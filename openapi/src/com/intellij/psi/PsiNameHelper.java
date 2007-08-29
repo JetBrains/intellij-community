@@ -52,7 +52,7 @@ public abstract class PsiNameHelper {
    * @param languageLevel to check text against. For instance 'assert' or 'enum' might or might not be identifiers depending on language level
    * @return true if the text is an identifier, false otherwise
    */
-  public abstract boolean isIdentifier(String text, LanguageLevel languageLevel);
+  public abstract boolean isIdentifier(@Nullable String text, LanguageLevel languageLevel);
 
   /**
    * Checks if the specified text is a Java keyword, using the language level of the project
@@ -61,7 +61,7 @@ public abstract class PsiNameHelper {
    * @param text the text to check.
    * @return true if the text is a keyword, false otherwise
    */
-  public abstract boolean isKeyword(String text);
+  public abstract boolean isKeyword(@Nullable String text);
 
   /**
    * Checks if the specified string is a qualified name (sequence of identifiers separated by
@@ -70,7 +70,7 @@ public abstract class PsiNameHelper {
    * @param text the text to check.
    * @return true if the text is a qualified name, false otherwise.
    */
-  public abstract boolean isQualifiedName(String text);
+  public abstract boolean isQualifiedName(@Nullable String text);
 
   public static String getShortClassName(@NotNull String referenceText) {
     return getShortClassName(referenceText, true);

@@ -9,6 +9,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameHelper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiNameHelperImpl extends PsiNameHelper{
   private final PsiManager myManager;
@@ -29,7 +30,7 @@ public class PsiNameHelperImpl extends PsiNameHelper{
     }
   }
 
-  public boolean isIdentifier(String text) {
+  public boolean isIdentifier(@Nullable String text) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (text == null) return false;
 
@@ -42,8 +43,9 @@ public class PsiNameHelperImpl extends PsiNameHelper{
     }
   }
 
-  public boolean isIdentifier(@NotNull String text, @NotNull LanguageLevel languageLevel) {
+  public boolean isIdentifier(@Nullable String text, @NotNull LanguageLevel languageLevel) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (text == null) return false;
 
     synchronized (LOCK) {
       updateLexer(languageLevel);
@@ -54,8 +56,9 @@ public class PsiNameHelperImpl extends PsiNameHelper{
     }
   }
 
-  public boolean isKeyword(String text) {
+  public boolean isKeyword(@Nullable String text) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (text == null) return false;
 
     synchronized (LOCK) {
       updateLexer(myManager.getEffectiveLanguageLevel());
@@ -66,7 +69,8 @@ public class PsiNameHelperImpl extends PsiNameHelper{
     }
   }
 
-  public boolean isQualifiedName(String text){
+  public boolean isQualifiedName(@Nullable String text){
+    if (text == null) return false;
     int index = 0;
     while(true){
       int index1 = text.indexOf('.', index);
