@@ -622,24 +622,12 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       //TODO: check NamedArguments
       GrArgumentList grArgumentList = grConstructorInvocation.getArgumentList();
 
-      String initValueToText;
       if (grArgumentList != null) {
         GrExpression[] expressions = grArgumentList.getExpressionArguments();
 
         for (int i1 = 0; i1 < expressions.length; i1++) {
           if (i1 > 0) text.append(", ");
-
-          GrExpression expression = expressions[i1];
-          PsiType argType = expression.getType();
-
-          String typeText = computeTypeText(argType);
-          if (typesToInitialValues.containsKey(typeText))
-            initValueToText = typesToInitialValues.get(typeText);
-          else
-            initValueToText = "null";
-
-          text.append(initValueToText);
-          i1++;
+          text.append(expressions[i1].getText());
         }
       }
       text.append(")");
