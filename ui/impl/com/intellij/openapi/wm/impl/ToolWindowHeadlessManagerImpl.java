@@ -43,6 +43,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void activate(@Nullable Runnable runnable) {
     }
 
+    public boolean isDisposed() {
+      return false;
+    }
+
     public boolean isVisible() {
       return false;
     }
@@ -151,6 +155,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setSelectedContent(final Content content, final boolean requestFocus) { }
 
     public void dispose() {}
+
+    public boolean isDisposed() {
+      return false;
+    }
 
     public ContentFactory getFactory() {
       return PeerFactory.getInstance().getContentFactory();

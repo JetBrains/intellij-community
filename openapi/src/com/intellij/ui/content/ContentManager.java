@@ -92,4 +92,6 @@ public interface ContentManager extends Disposable {
   void addDataProvider(DataProvider provider);
   
   ContentFactory getFactory();
+
+  boolean isDisposed();
 }

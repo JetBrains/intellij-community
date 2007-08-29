@@ -46,6 +46,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   private Set<Content> myContentWithChangedComponent = new HashSet<Content>();
 
+  private boolean myDisposed;
+
   /**
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class
    * must be created on already OPENED projects, otherwise there will be memory leak!
@@ -123,6 +125,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   private boolean removeContent(final Content content, boolean trackSelection, boolean dispose) {
+    if (getIndexOfContent(content) == -1) return false;
+
     try {
       Content selection = mySelection.size() > 0 ? mySelection.get(mySelection.size() - 1) : null;
       int selectedIndex = selection != null ? myContents.indexOf(selection) : -1;
@@ -454,10 +458,16 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public void dispose() {
+    myDisposed = true;
+
     myContents = null;
     mySelection = null;
     myContentWithChangedComponent.clear();
     myUI = null;
     myListeners = null;
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
   }
 }

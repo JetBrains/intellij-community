@@ -278,7 +278,10 @@ public class CompileDriver {
                                                     forceCompile
                                                     ? CompilerBundle.message("compiler.content.name.compile")
                                                     : CompilerBundle.message("compiler.content.name.make"), false);
-    WindowManager.getInstance().getStatusBar(myProject).setInfo("");
+    final WindowManager windowManager = WindowManager.getInstance();
+    if (windowManager != null) {
+      windowManager.getStatusBar(myProject).setInfo("");
+    }
 
     final DependencyCache dependencyCache = new DependencyCache(myCachesDirectoryPath);
     final CompileContextImpl compileContext =

@@ -137,5 +137,7 @@ public interface ToolWindow {
   void setToHideOnEmptyContent(boolean hideOnEmpty);
 
   boolean isToHideOnEmptyContent();
+  
+  boolean isDisposed();
 
 }
