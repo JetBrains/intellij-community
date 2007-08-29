@@ -259,7 +259,7 @@ public abstract class LwComponent implements IComponent{
         lwProp = new LwIntroBooleanProperty(propName);
       }
       else if (className.equals(Double.class.getName())) {
-        lwProp = new LwIntroDoubleProperty(propName);
+        lwProp = new LwIntroPrimitiveTypeProperty(propName, Double.class);
       }
       else {
         Class propClass;

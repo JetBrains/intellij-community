@@ -101,10 +101,10 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
       property = new LwIntroBooleanProperty(name);
     }
     else if (double.class.equals(propertyType)) { // double
-      property = new LwIntroDoubleProperty(name);
+      property = new LwIntroPrimitiveTypeProperty(name, Double.class);
     }
     else if (float.class.equals(propertyType)) { // double
-      property = new LwIntroFloatProperty(name);
+      property = new LwIntroPrimitiveTypeProperty(name, Float.class);
     }
     else if (String.class.equals(propertyType)) { // java.lang.String
       property = new LwRbIntroStringProperty(name);

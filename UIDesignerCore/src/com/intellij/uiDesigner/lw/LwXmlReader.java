@@ -19,8 +19,8 @@ import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-import java.awt.Color;
-import java.awt.Insets;
+import java.awt.*;
+import java.lang.reflect.Method;
 
 public final class LwXmlReader {
   private LwXmlReader() {
@@ -131,6 +131,21 @@ public final class LwXmlReader {
     }
     catch (NumberFormatException e) {
       throw new IllegalArgumentException("attribute '" + attributeName + "' is not a proper float: " + str);
+    }
+  }
+
+  public static Object getRequiredPrimitiveTypeValue(final Element element, final String attributeName, final Class valueClass) {
+    final String str = getRequiredString(element, attributeName);
+    try {
+      final Method method = valueClass.getMethod("valueOf", new Class[]{String.class});
+      //noinspection unchecked
+      return method.invoke(null, new Object[]{str});
+    }
+    catch (NumberFormatException e) {
+      throw new IllegalArgumentException("attribute '" + attributeName + "' is not a proper float: " + str);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 

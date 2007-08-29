@@ -15,7 +15,7 @@ import com.intellij.uiDesigner.designSurface.FirstComponentInsertLocation;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.editors.DoubleEditor;
+import com.intellij.uiDesigner.propertyInspector.editors.PrimitiveTypeEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.AbstractInsetsProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.AbstractIntProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
@@ -448,7 +448,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   private static class WeightProperty extends Property<RadComponent, Double> {
     private boolean myIsWeightX;
     private LabelPropertyRenderer<Double> myRenderer;
-    private DoubleEditor myEditor;
+    private PropertyEditor<Double> myEditor;
 
     public WeightProperty(final boolean isWeightX) {
       super(null, isWeightX ? "Weight X" : "Weight Y");
@@ -486,7 +486,7 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
     public PropertyEditor<Double> getEditor() {
       if (myEditor == null) {
-        myEditor = new DoubleEditor();
+        myEditor = new PrimitiveTypeEditor<Double>(Double.class);
       }
       return myEditor;
     }

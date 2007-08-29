@@ -7,10 +7,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.editors.AbstractTextFieldEditor;
-import com.intellij.uiDesigner.propertyInspector.editors.BooleanEditor;
-import com.intellij.uiDesigner.propertyInspector.editors.DoubleEditor;
-import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
+import com.intellij.uiDesigner.propertyInspector.editors.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.BooleanRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -31,7 +28,7 @@ public class ClientPropertyProperty extends Property {
     }
     else if (valueClass.equals(Double.class.getName())) {
       myRenderer = new LabelPropertyRenderer();
-      myEditor = new DoubleEditor();
+      myEditor = new PrimitiveTypeEditor(Double.class);
     }
     else {
       myRenderer = new LabelPropertyRenderer();
