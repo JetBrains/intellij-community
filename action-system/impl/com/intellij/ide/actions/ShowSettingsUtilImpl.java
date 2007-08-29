@@ -80,6 +80,13 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return configurableEditor.isOK();
   }
 
+  public boolean editConfigurable(final Component parent, final Configurable configurable, final Runnable advancedInitialization) {
+    SingleConfigurableEditor editor = new SingleConfigurableEditor(parent, configurable, createDimensionKey(configurable));
+    advancedInitialization.run();
+    editor.show();
+    return editor.isOK();
+  }
+
   private static String createDimensionKey(Configurable configurable) {
     String displayName = configurable.getDisplayName();
     displayName = displayName.replaceAll("\n", "_").replaceAll(" ", "_");

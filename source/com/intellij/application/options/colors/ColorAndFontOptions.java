@@ -613,7 +613,12 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
 
   @Nullable
   public Runnable enableSearch(String option) {
-    return myPanel.showOption(this, option);
+    return myPanel.showOption(this, option, true);
+  }
+
+  @Nullable
+  public Runnable selectOption(String option) {
+    return myPanel.showOption(this, option, false);
   }
 
   public Map<String, String> processListOptions(){

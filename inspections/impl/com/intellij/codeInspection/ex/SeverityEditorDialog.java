@@ -98,8 +98,13 @@ public class SeverityEditorDialog extends DialogWrapper {
     final JButton button = new JButton(InspectionsBundle.message("severities.default.settings.message"));
     button.addActionListener(new ActionListener(){
       public void actionPerformed(final ActionEvent e) {
-        ShowSettingsUtil.getInstance()
-          .editConfigurable(myPanel, ShowSettingsUtil.getInstance().findApplicationConfigurable(ColorAndFontOptions.class));
+        final ColorAndFontOptions colorAndFontOptions = ShowSettingsUtil.getInstance().findApplicationConfigurable(ColorAndFontOptions.class);
+        final Runnable preselect = new Runnable() {
+          public void run() {
+            SwingUtilities.invokeLater(colorAndFontOptions.selectOption(getSelectedType().getSeverity(null).myName));
+          }
+        };
+        ShowSettingsUtil.getInstance().editConfigurable(myPanel, colorAndFontOptions, preselect);
       }
     });
     disabled.add(button, new GridBagConstraints(0,0,1,1,0,0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0,0,0,0),0,0));
@@ -124,7 +129,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     infoTypes.add(getSeverityBasedTextAttributes(HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER));
     Collections.sort(infoTypes, new Comparator<SeverityRegistrar.SeverityBasedTextAttributes>() {
       public int compare(SeverityRegistrar.SeverityBasedTextAttributes attributes1, SeverityRegistrar.SeverityBasedTextAttributes attributes2) {
-        return mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity());
+        return - mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity());
       }
     });
     SeverityRegistrar.SeverityBasedTextAttributes preselection = null;
@@ -222,7 +227,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       new HashSet<SeverityRegistrar.SeverityBasedTextAttributes>(mySeverityRegistrar.getRegisteredHighlightingInfoTypes());
     final ListModel listModel = myOptionsList.getModel();
     final List<String> order = new ArrayList<String>();
-    for (int i = 0; i < listModel.getSize(); i++) {
+    for (int i = listModel.getSize() - 1; i >= 0 ;i--) {
       final SeverityRegistrar.SeverityBasedTextAttributes info =
         (SeverityRegistrar.SeverityBasedTextAttributes)listModel.getElementAt(i);
       order.add(info.getSeverity().myName);
@@ -279,11 +284,11 @@ public class SeverityEditorDialog extends DialogWrapper {
 
     public void update(final AnActionEvent e) {
       boolean canMove = ListUtil.canMoveSelectedItemsUp(myOptionsList);
-      SeverityRegistrar.SeverityBasedTextAttributes pair =
-        (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
-      if (pair != null && isDefaultSetting(pair.getType())) {
-        final int newPosition = myOptionsList.getSelectedIndex() - 1;
-        if (newPosition >0 ) {
+      if (canMove) {
+        SeverityRegistrar.SeverityBasedTextAttributes pair =
+          (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
+        if (pair != null && isDefaultSetting(pair.getType())) {
+          final int newPosition = myOptionsList.getSelectedIndex() - 1;
           pair = (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getModel().getElementAt(newPosition);
           if (isDefaultSetting(pair.getType())) {
             canMove = false;
@@ -306,11 +311,11 @@ public class SeverityEditorDialog extends DialogWrapper {
 
     public void update(final AnActionEvent e) {
       boolean canMove = ListUtil.canMoveSelectedItemsDown(myOptionsList);
-      SeverityRegistrar.SeverityBasedTextAttributes pair =
-        (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
-      if (pair != null && isDefaultSetting(pair.getType())) {
-        final int newPosition = myOptionsList.getSelectedIndex() + 1;
-        if (newPosition < myOptionsList.getModel().getSize()) {
+      if (canMove) {
+        SeverityRegistrar.SeverityBasedTextAttributes pair =
+          (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getSelectedValue();
+        if (pair != null && isDefaultSetting(pair.getType())) {
+          final int newPosition = myOptionsList.getSelectedIndex() + 1;
           pair = (SeverityRegistrar.SeverityBasedTextAttributes)myOptionsList.getModel().getElementAt(newPosition);
           if (isDefaultSetting(pair.getType())) {
             canMove = false;
