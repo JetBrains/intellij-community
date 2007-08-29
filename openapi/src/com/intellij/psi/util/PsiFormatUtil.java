@@ -293,6 +293,7 @@ public class PsiFormatUtil {
 
   public static String formatModifiers(PsiElement element, int options) throws IllegalArgumentException{
     PsiModifierList list;
+    boolean isInterface = false;
     if (element instanceof PsiVariable){
       list = ((PsiVariable)element).getModifierList();
     }
@@ -300,6 +301,7 @@ public class PsiFormatUtil {
       list = ((PsiMethod)element).getModifierList();
     }
     else if (element instanceof PsiClass){
+      isInterface = ((PsiClass)element).isInterface();
       list = ((PsiClass)element).getModifierList();
       if (list == null) return "";
     }
@@ -338,9 +340,10 @@ public class PsiFormatUtil {
         ? list.hasModifierProperty(PsiModifier.STATIC)
         : list.hasExplicitModifier(PsiModifier.STATIC)) appendModifier(buffer, PsiModifier.STATIC);
 
-    if ((options & SHOW_REDUNDANT_MODIFIERS) != 0
+    if (!isInterface && //cls modifier list
+        ((options & SHOW_REDUNDANT_MODIFIERS) != 0
         ? list.hasModifierProperty(PsiModifier.ABSTRACT)
-        : list.hasExplicitModifier(PsiModifier.ABSTRACT)) appendModifier(buffer, PsiModifier.ABSTRACT);
+        : list.hasExplicitModifier(PsiModifier.ABSTRACT))) appendModifier(buffer, PsiModifier.ABSTRACT);
 
     if ((options & SHOW_REDUNDANT_MODIFIERS) != 0
         ? list.hasModifierProperty(PsiModifier.FINAL)
