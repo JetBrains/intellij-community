@@ -5,6 +5,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -34,9 +34,8 @@ import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.radComponents.*;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.Table;
 import com.intellij.util.ui.IndentedIcon;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,16 +46,14 @@ import javax.swing.plaf.TableUI;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -582,9 +579,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     JComponent prefComponent = editor.getPreferredFocusedComponent((JComponent)editorComp);
     if(prefComponent == null){ // use default policy to find preferred focused component
       prefComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent((JComponent)editorComp);
-      LOG.assertTrue(prefComponent != null);
     }
-    prefComponent.requestFocusInWindow();
+    if (prefComponent != null) {
+      prefComponent.requestFocusInWindow();
+    }
   }
 
   private void finishEditing(){
