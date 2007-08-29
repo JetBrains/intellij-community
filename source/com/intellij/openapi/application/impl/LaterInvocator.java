@@ -6,19 +6,21 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Stack;
 import java.util.Iterator;
+import java.util.Stack;
 
 public class LaterInvocator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
@@ -33,10 +35,12 @@ public class LaterInvocator {
   private static class RunnableInfo {
     final Runnable runnable;
     final ModalityState modalityState;
+    final Condition<Object> expired;
 
-    public RunnableInfo(Runnable runnable, ModalityState modalityState) {
+    public RunnableInfo(Runnable runnable, ModalityState modalityState, @NotNull Condition expired) {
       this.runnable = runnable;
       this.modalityState = modalityState;
+      this.expired = expired;
     }
 
     @NonNls
@@ -96,16 +100,26 @@ public class LaterInvocator {
   }
 
   public static void invokeLater(Runnable runnable) {
+    invokeLater(runnable, Conditions.FALSE);
+  }
+
+  public static void invokeLater(Runnable runnable, @NotNull Condition expired) {
     ModalityState modalityState = ModalityState.defaultModalityState();
-    invokeLater(runnable, modalityState);
+    invokeLater(runnable, modalityState, expired);
   }
 
   public static void invokeLater(Runnable runnable, @NotNull ModalityState modalityState) {
+    invokeLater(runnable, modalityState, Conditions.FALSE);
+  }
+
+  public static void invokeLater(Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
     synchronized (LOCK) {
-      ourQueue.add(new RunnableInfo(runnable, modalityState));
+      ourQueue.add(new RunnableInfo(runnable, modalityState, expired));
     }
     requestFlush();
   }
+
+
 
   public static void invokeAndWait(final Runnable runnable, @NotNull ModalityState modalityState) {
     LOG.assertTrue(!isDispatchThread());
@@ -228,7 +242,9 @@ public class LaterInvocator {
       if (ourForcedFlushQueue.size() > 0) {
         final RunnableInfo toRun = ourForcedFlushQueue.get(0);
         ourForcedFlushQueue.remove(0);
-        return toRun.runnable;
+        if (!toRun.expired.value(null)) {
+          return toRun.runnable;
+        }
       }
 
 
@@ -238,6 +254,12 @@ public class LaterInvocator {
 
       while(ourQueueSkipCount < ourQueue.size()){
         RunnableInfo info = ourQueue.get(ourQueueSkipCount);
+
+        if (info.expired.value(null)) {
+          ourQueue.remove(ourQueueSkipCount);
+          continue;
+        }
+
         if (!currentModality.dominates(info.modalityState)) {
           ourQueue.remove(ourQueueSkipCount);
           return info.runnable;

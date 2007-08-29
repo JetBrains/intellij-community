@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +47,8 @@ public class MockApplication extends MockComponentManager implements Application
   public boolean isDispatchThread() {
     return true;
   }
+
+
 
   public void setupIdeQueue(EventQueue queue) {
   }
@@ -164,6 +167,12 @@ public class MockApplication extends MockComponentManager implements Application
                                                      Project project,
                                                      boolean smoothProgress) {
     return false;
+  }
+
+  public void invokeLater(final Runnable runnable, @NotNull final Condition expired) {
+  }
+
+  public void invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
   }
 
   public void invokeLater(Runnable runnable) {

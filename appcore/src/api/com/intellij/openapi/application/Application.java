@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,6 +162,8 @@ public interface Application extends ComponentManager {
    */
   void invokeLater(Runnable runnable);
 
+  void invokeLater(Runnable runnable, @NotNull Condition expired);
+
   /**
    * Causes <i>runnable.run()</i> to be executed asynchronously on the
    * AWT event dispatching thread, when IDEA is in the specified modality
@@ -170,6 +173,8 @@ public interface Application extends ComponentManager {
    * @param state the state in which the runnable will be executed.
    */
   void invokeLater(Runnable runnable, @NotNull ModalityState state);
+
+  void invokeLater(Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
 
   /**
    * Causes <code>runnable.run()</code> to be executed synchronously on the
