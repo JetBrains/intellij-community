@@ -4,19 +4,20 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class HtmlLocalInspectionTool extends LocalInspectionTool {
 
-  public static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
+  public static final Key<String> DO_NOT_VALIDATE_KEY = XmlHighlightVisitor.DO_NOT_VALIDATE_KEY;
   
   @Nls
   @NotNull
