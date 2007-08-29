@@ -32,6 +32,7 @@ import com.intellij.ui.errorView.ContentManagerProvider;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -224,12 +225,12 @@ public class CvsOperationExecutor {
     return (ProgressManager.getInstance().getProgressIndicator() != null);
   }
 
-  protected void showErrors(final List errors, CvsTabbedWindow tabbedWindow) {
-    showErrors(errors, new ArrayList(), tabbedWindow);
+  protected void showErrors(final List<VcsException> errors, CvsTabbedWindow tabbedWindow) {
+    showErrors(errors, new ArrayList<VcsException>(), tabbedWindow);
   }
 
-  protected void showErrors(final List errors,
-                            final List warnings,
+  protected void showErrors(final List<VcsException> errors,
+                            final List<VcsException> warnings,
                             final CvsTabbedWindow tabbedWindow) {
     if (!myShowErrors || myIsQuietOperation) return;
     if (tabbedWindow == null) return;
@@ -263,14 +264,12 @@ public class CvsOperationExecutor {
     }
   }
 
-  private void fillErrors(final List errors, final List warnings, final ErrorTreeView errorTreeView) {
-    for (Iterator i = errors.iterator(); i.hasNext();) {
-      VcsException exception = (VcsException)i.next();
+  private static void fillErrors(final List<VcsException> errors, final List<VcsException> warnings, final ErrorTreeView errorTreeView) {
+    for (final VcsException exception : errors) {
       errorTreeView.addMessage(MessageCategory.ERROR, exception.getMessages(), exception.getVirtualFile(), -1, -1, exception);
     }
 
-    for (Iterator i = warnings.iterator(); i.hasNext();) {
-      VcsException exception = (VcsException)i.next();
+    for (final VcsException exception : warnings) {
       errorTreeView.addMessage(MessageCategory.WARNING, exception.getMessages(), exception.getVirtualFile(), -1, -1, exception);
     }
 
@@ -298,27 +297,28 @@ public class CvsOperationExecutor {
   }
 
 
+  @Nullable
   public CvsTabbedWindow openTabbedWindow(final CvsHandler output) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (myProject != null) {
-      final CvsTabbedWindow tabbedWindow = CvsTabbedWindow.getInstance(myProject);
       if (CvsConfiguration.getInstance(myProject).SHOW_OUTPUT && !myIsQuietOperation) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
-          connectToOutput(output, tabbedWindow);
+          connectToOutput(output);
         } else {
           ApplicationManager.getApplication().invokeAndWait(new Runnable() {
             public void run() {
-              connectToOutput(output, tabbedWindow);
+              connectToOutput(output);
             }
           }, ModalityState.defaultModalityState());
         }
       }
-      return tabbedWindow;
+      return CvsTabbedWindow.getInstance(myProject);
     }
     return null;
   }
 
-  private void connectToOutput(CvsHandler output, CvsTabbedWindow tabbedWindow) {
+  private void connectToOutput(CvsHandler output) {
+    CvsTabbedWindow tabbedWindow = CvsTabbedWindow.getInstance(myProject);
     Editor editor = tabbedWindow.getOutput();
     if (editor == null) {
       output.connectToOutputView(tabbedWindow.addOutput(createView(myProject)), myProject);
