@@ -16,44 +16,66 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.util.ReflectionCache;
-import com.intellij.util.containers.ConcurrentClassMap;
+import com.intellij.util.containers.ConcurrentHashMap;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-public class ClassMapCachingNulls<T> extends ConcurrentClassMap<T> {
-  private static final Object NULL = new Object();
-  public T get(Class aClass) {
-    T value = myMap.get(aClass);
+public class ClassMapCachingNulls<T> {
+  private static final List NULL = new ArrayList(0);
+  private final Map<Class, List<T>> myBackingMap;
+  private final Map<Class, List<T>> myMap = new ConcurrentHashMap<Class, List<T>>();
+
+  public ClassMapCachingNulls(@NotNull Map<Class, List<T>> backingMap) {
+    myBackingMap = backingMap;
+  }
+
+  public List<T> get(Class aClass) {
+    List<T> value = myMap.get(aClass);
+    if (value == null) {
+      value = myBackingMap.get(aClass);
+      if (value != null) {
+        myMap.put(aClass, value);
+      }
+    }
     if (value != null) {
       return value == NULL ? null : value;
     }
+
     for (final Class aClass1 : ReflectionCache.getInterfaces(aClass)) {
-      value = get(aClass1);
-      if (value != null) {
-        break;
-      }
+      value = addFromUpper(value, aClass1);
     }
-    if (value == null) {
-      final Class superclass = ReflectionCache.getSuperClass(aClass);
-      if (superclass != null) {
-        value = get(superclass);
-      }
+    final Class superclass = ReflectionCache.getSuperClass(aClass);
+    if (superclass != null) {
+      value = addFromUpper(value, superclass);
     }
     if (value == NULL) {
       value = null;
     }
-    myMap.put(aClass, value == null ? (T)NULL : value);
+    myMap.put(aClass, value == null ? (List<T>)NULL : value);
     return value;
   }
 
-  public void clearCachedNulls() {
-    Iterator<Map.Entry<Class,T>> iterator = myMap.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<Class, T> entry = iterator.next();
-      if (entry.getValue() == NULL) {
-        iterator.remove();
+  private List<T> addFromUpper(List<T> value, Class superclass) {
+    List<T> fromUpper = get(superclass);
+    if (fromUpper != null) {
+      if (value == null) {
+        value = new ArrayList<T>(fromUpper);
+      }
+      else {
+        for (T t : fromUpper) {
+          if (!value.contains(t)) {
+            value.add(t);
+          }
+        }
       }
     }
+    return value;
+  }
+
+  public void clearCache() {
+    myMap.clear();
   }
 }

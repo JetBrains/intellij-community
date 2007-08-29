@@ -26,16 +26,22 @@ public abstract class InjectedLanguageManager implements ApplicationComponent {
 
   public abstract TextRange injectedToHost(@NotNull PsiElement element, @NotNull TextRange textRange);
 
-  public interface MultiPlaceInjector {
-    void getLanguagesToInject(@NotNull PsiElement context, @NotNull MultiPlaceRegistrar injectionPlacesRegistrar);
+  public interface MultiHostInjector {
+    void getLanguagesToInject(@NotNull PsiElement context, @NotNull MultiHostRegistrar injectionPlacesRegistrar);
   }
 
-  public interface MultiPlaceRegistrar {
-    @NotNull /*this*/ MultiPlaceRegistrar startInjecting(@NotNull Language language);
-    @NotNull /*this*/ MultiPlaceRegistrar addPlace(@NonNls @Nullable String prefix, @NonNls @Nullable String suffix, @NotNull PsiLanguageInjectionHost host, @NotNull TextRange rangeInsideHost);
+  public interface MultiHostRegistrar {
+    @NotNull /*this*/ MultiHostRegistrar startInjecting(@NotNull Language language);
+    @NotNull /*this*/ MultiHostRegistrar addPlace(@NonNls @Nullable String prefix, @NonNls @Nullable String suffix, @NotNull PsiLanguageInjectionHost host, @NotNull TextRange rangeInsideHost);
     void doneInjecting();
   }
 
-  public abstract void registerMultiHostInjector(@NotNull Class<? extends PsiElement> place, @Nullable ElementFilter filter, @NotNull MultiPlaceInjector injector);
-  public abstract boolean unregisterMultiPlaceInjector(@NotNull MultiPlaceInjector injector);
+  public abstract void registerMultiHostInjector(@NotNull Class<? extends PsiElement> place, @Nullable ElementFilter filter, @NotNull MultiHostInjector injector);
+  public abstract boolean unregisterMultiPlaceInjector(@NotNull MultiHostInjector injector);
+
+  public interface ConcatenationInjector {
+    void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement... operands);
+  }
+  public abstract void registerConcatenationInjector(@NotNull ConcatenationInjector injector);
+  public abstract boolean unregisterConcatenationInjector(@NotNull ConcatenationInjector injector);
 }

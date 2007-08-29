@@ -386,9 +386,9 @@ public class InjectedLanguageUtil {
       final Places result = new PlacesImpl();
       InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstance();
       if (injectedManager == null) return null; //for tests
-      injectedManager.processInPlaceInjectorsFor(element, new Processor<InjectedLanguageManager.MultiPlaceInjector>() {
-        public boolean process(InjectedLanguageManager.MultiPlaceInjector injector) {
-          injector.getLanguagesToInject(element, new InjectedLanguageManager.MultiPlaceRegistrar() {
+      injectedManager.processInPlaceInjectorsFor(element, new Processor<InjectedLanguageManager.MultiHostInjector>() {
+        public boolean process(InjectedLanguageManager.MultiHostInjector injector) {
+          injector.getLanguagesToInject(element, new InjectedLanguageManager.MultiHostRegistrar() {
             private Language myLanguage;
             private final List<TextRange> rangesInsideHostDocument = new SmartList<TextRange>();
             private final List<String> prefixes = new SmartList<String>();
@@ -400,7 +400,7 @@ public class InjectedLanguageUtil {
             boolean isOneLineEditor = false;
             boolean cleared = true;
             @NotNull
-            public InjectedLanguageManager.MultiPlaceRegistrar startInjecting(@NotNull Language language) {
+            public InjectedLanguageManager.MultiHostRegistrar startInjecting(@NotNull Language language) {
               if (!cleared) {
                 throw new IllegalStateException("Seems you haven't called doneInjecting()");
               }
@@ -426,7 +426,7 @@ public class InjectedLanguageUtil {
             }
 
             @NotNull
-            public InjectedLanguageManager.MultiPlaceRegistrar addPlace(@NonNls @Nullable String prefix,
+            public InjectedLanguageManager.MultiHostRegistrar addPlace(@NonNls @Nullable String prefix,
                                                                         @NonNls @Nullable String suffix,
                                                                         @NotNull PsiLanguageInjectionHost host,
                                                                         @NotNull TextRange rangeInsideHost) {
@@ -454,6 +454,9 @@ public class InjectedLanguageUtil {
             }
 
             public void doneInjecting() {
+              if (shreds.isEmpty()) {
+                throw new IllegalStateException("Seems you haven't called addPlace()");
+              }
               try {
                 DocumentWindow documentWindow = new DocumentWindow(hostDocument, isOneLineEditor, prefixes, suffixes, rangesInsideHostDocument);
                 PsiManagerEx psiManager = (PsiManagerEx)element.getManager();
@@ -491,10 +494,8 @@ public class InjectedLanguageUtil {
                   myFileViewProvider.forceCachedPsi(psiFile);
                 }
 
-                List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = obtainHighlightTokensFromLexer(myLanguage, outChars,
-                                                                                                                         injectionHosts,
-                                                                                                                         virtualFile,
-                                                                                            documentWindow, project);
+                List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens =
+                  obtainHighlightTokensFromLexer(myLanguage, outChars, injectionHosts, virtualFile, documentWindow, project);
                 psiFile.putUserData(HIGHLIGHT_TOKENS, tokens);
 
                 PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
