@@ -26,6 +26,7 @@ public interface Icons {
 
   public static final Icon FILE_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_fileType.png");
   public static final Icon SMALLEST = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_16x16.png");
+  public static final Icon BIG_ICON = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_48x48.png");
   public static final Icon CLAZZ = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/class.png");
   public static final Icon ABSTRACT = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/abstractClass.png");
   public static final Icon INTERFACE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/interface.png");

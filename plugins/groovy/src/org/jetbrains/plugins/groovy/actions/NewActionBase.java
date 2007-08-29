@@ -53,7 +53,7 @@ public abstract class NewActionBase extends CreateElementActionBase {
 
   protected abstract String getDialogTitle();
 
-  public final void update(final AnActionEvent e) {
+  public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
 
     super.update(e);
@@ -67,7 +67,7 @@ public abstract class NewActionBase extends CreateElementActionBase {
     }
   }
 
-  private boolean isGroovyConigured(AnActionEvent e) {
+  protected boolean isGroovyConigured(AnActionEvent e) {
     Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
     if (project != null) {
       PsiPackage groovyPackage = PsiManager.getInstance(project).findPackage("groovy.lang");
