@@ -125,7 +125,7 @@ public class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCa
     final GrExpression invoked = getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpression)) return PsiMethod.EMPTY_ARRAY;
 
-    return PsiImplUtil.getMethodVariants((GrReferenceElement) invoked);
+    return PsiImplUtil.getMethodVariants((GrReferenceExpression) invoked);
   }
 
 }

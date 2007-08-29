@@ -20,21 +20,21 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -123,6 +123,21 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   public PsiNamedElement[] getMethodVariants() {
     final GrCodeReferenceElement referenceElement = getReferenceElement();
     if (referenceElement == null) return PsiMethod.EMPTY_ARRAY;
-    return PsiImplUtil.getMethodVariants(referenceElement);
+    final GroovyResolveResult[] classResults = referenceElement.multiResolve(false);
+    List<PsiNamedElement> result = new ArrayList<PsiNamedElement>();
+    final PsiResolveHelper helper = getManager().getResolveHelper();
+    for (GroovyResolveResult classResult : classResults) {
+      final PsiElement element = classResult.getElement();
+      if (element instanceof PsiClass) {
+        final PsiMethod[] constructors = ((PsiClass) element).getConstructors();
+        for (PsiMethod constructor : constructors) {
+          if (helper.isAccessible(constructor, this, null)) {
+            result.add(constructor);
+          }
+        }
+      }
+    }
+
+    return result.toArray(new PsiNamedElement[result.size()]);
   }
 }

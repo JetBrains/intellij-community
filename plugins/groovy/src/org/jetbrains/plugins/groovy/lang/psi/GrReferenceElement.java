@@ -32,9 +32,4 @@ public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantRefe
 
   @NotNull
   GroovyResolveResult[] multiResolve(boolean incompleteCode);
-
-
-  //not caching!
-  @NotNull
-  GroovyResolveResult[] getSameNameVariants();
 }

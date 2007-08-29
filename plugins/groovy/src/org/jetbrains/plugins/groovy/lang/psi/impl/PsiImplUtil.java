@@ -146,7 +146,7 @@ public class PsiImplUtil {
     return member.getManager().getSearchHelper().getUseScope(member);
   }
 
-  public static PsiNamedElement[] getMethodVariants(GrReferenceElement methodReference) {
+  public static PsiNamedElement[] getMethodVariants(GrReferenceExpression methodReference) {
     final GroovyResolveResult[] results = methodReference.getSameNameVariants(); //will ignore argument types
     List<PsiNamedElement> elements = new ArrayList<PsiNamedElement>();
     for (GroovyResolveResult result : results) {
