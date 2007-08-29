@@ -227,6 +227,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
     final boolean isLastStep = isLastStep(getCurrentStep());
     getNextButton().setEnabled(!isLastStep);
     getFinishButton().setEnabled(isLastStep);
+    getRootPane().setDefaultButton(isLastStep ? getFinishButton() : getNextButton());
   }
 
   private boolean isLastStep(int step) {
