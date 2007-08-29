@@ -7,20 +7,17 @@
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
 
 public class BackgroundableProcessIndicator extends ProgressWindow {
   protected StatusBarEx myStatusBar;
@@ -29,6 +26,8 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
 
   private PerformInBackgroundOption myOption;
   private TaskInfo myInfo;
+
+  private boolean myDisposed;
 
   public BackgroundableProcessIndicator(Task.Backgroundable task) {
     this(task.getProject(), task, task);    
@@ -72,6 +71,8 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
 
 
   protected void showDialog() {
+    if (myDisposed) return;
+
     if (myOption.shouldStartInBackground()) {
       return;
     }
@@ -80,6 +81,8 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   public void background() {
+    if (myDisposed) return;
+
     myOption.processSentToBackground();
     doBackground();
     super.background();
@@ -101,6 +104,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   private void dispose() {
+    myDisposed = true;
     myInfo = null;
     myStatusBar = null;
     myOption = null;
