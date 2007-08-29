@@ -5,13 +5,12 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListAdapter;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.content.Content;
 
 import java.util.Collection;
@@ -47,7 +46,6 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
     private void rebuild() {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           myTodoTreeBuilder.rebuildCache();
         }
       });
