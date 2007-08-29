@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.CommonBundle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -102,6 +103,9 @@ public class ExistingModuleLoader extends ModuleBuilder {
         Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
         return false;
       }
+    } else {
+      Messages.showErrorDialog(current, IdeBundle.message("title.module.file.does.not.exist"), CommonBundle.message("title.error"));
+      return false;
     }
     return true;
   }
