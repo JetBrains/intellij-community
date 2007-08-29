@@ -458,6 +458,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     targetIndex++;
     if (targetIndex < cellIndex) cellIndex++;
     copyFormSpecs(sourceLayout, destinationLayout, isRow, cellIndex, cellCount, targetIndex);
+    updateGridConstraintsFromCellConstraints(destination);
   }
 
   private static void copyFormSpecs(final FormLayout sourceLayout,
