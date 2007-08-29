@@ -283,10 +283,12 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     }
     PsiJavaCodeReferenceElement baseClassRef = myAnonClass.getBaseClassReference();
     PsiClass baseClass = (PsiClass)baseClassRef.resolve();
-    PsiReferenceList refList = baseClass != null && baseClass.isInterface() ?
-                               aClass.getImplementsList() :
-                               aClass.getExtendsList();
-    if (refList != null) refList.add(baseClassRef);
+    if (baseClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) {
+      PsiReferenceList refList = baseClass != null && baseClass.isInterface() ?
+                                 aClass.getImplementsList() :
+                                 aClass.getExtendsList();
+      if (refList != null) refList.add(baseClassRef);
+    }
 
     renameReferences(myAnonClass);
     copyClassBody(myAnonClass, aClass, myVariableInfos.length > 0);
