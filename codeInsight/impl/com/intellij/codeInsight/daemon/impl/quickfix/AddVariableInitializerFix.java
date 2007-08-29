@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class AddVariableInitializerFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
@@ -20,15 +21,17 @@ public class AddVariableInitializerFix implements IntentionAction {
     myVariable = variable;
   }
 
+  @NotNull
   public String getText() {
     return CodeInsightBundle.message("quickfix.add.variable.text", myVariable.getName());
   }
 
+  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("quickfix.add.variable.family.name");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myVariable != null
         && myVariable.isValid()
         && myVariable.getManager().isInProject(myVariable)
@@ -36,31 +39,27 @@ public class AddVariableInitializerFix implements IntentionAction {
         ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(myVariable.getContainingFile())) return;
 
-    try {
-      String initializerText = suggestInitializer();
-      PsiElementFactory factory = myVariable.getManager().getElementFactory();
-      PsiExpression initializer = factory.createExpressionFromText(initializerText, myVariable);
-      if (myVariable instanceof PsiLocalVariable) {
-        ((PsiLocalVariable)myVariable).setInitializer(initializer);
-      }
-      else if (myVariable instanceof PsiField) {
-        ((PsiField)myVariable).setInitializer(initializer);
-      }
-      else {
-        LOG.error("Unknown variable type: "+myVariable);
-      }
-      TextRange range = myVariable.getInitializer().getTextRange();
-      int offset = range.getStartOffset();
-      editor.getCaretModel().moveToOffset(offset);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      editor.getSelectionModel().setSelection(range.getEndOffset(), range.getStartOffset());
+    String initializerText = suggestInitializer();
+    PsiElementFactory factory = myVariable.getManager().getElementFactory();
+    PsiExpression initializer = factory.createExpressionFromText(initializerText, myVariable);
+    if (myVariable instanceof PsiLocalVariable) {
+      ((PsiLocalVariable)myVariable).setInitializer(initializer);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    else if (myVariable instanceof PsiField) {
+      ((PsiField)myVariable).setInitializer(initializer);
     }
+    else {
+      LOG.error("Unknown variable type: "+myVariable);
+    }
+    CodeInsightUtil.forcePsiPostprocessAndRestoreElement(myVariable);
+    TextRange range = myVariable.getInitializer().getTextRange();
+    int offset = range.getStartOffset();
+    editor.getCaretModel().moveToOffset(offset);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
   }
 
   private String suggestInitializer() {
