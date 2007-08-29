@@ -208,16 +208,20 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
     }
 
-    final Rectangle visibleRect = focusOwner.getVisibleRect();
-
-    Point popupMenuPoint = null;
-
     Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null && focusOwner == editor.getContentComponent()) {
       return guessBestPopupLocation(editor);
     }
-    else if (focusOwner instanceof JList) { // JList
-      JList list = (JList)focusOwner;
+    else {
+      return guessBestPopupLocation(focusOwner);
+    }
+  }
+
+  public RelativePoint guessBestPopupLocation(final JComponent component) {
+    Point popupMenuPoint = null;
+    final Rectangle visibleRect = component.getVisibleRect();
+    if (component instanceof JList) { // JList
+      JList list = (JList)component;
       int firstVisibleIndex = list.getFirstVisibleIndex();
       int lastVisibleIndex = list.getLastVisibleIndex();
       int[] selectedIndices = list.getSelectedIndices();
@@ -229,8 +233,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
         }
       }
     }
-    else if (focusOwner instanceof JTree) { // JTree
-      JTree tree = (JTree)focusOwner;
+    else if (component instanceof JTree) { // JTree
+      JTree tree = (JTree)component;
       int[] selectionRows = tree.getSelectionRows();
       for (int i = 0; selectionRows != null && i < selectionRows.length; i++) {
         int row = selectionRows[i];
@@ -240,15 +244,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
           break;
         }
       }
-    } else if (focusOwner instanceof PopupOwner){
-      popupMenuPoint = ((PopupOwner)focusOwner).getBestPopupPosition();
+    } else if (component instanceof PopupOwner){
+      popupMenuPoint = ((PopupOwner)component).getBestPopupPosition();
     }
     // TODO[vova] add usability for JTable
     if (popupMenuPoint == null) {
       popupMenuPoint = new Point(visibleRect.x + visibleRect.width / 2, visibleRect.y + visibleRect.height / 2);
     }
 
-    return new RelativePoint(focusOwner, popupMenuPoint);
+    return new RelativePoint(component, popupMenuPoint);
   }
 
   public RelativePoint guessBestPopupLocation(Editor editor) {

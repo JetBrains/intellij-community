@@ -82,6 +82,8 @@ public abstract class JBPopupFactory {
                                                   boolean honorActionMnemonics,
                                                   int defaultOptionIndex, final boolean autoSelectionEnabled);
 
+  public abstract RelativePoint guessBestPopupLocation(JComponent component);
+
   /**
    * Possible ways to select actions in a popup from keyboard.
    */
