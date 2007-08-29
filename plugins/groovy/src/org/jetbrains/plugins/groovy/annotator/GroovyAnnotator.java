@@ -575,8 +575,9 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkNewExpression(AnnotationHolder holder, GrNewExpression newExpression) {
+    if (newExpression.getArrayCount() > 0) return;
     GrCodeReferenceElement refElement = newExpression.getReferenceElement();
-    LOG.assertTrue(refElement != null);
+    if (refElement == null) return;
     final PsiMethod resolved = newExpression.resolveConstructor();
     if (resolved != null) {
       checkMethodApplicability(resolved, refElement, holder);
