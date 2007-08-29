@@ -8,6 +8,7 @@ import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Condition;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
@@ -37,6 +38,14 @@ public class MockProject extends MockComponentManager implements ProjectEx {
 
   public boolean isDummy() {
     return false;
+  }
+
+  public Condition getDisposed() {
+    return new Condition() {
+      public boolean value(final Object o) {
+        return isDisposed();
+      }
+    };
   }
 
   @NotNull

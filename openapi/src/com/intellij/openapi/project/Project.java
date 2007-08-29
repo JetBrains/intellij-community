@@ -18,6 +18,7 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -78,6 +79,8 @@ public interface Project extends ComponentManager, AreaInstance, Disposable {
   void save();
 
   boolean isDisposed();
+  
+  Condition getDisposed();
 
   boolean isOpen();
 

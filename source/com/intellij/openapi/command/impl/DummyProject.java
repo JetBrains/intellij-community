@@ -4,6 +4,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
@@ -107,6 +108,14 @@ public class DummyProject extends UserDataHolderBase implements Project {
 
   public boolean isDisposed() {
     return false;
+  }
+
+  public Condition getDisposed() {
+    return new Condition() {
+      public boolean value(final Object o) {
+        return isDisposed();
+      }
+    };
   }
 
   @NotNull

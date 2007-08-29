@@ -14,6 +14,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -26,8 +27,8 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.pom.PomModel;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -148,6 +149,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public boolean isOpen() {
     return ProjectManagerEx.getInstanceEx().isProjectOpened(this);
+  }
+
+  public Condition getDisposed() {
+    return new Condition() {
+      public boolean value(final Object o) {
+        return isDisposed();
+      }
+    };
   }
 
   public boolean isInitialized() {
