@@ -535,7 +535,10 @@ public class TypedHandler implements TypedActionHandler {
     if (!(element.getLanguage() instanceof XMLLanguage)) return;
 
     ASTNode prevLeaf = element.getNode();
-    if (prevLeaf != null && !"/".equals(prevLeaf.getText())) return;
+    final String prevLeafText = prevLeaf != null ? prevLeaf.getText():null;
+    if (prevLeaf != null && !"/".equals(prevLeafText)) {
+      if (!"/".equals(prevLeafText.trim())) return;
+    }
     while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
     if(prevLeaf instanceof OuterLanguageElement) {
       element = file.getDocument().findElementAt(offset - 1);
