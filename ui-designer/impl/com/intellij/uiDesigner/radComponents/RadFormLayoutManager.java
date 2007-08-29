@@ -336,6 +336,11 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   }
 
   @Override
+  public void setChildDragging(RadComponent child, boolean dragging) {
+    // do nothing here - otherwise the layout will jump around
+  }
+
+  @Override
   public void paintCaptionDecoration(final RadContainer container, final boolean isRow, final int index, final Graphics2D g2d,
                                      final Rectangle rc) {
     // don't paint gap rows/columns with red background
