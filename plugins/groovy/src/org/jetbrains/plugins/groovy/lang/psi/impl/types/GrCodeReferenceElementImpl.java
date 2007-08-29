@@ -282,7 +282,18 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
     public GroovyResolveResult[] resolve(GrCodeReferenceElementImpl reference, boolean incompleteCode) {
       if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
-      return _resolve(reference, reference.getManager(), reference.getKind());
+      final GroovyResolveResult[] results = _resolve(reference, reference.getManager(), reference.getKind());
+      final PsiType[] args = reference.getTypeArguments();
+      for (int i = 0; i < results.length; i++) {
+        GroovyResolveResult result = results[i];
+        final PsiElement element = result.getElement();
+        if (element instanceof PsiClass) {
+          final PsiSubstitutor substitutor = result.getSubstitutor();
+          final PsiSubstitutor newSubstitutor = substitutor.putAll((PsiClass) element, args);
+          results[i] = new GroovyResolveResultImpl(element, result.isAccessible(), result.getImportStatementContext(), newSubstitutor);
+        }
+      }
+      return results;
     }
 
     private GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager,

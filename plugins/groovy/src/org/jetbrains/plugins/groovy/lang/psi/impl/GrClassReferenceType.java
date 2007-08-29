@@ -102,11 +102,17 @@ public class GrClassReferenceType extends PsiClassType {
 
   @NotNull
   public PsiClassType rawType() {
+    final PsiClass clazz = resolve();
+    if (clazz != null) {
+      final PsiElementFactory factory = clazz.getManager().getElementFactory();
+      return factory.createType(clazz, factory.createRawSubstitutor(clazz));
+    }
+
     return this;
   }
 
   public String getPresentableText() {
-    return myReferenceElement.getReferenceName();
+    return myReferenceElement.getText();
   }
 
   @Nullable
