@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ImportUtils;
 
 class FullyQualifiedNamePredicate implements PsiElementPredicate{
 
@@ -33,25 +34,48 @@ class FullyQualifiedNamePredicate implements PsiElementPredicate{
         if(!referenceElement.isQualified()) {
             return false;
         }
+	    final PsiElement parent = referenceElement.getParent();
+	    if (parent instanceof PsiMethodCallExpression ||
+	        parent instanceof PsiAssignmentExpression ||
+	        parent instanceof PsiVariable) {
+		    return false;
+	    }
         if (PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class,
                 PsiPackageStatement.class, PsiCodeFragment.class) != null) {
             return false;
         }
         final PsiElement qualifier = referenceElement.getQualifier();
-        if (qualifier instanceof PsiJavaCodeReferenceElement) {
-            final PsiJavaCodeReferenceElement qualfierReferenceElement =
-                    (PsiJavaCodeReferenceElement)qualifier;
-            final PsiElement resolved = qualfierReferenceElement.resolve();
-            if (resolved instanceof PsiPackage) {
-                return true;
-            }
-            if (resolved instanceof PsiClass) {
-                final Project project = element.getProject();
-                final CodeStyleSettings codeStyleSettings =
-                        CodeStyleSettingsManager.getSettings(project);
-                return codeStyleSettings.INSERT_INNER_CLASS_IMPORTS;
-            }
-        }
-        return false;
+	    if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
+		    return false;
+	    }
+	    final PsiJavaCodeReferenceElement qualfierReferenceElement =
+	            (PsiJavaCodeReferenceElement)qualifier;
+	    final PsiElement resolved = qualfierReferenceElement.resolve();
+	    if (!(resolved instanceof PsiPackage)) {
+		    if (!(resolved instanceof PsiClass)) {
+			    return false;
+		    }
+		    final Project project = element.getProject();
+		    final CodeStyleSettings codeStyleSettings =
+				    CodeStyleSettingsManager.getSettings(project);
+		    if (!codeStyleSettings.INSERT_INNER_CLASS_IMPORTS) {
+			    return false;
+		    }
+	    }
+	    final PsiElement target = referenceElement.resolve();
+	    if(!(target instanceof PsiClass)){
+		    return false;
+	    }
+	    final PsiClass aClass = (PsiClass) target;
+	    final String fqName = aClass.getQualifiedName();
+	    if (fqName == null) {
+		    return false;
+	    }
+	    final PsiJavaFile javaFile =
+			    PsiTreeUtil.getParentOfType(referenceElement, PsiJavaFile.class);
+	    if (javaFile == null) {
+		    return false;
+	    }
+	    return ImportUtils.nameCanBeImported(fqName, javaFile);
     }
 }
