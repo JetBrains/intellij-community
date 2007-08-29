@@ -38,6 +38,7 @@
       <property name="rolloverIcon"/>
       <property name="rolloverSelectedIcon"/>
       <property name="selectedIcon"/>
+      <property name="multiClickThreshhold"/>
     </expert-properties>
     <inplace-property name="text"/>
 

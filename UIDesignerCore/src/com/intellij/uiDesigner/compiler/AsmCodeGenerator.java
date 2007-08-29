@@ -521,6 +521,15 @@ public class AsmCodeGenerator {
             else if (propertyClass.equals(Float.class.getName())) {
               setterClass = float.class;
             }
+            else if (propertyClass.equals(Long.class.getName())) {
+              setterClass = long.class;
+            }
+            else if (propertyClass.equals(Byte.class.getName())) {
+              setterClass = byte.class;
+            }
+            else if (propertyClass.equals(Short.class.getName())) {
+              setterClass = short.class;
+            }
             else {
               setterClass = Class.forName(propertyClass);
             }

@@ -122,6 +122,15 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
     else if (float.class.getName().equals(propertyClassName)) {
       property = new LwIntroPrimitiveTypeProperty(name, Float.class);
     }
+    else if (long.class.getName().equals(propertyClassName)) {
+      property = new LwIntroPrimitiveTypeProperty(name, Long.class);
+    }
+    else if (byte.class.getName().equals(propertyClassName)) {
+      property = new LwIntroPrimitiveTypeProperty(name, Byte.class);
+    }
+    else if (short.class.getName().equals(propertyClassName)) {
+      property = new LwIntroPrimitiveTypeProperty(name, Short.class);
+    }
     else if (String.class.getName().equals(propertyClassName)) { // java.lang.String
       property = new LwRbIntroStringProperty(name);
     }

@@ -11,6 +11,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.patterns.impl.Pattern;
+import static com.intellij.patterns.impl.StandardPatterns.psiElement;
+import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -23,9 +26,6 @@ import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.patterns.impl.Pattern;
-import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
-import static com.intellij.patterns.impl.StandardPatterns.psiElement;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -614,6 +614,15 @@ public final class FormSourceCodeGenerator {
       else if (propertyClass.equals(Float.class.getName())) {
         push(((Float)value).floatValue());
       }
+      else if (propertyClass.equals(Long.class.getName())) {
+        push(((Long) value).longValue());
+      }
+      else if (propertyClass.equals(Short.class.getName())) {
+        push(((Short) value).shortValue());
+      }
+      else if (propertyClass.equals(Byte.class.getName())) {
+        push(((Byte) value).byteValue());
+      }
       else if (propertyClass.equals(Boolean.class.getName())) {
         push(((Boolean)value).booleanValue());
       }
@@ -1182,6 +1191,15 @@ public final class FormSourceCodeGenerator {
 
   public void append(final float value) {
     myBuffer.append(value).append("f");
+  }
+
+  private void push(final long value) {
+    checkParameter();
+    append(value);
+  }
+
+  public void append(final long value) {
+    myBuffer.append(value).append("L");
   }
 
   void push(final boolean value) {
