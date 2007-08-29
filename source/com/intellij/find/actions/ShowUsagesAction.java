@@ -82,11 +82,17 @@ public class ShowUsagesAction extends AnAction {
       FileEditor newFileEditor = location == null ? null :location.getEditor();
       final Editor newEditor = newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
       if (newEditor != null) {
+        //opening editor performing in invokeLater
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             newEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
               public void run() {
-                HintManager.getInstance().showInformationHint(newEditor, FindBundle.message("show.usages.only.usage"));
+                // after new editor created, some resizing events are still bubbling. To prevent hiding hint, invokeLater 
+                SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                    HintManager.getInstance().showInformationHint(newEditor, FindBundle.message("show.usages.only.usage"));
+                  }
+                });
               }
             });
           }
