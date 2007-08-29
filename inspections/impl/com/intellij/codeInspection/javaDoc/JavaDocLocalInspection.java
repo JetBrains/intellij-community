@@ -3,8 +3,8 @@
  */
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.CommonBundle;
+import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
@@ -18,11 +18,13 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,8 +48,8 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
 import java.io.IOException;
+import java.util.*;
 
 public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   private static final String REQUIRED_JAVADOC_IS_ABSENT = InspectionsBundle.message("inspection.javadoc.problem.descriptor");
@@ -334,6 +336,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (psiClass instanceof PsiAnonymousClass) return null;
+    if (psiClass instanceof JspClass) return null;
     if (IGNORE_DEPRECATED && psiClass.isDeprecated()) {
       return null;
     }
@@ -423,6 +426,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
   @Nullable
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (psiMethod instanceof JspHolderMethod) return null;
     if (IGNORE_DEPRECATED && (psiMethod.isDeprecated() || psiMethod.getContainingClass().isDeprecated())) {
       return null;
     }
