@@ -241,7 +241,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
 
     final int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
 
-    FoldRegion collapsedAt = ((FoldingModelImpl)myEditor.getFoldingModel()).getCollapsedRegionAtOffset(offset);
+    FoldRegion collapsedAt = myEditor.getFoldingModel().getCollapsedRegionAtOffset(offset);
 
     if (collapsedAt != null && offset > collapsedAt.getStartOffset()) {
       Runnable runnable = new Runnable() {
