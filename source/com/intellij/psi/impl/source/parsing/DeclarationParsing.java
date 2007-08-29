@@ -456,7 +456,7 @@ public class DeclarationParsing extends Parsing {
         TreeUtil.addChildren(parameterList, parseAnnotationParameter(lexer, true));
       }
 
-
+      boolean afterBad = false;
       while (true) {
         tokenType = lexer.getTokenType();
         if (tokenType == RPARENTH) {
@@ -467,6 +467,16 @@ public class DeclarationParsing extends Parsing {
         else if (tokenType == COMMA) {
           TreeUtil.addChildren(parameterList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           lexer.advance();
+          TreeUtil.addChildren(parameterList, parseAnnotationParameter(lexer, false));
+        }
+        else if (tokenType == BAD_CHARACTER) {
+          TreeUtil.addChildren(parameterList, Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.rparen")));
+          TreeUtil.addChildren(parameterList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+          lexer.advance();
+          afterBad = true;
+        }
+        else if (afterBad) {
+          afterBad = false;
           TreeUtil.addChildren(parameterList, parseAnnotationParameter(lexer, false));
         }
         else {
