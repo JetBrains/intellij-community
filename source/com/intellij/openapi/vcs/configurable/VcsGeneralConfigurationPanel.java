@@ -2,19 +2,20 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
 import com.intellij.openapi.vcs.changes.committed.CacheSettingsDialog;
+import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -50,6 +51,7 @@ public class VcsGeneralConfigurationPanel {
   private JCheckBox myCbEditInBackground;
   private JCheckBox myCbAddRemoveInBackground;
   private JButton myConfigureHistoryCacheButton;
+  private JComboBox myFailedCommitChangelistCombo;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -103,6 +105,7 @@ public class VcsGeneralConfigurationPanel {
     settings.PERFORM_UPDATE_IN_BACKGROUND = myCbUpdateInBackground.isSelected();
     settings.PERFORM_EDIT_IN_BACKGROUND = myCbEditInBackground.isSelected();
     settings.PERFORM_ADD_REMOVE_IN_BACKGROUND = myCbAddRemoveInBackground.isSelected();
+    settings.MOVE_TO_FAILED_COMMIT_CHANGELIST = getFailedCommitConfirm();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
@@ -113,6 +116,14 @@ public class VcsGeneralConfigurationPanel {
 
 
     getReadOnlyStatusHandler().getState().SHOW_DIALOG = myShowReadOnlyStatusDialog.isSelected();
+  }
+
+  private VcsShowConfirmationOption.Value getFailedCommitConfirm() {
+    switch(myFailedCommitChangelistCombo.getSelectedIndex()) {
+      case 0: return VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
+      case 1: return VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
+      default: return VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
+    }
   }
 
   private VcsShowConfirmationOption getAddConfirmation() {
@@ -161,6 +172,10 @@ public class VcsGeneralConfigurationPanel {
       return true;
     }
 
+    if (!Comparing.equal(getFailedCommitConfirm(), settings.MOVE_TO_FAILED_COMMIT_CHANGELIST)) {
+      return true;
+    }
+
     if (getReadOnlyStatusHandler().getState().SHOW_DIALOG != myShowReadOnlyStatusDialog.isSelected()) {
       return true;
     }
@@ -184,6 +199,15 @@ public class VcsGeneralConfigurationPanel {
     myCbUpdateInBackground.setSelected(settings.PERFORM_UPDATE_IN_BACKGROUND);
     myCbEditInBackground.setSelected(settings.PERFORM_EDIT_IN_BACKGROUND);
     myCbAddRemoveInBackground.setSelected(settings.PERFORM_ADD_REMOVE_IN_BACKGROUND);
+    if (settings.MOVE_TO_FAILED_COMMIT_CHANGELIST == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+      myFailedCommitChangelistCombo.setSelectedIndex(0);
+    }
+    else if (settings.MOVE_TO_FAILED_COMMIT_CHANGELIST == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
+      myFailedCommitChangelistCombo.setSelectedIndex(1);
+    }
+    else {
+      myFailedCommitChangelistCombo.setSelectedIndex(2);
+    }
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       myPromptOptions.get(setting).setSelected(setting.getValue());
@@ -196,6 +220,7 @@ public class VcsGeneralConfigurationPanel {
   private static void selectInGroup(final JRadioButton[] group, final VcsShowConfirmationOption confirmation) {
     final VcsShowConfirmationOption.Value value = confirmation.getValue();
     final int index;
+    //noinspection EnumSwitchStatementWhichMissesCases
     switch(value) {
       case SHOW_CONFIRMATION: index = 0; break;
       case DO_ACTION_SILENTLY: index = 1; break;

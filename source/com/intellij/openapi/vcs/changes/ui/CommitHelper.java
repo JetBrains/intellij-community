@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ui.ConfirmationDialog;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -178,7 +179,7 @@ public class CommitHelper {
                                final ChangeList changeList,
                                final List<Change> failedChanges,
                                final List<CheckinHandler> checkinHandlers,
-                               String commitMessage) {
+                               final String commitMessage) {
     final List<VcsException> errors = collectErrors(allExceptions);
     final int errorsSize = errors.size();
     final int warningsSize = allExceptions.size() - errorsSize;
@@ -214,9 +215,6 @@ public class CommitHelper {
       for (CheckinHandler handler : checkinHandlers) {
         handler.checkinFailed(errors);
       }
-
-      moveToFailedList(changeList, commitMessage, failedChanges,
-                       VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()), myProject);
     }
 
     if (errorsSize == 0 || warningsSize == 0) {
@@ -225,9 +223,6 @@ public class CommitHelper {
         indicator.setText(VcsBundle.message("commit.dialog.completed.successfully"));
       }
     }
-
-    myConfiguration.ERROR_OCCURED = errorsSize > 0;
-
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -242,6 +237,11 @@ public class CommitHelper {
           Messages
             .showErrorDialog(VcsBundle.message("message.text.commit.finished.with.warnings"), VcsBundle.message("message.title.commit"));
         }
+
+        if (errorsSize > 0) {
+          moveToFailedList(changeList, commitMessage, failedChanges,
+                           VcsBundle.message("commit.dialog.failed.commit.template", changeList.getName()), myProject);
+        }
       }
     }, ModalityState.NON_MODAL);
 
@@ -254,6 +254,23 @@ public class CommitHelper {
                                       final Project project) {
     // No need to move since we'll get exactly the same changelist.
     if (failedChanges.containsAll(changeList.getChanges())) return;
+
+    final VcsConfiguration configuration = VcsConfiguration.getInstance(project);
+    if (configuration.MOVE_TO_FAILED_COMMIT_CHANGELIST != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+      final VcsShowConfirmationOption option = new VcsShowConfirmationOption() {
+        public Value getValue() {
+          return configuration.MOVE_TO_FAILED_COMMIT_CHANGELIST;
+        }
+
+        public void setValue(final Value value) {
+          configuration.MOVE_TO_FAILED_COMMIT_CHANGELIST = value;
+        }
+      };
+      boolean result = ConfirmationDialog.requestForConfirmation(option, project, VcsBundle.message("commit.failed.confirm.prompt"),
+                                                                 VcsBundle.message("commit.failed.confirm.title"),
+                                                                 Messages.getQuestionIcon());
+      if (!result) return;
+    }
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     int index = 1;

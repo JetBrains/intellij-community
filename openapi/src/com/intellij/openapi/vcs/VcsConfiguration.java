@@ -49,6 +49,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.VcsConfiguration");
 
   @NonNls private static final String VALUE_ATTR = "value";
+  @NonNls private static final String CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT = "confirmMoveToFailedCommit";
   private Project myProject;
 
   public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
@@ -57,6 +58,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean PERFORM_COMMIT_IN_BACKGROUND = false;
   public boolean PERFORM_EDIT_IN_BACKGROUND = true;
   public boolean PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
+  public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
@@ -105,8 +107,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public float FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION = 0.8f;
   public float FILE_HISTORY_DIALOG_SPLITTER_PROPORTION = 0.5f;
 
-  public boolean ERROR_OCCURED = false;
-
   public String ACTIVE_VCS_NAME;
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
@@ -154,6 +154,10 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
+    final Element child = element.getChild(CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT);
+    if (child != null) {
+      MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.fromString(child.getAttributeValue(VALUE_ATTR));
+    }
     final List messages = element.getChildren(MESSAGE_ELEMENT_NAME);
     for (final Object message : messages) {
       saveCommitMessage(((Element)message).getAttributeValue(VALUE_ATTR));
@@ -165,6 +169,11 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+    if (MOVE_TO_FAILED_COMMIT_CHANGELIST != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
+      Element confirmChild = new Element(CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT);
+      confirmChild.setAttribute(VALUE_ATTR, MOVE_TO_FAILED_COMMIT_CHANGELIST.toString());
+      element.addContent(confirmChild);
+    }
     for (String message : myLastCommitMessages) {
       final Element messageElement = new Element(MESSAGE_ELEMENT_NAME);
       messageElement.setAttribute(VALUE_ATTR, message);
@@ -184,6 +193,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
 
   }
 
+  @NotNull
   public String getComponentName() {
     return "VcsManagerConfiguration";
   }
