@@ -118,7 +118,21 @@ public class GrClassReferenceType extends PsiClassType {
   @Nullable
   public String getCanonicalText() {
     PsiClass resolved = resolve();
-    return resolved == null ? null : resolved.getQualifiedName();
+    if (resolved == null) return null;
+    final String qName = resolved.getQualifiedName();
+    if (isRaw()) return qName;
+
+    final PsiType[] typeArgs = myReferenceElement.getTypeArguments();
+    if (typeArgs.length == 0) return qName;
+
+    StringBuilder builder = new StringBuilder();
+    builder.append(qName).append("<");
+    for (int i = 0; i < typeArgs.length; i++) {
+      if (i > 0) builder.append(",");
+      builder.append(typeArgs[i].getCanonicalText());
+    }
+    builder.append(">");
+    return builder.toString();
   }
 
   public String getInternalCanonicalText() {
