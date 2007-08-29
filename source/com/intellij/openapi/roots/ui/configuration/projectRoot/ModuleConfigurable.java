@@ -113,7 +113,10 @@ public class ModuleConfigurable extends NamedConfigurable<Module> implements Pla
   }
 
   public void queryPlace(@NotNull final Place place) {
-    getModuleEditor().queryPlace(place);
+    final ModuleEditor editor = getModuleEditor();
+    if (editor != null) {
+      editor.queryPlace(place);
+    }
   }
 
 }
