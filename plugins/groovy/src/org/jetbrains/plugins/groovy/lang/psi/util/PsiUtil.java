@@ -89,7 +89,7 @@ public class PsiUtil {
         final PsiType[] trimmed = new PsiType[parameterTypes.length - 1];
         System.arraycopy(parameterTypes, 1, trimmed, 0, trimmed.length);
         parameterTypes = trimmed;
-      } else return false;
+      } else if (!method.isVarArgs()) return false;
     }
 
     for (int i = 0; i < argumentTypes.length; i++) {
