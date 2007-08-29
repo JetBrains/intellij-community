@@ -388,12 +388,18 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
 
 
-    final JComponent comp = selected.getComponent();
-    comp.setBounds(insets.left + INNER + data.xAddin, data.yComp, getWidth() - insets.left - insets.right - INNER * 2 - data.xAddin,
-                     getHeight() - insets.top - insets.bottom - myHeaderFitSize.height - 1);
+    if (selected != null) {
+      final JComponent comp = selected.getComponent();
+      comp.setBounds(insets.left + INNER + data.xAddin, data.yComp, getWidth() - insets.left - insets.right - INNER * 2 - data.xAddin,
+                       getHeight() - insets.top - insets.bottom - myHeaderFitSize.height - 1);
+    }
 
 
-    data.selectedTabBounds = myInfo2Label.get(selected).getBounds();
+    final JBTabs.TabLabel tabLabel = myInfo2Label.get(selected);
+    if (tabLabel != null) {
+      data.selectedTabBounds = tabLabel.getBounds();
+    }
+
     if (data.toLayout.size() > 0 && myInfos.size() > 0) {
       final int left = myInfos.indexOf(data.toLayout.get(0));
       final int right = myInfos.indexOf(data.toLayout.get(data.toLayout.size() - 1));
