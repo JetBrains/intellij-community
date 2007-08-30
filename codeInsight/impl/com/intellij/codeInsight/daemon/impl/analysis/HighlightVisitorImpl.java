@@ -97,6 +97,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     mySingleImportedFields.clear();
     myParameterIsReassigned.clear();
     myAnnotationHolder.clear();
+    myXmlVisitor.clearResult();
   }
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
