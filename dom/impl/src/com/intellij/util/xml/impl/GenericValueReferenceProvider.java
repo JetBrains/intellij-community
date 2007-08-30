@@ -11,8 +11,6 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -20,7 +18,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,34 +37,18 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
 
   @NotNull
   public final PsiReference[] getReferencesByElement(PsiElement psiElement) {
-    if (!(psiElement instanceof XmlTag || psiElement instanceof XmlAttributeValue)) {
+
+    if (psiElement == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-
-    PsiElement originalElement = psiElement.getUserData(PsiUtil.ORIGINAL_KEY);
-    if (originalElement != null) {
-      psiElement = originalElement;
-    }
-
-    final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class, false);
-
-    PsiManager psiManager = psiElement.getManager();
-    final DomManager domManager = DomManager.getDomManager(psiManager.getProject());
-    DomElement domElement = domManager.getDomElement(tag);
-    if (domElement == null) {
+    final DomManager domManager = DomManager.getDomManager(psiElement.getProject());
+    final DomElement domElement;
+    if (psiElement instanceof XmlTag) {
+      domElement = domManager.getDomElement((XmlTag)psiElement);
+    } else if (psiElement instanceof XmlAttributeValue && psiElement.getParent() instanceof XmlAttribute) {
+      domElement = domManager.getDomElement((XmlAttribute)psiElement.getParent());
+    } else {
       return PsiReference.EMPTY_ARRAY;
-    }
-    if (psiElement instanceof XmlAttributeValue) {
-      final PsiElement parent = psiElement.getParent();
-      if (parent instanceof XmlAttribute) {
-        final XmlAttribute attribute = (XmlAttribute)parent;
-        final String name = attribute.getLocalName();
-        final DomAttributeChildDescription childDescription = domElement.getGenericInfo().getAttributeChildDescription(name);
-        if (childDescription != null) {
-          final GenericAttributeValue value = childDescription.getDomAttributeValue(domElement);
-          domElement = value.getXmlElement() == null ? null : value;
-        }
-      }
     }
 
     if (!(domElement instanceof GenericDomValue)) {
@@ -98,7 +79,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     return references;
   }
 
-  private AbstractConvertContext createConvertContext(final PsiElement psiElement, final GenericDomValue domValue) {
+  private static AbstractConvertContext createConvertContext(final PsiElement psiElement, final GenericDomValue domValue) {
     return new AbstractConvertContext() {
       @NotNull
       public DomElement getInvocationElement() {
