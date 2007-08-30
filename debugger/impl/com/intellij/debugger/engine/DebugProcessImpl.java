@@ -22,7 +22,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.ui.DebuggerSmoothManager;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -42,7 +41,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -98,9 +96,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private ConnectionServiceWrapper myConnectionService;
   private Map<String, Connector.Argument> myArguments;
-
-  private LinkedList<String> myStatusStack = new LinkedList<String>();
-  private String myStatusText;
 
   private final List<NodeRenderer> myRenderers = new ArrayList<NodeRenderer>();
   private final Map<Type, NodeRenderer>  myNodeRederersMap = new com.intellij.util.containers.HashMap<Type, NodeRenderer>();
@@ -531,33 +526,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
   }
 
-  private void pushStatisText(String text) {
-    if (myStatusText == null) {
-      myStatusText = ""/*((StatusBarEx)WindowManager.getInstance().getStatusBar(getProject())).getInfo()*/;
-    }
-
-    myStatusStack.addLast(myStatusText);
-    showStatusText(text);
-  }
-
-  private void popStatisText() {
-    if (!myStatusStack.isEmpty()) {
-      showStatusText(myStatusStack.removeFirst());
-    }
-  }
-
   public void showStatusText(final String text) {
-    myStatusText = text;
-    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    DebuggerSmoothManager.getInstanceEx().action("DebugProcessImpl.showStatusText", new Runnable() {
-      public void run() {
-        final Project project = getProject();
-        if (projectManager.isProjectOpened(project)) {
-          WindowManager.getInstance().getStatusBar(project).setInfo(text);
-          myStatusText = null;
-        }
-      }
-    });
+    final WindowManager wm = WindowManager.getInstance();
+    if (wm != null) {
+      wm.getStatusBar(myProject).setInfo(text);
+    }
   }
 
   static Connector findConnector(String connectorName) throws ExecutionException {
@@ -1116,10 +1089,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     if (method != null) {
-      pushStatisText(DebuggerBundle.message("progress.evaluating", DebuggerUtilsEx.methodName(method)));
+      showStatusText(DebuggerBundle.message("progress.evaluating", DebuggerUtilsEx.methodName(method)));
     }
     else {
-      pushStatisText(DebuggerBundle.message("title.evaluating"));
+      showStatusText(DebuggerBundle.message("title.evaluating"));
     }
   }
 
@@ -1127,7 +1100,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     if (LOG.isDebugEnabled()) {
       LOG.debug("after invocation in  thread " + suspendContext.getThread().name());
     }
-    popStatisText();
+    showStatusText("");
   }
 
   public ReferenceType findClass(EvaluationContext evaluationContext, String className,
