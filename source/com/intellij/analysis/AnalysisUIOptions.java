@@ -46,7 +46,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public String CUSTOM_SCOPE_NAME = "";
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   public boolean SHOW_ONLY_DIFF = false;
-  public boolean SHOW_STRUCTURE = true;
+  public boolean SHOW_STRUCTURE = false;
 
   public boolean ANALYSIS_IN_BACKGROUND = false;
 
