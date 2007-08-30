@@ -18,6 +18,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AbstractConvertContext extends ConvertContext {
 
+  public static ConvertContext createConvertContext(final DomElement domElement) {
+    return new AbstractConvertContext() {
+      @NotNull
+      public DomElement getInvocationElement() {
+        return domElement;
+      }
+    };
+  }
+
   public final PsiClass findClass(@Nullable String name, @Nullable final GlobalSearchScope searchScope) {
     return findClass(name, getFile(), getModule(), searchScope);
   }
