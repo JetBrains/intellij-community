@@ -27,7 +27,7 @@ public class BeanProperty {
 
   private final PsiMethod myMethod;
 
-  public BeanProperty(@NotNull PsiMethod method) {
+  protected BeanProperty(@NotNull PsiMethod method) {
     myMethod = method;
   }
 
@@ -86,6 +86,11 @@ public class BeanProperty {
   @Nullable
   public Icon getIcon(int flags) {
     return ICON;
+  }
+
+  @Nullable
+  public static BeanProperty createBeanProperty(@NotNull PsiMethod method) {
+    return PropertyUtil.isSimplePropertyAccessor(method) ? new BeanProperty(method) : null;
   }
 
   private class BeanPropertyElement extends FakePsiElement implements PsiMetaBaseOwner, PsiPresentableMetaData {
