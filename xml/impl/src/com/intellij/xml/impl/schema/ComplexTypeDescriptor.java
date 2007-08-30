@@ -9,7 +9,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.XmlLangAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -132,13 +131,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
     collectAttributes(result, myTag, new ArrayList<XmlTag>());
 
-    if (myDocumentDescriptor.supportsStdAttributes()) addStdAttributes(result);
-
     return result.toArray(new XmlAttributeDescriptor[result.size()]);
-  }
-
-  private static void addStdAttributes(List<XmlAttributeDescriptor> result) {
-    result.add(new XmlLangAttributeDescriptor());
   }
 
   private void collectElements(Map<String,XmlElementDescriptor> result, XmlTag tag, Set<XmlTag> visited, @Nullable XmlElement context) {

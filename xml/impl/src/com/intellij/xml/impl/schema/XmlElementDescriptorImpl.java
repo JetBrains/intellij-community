@@ -207,28 +207,40 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
       if (context != null) {
         final String contextNs = context.getNamespace();
-        final XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
 
+        boolean seenXmlNs = false;
         for(String ns:context.knownNamespaces()) {
           if (!contextNs.equals(ns) && ns.length() > 0) {
-            if (typeDescriptor.canContainAttribute("any",ns) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
-              final XmlNSDescriptor descriptor = context.getNSDescriptor(ns, true);
-
-              if (descriptor instanceof XmlNSDescriptorImpl) {
-                attributeDescriptors = ArrayUtil.mergeArrays(
-                  attributeDescriptors,
-                  ((XmlNSDescriptorImpl)descriptor).getRootAttributeDescriptors(context),
-                  XmlAttributeDescriptor.class
-                );
-              }
-            }
+            seenXmlNs |= XmlUtil.XML_NAMESPACE_URI.equals(ns);
+            attributeDescriptors = updateAttributeDescriptorsFromAny(context, typeDescriptor, attributeDescriptors, ns);
           }
+        }
+
+        if (!seenXmlNs) {
+          attributeDescriptors = updateAttributeDescriptorsFromAny(context, typeDescriptor, attributeDescriptors, XmlUtil.XML_NAMESPACE_URI);
         }
       }
       return attributeDescriptors;
     }
 
     return XmlAttributeDescriptor.EMPTY;
+  }
+
+  private XmlAttributeDescriptor[] updateAttributeDescriptorsFromAny(final XmlTag context, final ComplexTypeDescriptor typeDescriptor,
+                                                                     XmlAttributeDescriptor[] attributeDescriptors,
+                                                                     final String ns) {
+    if (typeDescriptor.canContainAttribute("any",ns) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
+      final XmlNSDescriptor descriptor = context.getNSDescriptor(ns, true);
+
+      if (descriptor instanceof XmlNSDescriptorImpl) {
+        attributeDescriptors = ArrayUtil.mergeArrays(
+          attributeDescriptors,
+          ((XmlNSDescriptorImpl)descriptor).getRootAttributeDescriptors(context),
+          XmlAttributeDescriptor.class
+        );
+      }
+    }
+    return attributeDescriptors;
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context){

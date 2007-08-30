@@ -845,10 +845,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     ExternalDocumentValidator.doValidation(context,host);
   }
 
-  protected boolean supportsStdAttributes() {
-    return true;
-  }
-
   public XmlTag getTag() {
     return myTag;
   }

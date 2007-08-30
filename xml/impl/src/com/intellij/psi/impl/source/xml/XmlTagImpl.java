@@ -60,6 +60,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
   private volatile boolean myHaveNamespaceDeclarations = false;
   private volatile BidirectionalMap<String, String> myNamespaceMap = null;
+  @NonNls private static final String XML_NS_PREFIX = "xml";
 
   public XmlTagImpl() {
     this(XML_TAG);
@@ -564,7 +565,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     }
     if(parent instanceof XmlTag) return ((XmlTag)parent).getNamespaceByPrefix(prefix);
     //The prefix 'xml' is by definition bound to the namespace name http://www.w3.org/XML/1998/namespace. It MAY, but need not, be declared
-    if ("xml".equals(prefix)) return XmlUtil.XML_NAMESPACE_URI;
+    if (XML_NS_PREFIX.equals(prefix)) return XmlUtil.XML_NAMESPACE_URI;
 
     if (prefix.length() > 0 &&
         !hasNamespaceDeclarations() &&
@@ -600,6 +601,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       if(ns != null) return ns;
     }
     if(parent instanceof XmlTag) return ((XmlTag)parent).getPrefixByNamespace(namespace);
+    //The prefix 'xml' is by definition bound to the namespace name http://www.w3.org/XML/1998/namespace. It MAY, but need not, be declared
+    if (XmlUtil.XML_NAMESPACE_URI.equals(namespace)) return XML_NS_PREFIX;
     return null;
   }
 
