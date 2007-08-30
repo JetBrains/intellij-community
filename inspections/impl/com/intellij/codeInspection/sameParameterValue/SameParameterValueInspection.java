@@ -114,7 +114,7 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
     return valueFix.getParamName() + " " + valueFix.getValue();
   }
 
-  private class InlineParameterValueFix implements LocalQuickFix {
+  public static class InlineParameterValueFix implements LocalQuickFix {
     private String myValue;
     private String myParameterName;
 
@@ -158,9 +158,14 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
         return;
       }
 
+      inlineSameParameterValue(method, parameter, defToInline);
+    }
+
+    public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
+      final Project project = method.getProject();
       final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
 
-      final PsiParameter param = parameter;
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
       final Runnable runnable = new Runnable() {
         public void run() {
           try {
@@ -168,7 +173,7 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
             int idx = 0;
             for (PsiReference reference : refsToInline) {
               PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)reference;
-              exprs[idx++] = InlineUtil.inlineVariable(param, defToInline, refElement);
+              exprs[idx++] = InlineUtil.inlineVariable(parameter, defToInline, refElement);
             }
 
             for (final PsiExpression expr : exprs) {
@@ -177,7 +182,7 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
 
             final List<ParameterInfo> psiParameters = new ArrayList<ParameterInfo>();
             int paramIdx = 0;
-            final String paramName = param.getName();
+            final String paramName = parameter.getName();
             for (PsiParameter param : parameters) {
               if (!Comparing.strEqual(paramName, param.getName())) {
                 psiParameters.add(new ParameterInfo(paramIdx, param.getName(), param.getType()));

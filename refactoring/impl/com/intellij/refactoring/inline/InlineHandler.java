@@ -8,6 +8,8 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -77,6 +79,10 @@ public class InlineHandler implements RefactoringActionHandler {
     }
     else if (element instanceof PsiClass) {
       InlineToAnonymousClassHandler.invoke(project, editor, (PsiClass) element);
+    }
+    else if (element instanceof PsiParameter && element.getParent() instanceof PsiParameterList &&
+             ((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+      InlineParameterHandler.invoke(project, editor, (PsiParameter) element);
     }
     else if (PsiUtil.isInJspFile(file) && (jspFile = PsiUtil.getJspFile(file)) != null) {
       InlineIncludeFileHandler.invoke(project, editor, jspFile);

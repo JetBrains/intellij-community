@@ -31,7 +31,7 @@ class InlineToAnonymousConstructorProcessor {
 
   private static final Key<PsiAssignmentExpression> ourAssignmentKey = Key.create("assignment");
   private static final Key<PsiCallExpression> ourCallKey = Key.create("call");
-  private static final Pattern ourNullPattern = StandardPatterns.psiExpression().type(PsiLiteralExpression.class).withText(PsiKeyword.NULL);
+  public static final Pattern ourNullPattern = StandardPatterns.psiExpression().type(PsiLiteralExpression.class).withText(PsiKeyword.NULL);
   private static final Pattern ourAssignmentPattern = psiExpressionStatement().withChild(psiElement(PsiAssignmentExpression.class).save(ourAssignmentKey));
   private static final Pattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).save(ourCallKey).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
   private static final Pattern ourThisCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.THIS)));
@@ -207,8 +207,8 @@ class InlineToAnonymousConstructorProcessor {
     return true;
   }
 
-  private boolean isConstant(final PsiExpression expr) {
-    Object constantValue = myClass.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
+  public static boolean isConstant(final PsiExpression expr) {
+    Object constantValue = expr.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
     return constantValue != null || ourNullPattern.accepts(expr);
   }
 
