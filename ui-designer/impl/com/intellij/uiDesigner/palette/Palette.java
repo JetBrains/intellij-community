@@ -670,6 +670,9 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
         else if (short.class.equals(propertyType)) {
           property = new IntroPrimitiveTypeProperty(name, readMethod, writeMethod, storeAsClient, Short.class);
         }
+        else if (char.class.equals(propertyType)) { // java.lang.String
+          property = new IntroCharProperty(name, readMethod, writeMethod, storeAsClient);
+        }
         else if (String.class.equals(propertyType)) { // java.lang.String
           property = new IntroStringProperty(name, readMethod, writeMethod, myProject, storeAsClient);
         }

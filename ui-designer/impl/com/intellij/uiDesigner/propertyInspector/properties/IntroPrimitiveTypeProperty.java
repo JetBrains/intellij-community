@@ -12,9 +12,9 @@ import java.lang.reflect.Method;
 /**
  * @author yole
  */
-public final class IntroPrimitiveTypeProperty<T> extends IntrospectedProperty<T> {
+public class IntroPrimitiveTypeProperty<T> extends IntrospectedProperty<T> {
   private LabelPropertyRenderer<T> myRenderer;
-  private PrimitiveTypeEditor<T> myEditor;
+  private PropertyEditor<T> myEditor;
   private final Class<T> myClass;
 
   public IntroPrimitiveTypeProperty(final String name, final Method readMethod, final Method writeMethod, final boolean storeAsClient, 
@@ -33,8 +33,12 @@ public final class IntroPrimitiveTypeProperty<T> extends IntrospectedProperty<T>
 
   public PropertyEditor<T> getEditor(){
     if (myEditor == null) {
-      myEditor = new PrimitiveTypeEditor<T>(myClass);
+      myEditor = createEditor();
     }
     return myEditor;
+  }
+
+  protected PropertyEditor<T> createEditor() {
+    return new PrimitiveTypeEditor<T>(myClass);
   }
 }

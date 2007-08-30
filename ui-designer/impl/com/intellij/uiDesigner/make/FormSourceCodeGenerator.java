@@ -623,6 +623,9 @@ public final class FormSourceCodeGenerator {
       else if (propertyClass.equals(Byte.class.getName())) {
         push(((Byte) value).byteValue());
       }
+      else if (propertyClass.equals(Character.class.getName())) {
+        push(((Character) value).charValue());
+      }
       else if (propertyClass.equals(Boolean.class.getName())) {
         push(((Boolean)value).booleanValue());
       }
@@ -1200,6 +1203,15 @@ public final class FormSourceCodeGenerator {
 
   public void append(final long value) {
     myBuffer.append(value).append("L");
+  }
+
+  private void push(final char value) {
+    checkParameter();
+    append(value);
+  }
+
+  public void append(final char value) {
+    myBuffer.append("'").append(value).append("'");
   }
 
   void push(final boolean value) {
