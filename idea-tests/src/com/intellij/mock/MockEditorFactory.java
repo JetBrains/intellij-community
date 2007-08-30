@@ -16,15 +16,15 @@ public class MockEditorFactory extends EditorFactory {
     return new DocumentImpl(text);
   }
 
-  public Editor createEditor(Document document) {
+  public Editor createEditor(@NotNull Document document) {
     return null;
   }
 
-  public Editor createViewer(Document document) {
+  public Editor createViewer(@NotNull Document document) {
     return null;
   }
 
-  public Editor createEditor(Document document, Project project) {
+  public Editor createEditor(@NotNull Document document, Project project) {
     return null;
   }
 
@@ -32,29 +32,32 @@ public class MockEditorFactory extends EditorFactory {
     return null;
   }
 
-  public Editor createViewer(Document document, Project project) {
+  public Editor createViewer(@NotNull Document document, Project project) {
     return null;
   }
 
-  public void releaseEditor(Editor editor) {
+  public void releaseEditor(@NotNull Editor editor) {
   }
 
-  public Editor[] getEditors(Document document, Project project) {
+  @NotNull
+  public Editor[] getEditors(@NotNull Document document, Project project) {
     return new Editor[0];
   }
 
-  public Editor[] getEditors(Document document) {
+  @NotNull
+  public Editor[] getEditors(@NotNull Document document) {
     return getEditors(document, null);
   }
 
+  @NotNull
   public Editor[] getAllEditors() {
     return new Editor[0];
   }
 
-  public void addEditorFactoryListener(EditorFactoryListener listener) {
+  public void addEditorFactoryListener(@NotNull EditorFactoryListener listener) {
   }
 
-  public void removeEditorFactoryListener(EditorFactoryListener listener) {
+  public void removeEditorFactoryListener(@NotNull EditorFactoryListener listener) {
   }
 
   @NotNull
@@ -62,19 +65,22 @@ public class MockEditorFactory extends EditorFactory {
     return new MockEditorEventMulticaster();
   }
 
-  public Document createDocument(CharSequence text) {
+  @NotNull
+  public Document createDocument(@NotNull CharSequence text) {
     return new DocumentImpl(text);
   }
 
-  public Document createDocument(char[] text) {
+  @NotNull
+  public Document createDocument(@NotNull char[] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 
   public void refreshAllEditors() {
   }
 
+  @NotNull
   public String getComponentName() {
-    return null;
+    return "mockeditorfactory";
   }
 
   public void initComponent() { }

@@ -452,7 +452,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public synchronized void setLastIntentionHint(IntentionHintComponent hintComponent) {
-    if (myLastIntentionHint != null) {
+    if (myLastIntentionHint != null && myLastIntentionHint.isVisible()) {
       myLastIntentionHint.hide();
     }
     myLastIntentionHint = hintComponent;

@@ -5,9 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -74,9 +72,15 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     });
   }
 
+  private static final Key<Boolean> IN_PREVIEW_USAGE_FLAG = Key.create("IN_PREVIEW_USAGE_FLAG");
   private void highlight(final List<UsageInfo> infos, final Editor editor) {
     if (editor != myEditor) return; //already disposed
-    myEditor.getMarkupModel().removeAllHighlighters();
+    MarkupModel markupModel = myEditor.getMarkupModel();
+    for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
+      if (highlighter.getUserData(IN_PREVIEW_USAGE_FLAG) != null) {
+        markupModel.removeHighlighter(highlighter);
+      }
+    }
     for (int i = infos.size()-1; i>=0; i--) { // finish with the first usage so that caret end up there
       UsageInfo info = infos.get(i);
       PsiElement psiElement = info.getElement();
@@ -99,9 +103,11 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
       }
       // highlight injected element in host document textrange
       textRange = InjectedLanguageManager.getInstance().injectedToHost(psiElement, textRange);
-      
-      myEditor.getMarkupModel().addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
-                                                    HighlighterLayer.ADDITIONAL_SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
+
+      RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
+                                                                                   HighlighterLayer.ADDITIONAL_SYNTAX, attributes,
+                                                                                   HighlighterTargetArea.EXACT_RANGE);
+      highlighter.putUserData(IN_PREVIEW_USAGE_FLAG, Boolean.TRUE);
       myEditor.getCaretModel().moveToOffset(textRange.getEndOffset());
     }
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);

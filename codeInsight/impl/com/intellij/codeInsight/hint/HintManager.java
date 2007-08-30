@@ -591,7 +591,9 @@ public class HintManager implements ApplicationComponent {
 
         hint.addHintListener(new HintListener() {
           public void hintHidden(EventObject event) {
-            editor.getMarkupModel().removeHighlighter(highlighter);
+            if (!editor.isDisposed()) {
+              editor.getMarkupModel().removeHighlighter(highlighter);
+            }
 
             if (myQuestionHint == hint) {
               myQuestionAction = null;
