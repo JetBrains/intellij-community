@@ -10,7 +10,10 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorComboBoxEditor;
+import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +31,8 @@ public class NameSuggestionsField extends JPanel {
   private final EventListenerList myListenerList = new EventListenerList();
   private final MyComboBoxModel myComboBoxModel;
   private final Project myProject;
+  private MyDocumentListener myDocumentListener;
+  private MyComboBoxItemListener myComboBoxItemListener;
 
   public NameSuggestionsField(Project project) {
     super(new BorderLayout());
@@ -139,15 +144,6 @@ public class NameSuggestionsField extends JPanel {
 
     EditorTextField field = new EditorTextField(text, myProject, fileType);
     field.selectAll();
-    field.addDocumentListener(new DocumentListener() {
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
-      public void documentChanged(DocumentEvent event) {
-        fireDataChanged();
-      }
-    });
-
     return field;
   }
 
@@ -186,26 +182,6 @@ public class NameSuggestionsField extends JPanel {
     combobox.setMaximumRowCount(8);
 
     comboEditor.selectAll();
-
-    combobox.addItemListener(
-      new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          fireDataChanged();
-        }
-      }
-    );
-
-
-    ((EditorTextField)combobox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
-      public void beforeDocumentChange(DocumentEvent event) {
-
-      }
-
-      public void documentChanged(DocumentEvent event) {
-        fireDataChanged();
-      }
-    }
-    );
   }
 
   public Editor getEditor() {
@@ -223,6 +199,36 @@ public class NameSuggestionsField extends JPanel {
 
   public void addDataChangedListener(DataChanged listener) {
     myListenerList.add(DataChanged.class, listener);
+    attachListeners();
+  }
+
+  public void removeDataChangedListener(DataChanged listener) {
+    myListenerList.remove(DataChanged.class, listener);
+    if (myListenerList.getListenerCount() == 0) {
+      detachListeners();
+    }
+  }
+
+  private void attachListeners() {
+    if (myDocumentListener == null) {
+      myDocumentListener = new MyDocumentListener();
+      ((EditorTextField) getFocusableComponent()).addDocumentListener(myDocumentListener);
+    }
+    if (myComboBoxItemListener == null && myComponent instanceof JComboBox) {
+      myComboBoxItemListener = new MyComboBoxItemListener();
+      ((JComboBox) myComponent).addItemListener(myComboBoxItemListener);
+    }
+  }
+
+  private void detachListeners() {
+    if (myDocumentListener != null) {
+      ((EditorTextField) getFocusableComponent()).removeDocumentListener(myDocumentListener);
+      myDocumentListener = null;
+    }
+    if (myComboBoxItemListener != null) {
+      ((JComboBox) myComponent).removeItemListener(myComboBoxItemListener);
+      myComboBoxItemListener = null;
+    }
   }
 
   private void fireDataChanged() {
@@ -246,5 +252,21 @@ public class NameSuggestionsField extends JPanel {
 
   public void setEnabled (boolean enabled) {
     myComponent.setEnabled(enabled);
+  }
+
+  private class MyDocumentListener implements DocumentListener {
+    public void beforeDocumentChange(DocumentEvent event) {
+
+    }
+
+    public void documentChanged(DocumentEvent event) {
+      fireDataChanged();
+    }
+  }
+
+  private class MyComboBoxItemListener implements ItemListener {
+    public void itemStateChanged(ItemEvent e) {
+      fireDataChanged();
+    }
   }
 }

@@ -58,6 +58,7 @@ public class RenameDialog extends RefactoringDialog {
   private final PsiElement myNameSuggestionContext;
   private final Editor myEditor;
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
+  private NameSuggestionsField.DataChanged myNameChangedListener;
 
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext,
                       Editor editor) {
@@ -83,6 +84,11 @@ public class RenameDialog extends RefactoringDialog {
     myHelpID = HelpID.getRenameHelpID(psiElement);
   }
 
+  protected void dispose() {
+    myNameSuggestionsField.removeDataChangedListener(myNameChangedListener);
+    super.dispose();
+  }
+
   protected boolean isToSearchForTextOccurencesForRename() {
     return RefactoringSettings.getInstance().isToSearchForTextOccurencesForRename(myPsiElement);
   }
@@ -99,11 +105,12 @@ public class RenameDialog extends RefactoringDialog {
   private void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, StdFileTypes.PLAIN_TEXT, myEditor);
-    myNameSuggestionsField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
+    myNameChangedListener = new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();
       }
-    });
+    };
+    myNameSuggestionsField.addDataChangedListener(myNameChangedListener);
 
     if (myPsiElement instanceof PsiVariable) {
       myNameSuggestionsField.getComponent().registerKeyboardAction(new ActionListener() {

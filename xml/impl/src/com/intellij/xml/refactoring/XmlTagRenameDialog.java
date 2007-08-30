@@ -51,6 +51,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   private NameSuggestionsField myNameSuggestionsField;
   private String myHelpID;
   private XmlTag myTag;
+  private NameSuggestionsField.DataChanged myNameChangedListener;
 
   public XmlTagRenameDialog(@NotNull final Editor editor, @NotNull final PsiElement element, @NotNull final XmlTag tag) {
     super(element.getProject(), true);
@@ -68,6 +69,11 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
     validateButtons();
     myHelpID = HelpID.getRenameHelpID(myTag);
+  }
+
+  protected void dispose() {
+    myNameSuggestionsField.removeDataChangedListener(myNameChangedListener);
+    super.dispose();
   }
 
   protected boolean hasHelpAction() {
@@ -90,11 +96,12 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
   private void createNewNameComponent() {
     myNameSuggestionsField = new NameSuggestionsField(new String[] { myTag.getName() }, myProject, StdFileTypes.PLAIN_TEXT, myEditor);
-    myNameSuggestionsField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
+    myNameChangedListener = new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();
       }
-    });
+    };
+    myNameSuggestionsField.addDataChangedListener(myNameChangedListener);
 
     myNameSuggestionsField.getComponent().registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {

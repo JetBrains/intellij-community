@@ -39,6 +39,8 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   private MemberSelectionPanel myMemberSelectionPanel;
   private JComboBox myClassCombo;
   private Project myProject;
+  private MyClassComboItemListener myClassComboItemListener;
+  private NameSuggestionsField.DataChanged myDataChangedListener;
 
   public InheritanceToDelegationDialog(Project project,
                                        PsiClass aClass,
@@ -52,6 +54,13 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
     setTitle(InheritanceToDelegationHandler.REFACTORING_NAME);
     init();
+  }
+
+  protected void dispose() {
+    myInnerClassNameField.removeDataChangedListener(myDataChangedListener);
+    myFieldNameField.removeDataChangedListener(myDataChangedListener);
+    myClassCombo.removeItemListener(myClassComboItemListener);
+    super.dispose();
   }
 
   @NotNull
@@ -140,13 +149,8 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     panel.add(myClassCombo, gbc);
     classComboLabel.setText(RefactoringBundle.message("replace.inheritance.from"));
 
-    myClassCombo.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          updateTargetClass();
-        }
-      }
-    });
+    myClassComboItemListener = new MyClassComboItemListener();
+    myClassCombo.addItemListener(myClassComboItemListener);
 
     gbc.gridy++;
     gbc.gridwidth = 1;
@@ -231,13 +235,13 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     @NonNls final String suggestion = "My" + targetClass.getName();
     myInnerClassNameField.setSuggestions(new String[]{suggestion});
 
-    final NameSuggestionsField.DataChanged listener = new NameSuggestionsField.DataChanged() {
+    myDataChangedListener = new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();
       }
     };
-    myInnerClassNameField.addDataChangedListener(listener);
-    myFieldNameField.addDataChangedListener(listener);
+    myInnerClassNameField.addDataChangedListener(myDataChangedListener);
+    myFieldNameField.addDataChangedListener(myDataChangedListener);
 
     myMemberSelectionPanel.getTable().setMemberInfos(myBasesToMemberInfos.get(targetClass));
     myMemberSelectionPanel.getTable().fireExternalDataChange();
@@ -296,6 +300,14 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
     private InterfaceMemberDependencyGraph getGraph() {
       return myGraphs.get(getSelectedTargetClass());
+    }
+  }
+
+  private class MyClassComboItemListener implements ItemListener {
+    public void itemStateChanged(ItemEvent e) {
+      if (e.getStateChange() == ItemEvent.SELECTED) {
+        updateTargetClass();
+      }
     }
   }
 }

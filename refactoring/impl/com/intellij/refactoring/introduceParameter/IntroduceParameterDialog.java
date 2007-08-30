@@ -68,6 +68,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private final NameSuggestionsGenerator myNameSuggestionsGenerator;
   private final TypeSelectorManager myTypeSelectorManager;
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
+  private NameSuggestionsField.DataChanged myParameterNameChangedListener;
 
 
   IntroduceParameterDialog(@NotNull Project project,
@@ -107,6 +108,11 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
     setTitle(REFACTORING_NAME);
     init();
+  }
+
+  protected void dispose() {
+    myParameterNameField.removeDataChangedListener(myParameterNameChangedListener);
+    super.dispose();
   }
 
   private boolean isDeclareFinal() {
@@ -212,11 +218,12 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     gbConstraints.weightx = 1;
     gbConstraints.fill = GridBagConstraints.BOTH;
     panel.add(myParameterNameField.getComponent(), gbConstraints);
-    myParameterNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
+    myParameterNameChangedListener = new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();
       }
-    });
+    };
+    myParameterNameField.addDataChangedListener(myParameterNameChangedListener);
 
     myNameSuggestionsManager =
             new NameSuggestionsManager(myTypeSelector, myParameterNameField, myNameSuggestionsGenerator, myProject);

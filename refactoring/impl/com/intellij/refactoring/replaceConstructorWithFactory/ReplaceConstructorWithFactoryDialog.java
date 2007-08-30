@@ -30,6 +30,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   private PsiClass myContainingClass;
   private final PsiMethod myConstructor;
   private final boolean myIsInner;
+  private NameSuggestionsField.DataChanged myNameChangedListener;
 
   ReplaceConstructorWithFactoryDialog(Project project, PsiMethod constructor, PsiClass containingClass) {
     super(project, true);
@@ -43,6 +44,11 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(project), true);
 
     init();
+  }
+
+  protected void dispose() {
+    myNameField.removeDataChangedListener(myNameChangedListener);
+    super.dispose();
   }
 
   public String getName() {
@@ -88,11 +94,12 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
         "getInstance"
       };
     myNameField = new NameSuggestionsField(nameSuggestions, getProject());
-    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
+    myNameChangedListener = new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();
       }
-    });
+    };
+    myNameField.addDataChangedListener(myNameChangedListener);
     panel.add(myNameField.getComponent(), gbc);
 
     JPanel targetClassPanel = createTargetPanel();

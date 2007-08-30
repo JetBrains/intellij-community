@@ -15,8 +15,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -45,6 +45,9 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
+  private NameSuggestionsField.DataChanged myNameChangedListener;
+  private ItemListener myReplaceAllListener;
+  private ItemListener myFinalListener;
 
   public IntroduceVariableDialog(Project project,
                                  PsiExpression expression, int occurrencesCount, boolean anyLValueOccurences,
@@ -61,6 +64,15 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
     setTitle(REFACTORING_NAME);
     init();
+  }
+
+  protected void dispose() {
+    myNameField.removeDataChangedListener(myNameChangedListener);
+    if (myCbReplaceAll != null) {
+      myCbReplaceAll.removeItemListener(myReplaceAllListener);
+    }
+    myCbFinal.removeItemListener(myFinalListener);
+    super.dispose();
   }
 
   protected Action[] createActions() {
@@ -104,11 +116,12 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
   protected JComponent createNorthPanel() {
     myNameField = new NameSuggestionsField(myProject);
-    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
+    myNameChangedListener = new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         updateOkStatus();
       }
-    });
+    };
+    myNameField.addDataChangedListener(myNameChangedListener);
 
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -179,13 +192,12 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
       myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurences", myOccurrencesCount));
 
       panel.add(myCbReplaceAll, gbConstraints);
-      myCbReplaceAll.addItemListener(
-              new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                  updateControls();
-                }
-              }
-      );
+      myReplaceAllListener = new ItemListener() {
+        public void itemStateChanged(ItemEvent e) {
+          updateControls();
+        }
+      };
+      myCbReplaceAll.addItemListener(myReplaceAllListener);
 
       if (myAnyLValueOccurences) {
         myCbReplaceWrite = new StateRestoringCheckBox();
@@ -206,15 +218,14 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     gbConstraints.insets = new Insets(0, 0, 0, 0);
     gbConstraints.gridy++;
     panel.add(myCbFinal, gbConstraints);
-    myCbFinal.addItemListener(
-            new ItemListener() {
-              public void itemStateChanged(ItemEvent e) {
-                if (myCbFinal.isEnabled()) {
-                  myCbFinalState = myCbFinal.isSelected();
-                }
-              }
-            }
-    );
+    myFinalListener = new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        if (myCbFinal.isEnabled()) {
+          myCbFinalState = myCbFinal.isSelected();
+        }
+      }
+    };
+    myCbFinal.addItemListener(myFinalListener);
 
     updateControls();
 
