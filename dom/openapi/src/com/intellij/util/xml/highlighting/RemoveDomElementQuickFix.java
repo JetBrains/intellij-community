@@ -8,8 +8,10 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.xml.DomBundle;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,22 +19,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RemoveDomElementQuickFix implements LocalQuickFix {
 
-  private final DomElement myElement;
+  private final boolean myIsTag;
+  private final String myName;
 
   public RemoveDomElementQuickFix(@NotNull DomElement element) {
-    myElement = element.createStableCopy();
+    myIsTag = element.getXmlElement() instanceof XmlTag;
+    myName = element.getXmlElementName();
   }
 
   @NotNull
   public String getName() {
-    final String name = myElement.getXmlElementName();
-    return isTag() ?
-           DomBundle.message("remove.element.fix.name", name) :
-           DomBundle.message("remove.attribute.fix.name", name);
-  }
-
-  private boolean isTag() {
-    return myElement.getXmlElement() instanceof XmlTag;
+    return myIsTag ?
+           DomBundle.message("remove.element.fix.name", myName) :
+           DomBundle.message("remove.attribute.fix.name", myName);
   }
 
   @NotNull
@@ -41,16 +40,19 @@ public class RemoveDomElementQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    if (isTag()) {
-      final DomElement parent = myElement.getParent();
-      assert parent != null;
-      final XmlTag parentTag = parent.getXmlTag();
-      myElement.undefine();
+    if (myIsTag) {
+      final XmlTag tag = (XmlTag)descriptor.getPsiElement();
+      final XmlTag parentTag = tag.getParentTag();
+      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
+      assert domElement != null;
+      domElement.undefine();
       if (parentTag != null && parentTag.isValid()) {
         parentTag.collapseIfEmpty();
       }
     } else {
-      myElement.undefine();
+      final DomElement domElement = DomManager.getDomManager(project).getDomElement((XmlAttribute)descriptor.getPsiElement());
+      assert domElement != null;
+      domElement.undefine();
     }
   }
 }
