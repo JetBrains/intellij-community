@@ -75,9 +75,6 @@ public class IntentionManagerImpl extends IntentionManager {
     addAction(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
 
     final ExtensionPoint<IntentionActionBean> point = Extensions.getArea(null).getExtensionPoint(EP_INTENTION_ACTIONS);
-    for (IntentionActionBean bean : point.getExtensions()) {
-      registerIntentionFromBean(bean, bean.getPluginDescriptor());
-    }
 
     point.addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
       public void extensionAdded(final IntentionActionBean extension, @Nullable final PluginDescriptor pluginDescriptor) {
