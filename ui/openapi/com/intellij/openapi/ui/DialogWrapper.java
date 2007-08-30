@@ -917,12 +917,19 @@ public abstract class DialogWrapper {
 
   protected final void setErrorText(@Nullable String text) {
     myErrorText.setError(text);
+    updateHeightForErrorText();
+    myErrorText.repaint();
   }
 
-  private class ErrorText extends JPanel {
+  private void updateHeightForErrorText() {
+    int minHeight = getContentPane().getMinimumSize().height;
+    if (getContentPane().getHeight() < minHeight) {
+      myPeer.setSize(myPeer.getSize().width, minHeight);
+    }
+  }
 
+  private static class ErrorText extends JPanel {
     private JLabel myLabel = new JLabel();
-
     private Dimension myPrefSize;
 
     public ErrorText() {
@@ -946,11 +953,6 @@ public abstract class DialogWrapper {
         }
       }
       revalidate();
-      int minHeight = getContentPane().getMinimumSize().height;
-      if (getContentPane().getHeight() < minHeight) {
-        myPeer.setSize(myPeer.getSize().width, minHeight);
-      }
-      repaint();
     }
 
     public Dimension getPreferredSize() {
