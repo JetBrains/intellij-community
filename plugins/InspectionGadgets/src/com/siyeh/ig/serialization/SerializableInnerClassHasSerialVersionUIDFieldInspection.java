@@ -49,5 +49,4 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection
     public BaseInspectionVisitor buildVisitor() {
         return new SerializableInnerClassHasSerialVersionUIDFieldVisitor(this);
     }
-
 }
