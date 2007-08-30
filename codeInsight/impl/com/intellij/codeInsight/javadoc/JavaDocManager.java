@@ -244,7 +244,6 @@ public class JavaDocManager implements ProjectComponent {
     final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
     storeOriginalElement(project, originalElement, element);
 
-    final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
       .setRequestFocusIfNotLookupOrSearch(project)
       .setLookupAndSearchUpdater(new Condition<PsiElement>() {

@@ -171,10 +171,9 @@ public class JavaDocUtil {
           LOG.info(e);
         }
       }
-      PsiMethod[] methods = aClass.getAllMethods();
+      PsiMethod[] methods = aClass.findMethodsByName(name, true);
       MethodsLoop:
       for (PsiMethod method : methods) {
-        if (!method.getName().equals(name)) continue;
         PsiParameter[] parms = method.getParameterList().getParameters();
         if (parms.length != types.length) continue;
 
@@ -182,7 +181,8 @@ public class JavaDocUtil {
           PsiParameter parm = parms[k];
           if (
             types[k] != null &&
-            !TypeConversionUtil.erasure(parm.getType()).getCanonicalText().equals(TypeConversionUtil.erasure(types[k]).getCanonicalText())
+            !TypeConversionUtil.erasure(parm.getType()).getCanonicalText().equals(types[k].getCanonicalText()) &&
+            !parm.getType().getCanonicalText().equals(types[k].getCanonicalText())
             ) {
             continue MethodsLoop;
           }
