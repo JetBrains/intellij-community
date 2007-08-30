@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.Result;
 
 import java.awt.*;
 
@@ -50,11 +52,15 @@ public class EditorUtil {
     editor.getScrollingModel().scrollVertically(yPos);
   }
 
-  public static void fillVirtualSpaceUntil(Editor editor, int columnNumber, int lineNumber) {
-    int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
-    String filler = EditorModificationUtil.calcStringToFillVitualSpace(editor);
+  public static void fillVirtualSpaceUntil(final Editor editor, int columnNumber, int lineNumber) {
+    final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
+    final String filler = EditorModificationUtil.calcStringToFillVitualSpace(editor);
     if (filler.length() > 0) {
-      editor.getDocument().insertString(offset, filler);
+      new WriteAction(){
+        protected void run(final Result result) throws Throwable {
+          editor.getDocument().insertString(offset, filler);
+        }
+      }.execute();
     }
   }
 
