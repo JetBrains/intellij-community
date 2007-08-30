@@ -8,13 +8,15 @@ print e
 1(2) element: null
 2(3) element: Open block
 3(4) element: IF statement
-4(5,8) READ c
+4(5,9) READ c
 5(7) element: RETURN statement
-6(9) element: Finally clause
-7(13)  CALL 6
-8(11)  CALL 6
-9(10) READ e
-10(11)  RETURN
-11(12) READ print
-12(13) READ e
-13() element: null
+6(11) element: Finally clause
+7()  CALL 6
+8(15) AFTER CALL 7
+9()  CALL 6
+10(13) AFTER CALL 9
+11(12) READ e
+12(13)  RETURN
+13(14) READ print
+14(15) READ e
+15() element: null

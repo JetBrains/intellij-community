@@ -72,7 +72,8 @@ public class DFAEngine<E> {
   }
 
   private E join(Instruction instruction, ArrayList<E> info, Stack<CallInstruction> callStack) {
-    final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.pred(callStack) : instruction.succ(callStack);
+    final Stack<CallInstruction> copy = (Stack<CallInstruction>) callStack.clone();  //enviroanment should not be modified in join
+    final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.pred(copy) : instruction.succ(copy);
     ArrayList<E> prevInfos = new ArrayList<E>();
     for (Instruction i : prev) {
       prevInfos.add(info.get(i.num() - 1));

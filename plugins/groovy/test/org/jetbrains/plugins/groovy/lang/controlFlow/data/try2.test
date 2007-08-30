@@ -10,10 +10,12 @@ try {
 2(3,4) element: Open block
 3(4,7) READ a
 4(5) element: Catch clause
-5(8) READ b
-6(9) element: Finally clause
-7(11)  CALL 6
-8(11)  CALL 6
-9(10) READ c
-10(11)  RETURN
-11() element: null
+5(9) READ b
+6(11) element: Finally clause
+7()  CALL 6
+8(13) AFTER CALL 7
+9()  CALL 6
+10(13) AFTER CALL 9
+11(12) READ c
+12(13)  RETURN
+13() element: null

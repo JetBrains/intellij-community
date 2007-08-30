@@ -41,7 +41,8 @@ class InstructionImpl implements Instruction {
     }
 
     if (!callStack.isEmpty()) {
-      return callStack.pop().pred(callStack);
+      final CallInstruction callInstruction = callStack.pop();
+      return callInstruction.pred(callStack);
     }
 
     return Collections.emptyList();
