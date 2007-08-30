@@ -88,7 +88,7 @@ public class InjectedLanguageUtil {
     SyntaxHighlighter syntaxHighlighter = language.getSyntaxHighlighter(project, virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();
     lexer.start(outChars, 0, outChars.length(), 0);
-    for (IElementType tokenType; (tokenType = lexer.getTokenType()) != null; lexer.advance()) {
+    for (IElementType tokenType = lexer.getTokenType(); tokenType != null; lexer.advance(),tokenType=lexer.getTokenType()) {
       TextRange textRange = new TextRange(lexer.getTokenStart(), lexer.getTokenEnd());
       TextRange editable = documentWindow.intersectWithEditable(textRange);
       if (editable == null || editable.getLength() == 0) continue;
@@ -309,6 +309,7 @@ public class InjectedLanguageUtil {
     return file.findElementAt(offset);
   }
 
+  private static final InjectedPsiProvider INJECTED_PSI_PROVIDER = new InjectedPsiProvider();
   private static Places probeElementsUp(PsiElement element, boolean probeUp) {
     for (PsiElement current = element; current != null; current = ResolveUtil.getContext(current)) {
       if ("EL".equals(element.getLanguage().getID())) return null;
@@ -320,10 +321,10 @@ public class InjectedLanguageUtil {
           return value;
         }
       }
-      InjectedPsiProvider provider = new InjectedPsiProvider();
-      CachedValueProvider.Result<Places> result = provider.compute(current);
+      CachedValueProvider.Result<Places> result = INJECTED_PSI_PROVIDER.compute(current);
       if (result != null) {
-        ParameterizedCachedValue<Places> cachedValue = current.getManager().getCachedValuesManager().createParameterizedCachedValue(provider, false);
+        ParameterizedCachedValue<Places> cachedValue = current.getManager().getCachedValuesManager().createParameterizedCachedValue(
+          INJECTED_PSI_PROVIDER, false);
         ((ParameterizedCachedValueImpl<Places>)cachedValue).setValue(result);
         Places places = result.getValue();
         for (Place place : places) {
@@ -402,6 +403,7 @@ public class InjectedLanguageUtil {
             @NotNull
             public InjectedLanguageManager.MultiHostRegistrar startInjecting(@NotNull Language language) {
               if (!cleared) {
+                clear();
                 throw new IllegalStateException("Seems you haven't called doneInjecting()");
               }
               ParserDefinition parserDefinition = language.getParserDefinition();
@@ -431,6 +433,7 @@ public class InjectedLanguageUtil {
                                                                         @NotNull PsiLanguageInjectionHost host,
                                                                         @NotNull TextRange rangeInsideHost) {
               if (myLanguage == null) {
+                clear();
                 throw new IllegalStateException("Seems you haven't called startInjecting()");
               }
               if (prefix == null) prefix = "";
@@ -454,10 +457,10 @@ public class InjectedLanguageUtil {
             }
 
             public void doneInjecting() {
-              if (shreds.isEmpty()) {
-                throw new IllegalStateException("Seems you haven't called addPlace()");
-              }
               try {
+                if (shreds.isEmpty()) {
+                  throw new IllegalStateException("Seems you haven't called addPlace()");
+                }
                 DocumentWindow documentWindow = new DocumentWindow(hostDocument, isOneLineEditor, prefixes, suffixes, rangesInsideHostDocument);
                 PsiManagerEx psiManager = (PsiManagerEx)element.getManager();
                 final Project project = psiManager.getProject();
