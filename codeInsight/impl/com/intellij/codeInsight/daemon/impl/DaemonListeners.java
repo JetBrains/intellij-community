@@ -305,6 +305,13 @@ public class DaemonListeners {
 
       if (myEscPressed) {
         myEscPressed = false;
+        if (id instanceof Document) {
+          Document document = (Document)id;
+          // prevent Esc key to leave the document in the not-highlighted state
+          if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(document)) {
+            stopDaemon(true);
+          }
+        }
       }
       else if (!myDaemonCodeAnalyzer.getUpdateProgress().isRunning()) {
         stopDaemon(true);
@@ -337,21 +344,19 @@ public class DaemonListeners {
   }
 
   private class MyAnActionListener implements AnActionListener {
-    private final AnAction escapeAction = ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    private final AnAction escapeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
 
     public void beforeActionPerformed(AnAction action, DataContext dataContext) {
       myEscPressed = action == escapeAction;
     }
 
-
     public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
     }
 
     public void beforeEditorTyping(char c, DataContext dataContext) {
-      if (dataContext.getData(DataConstants.PSI_FILE) == null) return; //no need to stop daemon if something happened in the console
+      if (DataKeys.PSI_FILE.getData(dataContext) == null) return; //no need to stop daemon if something happened in the console
 
       stopDaemon(true);
-      myEscPressed = false;
     }
   }
 
@@ -395,7 +400,7 @@ public class DaemonListeners {
         if (e.getArea() == EditorMouseEventArea.EDITING_AREA) {
           int offset = editor.logicalPositionToOffset(pos);
           if (editor.offsetToLogicalPosition(offset).column != pos.column) return; // we are in virtual space
-          HighlightInfo info = ((DaemonCodeAnalyzerImpl)myDaemonCodeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, false);
+          HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
           if (info == null || info.description == null) return;
           DaemonTooltipUtil.showInfoTooltip(info, editor, offset);
           shown = true;
