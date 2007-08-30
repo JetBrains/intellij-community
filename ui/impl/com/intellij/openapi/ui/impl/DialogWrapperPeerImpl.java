@@ -27,8 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferStrategy;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
@@ -508,6 +510,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       if (myFocusTrackback != null) {
         myFocusTrackback.dispose();
         myFocusTrackback = null;
+      }
+      final BufferStrategy strategy = getBufferStrategy();
+      if (strategy != null) {
+        try {
+          Method method = strategy.getClass().getMethod("dispose");   // added in JDK 1.6 so cannot call directly
+          method.invoke(strategy);
+        }
+        catch(Exception ex) {
+          // ignore
+        }
       }
       super.dispose();
 
