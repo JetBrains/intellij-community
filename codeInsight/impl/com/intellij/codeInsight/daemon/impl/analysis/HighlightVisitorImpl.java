@@ -98,6 +98,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     myParameterIsReassigned.clear();
     myAnnotationHolder.clear();
     myXmlVisitor.clearResult();
+    setRefCountHolder(null);
   }
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
@@ -366,8 +367,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       nextSibling instanceof OuterLanguageElement || nextSibling instanceof JspExpression || nextSibling instanceof ELExpressionHolder;
     if (nextIsOuterLanguageElement && psiElement != null && !(psiElement instanceof PsiFile) // error is not inside jsp text
        ) {
-      if (nextSibling.getPrevSibling() instanceof XmlTag) return false;
-      return true;
+      return !(nextSibling.getPrevSibling() instanceof XmlTag);
     }
 
     final XmlAttributeValue parentOfType = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
@@ -595,7 +595,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults() && method.isConstructor()) {
       myHolder.add(HighlightClassUtil.checkThingNotAllowedInInterface(method, method.getContainingClass()));
     }
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightNamesUtil.highlightMethodName(method, method.getNameIdentifier(), true));
+    myHolder.add(HighlightNamesUtil.highlightMethodName(method, method.getNameIdentifier(), true));
   }
 
   private void highlightMethodOrClassName(PsiJavaCodeReferenceElement element) {
@@ -792,20 +792,18 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods((PsiClass)parent));
     }
 
-    if (!myHolder.hasErrorResults()) {
-      if (resolved instanceof PsiVariable) {
-        PsiVariable variable = (PsiVariable)resolved;
-        if (!variable.hasModifierProperty(PsiModifier.FINAL) && HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems, myParameterIsReassigned)) {
-          myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, ref));
-        }
-        else {
-          myHolder.add(HighlightNamesUtil.highlightVariable(variable, ref.getReferenceNameElement()));
-        }
-        myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(ref));
+    if (resolved instanceof PsiVariable) {
+      PsiVariable variable = (PsiVariable)resolved;
+      if (!variable.hasModifierProperty(PsiModifier.FINAL) && HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems, myParameterIsReassigned)) {
+        myHolder.add(HighlightNamesUtil.highlightReassignedVariable(variable, ref));
       }
       else {
-        highlightMethodOrClassName(ref);
+        myHolder.add(HighlightNamesUtil.highlightVariable(variable, ref.getReferenceNameElement()));
       }
+      myHolder.add(HighlightNamesUtil.highlightClassNameInQualifier(ref));
+    }
+    else {
+      highlightMethodOrClassName(ref);
     }
   }
 

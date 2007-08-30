@@ -183,10 +183,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     text += getMessageByRoots(status.noHighlightingRoots, status.rootsNumber, "no.syntax.highlighting.performed");
     text += getMessageByRoots(status.noInspectionRoots, status.rootsNumber, "no.inspections.performed");
     text += HTML_FOOTER;
+
     return text;
-    //if (atLeastOnePassFinished) {
-    //}
-    //return DaemonBundle.message("pass.syntax");
   }
 
   private static final URL progressUrl = TrafficLightRenderer.class.getClassLoader().getResource("/general/progress.png");

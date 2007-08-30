@@ -119,9 +119,7 @@ public class HighlightClassUtil {
                                                  HighlightUtil.formatClass(abstractMethod.getContainingClass()));
 
       TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                      textRange,
-                                                      message);
+      errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
       if (ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null) {
         QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
       }
@@ -260,14 +258,7 @@ public class HighlightClassUtil {
 
   //@top
   private static HighlightInfo checkStaticFieldDeclarationInInnerClass(PsiKeyword keyword) {
-    if (new PsiMatcherImpl(keyword)
-      .dot(PsiMatcherImpl.hasText(PsiModifier.STATIC))
-      .parent(PsiMatcherImpl.hasClass(PsiModifierList.class))
-      .parent(PsiMatcherImpl.hasClass(PsiField.class))
-      .parent(PsiMatcherImpl.hasClass(PsiClass.class))
-      .dot(PsiMatcherImpl.hasModifier(PsiModifier.STATIC, false))
-      .parent(PsiMatcherImpl.hasClass(new Class[]{PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class}))
-      .getElement() == null) {
+    if (getEnclosingStaticClass(keyword, PsiField.class) == null) {
       return null;
     }
     PsiField field = (PsiField)keyword.getParent().getParent();
@@ -289,14 +280,7 @@ public class HighlightClassUtil {
 
   //@top
   private static HighlightInfo checkStaticMethodDeclarationInInnerClass(PsiKeyword keyword) {
-    if (new PsiMatcherImpl(keyword)
-      .dot(PsiMatcherImpl.hasText(PsiModifier.STATIC))
-      .parent(PsiMatcherImpl.hasClass(PsiModifierList.class))
-      .parent(PsiMatcherImpl.hasClass(PsiMethod.class))
-      .parent(PsiMatcherImpl.hasClass(PsiClass.class))
-      .dot(PsiMatcherImpl.hasModifier(PsiModifier.STATIC, false))
-      .parent(PsiMatcherImpl.hasClass(new Class[]{PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class}))
-      .getElement() == null) {
+    if (getEnclosingStaticClass(keyword, PsiMethod.class) == null) {
       return null;
     }
     PsiMethod method = (PsiMethod)keyword.getParent().getParent();
@@ -314,14 +298,7 @@ public class HighlightClassUtil {
 
   //@top
   private static HighlightInfo checkStaticInitializerDeclarationInInnerClass(PsiKeyword keyword) {
-    if (new PsiMatcherImpl(keyword)
-      .dot(PsiMatcherImpl.hasText(PsiModifier.STATIC))
-      .parent(PsiMatcherImpl.hasClass(PsiModifierList.class))
-      .parent(PsiMatcherImpl.hasClass(PsiClassInitializer.class))
-      .parent(PsiMatcherImpl.hasClass(PsiClass.class))
-      .dot(PsiMatcherImpl.hasModifier(PsiModifier.STATIC, false))
-      .parent(PsiMatcherImpl.hasClass(new Class[]{PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class}))
-      .getElement() == null) {
+    if (getEnclosingStaticClass(keyword, PsiClassInitializer.class) == null) {
       return null;
     }
     PsiClassInitializer initializer = (PsiClassInitializer)keyword.getParent().getParent();
@@ -335,6 +312,17 @@ public class HighlightClassUtil {
     IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(classModifiers, PsiModifier.STATIC, true, false);
     QuickFixAction.registerQuickFixAction(errorResult, fix);
     return errorResult;
+  }
+
+  private static PsiElement getEnclosingStaticClass(PsiKeyword keyword, Class<?> parentClass) {
+    return new PsiMatcherImpl(keyword)
+      .dot(PsiMatcherImpl.hasText(PsiModifier.STATIC))
+      .parent(PsiMatcherImpl.hasClass(PsiModifierList.class))
+      .parent(PsiMatcherImpl.hasClass(parentClass))
+      .parent(PsiMatcherImpl.hasClass(PsiClass.class))
+      .dot(PsiMatcherImpl.hasModifier(PsiModifier.STATIC, false))
+      .parent(PsiMatcherImpl.hasClass(new Class[]{PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class}))
+      .getElement();
   }
 
   //@top
