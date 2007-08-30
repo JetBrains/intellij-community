@@ -132,6 +132,7 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public void buildGDK() {
+    if (myProject.isDisposed()) return;
     if (checkUpToDate()) return;
 
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
