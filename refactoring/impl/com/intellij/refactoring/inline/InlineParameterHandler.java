@@ -2,6 +2,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
@@ -79,19 +80,21 @@ public class InlineParameterHandler {
       return;
     }
 
-    String occurencesString = RefactoringBundle.message("occurences.string", occurrences.size());
-    String question = RefactoringBundle.message("inline.parameter.confirmation", psiParameter.getName(),
-                                                refConstantInitializer.get().getText(), occurencesString);
-    RefactoringMessageDialog dialog = new RefactoringMessageDialog(
-      REFACTORING_NAME,
-      question,
-      HelpID.INLINE_VARIABLE,
-      "OptionPane.questionIcon",
-      true,
-      project);
-    dialog.show();
-    if (!dialog.isOK()){
-      return;
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      String occurencesString = RefactoringBundle.message("occurences.string", occurrences.size());
+      String question = RefactoringBundle.message("inline.parameter.confirmation", psiParameter.getName(),
+                                                  refConstantInitializer.get().getText(), occurencesString);
+      RefactoringMessageDialog dialog = new RefactoringMessageDialog(
+        REFACTORING_NAME,
+        question,
+        HelpID.INLINE_VARIABLE,
+        "OptionPane.questionIcon",
+        true,
+        project);
+      dialog.show();
+      if (!dialog.isOK()){
+        return;
+      }
     }
 
     new WriteCommandAction(project,
