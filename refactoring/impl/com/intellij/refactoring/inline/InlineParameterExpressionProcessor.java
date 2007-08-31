@@ -35,6 +35,7 @@ public class InlineParameterExpressionProcessor {
   private final PsiExpression myInitializer;
   private final boolean mySameClass;
   private PsiMethod myCallingMethod;
+  private Map<PsiLocalVariable, PsiElement> myLocalReplacements;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
                                             final PsiMethod method,
@@ -52,7 +53,7 @@ public class InlineParameterExpressionProcessor {
 
   void run() throws IncorrectOperationException {
     int parameterIndex = myMethod.getParameterList().getParameterIndex(myParameter);
-    final Map<PsiLocalVariable, PsiElement> localReplacements = new HashMap<PsiLocalVariable, PsiElement>();
+    myLocalReplacements = new HashMap<PsiLocalVariable, PsiElement>();
     final PsiExpression[] arguments = myMethodCall.getArgumentList().getExpressions();
     for(int i=0; i<arguments.length; i++) {
       if (i != parameterIndex && arguments [i] instanceof PsiReferenceExpression) {
@@ -61,16 +62,16 @@ public class InlineParameterExpressionProcessor {
         if (element instanceof PsiLocalVariable) {
           final PsiParameter param = myMethod.getParameterList().getParameters()[i];
           final PsiExpression paramRef = myMethod.getManager().getElementFactory().createExpressionFromText(param.getName(), myMethod);
-          localReplacements.put((PsiLocalVariable) element, paramRef);
+          myLocalReplacements.put((PsiLocalVariable) element, paramRef);
         }
       }
     }
 
-    processParameterInitializer(localReplacements);
+    processParameterInitializer();
 
     PsiExpression initializerInMethod = (PsiExpression) myInitializer.copy();
     final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
-    final boolean canEvaluate = replaceLocals(localReplacements, initializerInMethod, elementsToReplace);
+    final boolean canEvaluate = replaceLocals(initializerInMethod, elementsToReplace);
     if (!canEvaluate) {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"),
                                              "Parameter initializer depends on values which are not available inside the method and cannot be inlined",
@@ -90,17 +91,17 @@ public class InlineParameterExpressionProcessor {
       return;
     }
 
-    performRefactoring(initializerInMethod, localReplacements, parameterRefs, dlg.isCreateLocal());
+    performRefactoring(initializerInMethod, parameterRefs, dlg.isCreateLocal());
   }
 
-  private void processParameterInitializer(final Map<PsiLocalVariable, PsiElement> localReplacements) {
+  private void processParameterInitializer() {
     myInitializer.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
         if (element instanceof PsiLocalVariable) {
           final PsiLocalVariable localVariable = (PsiLocalVariable)element;
-          if (localReplacements.containsKey(localVariable)) return;
+          if (myLocalReplacements.containsKey(localVariable)) return;
           final PsiElement[] elements = DefUseUtil.getDefs(myCallingMethod.getBody(), localVariable, expression);
           if (elements.length == 1) {
             PsiExpression localInitializer = null;
@@ -112,19 +113,19 @@ public class InlineParameterExpressionProcessor {
             }
             if (localInitializer != null) {
               if (InlineToAnonymousConstructorProcessor.isConstant(localInitializer)) {
-                localReplacements.put(localVariable, localInitializer);
+                myLocalReplacements.put(localVariable, localInitializer);
               }
               else {
                 final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
                 PsiExpression replacedInitializer = (PsiExpression)localInitializer.copy();
-                if (replaceLocals(localReplacements, replacedInitializer, elementsToReplace)) {
+                if (replaceLocals(replacedInitializer, elementsToReplace)) {
                   try {
                     replacedInitializer = (PsiExpression) RefactoringUtil.replaceElementsWithMap(replacedInitializer, elementsToReplace);
                   }
                   catch (IncorrectOperationException e) {
                     LOG.error(e);
                   }
-                  localReplacements.put(localVariable, replacedInitializer);
+                  myLocalReplacements.put(localVariable, replacedInitializer);
                 }
               }
             }
@@ -134,7 +135,7 @@ public class InlineParameterExpressionProcessor {
     });
   }
 
-  private void performRefactoring(final PsiExpression initializerInMethod, final Map<PsiLocalVariable, PsiElement> localReplacements, final Collection<PsiReference> parameterRefs,
+  private void performRefactoring(final PsiExpression initializerInMethod, final Collection<PsiReference> parameterRefs,
                                   final boolean createLocal) {
     final Collection<PsiFile> containingFiles = new HashSet<PsiFile>();
     containingFiles.add(myMethod.getContainingFile());
@@ -165,7 +166,7 @@ public class InlineParameterExpressionProcessor {
           }
         }
 
-        for(PsiLocalVariable var: localReplacements.keySet()) {
+        for(PsiLocalVariable var: myLocalReplacements.keySet()) {
           if (ReferencesSearch.search(var).findFirst() == null) {
             var.delete();
           }
@@ -178,15 +179,14 @@ public class InlineParameterExpressionProcessor {
     }.execute();
   }
 
-  private boolean replaceLocals(final Map<PsiLocalVariable, PsiElement> localReplacements,
-                                final PsiExpression initializerInMethod,
+  private boolean replaceLocals(final PsiExpression expression,
                                 final Map<PsiElement, PsiElement> elementsToReplace) {
     final Ref<Boolean> refCannotEvaluate = new Ref<Boolean>();
-    initializerInMethod.accept(new PsiRecursiveElementVisitor() {
+    expression.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
-        if (!canEvaluate(expression, element, localReplacements, elementsToReplace)) {
+        if (!canEvaluate(expression, element, elementsToReplace)) {
           refCannotEvaluate.set(Boolean.TRUE);
         }
       }
@@ -196,11 +196,10 @@ public class InlineParameterExpressionProcessor {
 
   private boolean canEvaluate(final PsiReferenceExpression expression,
                               final PsiElement element,
-                              final Map<PsiLocalVariable, PsiElement> localReplacements,
                               final Map<PsiElement, PsiElement> elementsToReplace) {
     if (element instanceof PsiLocalVariable) {
       final PsiLocalVariable localVariable = (PsiLocalVariable)element;
-      final PsiElement localReplacement = localReplacements.get(localVariable);
+      final PsiElement localReplacement = myLocalReplacements.get(localVariable);
       if (localReplacement != null) {
         elementsToReplace.put(expression, localReplacement);
         return true;
