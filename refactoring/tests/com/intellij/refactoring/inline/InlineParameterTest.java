@@ -42,6 +42,10 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testStaticFinalField() throws Exception {
+    doTest(true);
+  }
+
   public void testRefIdentical() throws Exception {
      doTest(true);
    }

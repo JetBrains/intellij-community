@@ -65,7 +65,7 @@ public class InlineParameterHandler {
           if (!refInitializer.isNull()) {
             return false;
           }
-          if (InlineToAnonymousConstructorProcessor.isConstant(argument)) {
+          if (InlineToAnonymousConstructorProcessor.isConstant(argument) || getReferencedFinalField(argument) != null) {
             if (refConstantInitializer.isNull()) {
               refConstantInitializer.set(argument);
             }
@@ -137,11 +137,31 @@ public class InlineParameterHandler {
     }.execute();
   }
 
+  @Nullable
+  private static PsiField getReferencedFinalField(final PsiExpression argument) {
+    if (argument instanceof PsiReferenceExpression) {
+      final PsiElement element = ((PsiReferenceExpression)argument).resolve();
+      if (element instanceof PsiField) {
+        final PsiField field = (PsiField)element;
+        if (field.getModifierList().hasModifierProperty(PsiModifier.STATIC) &&
+            field.getModifierList().hasModifierProperty(PsiModifier.FINAL)) {
+          return field;
+        }
+      }
+    }
+    return null;
+  }
+
   private static boolean isSameConstant(final PsiExpression expr1, final PsiExpression expr2) {
     boolean expr1Null = InlineToAnonymousConstructorProcessor.ourNullPattern.accepts(expr1);
     boolean expr2Null = InlineToAnonymousConstructorProcessor.ourNullPattern.accepts(expr2);
     if (expr1Null || expr2Null) {
       return expr1Null && expr2Null;
+    }
+    PsiField field1 = getReferencedFinalField(expr1);
+    PsiField field2 = getReferencedFinalField(expr2);
+    if (field1 != null || field2 != null) {
+      return field1 == field2;
     }
     Object value1 = expr1.getManager().getConstantEvaluationHelper().computeConstantExpression(expr1);
     Object value2 = expr2.getManager().getConstantEvaluationHelper().computeConstantExpression(expr2);
