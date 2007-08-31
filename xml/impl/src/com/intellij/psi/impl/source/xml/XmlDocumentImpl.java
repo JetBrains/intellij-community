@@ -120,7 +120,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
             final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
 
             if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
-              return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, XmlDocumentImpl.this);
+              return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, XmlDocumentImpl.this, ExternalResourceManager.getInstance());
             }
 
             return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
