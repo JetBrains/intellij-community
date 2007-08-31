@@ -89,7 +89,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           boolean honorActionMnemonics,
                                           final Runnable disposeCallback,
                                           final int maxRowCount) {
-    final Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
+    final Component component = DataKeys.CONTEXT_COMPONENT.getData(dataContext);
     LOG.assertTrue(component != null);
 
     ListPopupStep step = createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
@@ -99,6 +99,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         if (disposeCallback != null) {
           disposeCallback.run();
         }
+        ActionMenu.showDescriptionInStatusBar(true, component, null);
         super.dispose();
       }
     };
