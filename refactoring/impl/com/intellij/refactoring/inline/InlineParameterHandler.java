@@ -50,16 +50,16 @@ public class InlineParameterHandler {
     final PsiMethod method = (PsiMethod) parameterList.getParent();
     final Ref<PsiExpression> refInitializer = new Ref<PsiExpression>();
     final Ref<PsiExpression> refConstantInitializer = new Ref<PsiExpression>();
-    final Ref<PsiMethodCallExpression> refMethodCall = new Ref<PsiMethodCallExpression>();
+    final Ref<PsiCallExpression> refMethodCall = new Ref<PsiCallExpression>();
     final List<PsiReference> occurrences = new ArrayList<PsiReference>();
     final Collection<PsiFile> containingFiles = new HashSet<PsiFile>();
     boolean result = ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference psiReference) {
         PsiElement element = psiReference.getElement();
-        if (element.getParent() instanceof PsiMethodCallExpression) {
+        if (element.getParent() instanceof PsiCallExpression) {
           occurrences.add(psiReference);
           containingFiles.add(element.getContainingFile());
-          PsiMethodCallExpression methodCall = (PsiMethodCallExpression) element.getParent();
+          PsiCallExpression methodCall = (PsiCallExpression) element.getParent();
           PsiExpression argument = methodCall.getArgumentList().getExpressions()[index];
           if (!refInitializer.isNull()) {
             return false;

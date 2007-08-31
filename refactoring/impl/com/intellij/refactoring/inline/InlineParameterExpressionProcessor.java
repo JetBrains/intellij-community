@@ -29,13 +29,13 @@ import java.util.HashSet;
 public class InlineParameterExpressionProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineParameterExpressionProcessor");
 
-  private final PsiMethodCallExpression myMethodCall;
+  private final PsiCallExpression myMethodCall;
   private final PsiMethod myMethod;
   private final PsiParameter myParameter;
   private final PsiExpression myInitializer;
   private final boolean mySameClass;
 
-  public InlineParameterExpressionProcessor(final PsiMethodCallExpression methodCall,
+  public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
                                             final PsiMethod method,
                                             final PsiParameter parameter,
                                             final PsiExpression initializer) {

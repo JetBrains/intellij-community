@@ -38,6 +38,10 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testConstructorCall() throws Exception {
+    doTest(true);
+  }
+
   public void testRefIdentical() throws Exception {
      doTest(true);
    }
