@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -45,6 +46,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   @NonNls static final String SCHEMA_TAG_NAME = "schema";
   @NonNls private static final String INCLUDE_TAG_NAME = "include";
   @NonNls private static final String IMPORT_TAG_NAME = "import";
+  @NonNls private static final String REDEFINE_TAG_NAME = "redefine";
 
   public XmlNSDescriptorImpl(XmlFile file) {
     init(file.getDocument());
@@ -98,7 +100,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
               tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
                 public Result<XmlElementDescriptor> compute() {
                   final String name = tag.getAttributeValue("name");
-                  
+
                   if (name != null && !name.equals(pair.second)) {
                     myDescriptorsMap.remove(pair);
                     return new Result<XmlElementDescriptor>(null);
@@ -141,6 +143,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
               }
             }
           }
+        }
+      } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
+        final XmlNSDescriptorImpl nsDescriptor = getRedefinedElementDescriptor(tag);
+        if (nsDescriptor != null) {
+          final XmlElementDescriptor xmlElementDescriptor = nsDescriptor.getElementDescriptor(localName, namespace, visited, reference);
+          if (xmlElementDescriptor != null) return xmlElementDescriptor;
         }
       }
     }
@@ -447,7 +455,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             }
           }
         }
-      } else if (equalsToSchemaName(tag, "redefine")) {
+      } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
         final XmlTag[] subTags = tag.getSubTags();
         final TypeDescriptor descriptor = doFindIn(subTags, name, pair, rootTag, visited);
         if (descriptor != null) return descriptor;
@@ -693,7 +701,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
             }
           }
         }
-      } else if (equalsToSchemaName(tag, "redefine")) {
+      } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
         final XmlTag rTag = findSpecialTagIn(tag.getSubTags(), specialName, name, rootTag, descriptor, visited);
         if (rTag != null) return rTag;
       }
@@ -848,4 +856,22 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   public XmlTag getTag() {
     return myTag;
   }
+
+  public static XmlNSDescriptorImpl getRedefinedElementDescriptor(final XmlTag parentTag) {
+  final String schemaL = parentTag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
+
+  if (schemaL != null) {
+    final PsiReference[] references = parentTag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
+
+    if (references.length > 0) {
+      final PsiElement psiElement = references[references.length - 1].resolve();
+
+      if (psiElement instanceof XmlFile) {
+        final PsiMetaDataBase metaData = ((XmlFile)psiElement).getDocument().getMetaData();
+        if (metaData instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)metaData;
+      }
+    }
+  }
+  return null;
+}
 }

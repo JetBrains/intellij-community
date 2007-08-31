@@ -19,7 +19,6 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -341,20 +340,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
         if (doRedefineCheck) {
           for(XmlTag parentTag = tag.getParentTag(); parentTag != null; parentTag = parentTag.getParentTag()) {
             if ("redefine".equals(parentTag.getLocalName())) {
-              final String schemaL = parentTag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
-
-              if (schemaL != null) {
-                final PsiReference[] references = parentTag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
-
-                if (references.length > 0) {
-                  final PsiElement psiElement = references[references.length - 1].resolve();
-
-                  if (psiElement instanceof XmlFile) {
-                    final PsiMetaDataBase metaData = ((XmlFile)psiElement).getDocument().getMetaData();
-                    if (metaData instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)metaData;
-                  }
-                }
-              }
+              return XmlNSDescriptorImpl.getRedefinedElementDescriptor(parentTag);
             }
           }
         }
