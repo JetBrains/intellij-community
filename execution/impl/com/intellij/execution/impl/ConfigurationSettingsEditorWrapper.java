@@ -62,12 +62,6 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     });
   }
 
-  public void setCompileMethodState(boolean state){
-    for (StepBeforeLaunchRow stepRow : myStepsBeforeLaunchRows) {
-      stepRow.enableRow(state);
-    }
-  }
-
   @NotNull
   protected JComponent createEditor() {
     myComponentPlace.setLayout(new GridBagLayout());

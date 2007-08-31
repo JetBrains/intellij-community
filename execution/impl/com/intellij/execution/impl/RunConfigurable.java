@@ -64,7 +64,6 @@ class RunConfigurable extends BaseConfigurable {
   private Splitter myPanel = new Splitter();
   private JPanel myWholePanel;
   private StorageAccessors myConfig;
-  private JCheckBox myCbCompileBeforeRunning;
   private SingleConfigurationConfigurable<RunConfiguration> mySelectedConfigurable = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
 
@@ -190,14 +189,9 @@ class RunConfigurable extends BaseConfigurable {
     myRightPanel.removeAll();
     mySelectedConfigurable = userObject;
     myRightPanel.add(mySelectedConfigurable.createComponent(), BorderLayout.CENTER);
-    updateCompileMethodComboStatus(mySelectedConfigurable);
     setupDialogBounds();
   }
 
-  private void updateCompileMethodComboStatus(final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable) {
-    final ConfigurationSettingsEditorWrapper editor = (ConfigurationSettingsEditorWrapper)configurationConfigurable.getEditor();
-    editor.setCompileMethodState(myCbCompileBeforeRunning.isSelected());
-  }
 
   public static void sortTree(DefaultMutableTreeNode root) {
     TreeUtil.sort(root, new Comparator() {
@@ -342,17 +336,6 @@ class RunConfigurable extends BaseConfigurable {
     myCbShowSettingsBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.display.settings.checkbox"));
     bottomPanel.add(myCbShowSettingsBeforeRunning);
 
-    myCbCompileBeforeRunning = new JCheckBox(ExecutionBundle.message("run.configuration.make.module.before.running.checkbox"));
-    myCbCompileBeforeRunning.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable = getSelectedConfiguration();
-        if (configurationConfigurable != null){
-          updateCompileMethodComboStatus(configurationConfigurable);
-        }
-      }
-    });
-    bottomPanel.add(myCbCompileBeforeRunning);
-
     myWholePanel.add(bottomPanel, BorderLayout.SOUTH);
     bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -361,7 +344,6 @@ class RunConfigurable extends BaseConfigurable {
         setModified(true);
       }
     };
-    myCbCompileBeforeRunning.addItemListener(cbListener);
     myCbShowSettingsBeforeRunning.addItemListener(cbListener);
 
     updateDialog();
@@ -376,7 +358,6 @@ class RunConfigurable extends BaseConfigurable {
     final RunManagerEx manager = getRunManager();
     final RunManagerConfig config = manager.getConfig();
     myCbShowSettingsBeforeRunning.setSelected(config.isShowSettingsBeforeRun());
-    myCbCompileBeforeRunning.setSelected(config.isCompileBeforeRunning());
     setModified(false);
   }
 
@@ -398,7 +379,6 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     manager.getConfig().setShowSettingsBeforeRun(myCbShowSettingsBeforeRunning.isSelected());
-    manager.getConfig().setCompileBeforeRunning(myCbCompileBeforeRunning.isSelected());
 
     setModified(false);
   }
