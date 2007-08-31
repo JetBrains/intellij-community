@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -162,7 +163,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   @NotNull
   public PsiElement getNameElement() {
-    final PsiElement element = findChildByType(GroovyTokenTypes.mIDENT);
+    final PsiElement element = getFirstChild();
     assert element != null;
     return element;
   }

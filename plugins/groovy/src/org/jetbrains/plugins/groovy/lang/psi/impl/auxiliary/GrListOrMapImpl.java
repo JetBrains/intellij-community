@@ -65,7 +65,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     return findChildrenByClass(GrExpression.class);
   }
 
-  @Nullable
+  @NotNull
   public GrNamedArgument[] getNamedArguments() {
     return findChildrenByClass(GrNamedArgument.class);
   }

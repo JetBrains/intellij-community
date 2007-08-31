@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
@@ -24,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @author ilyas
  */
 public interface GrArgumentLabel extends GroovyPsiElement {
+  @NotNull
   PsiElement getNameElement();
 
   String getName();
