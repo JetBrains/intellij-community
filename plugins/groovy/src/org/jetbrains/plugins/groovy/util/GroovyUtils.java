@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -40,7 +41,7 @@ public abstract class GroovyUtils {
     }
     final String name = dir.getName().toLowerCase();
     return ".svn".equals(name) || "_svn".equals(name) ||
-            ".cvs".equals(name) || "_cvs".equals(name);
+        ".cvs".equals(name) || "_cvs".equals(name);
   }
 
   /**
@@ -106,5 +107,14 @@ public abstract class GroovyUtils {
         return pattern.matcher(name).matches();
       }
     });
+  }
+
+  public static <E> List<E> flatten(Collection<List<E>> lists) {
+    List<E> result = new ArrayList<E>();
+    for (List<E> list : lists) {
+      result.addAll(list);
+    }
+
+    return result;
   }
 }
