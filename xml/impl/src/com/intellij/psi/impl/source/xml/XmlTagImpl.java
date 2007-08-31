@@ -14,8 +14,8 @@ import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlTagNameChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -265,10 +265,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
           if (currentOwner != null) {
             descriptor = (XmlNSDescriptor)currentOwner.getMetaData();
             if (descriptor != null) {
-              return new Result<XmlNSDescriptor>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
+              return new Result<XmlNSDescriptor>(descriptor, descriptor.getDependences(), XmlTagImpl.this, ExternalResourceManager.getInstance());
             }
           }
-          return new Result<XmlNSDescriptor>(null, XmlTagImpl.this, currentFile);
+          return new Result<XmlNSDescriptor>(null, XmlTagImpl.this, currentFile, ExternalResourceManager.getInstance());
         }
       }, false));
     }
