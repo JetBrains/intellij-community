@@ -19,6 +19,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
@@ -173,6 +174,19 @@ public class InlineParameterHandler {
               if (InlineToAnonymousConstructorProcessor.isConstant(localInitializer)) {
                 localReplacements.put(localVariable, localInitializer);
               }
+              else {
+                final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
+                PsiExpression replacedInitializer = (PsiExpression)localInitializer.copy();
+                if (replaceLocals(localReplacements, replacedInitializer, elementsToReplace)) {
+                  try {
+                    replacedInitializer = (PsiExpression) RefactoringUtil.replaceElementsWithMap(replacedInitializer, elementsToReplace);
+                  }
+                  catch (IncorrectOperationException e) {
+                    LOG.error(e);
+                  }
+                  localReplacements.put(localVariable, replacedInitializer);
+                }
+              }
             }
           }
         }
@@ -200,19 +214,7 @@ public class InlineParameterHandler {
     }
     final boolean createLocal = dlg.isCreateLocal();
 
-    for(Map.Entry<PsiElement, PsiElement> e: elementsToReplace.entrySet()) {
-      try {
-        if (e.getKey() == initializerInMethod) {
-          initializerInMethod = (PsiExpression) initializerInMethod.replace(e.getValue());
-        }
-        else {
-          e.getKey().replace(e.getValue());
-        }
-      }
-      catch (IncorrectOperationException e1) {
-        LOG.error(e1);
-      }
-    }
+    initializerInMethod = (PsiExpression) RefactoringUtil.replaceElementsWithMap(initializerInMethod, elementsToReplace);
 
     final Collection<PsiFile> containingFiles = new HashSet<PsiFile>();
     containingFiles.add(method.getContainingFile());

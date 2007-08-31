@@ -247,6 +247,16 @@ public class RefactoringUtil {
     return false;
   }
 
+  public static PsiElement replaceElementsWithMap(PsiElement replaceIn, final Map<PsiElement, PsiElement> elementsToReplace) throws IncorrectOperationException {
+    for(Map.Entry<PsiElement, PsiElement> e: elementsToReplace.entrySet()) {
+      if (e.getKey() == replaceIn) {
+        return e.getKey().replace(e.getValue());
+      }
+      e.getKey().replace(e.getValue());
+    }
+    return replaceIn;
+  }
+
   public static interface UsageInfoFactory {
     UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset);
   }

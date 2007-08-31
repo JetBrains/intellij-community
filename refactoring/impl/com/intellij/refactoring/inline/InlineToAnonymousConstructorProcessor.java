@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.util.RefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -353,7 +354,7 @@ class InlineToAnonymousConstructorProcessor {
         }
       }
     }
-    return replaceElementsWithMap(argument, elementsToReplace);
+    return RefactoringUtil.replaceElementsWithMap(argument, elementsToReplace);
   }
 
   private PsiExpression getParameterReference(final PsiParameter parameter) throws IncorrectOperationException {
@@ -422,16 +423,6 @@ class InlineToAnonymousConstructorProcessor {
         }
       }
     });
-    replaceElementsWithMap(method, elementsToReplace);
-  }
-
-  private static PsiElement replaceElementsWithMap(PsiElement replaceIn, final Map<PsiElement, PsiElement> elementsToReplace) throws IncorrectOperationException {
-    for(Map.Entry<PsiElement, PsiElement> e: elementsToReplace.entrySet()) {
-      if (e.getKey() == replaceIn) {
-        return e.getKey().replace(e.getValue());
-      }
-      e.getKey().replace(e.getValue());
-    }
-    return replaceIn;
+    RefactoringUtil.replaceElementsWithMap(method, elementsToReplace);
   }
 }
