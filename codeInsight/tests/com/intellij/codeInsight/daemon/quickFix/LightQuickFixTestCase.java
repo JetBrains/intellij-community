@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 
@@ -73,7 +74,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents) {
-    PsiFile hostFile = file.getContext() == null ? file : file.getContext().getContainingFile();
+    PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(file);
 
     String comment = hostFile instanceof XmlFile ? "<!--" : "//";
     // "quick fix action text to perform" "should be available"

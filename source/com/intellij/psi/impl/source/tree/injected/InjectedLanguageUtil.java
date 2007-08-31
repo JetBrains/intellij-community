@@ -644,14 +644,17 @@ public class InjectedLanguageUtil {
     return editor;
   }
 
-  private static PsiFile getContainingInjectedFile(PsiElement element) {
-    PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null) return null;
-    PsiElement host = psiFile.getContext();
-    return host == null ? null : psiFile;
+  public static PsiFile getTopLevelFile(PsiElement element) {
+    PsiFile containingFile = element.getContainingFile();
+    Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(containingFile);
+    if (document instanceof DocumentWindow) {
+      PsiElement host = containingFile.getContext();
+      if (host != null) containingFile = host.getContainingFile();
+    }
+    return containingFile;
   }
   public static boolean isInInjectedLanguagePrefixSuffix(final PsiElement element) {
-    PsiFile injectedFile = getContainingInjectedFile(element);
+    PsiFile injectedFile = element.getContainingFile();
     if (injectedFile == null) return false;
     Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(injectedFile);
     if (!(document instanceof DocumentWindow)) return false;

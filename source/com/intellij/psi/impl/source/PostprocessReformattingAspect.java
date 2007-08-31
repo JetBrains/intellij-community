@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -24,6 +23,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,12 +102,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       if(changeSet == null) return;
       final PsiElement psiElement = changeSet.getRootElement().getPsi();
       if(psiElement == null) return;
-      PsiFile containingFile = psiElement.getContainingFile();
-      Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getCachedDocument(containingFile);
-      if (document instanceof DocumentWindow) {
-        PsiElement host = containingFile.getContext();
-        if (host != null) containingFile = host.getContainingFile();
-      }
+      PsiFile containingFile = InjectedLanguageUtil.getTopLevelFile(psiElement);
       final FileViewProvider viewProvider = containingFile.getViewProvider();
 
       if(!viewProvider.isEventSystemEnabled()) return;

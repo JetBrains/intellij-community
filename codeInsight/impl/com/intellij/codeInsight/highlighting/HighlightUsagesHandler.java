@@ -23,6 +23,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -369,8 +370,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     // in case of injected file, use host file to highlight all occurences of the target in each injected file
-    PsiElement context = file.getContext();
-    context = context == null ? file : context.getContainingFile();
+    PsiElement context = InjectedLanguageUtil.getTopLevelFile(file);
     SearchScope searchScope = new LocalSearchScope(context);
     Collection<PsiReference> refs;
     if (target instanceof PsiMethod) {
