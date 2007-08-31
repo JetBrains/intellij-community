@@ -145,8 +145,11 @@ public class InlineParameterExpressionProcessor {
         PsiDeclarationStatement localDeclaration = factory.createVariableDeclarationStatement(myParameter.getName(),
                                                                                               myParameter.getType(),
                                                                                               initializerInMethod1);
+        boolean parameterIsFinal = myParameter.hasModifierProperty(PsiModifier.FINAL);
         SameParameterValueInspection.InlineParameterValueFix.removeParameter(myMethod, myParameter);
         if (createLocal) {
+          final PsiLocalVariable declaredVar = (PsiLocalVariable) localDeclaration.getDeclaredElements()[0];
+          declaredVar.getModifierList().setModifierProperty(PsiModifier.FINAL, parameterIsFinal);
           final PsiCodeBlock body = myMethod.getBody();
           if (body != null) {
             body.addAfter(localDeclaration, body.getLBrace());
