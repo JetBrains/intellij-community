@@ -15,13 +15,25 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -89,7 +101,91 @@ public class TooBroadCatchInspection extends BaseInspection {
         }
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+  @Nullable
+  protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+    PsiTypeElement typeElement = (PsiTypeElement)location;
+    PsiParameter catchParameter = (PsiParameter)typeElement.getParent();
+
+    PsiCatchSection catchSection = (PsiCatchSection)catchParameter.getParent();
+    PsiTryStatement tryStatement = catchSection.getTryStatement();
+    PsiCodeBlock block = tryStatement.getTryBlock();
+    assert block != null;
+    Set<PsiType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(block);
+    List<InspectionGadgetsFix> fixes = new ArrayList<InspectionGadgetsFix>();
+    for (PsiType thrown : exceptionsThrown) {
+      if (!isCaughtBefore(thrown, tryStatement, catchSection)) {
+        fixes.add(new AddCatchSectionFix(tryStatement, thrown, catchSection));
+      }
+    }
+    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+  }
+
+  private static boolean isCaughtBefore(PsiType thrown, PsiTryStatement tryStatement, PsiCatchSection catchSection) {
+    PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+    for (PsiCatchSection section : catchSections) {
+      if (catchSection == section) return false;
+      PsiType type = section.getCatchType();
+      if (type == null) continue;
+      if (type.isAssignableFrom(thrown)) return true;
+    }
+    return false;
+  }
+
+  private static class AddCatchSectionFix extends InspectionGadgetsFix {
+    private final PsiTryStatement myTryStatement;
+    private final PsiType myThrown;
+    private final PsiCatchSection myBeforeCatchSection;
+
+    public AddCatchSectionFix(PsiTryStatement tryStatement, PsiType thrown, PsiCatchSection catchSection) {
+      myTryStatement = tryStatement;
+      myThrown = thrown;
+      myBeforeCatchSection = catchSection;
+    }
+
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+      String name = codeStyleManager.suggestUniqueVariableName("e", myTryStatement.getTryBlock(), false);
+      PsiCatchSection section =
+        myTryStatement.getManager().getElementFactory().createCatchSection((PsiClassType)myThrown, name, myTryStatement);
+      PsiCatchSection element = (PsiCatchSection)myTryStatement.addBefore(section, myBeforeCatchSection);
+      codeStyleManager.shortenClassReferences(element);
+
+      if (isOnTheFly()) {
+        TextRange range = getRangeToSelect(element.getCatchBlock());
+        PsiFile file = element.getContainingFile();
+        Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        if (editor == null) return;
+        Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        if (editor.getDocument() != document) return;
+        editor.getCaretModel().moveToOffset(range.getStartOffset());
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      }
+    }
+
+    @NotNull
+    public String getName() {
+      return InspectionsBundle.message("add.catch.clause.for.0", myThrown.getPresentableText());
+    }
+  }
+
+  private static TextRange getRangeToSelect (PsiCodeBlock block) {
+    PsiElement first = block.getFirstBodyElement();
+    if (first instanceof PsiWhiteSpace) {
+      first = first.getNextSibling();
+    }
+    if (first == null) {
+      int offset = block.getTextRange().getStartOffset() + 1;
+      return new TextRange(offset, offset);
+    }
+    PsiElement last = block.getRBrace().getPrevSibling();
+    if (last instanceof PsiWhiteSpace) {
+      last = last.getPrevSibling();
+    }
+    return new TextRange(first.getTextRange().getStartOffset(), last.getTextRange().getEndOffset());
+  }
+
+  public BaseInspectionVisitor buildVisitor() {
         return new TooBroadCatchVisitor();
     }
 

@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -159,13 +158,18 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
 
     protected final void registerError(@NotNull PsiElement location,
                                        Object... infos){
-        final LocalQuickFix[] fixes = createFixes(location);
-        final String description = inspection.buildErrorString(infos);
+        final InspectionGadgetsFix[] fixes = createFixes(location);
+      if (fixes != null) {
+        for (InspectionGadgetsFix fix : fixes) {
+          fix.setOnTheFly(onTheFly);
+        }
+      }
+      final String description = inspection.buildErrorString(infos);
         holder.registerProblem(location, description, fixes);
     }
 
     @Nullable
-    private LocalQuickFix[] createFixes(PsiElement location){
+    private InspectionGadgetsFix[] createFixes(PsiElement location){
         if(!onTheFly && inspection.buildQuickFixesOnlyForOnTheFlyErrors()){
             return null;
         }
@@ -173,11 +177,11 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         if(fixes != null){
             return fixes;
         }
-        final LocalQuickFix fix = inspection.buildFix(location);
+        final InspectionGadgetsFix fix = inspection.buildFix(location);
         if(fix == null){
             return null;
         }
-        return new LocalQuickFix[]{fix};
+        return new InspectionGadgetsFix[]{fix};
     }
 
     public void visitReferenceExpression(PsiReferenceExpression expression) {

@@ -35,6 +35,7 @@ public class ForeachStatementInspection extends BaseInspection{
                 "extended.for.statement.display.name");
     }
 
+    @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "extended.for.statement.problem.descriptor");

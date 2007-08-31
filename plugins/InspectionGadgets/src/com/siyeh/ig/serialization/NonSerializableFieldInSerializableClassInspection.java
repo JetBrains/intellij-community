@@ -32,6 +32,7 @@ public class NonSerializableFieldInSerializableClassInspection
                 "non.serializable.field.in.serializable.class.display.name");
     }
 
+    @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "non.serializable.field.in.serializable.class.problem.descriptor");

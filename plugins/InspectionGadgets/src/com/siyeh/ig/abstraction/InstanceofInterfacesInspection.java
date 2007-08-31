@@ -30,6 +30,7 @@ public class InstanceofInterfacesInspection extends BaseInspection {
                 "instanceof.concrete.class.display.name");
     }
 
+    @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "instanceof.concrete.class.problem.descriptor");

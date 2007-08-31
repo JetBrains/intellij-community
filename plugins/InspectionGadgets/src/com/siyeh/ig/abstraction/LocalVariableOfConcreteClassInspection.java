@@ -32,6 +32,7 @@ public class LocalVariableOfConcreteClassInspection
                 "local.variable.of.concrete.class.display.name");
     }
 
+    @NotNull
     public String buildErrorString(Object... arg) {
         final PsiNamedElement variable = (PsiNamedElement)arg[0];
         final String name = variable.getName();

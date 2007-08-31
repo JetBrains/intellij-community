@@ -47,6 +47,7 @@ public class NegatedIfElseInspection extends BaseInspection {
         return InspectionGadgetsBundle.message("negated.if.else.display.name");
     }
 
+    @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "negated.if.else.problem.descriptor");

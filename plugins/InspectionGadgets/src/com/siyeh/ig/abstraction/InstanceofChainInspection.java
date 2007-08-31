@@ -34,6 +34,7 @@ public class InstanceofChainInspection extends BaseInspection {
                 "chain.of.instanceof.checks.display.name");
     }
 
+    @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "chain.of.instanceof.checks.problem.descriptor");

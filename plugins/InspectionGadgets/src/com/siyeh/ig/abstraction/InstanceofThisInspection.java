@@ -29,6 +29,7 @@ public class InstanceofThisInspection extends BaseInspection {
                 "instanceof.check.for.this.display.name");
     }
 
+    @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "instanceof.check.for.this.problem.descriptor");

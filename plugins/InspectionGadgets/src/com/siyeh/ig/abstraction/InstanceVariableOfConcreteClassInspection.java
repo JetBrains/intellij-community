@@ -31,6 +31,7 @@ public class InstanceVariableOfConcreteClassInspection extends BaseInspection {
                 "instance.variable.of.concrete.class.display.name");
     }
 
+    @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "instance.variable.of.concrete.class.problem.descriptor",
