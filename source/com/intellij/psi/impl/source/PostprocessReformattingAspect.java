@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -102,8 +103,11 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       final PsiElement psiElement = changeSet.getRootElement().getPsi();
       if(psiElement == null) return;
       PsiFile containingFile = psiElement.getContainingFile();
-      PsiElement host = containingFile.getContext();
-      if (host != null) containingFile = host.getContainingFile();
+      Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getCachedDocument(containingFile);
+      if (document instanceof DocumentWindow) {
+        PsiElement host = containingFile.getContext();
+        if (host != null) containingFile = host.getContainingFile();
+      }
       final FileViewProvider viewProvider = containingFile.getViewProvider();
 
       if(!viewProvider.isEventSystemEnabled()) return;
