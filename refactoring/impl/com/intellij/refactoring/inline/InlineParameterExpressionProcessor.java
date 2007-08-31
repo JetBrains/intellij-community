@@ -34,6 +34,7 @@ public class InlineParameterExpressionProcessor {
   private final PsiParameter myParameter;
   private final PsiExpression myInitializer;
   private final boolean mySameClass;
+  private PsiMethod myCallingMethod;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
                                             final PsiMethod method,
@@ -46,10 +47,10 @@ public class InlineParameterExpressionProcessor {
 
     PsiClass callingClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
     mySameClass = (callingClass == myMethod.getContainingClass());
+    myCallingMethod = PsiTreeUtil.getParentOfType(myMethodCall, PsiMethod.class);
   }
 
   void run() throws IncorrectOperationException {
-    final PsiMethod callingMethod = PsiTreeUtil.getParentOfType(myMethodCall, PsiMethod.class);
     int parameterIndex = myMethod.getParameterList().getParameterIndex(myParameter);
     final Map<PsiLocalVariable, PsiElement> localReplacements = new HashMap<PsiLocalVariable, PsiElement>();
     final PsiExpression[] arguments = myMethodCall.getArgumentList().getExpressions();
@@ -65,6 +66,34 @@ public class InlineParameterExpressionProcessor {
       }
     }
 
+    processParameterInitializer(localReplacements);
+
+    PsiExpression initializerInMethod = (PsiExpression) myInitializer.copy();
+    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
+    final boolean canEvaluate = replaceLocals(localReplacements, initializerInMethod, elementsToReplace);
+    if (!canEvaluate) {
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"),
+                                             "Parameter initializer depends on values which are not available inside the method and cannot be inlined",
+                                             null, myMethod.getProject());
+      return;
+    }
+
+    final Collection<PsiReference> parameterRefs = ReferencesSearch.search(myParameter).findAll();
+
+    initializerInMethod = (PsiExpression) RefactoringUtil.replaceElementsWithMap(initializerInMethod, elementsToReplace);
+
+    String question = RefactoringBundle.message("inline.parameter.confirmation", myParameter.getName(),
+                                                initializerInMethod.getText());
+    InlineParameterDialog dlg = new InlineParameterDialog(InlineParameterHandler.REFACTORING_NAME, question, HelpID.INLINE_VARIABLE,
+                                                          "OptionPane.questionIcon", true, myMethod.getProject());
+    if (!dlg.showDialog()) {
+      return;
+    }
+
+    performRefactoring(initializerInMethod, localReplacements, parameterRefs, dlg.isCreateLocal());
+  }
+
+  private void processParameterInitializer(final Map<PsiLocalVariable, PsiElement> localReplacements) {
     myInitializer.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
@@ -72,7 +101,7 @@ public class InlineParameterExpressionProcessor {
         if (element instanceof PsiLocalVariable) {
           final PsiLocalVariable localVariable = (PsiLocalVariable)element;
           if (localReplacements.containsKey(localVariable)) return;
-          final PsiElement[] elements = DefUseUtil.getDefs(callingMethod.getBody(), localVariable, expression);
+          final PsiElement[] elements = DefUseUtil.getDefs(myCallingMethod.getBody(), localVariable, expression);
           if (elements.length == 1) {
             PsiExpression localInitializer = null;
             if (elements [0] instanceof PsiLocalVariable) {
@@ -103,48 +132,28 @@ public class InlineParameterExpressionProcessor {
         }
       }
     });
+  }
 
-    PsiExpression initializerInMethod = (PsiExpression) myInitializer.copy();
-    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
-    final boolean canEvaluate = replaceLocals(localReplacements, initializerInMethod, elementsToReplace);
-    if (!canEvaluate) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"),
-                                             "Parameter initializer depends on values which are not available inside the method and cannot be inlined",
-                                             null, myMethod.getProject());
-      return;
-    }
-
-    final Collection<PsiReference> parameterRefs = ReferencesSearch.search(myParameter).findAll();
-
-    initializerInMethod = (PsiExpression) RefactoringUtil.replaceElementsWithMap(initializerInMethod, elementsToReplace);
-
-    String question = RefactoringBundle.message("inline.parameter.confirmation", myParameter.getName(),
-                                                initializerInMethod.getText());
-    InlineParameterDialog dlg = new InlineParameterDialog(InlineParameterHandler.REFACTORING_NAME, question, HelpID.INLINE_VARIABLE,
-                                                          "OptionPane.questionIcon", true, myMethod.getProject());
-    if (!dlg.showDialog()) {
-      return;
-    }
-    final boolean createLocal = dlg.isCreateLocal();
-
+  private void performRefactoring(final PsiExpression initializerInMethod, final Map<PsiLocalVariable, PsiElement> localReplacements, final Collection<PsiReference> parameterRefs,
+                                  final boolean createLocal) {
     final Collection<PsiFile> containingFiles = new HashSet<PsiFile>();
     containingFiles.add(myMethod.getContainingFile());
     containingFiles.add(myMethodCall.getContainingFile());
+
     final Project project = myMethod.getProject();
-    final PsiExpression initializerInMethod1 = initializerInMethod;
     new WriteCommandAction(project,
                            RefactoringBundle.message("inline.parameter.command.name", myParameter.getName()),
-                           containingFiles.toArray(new PsiFile[containingFiles.size()]) ) {
+                           containingFiles.toArray(new PsiFile[containingFiles.size()])) {
       protected void run(final Result result) throws Throwable {
         final PsiElementFactory factory = myMethod.getManager().getElementFactory();
         if (!createLocal) {
           for(PsiReference ref: parameterRefs) {
-            InlineUtil.inlineVariable(myParameter, initializerInMethod1, (PsiJavaCodeReferenceElement) ref.getElement());
+            InlineUtil.inlineVariable(myParameter, initializerInMethod, (PsiJavaCodeReferenceElement) ref.getElement());
           }
         }
         PsiDeclarationStatement localDeclaration = factory.createVariableDeclarationStatement(myParameter.getName(),
                                                                                               myParameter.getType(),
-                                                                                              initializerInMethod1);
+                                                                                              initializerInMethod);
         boolean parameterIsFinal = myParameter.hasModifierProperty(PsiModifier.FINAL);
         SameParameterValueInspection.InlineParameterValueFix.removeParameter(myMethod, myParameter);
         if (createLocal) {
