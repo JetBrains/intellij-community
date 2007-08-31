@@ -11,7 +11,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -90,7 +92,12 @@ public class InlineParameterHandler {
     }
     final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     if ((app.isInternal() || app.isUnitTestMode()) && !refInitializer.isNull()) {
-      tryInlineReferenceArgument(refMethodCall.get(), method, psiParameter, refInitializer.get());
+      try {
+        tryInlineReferenceArgument(refMethodCall.get(), method, psiParameter, refInitializer.get());
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
       return;
     }
     if (refConstantInitializer.isNull()) {
@@ -130,47 +137,52 @@ public class InlineParameterHandler {
   }
 
   private static void tryInlineReferenceArgument(PsiMethodCallExpression methodCall, final PsiMethod method, final PsiParameter parameter,
-                                                 final PsiExpression initializer) {
+                                                 final PsiExpression initializer) throws IncorrectOperationException {
+    final PsiMethod callingMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
     int parameterIndex = method.getParameterList().getParameterIndex(parameter);
-    final Map<PsiLocalVariable, PsiParameter> passedLocals = new HashMap<PsiLocalVariable, PsiParameter>();
+    final Map<PsiLocalVariable, PsiElement> localReplacements = new HashMap<PsiLocalVariable, PsiElement>();
     final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
     for(int i=0; i<arguments.length; i++) {
       if (i != parameterIndex && arguments [i] instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)arguments[i];
         final PsiElement element = referenceExpression.resolve();
         if (element instanceof PsiLocalVariable) {
-          passedLocals.put((PsiLocalVariable) element, method.getParameterList().getParameters() [i]);
+          final PsiParameter param = method.getParameterList().getParameters()[i];
+          final PsiExpression paramRef = method.getManager().getElementFactory().createExpressionFromText(param.getName(), method);
+          localReplacements.put((PsiLocalVariable) element, paramRef);
         }
       }
     }
 
-    PsiExpression initializerInMethod = (PsiExpression) initializer.copy();
-    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
-    final Ref<Boolean> refCannotEvaluate = new Ref<Boolean>();
-    initializerInMethod.accept(new PsiRecursiveElementVisitor() {
+    initializer.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
-        try {
-          final PsiElement element = expression.resolve();
-          if (element instanceof PsiLocalVariable) {
-            final PsiParameter param = passedLocals.get((PsiLocalVariable)element);
-            if (param == null) {
-              refCannotEvaluate.set(Boolean.TRUE);
-              return;
+        final PsiElement element = expression.resolve();
+        if (element instanceof PsiLocalVariable) {
+          final PsiLocalVariable localVariable = (PsiLocalVariable)element;
+          if (localReplacements.containsKey(localVariable)) return;
+          final PsiElement[] elements = DefUseUtil.getDefs(callingMethod.getBody(), localVariable, expression);
+          if (elements.length == 1) {
+            PsiExpression localInitializer = null;
+            if (elements [0] instanceof PsiLocalVariable) {
+              localInitializer = ((PsiLocalVariable) elements [0]).getInitializer();
             }
-            final PsiExpression paramRef = method.getManager().getElementFactory().createExpressionFromText(param.getName(),
-                                                                                                            expression);
-            elementsToReplace.put(expression, paramRef);
+            else if (elements [0] instanceof PsiAssignmentExpression) {
+              localInitializer = ((PsiAssignmentExpression) elements [0]).getRExpression();
+            }
+            if (localInitializer != null) {
+              if (InlineToAnonymousConstructorProcessor.isConstant(localInitializer)) {
+                localReplacements.put(localVariable, localInitializer);
+              }
+            }
           }
-          else {
-            refCannotEvaluate.set(Boolean.TRUE);
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
         }
       }
     });
-    if (!refCannotEvaluate.isNull()) {
+
+    PsiExpression initializerInMethod = (PsiExpression) initializer.copy();
+    final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
+    final boolean canEvaluate = replaceLocals(localReplacements, initializerInMethod, elementsToReplace);
+    if (!canEvaluate) {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"),
                                              "Parameter initializer depends on values which are not available inside the method and cannot be inlined",
                                              null, method.getProject());
@@ -227,12 +239,42 @@ public class InlineParameterHandler {
             body.addAfter(localDeclaration, body.getLBrace());
           }
         }
+
+        for(PsiLocalVariable var: localReplacements.keySet()) {
+          if (ReferencesSearch.search(var).findFirst() == null) {
+            var.delete();
+          }
+        }
       }
 
       protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
         return UndoConfirmationPolicy.DEFAULT;
       }
     }.execute();
+  }
+
+  private static boolean replaceLocals(final Map<PsiLocalVariable, PsiElement> localReplacements, final PsiExpression initializerInMethod,
+                                       final Map<PsiElement, PsiElement> elementsToReplace) {
+    final Ref<Boolean> refCannotEvaluate = new Ref<Boolean>();
+    initializerInMethod.accept(new PsiRecursiveElementVisitor() {
+      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        final PsiElement element = expression.resolve();
+        if (element instanceof PsiLocalVariable) {
+          final PsiLocalVariable localVariable = (PsiLocalVariable)element;
+          final PsiElement localReplacement = localReplacements.get(localVariable);
+          if (localReplacement != null) {
+            elementsToReplace.put(expression, localReplacement);
+          }
+          else {
+            refCannotEvaluate.set(Boolean.TRUE);
+          }
+        }
+        else {
+          refCannotEvaluate.set(Boolean.TRUE);
+        }
+      }
+    });
+    return refCannotEvaluate.isNull();
   }
 
   private static boolean isSameConstant(final PsiExpression expr1, final PsiExpression expr2) {

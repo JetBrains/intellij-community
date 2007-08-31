@@ -46,6 +46,10 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
      doTest(false);
    }
 
+  public void testRefLocalConstantInitializer() throws Exception {
+     doTest(false);
+   }
+
   private void doTest(final boolean createLocal) throws Exception {
     InlineParameterDialog.setCreateLocalInTests(createLocal);
     String name = getTestName(false);
