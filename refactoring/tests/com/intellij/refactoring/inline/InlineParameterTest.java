@@ -31,14 +31,23 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
   }
 
   public void testSameValue() throws Exception {
-    doTest();
+    doTest(true);
   }
 
   public void testNullValue() throws Exception {
-    doTest();
+    doTest(true);
   }
 
-  private void doTest() throws Exception {
+  public void testRefIdentical() throws Exception {
+     doTest(true);
+   }
+
+  public void testRefIdenticalNoLocal() throws Exception {
+     doTest(false);
+   }
+
+  private void doTest(final boolean createLocal) throws Exception {
+    InlineParameterDialog.setCreateLocalInTests(createLocal);
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineParameter/" + name + ".java";
     configureByFile(fileName);

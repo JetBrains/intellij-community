@@ -165,7 +165,6 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
       final Project project = method.getProject();
       final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
 
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
       final Runnable runnable = new Runnable() {
         public void run() {
           try {
@@ -180,18 +179,7 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
               InlineUtil.tryToInlineArrayCreationForVarargs(expr);
             }
 
-            final List<ParameterInfo> psiParameters = new ArrayList<ParameterInfo>();
-            int paramIdx = 0;
-            final String paramName = parameter.getName();
-            for (PsiParameter param : parameters) {
-              if (!Comparing.strEqual(paramName, param.getName())) {
-                psiParameters.add(new ParameterInfo(paramIdx, param.getName(), param.getType()));
-              }
-              paramIdx++;
-            }
-
-            new ChangeSignatureProcessor(project, method, false, null, method.getName(), method.getReturnType(),
-                                         psiParameters.toArray(new ParameterInfo[psiParameters.size()])).run();
+            removeParameter(method, parameter);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -200,6 +188,22 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
       };
 
       ApplicationManager.getApplication().runWriteAction(runnable);
+    }
+
+    public static void removeParameter(final PsiMethod method, final PsiParameter parameter) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final List<ParameterInfo> psiParameters = new ArrayList<ParameterInfo>();
+      int paramIdx = 0;
+      final String paramName = parameter.getName();
+      for (PsiParameter param : parameters) {
+        if (!Comparing.strEqual(paramName, param.getName())) {
+          psiParameters.add(new ParameterInfo(paramIdx, param.getName(), param.getType()));
+        }
+        paramIdx++;
+      }
+
+      new ChangeSignatureProcessor(method.getProject(), method, false, null, method.getName(), method.getReturnType(),
+                                   psiParameters.toArray(new ParameterInfo[psiParameters.size()])).run();
     }
 
     public String getValue() {
