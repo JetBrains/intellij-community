@@ -278,6 +278,7 @@ public abstract class PassExecutorService {
                 myPass.collectInformation(myUpdateProgress);
               }
               catch (ProcessCanceledException e) {
+                myUpdateProgress.cancel();
                 log(myUpdateProgress, myPass, "Canceled ");
               }
               catch(RuntimeException e) {
@@ -295,19 +296,13 @@ public abstract class PassExecutorService {
 
       boolean hasMoreWorkTodo = myThreadsToStartCountdown.decrementAndGet() != 0;
       if (!myUpdateProgress.isCanceled()) {
+        applyInformationToEditors(hasMoreWorkTodo);
         for (ScheduledPass successor : mySuccessorsOnCompletion) {
           int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
           if (predecessorsToRun == 0) {
             submit(successor);
           }
         }
-        applyInformationToEditors(hasMoreWorkTodo);
-      }
-
-      //mySubmittedPasses.remove(this);
-
-      // check that it is not remnant from the previous attempt, canceled long ago
-      if (!myUpdateProgress.isCanceled()) {
         if (!hasMoreWorkTodo) {
           log(myUpdateProgress, myPass, "Stopping ");
           myUpdateProgress.stopIfRunning();

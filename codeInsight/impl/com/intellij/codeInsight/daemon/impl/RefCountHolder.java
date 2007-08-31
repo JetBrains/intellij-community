@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -22,26 +23,26 @@ public class RefCountHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.RefCountHolder");
 
   private final PsiFile myFile;
-  private final AtomicInteger myModificationCountRef;
   private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new THashMap<PsiNamedElement, Boolean>();
   private final Map<String, XmlAttribute> myXmlId2AttributeMap = new THashMap<String, XmlAttribute>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
   private final Set<PsiNamedElement> myUsedElements = new THashSet<PsiNamedElement>();
-  private volatile boolean myTouched;
-  private volatile boolean myLocked;
-  private final int myInitialModificationCount;
+  private final AtomicInteger myState = new AtomicInteger(State.VIRGIN);
+  private interface State {
+    int VIRGIN = 0;                   // just created or cleared
+    int BEING_WRITTEN_BY_GHP = 1;     // general highlighting pass is storing references during analysis
+    int READY = 2;                    // may be used for higlighting unused stuff
+    int BEING_USED_BY_PHP = 3;        // post highlighting pass is retrieving info
+  }
 
-  public RefCountHolder(@NotNull PsiFile file, @NotNull AtomicInteger modificationCount) {
+  public RefCountHolder(@NotNull PsiFile file) {
     myFile = file;
-    myModificationCountRef = modificationCount;
-    myInitialModificationCount = modificationCount.get();
     LOG.debug("RefCountHolder created for '"+ StringUtil.first(file.getText(), 30, true));
   }
 
-  public synchronized void clear() {
-    myTouched=false;
+  public void clear() {
     myLocalRefsMap.clear();
     myImportStatements.clear();
     myDclsUsedMap.clear();
@@ -49,7 +50,8 @@ public class RefCountHolder {
     myUsedElements.clear();
   }
 
-  public synchronized void registerLocallyReferenced(@NotNull PsiNamedElement result) {
+  public void registerLocallyReferenced(@NotNull PsiNamedElement result) {
+    assertIsAnalyzing();
     myDclsUsedMap.put(result,Boolean.TRUE);
   }
 
@@ -61,18 +63,20 @@ public class RefCountHolder {
     }
   }
 
-  public synchronized void registerAttributeWithId(@NotNull String id, XmlAttribute attr) {
+  public void registerAttributeWithId(@NotNull String id, XmlAttribute attr) {
+    assertIsAnalyzing();
     myXmlId2AttributeMap.put(id,attr);
   }
 
-  public synchronized XmlAttribute getAttributeById(String id) {
+  public XmlAttribute getAttributeById(String id) {
     /* TODO[cdr, maxim.mossienko]
-    LOG.assertTrue(myTouched);
+    LOG.assertTrue(myState);
     */
     return myXmlId2AttributeMap.get(id);
   }
 
-  public synchronized void registerReference(@NotNull PsiJavaReference ref, JavaResolveResult resolveResult) {
+  public void registerReference(@NotNull PsiJavaReference ref, JavaResolveResult resolveResult) {
+    assertIsAnalyzing();
     PsiElement refElement = resolveResult.getElement();
     PsiFile psiFile = refElement == null ? null : refElement.getContainingFile();
     if (psiFile != null) psiFile = (PsiFile)psiFile.getNavigationElement(); // look at navigation elements because all references resolve into Cls elements when highlighting library source
@@ -90,8 +94,8 @@ public class RefCountHolder {
     myImportStatements.put(ref, importStatement);
   }
 
-  public synchronized boolean isRedundant(PsiImportStatementBase importStatement) {
-    assertIsTouched();
+  public boolean isRedundant(PsiImportStatementBase importStatement) {
+    assertIsRetrieving();
     return !myImportStatements.containsValue(importStatement);
   }
 
@@ -107,7 +111,8 @@ public class RefCountHolder {
     }
   }
 
-  public synchronized void removeInvalidRefs() {
+  public void removeInvalidRefs() {
+    assertIsAnalyzing();
     for(Iterator<PsiReference> iterator = myLocalRefsMap.keySet().iterator(); iterator.hasNext();){
       PsiReference ref = iterator.next();
       if (!ref.getElement().isValid()){
@@ -134,8 +139,8 @@ public class RefCountHolder {
     }
   }
 
-  public synchronized boolean isReferenced(PsiNamedElement element) {
-    assertIsTouched();
+  public boolean isReferenced(PsiNamedElement element) {
+    assertIsRetrieving();
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if (array != null && !array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
 
@@ -172,8 +177,8 @@ public class RefCountHolder {
     return true;
   }
 
-  public synchronized boolean isReferencedForRead(PsiElement element) {
-    assertIsTouched();
+  public boolean isReferencedForRead(PsiElement element) {
+    assertIsRetrieving();
     LOG.assertTrue(element instanceof PsiVariable);
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return false;
@@ -194,8 +199,8 @@ public class RefCountHolder {
     return false;
   }
 
-  public synchronized boolean isReferencedForWrite(PsiElement element) {
-    assertIsTouched();
+  public boolean isReferencedForWrite(PsiElement element) {
+    assertIsRetrieving();
     LOG.assertTrue(element instanceof PsiVariable);
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return false;
@@ -211,8 +216,8 @@ public class RefCountHolder {
     return false;
   }
 
-  public synchronized List<PsiNamedElement> getUnusedDcls() {
-    assertIsTouched();
+  public List<PsiNamedElement> getUnusedDcls() {
+    assertIsRetrieving();
     List<PsiNamedElement> result = new ArrayList<PsiNamedElement>();
     Set<Map.Entry<PsiNamedElement, Boolean>> entries = myDclsUsedMap.entrySet();
 
@@ -223,19 +228,35 @@ public class RefCountHolder {
     return result;
   }
 
-  public void touch() {
-    myTouched = true;
-  }
-  public void assertIsTouched() {
-    LOG.assertTrue(myTouched);
+  public void analyzeAndStoreReferences(Runnable analyze) throws ProcessCanceledException {
+    myState.compareAndSet(State.READY, State.VIRGIN);
+    if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) throw new ProcessCanceledException();
+    int newState;
+    try {
+      analyze.run();
+      newState = State.READY;
+    }
+    catch (Exception e) {
+      newState = State.VIRGIN;
+    }
+    boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, newState);
+    assert set : myState.get();
   }
 
-  void setLocked(final boolean locked) {
-    myLocked = locked;
+  public void retrieveUnusedReferencesInfo(Runnable analyze) throws ProcessCanceledException {
+    if (!myState.compareAndSet(State.READY, State.BEING_USED_BY_PHP)) throw new ProcessCanceledException();
+    try {
+      analyze.run();
+    }
+    finally {
+      boolean set = myState.compareAndSet(State.BEING_USED_BY_PHP, State.READY);
+      assert set : myState.get();
+    }
   }
-
-  public boolean isValid() {
-    if (myLocked) return true;
-    return myModificationCountRef.get() == myInitialModificationCount;
+  private void assertIsAnalyzing() {
+    assert myState.get() == State.BEING_WRITTEN_BY_GHP : myState.get();
+  }
+  private void assertIsRetrieving() {
+    assert myState.get() == State.BEING_USED_BY_PHP : myState.get();
   }
 }

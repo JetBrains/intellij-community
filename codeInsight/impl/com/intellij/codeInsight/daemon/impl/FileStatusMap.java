@@ -1,6 +1,8 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -8,15 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.WeakHashMap;
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -28,6 +27,10 @@ public class FileStatusMap {
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
   private static final Key<RefCountHolder> REF_COUND_HOLDER_IN_FILE_KEY = Key.create("DaemonCodeAnalyzerImpl.REF_COUND_HOLDER_IN_FILE_KEY");
   private final AtomicInteger myClearModificationCount = new AtomicInteger();
+
+  public FileStatusMap(@NotNull Project project) {
+    myProject = project;
+  }
 
   static TextRange getDirtyTextRange(Editor editor, int part) {
     Document document = editor.getDocument();
@@ -66,10 +69,6 @@ public class FileStatusMap {
       localInspectionsDirtyScope = dirtyScope;
       externalDirtyScope = dirtyScope;
     }
-  }
-
-  public FileStatusMap(@NotNull Project project) {
-    myProject = project;
   }
 
   public void markAllFilesDirty() {
@@ -180,18 +179,12 @@ public class FileStatusMap {
   }
 
   @NotNull
-  public RefCountHolder getRefCountHolder(@NotNull PsiFile file, boolean lockunlock) {
+  public RefCountHolder getRefCountHolder(@NotNull PsiFile file) {
     RefCountHolder refCountHolder = file.getUserData(REF_COUND_HOLDER_IN_FILE_KEY);
     UserDataHolderEx holder = (UserDataHolderEx)file;
-    if (refCountHolder != null && !refCountHolder.isValid()) {
-      // PostHighlighting pass is still mumbling with old refCounterHolder. Let it be, it'll be canceled soon anyway
-      holder.replace(REF_COUND_HOLDER_IN_FILE_KEY, refCountHolder, null);
-      refCountHolder = null;
-    }
     if (refCountHolder == null) {
-      refCountHolder = holder.putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file, myClearModificationCount));
+      refCountHolder = holder.putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file));
     }
-    refCountHolder.setLocked(lockunlock);
     return refCountHolder;
   }
 
