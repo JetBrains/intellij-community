@@ -57,7 +57,6 @@ class ImplementationClassCache extends SoftFactoryMap<Class<? extends DomElement
   }
 
   public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass) {
-    assert domElementClass.isAssignableFrom(implementationClass);
     myImplementationClasses.put(domElementClass, implementationClass);
     super.clear();
   }
