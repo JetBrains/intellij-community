@@ -13,7 +13,7 @@ import java.util.Collections;
 /**
  * @author ven
  */
-class InstructionImpl implements Instruction {
+class InstructionImpl implements Instruction, Cloneable {
   List<InstructionImpl> myPred = new ArrayList<InstructionImpl>();
 
   List<InstructionImpl> mySucc = new ArrayList<InstructionImpl>();
@@ -21,28 +21,50 @@ class InstructionImpl implements Instruction {
   PsiElement myPsiElement;
   private int myNumber;
 
+  private static final Stack<CallInstruction> ourEmptyCallStack = new Stack<CallInstruction>();
+  protected Stack<CallInstruction> myCallStack = ourEmptyCallStack; //copy on write
+
   @Nullable
   public PsiElement getElement() {
     return myPsiElement;
   }
 
-  InstructionImpl(PsiElement psiElement, int num) {
-    myPsiElement = psiElement;
+  InstructionImpl(PsiElement element, int num) {
+    myPsiElement = element;
     myNumber = num;
   }
 
-  public Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack) {
+  protected InstructionImpl clone() {
+    try {
+      final InstructionImpl clone = (InstructionImpl) super.clone();
+      clone.myCallStack = (Stack<CallInstruction>) myCallStack.clone();
+      return clone;
+    } catch (CloneNotSupportedException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  public Iterable<? extends Instruction> succ() {
+    for (InstructionImpl instruction : mySucc) {
+      instruction.myCallStack = myCallStack;
+    }
+    
     return mySucc;
   }
 
-  public Iterable<? extends Instruction> pred(Stack<CallInstruction> callStack) {
+  public Iterable<? extends Instruction> pred() {
+    for (InstructionImpl instruction : myPred) {
+      instruction.myCallStack = myCallStack;
+    }
+
     if (myPred.size() > 0) {
       return myPred;
     }
 
-    if (!callStack.isEmpty()) {
-      final CallInstruction callInstruction = callStack.pop();
-      return callInstruction.pred(callStack);
+    if (!myCallStack.isEmpty()) {
+      final CallInstruction callInstruction = myCallStack.peek();
+      return callInstruction.pred();
     }
 
     return Collections.emptyList();

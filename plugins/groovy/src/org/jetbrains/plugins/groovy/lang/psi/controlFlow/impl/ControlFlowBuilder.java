@@ -492,19 +492,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   class CallInstructionImpl extends InstructionImpl implements CallInstruction {
     private InstructionImpl myCallee;
 
-    public RetInstruction getReturnInstruction() {
-      return myReturnInsn;
-    }
-
-    private RetInstruction myReturnInsn;
-
     public String toString() {
       return super.toString() + " CALL " + myCallee.num();
     }
 
-    public Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack) {
-      callStack.push(this);
-      return Collections.singletonList(myCallee);
+    public Iterable<? extends Instruction> succ() {
+      final InstructionImpl calleeClone = myCallee.clone();
+      calleeClone.myCallStack.push(this);
+      return Collections.singletonList(calleeClone);
     }
 
     protected String getElementPresentation() { return ""; }
@@ -514,9 +509,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       myCallee = callee;
     }
 
-    public void setReturnInstruction(RetInstruction retInstruction) {
-      myReturnInsn = retInstruction;
-    }
+    protected CallInstructionImpl clone() { return (CallInstructionImpl) super.clone(); }
   }
 
   class PostCallInstructionImpl extends InstructionImpl implements AfterCallInstruction {
@@ -527,9 +520,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return super.toString() + "AFTER CALL " + myCall.num();
     }
 
-    public Iterable<? extends Instruction> pred(Stack<CallInstruction> callStack) {
-      callStack.push(myCall);
-      return Collections.singletonList(myReturnInsn);
+    public Iterable<? extends Instruction> pred() {
+      final InstructionImpl returnClone = myReturnInsn.clone();
+      returnClone.myCallStack.push(myCall);
+      return Collections.singletonList(returnClone);
     }
 
     protected String getElementPresentation() { return "";
@@ -543,6 +537,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     public void setReturnInstruction(RetInstruction retInstruction) {
       myReturnInsn = retInstruction;
     }
+
+    protected PostCallInstructionImpl clone() { return (PostCallInstructionImpl) super.clone(); }
   }
 
   class RetInstruction extends InstructionImpl {
@@ -556,8 +552,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     protected String getElementPresentation() { return ""; }
 
-    public Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack) {
-      final CallInstruction callInstruction = callStack.pop();
+    protected RetInstruction clone() { return (RetInstruction) super.clone(); }
+
+    public Iterable<? extends Instruction> succ() {
+      final CallInstruction callInstruction = myCallStack.peek();
       return ((CallInstructionImpl) callInstruction).mySucc;
    }
   }

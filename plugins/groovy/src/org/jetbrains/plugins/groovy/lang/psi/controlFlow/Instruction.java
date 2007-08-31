@@ -10,8 +10,8 @@ import com.intellij.psi.PsiElement;
  * @author ven
  */
 public interface Instruction {
-  Iterable<? extends Instruction> succ(Stack<CallInstruction> callStack);
-  Iterable<? extends Instruction> pred(Stack<CallInstruction> callStack);
+  Iterable<? extends Instruction> succ();
+  Iterable<? extends Instruction> pred();
 
   int num();
 
