@@ -422,15 +422,22 @@ public class XmlParsing {
       advance();
     }
 
-    while (token() == XML_NAME) {
-      advance();
-      if (token() == XML_EQ) {
+    final IElementType tokenType = token();
+    if (tokenType == XML_DATA_CHARACTERS) {
+      while (token() == XML_DATA_CHARACTERS) {
         advance();
       }
-      else {
-        error(XmlErrorMessages.message("expected.attribute.eq.sign"));
+    } else {
+      while (token() == XML_NAME) {
+        advance();
+        if (token() == XML_EQ) {
+          advance();
+        }
+        else {
+          error(XmlErrorMessages.message("expected.attribute.eq.sign"));
+        }
+        parseAttributeValue();
       }
-      parseAttributeValue();
     }
 
     if (token() == XML_PI_END) {
