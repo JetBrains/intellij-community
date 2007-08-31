@@ -11,15 +11,12 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.actions.BackAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ForwardAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
-import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Splitter;
@@ -138,7 +135,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return mySelectedConfigurable != null ? mySelectedConfigurable.getHelpTopic() : "";
   }
 
   public JComponent createComponent() {

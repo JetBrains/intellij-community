@@ -90,7 +90,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "reference.settingsdialog.project.structure.jdk ";
   }
 
   @NonNls
@@ -162,7 +162,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return ShowSettingsUtil.getInstance().findProjectConfigurable(project, JdkListConfigurable.class);
   }
 
-  protected AbstractAddGroup createAddAction() {
+  public AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(ProjectBundle.message("add.new.jdk.text")) {
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);

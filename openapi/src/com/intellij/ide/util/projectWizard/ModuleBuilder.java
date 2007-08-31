@@ -68,7 +68,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     myUpdaters.add(updater);
   }
 
-  public void setModuleFilePath(String path) {
+  public void setModuleFilePath(@NonNls String path) {
     myModuleFilePath = acceptParameter(path);
   }
 

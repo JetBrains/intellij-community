@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditor;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -54,14 +53,11 @@ public class ModuleEditor implements Place.Navigator {
   private TabbedPaneWrapper myTabbedPane;
   private final ModulesProvider myModulesProvider;
   private String myName;
-  @Nullable
-  private final ModuleBuilder myModuleBuilder;
   private List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
   private ModifiableRootModel myModifiableRootModelProxy;
 
   private EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   @NonNls private static final String METHOD_COMMIT = "commit";
-  private ModuleConfigurable myConfigurable;
 
   private Disposable myRoot = new Disposable() {
     public void dispose() {
@@ -72,22 +68,15 @@ public class ModuleEditor implements Place.Navigator {
   private ProjectFacetsConfigurator myFacetsConfigurator;
 
   public ModuleEditor(Project project, ModulesProvider modulesProvider, ProjectFacetsConfigurator facetsConfigurator,
-                      @NotNull Module module, @Nullable ModuleBuilder moduleBuilder) {
+                      @NotNull Module module) {
     myProject = project;
     myModulesProvider = modulesProvider;
     myFacetsConfigurator = facetsConfigurator;
     addChangeListener(facetsConfigurator);
     myName = module.getName();
-    myModuleBuilder = moduleBuilder;
-  }
-
-  @Nullable
-  public ModuleBuilder getModuleBuilder() {
-    return myModuleBuilder;
   }
 
   public void setHistoryFacade(ModuleConfigurable configurable) {
-    myConfigurable = configurable;
   }
 
   public void init(final String selectedTab, History history) {

@@ -22,21 +22,20 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
-import com.intellij.ui.navigation.Place;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.navigation.Place;
 import com.intellij.util.Icons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -295,12 +294,21 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     result.add(createAddAction());
     result.add(new MyRemoveAction());
 
+    final AnAction copyAction = createCopyAction();
+    if (copyAction != null) {
+      result.add(copyAction);
+    }
     result.add(Separator.getInstance());
 
     result.add(new MyFindUsagesAction());
 
 
     return result;
+  }
+
+  @Nullable
+  protected AnAction createCopyAction() {
+    return null;
   }
 
   protected abstract AbstractAddGroup createAddAction();

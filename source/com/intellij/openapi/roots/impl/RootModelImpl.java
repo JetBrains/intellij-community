@@ -25,7 +25,7 @@ import java.util.*;
 /**
  * @author dsl
  */
-class RootModelImpl implements ModifiableRootModel {
+public class RootModelImpl implements ModifiableRootModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
 
   private TreeSet<ContentEntry> myContent = new TreeSet<ContentEntry>(ContentComparator.INSTANCE);

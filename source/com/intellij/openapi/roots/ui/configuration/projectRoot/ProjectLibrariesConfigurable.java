@@ -38,20 +38,18 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
     return null;
   }
 
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
-    return null;
-  }
-
   @NonNls
   public String getId() {
     return "project.libraries";
   }
 
 
-  protected LibraryTableModifiableModelProvider getModelProvider(final StructureConfigrableContext context, final boolean editable) {
-    return context.getProjectLibrariesProvider(editable);
+  public LibraryTableModifiableModelProvider getModelProvider(final boolean editable) {
+    return myContext.getProjectLibrariesProvider(editable);
+  }
+
+  public BaseLibrariesConfigurable getOppositeGroup() {
+    return GlobalLibrariesConfigurable.getInstance(myProject);
   }
 
   public static ProjectLibrariesConfigurable getInstance(final Project project) {

@@ -38,12 +38,6 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
     return null;
   }
 
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
-    return null;
-  }
-
   @NonNls
   public String getId() {
     return "global.libraries";
@@ -54,8 +48,12 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
     return ShowSettingsUtil.getInstance().findProjectConfigurable(project, GlobalLibrariesConfigurable.class);
   }
 
-  protected LibraryTableModifiableModelProvider getModelProvider(final StructureConfigrableContext context, final boolean editable) {
-    return context.getGlobalLibrariesProvider(editable);
+  public LibraryTableModifiableModelProvider getModelProvider(final boolean editable) {
+    return myContext.getGlobalLibrariesProvider(editable);
+  }
+
+  public BaseLibrariesConfigurable getOppositeGroup() {
+    return ProjectLibrariesConfigurable.getInstance(myProject);
   }
 
   protected String getAddText() {

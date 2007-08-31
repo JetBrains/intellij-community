@@ -4,12 +4,17 @@
 
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.CommonBundle;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.actions.AddFacetActionGroup;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ModuleGroupUtil;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.NamePathComponent;
+import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,14 +23,15 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ClonableOrderEntry;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -33,11 +39,14 @@ import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Consumer;
@@ -124,6 +133,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     result.add(actionsManager.createExpandAllAction(expander, myTree));
     result.add(actionsManager.createCollapseAllAction(expander, myTree));
     return result;
+  }
+
+  protected AnAction createCopyAction() {
+    return new MyCopyAction();
   }
 
   protected void loadTree() {
@@ -351,7 +364,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return "root.settings";
+    return "reference.settingsdialog.project.structure.module";
   }
 
 
@@ -439,31 +452,35 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   public void addModule() {
     final Module module = myContext.myModulesConfigurator.addModule(myTree);
     if (module != null) {
-      final MasterDetailsComponent.MyNode node = new MasterDetailsComponent.MyNode(new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER));
-      final TreePath selectionPath = myTree.getSelectionPath();
-      MyNode parent = null;
-      if (selectionPath != null) {
-        MyNode selected = (MyNode)selectionPath.getLastPathComponent();
-        final Object o = selected.getConfigurable().getEditableObject();
-        if (o instanceof ModuleGroup) {
-          myContext.myModulesConfigurator.getModuleModel().setModuleGroupPath(module, ((ModuleGroup)o).getGroupPath());
-          parent = selected;
-        } else if (o instanceof Module) { //create near selected
-          final ModifiableModuleModel modifiableModuleModel = myContext.myModulesConfigurator.getModuleModel();
-          final String[] groupPath = modifiableModuleModel.getModuleGroupPath((Module)o);
-          if (groupPath != null) {
-            modifiableModuleModel.setModuleGroupPath(module, groupPath);
-            parent = findNodeByObject(myRoot, new ModuleGroup(groupPath));
-          }
+      addModuleNode(module);
+    }
+  }
+
+  private void addModuleNode(final Module module) {
+    final MyNode node = new MyNode(new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER));
+    final TreePath selectionPath = myTree.getSelectionPath();
+    MyNode parent = null;
+    if (selectionPath != null) {
+      MyNode selected = (MyNode)selectionPath.getLastPathComponent();
+      final Object o = selected.getConfigurable().getEditableObject();
+      if (o instanceof ModuleGroup) {
+        myContext.myModulesConfigurator.getModuleModel().setModuleGroupPath(module, ((ModuleGroup)o).getGroupPath());
+        parent = selected;
+      } else if (o instanceof Module) { //create near selected
+        final ModifiableModuleModel modifiableModuleModel = myContext.myModulesConfigurator.getModuleModel();
+        final String[] groupPath = modifiableModuleModel.getModuleGroupPath((Module)o);
+        if (groupPath != null) {
+          modifiableModuleModel.setModuleGroupPath(module, groupPath);
+          parent = findNodeByObject(myRoot, new ModuleGroup(groupPath));
         }
       }
-      if (parent == null) parent = myRoot;
-      addNode(node, parent);
-      myFacetEditorFacade.addFacetsNodes(module, node);
-      ((DefaultTreeModel)myTree.getModel()).reload(parent);
-      selectNodeInTree(node);
-      myContext.myValidityCache.clear(); //missing modules added
     }
+    if (parent == null) parent = myRoot;
+    addNode(node, parent);
+    myFacetEditorFacade.addFacetsNodes(module, node);
+    ((DefaultTreeModel)myTree.getModel()).reload(parent);
+    selectNodeInTree(node);
+    myContext.myValidityCache.clear(); //missing modules added
   }
 
   @Nullable
@@ -647,5 +664,116 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Nullable
   String getEmptySelectionString() {
     return "Select a module to view or edit its details here";
+  }
+
+  private class MyCopyAction extends AnAction {
+    private MyCopyAction() {
+      super(CommonBundle.message("button.copy"), CommonBundle.message("button.copy"), COPY_ICON);
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final NamedConfigurable namedConfigurable = getSelectedConfugurable();
+      if (namedConfigurable instanceof ModuleConfigurable) {
+        try {
+          final String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
+          final NamePathComponent component = new NamePathComponent(IdeBundle.message("label.project.name"), IdeBundle.message(
+            "label.component.file.location", StringUtil.capitalize(modulePresentation)), 'a', 'l', IdeBundle.message(
+            "title.select.project.file.directory", modulePresentation), IdeBundle.message("description.select.project.file.directory",
+                                                                                          StringUtil.capitalize(modulePresentation)));
+          final DialogWrapper dlg = new DialogWrapper(myTree, false) {
+            {
+              setTitle("Copy module");
+              init();
+            }
+
+            public JComponent getPreferredFocusedComponent() {
+              return component.getNameComponent();
+            }
+
+            @Nullable
+            protected JComponent createCenterPanel() {
+              return component;
+            }
+
+            protected void doOKAction() {
+              if (component.getNameValue().length() == 0) {
+                Messages.showErrorDialog(
+                  "Enter module copy name",
+                  CommonBundle.message("title.error"));
+                return;
+              }
+
+              if (component.getPath().length() == 0) {
+                Messages.showErrorDialog(IdeBundle.message("prompt.enter.project.file.location", modulePresentation),
+                                         CommonBundle.message("title.error"));
+                return;
+              }
+              if (!ProjectWizardUtil
+                 .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", modulePresentation), component.getPath(), true)) {
+                Messages.showErrorDialog("Path \'" + component.getPath() + "\' is invalid", CommonBundle.message("title.error"));
+                 return;
+              }
+              super.doOKAction();
+            }
+          };
+          dlg.show();
+          if (!dlg.isOK()) return;
+          final ModifiableRootModel rootModel = ((ModuleConfigurable)namedConfigurable).getModuleEditor().getModifiableRootModel();
+          final String path = component.getPath();
+          final ModuleBuilder builder = new ModuleBuilder() {
+            public void setupRootModel(final ModifiableRootModel modifiableRootModel) throws ConfigurationException {
+              if (rootModel.isJdkInherited()) {
+                modifiableRootModel.inheritJdk();
+              }
+              else {
+                modifiableRootModel.setJdk(rootModel.getJdk());
+              }
+
+              modifiableRootModel.inheritCompilerOutputPath(true);
+
+              modifiableRootModel.setLanguageLevel(rootModel.getLanguageLevel());
+
+              for (OrderEntry entry : rootModel.getOrderEntries()) {
+                if (entry instanceof JdkOrderEntry) continue;
+                if (entry instanceof ModuleSourceOrderEntry) continue;
+                if (entry instanceof ClonableOrderEntry) {
+                  modifiableRootModel.addOrderEntry(((ClonableOrderEntry)entry).cloneEntry((RootModelImpl)modifiableRootModel,
+                                                                                           (ProjectRootManagerImpl)ProjectRootManager
+                                                                                             .getInstance(myProject),
+                                                                                           VirtualFilePointerManager.getInstance()));
+                }
+              }
+
+              VirtualFile content = LocalFileSystem.getInstance().findFileByPath(component.getPath());
+              if (content == null) {
+                content = LocalFileSystem.getInstance().refreshAndFindFileByPath(component.getPath());
+              }
+              modifiableRootModel.addContentEntry(content);
+            }
+
+            public ModuleType getModuleType() {
+              return rootModel.getModule().getModuleType();
+            }
+          };
+          builder.setName(component.getNameValue());
+          builder.setModuleFilePath(path + "/" + builder.getName() + ".iml");
+          final Module module = myContext.myModulesConfigurator.addModule(builder);
+          if (module != null) {
+            addModuleNode(module);
+          }
+        }
+        catch (Exception e1) {
+          LOG.error(e1);
+        }
+      }
+    }
+
+    public void update(final AnActionEvent e) {
+      if (myTree.getSelectionPaths() == null || myTree.getSelectionPaths().length != 1) {
+        e.getPresentation().setEnabled(false);
+      } else {
+        e.getPresentation().setEnabled(getSelectedConfugurable() instanceof ModuleConfigurable);
+      }
+    }
   }
 }

@@ -158,7 +158,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         final Module[] modules = myModuleModel.getModules();
         if (modules.length > 0) {
           for (Module module : modules) {
-            createModuleEditor(module, null);
+            createModuleEditor(module);
           }
           Collections.sort(myModuleEditors, myModuleEditorComparator);
         }
@@ -168,8 +168,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myModified = false;
   }
 
-  private void createModuleEditor(final Module module, ModuleBuilder moduleBuilder) {
-    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, myFacetsConfigurator, module, moduleBuilder);
+  public void createModuleEditor(final Module module) {
+    final ModuleEditor moduleEditor = new ModuleEditor(myProject, this, myFacetsConfigurator, module);
     myModuleEditors.add(moduleEditor);
     moduleEditor.addChangeListener(this);
   }
@@ -276,7 +276,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       if (module != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            createModuleEditor(module, builder);
+            createModuleEditor(module);
           }
         });
       }
@@ -306,17 +306,19 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return module;
   }
 
-  void addModule(final ModuleBuilder moduleBuilder) {
+  @Nullable
+  public Module addModule(final ModuleBuilder moduleBuilder) {
     final Module module = createModule(moduleBuilder);
     if (module != null) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          createModuleEditor(module, moduleBuilder);
+          createModuleEditor(module);
           Collections.sort(myModuleEditors, myModuleEditorComparator);
         }
       });
       processModuleCountChanged(myModuleEditors.size() - 1, myModuleEditors.size());
     }
+    return module;
   }
 
   @Nullable

@@ -405,7 +405,7 @@ public class LibraryTableEditor implements Disposable {
     return dialogWrapper.isOK();
   }
 
-  public ActionListener createAddLibraryAction(boolean select, JComponent parent){
+  public ActionListener createAddLibraryAction(boolean select){
     return new AddLibraryAction(select);
   }
 
@@ -457,7 +457,7 @@ public class LibraryTableEditor implements Disposable {
             }
           });
         }
-        final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(library, null, null);
+        final DefaultMutableTreeNode libraryNode = rootConfigurable.createLibraryNode(library);
         if (myNeedSelection){
           rootConfigurable.selectNodeInTree(libraryNode);
           if (!myEditingModuleLibraries) {

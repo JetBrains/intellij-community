@@ -248,8 +248,8 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
   @Nullable
   @NonNls
-  public String getHelpTopic() { //todo help id
-    return "project.structure";
+  public String getHelpTopic() {
+    return "reference.settingsdialog.project.structure.general";
   }
 
 
