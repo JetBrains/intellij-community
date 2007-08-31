@@ -21,12 +21,10 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.UI;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -37,7 +35,7 @@ import java.util.Set;
 /**
  * @author kir
  */
-public class LinkLabel extends NonOpaquePanel {
+public class LinkLabel extends JLabel {
   private boolean myUnderline;
 
   private LinkListener myLinkListener;
@@ -48,6 +46,7 @@ public class LinkLabel extends NonOpaquePanel {
   private boolean myIsLinkActive;
 
   private String myVisitedLinksKey;
+  private int myIconWidth;
   private Icon myHoveringIcon;
   private Icon myInactiveIcon;
 
@@ -55,9 +54,6 @@ public class LinkLabel extends NonOpaquePanel {
   private boolean myPaintDefaultIcon;
   protected static final int DEFAULT_ICON_GAP = 2;
   private static final Icon LINK = IconLoader.getIcon("/ide/link.png");
-  private JLabel myLabel;
-  private JLabel myRightIcon;
-  private EmptyBorder myRightIconBorder;
 
   public LinkLabel() {
     this("", LINK);
@@ -76,42 +72,19 @@ public class LinkLabel extends NonOpaquePanel {
   }
 
   public LinkLabel(String text, Icon icon, LinkListener aListener, Object aLinkData, String aVisitedLinksKey) {
-    setLayout(new BorderLayout());
-
-    myLabel = new JLabel(text, icon, JLabel.LEFT);
+    super(text, icon, JLabel.LEFT);
+    setOpaque(false);
 
     setListener(aListener, aLinkData);
 
-    myInactiveIcon = myLabel.getIcon();
+    myIconWidth = getIcon() == null ? 0 : getIcon().getIconWidth() + getIconTextGap();
+    myInactiveIcon = getIcon();
 
     MyMouseHandler mouseHandler = new MyMouseHandler();
     addMouseListener(mouseHandler);
     addMouseMotionListener(mouseHandler);
 
     myVisitedLinksKey = aVisitedLinksKey;
-
-    add(myLabel, BorderLayout.CENTER);
-
-    myRightIcon = new JLabel();
-    myRightIconBorder = new EmptyBorder(0, myRightIcon.getIconTextGap(), 0, 0);
-    add(myRightIcon, BorderLayout.EAST);
-  }
-
-  private int getIconWidth() {
-    return myLabel.getIcon() == null ? 0 : myLabel.getIcon().getIconWidth() + myLabel.getIconTextGap();
-  }
-
-  public void setRightIcon(Icon rightIcon) {
-    myRightIcon.setIcon(rightIcon);
-
-    if (rightIcon == null) {
-      myRightIcon.setBorder(null);
-    } else {
-      myRightIcon.setBorder(myRightIconBorder);
-    }
-
-    revalidate();
-    repaint();
   }
 
   public void setHoveringIcon(Icon iconForHovering) {
@@ -156,9 +129,9 @@ public class LinkLabel extends NonOpaquePanel {
     super.paintComponent(g);
 
 
-    if (myLabel.getText() != null) {
+    if (getText() != null) {
       g.setColor(getActiveColor());
-      int x = getIconWidth();
+      int x = myIconWidth;
       int y = getTextBaseLine();
 
       if (myUnderline) {
@@ -169,11 +142,11 @@ public class LinkLabel extends NonOpaquePanel {
 
         y += k;
 
-        if (myLabel.getHorizontalAlignment() == myLabel.LEFT) {
-          UIUtil.drawLine(g, x + shiftX, y + shiftY, x + getFontMetrics(getFont()).stringWidth(myLabel.getText()) + shiftX, y + shiftY);
+        if (getHorizontalAlignment() == LEFT) {
+          UIUtil.drawLine(g, x + shiftX, y + shiftY, x + getFontMetrics(getFont()).stringWidth(getText()) + shiftX, y + shiftY);
         }
         else {
-          UIUtil.drawLine(g, getWidth() - 1 - getFontMetrics(getFont()).stringWidth(myLabel.getText()) + shiftX, y + shiftY,
+          UIUtil.drawLine(g, getWidth() - 1 - getFontMetrics(getFont()).stringWidth(getText()) + shiftX, y + shiftY,
                           getWidth() - 1 + shiftX, y + shiftY);
         }
       }
@@ -181,7 +154,7 @@ public class LinkLabel extends NonOpaquePanel {
       }
 
       if (myPaintDefaultIcon) {
-        int endX = getIconWidth() + getFontMetrics(getFont()).stringWidth(myLabel.getText());
+        int endX = myIconWidth + getFontMetrics(getFont()).stringWidth(getText());
         int endY = getHeight() / 2 - LINK.getIconHeight() / 2 + 1;
 
         LINK.paintIcon(this, g, endX + shiftX + DEFAULT_ICON_GAP, endY);
@@ -221,25 +194,22 @@ public class LinkLabel extends NonOpaquePanel {
   }
 
   private boolean isInClickableArea(Point pt) {
-    if (myLabel.getIcon() != null) {
-      if (pt.getX() < myLabel.getIcon().getIconWidth() && pt.getY() < myLabel.getIcon().getIconHeight()) {
+    if (getIcon() != null) {
+      if (pt.getX() < getIcon().getIconWidth() && pt.getY() < getIcon().getIconHeight()) {
         return true;
       }
     }
-
-    int widthAddin = myRightIcon.getIcon() != null ? myRightIcon.getIcon().getIconWidth() + myRightIcon.getIconTextGap() : 0;
-
-    if (myLabel.getText() != null) {
+    if (getText() != null) {
       FontMetrics fm = getFontMetrics(getFont());
       int height = fm.getHeight() + 1;
       int y = getHeight() / 2 - fm.getHeight() / 2;
-      int width = fm.stringWidth(myLabel.getText());
+      int width = fm.stringWidth(getText());
       if (myPaintDefaultIcon) {
         width += LINK.getIconWidth() + DEFAULT_ICON_GAP;
       }
 
-      if (myLabel.getHorizontalAlignment() == myLabel.LEFT) {
-        return (new Rectangle(getIconWidth(), y, width + widthAddin, height).contains(pt));
+      if (getHorizontalAlignment() == LEFT) {
+        return (new Rectangle(myIconWidth, y, width, height).contains(pt));
       }
       else {
         return (new Rectangle(getWidth() - width - 1, y, getWidth() - 1, height).contains(pt));
@@ -253,7 +223,7 @@ public class LinkLabel extends NonOpaquePanel {
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myUnderline = true;
     if (myHoveringIcon != null) {
-      myLabel.setIcon(myHoveringIcon);
+      setIcon(myHoveringIcon);
     }
     setStatusBarText(getStatusBarText());
     repaint();
@@ -266,9 +236,7 @@ public class LinkLabel extends NonOpaquePanel {
   private void disableUnderline() {
     setCursor(Cursor.getDefaultCursor());
     myUnderline = false;
-    if (myInactiveIcon != null) {
-      myLabel.setIcon(myInactiveIcon);
-    }
+    setIcon(myInactiveIcon);
     setStatusBarText(null);
     setActive(false);
   }
@@ -307,14 +275,6 @@ public class LinkLabel extends NonOpaquePanel {
 
   public void pressed(MouseEvent e) {
     doClick();
-  }
-
-  public void setText(final String text) {
-    myLabel.setText(text);
-  }
-
-  public void setIcon(final Icon icon) {
-    myLabel.setIcon(icon);
   }
 
   private class MyMouseHandler extends MouseAdapter implements MouseMotionListener {

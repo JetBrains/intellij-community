@@ -6,12 +6,16 @@ package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author max
@@ -103,13 +107,13 @@ public class NotificationPopup {
     @Override
     public void addNotify() {
       super.addNotify();
-      addMouseListenerToHierarchy(this, myEntranceListener);
+      ListenerUtil.addMouseListener(this, myEntranceListener);
     }
 
     @Override
     public void removeNotify() {
       super.removeNotify();
-      removeMouseListenerFromHierarchy(this, myEntranceListener);
+      ListenerUtil.removeMouseListener(this, myEntranceListener);
     }
 
     public Dimension getPreferredSize() {
@@ -117,33 +121,6 @@ public class NotificationPopup {
         return myPreferredContentSize;
       }
       return super.getPreferredSize();
-    }
-
-    @Override
-    protected void processMouseMotionEvent(MouseEvent e) {
-      super.processMouseMotionEvent(e);
-    }
-  }
-
-  private static void addMouseListenerToHierarchy(Component c, MouseListener l) {
-    c.addMouseListener(l);
-    if (c instanceof Container) {
-      final Container container = (Container)c;
-      Component[] children = container.getComponents();
-      for (Component child : children) {
-        addMouseListenerToHierarchy(child, l);
-      }
-    }
-  }
-
-  private static void removeMouseListenerFromHierarchy(Component c, MouseListener l) {
-    c.removeMouseListener(l);
-    if (c instanceof Container) {
-      final Container container = (Container)c;
-      Component[] children = container.getComponents();
-      for (Component child : children) {
-        removeMouseListenerFromHierarchy(child, l);
-      }
-    }
+    }   
   }
 }
