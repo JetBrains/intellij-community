@@ -31,7 +31,7 @@ public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiE
   /*
    * Use for list
    */
-  @Nullable
+  @NotNull
   GrExpression[] getInitializers();
 
   /*

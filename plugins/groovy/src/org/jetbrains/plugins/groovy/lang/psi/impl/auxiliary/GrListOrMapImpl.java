@@ -60,7 +60,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     return findChildByType(MAP_LITERAL_TOKEN_SET) != null;
   }
 
-  @Nullable
+  @NotNull
   public GrExpression[] getInitializers() {
     return findChildrenByClass(GrExpression.class);
   }
