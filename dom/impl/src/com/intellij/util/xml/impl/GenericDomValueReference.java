@@ -121,7 +121,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return getConverter().getErrorMessage(getStringValue(), context);
   }
 
-  private ConvertContextImpl getConvertContext() {
+  public final ConvertContextImpl getConvertContext() {
     return new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(myGenericValue));
   }
 
@@ -167,7 +167,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
           result.add(LookupValueFactory.createLookupValue(name, icon));
         }
       }
-      for (final String string : resolvingConverter.getAdditionalVariants()) {
+      for (final String string : resolvingConverter.getAdditionalVariants(convertContext)) {
         result.add(LookupValueFactory.createLookupValue(string, null));
       }
       return result.toArray();

@@ -201,7 +201,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       }
       final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
       final boolean domReferenceResolveOK = domReference != null && !hasBadResolve(element, domReference)
-        || converter instanceof ResolvingConverter && ((ResolvingConverter)converter).getAdditionalVariants().contains(element.getStringValue());
+        || domReference != null && converter instanceof ResolvingConverter && ((ResolvingConverter)converter).getAdditionalVariants(domReference.getConvertContext()).contains(element.getStringValue());
       boolean hasBadResolve = false;
       if (!domReferenceResolveOK) {
         for (final PsiReference reference : psiReferences) {

@@ -85,12 +85,21 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
   public abstract Collection<? extends T> getVariants(final ConvertContext context);
 
   /**
-   * Additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
+   * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
    * They will also appear in the completion dropdown.
-   * @return
    */
+  @Deprecated
+  @NotNull
   public Set<String> getAdditionalVariants() {
     return Collections.emptySet();
+  }
+  /**
+   * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
+   * They will also appear in the completion dropdown.
+   */
+  @NotNull
+  public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
+    return getAdditionalVariants();
   }
 
   /**

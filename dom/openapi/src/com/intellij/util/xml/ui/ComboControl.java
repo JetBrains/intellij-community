@@ -9,16 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.AbstractConvertContext;
-import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.NamedEnumUtil;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
@@ -29,15 +22,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author peter
@@ -100,7 +86,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
               return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
             }
           });
-          all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(), new Function() {
+          all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), new Function() {
             public Object fun(final Object s) {
               return new Pair(s, null);
             }
