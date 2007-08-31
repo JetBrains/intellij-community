@@ -36,18 +36,19 @@ public class InlineParameterHandler {
   }
 
   public static void invoke(final Project project, final Editor editor, final PsiParameter psiParameter) {
-    String errorMessage = getCannotInlineMessage(psiParameter);
-    if (errorMessage != null) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"), errorMessage, null, project);
-      return;
-    }
-
     final PsiParameterList parameterList = (PsiParameterList) psiParameter.getParent();
     if (!(parameterList.getParent() instanceof PsiMethod)) {
       return;
     }
     final int index = parameterList.getParameterIndex(psiParameter);
     final PsiMethod method = (PsiMethod) parameterList.getParent();
+
+    String errorMessage = getCannotInlineMessage(psiParameter, method);
+    if (errorMessage != null) {
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("inline.parameter.refactoring"), errorMessage, null, project);
+      return;
+    }
+
     final Ref<PsiExpression> refInitializer = new Ref<PsiExpression>();
     final Ref<PsiExpression> refConstantInitializer = new Ref<PsiExpression>();
     final Ref<PsiCallExpression> refMethodCall = new Ref<PsiCallExpression>();
@@ -148,9 +149,13 @@ public class InlineParameterHandler {
   }
 
   @Nullable
-  private static String getCannotInlineMessage(final PsiParameter psiParameter) {
+  private static String getCannotInlineMessage(final PsiParameter psiParameter, final PsiMethod method) {
     if (psiParameter.isVarArgs()) {
-      return "Inline for varargs parameters is not supported";
+      return RefactoringBundle.message("inline.parameter.error.varargs");
+    }
+    if (method.findSuperMethods().length > 0 ||
+                 method.getManager().getSearchHelper().findOverridingMethods(method, method.getUseScope(), true).length > 0) {
+      return RefactoringBundle.message("inline.parameter.error.hierarchy");
     }
     return null;
   }
