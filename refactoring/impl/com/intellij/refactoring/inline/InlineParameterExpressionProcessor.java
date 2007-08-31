@@ -116,16 +116,16 @@ public class InlineParameterExpressionProcessor {
 
     final Collection<PsiReference> parameterRefs = ReferencesSearch.search(myParameter).findAll();
 
+    initializerInMethod = (PsiExpression) RefactoringUtil.replaceElementsWithMap(initializerInMethod, elementsToReplace);
+
     String question = RefactoringBundle.message("inline.parameter.confirmation", myParameter.getName(),
-                                                myInitializer.getText());
+                                                initializerInMethod.getText());
     InlineParameterDialog dlg = new InlineParameterDialog(InlineParameterHandler.REFACTORING_NAME, question, HelpID.INLINE_VARIABLE,
                                                           "OptionPane.questionIcon", true, myMethod.getProject());
     if (!dlg.showDialog()) {
       return;
     }
     final boolean createLocal = dlg.isCreateLocal();
-
-    initializerInMethod = (PsiExpression) RefactoringUtil.replaceElementsWithMap(initializerInMethod, elementsToReplace);
 
     final Collection<PsiFile> containingFiles = new HashSet<PsiFile>();
     containingFiles.add(myMethod.getContainingFile());

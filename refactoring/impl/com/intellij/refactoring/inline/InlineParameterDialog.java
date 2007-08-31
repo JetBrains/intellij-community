@@ -2,6 +2,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.TestOnly;
@@ -24,7 +25,7 @@ public class InlineParameterDialog extends RefactoringMessageDialog {
     JComponent superPanel = super.createNorthPanel();
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(superPanel, BorderLayout.CENTER);
-    myCreateLocalCheckbox = new JCheckBox("&Replace with local variable");
+    myCreateLocalCheckbox = new JCheckBox(RefactoringBundle.message("inline.parameter.replace.with.local.checkbox"));
     panel.add(myCreateLocalCheckbox, BorderLayout.SOUTH);
     return panel;
   }
