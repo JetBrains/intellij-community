@@ -13,15 +13,18 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author mike
@@ -90,23 +93,27 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
   }
 
   void initModule(Module module) {
+    final Set<String> sourcesLeft = new THashSet<String>();
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
 
-    boolean mainRoot = true;
     for (String contentRoot : myContentRoots) {
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
       assert virtualFile != null : "cannot find content root: " + contentRoot;
       final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
 
-      if (mainRoot) {
-        for (String sourceRoot: mySourceRoots) {
-          final String s = contentRoot + "/" + sourceRoot;
-          final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
-          assert vf != null : "cannot find source root: " + s;
+
+      for (String sourceRoot: mySourceRoots) {
+        String s = contentRoot + "/" + sourceRoot;
+        VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
+        if (vf == null) {
+          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourceRoot);
+          if (file != null && VfsUtil.isAncestor(virtualFile, file, false)) vf = file;
+        }
+        //assert vf != null : "cannot find source root: " + sourceRoot;
+        if (vf != null) {
           contentEntry.addSourceFolder(vf, false);
         }
-        mainRoot = false;
       }
     }
     if (myOutputPath != null) {
