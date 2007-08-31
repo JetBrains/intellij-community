@@ -49,7 +49,7 @@ public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDec
 
   GrTopStatement[] getTopStatements();
 
-  GrImportStatement addImportForClass(PsiClass aClass);
+  GrImportStatement addImportForClass(PsiClass aClass) throws IncorrectOperationException;
 
   void removeImport(GrImportStatement importStatement) throws IncorrectOperationException;
 

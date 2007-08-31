@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -35,15 +37,26 @@ import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -120,7 +133,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkMap(GrNamedArgument[] namedArguments, AnnotationHolder holder) {
-    final Map<GrNamedArgument,List<GrNamedArgument>> map = factorDuplicates(namedArguments, new TObjectHashingStrategy<GrNamedArgument>() {
+    final Map<GrNamedArgument, List<GrNamedArgument>> map = factorDuplicates(namedArguments, new TObjectHashingStrategy<GrNamedArgument>() {
       public int computeHashCode(GrNamedArgument arg) {
         final GrArgumentLabel label = arg.getLabel();
         if (label == null) return 0;
@@ -489,8 +502,8 @@ public class GroovyAnnotator implements Annotator {
           if (refExpr.getParent() instanceof GrReferenceExpression) {
             Annotation annotation = holder.createWarningAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
             if (refExpr.getQualifierExpression() == null) {
-              registerAddImportFixes(refExpr, annotation);
               registerCreateClassByTypeFix(refExpr, annotation, false);
+              registerAddImportFixes(refExpr, annotation);
             }
 
           }
@@ -544,7 +557,8 @@ public class GroovyAnnotator implements Annotator {
     registerUsedImport(refElement, resolveResult);
     if (refElement.getReferenceName() != null) {
 
-      if (parent instanceof GrNewExpression) return;
+//todo [to ven] for what?
+//      if (parent instanceof GrNewExpression) return;
 
       if (parent instanceof GrImportStatement &&
           ((GrImportStatement) parent).isStatic() &&
@@ -566,8 +580,8 @@ public class GroovyAnnotator implements Annotator {
       final Annotation annotation = holder.createErrorAnnotation(refElement, message);
       // todo implement for nested classes
       if (refElement.getQualifier() == null) {
-        registerAddImportFixes(refElement, annotation);
         registerCreateClassByTypeFix(refElement, annotation, false);
+        registerAddImportFixes(refElement, annotation);
       }
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     } else if (!resolveResult.isAccessible()) {
