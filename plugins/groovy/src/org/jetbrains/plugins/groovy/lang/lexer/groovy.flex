@@ -144,9 +144,9 @@ mSTRING_ESC = \\ n | \\ r | \\ t | \\ b | \\ f | "\\" "\\" | \\ "$" | \\ \" | \\
 ESCAPPED_REGEX_SEP = \\ "/"
 mREGEX_BEGIN = "/""$"
    |  "/" ([^"/""$"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT}"$"
-mREGEX_CONTENT = ({mSTRING_ESC}         
+mREGEX_CONTENT = ({mSTRING_ESC}
    | {ESCAPPED_REGEX_SEP}
-   | [^\\"/"\r\n"$"])*
+   | [^"/"\r\n"$"])*
 
 mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} ("$""/" | "/")
 
@@ -400,7 +400,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              gStringStack.push(mDIV);       // For regexes
                                              return(mREGEX_BEGIN); }
 
-"/" ([^"/"\n\r"$"] | {mSTRING_ESC})? {mREGEX_CONTENT}      {  return mWRONG_REGEX_LITERAL; }
+"/" ([^\""$"\n\r"/"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} { return mWRONG_REGEX_LITERAL; }
 
 [^]                                       {  yypushback(yytext().length());
                                              if (blockStack.isEmpty()){
@@ -512,7 +512,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 {mGSTRING_LITERAL}                                         {  return mGSTRING_LITERAL; }
 
-\" ([^\\\""$"\n] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
+\" ([^\\\""$"\n\r] | {mSTRING_ESC})? {mGSTRING_SINGLE_CONTENT}
 | \"\"\"[^"$"]
 | {mWRONG_TRIPLE_GSTRING}                                  {  return mWRONG_GSTRING_LITERAL; }
 
