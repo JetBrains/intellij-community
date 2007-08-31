@@ -19,7 +19,6 @@ public class SurroundWithUtil {
       PsiManager psiManager = block.getManager();
       PsiElementFactory factory = psiManager.getElementFactory();
       ArrayList<PsiElement> array = new ArrayList<PsiElement>();
-      StatementsLoop:
       for (PsiElement statement : statements) {
         if (statement instanceof PsiDeclarationStatement) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
@@ -39,7 +38,7 @@ public class SurroundWithUtil {
               }
             }
             PsiDeclarationStatement newDeclaration;
-            if (array.size() > 0) {
+            if (!array.isEmpty()) {
               PsiElement firstStatement = array.get(0);
               newDeclaration = (PsiDeclarationStatement)block.addBefore(declaration, firstStatement);
               declaration.delete();
@@ -62,7 +61,7 @@ public class SurroundWithUtil {
                 }
               }
             }
-            continue StatementsLoop;
+            continue;
           }
         }
         array.add(statement);
@@ -77,7 +76,7 @@ public class SurroundWithUtil {
 
   private static boolean needToDeclareOut(PsiElement block, PsiElement[] statements, PsiDeclarationStatement statement) {
     PsiSearchHelper helper = block.getManager().getSearchHelper();
-    PsiElement[] elements = (statement).getDeclaredElements();
+    PsiElement[] elements = statement.getDeclaredElements();
     PsiElement lastStatement = statements[statements.length - 1];
     int endOffset = lastStatement.getTextRange().getEndOffset();
     for (PsiElement element : elements) {

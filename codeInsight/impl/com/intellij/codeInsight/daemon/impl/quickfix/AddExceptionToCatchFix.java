@@ -16,6 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -23,10 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 public class AddExceptionToCatchFix extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix");
 
-  public AddExceptionToCatchFix() {
-  }
-
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     int offset = editor.getCaretModel().getOffset();
 
@@ -67,7 +65,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     }
   }
 
-  private PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement, PsiClassType exceptionType, PsiFile file) throws IncorrectOperationException {
+  private static PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement, PsiClassType exceptionType, PsiFile file) throws IncorrectOperationException {
     PsiElementFactory factory = tryStatement.getManager().getElementFactory();
 
     CodeStyleManager styleManager = tryStatement.getManager().getCodeStyleManager();
@@ -96,7 +94,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     return catchBlock;
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
 
     int offset = editor.getCaretModel().getOffset();
@@ -117,13 +115,14 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     PsiTryStatement statement = (PsiTryStatement) parent;
     PsiCodeBlock tryBlock = statement.getTryBlock();
     if (tryBlock.getTextRange().getStartOffset() <= offset && tryBlock.getTextRange().getEndOffset() > offset) {
-      if (ExceptionUtil.collectUnhandledExceptions(tryBlock, statement.getParent()) != null) {
+      if (ExceptionUtil.collectUnhandledExceptions(tryBlock, statement.getParent()).length != 0) {
         return tryBlock;
       }
     }
     return null;
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.catch.clause.family");
   }

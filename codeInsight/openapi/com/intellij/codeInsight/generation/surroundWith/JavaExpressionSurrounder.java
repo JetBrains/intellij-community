@@ -17,7 +17,7 @@ public abstract class JavaExpressionSurrounder implements Surrounder {
   
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundExpressionHandler");
 
-  public boolean isApplicable(PsiElement[] elements) {
+  public boolean isApplicable(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == 1 && elements[0] instanceof PsiExpression);
     return isApplicable((PsiExpression)elements[0]);
   }

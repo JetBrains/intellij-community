@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class SurroundWithTryCatchFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix");
@@ -31,15 +32,17 @@ public class SurroundWithTryCatchFix implements IntentionAction {
     myStatement = PsiTreeUtil.getNonStrictParentOfType(element, PsiStatement.class);
   }
 
+  @NotNull
   public String getText() {
     return QuickFixBundle.message("surround.with.try.catch.fix");
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("surround.with.try.catch.fix");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (myStatement == null || !myStatement.isValid()) {
       return false;
     }
@@ -47,7 +50,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
            !HighlightUtil.isSuperOrThisMethodCall(((PsiExpressionStatement)myStatement).getExpression());
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     int col = editor.getCaretModel().getLogicalPosition().column;
