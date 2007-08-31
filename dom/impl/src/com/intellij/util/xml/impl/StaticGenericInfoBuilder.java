@@ -287,7 +287,14 @@ public class StaticGenericInfoBuilder {
     final SubTagList subTagList = method.findAnnotation(SubTagList.class, myClass);
     if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
       final String propertyName = getPropertyName(method);
-      return propertyName != null ? getNameStrategy(false).convertName(StringUtil.unpluralize(propertyName)) : null;
+      if (propertyName != null) {
+        final String singular = StringUtil.unpluralize(propertyName);
+        assert singular != null : "Can't unpluralize: " + propertyName;
+        return getNameStrategy(false).convertName(singular);
+      }
+      else {
+        return null;
+      }
     }
     return subTagList.value();
   }
