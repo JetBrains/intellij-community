@@ -12,9 +12,9 @@ try {
 4(5) element: Catch clause
 5(9) READ b
 6(11) element: Finally clause
-7()  CALL 6
+7(8)  CALL 6
 8(13) AFTER CALL 7
-9()  CALL 6
+9(10)  CALL 6
 10(13) AFTER CALL 9
 11(12) READ c
 12(13)  RETURN

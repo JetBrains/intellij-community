@@ -11,9 +11,9 @@ print e
 4(5,9) READ c
 5(7) element: RETURN statement
 6(11) element: Finally clause
-7()  CALL 6
+7(8)  CALL 6
 8(15) AFTER CALL 7
-9()  CALL 6
+9(10)  CALL 6
 10(13) AFTER CALL 9
 11(12) READ e
 12(13)  RETURN

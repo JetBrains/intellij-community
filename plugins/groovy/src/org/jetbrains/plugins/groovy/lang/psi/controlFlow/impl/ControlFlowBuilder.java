@@ -435,7 +435,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final CallInstructionImpl call = new CallInstructionImpl(myInstructionNumber++, finallyInstruction);
     addNode(call);
     addEdge(src, call);
-    flowAbrupted();
     PostCallInstructionImpl postCall = new PostCallInstructionImpl(myInstructionNumber++, call);
     addNode(postCall);
     addPendingEdge(scopeWhenAddPending, postCall);
