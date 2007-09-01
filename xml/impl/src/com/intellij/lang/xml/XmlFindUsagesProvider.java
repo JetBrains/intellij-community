@@ -22,7 +22,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
            element instanceof XmlEntityDecl ||
            element instanceof XmlTag ||
            element instanceof XmlAttributeValue ||
-           (PsiUtil.isInJspFile(element) && element instanceof PsiFile);
+           (PsiUtil.isInJspFile(element) && ( element instanceof PsiFile || element instanceof XmlComment));
   }
 
   @NotNull
@@ -41,6 +41,8 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
     }
     else if (element instanceof XmlAttribute) {
       return LangBundle.message("xml.terms.attribute");
+    } else if (element instanceof XmlComment) {
+      return LangBundle.message("xml.terms.variable");
     }
     throw new IllegalArgumentException("Cannot get type for " + element);
   }

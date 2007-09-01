@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
@@ -137,6 +138,13 @@ public abstract class JspSpiUtil {
   }
 
   protected abstract CompletionData _createJspCompletionData();
+
+  public static PsiReference[] getReferencesForXmlCommentInJspx(XmlComment comment) {
+    final JspSpiUtil util = getJspSpiUtil();
+    return util != null ? util.getReferencesFromComment(comment) : PsiReference.EMPTY_ARRAY;
+  }
+
+  protected abstract PsiReference[] getReferencesFromComment(XmlComment comment);
 
   public static boolean isJavaContext(PsiElement position) {
     if(PsiTreeUtil.getContextOfType(position, JspClass.class, false) != null) return true;
