@@ -35,9 +35,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
+
     private static final Logger LOG =
             Logger.getInstance("#com.siyeh.ig.InspectionGadgetsFix");
-  private boolean myOnTheFly;
+    private boolean myOnTheFly;
 
   /**
      * To appear in "Apply Fix" statement when multiple Quick Fixes exist
@@ -47,7 +48,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         return "";
     }
 
-    public void applyFix(@NotNull Project project,
+    public final void applyFix(@NotNull Project project,
                          @NotNull ProblemDescriptor descriptor){
         final PsiElement problemElement = descriptor.getPsiElement();
         if(problemElement == null || !problemElement.isValid()){
@@ -203,11 +204,11 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         return out;
     }
 
-  public final void setOnTheFly(boolean onTheFly) {
-    myOnTheFly = onTheFly;
-  }
+    public final void setOnTheFly(boolean onTheFly) {
+        myOnTheFly = onTheFly;
+    }
 
-  public final boolean isOnTheFly() {
-    return myOnTheFly;
-  }
+    public final boolean isOnTheFly() {
+        return myOnTheFly;
+    }
 }
