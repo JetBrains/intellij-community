@@ -21,6 +21,7 @@ public interface XmlTokenType {
   IElementType XML_ATTRIBUTE_VALUE_END_DELIMITER = new IXmlLeafElementType("XML_ATTRIBUTE_VALUE_END_DELIMITER");
   IElementType XML_EQ = new IXmlLeafElementType("XML_EQ");
   IElementType XML_DATA_CHARACTERS = new IXmlLeafElementType("XML_DATA_CHARACTERS");
+  IElementType XML_TAG_CHARACTERS = new IXmlLeafElementType("XML_TAG_CHARACTERS");
   IElementType XML_WHITE_SPACE = JavaTokenType.WHITE_SPACE;
   IElementType XML_REAL_WHITE_SPACE = new IXmlLeafElementType("XML_WHITE_SPACE");
   IElementType XML_COMMENT_START = new IXmlLeafElementType("XML_COMMENT_START");

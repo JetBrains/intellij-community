@@ -73,6 +73,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, HighlighterColors.XML_TAG);
     keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, HighlighterColors.XML_TAG);
     keys1.put(XmlTokenType.XML_EQ, HighlighterColors.XML_TAG);
+    keys1.put(XmlTokenType.XML_TAG_CHARACTERS, HighlighterColors.XML_TAG);
 
     keys2.put(XmlTokenType.XML_TAG_NAME, HighlighterColors.XML_TAG_NAME);
     keys2.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, HighlighterColors.XML_TAG_NAME);
@@ -82,6 +83,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, HighlighterColors.XML_ATTRIBUTE_VALUE);
     keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, HighlighterColors.XML_ATTRIBUTE_VALUE);
     keys2.put(XmlTokenType.XML_EQ, HighlighterColors.XML_ATTRIBUTE_NAME);
+    keys2.put(XmlTokenType.XML_TAG_CHARACTERS, HighlighterColors.XML_ATTRIBUTE_VALUE);
 
     keys1.put(XmlTokenType.XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 

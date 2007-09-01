@@ -423,8 +423,8 @@ public class XmlParsing {
     }
 
     final IElementType tokenType = token();
-    if (tokenType == XML_DATA_CHARACTERS) {
-      while (token() == XML_DATA_CHARACTERS) {
+    if (tokenType == XML_TAG_CHARACTERS) {
+      while (token() == XML_TAG_CHARACTERS) {
         advance();
       }
     } else {
