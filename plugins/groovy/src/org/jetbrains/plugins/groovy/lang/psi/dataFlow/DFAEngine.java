@@ -1,10 +1,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Stack;
 
 /**
  * @author ven
@@ -24,10 +26,14 @@ public class DFAEngine<E> {
     mySemilattice = semilattice;
   }
 
+  private static final Stack<CallInstruction> ourEmptyCallStack = new Stack<CallInstruction>();
+
   public ArrayList<E> performDFA() {
     ArrayList<E> info = new ArrayList<E>(myFlow.length);
+    ArrayList<Stack<CallInstruction>> env = new ArrayList<Stack<CallInstruction>>(myFlow.length);
     for (int i = 0; i < myFlow.length; i++) {
       info.add(myDfa.initial());
+      env.add(new Stack<CallInstruction>());
     }
 
     boolean[] visited = new boolean[myFlow.length];
@@ -46,11 +52,11 @@ public class DFAEngine<E> {
           final Instruction curr = worklist.remove();
           final int num = curr.num() - 1;
           final E oldE = info.get(num);
-          E newE = join(curr, info);
+          E newE = join(curr, info, env);
           myDfa.fun(newE, curr);
           if (!mySemilattice.eq(newE, oldE)) {
             info.set(num, newE);
-            for (Instruction next : getNext(curr)) {
+            for (Instruction next : getNext(curr, env)) {
               worklist.add(next);
               visited[next.num() - 1] = true;
             }
@@ -65,8 +71,8 @@ public class DFAEngine<E> {
     return info;
   }
 
-  private E join(Instruction instruction, ArrayList<E> info) {
-    final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.pred() : instruction.succ();
+  private E join(Instruction instruction, ArrayList<E> info, ArrayList<Stack<CallInstruction>> env) {
+    final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.pred(env) : instruction.succ(env);
     ArrayList<E> prevInfos = new ArrayList<E>();
     for (Instruction i : prev) {
       prevInfos.add(info.get(i.num() - 1));
@@ -74,7 +80,7 @@ public class DFAEngine<E> {
     return mySemilattice.join(prevInfos);
   }
 
-  private Iterable<? extends Instruction> getNext(Instruction curr) {
-    return myDfa.isForward() ? curr.succ() : curr.pred();
+  private Iterable<? extends Instruction> getNext(Instruction curr, ArrayList<Stack<CallInstruction>> env) {
+    return myDfa.isForward() ? curr.succ(env) : curr.pred(env);
   }
 }

@@ -1,28 +1,27 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
 import java.util.Collections;
+import java.util.Stack;
 
 /**
  * @author ven
  */
 class InstructionImpl implements Instruction, Cloneable {
-  List<InstructionImpl> myPred = new ArrayList<InstructionImpl>();
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl");
 
-  List<InstructionImpl> mySucc = new ArrayList<InstructionImpl>();
+  ArrayList<InstructionImpl> myPred = new ArrayList<InstructionImpl>();
+
+  ArrayList<InstructionImpl> mySucc = new ArrayList<InstructionImpl>();
 
   PsiElement myPsiElement;
   private int myNumber;
-
-  private static final Stack<CallInstruction> ourEmptyCallStack = new Stack<CallInstruction>();
-  protected Stack<CallInstruction> myCallStack = ourEmptyCallStack; //copy on write
 
   @Nullable
   public PsiElement getElement() {
@@ -34,37 +33,33 @@ class InstructionImpl implements Instruction, Cloneable {
     myNumber = num;
   }
 
-  protected InstructionImpl clone() {
-    try {
-      final InstructionImpl clone = (InstructionImpl) super.clone();
-      clone.myCallStack = (Stack<CallInstruction>) myCallStack.clone();
-      return clone;
-    } catch (CloneNotSupportedException e) {
-      e.printStackTrace();
-      return null;
-    }
+  protected Stack<CallInstruction> getStack(ArrayList<Stack<CallInstruction>> env, InstructionImpl instruction) {
+    return env.get(instruction.num() - 1);
   }
 
-  public Iterable<? extends Instruction> succ() {
+  public Iterable<? extends Instruction> succ(ArrayList<Stack<CallInstruction>> env) {
+    final Stack<CallInstruction> stack = getStack(env, this);
     for (InstructionImpl instruction : mySucc) {
-      instruction.myCallStack = myCallStack;
+      env.set(instruction.num() - 1, stack);
     }
-    
+
     return mySucc;
   }
 
-  public Iterable<? extends Instruction> pred() {
+  public Iterable<? extends Instruction> pred(ArrayList<Stack<CallInstruction>> env) {
+    final Stack<CallInstruction> stack = getStack(env, this);
     for (InstructionImpl instruction : myPred) {
-      instruction.myCallStack = myCallStack;
+      env.set(instruction.num() - 1, stack);
     }
 
     if (myPred.size() > 0) {
       return myPred;
     }
 
+    Stack<CallInstruction> myCallStack = env.get(num() - 1);
     if (!myCallStack.isEmpty()) {
       final CallInstruction callInstruction = myCallStack.peek();
-      return callInstruction.pred();
+      return callInstruction.pred(env);
     }
 
     return Collections.emptyList();

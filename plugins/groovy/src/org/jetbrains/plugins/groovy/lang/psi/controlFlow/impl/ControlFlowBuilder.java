@@ -496,10 +496,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return super.toString() + " CALL " + myCallee.num();
     }
 
-    public Iterable<? extends Instruction> succ() {
-      final InstructionImpl calleeClone = myCallee.clone();
-      calleeClone.myCallStack.push(this);
-      return Collections.singletonList(calleeClone);
+    public Iterable<? extends Instruction> succ(ArrayList<Stack<CallInstruction>> env) {
+      getStack(env, myCallee).push(this);
+      return Collections.singletonList(myCallee);
     }
 
     protected String getElementPresentation() { return ""; }
@@ -508,8 +507,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       super(null, num);
       myCallee = callee;
     }
-
-    protected CallInstructionImpl clone() { return (CallInstructionImpl) super.clone(); }
   }
 
   class PostCallInstructionImpl extends InstructionImpl implements AfterCallInstruction {
@@ -520,10 +517,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return super.toString() + "AFTER CALL " + myCall.num();
     }
 
-    public Iterable<? extends Instruction> pred() {
-      final InstructionImpl returnClone = myReturnInsn.clone();
-      returnClone.myCallStack.push(myCall);
-      return Collections.singletonList(returnClone);
+    public Iterable<? extends Instruction> pred(ArrayList<Stack<CallInstruction>> env) {
+      getStack(env, myReturnInsn).push(myCall);
+      return Collections.singletonList(myReturnInsn);
     }
 
     protected String getElementPresentation() { return "";
@@ -537,8 +533,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     public void setReturnInstruction(RetInstruction retInstruction) {
       myReturnInsn = retInstruction;
     }
-
-    protected PostCallInstructionImpl clone() { return (PostCallInstructionImpl) super.clone(); }
   }
 
   class RetInstruction extends InstructionImpl {
@@ -552,11 +546,17 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     protected String getElementPresentation() { return ""; }
 
-    protected RetInstruction clone() { return (RetInstruction) super.clone(); }
+    public Iterable<? extends Instruction> succ(ArrayList<Stack<CallInstruction>> env) {
+      final Stack<CallInstruction> callStack = getStack(env, this);
+      final CallInstruction callInstruction = callStack.peek();
+      final List<InstructionImpl> succ = ((CallInstructionImpl) callInstruction).mySucc;
+      final Stack<CallInstruction> copy = (Stack<CallInstruction>) callStack.clone();
+      copy.pop();
+      for (InstructionImpl instruction : succ) {
+        env.set(instruction.num() - 1, copy);
+      }
 
-    public Iterable<? extends Instruction> succ() {
-      final CallInstruction callInstruction = myCallStack.peek();
-      return ((CallInstructionImpl) callInstruction).mySucc;
+      return succ;
    }
   }
 }
