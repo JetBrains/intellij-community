@@ -110,7 +110,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   public XmlNSDescriptor getNSDescriptor(final String namespace, boolean strict) {
     final XmlTag parentTag = getParentTag();
 
-    if (parentTag == null) {
+    if (parentTag == null && namespace.equals(XmlUtil.XHTML_URI)) {
       PsiFile containingFile = getContainingFile();
       if (!(containingFile instanceof XmlFile) && PsiUtil.isInJspFile(containingFile)) {
         containingFile = PsiUtil.getJspFile(containingFile);
@@ -118,9 +118,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       final XmlDocument document = ((XmlFile)containingFile).getDocument();
       final XmlProlog prolog = document.getProlog();
 
-      if(prolog != null && prolog.getDoctype() != null &&
-         namespace.equals(XmlUtil.XHTML_URI)
-        ) {
+      if(prolog != null && prolog.getDoctype() != null) {
         final String url = prolog.getDoctype().getDtdUri();
         XmlNSDescriptor nsDescriptor = url != null ? document.getDefaultNSDescriptor(url, true):null;
         
