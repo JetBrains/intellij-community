@@ -6,16 +6,16 @@ try {
   c
 }
 -----
-1(2) element: null
-2(3,4) element: Open block
-3(4,7) READ a
-4(5) element: Catch clause
-5(9) READ b
-6(11) element: Finally clause
-7(8)  CALL 6
-8(13) AFTER CALL 7
-9(10)  CALL 6
-10(13) AFTER CALL 9
-11(12) READ c
-12(13)  RETURN
-13() element: null
+0(1) element: null
+1(2,3) element: Open block
+2(3,6) READ a
+3(4) element: Catch clause
+4(8) READ b
+5(10) element: Finally clause
+6(5,7)  CALL 5
+7(12) AFTER CALL 6
+8(5,9)  CALL 5
+9(12) AFTER CALL 8
+10(11) READ c
+11(12)  RETURN
+12() element: null

@@ -4,12 +4,12 @@ while (true) {
    i++
 }
 -----
-1(2) element: null
-2(3) WRITE i
-3(4,9) element: WHILE statement
-4(5) element: IF statement
-5(6,7) READ i
-6(9) element: BREAK statement
-7(8) READ i
-8(3) WRITE i
-9() element: null
+0(1) element: null
+1(2) WRITE i
+2(3,8) element: WHILE statement
+3(4) element: IF statement
+4(5,6) READ i
+5(8) element: BREAK statement
+6(7) READ i
+7(2) WRITE i
+8() element: null

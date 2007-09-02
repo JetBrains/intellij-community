@@ -6,11 +6,11 @@ switch(i) {
     print i
 }
 -----
-1(2) element: null
-2(3) READ i
-3(4,6) element: Switch statement
-4(5) READ i
-5(8) WRITE j
-6(7) READ print
-7(8) READ i
-8() element: null
+0(1) element: null
+1(2) READ i
+2(3,5) element: Switch statement
+3(4) READ i
+4(7) WRITE j
+5(6) READ print
+6(7) READ i
+7() element: null

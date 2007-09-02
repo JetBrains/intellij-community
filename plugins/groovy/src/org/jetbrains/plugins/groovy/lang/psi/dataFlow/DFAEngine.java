@@ -42,15 +42,15 @@ public class DFAEngine<E> {
     for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0;) {
       Instruction instr = myFlow[i];
 
-      if (!visited[instr.num() - 1]) {
+      if (!visited[instr.num()]) {
         Queue<Instruction> worklist = new LinkedList<Instruction>();
 
         worklist.add(instr);
-        visited[instr.num() - 1] = true;
+        visited[instr.num()] = true;
 
         while (!worklist.isEmpty()) {
           final Instruction curr = worklist.remove();
-          final int num = curr.num() - 1;
+          final int num = curr.num();
           final E oldE = info.get(num);
           E newE = join(curr, info, env);
           myDfa.fun(newE, curr);
@@ -58,7 +58,7 @@ public class DFAEngine<E> {
             info.set(num, newE);
             for (Instruction next : getNext(curr, env)) {
               worklist.add(next);
-              visited[next.num() - 1] = true;
+              visited[next.num()] = true;
             }
           }
         }
@@ -75,7 +75,7 @@ public class DFAEngine<E> {
     final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.pred(env) : instruction.succ(env);
     ArrayList<E> prevInfos = new ArrayList<E>();
     for (Instruction i : prev) {
-      prevInfos.add(info.get(i.num() - 1));
+      prevInfos.add(info.get(i.num()));
     }
     return mySemilattice.join(prevInfos);
   }

@@ -4,10 +4,10 @@ try {
   print e
 }
 -----
-1(2) element: null
-2(3,4) element: Open block
-3(4) element: THROW statement
-4(5) element: Catch clause
-5(6) READ print
-6(7) READ e
-7() element: null
+0(1) element: null
+1(2,3) element: Open block
+2(3) element: THROW statement
+3(4) element: Catch clause
+4(5) READ print
+5(6) READ e
+6() element: null

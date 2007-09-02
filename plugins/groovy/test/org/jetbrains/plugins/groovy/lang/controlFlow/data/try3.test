@@ -1,0 +1,21 @@
+def a
+
+try {
+} catch (Exception e) {
+    a = 1
+} finally {
+     a.abs()
+}
+-----
+0(1) element: null
+1(2,5) element: Open block
+2(3) element: Catch clause
+3(7) WRITE a
+4(9) element: Finally clause
+5(4,6)  CALL 4
+6(11) AFTER CALL 5
+7(4,8)  CALL 4
+8(11) AFTER CALL 7
+9(10) READ a
+10(11)  RETURN
+11() element: null

@@ -74,7 +74,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myProcessingStack = new Stack<InstructionImpl>();
     myCatchedExceptionInfos = new Stack<ExceptionInfo>();
     myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
-    myInstructionNumber = 1;
+    myInstructionNumber = 0;
     myStartInScope = startInScope;
     myEndInScope = endInScope;
     myIsInScope = startInScope == null;
@@ -381,7 +381,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (tryBlock != null) {
       tryBeg = startNode(tryBlock);
       tryBlock.accept(this);
-      tryEnd = myHead != tryBeg ? myHead : null;
+      tryEnd = myHead;
       finishNode(tryBeg);
     }
 
@@ -434,6 +434,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     flowAbrupted();
     final CallInstructionImpl call = new CallInstructionImpl(myInstructionNumber++, finallyInstruction);
     addNode(call);
+    addEdge(call, finallyInstruction);
     addEdge(src, call);
     PostCallInstructionImpl postCall = new PostCallInstructionImpl(myInstructionNumber++, call);
     addNode(postCall);
@@ -552,7 +553,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       final Stack<CallInstruction> copy = (Stack<CallInstruction>) callStack.clone();
       copy.pop();
       for (InstructionImpl instruction : succ) {
-        env.set(instruction.num() - 1, copy);
+        env.set(instruction.num(), copy);
       }
 
       return succ;

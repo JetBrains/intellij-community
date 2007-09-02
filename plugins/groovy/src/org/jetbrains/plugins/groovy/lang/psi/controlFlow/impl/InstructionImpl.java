@@ -34,13 +34,13 @@ class InstructionImpl implements Instruction, Cloneable {
   }
 
   protected Stack<CallInstruction> getStack(ArrayList<Stack<CallInstruction>> env, InstructionImpl instruction) {
-    return env.get(instruction.num() - 1);
+    return env.get(instruction.num());
   }
 
   public Iterable<? extends Instruction> succ(ArrayList<Stack<CallInstruction>> env) {
     final Stack<CallInstruction> stack = getStack(env, this);
     for (InstructionImpl instruction : mySucc) {
-      env.set(instruction.num() - 1, stack);
+      env.set(instruction.num(), stack);
     }
 
     return mySucc;
@@ -49,11 +49,11 @@ class InstructionImpl implements Instruction, Cloneable {
   public Iterable<? extends Instruction> pred(ArrayList<Stack<CallInstruction>> env) {
     final Stack<CallInstruction> stack = getStack(env, this);
     for (InstructionImpl instruction : myPred) {
-      env.set(instruction.num() - 1, stack);
+      env.set(instruction.num(), stack);
     }
 
-    if (myPred.size() > 0) {
-      return myPred;
+    return myPred;
+    /*if (myPred.size() > 0) {
     }
 
     Stack<CallInstruction> myCallStack = env.get(num() - 1);
@@ -62,7 +62,7 @@ class InstructionImpl implements Instruction, Cloneable {
       return callInstruction.pred(env);
     }
 
-    return Collections.emptyList();
+    return Collections.emptyList();*/
   }
 
   public String toString() {

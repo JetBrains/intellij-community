@@ -1,13 +1,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * @author ven
@@ -32,9 +33,13 @@ public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
         final PsiType t1 = entry.getValue();
         if (result.containsKey(name)) {
           final PsiType t2 = result.get(name);
-          if (t1.isAssignableFrom(t2)) result.put(name, t1);
-          else if (t2.isAssignableFrom(t1)) result.put(name, t2);
-          else result.put(name, GenericsUtil.getLeastUpperBound(t1, t2, myManager));
+          if (t1 != null && t2 != null) {
+            if (t1.isAssignableFrom(t2)) result.put(name, t1);
+            else if (t2.isAssignableFrom(t1)) result.put(name, t2);
+            else result.put(name, GenericsUtil.getLeastUpperBound(t1, t2, myManager));
+          } else {
+            result.put(name, null);
+          }
         }
       }
     }
@@ -50,8 +55,26 @@ public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
       if (!e2.containsKey(name)) return false;
       final PsiType t1 = entry.getValue();
       final PsiType t2 = e2.get(name);
-      if (!t1.equals(t2)) return false;
+      if (t1 == null || t2 == null) {
+        if (t1 != null || t2 != null) return false;
+      } else {
+        if (!t1.equals(t2)) return false;
+      }
     }
     return true;
+  }
+
+  private boolean equal(PsiType t1, PsiType t2) {
+    if (t1 instanceof PsiIntersectionType && t2 instanceof PsiIntersectionType) {
+      final PsiType[] first = ((PsiIntersectionType) t1).getConjuncts();
+      final PsiType[] second = ((PsiIntersectionType) t2).getConjuncts();
+      if (first.length != second.length) return false;
+      for (int i = 0; i < first.length; i++) {
+        if (!equal(first[i], second[i])) return false;
+      }
+      return true;
+    }
+
+    return t1.equals(t2);
   }
 }
