@@ -78,7 +78,7 @@ public class PsiIntersectionType extends PsiType {
     return myConjuncts;
   }
 
-  public static PsiType createIntersection (PsiType... conjuncts) {
+  public static PsiType createIntersection(PsiType... conjuncts) {
     LOG.assertTrue(conjuncts.length >= 1);
     if (conjuncts.length == 1) return conjuncts[0];
     return new PsiIntersectionType(conjuncts);
@@ -86,5 +86,19 @@ public class PsiIntersectionType extends PsiType {
 
   public PsiType getRepresentative() {
     return myConjuncts[0];
+  }
+
+  public boolean equals(final Object obj) {
+    if (this == obj) return true;
+    if (!(obj instanceof PsiIntersectionType)) return false;
+    final PsiType[] first = getConjuncts();
+    final PsiType[] second = ((PsiIntersectionType)obj).getConjuncts();
+    if (first.length != second.length) return false;
+    //positional equality
+    for (int i = 0; i < first.length; i++) {
+      if (!first[i].equals(second[i])) return false;
+    }
+
+    return true;
   }
 }
