@@ -32,10 +32,6 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
   }
 
-  protected String getHelpTopic() {
-    return "runningInspections";
-  }
-
   protected void analyze(@NotNull Project project, AnalysisScope scope) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = ((InspectionManagerEx)InspectionManager.getInstance(project));
