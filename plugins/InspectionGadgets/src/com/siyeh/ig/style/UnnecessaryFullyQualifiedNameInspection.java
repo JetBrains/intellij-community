@@ -121,10 +121,12 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
             final QualificationRemover qualificationRemover =
                     new QualificationRemover(fullyQualifiedText);
             file.accept(qualificationRemover);
-            final Collection<PsiElement> shortenedElements =
-                    qualificationRemover.getShortenedElements();
-            HighlightUtil.highlightElements(shortenedElements);
-            showStatusMessage(file.getProject(), shortenedElements.size());
+            if (isOnTheFly()) {
+                final Collection<PsiElement> shortenedElements =
+                        qualificationRemover.getShortenedElements();
+                HighlightUtil.highlightElements(shortenedElements);
+                showStatusMessage(file.getProject(), shortenedElements.size());
+            }
         }
 
         private static void showStatusMessage(Project project,
