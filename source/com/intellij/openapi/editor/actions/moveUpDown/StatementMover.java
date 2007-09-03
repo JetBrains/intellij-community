@@ -88,6 +88,7 @@ class StatementMover extends LineMover {
   private boolean calcInsertOffset(PsiFile file, final Editor editor, LineRange range) {
     int line = isDown ? range.endLine+1 : range.startLine - 1;
     int startLine = isDown ? range.endLine : range.startLine - 1;
+    if (line < 0 || startLine < 0) return false;
     while (true) {
       final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
       PsiElement element = firstNonWhiteElement(offset, file, true);
