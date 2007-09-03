@@ -523,7 +523,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
           }
         }
         if (!exceptions.isEmpty()) {
-          vcsHelper.showErrors(exceptions, "Errors Adding Files");
+          vcsHelper.showErrors(exceptions, SvnBundle.message("add.files.errors.title"));
         }
       }
     }
@@ -583,7 +583,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
           }
         }
         if (!exceptions.isEmpty()) {
-          vcsHelper.showErrors(exceptions, "Errors Deleting Files");
+          vcsHelper.showErrors(exceptions, SvnBundle.message("delete.files.errors.title"));
         }
       }
     }
@@ -608,8 +608,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
   @Nullable
   private static SvnVcs getVCS(VirtualFile file) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = 0; projects != null && i < projects.length; i++) {
-      Project project = projects[i];
+    for (Project project : projects) {
       AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
       if (vcs instanceof SvnVcs) {
         return (SvnVcs)vcs;
