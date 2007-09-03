@@ -531,7 +531,7 @@ public class BreakpointManager implements JDOMExternalizable {
                 if (slaveBreakpoint == null) {
                   continue;
                 }
-                addBreakpointRule(new EnableBreakpointRule(BreakpointManager.this, masterBreakpoint, slaveBreakpoint));
+                addBreakpointRule(new EnableBreakpointRule(BreakpointManager.this, masterBreakpoint, slaveBreakpoint, "true".equalsIgnoreCase(rule.getAttributeValue("leaveEnabled"))));
               }
             }
 
@@ -656,6 +656,9 @@ public class BreakpointManager implements JDOMExternalizable {
 
   @SuppressWarnings({"HardCodedStringLiteral"}) private static void writeRule(final EnableBreakpointRule enableBreakpointRule, Element element) {
     Element rule = new Element("rule");
+    if (enableBreakpointRule.isLeaveEnabled()) {
+      rule.setAttribute("leaveEnabled", Boolean.toString(true));
+    }
     element.addContent(rule);
     writeRuleBreakpoint(rule, MASTER_BREAKPOINT_TAGNAME, enableBreakpointRule.getMasterBreakpoint());
     writeRuleBreakpoint(rule, SLAVE_BREAKPOINT_TAGNAME, enableBreakpointRule.getSlaveBreakpoint());
@@ -940,10 +943,21 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
   
+  @Nullable
   public Breakpoint findMasterBreakpoint(@NotNull Breakpoint dependentBreakpoint) {
     for (final EnableBreakpointRule rule : myBreakpointRules) {
       if (dependentBreakpoint.equals(rule.getSlaveBreakpoint())) {
         return rule.getMasterBreakpoint();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public EnableBreakpointRule findBreakpointRule(@NotNull Breakpoint dependentBreakpoint) {
+    for (final EnableBreakpointRule rule : myBreakpointRules) {
+      if (dependentBreakpoint.equals(rule.getSlaveBreakpoint())) {
+        return rule;
       }
     }
     return null;

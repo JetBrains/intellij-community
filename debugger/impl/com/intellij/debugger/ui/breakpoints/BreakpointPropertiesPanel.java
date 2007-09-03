@@ -68,6 +68,8 @@ public abstract class BreakpointPropertiesPanel {
   private JRadioButton mySuspendThreadRadio;
   private JRadioButton mySuspendNoneRadio;
   private JRadioButton mySuspendAllRadio;
+  private JRadioButton myDisableAgainRadio;
+  private JRadioButton myLeaveEnabledRadioButton;
 
   ButtonGroup mySuspendPolicyGroup;
   public static final @NonNls String CONTROL_LOG_MESSAGE = "logMessage";
@@ -283,7 +285,7 @@ public abstract class BreakpointPropertiesPanel {
    * Save values in the UI components to the breakpoint object
    */
   public void saveTo(Breakpoint breakpoint, Runnable afterUpdate) {
-    myBreakpointComboboxHandler.saveTo(breakpoint);
+    myBreakpointComboboxHandler.saveTo(breakpoint, myLeaveEnabledRadioButton.isSelected());
     try {
       String text = myPassCountField.getText().trim();
       int count = !"".equals(text)? Integer.parseInt(text) : 0;
@@ -563,7 +565,7 @@ public abstract class BreakpointPropertiesPanel {
     }
   }
   
-  private static class BreakpointComboboxHandler implements BreakpointManagerListener{
+  private class BreakpointComboboxHandler implements BreakpointManagerListener{
     private final JComboBox myCombo;
     private final BreakpointManager myBreakpointManager;
     private Breakpoint myCurrentBreakpoint = null;
@@ -579,11 +581,11 @@ public abstract class BreakpointPropertiesPanel {
       fillCombobox();
     }
     
-    public void saveTo(Breakpoint slaveBreakpoint) {
+    public void saveTo(Breakpoint slaveBreakpoint, final boolean leaveEnabled) {
       myBreakpointManager.removeBreakpointRule(slaveBreakpoint);
       final Breakpoint masterBreakpoint = ((ComboboxItem)myCombo.getSelectedItem()).getBreakpoint();
       if (masterBreakpoint != null) {
-        myBreakpointManager.addBreakpointRule(new EnableBreakpointRule(myBreakpointManager, masterBreakpoint, slaveBreakpoint));
+        myBreakpointManager.addBreakpointRule(new EnableBreakpointRule(myBreakpointManager, masterBreakpoint, slaveBreakpoint, leaveEnabled));
       }
     }
     
@@ -600,18 +602,17 @@ public abstract class BreakpointPropertiesPanel {
       if (myCurrentBreakpoint != null) {
         // avoid depending on itself
         breakpoints.remove(myCurrentBreakpoint);
-        /*
-        for (Iterator<Breakpoint> it = breakpoints.iterator(); it.hasNext();) {
-          final Breakpoint breakpoint = it.next();
-          if (myCurrentBreakpoint.equals(breakpoint)) {
-            breakpoints.remove(breakpoint);
-            break;
-          }
-        }
-        */
       }
       myCombo.setModel(new BreakpointComboboxModel(breakpoints.toArray(new Breakpoint[breakpoints.size()])));
-      final Breakpoint baseBreakpoint = myCurrentBreakpoint != null? myBreakpointManager.findMasterBreakpoint(myCurrentBreakpoint) : null;
+      final EnableBreakpointRule rule = myCurrentBreakpoint != null? myBreakpointManager.findBreakpointRule(myCurrentBreakpoint) : null;
+      final Breakpoint baseBreakpoint = rule != null? rule.getMasterBreakpoint() : null;
+      final boolean leaveEnabled = rule != null && rule.isLeaveEnabled();
+      if (leaveEnabled) {
+        myLeaveEnabledRadioButton.setSelected(true);
+      }
+      else {
+        myDisableAgainRadio.setSelected(true);
+      }
       ((BreakpointComboboxModel)myCombo.getModel()).selectBreakpoint(baseBreakpoint);
     }
   }
