@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class StringConcatenationInspection extends BaseInspection {
 
@@ -50,6 +53,44 @@ public class StringConcatenationInspection extends BaseInspection {
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "string.concatenation.problem.descriptor");
+    }
+
+    @NotNull
+    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
+        final PsiElement parent = location.getParent();
+        if (!(parent instanceof PsiBinaryExpression)) {
+           return InspectionGadgetsFix.EMPTY_ARRAY;
+        }
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression)parent;
+        final PsiExpression lhs = binaryExpression.getLOperand();
+        final Collection<InspectionGadgetsFix> result = new ArrayList();
+        final PsiModifierListOwner element1 =
+                AnnotateForBinaryExpressionFix.extractAnnotatableElement(lhs);
+        if (element1 != null) {
+            final AnnotateForBinaryExpressionFix fix =
+                    new AnnotateForBinaryExpressionFix(element1, true);
+            result.add(fix);
+        }
+        final PsiExpression rhs = binaryExpression.getROperand();
+        final PsiModifierListOwner element2 =
+                AnnotateForBinaryExpressionFix.extractAnnotatableElement(rhs);
+        if (element2 != null) {
+            final AnnotateForBinaryExpressionFix fix =
+                    new AnnotateForBinaryExpressionFix(element2, false);
+            result.add(fix);
+        }
+        final PsiElement expressionParent = PsiTreeUtil.getParentOfType(
+                binaryExpression, PsiReturnStatement.class,
+                PsiExpressionList.class);
+        if (!(expressionParent instanceof PsiExpressionList) &&
+                expressionParent != null) {
+            final PsiMethod method =
+                    PsiTreeUtil.getParentOfType(expressionParent,
+                            PsiMethod.class);
+            result.add(new AnnotateContainingMethodFix(method));
+        }
+        return result.toArray(new InspectionGadgetsFix[result.size()]);
     }
 
     @Nullable
