@@ -303,6 +303,11 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     ((SimpleProviderBinding)providerBinding).unregisterProvider(provider, null);
   }
 
+  public void registerDocTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
+                                              boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
+    registerNamedReferenceProvider(names, elementFilter, PsiDocTagProviderBinding.class, PsiDocTag.class, caseSensitive, provider);
+  }
+
   public void registerXmlTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
                                               boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
     registerNamedReferenceProvider(names, elementFilter, XmlTagProviderBinding.class,XmlTag.class,caseSensitive, provider);
