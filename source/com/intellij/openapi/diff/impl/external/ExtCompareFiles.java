@@ -27,7 +27,7 @@ class ExtCompareFiles extends BaseExternalTool {
       VirtualFile file = getLocalFile(content.getFile());
       if (file != null && file.isDirectory()) return false;
       if (canExternalizeAsFile(file)) continue;
-      if (DiffUtil.isWriatable(content)) return false;
+      if (DiffUtil.isWritable(content)) return false;
     }
     return super.canShow(request);
   }

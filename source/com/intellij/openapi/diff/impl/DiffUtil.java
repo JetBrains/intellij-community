@@ -50,7 +50,7 @@ public class DiffUtil {
     return result;
   }
 
-  public static boolean isWriatable(DiffContent content) {
+  public static boolean isWritable(DiffContent content) {
     Document document = content.getDocument();
     return document != null && document.isWritable();
   }
