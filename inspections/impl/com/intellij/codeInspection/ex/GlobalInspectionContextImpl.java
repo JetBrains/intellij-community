@@ -5,10 +5,9 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
-import com.intellij.lang.StdLanguages;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.analysis.AnalysisUIOptions;
+import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
@@ -16,6 +15,7 @@ import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -45,6 +45,7 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.jsp.JspFile;
@@ -638,21 +639,39 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     if (attributeValue instanceof PsiArrayInitializerMemberValue) {
       final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
       for (PsiAnnotationMemberValue annotationMemberValue : initializers) {
-        if (annotationMemberValue instanceof PsiLiteralExpression) {
-          final Object value = ((PsiLiteralExpression)annotationMemberValue).getValue();
-          if (value instanceof String) {
-            result.add((String)value);
-          }
+        final String id = getInspectionIdSuppressedInAnnotationAttribute(annotationMemberValue);
+        if (id != null) {
+          result.add(id);
         }
       }
     }
-    else if (attributeValue instanceof PsiLiteralExpression) {
-      final Object value = ((PsiLiteralExpression)attributeValue).getValue();
-      if (value instanceof String) {
-        result.add((String)value);
+    else {
+      final String id = getInspectionIdSuppressedInAnnotationAttribute(attributeValue);
+      if (id != null) {
+        result.add(id);
       }
     }
     return result;
+  }
+
+  @Nullable
+  private static String getInspectionIdSuppressedInAnnotationAttribute(PsiElement element) {
+    if (element instanceof PsiLiteralExpression) {
+      final Object value = ((PsiLiteralExpression)element).getValue();
+      if (value instanceof String) {
+        return (String)value;
+      }
+    }
+    else if (element instanceof PsiReferenceExpression) {
+      final PsiElement psiElement = ((PsiReferenceExpression)element).resolve();
+      if (psiElement instanceof PsiVariableEx) {
+        final Object val = ((PsiVariableEx)psiElement).computeConstantValue(new HashSet<PsiVariable>());
+        if (val instanceof String) {
+          return (String)val;
+        }
+      }
+    }
+    return null;
   }
 
   public void ignoreElement(final InspectionTool tool, final PsiElement element) {
