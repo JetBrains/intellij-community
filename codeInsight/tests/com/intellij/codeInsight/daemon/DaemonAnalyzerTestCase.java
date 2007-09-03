@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -92,6 +93,17 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
     myAvailableTools.put(shortName, tool);
     myAvailableLocalTools.put(shortName, new LocalInspectionToolWrapper(tool));
+  }
+
+  protected void enableInspectionToolsFromProvider(InspectionToolProvider toolProvider){
+    try {
+      for(Class c:toolProvider.getInspectionClasses()) {
+        enableInspectionTool((LocalInspectionTool)c.newInstance());
+      }
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    } 
   }
 
   protected void disableInspectionTool(String shortName){
