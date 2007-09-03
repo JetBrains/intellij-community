@@ -5,7 +5,7 @@ Groovy script
     PsiElement(if)('if')
     PsiWhiteSpace(' ')
     PsiElement(()('(')
-    Relational expression
+    Instanceof expression
       Reference expression
         PsiElement(identifier)('x')
       PsiWhiteSpace(' ')

@@ -1,7 +1,7 @@
 x as int
 -----
 Groovy script
-  Relational expression
+  Safe cast expression
     Reference expression
       PsiElement(identifier)('x')
     PsiWhiteSpace(' ')
