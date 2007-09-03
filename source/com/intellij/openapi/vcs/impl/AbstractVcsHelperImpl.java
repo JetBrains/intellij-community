@@ -7,11 +7,12 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,10 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -81,10 +79,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     myProject = project;
   }
 
-  private static final Key<NewErrorTreeViewPanel> KEY = Key.create("AbstractVcsHelper.KEY");
-
   public void showCodeSmellErrors(final List<CodeSmellInfo> smellList) {
-
     Collections.sort(smellList, new Comparator<CodeSmellInfo>() {
       public int compare(final CodeSmellInfo o1, final CodeSmellInfo o2) {
         return o1.getTextRange().getStartOffset() - o2.getTextRange().getStartOffset();
@@ -98,28 +93,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
           return;
         }
 
-        final NewErrorTreeViewPanel errorTreeView = new NewErrorTreeViewPanel(myProject, null) {
-          protected boolean canHideWarnings() {
-            return false;
-          }
-        };
-        CommandProcessor commandProcessor = CommandProcessor.getInstance();
-        commandProcessor.executeCommand(myProject, new Runnable() {
-          public void run() {
-            final MessageView messageView = myProject.getComponent(MessageView.class);
-            final String tabDisplayName = VcsBundle.message("code.smells.error.messages.tab.name");
-            final Content content =
-              PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
-            content.putUserData(KEY, errorTreeView);
-            messageView.getContentManager().addContent(content);
-            messageView.getContentManager().setSelectedContent(content);
-            removeContents(content, tabDisplayName);
-            messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
-          }
-        }, VcsBundle.message("command.name.open.error.message.view"), null);
+        final VcsErrorViewPanel errorTreeView = new VcsErrorViewPanel(myProject);
+        openMessagesView(errorTreeView, VcsBundle.message("code.smells.error.messages.tab.name"));
 
         FileDocumentManager fileManager = FileDocumentManager.getInstance();
-
 
         for (CodeSmellInfo smellInfo : smellList) {
           VirtualFile file = fileManager.getFile(smellInfo.getDocument());
@@ -139,6 +116,21 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     });
 
+  }
+
+  private void openMessagesView(final VcsErrorViewPanel errorTreeView, final String tabDisplayName) {
+    CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    commandProcessor.executeCommand(myProject, new Runnable() {
+      public void run() {
+        final MessageView messageView = myProject.getComponent(MessageView.class);
+        final Content content =
+          PeerFactory.getInstance().getContentFactory().createContent(errorTreeView, tabDisplayName, true);
+        messageView.getContentManager().addContent(content);
+        Disposer.register(content, errorTreeView);
+        messageView.getContentManager().setSelectedContent(content);
+        removeContents(content, tabDisplayName);
+      }
+    }, VcsBundle.message("command.name.open.error.message.view"), null);
   }
 
   public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final FilePath path) {
@@ -247,24 +239,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
           return;
         }
 
-        final NewErrorTreeViewPanel errorTreeView = new NewErrorTreeViewPanel(myProject, null) {
-          protected boolean canHideWarnings() {
-            return false;
-          }
-        };
-        CommandProcessor commandProcessor = CommandProcessor.getInstance();
-        commandProcessor.executeCommand(myProject, new Runnable() {
-          public void run() {
-            final MessageView messageView = myProject.getComponent(MessageView.class);
-            final Content content =
-              PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
-            content.putUserData(KEY, errorTreeView);
-            messageView.getContentManager().addContent(content);
-            messageView.getContentManager().setSelectedContent(content);
-            removeContents(content, tabDisplayName);
-            messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
-          }
-        }, VcsBundle.message("command.name.open.error.message.view"), null);
+        final VcsErrorViewPanel errorTreeView = new VcsErrorViewPanel(myProject);
+        openMessagesView(errorTreeView, tabDisplayName);
 
         for (final VcsException exception : abstractVcsExceptions) {
           String[] messages = exception.getMessages();
@@ -702,35 +678,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  private static class MyContentDisposer implements ContentManagerListener {
-    private final Content myContent;
-    private final MessageView myMessageView;
-
-    public MyContentDisposer(final Content content, final MessageView messageView) {
-      myContent = content;
-      myMessageView = messageView;
+  private static class VcsErrorViewPanel extends NewErrorTreeViewPanel implements Disposable {
+    public VcsErrorViewPanel(Project project) {
+      super(project, null);
     }
 
-    public void contentRemoved(ContentManagerEvent event) {
-      final Content eventContent = event.getContent();
-      if (!eventContent.equals(myContent)) {
-        return;
-      }
-      myMessageView.getContentManager().removeContentManagerListener(this);
-      NewErrorTreeViewPanel errorTreeView = eventContent.getUserData(KEY);
-      if (errorTreeView != null) {
-        errorTreeView.dispose();
-      }
-      eventContent.putUserData(KEY, null);
-    }
-
-    public void contentAdded(ContentManagerEvent event) {
-    }
-
-    public void contentRemoveQuery(ContentManagerEvent event) {
-    }
-
-    public void selectionChanged(ContentManagerEvent event) {
+    protected boolean canHideWarnings() {
+      return false;
     }
   }
 }
