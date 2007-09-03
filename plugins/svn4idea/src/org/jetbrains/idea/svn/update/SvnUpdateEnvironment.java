@@ -45,7 +45,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   }
 
   public Configurable createConfigurable(final Collection<FilePath> collection) {
-
+    if (collection.isEmpty()) return null;
     return new SvnUpdateConfigurable(myVcs.getProject()){
 
       public String getDisplayName() {

@@ -146,6 +146,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                                  boolean totalUpdate,
                                                  ArrayList<VcsException> exceptions, UpdatedFiles updatedFiles);
 
+  @Nullable
   public abstract Configurable createConfigurable(Collection<FilePath> collection);
 
   public static FileGroup createFileGroup(String name, String id) {

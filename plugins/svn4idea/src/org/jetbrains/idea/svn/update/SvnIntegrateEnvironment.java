@@ -49,6 +49,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
   }
 
   public Configurable createConfigurable(final Collection<FilePath> collection) {
+    if (collection.isEmpty()) return null;
     return new SvnUpdateConfigurable(myVcs.getProject()){
       protected AbstractSvnUpdatePanel createPanel() {
         return new SvnIntegratePanel(myVcs, collection);
