@@ -166,7 +166,7 @@ public class ProjectUtil {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length > 0) {
       int exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.new.project"),
-                                         new String[]{IdeBundle.message("button.yes"), IdeBundle.message("button.no")}, 1,
+                                         new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe")}, 1,
                                          Messages.getQuestionIcon());
       if (exitCode == 1) { // "No" option
         closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1]);
@@ -272,7 +272,7 @@ public class ProjectUtil {
 
     if (!forceOpenInNewFrame && openProjects.length > 0) {
       int exitCode = Messages.showDialog(IdeBundle.message("prompt.open.project.in.new.frame"), IdeBundle.message("title.open.project"),
-                                         new String[]{IdeBundle.message("button.yes"), IdeBundle.message("button.no"),
+                                         new String[]{IdeBundle.message("button.newframe"), IdeBundle.message("button.existingframe"),
                                            CommonBundle.getCancelButtonText()}, 1, Messages.getQuestionIcon());
       if (exitCode == 1) { // "No" option
         if (!closeProject(projectToClose != null ? projectToClose : openProjects[openProjects.length - 1])) return null;
