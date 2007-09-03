@@ -46,11 +46,8 @@ import java.util.*;
 
 @State(
   name = "AntConfiguration",
-  storages = {
-  @Storage(id = "default", file = "$PROJECT_FILE$")
-    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
-)
+  storages = {@Storage(id = "default", file = "$PROJECT_FILE$"), @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/ant.xml",
+                                                                          scheme = StorageScheme.DIRECTORY_BASED)})
 public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, ModificationTracker {
 
   public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<AntReference>("defaultAnt", AntReference.BUNDLED_ANT);
@@ -131,8 +128,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   public AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException {
-    final AntBuildFile[] result = new AntBuildFile[] {null};
-    final AntNoFileException[] ex = new AntNoFileException[] {null};
+    final AntBuildFile[] result = new AntBuildFile[]{null};
+    final AntNoFileException[] ex = new AntNoFileException[]{null};
     final String title = AntBundle.message("register.ant.build.progress", file.getPresentableUrl());
     ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), title, false) {
       public void run(final ProgressIndicator indicator) {
@@ -303,7 +300,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       });
     }
     else {
-      myStartupManager.registerPostStartupActivity(new Runnable(){
+      myStartupManager.registerPostStartupActivity(new Runnable() {
         public void run() {
           runnable.run();
         }
@@ -437,7 +434,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
       String defaultTargetActionId = model.getDefaultTargetActionId();
       if (defaultTargetActionId != null) {
-        final TargetAction action = new TargetAction(buildFile, TargetAction.DEFAULT_TARGET_NAME, new String[]{TargetAction.DEFAULT_TARGET_NAME}, null);
+        final TargetAction action =
+          new TargetAction(buildFile, TargetAction.DEFAULT_TARGET_NAME, new String[]{TargetAction.DEFAULT_TARGET_NAME}, null);
         actionList.add(new Pair<String, AnAction>(defaultTargetActionId, action));
       }
 
@@ -468,11 +466,13 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private static void collectTargetActions(final AntBuildTarget[] targets,
-                                           final List<Pair<String, AnAction>> actionList, final AntBuildFile buildFile) {
+                                           final List<Pair<String, AnAction>> actionList,
+                                           final AntBuildFile buildFile) {
     for (final AntBuildTarget target : targets) {
       final String actionId = ((AntBuildTargetBase)target).getActionId();
       if (actionId != null) {
-        final TargetAction action = new TargetAction(buildFile, target.getName(), new String[]{target.getName()}, target.getNotEmptyDescription());
+        final TargetAction action =
+          new TargetAction(buildFile, target.getName(), new String[]{target.getName()}, target.getNotEmptyDescription());
         actionList.add(new Pair<String, AnAction>(actionId, action));
       }
     }
@@ -554,7 +554,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       }
     }
     final String title = AntBundle.message("loading.ant.config.progress");
-    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), title, false) {
+    new Task.Backgroundable(getProject(), title, false) {
       public void run(final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.pushState();
@@ -569,7 +569,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                   try {
                     final AntBuildFileBase buildFile = addBuildFileImpl(file);
                     buildFile.readProperties(element);
-                    
+
                     for (final Object o1 : element.getChildren(EXECUTE_ON_ELEMENT)) {
                       Element e = (Element)o1;
                       String eventId = e.getAttributeValue(EVENT_ELEMENT);
@@ -626,7 +626,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           indicator.popState();
         }
       }
-    });
+    }.queueLater(null);
   }
 
   @Nullable
@@ -652,7 +652,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
     public int compare(final Element o1, final Element o2) {
       final int typesEqual = o1.getAttributeValue(EVENT_ELEMENT).compareTo(o2.getAttributeValue(EVENT_ELEMENT));
-      return typesEqual == 0? o1.getAttributeValue(TARGET_ELEMENT).compareTo(o2.getAttributeValue(TARGET_ELEMENT)) : typesEqual;
+      return typesEqual == 0 ? o1.getAttributeValue(TARGET_ELEMENT).compareTo(o2.getAttributeValue(TARGET_ELEMENT)) : typesEqual;
     }
   }
 }

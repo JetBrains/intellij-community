@@ -17,6 +17,7 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +63,20 @@ public abstract class Task implements TaskInfo {
 
   public final void queue() {
     ProgressManager.getInstance().run(this);
+  }
+
+  public final void queueLater(@Nullable ModalityState state) {
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        queue();
+      }
+    };
+
+    if (state != null) {
+      ApplicationManager.getApplication().invokeLater(runnable, state);
+    } else {
+      ApplicationManager.getApplication().invokeLater(runnable);
+    }
   }
 
   public final String getTitle() {
