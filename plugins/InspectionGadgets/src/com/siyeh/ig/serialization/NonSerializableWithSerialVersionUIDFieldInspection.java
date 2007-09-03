@@ -50,6 +50,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
                 "non.serializable.with.serialversionuid.problem.descriptor");
     }
 
+    @NotNull
     protected InspectionGadgetsFix[] buildFixes(PsiElement location){
         return new InspectionGadgetsFix[]{new MakeSerializableFix(),
                                           new RemoveSerialVersionUIDFix()};

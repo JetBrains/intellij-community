@@ -28,7 +28,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class MethodNameSameAsClassNameInspection extends BaseInspection {
 
@@ -44,7 +43,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
                 "method.name.same.as.class.name.problem.descriptor");
     }
 
-    @Nullable
+    @NotNull
     protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
         return new InspectionGadgetsFix[]{
                 new RenameFix(), new MethodNameSameAsClassNameFix()};
@@ -61,12 +60,13 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
-            PsiElement parent = element.getParent();
+            final PsiElement parent = element.getParent();
             if (!(parent instanceof PsiMethod)) {
                 return;
             }
             final PsiMethod method = (PsiMethod)parent;
-            PsiTypeElement returnTypeElement = method.getReturnTypeElement();
+            final PsiTypeElement returnTypeElement =
+                    method.getReturnTypeElement();
             if (returnTypeElement == null) {
                 return;
             }

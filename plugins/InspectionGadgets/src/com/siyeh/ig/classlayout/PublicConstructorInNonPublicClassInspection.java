@@ -51,6 +51,7 @@ public class PublicConstructorInNonPublicClassInspection
         return new PublicConstructorInNonPublicClassVisitor();
     }
 
+    @NotNull
     public InspectionGadgetsFix[] buildFixes(PsiElement location) {
         final List<InspectionGadgetsFix> fixes = new ArrayList();
         final PsiModifierList modifierList =

@@ -130,9 +130,9 @@ public abstract class BaseInspection extends LocalInspectionTool {
         return null;
     }
 
-    @Nullable
+    @NotNull
     protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
-        return null;
+        return InspectionGadgetsFix.EMPTY_ARRAY;
     }
 
     public boolean hasQuickFix() {

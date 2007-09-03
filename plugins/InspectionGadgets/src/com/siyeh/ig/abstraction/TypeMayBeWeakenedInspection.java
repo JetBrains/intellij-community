@@ -89,18 +89,19 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
     @Nullable
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(
-		        InspectionGadgetsBundle.message("type.may.be.weakened.ignore.option"), this,
+		        InspectionGadgetsBundle.message(
+                        "type.may.be.weakened.ignore.option"), this,
 		        "useRighthandTypeAsWeakestTypeInAssignments");
     }
 
-    @Nullable
+    @NotNull
     protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
         final PsiElement parent = location.getParent();
         final Collection<PsiClass> weakestClasses =
                 calculateWeakestClassesNecessary(
                         parent, useRighthandTypeAsWeakestTypeInAssignments);
         if (weakestClasses.isEmpty()) {
-            return null;
+            return InspectionGadgetsFix.EMPTY_ARRAY;
         }
         final Collection<InspectionGadgetsFix> fixes = new ArrayList();
         for (PsiClass weakestClass : weakestClasses) {
@@ -157,7 +158,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             final PsiTypeParameter[] typeParameters =
                     aClass.getTypeParameters();
             final PsiElementFactory factory = manager.getElementFactory();
-            final PsiClassType type;
+            final PsiType type;
             if (typeParameters.length != 0 &&
                     typeParameters.length == parameterTypes.length) {
                 final Map<PsiTypeParameter, PsiType> typeParameterMap =
@@ -200,7 +201,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         }
         final PsiClassType variableOrMethodClassType =
                 (PsiClassType) variableOrMethodType;
-        final PsiClass variableOrMethodClass = variableOrMethodClassType.resolve();
+        final PsiClass variableOrMethodClass =
+                variableOrMethodClassType.resolve();
         if (variableOrMethodClass == null) {
             return Collections.EMPTY_LIST;
         }
@@ -372,11 +374,13 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 		            return Collections.EMPTY_LIST;
 	            }
             } else if (referenceParent instanceof PsiThrowStatement) {
-	            final PsiThrowStatement throwStatement = (PsiThrowStatement)referenceParent;
+	            final PsiThrowStatement throwStatement =
+                        (PsiThrowStatement)referenceParent;
 	            final PsiClassType runtimeExceptionType =
 			            PsiType.getJavaLangRuntimeException(manager,
 					            throwStatement.getResolveScope());
-	            final PsiClass runtimeExceptionClass = runtimeExceptionType.resolve();
+	            final PsiClass runtimeExceptionClass =
+                        runtimeExceptionType.resolve();
 	            if (runtimeExceptionClass != null &&
 			            InheritanceUtil.isInheritorOrSelf(variableOrMethodClass,
 					            runtimeExceptionClass, true)) {
@@ -385,15 +389,18 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 		            }
 	            } else {
 		            final PsiMethod method =
-				            PsiTreeUtil.getParentOfType(throwStatement, PsiMethod.class);
+				            PsiTreeUtil.getParentOfType(throwStatement,
+                                    PsiMethod.class);
 		            final PsiReferenceList throwsList = method.getThrowsList();
-		            final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
+		            final PsiClassType[] referencedTypes =
+                            throwsList.getReferencedTypes();
 		            boolean checked = false;
 		            for (PsiClassType referencedType : referencedTypes) {
 			            final PsiClass throwableClass = referencedType.resolve();
 			            if (throwableClass != null &&
-					            InheritanceUtil.isInheritorOrSelf(variableOrMethodClass,
-							            throwableClass, true)) {
+					            InheritanceUtil.isInheritorOrSelf(
+                                        variableOrMethodClass,
+                                        throwableClass, true)) {
 				            if (checkType(referencedType, weakestTypeClasses)) {
 					            checked = true;
 				            }
@@ -416,8 +423,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         return Collections.unmodifiableCollection(weakestTypeClasses);
     }
 
-	private static boolean checkType(@Nullable PsiType type,
-	                                 @NotNull Collection<PsiClass> weakestTypeClasses) {
+	private static boolean checkType(
+            @Nullable PsiType type,
+            @NotNull Collection<PsiClass> weakestTypeClasses) {
 		if (!(type instanceof PsiClassType)) {
 			return false;
 		}
@@ -465,8 +473,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         return null;
     }
 
-    private static void checkClass(@NotNull PsiClass aClass,
-                                   @NotNull Collection<PsiClass> weakestTypeClasses) {
+    private static void checkClass(
+            @NotNull PsiClass aClass,
+            @NotNull Collection<PsiClass> weakestTypeClasses) {
         boolean shouldAdd = true;
         for (Iterator<PsiClass> iterator =
                 weakestTypeClasses.iterator(); iterator.hasNext();) {
@@ -535,7 +544,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     return;
                 } else if (declarationScope instanceof PsiMethod) {
                     final PsiMethod method = (PsiMethod)declarationScope;
-                    if (method.getContainingClass().isInterface()) {
+	                final PsiClass containingClass = method.getContainingClass();
+	                if (containingClass.isInterface()) {
                         return;
                     }
                     final Query<MethodSignatureBackedByPsiMethod> superSearch =

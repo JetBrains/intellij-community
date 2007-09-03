@@ -36,11 +36,13 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
 
+    public static final InspectionGadgetsFix[] EMPTY_ARRAY = {};
     private static final Logger LOG =
             Logger.getInstance("#com.siyeh.ig.InspectionGadgetsFix");
-    private boolean myOnTheFly;
 
-  /**
+    private boolean myOnTheFly = false;
+
+    /**
      * To appear in "Apply Fix" statement when multiple Quick Fixes exist
      */
     @NotNull

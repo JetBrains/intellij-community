@@ -101,7 +101,7 @@ public class TooBroadCatchInspection extends BaseInspection {
         }
     }
 
-  @Nullable
+  @NotNull
   protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
     PsiTypeElement typeElement = (PsiTypeElement)location;
     PsiParameter catchParameter = (PsiParameter)typeElement.getParent();

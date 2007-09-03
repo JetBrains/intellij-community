@@ -23,7 +23,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +46,7 @@ public class StringEqualsInspection extends BaseInspection {
                 "string.equals.call.problem.descriptor");
     }
 
-    @Nullable
+    @NotNull
     protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
         final List<InspectionGadgetsFix> result = new ArrayList();
         final PsiReferenceExpression methodExpression =

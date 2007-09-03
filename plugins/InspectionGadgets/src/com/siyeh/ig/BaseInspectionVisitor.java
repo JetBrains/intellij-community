@@ -18,7 +18,6 @@ package com.siyeh.ig;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseInspectionVisitor extends PsiElementVisitor{
 
@@ -62,7 +61,7 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
     }
 
     protected final void registerStatementError(@NotNull PsiStatement statement,
-                                          Object... infos){
+                                                Object... infos){
         final PsiElement statementToken = statement.getFirstChild();
         if (statementToken == null) {
             registerError(statement, infos);
@@ -72,7 +71,7 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
     }
 
     protected final void registerClassError(@NotNull PsiClass aClass,
-                                      Object... infos){
+                                            Object... infos){
         final PsiElement nameIdentifier;
         if (aClass instanceof PsiEnumConstantInitializer) {
             final PsiEnumConstantInitializer enumConstantInitializer =
@@ -94,7 +93,7 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
     }
 
     protected final void registerMethodError(@NotNull PsiMethod method,
-                                       Object... infos){
+                                             Object... infos){
         final PsiElement nameIdentifier = method.getNameIdentifier();
         if (nameIdentifier == null) {
             registerError(method.getContainingFile(), infos);
@@ -104,7 +103,7 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
     }
 
     protected final void registerVariableError(@NotNull PsiVariable variable,
-                                         Object... infos){
+                                               Object... infos){
         final PsiElement nameIdentifier = variable.getNameIdentifier();
         if (nameIdentifier == null) {
             registerError(variable, infos);
@@ -159,27 +158,25 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
     protected final void registerError(@NotNull PsiElement location,
                                        Object... infos){
         final InspectionGadgetsFix[] fixes = createFixes(location);
-      if (fixes != null) {
         for (InspectionGadgetsFix fix : fixes) {
-          fix.setOnTheFly(onTheFly);
+            fix.setOnTheFly(onTheFly);
         }
-      }
-      final String description = inspection.buildErrorString(infos);
+        final String description = inspection.buildErrorString(infos);
         holder.registerProblem(location, description, fixes);
     }
 
-    @Nullable
+    @NotNull
     private InspectionGadgetsFix[] createFixes(PsiElement location){
         if(!onTheFly && inspection.buildQuickFixesOnlyForOnTheFlyErrors()){
-            return null;
+            return InspectionGadgetsFix.EMPTY_ARRAY;
         }
         final InspectionGadgetsFix[] fixes = inspection.buildFixes(location);
-        if(fixes != null){
+        if(fixes.length > 0){
             return fixes;
         }
         final InspectionGadgetsFix fix = inspection.buildFix(location);
         if(fix == null){
-            return null;
+            return InspectionGadgetsFix.EMPTY_ARRAY;
         }
         return new InspectionGadgetsFix[]{fix};
     }

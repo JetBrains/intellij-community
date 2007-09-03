@@ -27,7 +27,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
 
@@ -58,7 +57,7 @@ public class ArchaicSystemPropertyAccessInspection extends BaseInspection {
         }
     }
 
-    @Nullable
+    @NotNull
     protected InspectionGadgetsFix[] buildFixes(PsiElement location){
         return new InspectionGadgetsFix[]{new ReplaceWithParseMethodFix(),
                 new ReplaceWithStandardPropertyAccessFix()};
