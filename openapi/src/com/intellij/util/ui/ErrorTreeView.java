@@ -15,14 +15,14 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
-import org.jetbrains.annotations.NonNls;
-
-public interface ErrorTreeView {
+public interface ErrorTreeView extends Disposable {
   @NonNls String CURRENT_EXCEPTION_DATA = "CURRENT_EXCEPTION_DATA";
 
   /**
@@ -36,6 +36,4 @@ public interface ErrorTreeView {
   void addMessage(int type, String[] text, String groupName, Navigatable navigatable, String exportTextPrefix, String rendererTextPrefix, Object data);
 
   JComponent getComponent();
-
-  void dispose();
 }
