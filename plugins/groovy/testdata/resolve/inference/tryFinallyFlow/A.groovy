@@ -5,6 +5,6 @@ def r() {
     a = ""
   }
   finally {
-    a.<ref>abs()
+    <ref>a
   }
 }
