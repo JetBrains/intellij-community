@@ -19,6 +19,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -27,5 +28,6 @@ public interface UpdateEnvironment {
 
   UpdateSession updateDirectories(FilePath[] contentRoots, UpdatedFiles updatedFiles, ProgressIndicator progressIndicator) throws ProcessCanceledException;
 
+  @Nullable
   Configurable createConfigurable(Collection<FilePath> files);
 }
