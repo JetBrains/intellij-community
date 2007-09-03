@@ -33,6 +33,7 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,7 +75,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
+public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.UpdateInfoTree");
 
   private VirtualFile mySelectedFile;
@@ -83,7 +84,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private final UpdatedFiles myUpdatedFiles;
   private UpdateRootNode myRoot;
   private DefaultTreeModel myTreeModel;
-  private final FileStatusListener myFileStatusListener;
+  private FileStatusListener myFileStatusListener;
   private final FileStatusManager myFileStatusManager;
   private final String myRootName;
   private final ActionInfo myActionInfo;
@@ -126,10 +127,13 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myTreeExpander = new DefaultTreeExpander(myTree);
   }
 
-  protected void dispose() {
+  public void dispose() {
     super.dispose();
     Disposer.dispose(myRoot);
-    myFileStatusManager.removeFileStatusListener(myFileStatusListener);
+    if (myFileStatusListener != null) {
+      myFileStatusManager.removeFileStatusListener(myFileStatusListener);
+      myFileStatusListener = null;
+    }
   }
 
   public boolean isCanGroupByChangeList() {
