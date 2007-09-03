@@ -29,7 +29,7 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
 
     ImportsAreUsedVisitor(PsiImportStatement[] importStatements) {
         super();
-        this.importStatements = new ArrayList(Arrays.asList(importStatements));
+        this.importStatements = new ArrayList<PsiImportStatement>(Arrays.asList(importStatements));
         Collections.reverse(this.importStatements);
     }
 
@@ -53,7 +53,8 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
             // responsible
             return;
         }
-        final PsiElement element = reference.resolve();
+        // during typing there can be incomplete code
+        final PsiElement element = reference.advancedResolve(true).getElement();
         if (!(element instanceof PsiClass)) {
             return;
         }
@@ -63,7 +64,7 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final List<PsiImportStatement> importStatementsCopy =
-                new ArrayList(importStatements);
+                new ArrayList<PsiImportStatement>(importStatements);
         for (PsiImportStatement importStatement : importStatementsCopy) {
             final String importName = importStatement.getQualifiedName();
             if (importName == null) {
