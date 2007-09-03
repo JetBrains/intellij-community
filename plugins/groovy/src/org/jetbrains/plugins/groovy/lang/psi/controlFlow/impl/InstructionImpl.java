@@ -53,16 +53,6 @@ class InstructionImpl implements Instruction, Cloneable {
     }
 
     return myPred;
-    /*if (myPred.size() > 0) {
-    }
-
-    Stack<CallInstruction> myCallStack = env.get(num() - 1);
-    if (!myCallStack.isEmpty()) {
-      final CallInstruction callInstruction = myCallStack.peek();
-      return callInstruction.pred(env);
-    }
-
-    return Collections.emptyList();*/
   }
 
   public String toString() {
