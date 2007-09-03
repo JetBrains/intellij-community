@@ -1,17 +1,18 @@
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.CvsBundle;
 
 /**
- * author: lesya
+ * @author lesya
  */
 public class UneditAction extends AsbtractActionFromEditGroup {
   @Override
@@ -20,7 +21,7 @@ public class UneditAction extends AsbtractActionFromEditGroup {
     int modifiedFiles = 0;
     VirtualFile firstModifiedFile = null;
     for(VirtualFile file: selectedFiles) {
-      if (FileDocumentManager.getInstance().isFileModified(file)) {
+      if (FileStatusManager.getInstance(context.getProject()).getStatus(file) == FileStatus.MODIFIED) {
         if (firstModifiedFile == null) {
           firstModifiedFile = file;
         }
