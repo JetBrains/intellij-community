@@ -22,9 +22,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.io.File;
@@ -52,21 +52,32 @@ public class JUnitDevKitPatcher extends JUnitPatcher{
       }
     }
 
-    if (!vm.hasProperty("idea.home.path")) {
-      String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
-      if (sandboxHome != null) {
-        try {
-          sandboxHome = new File(sandboxHome).getCanonicalPath();
-        }
-        catch (IOException e) {
-          sandboxHome = new File(sandboxHome).getAbsolutePath();
-        }
+    final String sandboxHome = getSandboxPath(jdk);
+    if (sandboxHome != null) {
+      if (!vm.hasProperty("idea.home.path")) {
         vm.defineProperty("idea.home.path", sandboxHome + File.separator + "test");
+      }
+      if (!vm.hasProperty("idea.plugins.path")) {
+        vm.defineProperty("idea.plugins.path", sandboxHome + File.separator + "plugins");
       }
     }
 
     javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
     javaParameters.getClassPath().addFirst(jdk.getToolsPath());
+  }
+
+  @Nullable
+  private static String getSandboxPath(final ProjectJdk jdk) {
+    String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
+    if (sandboxHome != null) {
+      try {
+        sandboxHome = new File(sandboxHome).getCanonicalPath();
+      }
+      catch (IOException e) {
+        sandboxHome = new File(sandboxHome).getAbsolutePath();
+      }
+    }
+    return sandboxHome;
   }
 }
