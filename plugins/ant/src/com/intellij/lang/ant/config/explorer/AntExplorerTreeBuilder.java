@@ -79,6 +79,10 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   }
 
   private final class ConfigurationListener implements AntConfigurationListener {
+    public void configurationLoaded() {
+      myUpdater.addSubtreeToUpdate(myRootNode);
+    }
+
     public void buildFileAdded(AntBuildFile buildFile) {
       myUpdater.addSubtreeToUpdate(myRootNode);
     }

@@ -367,6 +367,10 @@ public class DaemonListeners {
   }
 
   private class MyAntConfigurationListener implements AntConfigurationListener {
+    public void configurationLoaded() {
+      myDaemonCodeAnalyzer.restart();
+    }
+
     public void buildFileChanged(final AntBuildFile buildFile) {
       myDaemonCodeAnalyzer.restart();
     }

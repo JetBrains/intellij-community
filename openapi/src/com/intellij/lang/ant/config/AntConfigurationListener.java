@@ -20,7 +20,8 @@ package com.intellij.lang.ant.config;
 import java.util.EventListener;
 
 public interface AntConfigurationListener extends EventListener {
-
+  void configurationLoaded();
+  
   void buildFileChanged(final AntBuildFile buildFile);
 
   void buildFileAdded(final AntBuildFile buildFile);
