@@ -11,10 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.TextOccurenceProcessor;
-import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlEntityDecl;
@@ -66,11 +63,14 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
         return p.getEffectiveSearchScope();
       }
     });
+    final boolean ignoreInjectedPsi = searchScope instanceof LocalSearchScope? ((LocalSearchScope)searchScope).isIgnoreInjectedPsi() : false;
+
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         if (DEBUG) {
           System.out.println("!!! About to check "+element);
         }
+        if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
           if (CachesBasedRefSearcher.DEBUG) {
