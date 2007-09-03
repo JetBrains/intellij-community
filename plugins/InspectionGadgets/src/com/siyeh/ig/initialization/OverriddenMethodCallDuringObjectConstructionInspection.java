@@ -23,10 +23,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.CloneUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class OverriddenMethodCallInConstructorInspection
-        extends BaseInspection {
+public class OverriddenMethodCallDuringObjectConstructionInspection
+        extends BaseInspection{
 
     @NotNull
     public String getDisplayName(){
@@ -50,42 +51,70 @@ public class OverriddenMethodCallInConstructorInspection
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
-            final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-            if (method == null || !method.isConstructor()) {
+            final PsiMember member =
+                    PsiTreeUtil.getParentOfType(call, PsiMethod.class,
+                            PsiClassInitializer.class);
+            if (member instanceof PsiClassInitializer){
+                final PsiClassInitializer classInitializer =
+                        (PsiClassInitializer)member;
+                if (classInitializer.hasModifierProperty(PsiModifier.STATIC)){
+                    return;
+                }
+            } else if (member instanceof PsiMethod){
+                final PsiMethod method = (PsiMethod)member;
+                if (!isObjectConstructionMethod(method)){
+                    return;
+                }
+            } else {
                 return;
             }
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
-            final PsiExpression qualifierExpression =
+            final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
-            if(qualifierExpression != null) {
-                if(!(qualifierExpression instanceof PsiThisExpression ||
-                        qualifierExpression instanceof PsiSuperExpression)){
+            if(qualifier != null){
+                if(!(qualifier instanceof PsiThisExpression ||
+                        qualifier instanceof PsiSuperExpression)){
                     return;
                 }
             }
-            final PsiClass constructorClass = method.getContainingClass();
-            if (constructorClass == null ||
-                    constructorClass.hasModifierProperty(PsiModifier.FINAL)) {
+            final PsiClass containingClass = member.getContainingClass();
+            if(containingClass == null ||
+                    containingClass.hasModifierProperty(PsiModifier.FINAL)){
                 return;
             }
             final PsiMethod calledMethod =
                     (PsiMethod) methodExpression.resolve();
-            if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod)) {
+            if(calledMethod == null || !PsiUtil.canBeOverriden(calledMethod)){
                 return;
             }
             final PsiClass calledMethodClass =
                     calledMethod.getContainingClass();
-            if(!InheritanceUtil.isCorrectDescendant(constructorClass,
-                    calledMethodClass, true)) {
+            if(!InheritanceUtil.isCorrectDescendant(containingClass,
+                    calledMethodClass, true)){
                 return;
             }
             if(!MethodUtils.isOverriddenInHierarchy(calledMethod,
-                    constructorClass)){
+                    containingClass)){
                 return;
             }
             registerMethodCallError(call);
         }
+        
+        public static boolean isObjectConstructionMethod(PsiMethod method){
+            if(method.isConstructor()){
+                return true;
+            }
+            if(CloneUtils.isClone(method)){
+                return true;
+            }
+            if(MethodUtils.simpleMethodMatches(method, null, "void",
+                    "readObject", "java.io.ObjectInputStream")){
+                return true;
+            }
+            return MethodUtils.simpleMethodMatches(method, null, "void",
+                    "readObjectNoData");
+        }
+
     }
 }

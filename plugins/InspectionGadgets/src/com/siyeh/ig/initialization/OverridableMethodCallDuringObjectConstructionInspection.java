@@ -29,7 +29,6 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class OverridableMethodCallDuringObjectConstructionInspection
         extends BaseInspection {
@@ -46,8 +45,8 @@ public class OverridableMethodCallDuringObjectConstructionInspection
               "overridable.method.call.in.constructor.problem.descriptor");
     }
 
-    @Nullable
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    @NotNull
+    protected InspectionGadgetsFix[] buildFixes(PsiElement location) {
         final PsiElement methodExpression = location.getParent();
         final PsiMethodCallExpression methodCallExpression =
                 (PsiMethodCallExpression)methodExpression.getParent();
@@ -55,14 +54,52 @@ public class OverridableMethodCallDuringObjectConstructionInspection
                 ClassUtils.getContainingClass(methodCallExpression);
         final PsiMethod method = methodCallExpression.resolveMethod();
         if (method == null) {
-            return null;
+            return InspectionGadgetsFix.EMPTY_ARRAY;
         }
         final PsiClass containingClass = method.getContainingClass();
         if (!containingClass.equals(callClass) ||
                 MethodUtils.isOverridden(method)) {
-            return null;
+            return InspectionGadgetsFix.EMPTY_ARRAY;
         }
-        return new MakeMethodFinalFix(location.getText());
+        if (!ClassUtils.isOverridden(containingClass)) {
+            return new InspectionGadgetsFix[]{
+                    new MakeClassFinalFix(containingClass),
+                    new MakeMethodFinalFix(location.getText())};
+        } else {
+            return new InspectionGadgetsFix[]{
+                    new MakeMethodFinalFix(location.getText())};
+        }
+    }
+
+    private static class MakeClassFinalFix extends InspectionGadgetsFix {
+
+        private final String className;
+
+        MakeClassFinalFix(PsiClass aClass) {
+            className = aClass.getName();
+        }
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "make.class.final.fix.name", className);
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiClass containingClass =
+                    PsiTreeUtil.getParentOfType(element, PsiClass.class);
+            if (containingClass == null) {
+                return;
+            }
+            final PsiModifierList modifierList =
+                    containingClass.getModifierList();
+            if (modifierList == null) {
+                return;
+            }
+            modifierList.setModifierProperty(PsiModifier.FINAL, true);
+        }
     }
 
     private static class MakeMethodFinalFix extends InspectionGadgetsFix {
@@ -102,12 +139,21 @@ public class OverridableMethodCallDuringObjectConstructionInspection
         public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
-            final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(call, PsiMethod.class);
-            if (method == null) {
-                return;
-            }
-            if (!isObjectConstructionMethod(method)) {
+            final PsiMember member =
+                    PsiTreeUtil.getParentOfType(call, PsiMethod.class,
+                            PsiClassInitializer.class);
+            if (member instanceof PsiClassInitializer) {
+                final PsiClassInitializer classInitializer =
+                        (PsiClassInitializer)member;
+                if (classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
+                    return;
+                }
+            } else if (member instanceof PsiMethod) {
+                final PsiMethod method = (PsiMethod)member;
+                if (!isObjectConstructionMethod(method)) {
+                    return;
+                }
+            } else {
                 return;
             }
             final PsiReferenceExpression methodExpression =
@@ -120,7 +166,7 @@ public class OverridableMethodCallDuringObjectConstructionInspection
                     return;
                 }
             }
-            final PsiClass containingClass = method.getContainingClass();
+            final PsiClass containingClass = member.getContainingClass();
             if (containingClass == null) {
                 return;
             }
@@ -129,18 +175,13 @@ public class OverridableMethodCallDuringObjectConstructionInspection
             }
             final PsiMethod calledMethod = 
                     (PsiMethod) methodExpression.resolve();
-            if (calledMethod == null) {
-                return;
-            }
-            if (!PsiUtil.canBeOverriden(calledMethod)) {
+            if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod)) {
                 return;
             }
             final PsiClass calledMethodClass =
                     calledMethod.getContainingClass();
-            if(calledMethodClass == null){
-                return;
-            }
-            if(!calledMethodClass.equals(containingClass)){
+            if (calledMethodClass == null ||
+                !calledMethodClass.equals(containingClass)) {
                 return;
             }
             registerMethodCallError(call);

@@ -689,7 +689,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(NonFinalStaticVariableUsedInClassInitializationInspection.class);
         m_inspectionClasses.add(NonThreadSafeLazyInitializationInspection.class);
         m_inspectionClasses.add(OverridableMethodCallDuringObjectConstructionInspection.class);
-        m_inspectionClasses.add(OverriddenMethodCallInConstructorInspection.class);
+        m_inspectionClasses.add(OverriddenMethodCallDuringObjectConstructionInspection.class);
         m_inspectionClasses.add(StaticVariableInitializationInspection.class);
         m_inspectionClasses.add(StaticVariableUninitializedUseInspection.class);
         m_inspectionClasses.add(ThisEscapedInConstructorInspection.class);
