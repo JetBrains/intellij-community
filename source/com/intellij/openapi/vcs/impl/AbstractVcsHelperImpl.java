@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -104,14 +105,19 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         FileDocumentManager fileManager = FileDocumentManager.getInstance();
 
         for (CodeSmellInfo smellInfo : smellList) {
-          VirtualFile file = fileManager.getFile(smellInfo.getDocument());
+          final VirtualFile file = fileManager.getFile(smellInfo.getDocument());
+          final OpenFileDescriptor navigatable =
+            new OpenFileDescriptor(myProject, file, smellInfo.getStartLine(), smellInfo.getStartColumn());
+          final String exportPrefix = NewErrorTreeViewPanel.createExportPrefix(smellInfo.getStartLine() + 1);
+          final String rendererPrefix =
+            NewErrorTreeViewPanel.createRendererPrefix(smellInfo.getStartLine() + 1, smellInfo.getStartColumn() + 1);
           if (smellInfo.getSeverity() == HighlightSeverity.ERROR) {
-            errorTreeView.addMessage(MessageCategory.ERROR, new String[]{smellInfo.getDescription()}, file, smellInfo.getStartLine(),
-                                     smellInfo.getStartColumn(), null);
+            errorTreeView.addMessage(MessageCategory.ERROR, new String[]{smellInfo.getDescription()}, file.getPresentableUrl(), navigatable,
+                                     exportPrefix, rendererPrefix, null);
           }
           else {//if (smellInfo.getSeverity() == HighlightSeverity.WARNING) {
-            errorTreeView.addMessage(MessageCategory.WARNING, new String[]{smellInfo.getDescription()}, file, smellInfo.getStartLine(),
-                                     smellInfo.getStartColumn(), null);
+            errorTreeView.addMessage(MessageCategory.WARNING, new String[]{smellInfo.getDescription()}, file.getPresentableUrl(),
+                                     navigatable, exportPrefix, rendererPrefix, null);
           }
 
         }
