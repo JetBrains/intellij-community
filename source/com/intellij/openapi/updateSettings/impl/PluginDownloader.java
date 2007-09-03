@@ -143,7 +143,13 @@ public class PluginDownloader {
 
       pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-      File file = File.createTempFile("plugin", "download", new File(PathManagerEx.getPluginTempPath()));
+      final File pluginsTemp = new File(PathManagerEx.getPluginTempPath());
+
+      if (!pluginsTemp.exists()) {
+        pluginsTemp.mkdirs();
+      }
+
+      File file = File.createTempFile("plugin", "download", pluginsTemp);
 
       int responseCode = connection.getResponseCode();
       switch (responseCode) {
