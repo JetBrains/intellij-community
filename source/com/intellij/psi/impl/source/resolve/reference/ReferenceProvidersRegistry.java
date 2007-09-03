@@ -303,7 +303,6 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     ((SimpleProviderBinding)providerBinding).unregisterProvider(provider, null);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"}) //IBatis plugin happens to use it
   public void registerDocTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
                                               boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
     registerNamedReferenceProvider(names, elementFilter, PsiDocTagProviderBinding.class, PsiDocTag.class, caseSensitive, provider);
