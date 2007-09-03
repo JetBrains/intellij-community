@@ -87,8 +87,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     cbMatchCase.setMnemonic('C');
     cbWholeWords.setMnemonic('M');
 
-    setSmallerFont(cbWholeWords);
-    setSmallerFont(cbMatchCase);
+    setSmallerFontAndOpaque(cbWholeWords);
+    setSmallerFontAndOpaque(cbMatchCase);
 
     cbMatchCase.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -112,7 +112,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     add(tailPanel, BorderLayout.EAST);
 
     myMatchInfoLabel = new JLabel();
-    setSmallerFont(myMatchInfoLabel);
+    setSmallerFontAndOpaque(myMatchInfoLabel);
 
     JLabel closeLabel = new JLabel(" ", IconLoader.getIcon("/actions/cross.png"), JLabel.RIGHT);
     closeLabel.addMouseListener(new MouseAdapter() {
@@ -196,12 +196,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
   }
 
+  private static void setSmallerFontAndOpaque(final JComponent component) {
+    setSmallerFont(component);
+    component.setOpaque(false);
+  }
+
   private static void setSmallerFont(final JComponent component) {
     if (SystemInfo.isMac) {
       Font f = component.getFont();
       component.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
     }
-    component.setOpaque(false);
   }
 
   public void requestFocus() {
@@ -284,12 +288,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
   private void setRegularBackground() {
     mySearchField.setBackground(myDefaultBackground);
-    mySearchField.setOpaque(false);
   }
 
   private void setNotFoundBackground() {
     mySearchField.setBackground(LightColors.RED);
-    mySearchField.setOpaque(true);
   }
 
   private boolean isWholeWords() {
