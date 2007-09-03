@@ -111,11 +111,9 @@ public abstract class BaseRefactoringAction extends AnAction {
   }
 
   private static void disableAction(final AnActionEvent e) {
+    e.getPresentation().setEnabled(false);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(false);
-    }
-    else {
-      e.getPresentation().setEnabled(false);
     }
   }
 
