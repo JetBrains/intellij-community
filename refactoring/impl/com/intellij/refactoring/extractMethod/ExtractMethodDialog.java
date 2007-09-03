@@ -258,7 +258,7 @@ class ExtractMethodDialog extends DialogWrapper {
   private void update() {
     myNameField.setEnabled(!isChainedConstructor());
     if (myCbMakeStatic != null) {
-      myCbMakeStatic.setEnabled(!isChainedConstructor());
+      myCbMakeStatic.setEnabled(myCanBeStatic && !isChainedConstructor());
     }
     updateSignature();
     setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()) ||
