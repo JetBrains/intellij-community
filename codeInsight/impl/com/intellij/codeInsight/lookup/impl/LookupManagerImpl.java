@@ -209,7 +209,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   }
 
   public static boolean isUseNewSorting() {
-    return SmartCodeCompletionAction.isDoingSmartCodeCompleteAction() && "true".equals(System.getProperty("sort.lookup.items.by.proximity"));
+    return SmartCodeCompletionAction.isDoingSmartCodeCompleteAction();
   }
 
   protected boolean shouldSortItems(final PsiFile containingFile, final LookupItem[] items) {
