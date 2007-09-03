@@ -788,7 +788,28 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public List<Match> getDuplicates() {
+    if (myIsChainedConstructor) {
+      return filterChainedConstructorDuplicates(myDuplicates);
+    }
     return myDuplicates;
+  }
+
+  private static List<Match> filterChainedConstructorDuplicates(final List<Match> duplicates) {
+    List<Match> result = new ArrayList<Match>();
+    for(Match duplicate: duplicates) {
+      final PsiElement matchStart = duplicate.getMatchStart();
+      final PsiMethod method = PsiTreeUtil.getParentOfType(matchStart, PsiMethod.class);
+      if (method != null && method.isConstructor()) {
+        final PsiCodeBlock body = method.getBody();
+        if (body != null) {
+          final PsiStatement[] psiStatements = body.getStatements();
+          if (psiStatements.length > 0 && matchStart == psiStatements [0]) {
+            result.add(duplicate);
+          }
+        }
+      }
+    }
+    return result;
   }
 
   public void processMatch(Match match) throws IncorrectOperationException {

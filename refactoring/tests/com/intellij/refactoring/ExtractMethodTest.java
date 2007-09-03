@@ -274,8 +274,20 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testChainedConstructor() throws Exception {
+    doChainedConstructorTest(false);
+  }
+
+  public void testChainedConstructorDuplicates() throws Exception {
+    doChainedConstructorTest(true);
+  }
+
+  public void testChainedConstructorInvalidDuplicates() throws Exception {
+    doChainedConstructorTest(true);
+  }
+
+  private void doChainedConstructorTest(final boolean replaceAllDuplicates) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    boolean success = performExtractMethod(true, false, getEditor(), getFile(), getProject(), true);
+    boolean success = performExtractMethod(true, replaceAllDuplicates, getEditor(), getFile(), getProject(), true);
     assertTrue(success);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
