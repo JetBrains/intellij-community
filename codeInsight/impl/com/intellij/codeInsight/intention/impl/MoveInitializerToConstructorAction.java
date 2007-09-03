@@ -46,7 +46,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     return psiClass != null && !psiClass.isInterface() && !(psiClass instanceof PsiAnonymousClass);
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     int offset = editor.getCaretModel().getOffset();
@@ -95,12 +95,21 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     PsiElementFactory factory = codeBlock.getManager().getElementFactory();
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName()+" = y;", codeBlock);
     PsiAssignmentExpression expression = (PsiAssignmentExpression)statement.getExpression();
-    expression.getRExpression().replace(field.getInitializer());
+    PsiExpression initializer = field.getInitializer();
+    if (initializer instanceof PsiArrayInitializerExpression) {
+      PsiType type = initializer.getType();
+      PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + type.getCanonicalText() + "{}", codeBlock);
+      newExpression.getArrayInitializer().replace(initializer);
+      initializer = newExpression;
+    }
+    expression.getRExpression().replace(initializer);
     PsiStatement[] statements = codeBlock.getStatements();
     PsiElement anchor = null;
     for (PsiStatement blockStatement : statements) {
-       if (blockStatement instanceof PsiExpressionStatement && HighlightUtil.isSuperOrThisMethodCall(
-         ((PsiExpressionStatement)blockStatement).getExpression())) continue;
+      if (blockStatement instanceof PsiExpressionStatement &&
+          HighlightUtil.isSuperOrThisMethodCall(((PsiExpressionStatement)blockStatement).getExpression())) {
+        continue;
+      }
       if (containsReference(blockStatement, field)) {
         anchor = blockStatement;
         break;
