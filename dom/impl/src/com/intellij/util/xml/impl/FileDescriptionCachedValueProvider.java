@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.lang.ref.WeakReference;
 
 /**
  * @author peter
@@ -267,7 +267,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     final Set<Object> deps = new LinkedHashSet<Object>();
     deps.add(this);
     deps.add(myXmlFile);
-    for (final DomFileDescription<?> fileDescription : myDomManager.getFileDescriptions().keySet()) {
+    for (final DomFileDescription<?> fileDescription : new HashSet<DomFileDescription<?>>(myDomManager.getFileDescriptions().keySet())) {
       deps.addAll(fileDescription.getDependencyItems(myXmlFile));
     }
     return deps.toArray();
