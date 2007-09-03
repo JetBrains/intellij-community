@@ -1091,7 +1091,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     PsiElement parent = getParent();
     final String name = getName();
     if (parent instanceof PsiFile) {
-      PsiJavaFile fileNavigationElement = (PsiJavaFile) parent.getNavigationElement();
+      PsiClassOwner fileNavigationElement = (PsiClassOwner)parent.getNavigationElement();
       for (PsiClass aClass : fileNavigationElement.getClasses()) {
         if (name.equals(aClass.getName())) return aClass;
       }

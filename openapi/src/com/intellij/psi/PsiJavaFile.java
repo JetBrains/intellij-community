@@ -22,13 +22,7 @@ import com.intellij.pom.java.LanguageLevel;
 /**
  * Represents a Java or JSP file.
  */
-public interface PsiJavaFile extends PsiImportHolder {
-  /**
-   * Returns the list of classes contained in the file.
-   *
-   * @return the array of classes in the file.
-   */
-  @NotNull PsiClass[] getClasses();
+public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner {
 
   /**
    * Returns the package statement contained in the file.

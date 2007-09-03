@@ -321,7 +321,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
           VirtualFile source = file.findFileByRelativePath(relativeFilePath);
           if (source != null) {
             PsiFile psiSource = getManager().findFile(source);
-            if (psiSource instanceof PsiJavaFile) {
+            if (psiSource instanceof PsiClassOwner) {
               return psiSource;
             }
           }
