@@ -270,11 +270,21 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   public boolean hasCachesForAnyRoot() {
-    return hasCachesWithEmptiness(false);
+    try {
+      return hasCachesWithEmptiness(false);
+    }
+    catch (ProcessCanceledException e) {
+      return true;
+    }
   }
 
   public boolean hasEmptyCaches() {
-    return hasCachesWithEmptiness(true);
+    try {
+      return hasCachesWithEmptiness(true);
+    }
+    catch (ProcessCanceledException e) {
+      return false;
+    }
   }
 
   private boolean hasCachesWithEmptiness(final boolean emptiness) {
