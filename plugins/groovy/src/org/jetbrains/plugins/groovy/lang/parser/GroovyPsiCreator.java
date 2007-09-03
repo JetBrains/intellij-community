@@ -42,6 +42,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSecti
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrTypeCastExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrSafeCastExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrInstanceofExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
@@ -53,7 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.Gr
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
@@ -189,7 +192,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(AND_EXPRESSION)) return new GrAndExprImpl(node);
     if (elem.equals(REGEX_EXPRESSION)) return new GrRegexExprImpl(node);
     if (elem.equals(EQUALITY_EXPRESSION)) return new GrEqualityExprImpl(node);
-    if (elem.equals(RELATIONAL_EXPRESSION)) return new GrRelationalExprImpl(node);
+    if (elem.equals(RELATIONAL_EXPRESSION)) return new GrRelationalExpressionImpl(node);
     if (elem.equals(SHIFT_EXPRESSION)) return new GrShiftExprImpl(node);
     if (elem.equals(RANGE_EXPRESSION)) return new GrRangeExprImpl(node);
     if (elem.equals(COMPOSITE_SHIFT_SIGN)) return new GrOperationSignImpl(node);
@@ -200,6 +203,8 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(UNARY_EXPRESSION)) return new GrUnaryExpressionImpl(node);
     if (elem.equals(POSTFIX_EXPRESSION)) return new GrPostfixExprImpl(node);
     if (elem.equals(CAST_EXPRESSION)) return new GrTypeCastExpressionImpl(node);
+    if (elem.equals(SAFE_CAST_EXPRESSION)) return new GrSafeCastExpressionImpl(node);
+    if (elem.equals(INSTANCEOF_EXPRESSION)) return new GrInstanceofExpressionImpl(node);
     if (elem.equals(ARRAY_TYPE)) return new GrArrayTypeElementImpl(node);
     if (elem.equals(BUILT_IN_TYPE)) return new GrBuiltInTypeElementImpl(node);
     if (elem.equals(GSTRING)) return new GrStringImpl(node);

@@ -49,18 +49,12 @@ public class RelationalExpression implements GroovyElementTypes {
         ParserUtils.getToken(builder, mNLS);
         ShiftExpression.parse(builder);
         marker.done(RELATIONAL_EXPRESSION);
-      } else if (kINSTANCEOF.equals(builder.getTokenType()) ||
-              kAS.equals(builder.getTokenType())) {
-        builder.advanceLexer();
-        PsiBuilder.Marker rb = builder.mark();
-        ParserUtils.getToken(builder, mNLS);
-        if (WRONGWAY.equals(TypeSpec.parse(builder))) {
-          rb.rollbackTo();
-          builder.error(GroovyBundle.message("type.specification.expected"));
-        } else {
-          rb.drop();
-        }
-        marker.done(RELATIONAL_EXPRESSION);
+      } else if (kINSTANCEOF.equals(builder.getTokenType())) {
+        advanceLexerAndParseType(builder);
+        marker.done(INSTANCEOF_EXPRESSION);
+      } else if (kAS.equals(builder.getTokenType())) {
+        advanceLexerAndParseType(builder);
+        marker.done(SAFE_CAST_EXPRESSION);
       } else {
         marker.drop();
       }
@@ -69,6 +63,18 @@ public class RelationalExpression implements GroovyElementTypes {
     }
 
     return result;
+  }
+
+  private static void advanceLexerAndParseType(PsiBuilder builder) {
+    builder.advanceLexer();
+    PsiBuilder.Marker rb = builder.mark();
+    ParserUtils.getToken(builder, mNLS);
+    if (WRONGWAY.equals(TypeSpec.parse(builder))) {
+      rb.rollbackTo();
+      builder.error(GroovyBundle.message("type.specification.expected"));
+    } else {
+      rb.drop();
+    }
   }
 
   /**

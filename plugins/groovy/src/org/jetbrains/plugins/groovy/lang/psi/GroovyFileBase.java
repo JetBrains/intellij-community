@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -28,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 /**
  * @author ilyas
  */
-public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner {
+public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner, PsiClassOwner {
   String SCRIPT_BASE_CLASS_NAME = "groovy.lang.Script";
   String[] IMPLICITLY_IMPORTED_PACKAGES = {
       "java.lang",

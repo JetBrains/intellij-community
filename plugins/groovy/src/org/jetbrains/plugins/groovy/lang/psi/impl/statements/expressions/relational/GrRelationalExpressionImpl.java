@@ -24,9 +24,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author ilyas
  */
-public class GrRelationalExprImpl extends GrBinaryExpressionImpl implements GrRelationalExpression {
+public class GrRelationalExpressionImpl extends GrBinaryExpressionImpl implements GrRelationalExpression {
 
-  public GrRelationalExprImpl(@NotNull ASTNode node) {
+  public GrRelationalExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 

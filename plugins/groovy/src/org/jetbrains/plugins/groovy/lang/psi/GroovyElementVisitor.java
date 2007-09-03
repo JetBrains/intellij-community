@@ -183,6 +183,14 @@ public abstract class GroovyElementVisitor {
     visitExpression(typeCastExpression);
   }
 
+  public void visitSafeCastExpression(GrSafeCastExpression typeCastExpression) {
+    visitExpression(typeCastExpression);
+  }
+
+  public void visitInstanceofExpression(GrInstanceOfExpression expression) {
+    visitExpression(expression);
+  }
+
   public void visitParenthesizedExpression(GrParenthesizedExpr expression) {
     visitExpression(expression);
   }

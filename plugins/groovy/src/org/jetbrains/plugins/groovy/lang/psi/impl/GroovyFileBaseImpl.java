@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -114,5 +115,10 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
       child = child.getNextSibling();
     }
+  }
+
+  @NotNull
+  public PsiClass[] getClasses() {
+    return getTypeDefinitions();
   }
 }
