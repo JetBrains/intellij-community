@@ -6,9 +6,9 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
-import com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode;
+import com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode;
+import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -23,8 +23,8 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -293,7 +293,9 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       final ProjectJdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
       Arrays.sort(projectJdks, new Comparator<ProjectJdk>() {
         public int compare(final ProjectJdk o1, final ProjectJdk o2) {
-          return o1.getVersionString().compareToIgnoreCase(o2.getVersionString());
+          final String version1 = o1.getVersionString();
+          final String version2 = o2.getVersionString();
+          return version1 != null && version2 != null ? version1.compareToIgnoreCase(version2) : 0;
         }
       });
       if (projectJdks.length > 0) {

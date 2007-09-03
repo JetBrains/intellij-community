@@ -79,9 +79,15 @@ public abstract class ProjectOpenProcessor {
       wizardContext.setProjectFileDirectory(virtualFile.getParent().getPath());
       if (wizardContext.getProjectJdk() == null) {
         for (ProjectJdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
-          if (wizardContext.getProjectJdk() == null ||
-              wizardContext.getProjectJdk().getVersionString().compareTo(projectJdk.getVersionString()) < 0) {
+          final String jdkVersion = projectJdk.getVersionString();
+          if (wizardContext.getProjectJdk() == null) {
             wizardContext.setProjectJdk(projectJdk);
+          }
+          else {
+            final String version = wizardContext.getProjectJdk().getVersionString();
+            if (jdkVersion == null || (version != null && version.compareTo(jdkVersion) < 0)) {
+              wizardContext.setProjectJdk(projectJdk);
+            }
           }
         }
       }
