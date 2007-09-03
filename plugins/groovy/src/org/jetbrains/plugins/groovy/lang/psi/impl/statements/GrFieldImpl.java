@@ -112,4 +112,10 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
   public boolean isMetaEnough() {
     return true;
   }
+
+  public PsiElement getOriginalElement() {
+    PsiClass originalClass = (PsiClass)getContainingClass().getOriginalElement();
+    PsiField originalField = originalClass.findFieldByName(getName(), false);
+    return originalField != null ? originalField : this;
+  }
 }

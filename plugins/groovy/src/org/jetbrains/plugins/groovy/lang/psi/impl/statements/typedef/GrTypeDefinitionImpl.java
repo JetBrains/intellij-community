@@ -669,4 +669,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public String getElementToCompare() {
     return getName();
   }
+
+  public PsiElement getOriginalElement() {
+    return PsiImplUtil.getOriginalElement(this, getContainingFile());
+  }
 }

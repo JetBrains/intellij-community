@@ -19,10 +19,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -47,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.G
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.refactoring.GroovyVariableUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -301,5 +308,42 @@ public class PsiImplUtil {
     }
 
     return true;
+  }
+
+  public static PsiElement getOriginalElement(PsiClass clazz, PsiFile containingFile) {
+    VirtualFile vFile = containingFile.getVirtualFile();
+    final PsiManager manager = clazz.getManager();
+    final ProjectFileIndex idx = ProjectRootManager.getInstance(manager.getProject()).getFileIndex();
+
+    if (vFile == null || !idx.isInLibrarySource(vFile)) return clazz;
+    final String qName = clazz.getQualifiedName();
+    if (qName == null) return null;
+    final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
+    PsiClass original = manager.findClass(qName, new GlobalSearchScope() {
+      public int compare(VirtualFile file1, VirtualFile file2) {
+        return 0;
+      }
+
+      public boolean contains(VirtualFile file) {
+        // order for file and vFile has non empty intersection.
+        List<OrderEntry> entries = idx.getOrderEntriesForFile(file);
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < entries.size(); i++) {
+          final OrderEntry entry = entries.get(i);
+          if (orderEntries.contains(entry)) return true;
+        }
+        return false;
+      }
+
+      public boolean isSearchInModuleContent(@NotNull Module aModule) {
+        return false;
+      }
+
+      public boolean isSearchInLibraries() {
+        return true;
+      }
+    });
+
+    return original != null ? original : clazz;
   }
 }

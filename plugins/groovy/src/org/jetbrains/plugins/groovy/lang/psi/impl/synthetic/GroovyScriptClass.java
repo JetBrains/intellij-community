@@ -15,6 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -318,6 +319,10 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
         return myFile.getIcon(0);
       }
     };
+  }
+
+  public PsiElement getOriginalElement() {
+    return PsiImplUtil.getOriginalElement(this, myFile);
   }
 }
 

@@ -258,5 +258,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     System.arraycopy(declaredDefs, 0, result, 1, declaredDefs.length);
     return result;
   }
+
+  public PsiElement getOriginalElement() {
+    final PsiClass scriptClass = getScriptClass();
+    if (scriptClass != null) {
+      return scriptClass.getOriginalElement();
+    }
+    return this;
+  }
 }
 
