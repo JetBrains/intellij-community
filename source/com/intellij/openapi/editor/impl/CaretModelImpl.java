@@ -359,7 +359,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener {
     DocumentEventImpl event = (DocumentEventImpl)e;
     if (event.isWholeTextReplaced()) {
       int newLength = myEditor.getDocument().getTextLength();
-      if (myOffset == newLength - e.getNewLength() + e.getOldLength()) {
+      if (myOffset == newLength - e.getNewLength() + e.getOldLength() || newLength == 0) {
         moveToOffset(newLength);
       }
       else {
