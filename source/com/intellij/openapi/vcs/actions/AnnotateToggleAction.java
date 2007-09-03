@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -194,7 +195,7 @@ public class AnnotateToggleAction extends ToggleAction {
 
     @Nullable
     public String getToolTip(final int line, final Editor editor) {
-      return myAnnotation.getToolTip(line);
+      return XmlStringUtil.escapeString(myAnnotation.getToolTip(line));
     }
 
     public void doAction(int line) {

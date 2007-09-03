@@ -33,14 +33,15 @@ package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
-import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.EditorGutterAction;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class Annotater {
@@ -77,7 +78,7 @@ public class Annotater {
 
         @Nullable
         public String getToolTip(final int line, final Editor editor) {
-          return myFileAnnotation.getToolTip(line);
+          return XmlStringUtil.escapeString(myFileAnnotation.getToolTip(line));
         }
 
         public void gutterClosed() {
