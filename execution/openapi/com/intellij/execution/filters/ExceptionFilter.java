@@ -15,7 +15,12 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -23,25 +28,28 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 public class ExceptionFilter implements Filter{
   private final Project myProject;
-  @NonNls private static final String AT_STR = "at";
-  private static final String AT_PREFIX = AT_STR + " ";
-  private static final String _AT_STR = " " + AT_STR + " ";
+  @NonNls private static final String AT = "at";
+  private static final String AT_PREFIX = AT + " ";
+  private static final String STANDALONE_AT = " " + AT + " ";
+  private static final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
 
   public ExceptionFilter(@NotNull final Project project) {
     myProject = project;
   }
 
-  public Result applyFilter(final String line, final int entireLength) {
+  public Result applyFilter(final String line, final int textEndOffset) {
     int atIndex;
     if (line.startsWith(AT_PREFIX)){
       atIndex = 0;
     }
     else{
-      atIndex = line.indexOf(AT_PREFIX);
+      atIndex = line.indexOf(STANDALONE_AT);
       if (atIndex < 0) {
-        atIndex = line.indexOf(_AT_STR);
+        atIndex = line.indexOf(AT_PREFIX);
       }
       if (atIndex < 0) return null;
     }
@@ -50,7 +58,7 @@ public class ExceptionFilter implements Filter{
     if (lparenthIndex < 0) return null;
     final int lastDotIndex = line.lastIndexOf('.', lparenthIndex);
     if (lastDotIndex < 0 || lastDotIndex < atIndex) return null;
-    String className = line.substring(atIndex + AT_STR.length() + 1, lastDotIndex).trim();
+    String className = line.substring(atIndex + AT.length() + 1, lastDotIndex).trim();
     final int dollarIndex = className.indexOf('$');
     if (dollarIndex >= 0){
       className = className.substring(0, dollarIndex);
@@ -83,11 +91,16 @@ public class ExceptionFilter implements Filter{
       if (!file.getName().equalsIgnoreCase(shortFileName)) return null;
       */
 
-      final int textStartOffset = entireLength - line.length();
+      final int textStartOffset = textEndOffset - line.length();
       final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
       final int highlightEndOffset = textStartOffset + rparenthIndex;
-      final OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(myProject, file.getVirtualFile(), lineNumber - 1);
-      return new Result(highlightStartOffset, highlightEndOffset, info);
+      VirtualFile virtualFile = file.getVirtualFile();
+      final OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(myProject, virtualFile, lineNumber - 1);
+      TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();
+      if (ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(virtualFile)) {
+        attributes.setFontType(Font.BOLD);
+      }
+      return new Result(highlightStartOffset, highlightEndOffset, info, attributes);
     }
     catch(NumberFormatException e){
       return null;

@@ -519,13 +519,20 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     MarkupModelEx markupModel = (MarkupModelEx)myEditor.getMarkupModel();
     for (Map.Entry<RangeHighlighter,HyperlinkInfo> entry : myHyperlinks.getRanges().entrySet()) {
       RangeHighlighter range = entry.getKey();
-      if (range.getTextAttributes() == FOLLOWED_HYPERLINK_ATTRIBUTES) {
-        TextAttributes oldAttr = range.getUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES);
+      TextAttributes oldAttr = range.getUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES);
+      if (oldAttr != null) {
         markupModel.setRangeHighlighterAttributes(range, oldAttr);
+        range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, null);
       }
       if (entry.getValue() == info) {
-        range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, range.getTextAttributes());
-        markupModel.setRangeHighlighterAttributes(range, FOLLOWED_HYPERLINK_ATTRIBUTES);
+        TextAttributes oldAttributes = range.getTextAttributes();
+        range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, oldAttributes);
+        TextAttributes attributes = FOLLOWED_HYPERLINK_ATTRIBUTES.clone();
+        assert oldAttributes != null;
+        attributes.setFontType(oldAttributes.getFontType());
+        attributes.setEffectType(oldAttributes.getEffectType());
+        attributes.setEffectColor(oldAttributes.getEffectColor());
+        markupModel.setRangeHighlighterAttributes(range, attributes);
       }
     }
     //refresh highlighter text attributes
@@ -863,7 +870,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     int i;
     for (i = 0; i<ranges.size(); i++) {
       RangeHighlighter range = ranges.get(i);
-      if (range.getTextAttributes() == FOLLOWED_HYPERLINK_ATTRIBUTES) {
+      if (range.getUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES) != null) {
         break;
       }
     }
