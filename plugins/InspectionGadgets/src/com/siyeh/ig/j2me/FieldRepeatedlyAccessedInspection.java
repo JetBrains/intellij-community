@@ -20,7 +20,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.performance.VariableAccessVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,14 +39,16 @@ public class FieldRepeatedlyAccessedInspection extends BaseInspection {
 
     @NotNull
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("field.repeatedly.accessed.in.method.display.name");
+        return InspectionGadgetsBundle.message(
+                "field.repeatedly.accessed.in.method.display.name");
     }
 
     @NotNull
     public String buildErrorString(Object... arg) {
         final String fieldName = ((PsiNamedElement) arg[0]).getName();
         return InspectionGadgetsBundle.message(
-                "field.repeatedly.accessed.in.method.problem.descriptor", fieldName);
+                "field.repeatedly.accessed.in.method.problem.descriptor",
+                fieldName);
     }
 
     public JComponent createOptionsPanel() {
@@ -70,21 +72,12 @@ public class FieldRepeatedlyAccessedInspection extends BaseInspection {
             method.accept(visitor);
             final Set<PsiField> fields = visitor.getOveraccessedFields();
             for(PsiField field : fields){
-                if(isConstant(field) || m_ignoreFinalFields &&
+                if(ExpressionUtils.isConstant(field) || m_ignoreFinalFields &&
                         field.hasModifierProperty(PsiModifier.FINAL)){
                     continue;
                 }
                 registerError(nameIdentifier, field);
             }
-        }
-
-        private boolean isConstant(PsiField field){
-            if(!field.hasModifierProperty(PsiModifier.STATIC) ||
-                    !field.hasModifierProperty(PsiModifier.FINAL)){
-                return false ;
-            }
-            final PsiType type = field.getType();
-            return ClassUtils.isImmutable(type);
         }
     }
 }

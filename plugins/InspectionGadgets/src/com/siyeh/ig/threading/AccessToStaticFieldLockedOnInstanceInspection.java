@@ -20,8 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class AccessToStaticFieldLockedOnInstanceInspection
@@ -103,7 +102,7 @@ public class AccessToStaticFieldLockedOnInstanceInspection
             }
             final PsiField referredField = (PsiField) referent;
             if (!referredField.hasModifierProperty(PsiModifier.STATIC) ||
-                    isConstant(referredField)) {
+                    ExpressionUtils.isConstant(referredField)) {
                 return;
             }
             final PsiClass containingClass = referredField.getContainingClass();
@@ -111,17 +110,6 @@ public class AccessToStaticFieldLockedOnInstanceInspection
                 return;
             }
             registerError(expression);
-        }
-
-        private static boolean isConstant(PsiField field) {
-            if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-                return false;
-            }
-            if (CollectionUtils.isEmptyArray(field)) {
-                return true;
-            }
-            final PsiType type = field.getType();
-            return ClassUtils.isImmutable(type);
         }
     }
 }

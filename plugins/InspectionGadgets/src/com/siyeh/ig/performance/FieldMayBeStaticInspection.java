@@ -21,8 +21,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.MakeStaticFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.MakeStaticFix;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 

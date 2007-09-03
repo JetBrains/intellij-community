@@ -25,6 +25,18 @@ public class ExpressionUtils {
 
     private ExpressionUtils() {}
 
+    public static boolean isConstant(PsiField field) {
+        if (!field.hasModifierProperty(PsiModifier.FINAL) ||
+            !field.hasModifierProperty(PsiModifier.STATIC)) {
+            return false;
+        }
+        if (CollectionUtils.isEmptyArray(field)) {
+            return true;
+        }
+        final PsiType type = field.getType();
+        return ClassUtils.isImmutable(type);
+    }
+
     public static boolean isEmptyStringLiteral(
             @Nullable PsiExpression expression) {
         if (!(expression instanceof PsiLiteralExpression)) {

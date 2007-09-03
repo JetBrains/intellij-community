@@ -28,6 +28,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.HighlightUtil;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -334,8 +336,7 @@ public class TooBroadScopeInspection extends BaseInspection
             return true;
         }
         if (PsiUtil.isConstantExpression(expression) ||
-            PsiKeyword.NULL.equals(expression.getText()))
-        {
+            ExpressionUtils.isNullLiteral(expression)) {
             return true;
         }
         if (expression instanceof PsiNewExpression)
@@ -370,9 +371,11 @@ public class TooBroadScopeInspection extends BaseInspection
             }
             else if (!m_allowConstructorAsInitializer)
             {
-                return false;
+                final PsiType type = newExpression.getType();
+                if (!ClassUtils.isImmutable(type)) {
+                    return false;
+                }
             }
-
             final PsiExpressionList argumentList =
                     newExpression.getArgumentList();
             if (argumentList == null)
@@ -386,6 +389,18 @@ public class TooBroadScopeInspection extends BaseInspection
                 result &= isMoveable(argumentExpression);
             }
             return result;
+        }
+        if (expression instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)expression;
+            final PsiElement target = referenceExpression.resolve();
+            if (!(target instanceof PsiField)) {
+                return false;
+            }
+            final PsiField field = (PsiField)target;
+            if (ExpressionUtils.isConstant(field)) {
+                return true;
+            }
         }
         return false;
     }
@@ -406,8 +421,7 @@ public class TooBroadScopeInspection extends BaseInspection
                 return;
             }
             final PsiExpression initializer = variable.getInitializer();
-            final boolean initializerIsMoveable = isMoveable(initializer);
-            if (!initializerIsMoveable)
+            if (!isMoveable(initializer))
             {
                 return;
             }
