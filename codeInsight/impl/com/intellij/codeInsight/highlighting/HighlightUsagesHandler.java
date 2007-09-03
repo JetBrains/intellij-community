@@ -3,12 +3,12 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -23,12 +23,13 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -107,8 +108,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                                             TargetElementUtil.CATCH_ACCEPTED |
                                                             TargetElementUtil.THROWS_ACCEPTED |
                                                             TargetElementUtil.THROW_ACCEPTED |
-                                                            TargetElementUtil.RETURN_ACCEPTED);
-
+                                                            TargetElementUtil.RETURN_ACCEPTED
+                                                            | TargetElementUtil.EXTENDS_IMPLEMENTS_ACCEPTED
+    );
     if (target instanceof PsiCompiledElement) target = ((PsiCompiledElement)target).getMirror();
     return target;
   }
@@ -166,66 +168,43 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     public void run() {
       highlightReferences(myProject, myTarget, myRefs, myEditor, myFile, myClearHighlights);
-
       setStatusText(myTarget, myRefs.size(), myProject);
     }
   }
 
-  private class ChooseExceptionClassAndDoHighlightRunnable implements Runnable {
-    private final PsiClass[] myExceptionClasses;
-    private final PsiElement myHighlightInPlace;
-    private final Project myProject;
-    private final PsiElement myTarget;
+  private abstract static class ChooseClassAndDoHighlightRunnable implements Runnable {
+    private final PsiClass[] myClasses;
     private final Editor myEditor;
-    private final PsiFile myFile;
     private JList myList;
-    private TypeFilter myTypeFilter = ANY_TYPE;
-    private final boolean myClearHighlights;
+    private final String myTitle;
 
-    public ChooseExceptionClassAndDoHighlightRunnable(PsiClassType[] exceptions, PsiElement highlightInPlace, Project project,
-                                                      PsiElement target, Editor editor, PsiFile file, boolean clearHighlights) {
-      myClearHighlights = clearHighlights;
+    public ChooseClassAndDoHighlightRunnable(PsiClassType[] classTypes, Editor editor, String title) {
       List<PsiClass> classes = new ArrayList<PsiClass>();
-      for (PsiClassType exception1 : exceptions) {
-        PsiClass exception = exception1.resolve();
-        if (exception != null) classes.add(exception);
+      for (PsiClassType classType : classTypes) {
+        PsiClass aClass = classType.resolve();
+        if (aClass != null) classes.add(aClass);
       }
-      myExceptionClasses = classes.toArray(new PsiClass[classes.size()]);
-      myHighlightInPlace = highlightInPlace;
-      myProject = project;
-      myTarget = target;
+      myClasses = classes.toArray(new PsiClass[classes.size()]);
       myEditor = editor;
-      myFile = file;
+      myTitle = title;
     }
 
-    public void setTypeFilter(TypeFilter typeFilter) {
-      myTypeFilter = typeFilter;
-    }
-
-    private void highlightOtherOccurrences(final ArrayList<PsiElement> otherOccurrences) {
-      HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-      EditorColorsManager manager = EditorColorsManager.getInstance();
-      TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-
-      PsiElement[] elements = otherOccurrences.toArray(new PsiElement[otherOccurrences.size()]);
-      doHighlightElements(highlightManager, myEditor, elements, attributes, myClearHighlights);
-    }
+    protected abstract void selected(PsiClass... classes);
 
     public void run() {
-      final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
-      if (myExceptionClasses.length == 1) {
-        List<PsiReference> refs = new ArrayList<PsiReference>();
-        final ArrayList<PsiElement> otherOccurrences = new ArrayList<PsiElement>();
-        addExceptionThrownPlaces(refs, otherOccurrences, factory.createType(myExceptionClasses[0]), myHighlightInPlace, myTypeFilter);
-        new DoHighlightRunnable(refs, myProject, myTarget, myEditor, myFile, myClearHighlights).run();
-        highlightOtherOccurrences(otherOccurrences);
+      if (myClasses.length == 1) {
+        selected(myClasses[0]);
       }
-      else if (myExceptionClasses.length > 0) {
+      else if (myClasses.length > 0) {
         PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
 
-        Arrays.sort(myExceptionClasses, renderer.getComparator());
+        Arrays.sort(myClasses, renderer.getComparator());
 
-        Vector<Object> model = new Vector<Object>(Arrays.asList(myExceptionClasses));
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          selected(myClasses);
+          return;
+        }
+        Vector<Object> model = new Vector<Object>(Arrays.asList(myClasses));
         model.insertElementAt(CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry"), 0);
 
         myList = new JList(model);
@@ -238,30 +217,19 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           public void run() {
             int idx = myList.getSelectedIndex();
             if (idx < 0) return;
-            ArrayList<PsiReference> refs = new ArrayList<PsiReference>();
-            final ArrayList<PsiElement> otherOccurrences = new ArrayList<PsiElement>();
             if (idx > 0) {
-              addExceptionThrownPlaces(refs, otherOccurrences, factory.createType(myExceptionClasses[idx - 1]),
-                                        myHighlightInPlace,
-                                        myTypeFilter);
+              selected(myClasses[idx-1]);
             }
             else {
-              for (PsiClass exceptionClass : myExceptionClasses) {
-                addExceptionThrownPlaces(refs, otherOccurrences, factory.createType(exceptionClass),
-                                          myHighlightInPlace,
-                                          myTypeFilter);
-              }
+              selected(myClasses);
             }
-
-            new DoHighlightRunnable(refs, myProject, myTarget, myEditor, myFile, myClearHighlights).run();
-            highlightOtherOccurrences(otherOccurrences);
           }
         };
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             new PopupChooserBuilder(myList).
-              setTitle(CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")).
+              setTitle(myTitle).
               setItemChoosenCallback(callback).
               createPopup().
               showInBestPositionFor(myEditor);
@@ -271,101 +239,16 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  private Runnable createHighlightAction(final Project project, PsiFile file, PsiElement[] targets, final Editor editor) {
+  private static Runnable createHighlightAction(final Project project, PsiFile file, PsiElement[] targets, final Editor editor) {
     if (file instanceof PsiCompiledElement) file = (PsiFile)((PsiCompiledElement)file).getMirror();
     PsiElement target = targets[0];
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     boolean clearHighlights = isClearHighlights(editor, highlightManager);
 
     if (target instanceof PsiKeyword) {
-      if (PsiKeyword.TRY.equals(target.getText())) {
-        PsiElement parent = target.getParent();
-        if (!(parent instanceof PsiTryStatement)) {
-          return EMPTY_HIGHLIGHT_RUNNABLE;
-        }
-        PsiTryStatement tryStatement = (PsiTryStatement)parent;
-
-        final PsiClassType[] psiClassTypes = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(),
-                                                                                      tryStatement.getTryBlock());
-
-        return createChoosingRunnable(project, psiClassTypes, tryStatement.getTryBlock(), target, editor, file, ANY_TYPE, clearHighlights);
-      }
-
-      if (PsiKeyword.CATCH.equals(target.getText())) {
-        PsiElement parent = target.getParent();
-        if (!(parent instanceof PsiCatchSection)) {
-          return EMPTY_HIGHLIGHT_RUNNABLE;
-        }
-        PsiTryStatement tryStatement = ((PsiCatchSection)parent).getTryStatement();
-
-        final PsiParameter param = ((PsiCatchSection)parent).getParameter();
-        if (param == null) return EMPTY_HIGHLIGHT_RUNNABLE;
-
-        final PsiParameter[] catchBlockParameters = tryStatement.getCatchBlockParameters();
-
-        final PsiClassType[] allThrownExceptions = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(),
-                                                                                            tryStatement.getTryBlock());
-        TypeFilter filter = new TypeFilter() {
-          public boolean accept(PsiType type) {
-            for (PsiParameter parameter : catchBlockParameters) {
-              boolean isAssignable = parameter.getType().isAssignableFrom(type);
-              if (parameter != param) {
-                if (isAssignable) return false;
-              }
-              else {
-                return isAssignable;
-              }
-            }
-            return false;
-          }
-        };
-
-        ArrayList<PsiClassType> filtered = new ArrayList<PsiClassType>();
-        for (PsiClassType type : allThrownExceptions) {
-          if (filter.accept(type)) filtered.add(type);
-        }
-
-        return createChoosingRunnable(project, filtered.toArray(new PsiClassType[filtered.size()]),
-                                      tryStatement.getTryBlock(), target, editor, file, filter, clearHighlights);
-      }
-
-      if (PsiKeyword.THROWS.equals(target.getText())) {
-        PsiElement parent = target.getParent().getParent();
-        if (!(parent instanceof PsiMethod)) return EMPTY_HIGHLIGHT_RUNNABLE;
-        PsiMethod method = (PsiMethod)parent;
-        if (method.getBody() == null) return EMPTY_HIGHLIGHT_RUNNABLE;
-
-        final PsiClassType[] psiClassTypes = ExceptionUtil.collectUnhandledExceptions(method.getBody(),
-                                                                                      method.getBody());
-
-        return createChoosingRunnable(project, psiClassTypes, method.getBody(), target, editor, file, ANY_TYPE, clearHighlights);
-      }
-
-      if (PsiKeyword.RETURN.equals(target.getText()) || PsiKeyword.THROW.equals(target.getText())) {
-        PsiElement parent = target.getParent();
-        if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiThrowStatement)) return EMPTY_HIGHLIGHT_RUNNABLE;
-
-        PsiMethod method = PsiTreeUtil.getParentOfType(target, PsiMethod.class);
-        if (method == null) return EMPTY_HIGHLIGHT_RUNNABLE;
-
-        PsiCodeBlock body = method.getBody();
-        try {
-          ControlFlow flow = ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
-
-          List<PsiStatement> exitStatements = new ArrayList<PsiStatement>();
-          ControlFlowUtil.findExitPointsAndStatements(flow, flow.getStartOffset(body), flow.getEndOffset(body), new IntArrayList(),
-                                                      exitStatements,
-                                                      new Class[]{PsiReturnStatement.class, PsiBreakStatement.class,
-                                                                  PsiContinueStatement.class, PsiThrowStatement.class,
-                                                                  PsiExpressionStatement.class});
-
-          if (!exitStatements.contains(parent)) return EMPTY_HIGHLIGHT_RUNNABLE;
-
-          return new DoHighlightExitPointsRunnable(project, editor, exitStatements.toArray(new PsiElement[exitStatements.size()]), clearHighlights);
-        }
-        catch (AnalysisCanceledException e) {
-          return EMPTY_HIGHLIGHT_RUNNABLE;
-        }
+      Runnable runnable = highlightKeyword((PsiKeyword)target, editor, file, clearHighlights);
+      if (runnable != null) {
+        return runnable;
       }
     }
 
@@ -383,15 +266,170 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return new DoHighlightRunnable(new ArrayList<PsiReference>(refs), project, target, editor, file, clearHighlights);
   }
 
-  private Runnable createChoosingRunnable(Project project, final PsiClassType[] psiClassTypes,
-                                          PsiElement place, PsiElement target, Editor editor,
-                                          PsiFile file, TypeFilter typeFilter, boolean clearHighlights) {
-    if (psiClassTypes == null || psiClassTypes.length == 0) return EMPTY_HIGHLIGHT_RUNNABLE;
+  private static Runnable highlightKeyword(PsiKeyword target, Editor editor, PsiFile file, boolean clearHighlights) {
+    Project project = target.getProject();
+    String targetText = target.getText();
+    PsiElement parent = target.getParent();
+    if (PsiKeyword.TRY.equals(targetText)) {
+      if (!(parent instanceof PsiTryStatement)) {
+        return EMPTY_HIGHLIGHT_RUNNABLE;
+      }
+      PsiTryStatement tryStatement = (PsiTryStatement)parent;
 
-    final ChooseExceptionClassAndDoHighlightRunnable highlightRunnable =
-      new ChooseExceptionClassAndDoHighlightRunnable(psiClassTypes, place, project, target, editor, file, clearHighlights);
-    highlightRunnable.setTypeFilter(typeFilter);
-    return highlightRunnable;
+      final PsiClassType[] psiClassTypes = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(), tryStatement.getTryBlock());
+      return createExceptionChoosingRunnable(project, psiClassTypes, tryStatement.getTryBlock(), target, editor, file, ANY_TYPE, clearHighlights);
+    }
+
+    if (PsiKeyword.CATCH.equals(targetText)) {
+      if (!(parent instanceof PsiCatchSection)) {
+        return EMPTY_HIGHLIGHT_RUNNABLE;
+      }
+      PsiTryStatement tryStatement = ((PsiCatchSection)parent).getTryStatement();
+
+      final PsiParameter param = ((PsiCatchSection)parent).getParameter();
+      if (param == null) return EMPTY_HIGHLIGHT_RUNNABLE;
+
+      final PsiParameter[] catchBlockParameters = tryStatement.getCatchBlockParameters();
+
+      final PsiClassType[] allThrownExceptions = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(),
+                                                                                          tryStatement.getTryBlock());
+      TypeFilter filter = new TypeFilter() {
+        public boolean accept(PsiType type) {
+          for (PsiParameter parameter : catchBlockParameters) {
+            boolean isAssignable = parameter.getType().isAssignableFrom(type);
+            if (parameter != param) {
+              if (isAssignable) return false;
+            }
+            else {
+              return isAssignable;
+            }
+          }
+          return false;
+        }
+      };
+
+      ArrayList<PsiClassType> filtered = new ArrayList<PsiClassType>();
+      for (PsiClassType type : allThrownExceptions) {
+        if (filter.accept(type)) filtered.add(type);
+      }
+
+      return createExceptionChoosingRunnable(project, filtered.toArray(new PsiClassType[filtered.size()]),
+                                    tryStatement.getTryBlock(), target, editor, file, filter, clearHighlights);
+    }
+
+    if (PsiKeyword.THROWS.equals(targetText)) {
+      PsiElement grand = parent.getParent();
+      if (!(grand instanceof PsiMethod)) return EMPTY_HIGHLIGHT_RUNNABLE;
+      PsiMethod method = (PsiMethod)grand;
+      if (method.getBody() == null) return EMPTY_HIGHLIGHT_RUNNABLE;
+
+      final PsiClassType[] psiClassTypes = ExceptionUtil.collectUnhandledExceptions(method.getBody(), method.getBody());
+      return createExceptionChoosingRunnable(project, psiClassTypes, method.getBody(), target, editor, file, ANY_TYPE, clearHighlights);
+    }
+
+    if (PsiKeyword.RETURN.equals(targetText) || PsiKeyword.THROW.equals(targetText)) {
+      if (!(parent instanceof PsiReturnStatement) && !(parent instanceof PsiThrowStatement)) return EMPTY_HIGHLIGHT_RUNNABLE;
+
+      PsiMethod method = PsiTreeUtil.getParentOfType(target, PsiMethod.class);
+      if (method == null) return EMPTY_HIGHLIGHT_RUNNABLE;
+
+      PsiCodeBlock body = method.getBody();
+      try {
+        ControlFlow flow = ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+
+        List<PsiStatement> exitStatements = new ArrayList<PsiStatement>();
+        ControlFlowUtil.findExitPointsAndStatements(flow, flow.getStartOffset(body), flow.getEndOffset(body), new IntArrayList(),
+                                                    exitStatements,
+                                                    new Class[]{PsiReturnStatement.class, PsiBreakStatement.class,
+                                                                PsiContinueStatement.class, PsiThrowStatement.class,
+                                                                PsiExpressionStatement.class});
+
+        if (!exitStatements.contains(parent)) return EMPTY_HIGHLIGHT_RUNNABLE;
+
+        return new DoHighlightExitPointsRunnable(project, editor, exitStatements.toArray(new PsiElement[exitStatements.size()]), clearHighlights);
+      }
+      catch (AnalysisCanceledException e) {
+        return EMPTY_HIGHLIGHT_RUNNABLE;
+      }
+    }
+
+    if (PsiKeyword.EXTENDS.equals(targetText) || PsiKeyword.IMPLEMENTS.equals(targetText)) {
+      return highlightOverridingMethodsRunnable(target, clearHighlights, editor);
+    }
+    return null;
+  }
+
+  private static Runnable highlightOverridingMethodsRunnable(final PsiKeyword target, final boolean clearHighlights, final Editor editor) {
+    PsiElement parent = target.getParent();
+    if (!(parent instanceof PsiReferenceList)) return null;
+    PsiElement grand = parent.getParent();
+    if (!(grand instanceof PsiClass)) return null;
+    final PsiClass aClass = (PsiClass)grand;
+    PsiReferenceList list = PsiKeyword.EXTENDS.equals(target.getText()) ? aClass.getExtendsList() : aClass.getImplementsList();
+    if (list == null) return EMPTY_HIGHLIGHT_RUNNABLE;
+    final PsiClassType[] classTypes = list.getReferencedTypes();
+
+    if (classTypes.length == 0) return EMPTY_HIGHLIGHT_RUNNABLE;
+    return new ChooseClassAndDoHighlightRunnable(classTypes, editor, CodeInsightBundle.message("highlight.overridden.classes.chooser.title")) {
+      protected void selected(PsiClass... classes) {
+        List<PsiElement> toHighlight = new ArrayList<PsiElement>();
+        for (PsiMethod method : aClass.getMethods()) {
+          List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
+          for (HierarchicalMethodSignature superSignature : superSignatures) {
+            PsiClass containingClass = superSignature.getMethod().getContainingClass();
+            if (containingClass == null) continue;
+            for (PsiClass classToAnalyze : classes) {
+              if (InheritanceUtil.isInheritorOrSelf(classToAnalyze, containingClass, true)) {
+                toHighlight.add(method.getNameIdentifier());
+                break;
+              }
+            }
+          }
+        }
+        if (toHighlight.isEmpty()) {
+          if (ApplicationManager.getApplication().isUnitTestMode()) return;
+          String name = classes.length == 1 ? classes[0].getPresentation().getPresentableText() : "";
+          String text = CodeInsightBundle.message("no.methods.overriding.0.are.found", classes.length, name);
+          HintManager.getInstance().showInformationHint(editor, text);
+        }
+        else {
+          toHighlight.add(target);
+          Project project = target.getProject();
+          highlightOtherOccurrences(toHighlight, project, editor, clearHighlights);
+          setupFindModel(project);
+          String message = CodeInsightBundle.message("status.bar.overridden.methods.highlighted.message", toHighlight.size());
+          WindowManager.getInstance().getStatusBar(project).setInfo(message);
+        }
+      }
+    };
+  }
+
+  private static Runnable createExceptionChoosingRunnable(final Project project, final PsiClassType[] psiClassTypes,
+                                          final PsiElement place, final PsiElement target, final Editor editor,
+                                          final PsiFile file, final TypeFilter typeFilter, final boolean clearHighlights) {
+    if (psiClassTypes == null || psiClassTypes.length == 0) return EMPTY_HIGHLIGHT_RUNNABLE;
+    return new ChooseClassAndDoHighlightRunnable(psiClassTypes, editor, CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")) {
+      protected void selected(PsiClass... classes) {
+        List<PsiReference> refs = new ArrayList<PsiReference>();
+        final ArrayList<PsiElement> otherOccurrences = new ArrayList<PsiElement>();
+        final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+
+        for (PsiClass aClass : classes) {
+          addExceptionThrownPlaces(refs, otherOccurrences, factory.createType(aClass), place, typeFilter);
+        }
+        new DoHighlightRunnable(refs, project, target, editor, file, clearHighlights).run();
+        highlightOtherOccurrences(otherOccurrences, project, editor, clearHighlights);
+      }
+    };
+  }
+
+  private static void highlightOtherOccurrences(final List<PsiElement> otherOccurrences, Project myProject, Editor myEditor, boolean clearHighlights) {
+    HighlightManager highlightManager = HighlightManager.getInstance(myProject);
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+
+    PsiElement[] elements = otherOccurrences.toArray(new PsiElement[otherOccurrences.size()]);
+    doHighlightElements(highlightManager, myEditor, elements, attributes, clearHighlights);
   }
 
   private interface TypeFilter {
@@ -529,12 +567,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return;
     }
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    Document document = editor.getDocument();
     highlightManager.addOccurrenceHighlights(editor, elements, attributes, false, highlighters);
-    for (int idx = 0; idx < highlighters.size(); idx++) {
-      RangeHighlighter highlighter = highlighters.get(idx);
-      int offset = elements[idx].getTextRange().getStartOffset();
-      setLineTextErrorStripeTooltip(document, offset, highlighter);
+    for (RangeHighlighter highlighter : highlighters) {
+      setLineTextErrorStripeTooltip(highlighter);
     }
   }
 
@@ -542,7 +577,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
     int caretOffset = editor.getCaretModel().getOffset();
     for (RangeHighlighter highlighter : highlighters) {
-      if (new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()).contains(caretOffset)) {
+      if (new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()).grown(1).contains(caretOffset)) {
         return true;
       }
     }
@@ -600,13 +635,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return;
     }
     ArrayList<RangeHighlighter> outHighlighters = new ArrayList<RangeHighlighter>();
-    Document document = editor.getDocument();
     PsiReference[] refArray = refs.toArray(new PsiReference[refs.size()]);
     highlightManager.addOccurrenceHighlights(editor, refArray, attributes, false, outHighlighters);
-    for (int idx = 0; idx < outHighlighters.size(); idx++) {
-      RangeHighlighter highlighter = outHighlighters.get(idx);
-      int offset = refArray[idx].getElement().getTextRange().getStartOffset() + refArray[idx].getRangeInElement().getStartOffset();
-      setLineTextErrorStripeTooltip(document, offset, highlighter);
+    for (RangeHighlighter highlighter : outHighlighters) {
+      setLineTextErrorStripeTooltip(highlighter);
     }
   }
 

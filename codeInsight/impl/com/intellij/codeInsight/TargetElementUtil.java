@@ -27,6 +27,7 @@ public class TargetElementUtil {
   public static final int THROWS_ACCEPTED = 0x200;
   public static final int RETURN_ACCEPTED = 0x400;
   public static final int THROW_STATEMENT_ACCEPTED = 0x800;
+  public static final int EXTENDS_IMPLEMENTS_ACCEPTED = 0x1000;
 
   public static PsiElement findTargetElement(Editor editor, int flags) {
     int offset = editor.getCaretModel().getOffset();
@@ -136,22 +137,20 @@ public class TargetElementUtil {
         return ((PsiClassType)type).resolve();
       }
 
-      if (PsiKeyword.TRY.equals(element.getText())) {
-        if ((flags & TRY_ACCEPTED) == 0) return null;
+      String elementText = element.getText();
+      if (PsiKeyword.TRY.equals(elementText) && (flags & TRY_ACCEPTED) != 0) {
         return element;
       }
 
-      if (PsiKeyword.CATCH.equals(element.getText())) {
-        if ((flags & CATCH_ACCEPTED) == 0) return null;
+      if (PsiKeyword.CATCH.equals(elementText) && (flags & CATCH_ACCEPTED) != 0) {
         return element;
       }
 
-      if (PsiKeyword.THROWS.equals(element.getText())) {
-        if ((flags & THROWS_ACCEPTED) == 0) return null;
+      if (PsiKeyword.THROWS.equals(elementText) && (flags & THROWS_ACCEPTED) != 0) {
         return element;
       }
 
-      if (PsiKeyword.THROW.equals(element.getText())) {
+      if (PsiKeyword.THROW.equals(elementText)) {
         if ((flags & THROW_ACCEPTED) != 0) return element;
         if ((flags & THROW_STATEMENT_ACCEPTED) != 0) {
           final PsiElement parent = element.getParent();
@@ -162,8 +161,10 @@ public class TargetElementUtil {
         return null;
       }
 
-      if (PsiKeyword.RETURN.equals(element.getText())) {
-        if ((flags & RETURN_ACCEPTED) == 0) return null;
+      if (PsiKeyword.RETURN.equals(elementText) && (flags & RETURN_ACCEPTED) != 0) {
+        return element;
+      }
+      if ((PsiKeyword.IMPLEMENTS.equals(elementText) || PsiKeyword.EXTENDS.equals(elementText)) && (flags & EXTENDS_IMPLEMENTS_ACCEPTED) != 0) {
         return element;
       }
     }

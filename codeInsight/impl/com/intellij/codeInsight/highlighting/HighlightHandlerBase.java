@@ -21,8 +21,9 @@ public abstract class HighlightHandlerBase {
     findManager.setFindNextModel(model);
   }
 
-  protected static void setLineTextErrorStripeTooltip(final Document document, final int offset, final RangeHighlighter highlighter) {
-    final int lineNumber = document.getLineNumber(offset);
+  protected static void setLineTextErrorStripeTooltip(final RangeHighlighter highlighter) {
+    Document document = highlighter.getDocument();
+    final int lineNumber = document.getLineNumber(highlighter.getStartOffset());
     final String lineText = document.getText().substring(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber));
     highlighter.setErrorStripeTooltip("  " + lineText.trim () + "  ");
   }
