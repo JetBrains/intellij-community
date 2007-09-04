@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import java.util.List;
 
 /**
- * Black implementation for Groovy formatter
+ * Block implementation for Groovy formatter
  *
  * @author ilyas
  */
@@ -144,7 +144,7 @@ public class GroovyBlock implements Block, GroovyElementTypes {
   public boolean isIncomplete(@NotNull final ASTNode node) {
     ASTNode lastChild = node.getLastChildNode();
     while (lastChild != null &&
-            (lastChild.getPsi() instanceof PsiWhiteSpace || lastChild.getPsi() instanceof PsiComment)) {
+        (lastChild.getPsi() instanceof PsiWhiteSpace || lastChild.getPsi() instanceof PsiComment)) {
       lastChild = lastChild.getTreePrev();
     }
     if (lastChild == null) {

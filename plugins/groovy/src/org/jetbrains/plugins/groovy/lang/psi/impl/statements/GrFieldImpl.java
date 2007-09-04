@@ -13,6 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -59,6 +60,10 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
       return (PsiClass) parent.getParent();
     }
 
+    if (parent instanceof GrGspDeclarationHolder) {
+      return ((GrGspDeclarationHolder) parent).getContainingClass();
+    }
+
     return null;
   }
 
@@ -84,7 +89,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
   public String getName(PsiElement context) {
     final String name = getName();
     if (isProperty()) {
-      if (context  instanceof PsiMethodCallExpression) {
+      if (context instanceof PsiMethodCallExpression) {
         final String refName = ((PsiMethodCallExpression) context).getMethodExpression().getReferenceName();
         if (name != null && refName != null) {
           if (refName.startsWith("get") || refName.startsWith("set")) {
@@ -114,7 +119,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
   }
 
   public PsiElement getOriginalElement() {
-    PsiClass originalClass = (PsiClass)getContainingClass().getOriginalElement();
+    PsiClass originalClass = (PsiClass) getContainingClass().getOriginalElement();
     PsiField originalField = originalClass.findFieldByName(getName(), false);
     return originalField != null ? originalField : this;
   }
