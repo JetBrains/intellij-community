@@ -290,15 +290,15 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     }
   }
 
-  private static String getDefaultTemplateName(String defTemplate) {
+  public static String getDefaultTemplateName(String defTemplate) {
     return defTemplate.substring(defTemplate.lastIndexOf("/") + 1);
   }
 
-  private void readDefTemplateFile(InputStream inputStream, String defGroupName) throws JDOMException, InvalidDataException, IOException {
+  public void readDefTemplateFile(InputStream inputStream, String defGroupName) throws JDOMException, InvalidDataException, IOException {
     readTemplateFile(JDOMUtil.loadDocument(inputStream), defGroupName, true);
   }
 
-  private void readTemplateFile(File file) throws JDOMException, InvalidDataException, IOException {
+  public void readTemplateFile(File file) throws JDOMException, InvalidDataException, IOException {
     if (!file.exists()) return;
 
     String defGroupName = FileUtil.getNameWithoutExtension(file);
