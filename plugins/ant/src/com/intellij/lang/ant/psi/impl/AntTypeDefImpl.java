@@ -221,7 +221,6 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         builder.append((char)nextByte);
       }
       antlibStream.close();
-      final AntElement parent = element.getAntParent();
       final XmlFile xmlFile = (XmlFile)createDummyFile("dummy.xml", StdFileTypes.XML, builder, element.getManager());
       final XmlDocument document = xmlFile.getDocument();
       if (document == null) return;
@@ -239,15 +238,6 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         final AntElement newElement = AntElementFactory.createAntElement(element, tag);
         if (newElement instanceof AntTypeDef) {
           for (final AntTypeDefinition def : ((AntTypeDef)newElement).getDefinitions()) {
-            if (parent instanceof AntStructuredElementImpl) {
-              ((AntStructuredElementImpl)parent).registerCustomType(def);
-            }
-            else {
-              final AntFile file = element.getAntFile();
-              if (file != null) {
-                file.registerCustomType(def);
-              }
-            }
             if (element instanceof AntTypeDefImpl) {
               final AntTypeDefImpl td = ((AntTypeDefImpl)element);
               final AntTypeDefinition[] defs = td.myNewDefinitions != null ? td.myNewDefinitions : AntTypeDefinition.EMPTY_ARRAY;
