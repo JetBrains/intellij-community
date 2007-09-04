@@ -247,11 +247,15 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "CloneDoesntCallSuperClone"})
   protected PsiFileImpl clone() {
     FileViewProvider provider = getViewProvider().clone();
+    final LanguageDialect dialect = getLanguageDialect();
     PsiFileImpl clone = (PsiFileImpl)provider.getPsi(getLanguage());
+    if (clone == null && dialect != null) {
+      clone = (PsiFileImpl)provider.getPsi(dialect);
+    }
 
     copyCopyableDataTo(clone);
     
-    if(getTreeElement() != null){
+    if (getTreeElement() != null) {
       // not set by provider in clone
       final FileElement treeClone = (FileElement)calcTreeElement().clone();
       clone.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
@@ -264,7 +268,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     else if (myOriginalFile != null) {
       clone.myOriginalFile = myOriginalFile;
     }
-    final LanguageDialect dialect = getLanguageDialect();
+
     if (dialect != null) {
       clone.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, dialect);
     }
