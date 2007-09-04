@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -31,16 +30,20 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   }
 
   private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
-    HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), SeverityRegistrar.getInstance(project).getSeverityByIndex(0), project);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), severityRegistrar.getSeverityByIndex(0), project);
     if (highlights.length == 0){
       showMessageWhenNoHighlights(project, file, editor);
       return;
     }
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     if (settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST) {
-      HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), HighlightSeverity.ERROR, project);
-      if (errors.length != 0) {
-        highlights = errors;
+      for (int idx = severityRegistrar.getSeveritiesCount() - 1; idx >= 0; idx--) {
+        HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), severityRegistrar.getSeverityByIndex(idx), project);
+        if (errors.length != 0) {
+          highlights = errors;
+          break;
+        }
       }
     }
 
