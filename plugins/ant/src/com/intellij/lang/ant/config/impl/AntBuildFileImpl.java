@@ -14,7 +14,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -133,7 +132,6 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   public AntBuildFileImpl(final AntFile antFile, final AntConfigurationBase configuration) {
     myFile = antFile;
-    antFile.getSourceElement().putCopyableUserData(XmlFile.ANT_BUILD_FILE, this);
     myAntConfiguration = configuration;
     myWorkspaceOptions = new ExternalizablePropertyContainer();
     myWorkspaceOptions.registerProperty(RUN_IN_BACKGROUND);

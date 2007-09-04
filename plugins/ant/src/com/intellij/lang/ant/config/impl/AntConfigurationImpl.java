@@ -422,7 +422,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (psiFile == null) {
       throw new AntNoFileException(AntBundle.message("cant.add.file.error.message"), file);
     }
-    final AntBuildFileImpl buildFile = new AntBuildFileImpl((AntFile)psiFile, this);
+    final AntFile antFile = (AntFile)psiFile;
+    final AntBuildFileImpl buildFile = new AntBuildFileImpl(antFile, this);
+    antFile.getSourceElement().putCopyableUserData(XmlFile.ANT_BUILD_FILE, buildFile);
     myBuildFiles.add(buildFile);
     return buildFile;
   }
