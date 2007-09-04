@@ -65,6 +65,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   private JPopupMenu myMorePopup;
 
   private boolean mySingleRow = true;
+  private TableLayoutData myLastTableLayout;
 
   public JBTabs(ActionManager actionManager, Disposable parent) {
     myActionManager = actionManager;
@@ -352,6 +353,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
 
     if (mySingleRow) {
+      myLastTableLayout = null;
       layoutSingleRow();
     }
     else {
@@ -388,6 +390,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
       layoutComp(xAddin, eachY, getSelectedInfo().getComponent());
     }
+
+    myLastTableLayout = data;
   }
 
   private TableLayoutData computeLayoutTable() {
@@ -687,7 +691,42 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
+
+
+    if (isSingleRow() && myLastSingRowLayout != null) {
+      final List<TabInfo> infos = myLastSingRowLayout.toLayout;
+      for (int i = 1; i < infos.size(); i++) {
+        final TabInfo each = infos.get(i);
+        if (getSelectedInfo() != each && getSelectedInfo() != infos.get(i - 1)) {
+          drawSeparator(g, each);
+        }
+      }
+    } else if (!isSingleRow() && myLastTableLayout != null) {
+      final List<TableRow> table = myLastTableLayout.table;
+      for (TableRow eachRow : table) {
+        final List<TabInfo> infos = eachRow.myColumns;
+        for (int i = 1; i < infos.size(); i++) {
+          final TabInfo each = infos.get(i);
+          if (getSelectedInfo() != each && getSelectedInfo() != infos.get(i - 1)) {
+            drawSeparator(g, each);
+          }
+        }
+      }
+    }
+
     myMoreIcon.paintIcon(this, g);
+  }
+
+  private void drawSeparator(Graphics g, TabInfo info) {
+    final Rectangle bounds = myInfo2Label.get(info).getBounds();
+
+    final double height = bounds.height * 0.85d;
+    final double delta = bounds.height - height;
+
+    final int y1 = (int)(bounds.y + delta) + 1;
+    final int x1 = bounds.x;
+    final int y2 = (int)(bounds.y + bounds.height - delta);
+    UIUtil.drawVDottedLine((Graphics2D)g, x1, y1, y2, getBackground(), Color.gray);
   }
 
   private Max computeMaxSize() {
@@ -995,6 +1034,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
     revalidate();
     repaint();
+  }
+
+  public boolean isSingleRow() {
+    return mySingleRow;
   }
 
   public boolean isSideComponentVertical() {
