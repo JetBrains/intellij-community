@@ -8,20 +8,25 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.event.PomModelListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.util.PsiProximity;
+import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
@@ -40,7 +45,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
-public class LookupImpl extends LightweightHint implements Lookup {
+public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
   private static final int MAX_PREFERRED_COUNT = 5;
   static final Object EMPTY_ITEM_ATTRIBUTE = Key.create("emptyItem");
@@ -65,7 +70,6 @@ public class LookupImpl extends LightweightHint implements Lookup {
 
   private CaretListener myEditorCaretListener;
   private EditorMouseListener myEditorMouseListener;
-  private DocumentListener myDocumentListener;
 
   private ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
 
@@ -112,6 +116,16 @@ public class LookupImpl extends LightweightHint implements Lookup {
     scrollPane.setBorder(new BegPopupMenuBorder());
     getComponent().add(scrollPane, BorderLayout.CENTER);
 
+    project.getModel().addModelListener(new PomModelListener() {
+      public void modelChanged(final PomModelEvent event) {
+        hide();
+      }
+
+      public boolean isAspectChangeInteresting(final PomModelAspect aspect) {
+        return true;
+      }
+    }, this);
+
     myEditorCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e){
         int curOffset = myEditor.getCaretModel().getOffset();
@@ -130,14 +144,13 @@ public class LookupImpl extends LightweightHint implements Lookup {
     };
     myEditor.addEditorMouseListener(myEditorMouseListener);
 
-    myDocumentListener = new DocumentAdapter() {
+    myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         if (!myLookupStartMarker.isValid()){
           hide();
         }
       }
-    };
-    myEditor.getDocument().addDocumentListener(myDocumentListener);
+    }, this);
 
     myList.addListSelectionListener(
       new ListSelectionListener() {
@@ -581,11 +594,11 @@ public class LookupImpl extends LightweightHint implements Lookup {
     if (IdeEventQueue.getInstance().getPopupManager().closeActivePopup()) {
       return;
     }
-    myDisposed = true;
+    Disposer.dispose(this);
+
 
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
     myEditor.removeEditorMouseListener(myEditorMouseListener);
-    myEditor.getDocument().removeDocumentListener(myDocumentListener);
     myEditor.putUserData(LOOKUP_IN_EDITOR_KEY, null);
 
     super.hide();
@@ -601,5 +614,9 @@ public class LookupImpl extends LightweightHint implements Lookup {
 
   public CharFilter getCharFilter() {
     return myCharFilter;
+  }
+
+  public void dispose() {
+    myDisposed = true;
   }
 }

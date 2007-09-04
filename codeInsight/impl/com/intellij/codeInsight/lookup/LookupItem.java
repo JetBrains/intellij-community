@@ -135,7 +135,9 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   @NotNull
   public T getObject() {
     if (myObject instanceof SmartPsiElementPointer){
-      return (T)((SmartPsiElementPointer)myObject).getElement();
+      final T t = (T)((SmartPsiElementPointer)myObject).getElement();
+      assert t != null : "Pointer = " + myObject + "; lookupStrings = " + myAllLookupStrings;
+      return t;
     }
     else{
       return (T)myObject;
