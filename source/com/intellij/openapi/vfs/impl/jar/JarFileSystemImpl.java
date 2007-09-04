@@ -169,7 +169,9 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   public String extractRootPath(@NotNull final String path) {
-    return path.substring(0, path.indexOf(JAR_SEPARATOR) + JAR_SEPARATOR.length());
+    final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);
+    assert jarSeparatorIndex >=0 : "Path passed to JarFileSystem does have jar separator !/";
+    return path.substring(0, jarSeparatorIndex + JAR_SEPARATOR.length());
   }
 
   public boolean isCaseSensitive() {
