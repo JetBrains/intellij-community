@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -142,7 +142,7 @@ public class FileChooserDescriptor implements Cloneable{
     }
 
     // do not include ignored files
-    if (myHideIgnored && FileTypeManager.getInstance().isFileIgnored(file.getName())) {
+    if (isHideIgnored() && !showHiddenFiles && FileTypeManager.getInstance().isFileIgnored(file.getName())) {
       return false;
     }
 
