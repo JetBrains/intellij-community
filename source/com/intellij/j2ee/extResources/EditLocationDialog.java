@@ -106,7 +106,7 @@ public class EditLocationDialog extends DialogWrapper {
   }
 
   protected FileChooserDescriptor getChooserDescriptor(){
-    return new FileChooserDescriptor(true, true, false, false, false, false);
+    return new FileChooserDescriptor(true, false, false, false, true, false);
   }
 
   protected void init() {

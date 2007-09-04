@@ -130,7 +130,7 @@ public class FileChooserDescriptor implements Cloneable{
   public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
     if (!file.isDirectory()) {
       if (FileElement.isArchive(file)) {
-        if (!myChooseJars) {
+        if (!myChooseJars && !myChooseJarContents) {
           return false;
         }
       }
@@ -190,6 +190,7 @@ public class FileChooserDescriptor implements Cloneable{
   }
 
   private boolean acceptAsGeneralFile(VirtualFile file) {
+    if (FileElement.isArchive(file)) return false; // should be handle by acceptsAsJarFile
     return !file.isDirectory() && myChooseFiles;
   }
 

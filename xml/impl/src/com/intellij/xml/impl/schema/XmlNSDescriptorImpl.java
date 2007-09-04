@@ -858,20 +858,20 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   public static XmlNSDescriptorImpl getRedefinedElementDescriptor(final XmlTag parentTag) {
-  final String schemaL = parentTag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
+    final String schemaL = parentTag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
 
-  if (schemaL != null) {
-    final PsiReference[] references = parentTag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
+    if (schemaL != null) {
+      final PsiReference[] references = parentTag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
 
-    if (references.length > 0) {
-      final PsiElement psiElement = references[references.length - 1].resolve();
+      if (references.length > 0) {
+        final PsiElement psiElement = references[references.length - 1].resolve();
 
-      if (psiElement instanceof XmlFile) {
-        final PsiMetaDataBase metaData = ((XmlFile)psiElement).getDocument().getMetaData();
-        if (metaData instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)metaData;
+        if (psiElement instanceof XmlFile) {
+          final PsiMetaDataBase metaData = ((XmlFile)psiElement).getDocument().getMetaData();
+          if (metaData instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)metaData;
+        }
       }
     }
+    return null;
   }
-  return null;
-}
 }

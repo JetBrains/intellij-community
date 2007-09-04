@@ -344,6 +344,10 @@ public class VfsUtil {
       }
     }
 
+    if (file == null && uri.indexOf(JarFileSystem.JAR_SEPARATOR) != -1) {
+      file = JarFileSystem.getInstance().findFileByPath(uri);
+    }
+
     if (file == null) {
       if (base == null) return LocalFileSystem.getInstance().findFileByPath(uri);
       if (!base.isDirectory()) base = base.getParent();

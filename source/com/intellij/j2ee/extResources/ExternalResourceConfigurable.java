@@ -6,6 +6,8 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,8 +206,17 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   private class PathRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      final String loc = value.toString().replace('\\', '/');
-      setForeground(LocalFileSystem.getInstance().findFileByPath(loc) != null ? isSelected ? UIUtil.getTableSelectionForeground() : Color.black : new Color(210, 0, 0));
+      String loc = value.toString().replace('\\', '/');
+      final int jarDelimIndex = loc.indexOf(JarFileSystem.JAR_SEPARATOR);
+      final VirtualFile path;
+
+      if (jarDelimIndex != -1) {
+        path = JarFileSystem.getInstance().findFileByPath(loc);
+      } else {
+        path = LocalFileSystem.getInstance().findFileByPath(loc);
+      }
+
+      setForeground(path != null ? isSelected ? UIUtil.getTableSelectionForeground() : Color.black : new Color(210, 0, 0));
       return this;
     }
   }
