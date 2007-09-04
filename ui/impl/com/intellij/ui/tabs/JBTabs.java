@@ -51,7 +51,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   private JPopupMenu myActivePopup;
 
   private boolean myHorizontalSide = true;
-  private LayoutData myLastLayout;
+  private LineLayoutData myLastSingRowLayout;
 
   private MoreIcon myMoreIcon = new MoreIcon() {
     protected boolean isActive() {
@@ -59,10 +59,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
 
     protected Rectangle getIconRec() {
-      return myLastLayout != null ? myLastLayout.moreRect : null;
+      return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
     }
   };
   private JPopupMenu myMorePopup;
+
+  private boolean mySingleRow = true;
 
   public JBTabs(ActionManager actionManager, Disposable parent) {
     myActionManager = actionManager;
@@ -105,7 +107,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
-        if (myLastLayout != null && myLastLayout.moreRect != null && myLastLayout.moreRect.contains(e.getPoint())) {
+        if (myLastSingRowLayout != null && myLastSingRowLayout.moreRect != null && myLastSingRowLayout.moreRect.contains(e.getPoint())) {
           showMorePopup(e);
         }
       }
@@ -197,7 +199,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     myInfo2Label.put(info, label);
 
     if (index < 0) {
-      myInfos.add(0, info);
+      myInfos.add(info);
     }
     else if (index > myInfos.size() - 1) {
       myInfos.add(info);
@@ -312,7 +314,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
   }
 
-  class LayoutData {
+  class LineLayoutData {
     Dimension laayoutSize = getSize();
     int contentCount = getTabCount();
     int eachX;
@@ -323,28 +325,138 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     List<TabInfo> toDrop = new ArrayList<TabInfo>();
     int moreRectWidth = myMoreIcon.getIconWidth() + 6;
     Rectangle moreRect;
-    public Rectangle selectedTabBounds;
     public boolean displayedHToolbar;
     public int yComp;
   }
 
+  class TableLayoutData {
+    List<TableRow> table = new ArrayList<TableRow>();
+    public Rectangle toFitRec;
+  }
+
+  private class TableRow {
+
+    private List<TabInfo> myColumns = new ArrayList<TabInfo>();
+    private int width;
+
+    void add(TabInfo info) {
+      myColumns.add(info);
+      width += myInfo2Label.get(info).getPreferredSize().width;
+    }
+
+  }
+
   public void doLayout() {
-    final JBTabs.Max max = computeMaxSize();
+    final Max max = computeMaxSize();
+    myHeaderFitSize =
+      new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
 
-    myHeaderFitSize = new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
+    if (mySingleRow) {
+      layoutSingleRow();
+    }
+    else {
+      myLastSingRowLayout = null;
+      layoutTable();
+    }
+  }
 
+  private void layoutTable() {
+    resetLayout(true);
+    final TableLayoutData data = computeLayoutTable();
+    final Insets insets = getLayoutInsets();
+    int eachY = insets.top, eachX;
+    for (TableRow eachRow : data.table) {
+      eachX = insets.left;
+      for (int i = 0; i < eachRow.myColumns.size(); i++) {
+        TabInfo tabInfo = eachRow.myColumns.get(i);
+        final TabLabel label = myInfo2Label.get(tabInfo);
+        int width = label.getPreferredSize().width;
+        label.setBounds(eachX, eachY, width, myHeaderFitSize.height);
+        eachX += width;
+      }
+      eachY += myHeaderFitSize.height;
+    }
+
+    if (getSelectedInfo() != null) {
+      final JComponent selectedToolbar = myInfo2Toolbar.get(getSelectedInfo());
+
+      int xAddin = 0;
+      if (!myHorizontalSide && selectedToolbar != null) {
+        xAddin = selectedToolbar.getPreferredSize().width + 1;
+        selectedToolbar.setBounds(insets.left + 1, eachY + 1, selectedToolbar.getPreferredSize().width, getHeight() - eachY - insets.bottom - 2);
+      }
+
+      layoutComp(xAddin, eachY, getSelectedInfo().getComponent());
+    }
+  }
+
+  private TableLayoutData computeLayoutTable() {
+    final TableLayoutData data = new TableLayoutData();
+
+    final Insets insets = getLayoutInsets();
+    data.toFitRec =
+      new Rectangle(insets.left, insets.top, getWidth() - insets.left - insets.right, getHeight() - insets.top - insets.bottom);
+    int eachRow = 0, eachX = data.toFitRec.x;
+    TableRow eachTableRow = new TableRow();
+    data.table.add(eachTableRow);
+
+    int selectedRow = -1;
+    for (TabInfo eachInfo : myInfos) {
+      final TabLabel eachLabel = myInfo2Label.get(eachInfo);
+      final Dimension size = eachLabel.getPreferredSize();
+      if (eachX + size.width <= data.toFitRec.getMaxX()) {
+        eachTableRow.add(eachInfo);
+        if (getSelectedInfo() == eachInfo) {
+          selectedRow = eachRow;
+        }
+        eachX += size.width;
+      }
+      else {
+        eachTableRow = new TableRow();
+        data.table.add(eachTableRow);
+        eachRow++;
+        eachX = insets.left;
+        eachTableRow.add(eachInfo);
+        if (getSelectedInfo() == eachInfo) {
+          selectedRow = eachRow;
+        }
+        if (eachX + size.width <= data.toFitRec.getMaxX()) {
+          eachX += size.width;
+        } else {
+          eachTableRow = new TableRow();
+          eachRow++;
+          eachX = insets.left;
+        }
+      }
+    }
+
+    List<TableRow> toMove = new ArrayList<TableRow>();
+    for (int i = selectedRow + 1; i < data.table.size(); i++) {
+      toMove.add(data.table.get(i));
+    }
+
+    for (TableRow eachMove : toMove) {
+      data.table.remove(eachMove);
+      data.table.add(0, eachMove);
+    }
+
+
+    return data;
+  }
+
+  private void layoutSingleRow() {
     final TabInfo selected = getSelectedInfo();
     final JComponent selectedToolbar = myInfo2Toolbar.get(selected);
 
-    LayoutData data = new LayoutData();
+    LineLayoutData data = new LineLayoutData();
     boolean layoutLabels = true;
 
-    if (myLastLayout != null && myLastLayout.contentCount == getTabCount() && myLastLayout.laayoutSize.equals(getSize())) {
+    if (myLastSingRowLayout != null && myLastSingRowLayout.contentCount == getTabCount() && myLastSingRowLayout.laayoutSize.equals(getSize())) {
       for (TabInfo each : myInfos) {
         if (getSelectedInfo() == each) {
-          final JBTabs.TabLabel eachLabel = myInfo2Label.get(each);
+          final TabLabel eachLabel = myInfo2Label.get(each);
           if (eachLabel.getBounds().width != 0) {
-            data = myLastLayout;
+            data = myLastSingRowLayout;
             layoutLabels = false;
           }
         }
@@ -352,11 +464,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
 
 
-
-    Insets insets = getInsets();
-    if (insets == null) {
-      insets = new Insets(0, 0, 0, 0);
-    }
+    Insets insets = getLayoutInsets();
 
     resetLayout(layoutLabels);
 
@@ -380,39 +488,49 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     if (selectedToolbar != null) {
       if (myHorizontalSide) {
         int toolbarX = data.eachX + getToolbarInset() + (data.moreRect != null ? data.moreRect.width : 0);
-          selectedToolbar.setBounds(toolbarX, insets.top, getSize().width - insets.left - toolbarX,
-                                    myHeaderFitSize.height - 1);
-      } else {
-        selectedToolbar.setBounds(insets.left + 1, data.yComp, selectedToolbar.getPreferredSize().width, getSize().height - data.yComp - insets.bottom - 1);
+        selectedToolbar.setBounds(toolbarX, insets.top, getSize().width - insets.left - toolbarX, myHeaderFitSize.height - 1);
+      }
+      else {
+        selectedToolbar.setBounds(insets.left + 1, data.yComp + 1, selectedToolbar.getPreferredSize().width,
+                                  getSize().height - data.yComp - insets.bottom - 2);
       }
     }
 
 
     if (selected != null) {
       final JComponent comp = selected.getComponent();
-      comp.setBounds(insets.left + INNER + data.xAddin, data.yComp, getWidth() - insets.left - insets.right - INNER * 2 - data.xAddin,
-                       getHeight() - insets.top - insets.bottom - myHeaderFitSize.height - 1);
+      layoutComp(data.xAddin, data.yComp, comp);
     }
 
-
-    final JBTabs.TabLabel tabLabel = myInfo2Label.get(selected);
-    if (tabLabel != null) {
-      data.selectedTabBounds = tabLabel.getBounds();
-    }
 
     if (data.toLayout.size() > 0 && myInfos.size() > 0) {
       final int left = myInfos.indexOf(data.toLayout.get(0));
       final int right = myInfos.indexOf(data.toLayout.get(data.toLayout.size() - 1));
       myMoreIcon.setPaintedIcons(left > 0, right < myInfos.size() - 1);
-    } else {
+    }
+    else {
       myMoreIcon.setPaintedIcons(false, false);
     }
 
 
-    myLastLayout = data;
+    myLastSingRowLayout = data;
   }
 
-  private void layoutLabels(final LayoutData data, final Insets insets) {
+  private void layoutComp(int xAddin, int yComp, final JComponent comp) {
+    final Insets insets = getLayoutInsets();
+    comp.setBounds(insets.left + INNER + xAddin, yComp + 1, getWidth() - insets.left - insets.right - INNER * 2 - xAddin,
+                   getHeight() - insets.bottom - yComp - 2);
+  }
+
+  private Insets getLayoutInsets() {
+    Insets insets = getInsets();
+    if (insets == null) {
+      insets = new Insets(0, 0, 0, 0);
+    }
+    return insets;
+  }
+
+  private void layoutLabels(final LineLayoutData data, final Insets insets) {
     boolean reachedBounds = false;
     for (TabInfo eachInfo : data.toLayout) {
       final TabLabel label = myInfo2Label.get(eachInfo);
@@ -421,21 +539,23 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       if (data.eachX + eachSize.width <= data.toFitWidth) {
         label.setBounds(data.eachX, insets.top, eachSize.width, myHeaderFitSize.height);
         data.eachX += eachSize.width;
-        data.eachX ++;
-      } else {
+        data.eachX++;
+      }
+      else {
         if (!reachedBounds) {
           final int width = getWidth() - data.eachX - data.moreRectWidth;
           label.setBounds(data.eachX, insets.top, width, myHeaderFitSize.height);
           data.eachX += width;
-          data.eachX ++;
-        } else {
+          data.eachX++;
+        }
+        else {
           label.setBounds(0, 0, 0, 0);
         }
       }
     }
   }
 
-  private void recomputeToLayout(final JComponent selectedToolbar, final LayoutData data, final Insets insets) {
+  private void recomputeToLayout(final JComponent selectedToolbar, final LineLayoutData data, final Insets insets) {
     final int toolbarInset = getToolbarInset();
     data.displayedHToolbar = myHorizontalSide && selectedToolbar != null;
     data.toFitWidth = getWidth() - insets.left - insets.right - (data.displayedHToolbar ? toolbarInset : 0);
@@ -444,7 +564,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       data.toLayout.add(eachInfo);
     }
 
-    while(true) {
+    while (true) {
       if (data.requiredWidth <= data.toFitWidth - data.eachX) break;
       if (data.toLayout.size() == 0) break;
 
@@ -452,9 +572,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       final TabInfo last = data.toLayout.get(data.toLayout.size() - 1);
       if (first != getSelectedInfo()) {
         processDrop(data, first);
-      } else if (last != getSelectedInfo()) {
+      }
+      else if (last != getSelectedInfo()) {
         processDrop(data, last);
-      } else {
+      }
+      else {
         if (data.toDrop.size() > 0) {
         }
         break;
@@ -484,7 +606,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
   }
 
-  private void processDrop(final LayoutData data, final TabInfo info) {
+  private void processDrop(final LineLayoutData data, final TabInfo info) {
     data.requiredWidth -= myInfo2Label.get(info).getPreferredSize().width;
     data.toDrop.add(info);
     data.toLayout.remove(info);
@@ -499,21 +621,27 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
-    if (myLastLayout == null && myLastLayout.selectedTabBounds == null) return;
+
+    final TabInfo selected = getSelectedInfo();
+    if (selected == null) return;
+
+
+    final JBTabs.TabLabel selectedLabel = myInfo2Label.get(selected);
+    if (selectedLabel == null) return;
+
+    Rectangle selectedTabBounds = selectedLabel.getBounds();
+
 
     final GraphicsConfig config = new GraphicsConfig(g);
     config.setAntialiasing(true);
 
     Graphics2D g2d = (Graphics2D)g;
     final GeneralPath path = new GeneralPath();
-    Insets insets = getInsets();
-    if (insets == null) {
-      insets = new Insets(0, 0, 0, 0);
-    }
-    final int bottomY = myHeaderFitSize.height + insets.top - 1;
-    final int topY = insets.top;
-    int leftX = myLastLayout.selectedTabBounds.x;
-    int rightX = myLastLayout.selectedTabBounds.x + myLastLayout.selectedTabBounds.width;
+    Insets insets = getLayoutInsets();
+    final int bottomY = (int)selectedTabBounds.getMaxY();
+    final int topY = selectedTabBounds.y;
+    int leftX = selectedTabBounds.x;
+    int rightX = selectedTabBounds.x + selectedTabBounds.width;
     int arc = getArcSize();
 
     path.moveTo(insets.left, bottomY);
@@ -541,7 +669,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
     }
 
-    g2d.setPaint(new GradientPaint(myLastLayout.selectedTabBounds.x, topY, from, myLastLayout.selectedTabBounds.x, bottomY, to));
+    g2d.setPaint(new GradientPaint(selectedTabBounds.x, topY, from, selectedTabBounds.x, bottomY, to));
     g2d.fill(path);
     if (paintFocused) {
       g2d.setColor(UIUtil.getFocusedBoundsColor());
@@ -862,6 +990,13 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     repaint();
   }
 
+  public void setSingleRow(boolean singleRow) {
+    mySingleRow = singleRow;
+
+    revalidate();
+    repaint();
+  }
+
   public boolean isSideComponentVertical() {
     return !myHorizontalSide;
   }
@@ -910,6 +1045,14 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     });
     south.add(v);
 
+    final JCheckBox row = new JCheckBox("Single row", true);
+    row.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        tabs.setSingleRow(row.isSelected());
+      }
+    });
+    south.add(row);
+
     frame.getContentPane().add(south, BorderLayout.SOUTH);
 
     tabs.addListener(new TabsListener() {
@@ -918,7 +1061,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       }
     });
 
-    tabs.addTab(new TabInfo(new JTree())).setText("Tree").setActions(new DefaultActionGroup(), null)
+    tabs.addTab(new TabInfo(new JTree())).setText("Tree1").setActions(new DefaultActionGroup(), null)
       .setIcon(IconLoader.getIcon("/debugger/frame.png"));
     tabs.addTab(new TabInfo(new JTree())).setText("Tree2");
     tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
@@ -931,12 +1074,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     tabs.addTab(new TabInfo(new JTable())).setText("Table 8").setActions(new DefaultActionGroup(), null);
     tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
-    tabs.setBorder(new EmptyBorder(6, 6, 6, 6));
+
+    tabs.setBorder(new EmptyBorder(6, 6, 20, 6));
 
     frame.setBounds(200, 200, 300, 200);
     frame.show();
   }
-
 
 
 }
