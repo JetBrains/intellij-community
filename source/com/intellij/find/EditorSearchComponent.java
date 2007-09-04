@@ -11,18 +11,23 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +35,9 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class EditorSearchComponent extends JPanel implements DataProvider {
   private final JLabel myMatchInfoLabel;
@@ -43,6 +49,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private final Color GRADIENT_C1;
   private final Color GRADIENT_C2;
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
+  public static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
   private final JComponent myToolbarComponent;
 
   @Nullable
@@ -177,6 +184,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         mySearchField.setText(initialText != null && initialText.indexOf('\n') < 0 ? initialText : "");
       }
     });
+
+    new VariantsCompletionAction(); // It registers a shortcut set automatically on construction
   }
 
   private void searchBackward() {
@@ -402,25 +411,85 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final String[] recents = FindSettings.getInstance().getRecentFindStrings();
-      final JList list = new JList(recents);
-      final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list).setMovable(false).setResizable(false)
-        .setRequestFocus(true).setItemChoosenCallback(new Runnable() {
-        public void run() {
-          String selectedValue = (String)list.getSelectedValue();
-          if (selectedValue != null) {
-            mySearchField.setText(selectedValue);
+      showCompletionPopup(e, new JList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFindStrings())), "Recent Searches");
+    }
+  }
+
+  private class VariantsCompletionAction extends AnAction {
+    private VariantsCompletionAction() {
+      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION).getShortcutSet(), mySearchField);
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final String prefix = getPrefix();
+      if (prefix.length() == 0) return;
+
+      final String[] array = calcWords(prefix);
+      if (array.length == 0) {
+        return;
+      }
+
+      final JList list = new JList(array);
+      list.setBackground(COMPLETION_BACKGROUND_COLOR);
+      list.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+
+      showCompletionPopup(e, list, null);
+    }
+
+    private String getPrefix() {
+      return mySearchField.getText().substring(0, mySearchField.getCaret().getDot());
+    }
+
+    private String[] calcWords(final String prefix) {
+      final String regexp = NameUtil.buildRegexp(prefix, 0, true, true);
+      final Pattern pattern = Pattern.compile(regexp);
+      final Matcher matcher = pattern.matcher("");
+      final Set<String> words = new HashSet<String>();
+      CharSequence chars = myEditor.getDocument().getCharsSequence();
+
+      IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
+        public void run(final CharSequence chars, final int start, final int end, char[] charArray) {
+          final CharSequence word = chars.subSequence(start, end);
+          matcher.reset(word);
+          if (matcher.matches()) {
+            words.add(word.toString());
           }
         }
-      }).createPopup();
+      }, chars, 0, chars.length());
 
-      final InputEvent event = e.getInputEvent();
-      if (event instanceof MouseEvent) {
-        popup.showUnderneathOf(myToolbarComponent);
+
+      ArrayList<String> sortedWords = new ArrayList<String>(words);
+      Collections.sort(sortedWords);
+
+      return sortedWords.toArray(new String[sortedWords.size()]);
+    }
+  }
+
+  private void showCompletionPopup(final AnActionEvent e, final JList list, String title) {
+
+    final Runnable callback = new Runnable() {
+      public void run() {
+        String selectedValue = (String)list.getSelectedValue();
+        if (selectedValue != null) {
+          mySearchField.setText(selectedValue);
+        }
       }
-      else {
-        popup.showUnderneathOf(mySearchField);
-      }
+    };
+
+    final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
+    if (title != null) {
+      builder.setTitle(title);
+    }
+
+    final JBPopup popup = builder.setMovable(false).setResizable(false)
+      .setRequestFocus(true).setItemChoosenCallback(callback).createPopup();
+
+    final InputEvent event = e.getInputEvent();
+    if (event instanceof MouseEvent) {
+      popup.showUnderneathOf(myToolbarComponent);
+    }
+    else {
+      popup.showUnderneathOf(mySearchField);
     }
   }
 

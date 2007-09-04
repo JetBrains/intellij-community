@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -267,9 +268,24 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
       else if (DataConstantsEx.MODALITY_STATE.equals(dataId)) {
         return _component != null ? ModalityState.stateForComponent(_component) : ModalityState.NON_MODAL;
       }
+      else if (DataConstants.EDITOR.equals(dataId)) {
+        Editor editor = (Editor)DataManagerImpl.this.getData(dataId, _component);
+        return validateEditor(editor);
+      }
       else {
         return DataManagerImpl.this.getData(dataId, _component);
       }
+    }
+
+    @Nullable
+    private Editor validateEditor(Editor editor) {
+      Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      if (focusOwner instanceof JComponent) {
+        final JComponent jComponent = (JComponent)focusOwner;
+        if (jComponent.getClientProperty("AuxEditorComponent") != null) return null; // Hack for EditorSearchComponent
+      }
+
+      return editor;
     }
 
     @NonNls
