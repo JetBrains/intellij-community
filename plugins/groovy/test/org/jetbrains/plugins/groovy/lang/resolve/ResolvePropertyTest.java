@@ -148,6 +148,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertNull(ref.resolve());
   }
 
+  public void testNotSettingProperty() throws Exception {
+    PsiReference ref = configureByFile("notSettingProperty/A.groovy");
+    assertNull(ref.resolve());
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
