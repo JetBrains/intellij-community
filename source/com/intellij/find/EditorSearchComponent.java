@@ -92,18 +92,23 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     final JCheckBox cbMatchCase = new NonFocusableCheckBox("Case sensitive");
     final JCheckBox cbWholeWords = new NonFocusableCheckBox("Match whole words only");
+    final JCheckBox cbRegexp = new NonFocusableCheckBox("Regex");
 
     leadPanel.add(cbMatchCase);
     leadPanel.add(cbWholeWords);
+    leadPanel.add(cbRegexp);
 
     cbMatchCase.setSelected(isCaseSensitive());
     cbWholeWords.setSelected(isWholeWords());
+    cbRegexp.setSelected(isRegexp());
 
     cbMatchCase.setMnemonic('C');
     cbWholeWords.setMnemonic('M');
+    cbRegexp.setMnemonic('R');
 
     setSmallerFontAndOpaque(cbWholeWords);
     setSmallerFontAndOpaque(cbMatchCase);
+    setSmallerFontAndOpaque(cbRegexp);
 
     cbMatchCase.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -119,6 +124,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         final boolean b = cbWholeWords.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setWholeWordsOnly(b);
         FindSettings.getInstance().setLocalWholeWordsOnly(b);
+        updateResults();
+      }
+    });
+
+    cbRegexp.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final boolean b = cbRegexp.isSelected();
+        cbWholeWords.setEnabled(!b);
+        FindManager.getInstance(myProject).getFindInFileModel().setRegularExpressions(b);
         updateResults();
       }
     });
@@ -261,7 +275,25 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       FindManager findManager = FindManager.getInstance(myProject);
       FindModel model = new FindModel();
       model.setCaseSensitive(isCaseSensitive());
-      model.setWholeWordsOnly(isWholeWords());
+
+      if (isRegexp()) {
+        model.setWholeWordsOnly(false);
+        model.setRegularExpressions(true);
+        try {
+          Pattern.compile(text);
+        }
+        catch (Exception e) {
+          setNotFoundBackground();
+          myMatchInfoLabel.setText("Incorrect regular expression");
+          boldMatchInfo();
+          return;
+        }
+      }
+      else {
+        model.setWholeWordsOnly(isWholeWords());
+        model.setRegularExpressions(false);
+      }
+
       model.setFromCursor(false);
       model.setStringToFind(text);
       model.setSearchHighlighters(true);
@@ -306,12 +338,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       else {
         setRegularBackground();
         myMatchInfoLabel.setText("More than 100 matches");
-        myMatchInfoLabel.setFont(myMatchInfoLabel.getFont().deriveFont(Font.BOLD));
+        boldMatchInfo();
       }
 
       findManager.setFindWasPerformed();
       findManager.setFindNextModel(model);
     }
+  }
+
+  private void boldMatchInfo() {
+    myMatchInfoLabel.setFont(myMatchInfoLabel.getFont().deriveFont(Font.BOLD));
   }
 
   private void setRegularBackground() {
@@ -328,6 +364,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
   private boolean isCaseSensitive() {
     return FindManager.getInstance(myProject).getFindInFileModel().isCaseSensitive();
+  }
+
+  private boolean isRegexp() {
+    return FindManager.getInstance(myProject).getFindInFileModel().isRegularExpressions();
   }
 
   private void removeCurrentHighlights() {
