@@ -124,7 +124,7 @@ public class GroovyAnnotator implements Annotator {
   private void checkConstructorInvocation(AnnotationHolder holder, GrConstructorInvocation invocation) {
     final PsiMethod resolved = invocation.resolveConstructor();
     if (resolved != null) {
-      checkMethodApplicability(resolved, invocation, holder);
+      checkMethodApplicability(resolved, invocation.getThisOrSuperKeyword(), holder);
     } else {
       final GroovyResolveResult[] results = invocation.multiResolveConstructor();
       final GrArgumentList argList = invocation.getArgumentList();
@@ -556,10 +556,10 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkMethodApplicability(PsiMethod method, GroovyPsiElement place, AnnotationHolder holder) {
+  private void checkMethodApplicability(PsiMethod method, PsiElement place, AnnotationHolder holder) {
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor());
     if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, method)) {
-      GroovyPsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+      PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
       if (elementToHighlight == null) {
         elementToHighlight = place;
       }

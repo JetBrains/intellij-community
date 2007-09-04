@@ -136,7 +136,7 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static GroovyPsiElement getArgumentsElement(GroovyPsiElement methodRef) {
+  public static GroovyPsiElement getArgumentsElement(PsiElement methodRef) {
     PsiElement parent = methodRef.getParent();
     if (parent instanceof GrMethodCallExpression) {
       return ((GrMethodCallExpression) parent).getArgumentList();
