@@ -33,6 +33,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -396,20 +397,39 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                             throwsList.getReferencedTypes();
 		            boolean checked = false;
 		            for (PsiClassType referencedType : referencedTypes) {
-			            final PsiClass throwableClass = referencedType.resolve();
-			            if (throwableClass != null &&
-					            InheritanceUtil.isInheritorOrSelf(
-                                        variableOrMethodClass,
-                                        throwableClass, true)) {
-				            if (checkType(referencedType, weakestTypeClasses)) {
-					            checked = true;
-				            }
-			            }
-		            }
+			            final PsiClass throwableClass =
+                                referencedType.resolve();
+                        if (throwableClass == null ||
+                            !InheritanceUtil.isInheritorOrSelf(
+                                    variableOrMethodClass, throwableClass,
+                                    true)) {
+                            continue;
+                        }
+                        if (!checkType(referencedType, weakestTypeClasses)) {
+                            continue;
+                        }
+                        checked = true;
+                    }
 		            if (!checked) {
 			            return Collections.EMPTY_LIST;
 		            }
 	            }
+            } else if (referenceParent instanceof PsiConditionalExpression) {
+                final PsiConditionalExpression conditionalExpression =
+                        (PsiConditionalExpression)referenceParent;
+                final PsiType type = ExpectedTypeUtils.findExpectedType(
+                        conditionalExpression, true);
+                if (!checkType(type, weakestTypeClasses)) {
+                    return Collections.EMPTY_LIST;
+                }
+            } else if (referenceParent instanceof PsiBinaryExpression) {
+                // strings only
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression)referenceParent;
+                final PsiType type = binaryExpression.getType();
+                if (!checkType(type, weakestTypeClasses)) {
+                    return Collections.EMPTY_LIST;
+                }
             }
             if (weakestTypeClasses.contains(variableOrMethodClass)) {
                 return Collections.EMPTY_LIST;
