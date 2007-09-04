@@ -73,6 +73,12 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
            "This method will cease to exist in IDEA 7.0 final release.\n" +
            "Please contact plugin developers for plugin update.";
 
+  private final Condition myDisposedCondition = new Condition() {
+    public boolean value(final Object o) {
+      return isDisposed();
+    }
+  };
+
   protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed) {
     super(ApplicationManager.getApplication());
 
@@ -152,11 +158,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   public Condition getDisposed() {
-    return new Condition() {
-      public boolean value(final Object o) {
-        return isDisposed();
-      }
-    };
+    return myDisposedCondition;
   }
 
   public boolean isInitialized() {
