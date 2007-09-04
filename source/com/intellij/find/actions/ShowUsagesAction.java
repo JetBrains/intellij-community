@@ -62,16 +62,10 @@ public class ShowUsagesAction extends AnAction {
   }
 
   private static void showElementUsages(final Project project, final PsiElement element, Editor editor) {
-    Processor<Usage> processor = new Processor<Usage>() {
-      public boolean process(final Usage usage) {
-        usage.navigate(true);
-        return false;
-      }
-    };
     ArrayList<Usage> usages = new ArrayList<Usage>();
     CommonProcessors.CollectProcessor<Usage> collect = new CommonProcessors.CollectProcessor<Usage>(usages);
     UsageViewPresentation presentation = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().processUsages(element, collect);
-
+    if (presentation == null) return;
     if (usages.isEmpty()) {
       HintManager.getInstance().showInformationHint(editor, FindBundle.message("find.usage.view.no.usages.text"));
     }
@@ -82,12 +76,12 @@ public class ShowUsagesAction extends AnAction {
       FileEditor newFileEditor = location == null ? null :location.getEditor();
       final Editor newEditor = newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
       if (newEditor != null) {
-        //opening editor performing in invokeLater
+        //opening editor is performing in invokeLater
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             newEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
               public void run() {
-                // after new editor created, some resizing events are still bubbling. To prevent hiding hint, invokeLater 
+                // after new editor created, some editor resizing events are still bubbling. To prevent hiding hint, invokeLater this
                 SwingUtilities.invokeLater(new Runnable() {
                   public void run() {
                     HintManager.getInstance().showInformationHint(newEditor, FindBundle.message("show.usages.only.usage"));
@@ -100,8 +94,14 @@ public class ShowUsagesAction extends AnAction {
       }
     }
     else {
+      Processor<Usage> doNavigate = new Processor<Usage>() {
+        public boolean process(final Usage usage) {
+          usage.navigate(true);
+          return false;
+        }
+      };
       final String title = presentation.getTabText();
-      getUsagePopup(usages, title, processor, project).showInBestPositionFor(editor);
+      getUsagePopup(usages, title, doNavigate, project).showInBestPositionFor(editor);
     }
   }
 

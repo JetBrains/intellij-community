@@ -285,6 +285,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
+  // return null on failure or cancel
   public UsageViewPresentation processUsages(@NotNull PsiElement element, final Processor<Usage> processor) {
     final FindUsagesHandler handler = findHandler(element);
     if (handler == null) return null;
@@ -297,12 +298,18 @@ public class FindUsagesManager implements JDOMExternalizable {
 
     UsageViewPresentation presentation = createPresentation(element, findUsagesOptions, myToOpenInNewTab);
     final UsageSearcher usageSearcher = createUsageSearcher(descriptor, findUsagesOptions, null);
+    final boolean[] canceled = new boolean[]{false};
     Task task = new Task.Modal(myProject, UsageViewManagerImpl.getProgressTitle(presentation), true) {
       public void run(final ProgressIndicator indicator) {
         usageSearcher.generate(processor);
       }
+
+      public void onCancel() {
+        canceled[0] = true;
+      }
     };
     ProgressManager.getInstance().run(task);
+    if (canceled[0]) return null;
     return presentation;
   }
 
