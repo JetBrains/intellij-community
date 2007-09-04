@@ -25,6 +25,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,8 +98,10 @@ public class ExceptionFilter implements Filter{
       VirtualFile virtualFile = file.getVirtualFile();
       final OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(myProject, virtualFile, lineNumber - 1);
       TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();
-      if (ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(virtualFile)) {
-        attributes.setFontType(Font.BOLD);
+      if (!ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(virtualFile)) {
+        Color color = UIUtil.getTextInactiveTextColor();
+        attributes.setForegroundColor(color);
+        attributes.setEffectColor(color);
       }
       return new Result(highlightStartOffset, highlightEndOffset, info, attributes);
     }

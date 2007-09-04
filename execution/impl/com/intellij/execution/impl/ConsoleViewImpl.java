@@ -532,6 +532,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         attributes.setFontType(oldAttributes.getFontType());
         attributes.setEffectType(oldAttributes.getEffectType());
         attributes.setEffectColor(oldAttributes.getEffectColor());
+        attributes.setForegroundColor(oldAttributes.getForegroundColor());
         markupModel.setRangeHighlighterAttributes(range, attributes);
       }
     }
