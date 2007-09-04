@@ -1,6 +1,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 
 /**
@@ -13,4 +16,12 @@ public interface GrConstructorInvocation extends GrStatement {
   boolean isSuperCall();
 
   boolean isThisCall();
+
+  PsiElement getThisOrSuperKeyword();
+
+  PsiMethod resolveConstructor();
+
+  PsiClass getDelegatedClass();
+
+  GroovyResolveResult[] multiResolveConstructor();
 }

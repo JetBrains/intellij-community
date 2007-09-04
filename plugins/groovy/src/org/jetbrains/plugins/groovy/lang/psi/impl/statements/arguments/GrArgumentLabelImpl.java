@@ -87,13 +87,15 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
         }
       }
 
-      PsiType type = ((GrExpression) parent).getType();
-      if (type instanceof PsiClassType) {
-        PsiClass clazz = ((PsiClassType) type).resolve();
-        if (clazz != null) {
-          PsiMethod[] byName = clazz.findMethodsByName(setterName, true);
-          if (byName.length > 0) return byName[0];
-          return clazz.findFieldByName(propName, true);
+      if (parent instanceof GrExpression) {
+        PsiType type = ((GrExpression) parent).getType();
+        if (type instanceof PsiClassType) {
+          PsiClass clazz = ((PsiClassType) type).resolve();
+          if (clazz != null) {
+            PsiMethod[] byName = clazz.findMethodsByName(setterName, true);
+            if (byName.length > 0) return byName[0];
+            return clazz.findFieldByName(propName, true);
+          }
         }
       }
     }

@@ -26,11 +26,13 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 
@@ -148,7 +150,7 @@ public class PsiUtil {
 
   // Returns arguments types not including Map for named arguments
   @Nullable
-  public static PsiType[] getArgumentTypes(GroovyPsiElement place, boolean forConstructor) {
+  public static PsiType[] getArgumentTypes(PsiElement place, boolean forConstructor) {
     PsiElementFactory factory = place.getManager().getElementFactory();
     PsiElement parent = place.getParent();
     if (parent instanceof GrCallExpression) {
@@ -195,6 +197,24 @@ public class PsiUtil {
       }
 
       return result;
+    } else if (parent instanceof GrConstructorInvocation) {
+      final GrArgumentList argList = ((GrConstructorInvocation) parent).getArgumentList();
+      List<PsiType> result = new ArrayList<PsiType>();
+      if (argList.getNamedArguments().length > 0) {
+        result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
+      }
+
+      GrExpression[] expressions = argList.getExpressionArguments();
+      for (GrExpression expression : expressions) {
+        PsiType type = getArgumentType(expression);
+        if (type == null) {
+          result.add(PsiType.NULL);
+        } else {
+          result.add(type);
+        }
+      }
+
+      return result.toArray(new PsiType[result.size()]);
     }
 
     return null;

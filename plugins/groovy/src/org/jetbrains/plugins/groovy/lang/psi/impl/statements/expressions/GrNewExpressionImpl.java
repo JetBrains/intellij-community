@@ -102,10 +102,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   public PsiMethod resolveConstructor() {
-    final GroovyResolveResult[] results = multiResolveConstructor();
-    if (results.length != 1) return null;
-    final PsiElement element = results[0].getElement();
-    return element instanceof PsiMethod ? (PsiMethod)element : null;
+    return PsiImplUtil.extractUniqueResult(multiResolveConstructor());
   }
 
   public int getArrayCount() {

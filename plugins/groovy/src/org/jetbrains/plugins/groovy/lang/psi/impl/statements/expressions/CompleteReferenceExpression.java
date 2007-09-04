@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -44,8 +45,11 @@ public class CompleteReferenceExpression {
     if (qualifier == null) {
       PsiElement parent = refExpr.getParent();
       if (parent instanceof GrArgumentList) {
-        GrExpression call = (GrExpression) parent.getParent(); //add named argument label variants
-        type = call.getType();
+        final PsiElement pparent = parent.getParent();
+        if (pparent instanceof GrExpression) {
+          GrExpression call = (GrExpression) pparent; //add named argument label variants
+          type = call.getType();
+        }
       }
     } else {
       type = qualifier.getType();

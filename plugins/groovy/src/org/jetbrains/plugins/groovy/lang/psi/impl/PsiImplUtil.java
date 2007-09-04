@@ -346,4 +346,10 @@ public class PsiImplUtil {
 
     return original != null ? original : clazz;
   }
+
+  public static PsiMethod extractUniqueResult(GroovyResolveResult[] results) {
+    if (results.length != 1) return null;
+    final PsiElement element = results[0].getElement();
+    return element instanceof PsiMethod ? (PsiMethod)element : null;
+  }
 }
