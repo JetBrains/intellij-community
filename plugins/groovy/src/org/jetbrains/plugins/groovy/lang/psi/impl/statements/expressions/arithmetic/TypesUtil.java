@@ -136,6 +136,8 @@ public class TypesUtil {
   }
 
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+    if (lType == null || rType == null) return false;
+
     if (isNumericType(lType) && isNumericType(rType)) {
       lType = unboxPrimitiveTypeWrapper(lType);
       rType = unboxPrimitiveTypeWrapper(rType);
@@ -144,7 +146,7 @@ public class TypesUtil {
       lType = boxPrimitiveTypeAndEraseGenerics(lType, manager, scope);
     }
 
-    return !(lType == null || rType == null) && TypeConversionUtil.isAssignable(lType, rType);
+    return TypeConversionUtil.isAssignable(lType, rType);
 
   }
 
