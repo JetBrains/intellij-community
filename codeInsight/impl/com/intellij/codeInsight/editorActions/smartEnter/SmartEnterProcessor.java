@@ -216,8 +216,9 @@ public class SmartEnterProcessor {
     }
 
     final PsiElement[] children = atCaret.getChildren();
-    for (PsiElement aChildren : children) {
-      collectAllElements(aChildren, res, recurse);
+    for (PsiElement child : children) {
+      if (atCaret instanceof PsiStatement && child instanceof PsiStatement) continue;
+      collectAllElements(child, res, recurse);
     }
   }
 
