@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -29,6 +31,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class EditorSearchComponent extends JPanel implements DataProvider {
   private final JLabel myMatchInfoLabel;
@@ -40,6 +43,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private final Color GRADIENT_C1;
   private final Color GRADIENT_C2;
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
+  private final JComponent myToolbarComponent;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -68,16 +72,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     setSmallerFont(mySearchField);
 
     DefaultActionGroup group = new DefaultActionGroup("search bar", false);
+    group.add(new ShowHistoryAction());
     group.add(new PrevOccurenceAction());
-
     group.add(new NextOccurenceAction());
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("SearchBar", group, true);
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    final JComponent prevnextToolbar = tb.getComponent();
-    prevnextToolbar.setBorder(null);
-    prevnextToolbar.setOpaque(false);
-    leadPanel.add(prevnextToolbar);
+    myToolbarComponent = tb.getComponent();
+    myToolbarComponent.setBorder(null);
+    myToolbarComponent.setOpaque(false);
+    leadPanel.add(myToolbarComponent);
 
     final JCheckBox cbMatchCase = new NonFocusableCheckBox("Case sensitive");
     final JCheckBox cbWholeWords = new NonFocusableCheckBox("Match whole words only");
@@ -149,6 +153,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         }
         else {
           myEditor.getContentComponent().requestFocus();
+          addCurrentTextToRecents();
         }
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
@@ -184,6 +189,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       }
 
       FindUtil.searchBack(myProject, myEditor);
+      addCurrentTextToRecents();
     }
   }
 
@@ -197,6 +203,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       }
 
       FindUtil.searchAgain(myProject, myEditor);
+      addCurrentTextToRecents();
+    }
+  }
+
+  private void addCurrentTextToRecents() {
+    final String text = mySearchField.getText();
+    if (text.length() > 0) {
+      FindSettings.getInstance().addStringToFind(text);
     }
   }
 
@@ -223,6 +237,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       myEditor.getSelectionModel().removeSelection();
     }
     myEditor.setHeaderComponent(null);
+    addCurrentTextToRecents();
   }
 
   private void updateResults() {
@@ -366,6 +381,46 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     public void update(final AnActionEvent e) {
       e.getPresentation().setEnabled(mySearchField.getText().length() > 0);
+    }
+  }
+
+  private class ShowHistoryAction extends AnAction {
+    private ShowHistoryAction() {
+      getTemplatePresentation().setIcon(IconLoader.findIcon("/actions/search.png"));
+      getTemplatePresentation().setDescription("Search history");
+      getTemplatePresentation().setText("Search History");
+
+      ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
+      shortcuts.add(new KeyboardShortcut(
+        KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK), null));
+      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction("IncrementalSearch").getShortcutSet().getShortcuts()));
+      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts()));
+
+      registerCustomShortcutSet(
+        new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
+        mySearchField);
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final String[] recents = FindSettings.getInstance().getRecentFindStrings();
+      final JList list = new JList(recents);
+      final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list).setMovable(false).setResizable(false)
+        .setRequestFocus(true).setItemChoosenCallback(new Runnable() {
+        public void run() {
+          String selectedValue = (String)list.getSelectedValue();
+          if (selectedValue != null) {
+            mySearchField.setText(selectedValue);
+          }
+        }
+      }).createPopup();
+
+      final InputEvent event = e.getInputEvent();
+      if (event instanceof MouseEvent) {
+        popup.showUnderneathOf(myToolbarComponent);
+      }
+      else {
+        popup.showUnderneathOf(mySearchField);
+      }
     }
   }
 
