@@ -10,10 +10,10 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class RefFieldImpl extends RefElementImpl implements RefField {
@@ -159,7 +159,7 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
   @Nullable
   public static PsiField findPsiField(PsiManager manager, String externalName) {
     int classNameDelimeter = externalName.lastIndexOf(' ');
-    if (classNameDelimeter > 0 && classNameDelimeter < externalName.length() - 2) {
+    if (classNameDelimeter > 0 && classNameDelimeter < externalName.length() - 1) {
       final String className = externalName.substring(0, classNameDelimeter);
       final String fieldName = externalName.substring(classNameDelimeter + 1);
       final PsiClass psiClass = ClassUtil.findPsiClass(manager, className);
