@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -132,9 +133,12 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   protected String getValue() {
     final XmlTag tag = getXmlTag();
     if (tag != null) {
-      final String s = tag.getAttributeValue(getXmlElementName(), getXmlElementNamespace());
-      if (s != null) {
-        return XmlUtil.unescape(s);
+      final XmlAttribute attribute = tag.getAttribute(getXmlElementName(), getXmlElementNamespace());
+      if (attribute != null) {
+        final XmlAttributeValue value = attribute.getValueElement();
+        if (value != null && value.getTextLength() >= 2) {          
+          return XmlUtil.unescape(value.getValue());
+        }
       }
     }
     return null;
