@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
@@ -174,7 +175,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     if (mySearchField.getText().length() > 0) {
       final SelectionModel model = myEditor.getSelectionModel();
       if (model.hasSelection()) {
-        if (mySearchField.getText().equals(model.getSelectedText()) && myEditor.getCaretModel().getOffset() == model.getSelectionEnd()) {
+        if (Comparing.equal(mySearchField.getText(), model.getSelectedText(), isCaseSensitive()) && myEditor.getCaretModel().getOffset() == model.getSelectionEnd()) {
           myEditor.getCaretModel().moveToOffset(model.getSelectionStart());
         }
       }
@@ -187,7 +188,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     if (mySearchField.getText().length() > 0) {
       final SelectionModel model = myEditor.getSelectionModel();
       if (model.hasSelection()) {
-        if (mySearchField.getText().equals(model.getSelectedText()) && myEditor.getCaretModel().getOffset() == model.getSelectionStart()) {
+        if (Comparing.equal(mySearchField.getText(), model.getSelectedText(), isCaseSensitive()) && myEditor.getCaretModel().getOffset() == model.getSelectionStart()) {
           myEditor.getCaretModel().moveToOffset(model.getSelectionEnd());
         }
       }
