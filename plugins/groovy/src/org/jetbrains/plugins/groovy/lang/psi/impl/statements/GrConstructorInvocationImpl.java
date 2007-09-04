@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -70,10 +73,49 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
 
   public PsiClass getDelegatedClass() {
     GrTypeDefinition typeDefinition = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class);
-    PsiClass clazz;
     if (typeDefinition != null) {
       return isThisCall() ? typeDefinition : typeDefinition.getSuperClass();
     }
     return null;
+  }
+
+  public PsiElement getElement() {
+    return this;
+  }
+
+  public TextRange getRangeInElement() {
+    return new TextRange(0, getThisOrSuperKeyword().getTextLength());
+  }
+
+  @Nullable
+  public PsiElement resolve() {
+    return resolveConstructor();
+  }
+
+  public String getCanonicalText() {
+    return getText(); //TODO
+  }
+
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    return this;
+  }
+
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    return this;
+  }
+
+  public boolean isReferenceTo(PsiElement element) {
+    return element instanceof PsiMethod &&
+        ((PsiMethod) element).isConstructor() &&
+        getManager().areElementsEquivalent(element, resolve());
+
+  }
+
+  public Object[] getVariants() {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  public boolean isSoft() {
+    return false;
   }
 }

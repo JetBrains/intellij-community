@@ -21,6 +21,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -60,6 +61,21 @@ public class FindUsagesTest extends IdeaTestCase {
     doTest("setter1/A.groovy", 2);
   }
 
+  public void testConstructor1() throws Throwable {
+    doConstructorTest("constructor1/A.groovy", 2);
+  }
+
+  private void doConstructorTest(String filePath, int expectedCount) throws Throwable {
+    myFixture.configureByFile(filePath);
+    final PsiElement elementAt = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+    final PsiMethod method = PsiTreeUtil.getParentOfType(elementAt, PsiMethod.class);
+    assertNotNull(method);
+    assertTrue(method.isConstructor());
+    final Query<PsiReference> query = ReferencesSearch.search(method);
+
+    assertEquals(expectedCount, query.findAll().size());
+  }
+
   public void testGetter1() throws Throwable {
     doTest("getter1/A.groovy", 1);
   }
@@ -96,8 +112,7 @@ public class FindUsagesTest extends IdeaTestCase {
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
     if (resolved instanceof PsiMethod) {
       query = MethodReferencesSearch.search((PsiMethod) resolved, projectScope, true);
-    }
-    else {
+    } else {
       query = ReferencesSearch.search(resolved, projectScope);
     }
 

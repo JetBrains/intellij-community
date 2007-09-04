@@ -100,6 +100,8 @@ public class GroovyLoader implements ApplicationComponent {
     MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodLateBoundReferencesSearcher());
 
+    ReferencesSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
+
     ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferencesSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new TypeAliasReferenceSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new LateBoundReferencesSearcher());
