@@ -281,9 +281,31 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         }
         eachParent = eachParent.getParent();
       }
+
+      if (frame == null) {
+        frame = tryToFindTheOnlyFrame();
+      }
     }
-    LOG.assertTrue(frame != null);
+
+    LOG.assertTrue(frame != null, "Project: " + project);
+
     return frame;
+  }
+
+  private IdeFrameImpl tryToFindTheOnlyFrame() {
+    IdeFrameImpl candidate = null;
+    final Frame[] all = Frame.getFrames();
+    for (Frame each : all) {
+      if (each instanceof IdeFrameImpl) {
+        if (candidate == null) {
+          candidate = (IdeFrameImpl)each;
+        } else {
+          candidate = null;
+          break;
+        }
+      }
+    }
+    return candidate;
   }
 
   public final IdeFrameImpl getFrame(final Project project) {
