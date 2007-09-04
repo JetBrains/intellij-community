@@ -135,7 +135,7 @@ public class FramesPanel extends UpdatableDebuggerView {
       }
     }
 
-    getContext().getDebugProcess().getManagerThread().invokeLater(new RefreshFramePanelCommand(updateOnly));
+    getContext().getDebugProcess().getManagerThread().invokeLater(new RefreshFramePanelCommand(updateOnly && myThreadsCombo.getItemCount() != 0));
   }
 
   private class RefreshFramePanelCommand extends DebuggerContextCommandImpl {

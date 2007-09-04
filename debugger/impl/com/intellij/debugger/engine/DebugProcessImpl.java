@@ -50,6 +50,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
@@ -118,7 +119,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private boolean myIsFailed = false;
   private DebuggerSession mySession;
   protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
-
+  private Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD); 
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -527,10 +528,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   public void showStatusText(final String text) {
-    final WindowManager wm = WindowManager.getInstance();
-    if (wm != null) {
-      wm.getStatusBar(myProject).setInfo(text);
-    }
+    myStatusUpdateAlarm.cancelAllRequests();
+    myStatusUpdateAlarm.addRequest(new Runnable() {
+      public void run() {
+        final WindowManager wm = WindowManager.getInstance();
+        if (wm != null) {
+          wm.getStatusBar(myProject).setInfo(text);
+        }
+      }
+    }, 50);
   }
 
   static Connector findConnector(String connectorName) throws ExecutionException {
@@ -794,6 +800,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   public void dispose() {
     NodeRendererSettings.getInstance().removeListener(mySettingsListener);
+    myStatusUpdateAlarm.dispose();
   }
 
   public DebuggerManagerThreadImpl getManagerThread() {
