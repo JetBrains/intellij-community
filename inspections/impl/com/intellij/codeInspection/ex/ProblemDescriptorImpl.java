@@ -32,8 +32,8 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement) {
     super(fixes, descriptionTemplate);
-    LOG.assertTrue(startElement.isValid(), "Invalid PsiElement");
-    LOG.assertTrue(endElement.isValid(), "Invalid PsiElement");
+    LOG.assertTrue(startElement.isValid(), startElement);
+    LOG.assertTrue(endElement.isValid(), endElement);
     assertPhysical(startElement, endElement);
 
     if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset()) {

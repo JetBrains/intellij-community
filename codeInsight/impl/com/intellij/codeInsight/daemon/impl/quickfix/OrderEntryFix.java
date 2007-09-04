@@ -195,6 +195,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         QuickFixAction.registerQuickFixAction(info, fix);
         result.add(fix);
       }
+      ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(currentModule).getFileIndex();
       for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
         if (orderEntry instanceof LibraryOrderEntry) {
           final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)orderEntry;
@@ -204,7 +205,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           if (files.length == 0) continue;
           final VirtualFile jar = files[0];
 
-          if (jar == null || libraryEntry.isModuleLevel() && !librariesToAdd.add(jar) || !librariesToAdd.add(library)) continue;
+          if (jar == null || libraryEntry.isModuleLevel() && !librariesToAdd.add(jar) || !librariesToAdd.add(library) || moduleFileIndex.getOrderEntryForFile(virtualFile) != null) continue;
           final OrderEntryFix fix = new OrderEntryFix() {
             @NotNull
             public String getText() {
