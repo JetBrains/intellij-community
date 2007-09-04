@@ -37,8 +37,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private final JTextField mySearchField;
   private final Color myDefaultBackground;
 
-  private static final Color GRADIENT_C1 = new Color(0xe8, 0xe8, 0xe8);
-  private static final Color GRADIENT_C2 = new Color(0xD0, 0xD0, 0xD0);
+  private final Color GRADIENT_C1;
+  private final Color GRADIENT_C2;
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
 
   @Nullable
@@ -49,6 +49,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   public EditorSearchComponent(final Editor editor, final Project project) {
     super(new BorderLayout(0, 0));
 
+    GRADIENT_C1 = getBackground();
+    GRADIENT_C2 = new Color(GRADIENT_C1.getRed() - 0x18, GRADIENT_C1.getGreen() - 0x18, GRADIENT_C1.getBlue() - 0x18);
+    
     myProject = project;
     myEditor = editor;
 
