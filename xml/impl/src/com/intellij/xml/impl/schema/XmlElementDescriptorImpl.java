@@ -203,7 +203,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
-      XmlAttributeDescriptor[] attributeDescriptors = typeDescriptor.getAttributes();
+      XmlAttributeDescriptor[] attributeDescriptors = typeDescriptor.getAttributes(context);
 
       if (context != null) {
         final String contextNs = context.getNamespace();
