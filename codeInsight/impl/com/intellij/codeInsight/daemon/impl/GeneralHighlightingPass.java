@@ -14,6 +14,7 @@ import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,7 +111,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return highlightVisitors;
   }
 
-  private void releaseHighlightVisitors() {
+  private void releaseHighlightVisitors(HighlightVisitor[] highlightVisitors) {
+    for (HighlightVisitor visitor : highlightVisitors) {
+      if (visitor instanceof Disposable) {
+        ((Disposable)visitor).dispose();
+      }
+    }
     AtomicInteger count = myProject.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
     int i = count.decrementAndGet();
     assert i >=0 : i;
@@ -177,7 +183,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
     finally {
       setRefCountHolders(null, highlightVisitors);
-      releaseHighlightVisitors();
+      releaseHighlightVisitors(highlightVisitors);
     }
     myHighlights = result;
     myMarkers = lineMarkers;
