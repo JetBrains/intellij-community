@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -44,7 +45,7 @@ public class FileReferenceQuickFixProvider {
       return Collections.emptyList();
     }
 
-    final PsiFileSystemItem context;
+    PsiFileSystemItem context = null;
     if(index > 0) {
       context = fileReferenceSet.getReference(index - 1).resolve();
     } else { // index == 0
@@ -52,7 +53,17 @@ public class FileReferenceQuickFixProvider {
       if (defaultContexts.isEmpty()) {
         return Collections.emptyList();
       }
-      context = defaultContexts.iterator().next();
+
+      for (PsiFileSystemItem defaultContext : defaultContexts) {
+        final VirtualFile virtualFile = defaultContext.getVirtualFile();
+        if (virtualFile != null && defaultContext.isDirectory() && virtualFile.isInLocalFileSystem()) {
+          context = defaultContext;
+          break;
+        }
+      }
+      if (context == null && ApplicationManager.getApplication().isUnitTestMode()) {
+        context = defaultContexts.iterator().next();
+      }
     }
     if (context == null) return Collections.emptyList();
 
@@ -61,8 +72,6 @@ public class FileReferenceQuickFixProvider {
     
     final PsiDirectory directory = context.getManager().findDirectory(virtualFile);
     if (directory == null) return Collections.emptyList();
-
-    boolean differentCase = false;
 
     if (fileReferenceSet.isCaseSensitive()) {
       boolean original = fileReferenceSet.isCaseSensitive();
@@ -73,7 +82,6 @@ public class FileReferenceQuickFixProvider {
         if (psiElement instanceof PsiNamedElement) {
           final String existingElementName = ((PsiNamedElement)psiElement).getName();
 
-          differentCase = true;
           final RenameFileReferenceIntentionAction renameRefAction = new RenameFileReferenceIntentionAction(existingElementName, reference);
           QuickFixAction.registerQuickFixAction(info, renameRefAction);
 
@@ -85,8 +93,6 @@ public class FileReferenceQuickFixProvider {
         fileReferenceSet.setCaseSensitive(original);
       }
     }
-
-    if (differentCase && SystemInfo.isWindows) return Collections.emptyList();
 
     final boolean isdirectory;
 
