@@ -2,20 +2,14 @@ package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
-import com.intellij.cvsSupport2.application.CvsInfo;
-import com.intellij.cvsSupport2.checkinProject.DirectoryContent;
-import com.intellij.cvsSupport2.checkinProject.VirtualFileEntry;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
-import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -35,7 +29,7 @@ public class CvsStatusProvider {
 
   public static FileStatus getStatus(@NotNull VirtualFile file) {
     if (!CvsEntriesManager.getInstance().isActive()) return FileStatus.NOT_CHANGED;
-    return getStatus(file, getEntriesManager().getEntryFor(file.getParent(), file.getName()));
+    return getStatus(file, CvsEntriesManager.getInstance().getEntryFor(file.getParent(), file.getName()));
   }
 
   public static FileStatus getStatus(VirtualFile file, Entry entry) {
@@ -79,10 +73,6 @@ public class CvsStatusProvider {
 
   }
 
-  private static CvsEntriesManager getEntriesManager() {
-    return CvsEntriesManager.getInstance();
-  }
-
   private static FileStatus getFileStatusForAbsentFile(Entry entry) {
     if (entry == null || entry.isDirectory()) {
       return FileStatus.UNKNOWN;
@@ -116,74 +106,6 @@ public class CvsStatusProvider {
 
   private static boolean isZero(long diff) {
     return diff < TIME_STAMP_EPSILON;
-  }
-
-  private static boolean isInContent(VirtualFile file) {
-    return file == null || !FileTypeManager.getInstance().isFileIgnored(file.getName());
-  }
-
-  public static DirectoryContent getDirectoryContent(VirtualFile directory) {
-    CvsInfo cvsInfo = getEntriesManager().getCvsInfoFor(directory);
-    DirectoryContent result = new DirectoryContent(cvsInfo);
-
-    VirtualFile[] children = CvsVfsUtil.getChildrenOf(directory);
-    if (children == null) children = VirtualFile.EMPTY_ARRAY;
-
-    Collection<Entry> entries = cvsInfo.getEntries();
-
-    HashMap<String, VirtualFile> nameToFileMap = new HashMap<String, VirtualFile>();
-    for (VirtualFile child : children) {
-      nameToFileMap.put(child.getName(), child);
-    }
-
-    for (final Entry entry : entries) {
-      String fileName = entry.getFileName();
-      if (entry.isDirectory()) {
-        if (nameToFileMap.containsKey(fileName)) {
-          VirtualFile virtualFile = nameToFileMap.get(fileName);
-          if (isInContent(virtualFile)) {
-            result.addDirectory(new VirtualFileEntry(virtualFile, entry));
-          }
-        }
-        else if (!entry.isRemoved() && !FileTypeManager.getInstance().isFileIgnored(fileName)) {
-          result.addDeletedDirectory(entry);          
-        }
-      }
-      else {
-        if (nameToFileMap.containsKey(fileName) || entry.isRemoved()) {
-          VirtualFile virtualFile = nameToFileMap.get(fileName);
-          if (isInContent(virtualFile)) {
-            result.addFile(new VirtualFileEntry(virtualFile, entry));
-          }
-        }
-        else if (!entry.isAddedFile()) {
-          result.addDeletedFile(entry);
-        }
-      }
-      nameToFileMap.remove(fileName);
-    }
-
-    for (final String name : nameToFileMap.keySet()) {
-      VirtualFile unknown = nameToFileMap.get(name);
-      if (unknown.isDirectory()) {
-        if (isInContent(unknown)) {
-          result.addUnknownDirectory(unknown);
-        }
-      }
-      else {
-        if (isInContent(unknown)) {
-          boolean isIgnored = result.getCvsInfo().getIgnoreFilter().shouldBeIgnored(unknown.getName());
-          if (isIgnored) {
-            result.addIgnoredFile(unknown);
-          }
-          else {
-            result.addUnknownFile(unknown);
-          }
-        }
-      }
-    }
-
-    return result;
   }
 
   public static Date createDateDiffersTo(long timeStamp) {

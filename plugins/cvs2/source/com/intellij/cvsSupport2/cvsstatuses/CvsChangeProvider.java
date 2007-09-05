@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.CvsBundle;
+import com.intellij.util.containers.HashMap;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,7 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Collection;
 
 /**
  * @author max
@@ -82,8 +85,9 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively) {
-    if (!scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir))) return;
-    final DirectoryContent dirContent = CvsStatusProvider.getDirectoryContent(dir);
+    final FilePath path = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir);
+    if (!scope.belongsTo(path)) return;
+    final DirectoryContent dirContent = getDirectoryContent(dir);
 
     for (VirtualFile file : dirContent.getUnknownFiles()) {
       builder.processUnversionedFile(file);
@@ -109,6 +113,11 @@ public class CvsChangeProvider implements ChangeProvider {
 
     checkSwitchedDir(dir, builder);
 
+    if (CvsUtil.fileIsUnderCvs(dir) && dir.getChildren().length == 1 /* admin dir */ &&
+        dirContent.getDeletedFiles().isEmpty() && hasRemovedFiles(dirContent.getFiles())) {
+      // directory is going to be deleted
+      builder.processChange(new Change(CurrentContentRevision.create(path), CurrentContentRevision.create(path), FileStatus.DELETED));
+    }
     for (VirtualFileEntry fileEntry : dirContent.getFiles()) {
       processFile(dir, fileEntry.getVirtualFile(), fileEntry.getEntry(), builder);
     }
@@ -120,6 +129,15 @@ public class CvsChangeProvider implements ChangeProvider {
         }
       }
     }
+  }
+
+  private static boolean hasRemovedFiles(final Collection<VirtualFileEntry> files) {
+    for(VirtualFileEntry e: files) {
+      if (e.getEntry().isRemoved()) {
+        return true;
+      }
+    }
+    return false;
   }
 
 
@@ -280,6 +298,74 @@ public class CvsChangeProvider implements ChangeProvider {
       return new CvsUpToDateBinaryRevision(path, revisionNumber);
     }
     return new CvsUpToDateRevision(path, revisionNumber);
+  }
+
+  private static boolean isInContent(VirtualFile file) {
+    return file == null || !FileTypeManager.getInstance().isFileIgnored(file.getName());
+  }
+
+  private static DirectoryContent getDirectoryContent(VirtualFile directory) {
+    CvsInfo cvsInfo = CvsEntriesManager.getInstance().getCvsInfoFor(directory);
+    DirectoryContent result = new DirectoryContent(cvsInfo);
+
+    VirtualFile[] children = CvsVfsUtil.getChildrenOf(directory);
+    if (children == null) children = VirtualFile.EMPTY_ARRAY;
+
+    Collection<Entry> entries = cvsInfo.getEntries();
+
+    HashMap<String, VirtualFile> nameToFileMap = new HashMap<String, VirtualFile>();
+    for (VirtualFile child : children) {
+      nameToFileMap.put(child.getName(), child);
+    }
+
+    for (final Entry entry : entries) {
+      String fileName = entry.getFileName();
+      if (entry.isDirectory()) {
+        if (nameToFileMap.containsKey(fileName)) {
+          VirtualFile virtualFile = nameToFileMap.get(fileName);
+          if (isInContent(virtualFile)) {
+            result.addDirectory(new VirtualFileEntry(virtualFile, entry));
+          }
+        }
+        else if (!entry.isRemoved() && !FileTypeManager.getInstance().isFileIgnored(fileName)) {
+          result.addDeletedDirectory(entry);
+        }
+      }
+      else {
+        if (nameToFileMap.containsKey(fileName) || entry.isRemoved()) {
+          VirtualFile virtualFile = nameToFileMap.get(fileName);
+          if (isInContent(virtualFile)) {
+            result.addFile(new VirtualFileEntry(virtualFile, entry));
+          }
+        }
+        else if (!entry.isAddedFile()) {
+          result.addDeletedFile(entry);
+        }
+      }
+      nameToFileMap.remove(fileName);
+    }
+
+    for (final String name : nameToFileMap.keySet()) {
+      VirtualFile unknown = nameToFileMap.get(name);
+      if (unknown.isDirectory()) {
+        if (isInContent(unknown)) {
+          result.addUnknownDirectory(unknown);
+        }
+      }
+      else {
+        if (isInContent(unknown)) {
+          boolean isIgnored = result.getCvsInfo().getIgnoreFilter().shouldBeIgnored(unknown.getName());
+          if (isIgnored) {
+            result.addIgnoredFile(unknown);
+          }
+          else {
+            result.addUnknownFile(unknown);
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   private class CvsUpToDateRevision implements ContentRevision {
