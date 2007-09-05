@@ -12,11 +12,11 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.ConstructorPicker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -245,7 +245,7 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
 
           while (lastDotIdx > parenIndex) lastDotIdx = fqName.lastIndexOf('.', lastDotIdx - 1);
 
-          if (spaceIdx < 0 || spaceIdx > lastDotIdx || spaceIdx > parenIndex) {
+          if (spaceIdx < 0 || spaceIdx + 1 > lastDotIdx || spaceIdx > parenIndex) {
             notype = true;
           }
 
