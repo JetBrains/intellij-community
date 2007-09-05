@@ -131,7 +131,7 @@ public class VfsUtil {
    * @param filter    {@link VirtualFileFilter}
    * @throws IOException if files failed to be copied
    */
-  public static void copyDirectory(Object requestor, VirtualFile fromDir, VirtualFile toDir, VirtualFileFilter filter)
+  public static void copyDirectory(Object requestor, VirtualFile fromDir, VirtualFile toDir, @Nullable VirtualFileFilter filter)
     throws IOException {
     VirtualFile[] children = fromDir.getChildren();
     for (VirtualFile child : children) {
