@@ -193,7 +193,8 @@ public class JavaDocManager implements ProjectComponent {
     return hint;
   }
 
-  public JBPopup showJavaDocInfo(final Editor editor, PsiFile file, boolean requestFocus) {
+  @Nullable
+  public JBPopup showJavaDocInfo(final Editor editor, @Nullable PsiFile file, boolean requestFocus) {
     myEditor = editor;
     final Project project = getProject(file);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -298,6 +299,7 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   private static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
+    if (element == null) return;
     try {
       element.putUserData(
         ORIGINAL_ELEMENT_KEY,
@@ -309,8 +311,8 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   @Nullable
-  public static PsiElement findTargetElement(final Editor editor, final PsiFile file, PsiElement contextElement) {
-    PsiElement element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements);
+  public PsiElement findTargetElement(final Editor editor, @Nullable final PsiFile file, PsiElement contextElement) {
+    PsiElement element = editor != null ? TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements) : null;
 
     // Allow context doc over xml tag content
     if (element == null && contextElement != null) {
@@ -344,7 +346,7 @@ public class JavaDocManager implements ProjectComponent {
         }
       }
 
-      final Lookup activeLookup = LookupManager.getInstance(file.getProject()).getActiveLookup();
+      final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
 
       if (activeLookup != null) {
         LookupItem item = activeLookup.getCurrentItem();
@@ -354,7 +356,7 @@ public class JavaDocManager implements ProjectComponent {
 
         if (documentationProvider!=null) {
           element = documentationProvider.getDocumentationElementForLookupItem(
-            file.getManager(),
+            PsiManager.getInstance(myProject),
             item.getObject(),
             ref != null ? ref.getElement():contextElement
           );
@@ -362,7 +364,7 @@ public class JavaDocManager implements ProjectComponent {
       }
     }
 
-    storeOriginalElement(file.getProject(), contextElement, element);
+    storeOriginalElement(myProject, contextElement, element);
 
     return element;
   }
@@ -371,6 +373,7 @@ public class JavaDocManager implements ProjectComponent {
     return myPreviouslyFocused != null && myPreviouslyFocused.getParent() instanceof ChooseByNameBase.JPanelProvider;
   }
 
+  @Nullable
   private static PsiElement getPsiElementFromParameterInfoObject(final Object o, PsiElement element) {
     if (o instanceof CandidateInfo) {
       element = ((CandidateInfo)o).getElement();
@@ -487,6 +490,7 @@ public class JavaDocManager implements ProjectComponent {
     }
   }
 
+  @Nullable
   private JBPopup getDocInfoHint() {
     if (myDocInfoHintRef == null) return null;
     JBPopup hint = myDocInfoHintRef.get();
@@ -497,6 +501,7 @@ public class JavaDocManager implements ProjectComponent {
     return hint;
   }
 
+  @Nullable
   private static List<String> findUrlForClass(PsiClass aClass) {
     String qName = aClass.getQualifiedName();
     if (qName == null) return null;
@@ -564,6 +569,7 @@ public class JavaDocManager implements ProjectComponent {
     return result.isEmpty() ? null : result;
   }
 
+  @Nullable
   private static List<String> findUrlForPackage(PsiPackage aPackage) {
     String qName = aPackage.getQualifiedName();
     qName = qName.replace('.', '/') +  '/' + PACKAGE_SUMMARY_FILE;
@@ -576,6 +582,7 @@ public class JavaDocManager implements ProjectComponent {
     return null;
   }
 
+  @Nullable
   private String findUrlForLink(PsiPackage basePackage, String link) {
     int index = link.indexOf('#');
     String tail = "";
