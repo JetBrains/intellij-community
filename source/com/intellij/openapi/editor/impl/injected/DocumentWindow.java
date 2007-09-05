@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,37 +22,40 @@ import java.util.List;
 /**
  * @author Alexey
  */
-public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
+public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.editor.impl.injected.DocumentRangee");
   private final DocumentEx myDelegate;
   //sorted by startOffset
-  private final RangeMarker[] myHostRanges;
+  private final RangeMarker[] myRelevantRangesInHostDocument;
   private final boolean myOneLine;
   private final String[] myPrefixes;
   private final String[] mySuffixes;
   private final int myPrefixLineCount;
   private final int mySuffixLineCount;
 
-  public DocumentWindow(@NotNull DocumentEx delegate, boolean oneLine, @NotNull List<String> prefixes, @NotNull List<String> suffixes, @NotNull List<TextRange> ranges) {
+  public DocumentWindow(@NotNull DocumentEx delegate,
+                        boolean oneLine,
+                        @NotNull List<String> prefixes,
+                        @NotNull List<String> suffixes,
+                        @NotNull List<TextRange> ranges) {
     myDelegate = delegate;
     myOneLine = oneLine;
     myPrefixes = prefixes.toArray(new String[prefixes.size()]);
     mySuffixes = suffixes.toArray(new String[suffixes.size()]);
-    myHostRanges = new RangeMarker[ranges.size()];
+    myRelevantRangesInHostDocument = new RangeMarker[ranges.size()];
     assert myPrefixes.length == mySuffixes.length : prefixes + " " + suffixes + " " + ranges;
-    assert myPrefixes.length == myHostRanges.length : prefixes + " " + suffixes + " " + ranges;
+    assert myPrefixes.length == myRelevantRangesInHostDocument.length : prefixes + " " + suffixes + " " + ranges;
     for (int i = 0; i < ranges.size(); i++) {
       TextRange range = ranges.get(i);
       RangeMarker rangeMarker = delegate.createRangeMarker(range);
       rangeMarker.setGreedyToLeft(true);
       rangeMarker.setGreedyToRight(true);
-      myHostRanges[i] = rangeMarker;
+      myRelevantRangesInHostDocument[i] = rangeMarker;
     }
     myPrefixLineCount = Math.max(1, countLineSeparators(myPrefixes[0]));
     mySuffixLineCount = Math.max(1, countLineSeparators(mySuffixes[mySuffixes.length-1]));
   }
 
-  @Terminal
   public int getLineCount() {
     return countLineSeparators(getText());
   }
@@ -66,24 +70,21 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
     return lineCount;
   }
 
-  @Terminal
   public int getLineStartOffset(int line) {
     assert line >= 0 : line;
     return new DocumentImpl(getText()).getLineStartOffset(line);
   }
 
-  @Terminal
   public int getLineEndOffset(int line) {
     if (line==0 && myPrefixes[0].length()==0) return getTextLength();
     return new DocumentImpl(getText()).getLineEndOffset(line);
   }
 
-  @Terminal
   public String getText() {
     StringBuilder text = new StringBuilder();
     String hostText = myDelegate.getText();
-    for (int i = 0; i < myHostRanges.length; i++) {
-      RangeMarker hostRange = myHostRanges[i];
+    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
+      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
       if (hostRange.isValid()) {
         text.append(myPrefixes[i]);
         text.append(hostText, hostRange.getStartOffset(), hostRange.getEndOffset());
@@ -103,8 +104,8 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
 
   public int getTextLength() {
     int length = 0;
-    for (int i = 0; i < myHostRanges.length; i++) {
-      RangeMarker hostRange = myHostRanges[i];
+    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
+      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
       length += myPrefixes[i].length();
       length += hostRange.getEndOffset() - hostRange.getStartOffset();
       length += mySuffixes[i].length();
@@ -112,14 +113,13 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
     return length;
   }
 
-  @Terminal
   public int getLineNumber(int offset) {
     if (offset < myPrefixes[0].length()) return 0;
     int lineNumber = myPrefixLineCount - 1;
     String hostText = myDelegate.getText();
-    for (int i = 0; i < myHostRanges.length; i++) {
+    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
       offset -= myPrefixes[i].length();
-      RangeMarker currentRange = myHostRanges[i];
+      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
       int length = currentRange.getEndOffset() - currentRange.getStartOffset();
       String rangeText = hostText.substring(currentRange.getStartOffset(), currentRange.getEndOffset());
       if (offset < length) {
@@ -135,9 +135,9 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
 
   public int getHostNumber(int injectedOffset) {
     if (injectedOffset < myPrefixes[0].length()) return -1;
-    for (int i = 0; i < myHostRanges.length; i++) {
+    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
       injectedOffset -= myPrefixes[i].length();
-      RangeMarker currentRange = myHostRanges[i];
+      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
       int length = currentRange.getEndOffset() - currentRange.getStartOffset();
       if (injectedOffset < length) {
         return i;
@@ -148,8 +148,8 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
     return -1;
   }
   public TextRange getHostRange(int hostOffset) {
-    for (RangeMarker currentRange : myHostRanges) {
-      TextRange textRange = new TextRange(currentRange.getStartOffset(), currentRange.getEndOffset());
+    for (RangeMarker currentRange : myRelevantRangesInHostDocument) {
+      TextRange textRange = InjectedLanguageUtil.toTextRange(currentRange);
       if (textRange.grown(1).contains(hostOffset)) return textRange;
     }
     return null;
@@ -158,7 +158,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
   public int getPrevHostsCombinedLength(int hostNumber) {
     int res = 0;
     for (int i = 0; i < hostNumber; i++) {
-      RangeMarker currentRange = myHostRanges[i];
+      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
       int length = currentRange.getEndOffset() - currentRange.getStartOffset();
       res += length;
     }
@@ -230,13 +230,16 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
   }
 
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset, final boolean surviveOnExternalChange) {
+    if (!surviveOnExternalChange) {
+      return createRangeMarker(startOffset, endOffset);
+    }
     TextRange hostRange = injectedToHost(new TextRange(startOffset, endOffset));
     //todo persistent?
     return myDelegate.createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
   }
 
-  @SuppressWarnings({"deprecation"})
   public MarkupModel getMarkupModel() {
+    //noinspection deprecation
     return new MarkupModelWindow((MarkupModelEx)myDelegate.getMarkupModel(), this);
   }
 
@@ -294,18 +297,17 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
     if (isOneLine()) {
       text = StringUtil.replace(text.toString(), "\n", "");
     }
-
     String[] changes = calculateMinEditSequence(text.toString());
-    assert changes.length == myHostRanges.length;
+    assert changes.length == myRelevantRangesInHostDocument.length;
     for (int i = 0; i < changes.length; i++) {
       String change = changes[i];
-      RangeMarker hostRange = myHostRanges[i];
+      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
       myDelegate.replaceString(hostRange.getStartOffset(), hostRange.getEndOffset(), change);
     }
   }
 
   public RangeMarker[] getHostRanges() {
-    return myHostRanges;
+    return myRelevantRangesInHostDocument;
   }
 
   public RangeMarker createRangeMarker(final TextRange textRange) {
@@ -383,13 +385,13 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
     return myDelegate;
   }
 
-  @Terminal
+  //todo use escaper?
   public int hostToInjected(int hostOffset) {
-    if (hostOffset < myHostRanges[0].getStartOffset()) return myPrefixes[0].length();
+    if (hostOffset < myRelevantRangesInHostDocument[0].getStartOffset()) return myPrefixes[0].length();
     int offset = 0;
-    for (int i = 0; i < myHostRanges.length; i++) {
+    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
       offset += myPrefixes[i].length();
-      RangeMarker currentRange = myHostRanges[i];
+      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
       if (hostOffset < currentRange.getEndOffset()) {
         return offset + hostOffset - currentRange.getStartOffset();
       }
@@ -399,23 +401,23 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
     return getTextLength() - mySuffixes[mySuffixes.length-1].length();
   }
 
-  @Terminal
   public int injectedToHost(int offset) {
     return injectedToHost(offset, true);
   }
 
-  @Terminal
   private int injectedToHost(int offset, boolean strict) {
-    if (offset < myPrefixes[0].length()) return myHostRanges[0].getStartOffset();
-    for (int i = 0; i < myHostRanges.length; i++) {
-      RangeMarker currentRange = myHostRanges[i];
+    if (offset < myPrefixes[0].length()) return myRelevantRangesInHostDocument[0].getStartOffset();
+    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
+      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
       offset -= myPrefixes[i].length();
       int length = currentRange.getEndOffset() - currentRange.getStartOffset();
-      if (offset < length || !strict && offset == length) return currentRange.getStartOffset() + offset;
+      if (offset < length || !strict && offset == length) {
+        return currentRange.getStartOffset() + offset;
+      }
       offset -= length;
       offset -= mySuffixes[i].length();
     }
-    return myHostRanges[myHostRanges.length-1].getEndOffset();
+    return myRelevantRangesInHostDocument[myRelevantRangesInHostDocument.length-1].getEndOffset();
   }
 
   public TextRange injectedToHost(TextRange injected) {
@@ -424,7 +426,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
 
   public int injectedToHostLine(int line) {
     if (line < myPrefixLineCount) {
-      return myDelegate.getLineNumber(myHostRanges[0].getStartOffset());
+      return myDelegate.getLineNumber(myRelevantRangesInHostDocument[0].getStartOffset());
     }
     int lineCount = getLineCount();
     if (line > lineCount - mySuffixLineCount) {
@@ -437,18 +439,16 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
   }
 
   public boolean containsRange(int start, int end) {
-    if (end - start >= myHostRanges[0].getEndOffset() - myHostRanges[0].getStartOffset()) return false;
-    for (RangeMarker hostRange : myHostRanges) {
-      if (new TextRange(hostRange.getStartOffset(), hostRange.getEndOffset()).contains(new TextRange(start, end))) return true;
+    if (end - start >= myRelevantRangesInHostDocument[0].getEndOffset() - myRelevantRangesInHostDocument[0].getStartOffset()) return false;
+    for (RangeMarker hostRange : myRelevantRangesInHostDocument) {
+      if (InjectedLanguageUtil.toTextRange(hostRange).contains(new TextRange(start, end))) return true;
     }
     return false;
   }
 
   public RangeMarker getFirstTextRange() {
-    return myHostRanges[0];
+    return myRelevantRangesInHostDocument[0];
   }
-
-  private static @interface Terminal{}
 
   public int hostToInjectedLine(int hostLine) {
     int hostOffset = myDelegate.getLineStartOffset(hostLine);
@@ -461,8 +461,8 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
     int offset = 0;
     int startOffset = -1;
     int endOffset = -1;
-    for (int i = 0; i < myHostRanges.length; i++) {
-      RangeMarker hostRange = myHostRanges[i];
+    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
+      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
       offset += myPrefixes[i].length();
       int length = hostRange.getEndOffset() - hostRange.getStartOffset();
       TextRange intersection = new TextRange(offset, offset + length).intersection(rangeToEdit);
@@ -482,10 +482,10 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
   public boolean intersects(DocumentWindow documentWindow) {
     int i = 0;
     int j = 0;
-    while (i < myHostRanges.length && j < documentWindow.myHostRanges.length) {
-      RangeMarker range = myHostRanges[i];
-      RangeMarker otherRange = documentWindow.myHostRanges[j];
-      if (new TextRange(range.getStartOffset(), range.getEndOffset()).intersects(new TextRange(otherRange.getStartOffset(), otherRange.getEndOffset()))) return true;
+    while (i < myRelevantRangesInHostDocument.length && j < documentWindow.myRelevantRangesInHostDocument.length) {
+      RangeMarker range = myRelevantRangesInHostDocument[i];
+      RangeMarker otherRange = documentWindow.myRelevantRangesInHostDocument[j];
+      if (InjectedLanguageUtil.toTextRange(range).intersects(InjectedLanguageUtil.toTextRange(otherRange))) return true;
       if (range.getEndOffset() > otherRange.getStartOffset()) i++;
       else if (range.getStartOffset() < otherRange.getEndOffset()) j++;
       else {
@@ -501,7 +501,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
   // result[i] == "" means delete
   // result[i] == string means replace
   public String[] calculateMinEditSequence(String newText) {
-    String[] result = new String[myHostRanges.length];
+    String[] result = new String[myRelevantRangesInHostDocument.length];
     String hostText = myDelegate.getText();
     calculateMinEditSequence(hostText, newText, result, 0, result.length - 1);
     for (int i = 0; i < result.length; i++) {
@@ -515,7 +515,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
   }
 
   private String getRangeText(String hostText, int i) {
-    return myPrefixes[i] + hostText.substring(myHostRanges[i].getStartOffset(), myHostRanges[i].getEndOffset()) + mySuffixes[i];
+    return myPrefixes[i] + hostText.substring(myRelevantRangesInHostDocument[i].getStartOffset(), myRelevantRangesInHostDocument[i].getEndOffset()) + mySuffixes[i];
   }
   private void calculateMinEditSequence(String hostText, String newText, String[] result, int i, int j) {
     String rangeText1 = getRangeText(hostText, i);
@@ -570,13 +570,13 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
   }
 
   public boolean areRangesEqual(DocumentWindow window) {
-    if (myHostRanges.length != window.myHostRanges.length) return false;
-    for (int i = 0; i < myHostRanges.length; i++) {
+    if (myRelevantRangesInHostDocument.length != window.myRelevantRangesInHostDocument.length) return false;
+    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
       if (!myPrefixes[i].equals(window.myPrefixes[i])) return false;
       if (!mySuffixes[i].equals(window.mySuffixes[i])) return false;
 
-      RangeMarker hostRange = myHostRanges[i];
-      RangeMarker other = window.myHostRanges[i];
+      RangeMarker hostRange = myRelevantRangesInHostDocument[i];
+      RangeMarker other = window.myRelevantRangesInHostDocument[i];
       if (hostRange.getStartOffset() != other.getStartOffset()) return false;
       if (hostRange.getEndOffset() != other.getEndOffset()) return false;
     }
@@ -584,7 +584,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
   }
 
   public boolean isValid() {
-    for (RangeMarker range : myHostRanges) {
+    for (RangeMarker range : myRelevantRangesInHostDocument) {
       if (!range.isValid()) return false;
     }
     return true;
@@ -597,10 +597,16 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx {
   }
 
   public int hashCode() {
-    return myHostRanges[0].getStartOffset();
+    return myRelevantRangesInHostDocument[0].getStartOffset();
   }
 
   public boolean isOneLine() {
     return myOneLine;
+  }
+
+  public void dispose() {
+    for (RangeMarker hostRange : myRelevantRangesInHostDocument) {
+      myDelegate.removeRangeMarker((RangeMarkerEx)hostRange);
+    }
   }
 }

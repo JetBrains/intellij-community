@@ -8,8 +8,11 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.xml.SyntheticBlock;
 import com.intellij.psi.impl.DebugUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 class InitialInfoBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.InitialInfoBuilder");
@@ -61,7 +64,7 @@ class InitialInfoBuilder {
                                          final Block parentBlock,
                                          boolean rootBlockIsRightBlock
                                          ) {
-    final WrapImpl wrap = ((WrapImpl)rootBlock.getWrap());
+    final WrapImpl wrap = (WrapImpl)rootBlock.getWrap();
     if (wrap != null) {
       wrap.registerParent(currentWrapParent);
       currentWrapParent = wrap;
@@ -89,7 +92,7 @@ class InitialInfoBuilder {
     }
 
     myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
-    boolean isReadOnly = isReadOnly(textRange, rootBlock, rootBlockIsRightBlock);
+    boolean isReadOnly = isReadOnly(textRange, rootBlockIsRightBlock);
 
     if (isReadOnly) {
       return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
@@ -158,7 +161,7 @@ class InitialInfoBuilder {
     return info;
   }
 
-  private void setDefaultIndents(final List<AbstractBlockWrapper> list) {
+  private static void setDefaultIndents(final List<AbstractBlockWrapper> list) {
     if (!list.isEmpty()) {
       for (AbstractBlockWrapper wrapper : list) {
         if (wrapper.getIndent() == null) {
@@ -232,7 +235,7 @@ class InitialInfoBuilder {
     }
   }
 
-  private boolean isReadOnly(final TextRange textRange, final Block rootBlock, boolean rootIsRightBlock) {
+  private boolean isReadOnly(final TextRange textRange, boolean rootIsRightBlock) {
     if (myAffectedRange == null) return false;
     if (myAffectedRange.getStartOffset() >= textRange.getEndOffset() && rootIsRightBlock) {
       return false;
@@ -257,11 +260,14 @@ class InitialInfoBuilder {
     return myLastTokenBlock;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void assertInvalidRanges(final int startOffset, final int newEndOffset, FormattingDocumentModel model, String message) {
-    final StringBuffer buffer = new StringBuffer();
+    @NonNls final StringBuffer buffer = new StringBuffer();
     buffer.append("Invalid formatting blocks:").append(message).append("\n");
-    buffer.append("Start offset:").append(startOffset).append(" end offset:").append(newEndOffset).append("\n");
+    buffer.append("Start offset:");
+    buffer.append(startOffset);
+    buffer.append(" end offset:");
+    buffer.append(newEndOffset);
+    buffer.append("\n");
 
     int minOffset = Math.max(Math.min(startOffset, newEndOffset) - 20, 0);
     int maxOffset = Math.min(Math.max(startOffset, newEndOffset) + 20, model.getTextLength());
@@ -273,23 +279,22 @@ class InitialInfoBuilder {
       buffer.append("in ").append(((FormattingDocumentModelImpl)model).getFile().getLanguage()).append("\n");
     }
 
-    buffer.append("File text:\n");
+    buffer.append("File text:(" + model.getTextLength()+")\n'");
     buffer.append(model.getText(new TextRange(0, model.getTextLength())).toString());
+    buffer.append("'\n");
 
     if (model instanceof FormattingDocumentModelImpl) {
-      final FormattingDocumentModelImpl modelImpl = ((FormattingDocumentModelImpl)model);
-      buffer.append("Psi Tree:");
-      buffer.append('\n');
+      final FormattingDocumentModelImpl modelImpl = (FormattingDocumentModelImpl)model;
+      buffer.append("Psi Tree:\n");
       final PsiFile file = modelImpl.getFile();
       final PsiFile[] roots = file.getPsiRoots();
       for (PsiFile root : roots) {
-        buffer.append("Root ").append(root.toString());
+        buffer.append("Root ");
         DebugUtil.treeToBuffer(buffer, root.getNode(), 0, false, true, true);
       }
-
       buffer.append('\n');
     }
 
-    LOG.assertTrue(false, buffer);
+    LOG.error(buffer.toString());
   }
 }

@@ -61,8 +61,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return new EditorWindow(documentRange, editor, injectedFile, documentRange.isOneLine());
   }
 
-  private EditorWindow(@NotNull DocumentWindow documentWindow, @NotNull final EditorImpl delegate, @NotNull PsiFile injectedFile,
-                       boolean oneLine) {
+  private EditorWindow(@NotNull DocumentWindow documentWindow, @NotNull final EditorImpl delegate, @NotNull PsiFile injectedFile, boolean oneLine) {
     myDocumentWindow = documentWindow;
     myDelegate = delegate;
     myInjectedFile = injectedFile;
@@ -82,7 +81,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
       if (!editorWindow.isValid() || myDocumentWindow.intersects(editorWindow.myDocumentWindow)) {
         editorWindow.disposeModel();
 
-        InjectedLanguageUtil.clearCaches(editorWindow.getInjectedFile(), editorWindow.getDocument());
+        InjectedLanguageUtil.clearCaches(editorWindow.getInjectedFile());
         iterator.remove();
       }
     }

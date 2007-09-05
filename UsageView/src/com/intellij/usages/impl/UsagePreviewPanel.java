@@ -42,7 +42,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
     PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) return;
 
-    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance().getInjectionHost(psiFile);
+    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(myProject).getInjectionHost(psiFile);
     if (host != null) {
       psiFile = host.getContainingFile();
       if (psiFile == null) return;
@@ -102,7 +102,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
         }
       }
       // highlight injected element in host document textrange
-      textRange = InjectedLanguageManager.getInstance().injectedToHost(psiElement, textRange);
+      textRange = InjectedLanguageManager.getInstance(myProject).injectedToHost(psiElement, textRange);
 
       RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
                                                                                    HighlighterLayer.ADDITIONAL_SYNTAX, attributes,

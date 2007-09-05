@@ -7,8 +7,6 @@ import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,35 +32,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   private final WeakList<VirtualFileWindow> cachedFiles = new WeakList<VirtualFileWindow>();
-  private final ProjectManagerAdapter myProjectListener;
 
-  public static InjectedLanguageManagerImpl getInstance() {
-    return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance();
+  public static InjectedLanguageManagerImpl getInstance(Project project) {
+    return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
+  }
+
+  public void projectOpened() {
+
+  }
+
+  public void projectClosed() {
+
   }
 
   public InjectedLanguageManagerImpl() {
-    myProjectListener = new ProjectManagerAdapter() {
-      public void projectClosing(final Project project) {
-        VirtualFileWindow[] windows;
-        synchronized (cachedFiles) {
-          windows = new VirtualFileWindow[cachedFiles.size()];
-          Iterator<VirtualFileWindow> iterator = cachedFiles.iterator();
-          int i =0;
-          while (iterator.hasNext()) {
-            windows[i++] = iterator.next();
-          }
-        }
-        for (VirtualFileWindow file : windows) {
-          if (file == null) continue;
-          DocumentWindow documentWindow = file.getDocumentWindow();
-          PsiFile injected = ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().getCachedPsiFile(file);
-          if (injected != null) {
-            InjectedLanguageUtil.clearCaches(injected, documentWindow);
-          }
-        }
-      }
-    };
-
     registerMultiHostInjector(PsiLanguageInjectionHost.class, null, new MultiHostInjector() {
       public void getLanguagesToInject(@NotNull PsiElement context, @NotNull final MultiHostRegistrar injectionPlacesRegistrar) {
         final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
@@ -223,15 +206,13 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   @NonNls
   @NotNull
   public String getComponentName() {
-    return "InjectdManager";
+    return "InjectedLanguageManager";
   }
 
   public void initComponent() {
-    ProjectManager.getInstance().addProjectManagerListener(myProjectListener);
   }
 
   public void disposeComponent() {
-    ProjectManager.getInstance().removeProjectManagerListener(myProjectListener);
   }
 
   public void clearCaches(VirtualFileWindow virtualFile) {

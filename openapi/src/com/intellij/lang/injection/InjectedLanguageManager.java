@@ -7,19 +7,19 @@
 package com.intellij.lang.injection;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.filters.ElementFilter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
-public abstract class InjectedLanguageManager implements ApplicationComponent {
-  public static InjectedLanguageManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(InjectedLanguageManager.class);
+public abstract class InjectedLanguageManager implements ProjectComponent {
+  public static InjectedLanguageManager getInstance(Project project) {
+    return project.getComponent(InjectedLanguageManager.class);
   }
 
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element);

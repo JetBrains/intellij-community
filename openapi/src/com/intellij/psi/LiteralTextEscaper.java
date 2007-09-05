@@ -16,7 +16,6 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
   public abstract boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars);
 
   /**
-   * 
    * @param offsetInDecoded offset in the parsed injected file
    * @param rangeInsideHost
    * @return offset in the host PSI element, or -1 if offset is out of host range
@@ -29,4 +28,8 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
   }
 
   public abstract boolean isOneLine();
+
+  public T getHost() {
+    return myHost;
+  }
 }

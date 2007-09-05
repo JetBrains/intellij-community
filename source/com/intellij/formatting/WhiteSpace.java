@@ -48,7 +48,8 @@ class WhiteSpace {
       );
     }
 
-    TextRange range = new TextRange(myStart, myEnd = newEndOffset);
+    myEnd = newEndOffset;
+    TextRange range = new TextRange(myStart, myEnd);
     myInitial = model.getText(range);
     
     if (!coveredByBlock(model)) {

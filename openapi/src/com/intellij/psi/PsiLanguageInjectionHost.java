@@ -1,5 +1,6 @@
 package com.intellij.psi;
 
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -44,15 +45,19 @@ public interface PsiLanguageInjectionHost extends PsiElement {
 
   class Shred {
     public final PsiLanguageInjectionHost host;
-    public final TextRange rangeInsideHost;
+    private final RangeMarker relevantRangeInHost;
     public final String prefix;
     public final String suffix;
 
-    public Shred(PsiLanguageInjectionHost host, TextRange rangeInsideHost, String prefix, String suffix) {
+    public Shred(PsiLanguageInjectionHost host, RangeMarker relevantRangeInHost, String prefix, String suffix) {
       this.host = host;
-      this.rangeInsideHost = rangeInsideHost;
+      this.relevantRangeInHost = relevantRangeInHost;
       this.prefix = prefix;
       this.suffix = suffix;
+    }
+
+    public TextRange getRangeInsideHost() {
+      return new TextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset()).shiftRight(-host.getTextRange().getStartOffset());
     }
   }
 }
