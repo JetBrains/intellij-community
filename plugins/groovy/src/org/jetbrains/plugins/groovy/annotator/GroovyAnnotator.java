@@ -35,6 +35,7 @@ import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
+import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -92,6 +93,7 @@ public class GroovyAnnotator implements Annotator {
     } else if (element instanceof GrMethod) {
       checkMethodDefinitionModifiers(holder, (GrMethod) element);
       checkInnerMethod(holder, (GrMethod) element);
+      addOverrideGutter(holder, (GrMethod) element);
     } else if (element instanceof GrVariableDeclaration) {
       checkVariableDeclaration(holder, (GrVariableDeclaration) element);
     } else if (element instanceof GrVariable) {
@@ -107,7 +109,7 @@ public class GroovyAnnotator implements Annotator {
     } else if (element instanceof GrNewExpression) {
       checkNewExpression(holder, (GrNewExpression) element);
     } else if (element instanceof GrConstructorInvocation) {
-      checkConstructorInvocation(holder, (GrConstructorInvocation)element);
+      checkConstructorInvocation(holder, (GrConstructorInvocation) element);
     } else if (element instanceof GroovyFile) {
       final GroovyFile file = (GroovyFile) element;
       if (file.isScript()) {
@@ -118,6 +120,15 @@ public class GroovyAnnotator implements Annotator {
       }
     } else if (!(element instanceof PsiWhiteSpace) && element.getContainingFile() instanceof GroovyFile) {
       GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
+    }
+  }
+
+  private void addOverrideGutter(AnnotationHolder holder, GrMethod method) {
+    final Annotation annotation = holder.createInfoAnnotation(method, GroovyBundle.message("override"));
+
+    final PsiMethod[] superMethods = method.findSuperMethods();
+    if (superMethods.length != 0) {
+      annotation.setGutterIconRenderer(new OverrideGutter(superMethods, OverrideGutter.OVERRIDING_ICON_TYPE));
     }
   }
 
