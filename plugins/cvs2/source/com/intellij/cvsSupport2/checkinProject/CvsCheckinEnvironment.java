@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,6 +26,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * author: lesya
@@ -87,16 +89,29 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.setShowErrors(false);
 
+    final List<File> dirsToPrune = new ArrayList<File>();
+    for(Change c: changes) {
+      if (c.getType() == Change.Type.DELETED) {
+        final ContentRevision contentRevision = c.getBeforeRevision();
+        assert contentRevision != null;
+        final FilePath path = contentRevision.getFile();
+        final FilePath parentPath = path.getParentPath();
+        if (parentPath != null) {
+          dirsToPrune.add(parentPath.getIOFile());
+        }
+      }
+    }
+
     final CvsConfiguration cvsConfiguration = CvsConfiguration.getInstance(myProject);
 
     CvsHandler handler = CommandCvsHandler.createCommitHandler(
           files,
-          new File[]{},
           preparedComment,
           CvsBundle.message("operation.name.commit.file", files.length),
-          CvsConfiguration.getInstance(myProject).MAKE_NEW_FILES_READONLY, myProject,
+          cvsConfiguration.MAKE_NEW_FILES_READONLY, myProject,
           cvsConfiguration.TAG_AFTER_PROJECT_COMMIT,
-          cvsConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME);
+          cvsConfiguration.TAG_AFTER_PROJECT_COMMIT_NAME,
+          dirsToPrune);
 
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     return executor.getResult().getErrorsAndWarnings();

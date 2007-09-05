@@ -1,10 +1,11 @@
 package com.intellij.cvsSupport2.cvshandlers;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.CvsBundle;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.EntriesHandler;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
@@ -19,7 +20,7 @@ public class IOFilesBasedDirectoryPruner {
   private ProgressIndicator myProgressIndicator;
   private final String myCharset = CvsApplicationLevelConfiguration.getCharset();
 
-  public IOFilesBasedDirectoryPruner(final ProgressIndicator progressIndicator) {
+  public IOFilesBasedDirectoryPruner(@Nullable final ProgressIndicator progressIndicator) {
     myProgressIndicator = progressIndicator;
   }
 

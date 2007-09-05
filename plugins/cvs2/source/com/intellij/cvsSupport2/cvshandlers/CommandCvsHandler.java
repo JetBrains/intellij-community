@@ -33,22 +33,23 @@ import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.cvsSupport2.errorHandling.CvsProcessException;
 import com.intellij.cvsSupport2.errorHandling.InvalidModuleDescriptionException;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.InvalidEntryFormatException;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -156,23 +157,29 @@ public class CommandCvsHandler extends AbstractCvsHandler {
   }
 
   public static CvsHandler createCommitHandler(FilePath[] selectedFiles,
-                                               File[] locallyDeletedFiles,
                                                String commitMessage,
                                                String title,
                                                boolean makeNewFilesReadOnly,
                                                Project project,
                                                final boolean tagFilesAfterCommit,
-                                               final String tagName) {
+                                               final String tagName,
+                                               @NotNull final List<File> dirsToPrune) {
     CommitFilesOperation operation = new CommitFilesOperation(commitMessage, makeNewFilesReadOnly);
     if (selectedFiles != null) {
       for (FilePath selectedFile : selectedFiles) {
         operation.addFile(selectedFile.getIOFile());
       }
     }
-    if (locallyDeletedFiles != null) {
-      for (File locallyDeletedFile : locallyDeletedFiles) {
-        operation.addFile(locallyDeletedFile);
-      }
+    if (!dirsToPrune.isEmpty()) {
+      operation.addFinishAction(new Runnable() {
+        public void run() {
+          IOFilesBasedDirectoryPruner pruner = new IOFilesBasedDirectoryPruner(null);
+          for(File dir: dirsToPrune) {
+            pruner.addFile(dir);
+          }
+          pruner.execute();
+        }
+      });
     }
 
     final CommandCvsHandler result = new CommandCvsHandler(title, operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
