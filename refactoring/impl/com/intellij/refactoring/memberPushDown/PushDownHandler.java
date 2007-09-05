@@ -6,17 +6,16 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -37,7 +36,7 @@ public class PushDownHandler implements RefactoringActionHandler {
         return;
       }
 
-      if (element instanceof PsiClass) {
+      if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
         if (element instanceof JspClass) {
           RefactoringMessageUtil.showNotSupportedForJspClassesError(project, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
           return;
