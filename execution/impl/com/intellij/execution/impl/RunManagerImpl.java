@@ -10,10 +10,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
@@ -63,6 +60,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @NonNls private static final String VALUE = "value";
 
   private List<Element> myUnloadedElements = null;
+  private JDOMExternalizableStringList myOrder = new JDOMExternalizableStringList();
 
   public RunManagerImpl(final Project project,
                         PropertiesComponent propertiesComponent,
@@ -71,13 +69,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     myProject = project;
     myRefactoringElementListenerProvider = new MyRefactoringElementListenerProvider();
     initializeConfigurationTypes(configurationTypes);
-
-    for (final RunnerAndConfigurationSettingsImpl settings : myConfigurations.values()) {
-      RunConfiguration configuration = settings.getConfiguration();
-      if (configuration instanceof ModuleBasedConfiguration) {
-        ((ModuleBasedConfiguration)configuration).init();
-      }
-    }
     registerStepBeforeRun(RunManagerConfig.MAKE, null, null);
   }
 
@@ -158,7 +149,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     LOG.assertTrue(type != null);
 
     final List<RunConfiguration> array = new ArrayList<RunConfiguration>();
-    for (RunnerAndConfigurationSettingsImpl myConfiguration : myConfigurations.values()) {
+    for (RunnerAndConfigurationSettingsImpl myConfiguration : getSortedConfigurations()) {
       final RunConfiguration configuration = myConfiguration.getConfiguration();
       if (type.equals(configuration.getType())) {
         array.add(configuration);
@@ -170,7 +161,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   public RunConfiguration[] getAllConfigurations() {
     RunConfiguration [] result = new RunConfiguration[myConfigurations.size()];
     int i = 0;
-    for (Iterator<RunnerAndConfigurationSettingsImpl> iterator = myConfigurations.values().iterator(); iterator.hasNext();i++) {
+    for (Iterator<RunnerAndConfigurationSettingsImpl> iterator = getSortedConfigurations().iterator(); iterator.hasNext();i++) {
       RunnerAndConfigurationSettings settings = iterator.next();
       result[i] = settings.getConfiguration();
     }
@@ -179,7 +170,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public RunnerAndConfigurationSettings getSettings(RunConfiguration configuration){
-    for (RunnerAndConfigurationSettingsImpl settings : myConfigurations.values()) {
+    for (RunnerAndConfigurationSettingsImpl settings : getSortedConfigurations()) {
       if (settings.getConfiguration() == configuration) return settings;
     }
     return null;
@@ -192,7 +183,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     LOG.assertTrue(type != null);
 
     final LinkedHashSet<RunnerAndConfigurationSettings> array = new LinkedHashSet<RunnerAndConfigurationSettings>();
-    for (RunnerAndConfigurationSettingsImpl configuration : myConfigurations.values()) {
+    for (RunnerAndConfigurationSettingsImpl configuration : getSortedConfigurations()) {
       if (type.equals(configuration.getType())) {
         array.add(configuration);
       }
@@ -231,7 +222,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     //    it.remove();
     //  }
     //}
-    for (Iterator<RunnerAndConfigurationSettingsImpl> it = myConfigurations.values().iterator(); it.hasNext();) {
+    for (Iterator<RunnerAndConfigurationSettingsImpl> it = getSortedConfigurations().iterator(); it.hasNext();) {
       final RunnerAndConfigurationSettings configuration = it.next();
       if (type.equals(configuration.getType())) {
         it.remove();
@@ -241,6 +232,19 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (myTempConfiguration != null && type.equals(myTempConfiguration.getType())) {
       myTempConfiguration = null;
     }
+  }
+
+  private Collection<RunnerAndConfigurationSettingsImpl> getSortedConfigurations() {
+    if (myOrder != null && !myOrder.isEmpty()) { //compatibility
+      final HashMap<String, RunnerAndConfigurationSettingsImpl> settings =
+        new HashMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations); //sort shared and local configurations
+      myConfigurations.clear();
+      for (String configName : myOrder) {
+        myConfigurations.put(configName, settings.get(configName));
+      }
+      myOrder = null;
+    }
+    return myConfigurations.values();
   }
 
 
@@ -283,8 +287,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     final Collection<RunnerAndConfigurationSettingsImpl> configurations = getStableConfigurations().values();
     for (RunnerAndConfigurationSettingsImpl configuration : configurations) {
-      addConfigurationElement(parentNode, configuration); //write shared configurations twice to save order     
+      if (!isConfigurationShared(configuration)) {
+        addConfigurationElement(parentNode, configuration);
+      }
     }
+
+    final JDOMExternalizableStringList order = new JDOMExternalizableStringList();
+    order.addAll(myConfigurations.keySet()); //temp && stable configurations
+    order.writeExternal(parentNode);
+
     if (mySelectedConfiguration != null){
       parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration.getConfiguration()));
     }
@@ -328,6 +339,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         myUnloadedElements.add(element);
       }
     }
+
+    myOrder.readExternal(parentNode);
+
     mySelectedConfig = parentNode.getAttributeValue(SELECTED_ATTR);
   }
 
@@ -513,7 +527,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   private class MyRefactoringElementListenerProvider implements RefactoringElementListenerProvider {
     public RefactoringElementListener getListener(final PsiElement element) {
       RefactoringElementListenerComposite composite = null;
-      for (RunnerAndConfigurationSettingsImpl settings : myConfigurations.values()) {
+      for (RunnerAndConfigurationSettingsImpl settings : getSortedConfigurations()) {
         final RunConfiguration configuration = settings.getConfiguration();
         if (configuration instanceof RuntimeConfiguration) { // todo: perhaps better way to handle listeners?
           final RefactoringElementListener listener = ((RuntimeConfiguration)configuration).getRefactoringElementListener(element);
