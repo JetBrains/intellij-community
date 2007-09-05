@@ -35,7 +35,7 @@
 
   <property name="output" value="${basedir}/dist"/>
 
-  <path id="base.path">
+  <path id="idea.lib.path">
     <fileset dir="${idea.lib}">
       <include name="**/*.jar"/>
       <exclude name="boot.jar"/>
@@ -75,6 +75,8 @@
     <ant dir="./org/jetbrains/plugins/grails/lang/gsp/lexer/core" antfile="build.xml" target="generate.lexer"/>
   </target>
 
+  <property name="stubsOutput" value="${production.dest}/stubs"/>
+
   <target name="make.project" description="makes project" depends="build.lexer, unzip.last.successful.IDEA.build">
     <copy todir="${production.dest.groovy}/META-INF">
       <fileset dir="${project.dir}/META-INF"/>
@@ -90,13 +92,46 @@
       </fileset>
     </copy>
 
-    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="base.path"/>
+    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="idea.lib.path"/>
+    <taskdef name="generateStubs" classname="org.codehaus.groovy.ant.GenerateStubsTask" classpathref="groovy.path"/>
 
-    <javac2 srcdir="."
-            destdir="${production.dest.groovy}">
-      <classpath refid="base.path"/>
+    <mkdir dir="${stubsOutput}"/>
+
+    <generateStubs destdir="${stubsOutput}" srcDir=".">
+      <include name="**/*.groovy"/>
+      <include name="**/*.java"/>
+      <classpath>
+        <path refid="idea.lib.path"/>
+        <path refid="groovy.path"/>
+      </classpath>
+
+      <configuration targetBytecode="1.5"/>
+    </generateStubs>
+
+    <path id="javaToCompile">
+      <pathelement path="."/>
+      <pathelement path="${stubsOutput}"/>
+    </path>
+
+    <javac2 destdir="${production.dest.groovy}">
+      <src refId="javaToCompile"/>
+
+      <classpath refid="idea.lib.path"/>
       <classpath refid="groovy.path"/>
     </javac2>
+
+    <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="groovy.path"/>
+    <path id="output.path">
+      <pathelement path="${production.dest.groovy}"/>
+    </path>
+
+    <groovyc destdir="${production.dest.groovy}" srcDir=".">
+      <classpath>
+        <path refid="idea.lib.path"/>
+        <path refid="groovy.path"/>
+        <path refid="output.path"/>
+      </classpath>
+    </groovyc>
 
     <replace file="${production.dest.groovy}/META-INF/plugin.xml" token="VERSION" value="${plugin.version}"/>
 
@@ -163,7 +198,7 @@
     <javac srcdir="../test"
            destdir="${test.dest}">
 
-      <classpath refid="base.path"/>
+      <classpath refid="idea.lib.path"/>
       <classpath refid="groovy.path"/>
 
       <classpath>
@@ -194,7 +229,7 @@
         <path location="${test.dest}"/>
         <path location="${production.dest.groovy}"/>
 
-        <path refid="base.path"/>
+        <path refid="idea.lib.path"/>
         <path refid="groovy.path"/>
         <path refid="tools.path"/>
       </classpath>
