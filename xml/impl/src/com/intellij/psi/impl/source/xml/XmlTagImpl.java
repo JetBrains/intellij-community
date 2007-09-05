@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -38,6 +39,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +50,7 @@ import java.util.*;
  * @author Mike
  */
 
-public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType/*, ModificationTracker */{
+public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTagImpl");
 
   private volatile String myName = null;
@@ -129,7 +131,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     Map<String, CachedValue<XmlNSDescriptor>> map = initNSDescriptorsMap();
 
     final CachedValue<XmlNSDescriptor> descriptor = map.get(namespace);
-    if(descriptor != null) return descriptor.getValue();
+    if(descriptor != null) {
+      final XmlNSDescriptor value = descriptor.getValue();
+      if (value != null) return value;
+    }
 
     if(parentTag == null){
       final XmlDocument parentOfType = PsiTreeUtil.getParentOfType(this, XmlDocument.class);
@@ -247,29 +252,29 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
                                                                      final String version,
                                                                      final String fileLocation,
                                                                      Map<String, CachedValue<XmlNSDescriptor>> map) {
-    if(map == null) map = new HashMap<String, CachedValue<XmlNSDescriptor>>();
+    if(map == null) map = new THashMap<String, CachedValue<XmlNSDescriptor>>();
     final ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
 
-    if (retrieveOwner(retrieveFile(fileLocation, version), namespace) != null || externalResourceManager.getImplicitNamespaceDescriptor(fileLocation) != null) {
-      map.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
-        public Result<XmlNSDescriptor> compute() {
-          XmlNSDescriptor descriptor = externalResourceManager.getImplicitNamespaceDescriptor(fileLocation);
-          if (descriptor != null) {
-            return new Result<XmlNSDescriptor>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
-          }
-
-          XmlFile currentFile = retrieveFile(fileLocation, version);
-          PsiMetaBaseOwner currentOwner = retrieveOwner(currentFile, namespace);
-          if (currentOwner != null) {
-            descriptor = (XmlNSDescriptor)currentOwner.getMetaData();
-            if (descriptor != null) {
-              return new Result<XmlNSDescriptor>(descriptor, descriptor.getDependences(), XmlTagImpl.this, ExternalResourceManager.getInstance());
-            }
-          }
-          return new Result<XmlNSDescriptor>(null, XmlTagImpl.this, currentFile, ExternalResourceManager.getInstance());
+    // We put cached value in any case to cause its value update on e.g. mapping change
+    map.put(namespace, getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlNSDescriptor>() {
+      public Result<XmlNSDescriptor> compute() {
+        XmlNSDescriptor descriptor = externalResourceManager.getImplicitNamespaceDescriptor(fileLocation);
+        if (descriptor != null) {
+          return new Result<XmlNSDescriptor>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
         }
-      }, false));
-    }
+
+        XmlFile currentFile = retrieveFile(fileLocation, version);
+        PsiMetaBaseOwner currentOwner = retrieveOwner(currentFile, namespace);
+        if (currentOwner != null) {
+          descriptor = (XmlNSDescriptor)currentOwner.getMetaData();
+          if (descriptor != null) {
+            return new Result<XmlNSDescriptor>(descriptor, descriptor.getDependences(), XmlTagImpl.this, ExternalResourceManager.getInstance());
+          }
+        }
+        return new Result<XmlNSDescriptor>(null, XmlTagImpl.this, currentFile, ExternalResourceManager.getInstance());
+      }
+    }, false));
+
     return map;
   }
 
@@ -381,7 +386,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   public XmlAttribute[] getAttributes() {
     XmlAttribute[] attributes = myAttributes;
     if (attributes == null) {
-      Map<String, String> attributesValueMap = new HashMap<String, String>();
+      Map<String, String> attributesValueMap = new THashMap<String, String>();
       attributes = calculateAttributes(attributesValueMap);
       myAttributes = attributes;
       myAttributeValueMap = attributesValueMap;
@@ -677,7 +682,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
   @NotNull
   public Map<String, String> getLocalNamespaceDeclarations() {
-    Map<String, String> namespaces = new HashMap<String, String>();
+    Map<String, String> namespaces = new THashMap<String, String>();
     for (final XmlAttribute attribute : getAttributes()) {
       if (!attribute.isNamespaceDeclaration() || attribute.getValue() == null) continue;
       // xmlns -> "", xmlns:a -> a
