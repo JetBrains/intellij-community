@@ -36,7 +36,8 @@ abstract class BaseHtmlLexer extends LexerBase {
     XmlTokenType.XML_WHITE_SPACE,
     XmlTokenType.XML_REAL_WHITE_SPACE,
     XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
-    XmlTokenType.XML_DATA_CHARACTERS
+    XmlTokenType.XML_DATA_CHARACTERS,
+    XmlTokenType.XML_TAG_CHARACTERS
   });
 
   interface TokenHandler {

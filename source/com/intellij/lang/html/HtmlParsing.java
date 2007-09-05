@@ -119,17 +119,26 @@ public class HtmlParsing {
 
     String tagName = originalTagName.toLowerCase();
     myTagNamesStack.push(tagName);
-    
+
+    boolean freeMakerTag = tagName.length() > 0 && '#' == tagName.charAt(0);
+
     do {
       final IElementType tt = token();
-      if (tt == XmlTokenType.XML_NAME) {
-        parseAttribute();
-      }
-      else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
-        parseReference();
+      if (freeMakerTag) {
+        if (tt == XmlTokenType.XML_EMPTY_ELEMENT_END || tt == XmlTokenType.XML_TAG_END || tt == XmlTokenType.XML_END_TAG_START
+          || tt == XmlTokenType.XML_START_TAG_START) break;
+        advance();
       }
       else {
-        break;
+        if (tt == XmlTokenType.XML_NAME) {
+          parseAttribute();
+        }
+        else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
+          parseReference();
+        }
+        else {
+          break;
+        }
       }
     }
     while (true);
@@ -297,7 +306,7 @@ public class HtmlParsing {
         else {
           error(XmlErrorMessages.message("xml.parsing.closing.tag.is.not.done"));
         }
-        
+
         tag.done(XmlElementType.HTML_TAG);
         return;
       }

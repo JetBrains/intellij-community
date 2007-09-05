@@ -214,7 +214,8 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   }
 
   protected boolean isHtmlTagState(int state) {
-    return state == _HtmlLexer.START_TAG_NAME || state == _HtmlLexer.END_TAG_NAME;
+    return state == _HtmlLexer.START_TAG_NAME || state == _HtmlLexer.END_TAG_NAME || 
+           state  == _HtmlLexer.START_TAG_NAME2 || state == _HtmlLexer.END_TAG_NAME2;
   }
 
   public void setHasNoEmbeddments(boolean hasNoEmbeddments) {

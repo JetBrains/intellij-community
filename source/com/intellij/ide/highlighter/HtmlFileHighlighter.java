@@ -64,6 +64,7 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
     keys1.put(XmlTokenType.TAG_WHITE_SPACE, HighlighterColors.HTML_TAG);
     keys1.put(XmlTokenType.XML_NAME, HighlighterColors.HTML_TAG);
     keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, HighlighterColors.HTML_TAG);
+    keys1.put(XmlTokenType.XML_TAG_CHARACTERS, HighlighterColors.HTML_TAG);
     keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER, HighlighterColors.HTML_TAG);
     keys1.put(XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER, HighlighterColors.HTML_TAG);
     keys1.put(XmlTokenType.XML_EQ, HighlighterColors.HTML_TAG);
