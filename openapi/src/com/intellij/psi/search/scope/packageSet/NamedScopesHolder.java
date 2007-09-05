@@ -120,21 +120,22 @@ public abstract class NamedScopesHolder implements JDOMExternalizable {
     return setElement;
   }
 
-  private static NamedScope readScope(Element setElement) throws ParsingException {
-    PackageSet set = PackageSetFactory.getInstance().compile(setElement.getAttributeValue(PATTERN_ATT));
+  private static NamedScope readScope(Element setElement){
     String name = setElement.getAttributeValue(NAME_ATT);
+    PackageSet set = null;
+    try {
+      set = PackageSetFactory.getInstance().compile(setElement.getAttributeValue(PATTERN_ATT));
+    }
+    catch (ParsingException e) {
+      // Skip damaged set
+    }
     return new NamedScope(name, set);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
     List sets = element.getChildren(SCOPE_TAG);
     for (Object set : sets) {
-      try {
-        addScope(readScope((Element)set));
-      }
-      catch (ParsingException e) {
-        // Skip damaged set
-      }
+      addScope(readScope((Element)set));
     }
     fireScopeListeners();
   }

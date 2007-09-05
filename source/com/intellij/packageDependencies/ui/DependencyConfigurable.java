@@ -3,10 +3,10 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -25,7 +25,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class DependencyConfigurable extends BaseConfigurable {
@@ -105,12 +107,18 @@ public class DependencyConfigurable extends BaseConfigurable {
     modelItems.addAll(myAllowRulesModel.getItems());
     for (DependencyRule rule : modelItems) {
       validationManager.addRule(rule);
-      final PackageSet fromPackageSet = rule.getFromScope().getValue();
-      LOG.assertTrue(fromPackageSet != null);
-      unUsed.remove(fromPackageSet.getText());
-      final PackageSet toPackageSet = rule.getToScope().getValue();
-      LOG.assertTrue(toPackageSet != null);
-      unUsed.remove(toPackageSet.getText());
+      final NamedScope fromScope = rule.getFromScope();
+      if (fromScope instanceof NamedScope.UnnamedScope) {
+        final PackageSet fromPackageSet = fromScope.getValue();
+        LOG.assertTrue(fromPackageSet != null);
+        unUsed.remove(fromPackageSet.getText());
+      }
+      final NamedScope toScope = rule.getToScope();
+      if (toScope instanceof NamedScope.UnnamedScope) {
+        final PackageSet toPackageSet = toScope.getValue();
+        LOG.assertTrue(toPackageSet != null);
+        unUsed.remove(toPackageSet.getText());
+      }
     }
     for (String text : unUsed.keySet()) {//cleanup
       validationManager.getUnnamedScopes().remove(text);
