@@ -75,6 +75,8 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         throw exception[0];
       }
     }
+    catch(SVNCancelException ignore) {
+    }
     catch (SVNException e1) {
       Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", e1.getMessage()), SvnBundle.message("message.title.check.out"));
     } finally {
@@ -217,7 +219,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
 
     public void checkCancelled() throws SVNCancelException {
-      myIndicator.checkCanceled();
       if (myIndicator.isCanceled()) {
         throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Operation cancelled"));
       }
