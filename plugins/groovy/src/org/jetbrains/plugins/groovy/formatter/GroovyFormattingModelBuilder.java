@@ -19,9 +19,13 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.FormattingModelProvider;
 import com.intellij.formatting.Indent;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GspOuterGroovyElement;
+import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
 
 /**
  * @author ilyas
@@ -29,7 +33,13 @@ import org.jetbrains.annotations.NotNull;
 public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-    return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(),
-            new GroovyBlock(element.getNode(), null, Indent.getAbsoluteNoneIndent(), null, settings), settings);
+    ASTNode node = element.getNode();
+    assert node != null;
+    PsiFile containingFile = element.getContainingFile();
+    if (element instanceof GspOuterGroovyElement) {
+      containingFile = ((GspFile) element.getContainingFile()).getGroovyLanguageRoot();
+    }
+    return FormattingModelProvider.createFormattingModelForPsiFile(containingFile,
+        new GroovyBlock(node, null, Indent.getAbsoluteNoneIndent(), null, settings), settings);
   }
 }
