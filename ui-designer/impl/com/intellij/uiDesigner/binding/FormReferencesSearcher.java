@@ -35,7 +35,11 @@ import java.util.Set;
 public class FormReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   public boolean execute(final ReferencesSearch.SearchParameters p, final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
-    final PsiFile psiFile = refElement.getContainingFile();
+    final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      public PsiFile compute() {
+        return refElement.getContainingFile();
+      }
+    });
     if (psiFile == null) return true;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return true;
