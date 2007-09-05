@@ -111,7 +111,9 @@ public class CvsVfsUtil {
     final VirtualFile[][] result = new VirtualFile[1][];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        result[0] = directory.getChildren();
+        if (directory.isValid()) {
+          result[0] = directory.getChildren();
+        }
       }
     });
     return result[0];
