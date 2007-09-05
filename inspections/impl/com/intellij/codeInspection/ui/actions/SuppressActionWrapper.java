@@ -167,8 +167,8 @@ class SuppressActionWrapper extends AnAction {
         final LocalInspectionTool localTool = wrapper.getTool();
         if (localTool instanceof CustomSuppressableInspectionTool) {
           final IntentionAction[] customActions =
-            ((CustomSuppressableInspectionTool)localTool).getSuppressActions((ProblemDescriptor)descriptor);
-          if (customActions.length > 0) return customActions[0];
+            ((CustomSuppressableInspectionTool)localTool).getSuppressActions(context);
+          if (customActions != null && customActions.length > 0) return customActions[0];
         }
       }
     }
