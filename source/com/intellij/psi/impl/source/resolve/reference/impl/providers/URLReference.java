@@ -4,38 +4,38 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.psi.PsiReference;
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.ElementManipulator;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.jsp.JspManager;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlDocument;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.util.Processor;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -92,6 +92,14 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     if (tag != null && canonicalText.equals(tag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME))) return tag;
 
     final PsiFile containingFile = myElement.getContainingFile();
+
+    if (tag != null &&
+        tag.getAttributeValue("schemaLocation", com.intellij.xml.util.XmlUtil.XML_SCHEMA_INSTANCE_URI) == null
+       ) {
+      final PsiFile file = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, containingFile, null);
+      if (file != null) return file;
+    }
+
     if (containingFile instanceof XmlFile) {
       final XmlDocument document = ((XmlFile)containingFile).getDocument();
       assert document != null;

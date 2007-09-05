@@ -176,18 +176,16 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       String ref = tag.getAttributeValue(REF_ATTR_NAME);
 
       if (ref != null) {
-        XmlTag groupTag = null;
+        XmlTag groupTag = myDocumentDescriptor.findGroup(ref);
         
         // TODO: This is bad hack, but we need context for "include-style" schemas
-        if (context instanceof XmlTag) {
+        if (groupTag == null && context instanceof XmlTag) {
           final XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(myDocumentDescriptor.getDefaultNamespace(), true);
 
           if (descriptor instanceof XmlNSDescriptorImpl && descriptor != myDocumentDescriptor) {
             groupTag = ((XmlNSDescriptorImpl)descriptor).findGroup(ref);
           }
         }
-
-        if (groupTag == null) groupTag = myDocumentDescriptor.findGroup(ref);
 
         if (groupTag != null) {
           XmlTag[] tags = groupTag.getSubTags();
@@ -279,9 +277,10 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
       if (ref != null) {
         XmlTag groupTag = null;
+        final XmlTag parentTag = tag.getParentTag();
 
-        // TODO: This is bad hack, but we need context for "include-style" schemas
-        if (context instanceof XmlTag) {
+        // TODO: 
+        if (parentTag != null && !XmlNSDescriptorImpl.equalsToSchemaName(parentTag, "attributeGroup") && context instanceof XmlTag) {
           final XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(myDocumentDescriptor.getDefaultNamespace(), true);
 
           if (descriptor instanceof XmlNSDescriptorImpl && descriptor != myDocumentDescriptor) {

@@ -457,8 +457,15 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         }
       } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
         final XmlTag[] subTags = tag.getSubTags();
-        final TypeDescriptor descriptor = doFindIn(subTags, name, pair, rootTag, visited);
+        TypeDescriptor descriptor = doFindIn(subTags, name, pair, rootTag, visited);
         if (descriptor != null) return descriptor;
+
+        final XmlNSDescriptorImpl nsDescriptor = getRedefinedElementDescriptor(tag);
+        if (nsDescriptor != null) {
+          final XmlTag redefinedRootTag = ((XmlDocument)nsDescriptor.getDeclaration()).getRootTag();
+          descriptor = doFindIn(redefinedRootTag.getSubTags(), name, pair, redefinedRootTag, visited);
+          if (descriptor != null) return descriptor;
+        }
       }
     }
     return null;
@@ -702,8 +709,16 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           }
         }
       } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
-        final XmlTag rTag = findSpecialTagIn(tag.getSubTags(), specialName, name, rootTag, descriptor, visited);
+        XmlTag rTag = findSpecialTagIn(tag.getSubTags(), specialName, name, rootTag, descriptor, visited);
         if (rTag != null) return rTag;
+
+        final XmlNSDescriptorImpl nsDescriptor = getRedefinedElementDescriptor(tag);
+        if (nsDescriptor != null) {
+          final XmlTag redefinedRootTag = ((XmlDocument)nsDescriptor.getDeclaration()).getRootTag();
+
+          rTag = findSpecialTagIn(redefinedRootTag.getSubTags(), specialName, name, redefinedRootTag, nsDescriptor, visited);
+          if (rTag != null) return rTag;
+        }
       }
     }
 

@@ -59,7 +59,6 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
   @NonNls private static final String MEMBER_TYPES_ATTR_NAME = "memberTypes";
   @NonNls private static final String ITEM_TYPE_ATTR_NAME = "itemType";
   @NonNls private static final String BASE_ATTR_NAME = "base";
-  @NonNls private static final String BASE_XML_NS_ATTR_NAME = BASE_ATTR_NAME;
   @NonNls private static final String GROUP_TAG_NAME = "group";
 
   @NonNls private static final String ATTRIBUTE_GROUP_TAG_NAME = "attributeGroup";
@@ -236,7 +235,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
           myType = ReferenceType.AttributeReference;
         }
       } else if (TYPE_ATTR_NAME.equals(attributeLocalName) ||
-                 BASE_XML_NS_ATTR_NAME.equals(attributeLocalName) ||
+                 BASE_ATTR_NAME.equals(attributeLocalName) ||
                  MEMBER_TYPES_ATTR_NAME.equals(attributeLocalName) ||
                  ITEM_TYPE_ATTR_NAME.equals(attributeLocalName)
                 ) {
@@ -332,15 +331,20 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
               ATTRIBUTE_GROUP_TAG_NAME.equals(tagLocalName)
             )
            ) ||
-           ( BASE_XML_NS_ATTR_NAME.equals(attrName) ||
+           ( BASE_ATTR_NAME.equals(attrName) ||
              MEMBER_TYPES_ATTR_NAME.equals(attrName)
            );
         }
 
         if (doRedefineCheck) {
           for(XmlTag parentTag = tag.getParentTag(); parentTag != null; parentTag = parentTag.getParentTag()) {
-            if ("redefine".equals(parentTag.getLocalName())) {
-              return XmlNSDescriptorImpl.getRedefinedElementDescriptor(parentTag);
+
+            if (text.equals(parentTag.getAttributeValue("name"))) {
+              final XmlTag grandParent = parentTag.getParentTag();
+
+              if (grandParent != null && "redefine".equals(grandParent.getLocalName())) {
+                return XmlNSDescriptorImpl.getRedefinedElementDescriptor(grandParent);
+              }
             }
           }
         }
