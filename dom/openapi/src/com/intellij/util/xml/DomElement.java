@@ -80,6 +80,14 @@ public interface DomElement extends AnnotatedElement{
 
   GlobalSearchScope getResolveScope();
 
+  /**
+   * Walk up the DOM tree searching for element of requiredClass type
+   * @param requiredClass
+   * @param strict
+   * strict = false: if the current element is already of the correct type, then it is returned.
+   * strict = true: the returned element must be higher in the hierarchy. 
+   * @return the parent of requiredClass type
+   */
   @Nullable
   <T extends DomElement> T getParentOfType(Class<T> requiredClass, boolean strict);
 
