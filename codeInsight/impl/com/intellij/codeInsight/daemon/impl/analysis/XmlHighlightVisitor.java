@@ -110,7 +110,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                                    HighlightInfoType type,
                                                    HighlightDisplayKey key,
                                                    IntentionAction... quickFixActions) {
-    bindMessageToTag(tag, type,  0, tag.getName().length(), localizedMessage, key, quickFixActions);
+    bindMessageToTag(tag, type,  0, -1, localizedMessage, key, quickFixActions);
   }
 
   public void visitXmlToken(XmlToken token) {
@@ -240,10 +240,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   private void bindMessageToAstNode(final PsiElement childByRole,
                                     final HighlightInfoType warning,
                                     final int offset,
-                                    final int length,
+                                    int length,
                                     final String localizedMessage, final HighlightDisplayKey key, IntentionAction... quickFixActions) {
     if(childByRole != null) {
       final TextRange textRange = childByRole.getTextRange();
+      if (length == -1) length = textRange.getLength();
       final int startOffset = textRange.getStartOffset() + offset;
 
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
