@@ -219,7 +219,7 @@ public class ChangesUtil {
     }, processor);
   }
 
-  public static List<File> filePathsToFiles(List<FilePath> filePaths) {
+  public static List<File> filePathsToFiles(Collection<FilePath> filePaths) {
     List<File> ioFiles = new ArrayList<File>();
     for(FilePath filePath: filePaths) {
       ioFiles.add(filePath.getIOFile());
