@@ -420,6 +420,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     else {
       element = fileCopy.findElementAt(context.startOffset);
     }
+    if (element == null) {
+      LOG.assertTrue(false, "offset " + context.startOffset + " at:\n" + fileCopy.getText());
+    }
     return Pair.create(context, element);
   }
 
