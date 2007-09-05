@@ -26,11 +26,17 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
   }
 
   public String getText() {
-    return myTextComponent.getText();
+    try {
+      final javax.swing.text.Document document = myTextComponent.getDocument();
+      return document.getText(0, document.getLength()-1);
+    }
+    catch (BadLocationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public CharSequence getCharsSequence() {
-    return myTextComponent.getText();
+    return getText();
   }
 
   public char[] getChars() {
@@ -38,7 +44,7 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
   }
 
   public int getTextLength() {
-    return myTextComponent.getText().length();
+    return myTextComponent.getDocument().getLength();
   }
 
   public int getLineCount() {

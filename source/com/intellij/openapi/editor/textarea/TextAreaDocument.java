@@ -53,7 +53,7 @@ public class TextAreaDocument extends TextComponentDocument {
       int endOffset = myTextArea.getLineEndOffset(line) - 1;
       int startOffset = myTextArea.getLineStartOffset(line);
       int l = 0;
-      String text = myTextArea.getText();
+      String text = getText();
       while(l < endOffset - startOffset && (text.charAt(endOffset - l) == '\r' || text.charAt(endOffset - l) == '\n')) {
         l++;
       }
