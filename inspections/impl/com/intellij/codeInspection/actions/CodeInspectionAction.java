@@ -17,6 +17,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,6 +50,10 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     return myGlobalInspectionContext;
   }
 
+  @NonNls
+  protected String getHelpTopic() {
+    return "reference.dialogs.inspection.scope";
+  }
 
   protected void canceled() {
     super.canceled();

@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +71,7 @@ public abstract class BaseAnalysisAction extends AnAction {
 
 
         protected void doHelpAction() {
-          HelpManager.getInstance().invokeHelp("reference.dialogs.analyzeDependencies.scope");
+          HelpManager.getInstance().invokeHelp(getHelpTopic());
         }
 
         protected Action[] createActions() {
@@ -93,6 +94,11 @@ public abstract class BaseAnalysisAction extends AnAction {
 
       analyze(project, scope);
     }
+  }
+
+  @NonNls
+  protected String getHelpTopic() {
+    return "reference.dialogs.analyzeDependencies.scope";
   }
 
   protected void canceled() {
