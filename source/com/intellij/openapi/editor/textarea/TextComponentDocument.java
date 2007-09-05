@@ -28,7 +28,7 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
   public String getText() {
     try {
       final javax.swing.text.Document document = myTextComponent.getDocument();
-      return document.getText(0, document.getLength()-1);
+      return document.getText(0, document.getLength());
     }
     catch (BadLocationException e) {
       throw new RuntimeException(e);
