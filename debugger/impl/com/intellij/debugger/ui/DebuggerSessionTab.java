@@ -29,6 +29,7 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.CloseAction;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.CommonActionsManager;
@@ -242,6 +243,13 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     final DefaultActionGroup consoleActions = new DefaultActionGroup();
     addAction(consoleActions, DebuggerActions.EXPORT_THREADS);
+    if (myConsole instanceof ConsoleView) {
+      AnAction[] actions = ((ConsoleView)myConsole).createUpDownStacktraceActions();
+      for (AnAction goaction: actions) {
+        consoleActions.add(goaction);
+      }
+    }
+
     content.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR);
 
     Content[] contents = myViewsContentManager.getContents();
