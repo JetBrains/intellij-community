@@ -71,7 +71,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<Class<? extends PomModelAspect>, PomModelAspect>();
   private Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
   private Map<PomModelAspect, List<PomModelAspect>> myInvertedIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
-  private final List<PomModelListener> myListeners = new ArrayList<PomModelListener>();
+  private final Collection<PomModelListener> myListeners = new ArrayList<PomModelListener>();
 
   public PomModelImpl(Project project) {
     myPomProject = new PomProjectImpl(this, project);
@@ -174,7 +174,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
         { // update
           final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-          final Set<PomModelAspect> dependants = new LinkedHashSet<PomModelAspect>();
+          final Collection<PomModelAspect> dependants = new LinkedHashSet<PomModelAspect>();
           for (final PomModelAspect pomModelAspect : changedAspects) {
             dependants.addAll(getAllDependants(pomModelAspect));
           }

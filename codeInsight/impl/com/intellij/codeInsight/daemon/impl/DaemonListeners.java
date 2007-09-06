@@ -17,9 +17,11 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -43,15 +45,13 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -63,7 +63,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 
 /**
@@ -72,8 +71,8 @@ import java.util.Set;
 public class DaemonListeners {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
 
-  private final MyCommandListener myCommandListener = new MyCommandListener();
-  private final MyApplicationListener myApplicationListener = new MyApplicationListener();
+  private final CommandListener myCommandListener = new MyCommandListener();
+  private final ApplicationListener myApplicationListener = new MyApplicationListener();
   private final EditorColorsListener myEditorColorsListener = new MyEditorColorsListener();
   private final AnActionListener myAnActionListener = new MyAnActionListener();
   private final PropertyChangeListener myTodoListener = new MyTodoListener();
@@ -84,7 +83,7 @@ public class DaemonListeners {
   private final ProfileChangeAdapter myProfileChangeListener = new MyProfileChangeListener();
 
   private final DocumentListener myDocumentListener;
-  private final VirtualFileAdapter myVirtualFileListener;
+  private final VirtualFileListener myVirtualFileListener;
   private final EditorFactoryListener myEditorFactoryListener;
 
   private final CaretListener myCaretListener;
@@ -250,7 +249,7 @@ public class DaemonListeners {
     myEditorTracker.removeEditorTrackerListener(myEditorTrackerListener);
   }
 
-  boolean canChangeFileSilently(PsiFile file) {
+  boolean canChangeFileSilently(PsiFileSystemItem file) {
     if (cutOperationJustHappened) return false;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
@@ -280,7 +279,7 @@ public class DaemonListeners {
   }
 
   private class MyCommandListener extends CommandAdapter {
-    private final String myCutActionName =
+    private final Object myCutActionName =
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
     public void commandStarted(CommandEvent event) {
@@ -430,7 +429,7 @@ public class DaemonListeners {
     // Editors in modal context
     List<Editor> editors = myEditorTracker.getActiveEditors();
 
-    Set<FileEditor> activeFileEditors = new THashSet<FileEditor>(editors.size());
+    Collection<FileEditor> activeFileEditors = new THashSet<FileEditor>(editors.size());
     for (Editor editor : editors) {
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
       activeFileEditors.add(textEditor);
@@ -440,8 +439,8 @@ public class DaemonListeners {
     }
 
     // Editors in tabs.
-    Set<FileEditor> result = new THashSet<FileEditor>();
-    Set<Document> documents = new THashSet<Document>(activeFileEditors.size());
+    Collection<FileEditor> result = new THashSet<FileEditor>();
+    Collection<Document> documents = new THashSet<Document>(activeFileEditors.size());
     final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
     for (FileEditor tabEditor : tabEditors) {
       if (tabEditor instanceof TextEditor) {

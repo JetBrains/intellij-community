@@ -16,24 +16,23 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
 public class PsiEventWrapperAspect implements PomModelAspect{
-  private final PomModel myModel;
   private final TreeAspect myTreeAspect;
 
   public PsiEventWrapperAspect(PomModel model, TreeAspect aspect) {
-    myModel = model;
     myTreeAspect = aspect;
-    myModel.registerAspect(PsiEventWrapperAspect.class, this, Collections.singleton((PomModelAspect)aspect));
+    model.registerAspect(PsiEventWrapperAspect.class, this, Collections.singleton((PomModelAspect)aspect));
   }
 
   public void projectOpened() {}
   public void projectClosed() {}
 
+  @NotNull
   public String getComponentName() {
     return "PSI event wrapper aspect for POM";
   }
@@ -43,19 +42,19 @@ public class PsiEventWrapperAspect implements PomModelAspect{
   public void update(PomModelEvent event) {
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
     if(changeSet == null) return;
-    FileElement rootElement = (FileElement)changeSet.getRootElement();
+    ASTNode rootElement = changeSet.getRootElement();
     final PsiFile file = (PsiFile)SourceTreeToPsiMap.treeElementToPsi(rootElement);
     final PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
     if(manager == null) return;
 
     if(file.isPhysical()){
       final ASTNode[] changedElements = changeSet.getChangedElements();
-      for (int i = 0; i < changedElements.length; i++) {
-        ASTNode changedElement = changedElements[i];
+      for (ASTNode changedElement : changedElements) {
         TreeChange changesByElement = changeSet.getChangesByElement(changedElement);
         PsiElement psiParent = null;
 
-        while(changedElement != null && ((psiParent = changedElement.getPsi()) == null || !checkPsiForChildren(changesByElement.getAffectedChildren()))){
+        while (changedElement != null &&
+               ((psiParent = changedElement.getPsi()) == null || !checkPsiForChildren(changesByElement.getAffectedChildren()))) {
           final ASTNode parent = changedElement.getTreeParent();
           final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, changedElement);
           changeInfo.compactChange(changedElement, changesByElement);
@@ -63,12 +62,11 @@ public class PsiEventWrapperAspect implements PomModelAspect{
           changesByElement.addChange(changedElement, changeInfo);
           changedElement = parent;
         }
-        if(changedElement == null) continue;
+        if (changedElement == null) continue;
 
         final ASTNode[] affectedChildren = changesByElement.getAffectedChildren();
 
-        for (int j = 0; j < affectedChildren.length; j++) {
-          final ASTNode treeElement = affectedChildren[j];
+        for (final ASTNode treeElement : affectedChildren) {
           PsiTreeChangeEventImpl psiEvent = new PsiTreeChangeEventImpl(manager);
           psiEvent.setParent(psiParent);
           psiEvent.setFile(file);
@@ -77,7 +75,7 @@ public class PsiEventWrapperAspect implements PomModelAspect{
           psiEvent.setChild(psiChild);
 
           final ChangeInfo changeByChild = changesByElement.getChangeByChild(treeElement);
-          switch(changeByChild.getChangeType()){
+          switch (changeByChild.getChangeType()) {
             case ChangeInfo.ADD:
               psiEvent.setOffset(treeElement.getStartOffset());
               psiEvent.setOldLength(0);
@@ -93,19 +91,17 @@ public class PsiEventWrapperAspect implements PomModelAspect{
               manager.childReplaced(psiEvent);
               break;
             case ChangeInfo.CONTENTS_CHANGED:
-              final ChangeInfo contentsChangeInfo = changeByChild;
               psiEvent.setOffset(treeElement.getStartOffset());
               psiEvent.setOldChild(psiChild);
               psiEvent.setNewChild(psiChild);
-              psiEvent.setOldLength(contentsChangeInfo.getOldLength());
+              psiEvent.setOldLength(changeByChild.getOldLength());
               manager.childReplaced(psiEvent);
               break;
             case ChangeInfo.REMOVED:
-              final ChangeInfo removedChangeInfo = changeByChild;
               psiEvent.setOffset(changesByElement.getChildOffsetInNewTree(treeElement));
               psiEvent.setOldParent(psiParent);
               psiEvent.setOldChild(psiChild);
-              psiEvent.setOldLength(removedChangeInfo.getOldLength());
+              psiEvent.setOldLength(changeByChild.getOldLength());
               manager.childRemoved(psiEvent);
               break;
           }
@@ -117,9 +113,8 @@ public class PsiEventWrapperAspect implements PomModelAspect{
     }
   }
 
-  private boolean checkPsiForChildren(final ASTNode[] affectedChildren) {
-    for (int i = 0; i < affectedChildren.length; i++) {
-      final ASTNode astNode = affectedChildren[i];
+  private static boolean checkPsiForChildren(final ASTNode[] affectedChildren) {
+    for (final ASTNode astNode : affectedChildren) {
       if (astNode instanceof LeafElement && ((LeafElement)astNode).isChameleon()) return false;
       if (astNode.getPsi() == null) return false;
     }

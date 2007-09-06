@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.Alarm;
@@ -63,8 +64,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   private final Alarm myAlarm = new Alarm();
 
   private boolean myUpdateByTimerEnabled = true;
-  private final Set<VirtualFile> myDisabledHintsFiles = new THashSet<VirtualFile>();
-  private final Set<PsiFile> myDisabledHighlightingFiles = new THashSet<PsiFile>();
+  private final Collection<VirtualFile> myDisabledHintsFiles = new THashSet<VirtualFile>();
+  private final Collection<PsiFile> myDisabledHighlightingFiles = new THashSet<PsiFile>();
   private final FileStatusMap myFileStatusMap;
 
   private DaemonCodeAnalyzerSettings myLastSettings;
@@ -261,7 +262,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public List<TextEditorHighlightingPass> getPassesToShowProgressFor(PsiFile file) {
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
     List<TextEditorHighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
-    ArrayList<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(allPasses.size());
+    List<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(allPasses.size());
     for (TextEditorHighlightingPass pass : allPasses) {
       if (pass.getDocument() == document || pass.getDocument() == null) {
         result.add(pass);
@@ -338,7 +339,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
     HighlightInfo[] highlights = getHighlights(document, project);
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
-    List<HighlightInfo> array = new ArrayList<HighlightInfo>();
+    Collection<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
       if (SeverityRegistrar.getInstance(project).compare(info.getSeverity(), minSeverity) >= 0 &&
           info.startOffset >= startOffset &&
@@ -407,8 +408,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @NotNull
   private static HighlightInfo[] stripWarningsCoveredByErrors(final Project project, HighlightInfo[] highlights, MarkupModel markup) {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
-    List<HighlightInfo> all = new ArrayList<HighlightInfo>(Arrays.asList(highlights));
-    List<HighlightInfo> errors = new ArrayList<HighlightInfo>();
+    Collection<HighlightInfo> all = new ArrayList<HighlightInfo>(Arrays.asList(highlights));
+    Collection<HighlightInfo> errors = new ArrayList<HighlightInfo>();
     for (HighlightInfo highlight : highlights) {
       if (severityRegistrar.compare(highlight.getSeverity(), HighlightSeverity.ERROR) >= 0) {
         errors.add(highlight);
@@ -526,7 +527,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       }
     };
   }
-  boolean canChangeFileSilently(PsiFile file) {
+  boolean canChangeFileSilently(PsiFileSystemItem file) {
     return myDaemonListeners.canChangeFileSilently(file);
   }
 
