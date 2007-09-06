@@ -110,7 +110,9 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       if (element1 == element2) return 0;
 
       PsiModifierList modifierList1 = element1.getModifierList();
+      LOG.assertTrue(modifierList1 != null, element1.getText());
       PsiModifierList modifierList2 = element2.getModifierList();
+      LOG.assertTrue(modifierList2 != null, element2.getText());
       int level1 = PsiUtil.getAccessLevel(modifierList1);
       int level2 = PsiUtil.getAccessLevel(modifierList2);
       if (level1 != level2) return level2 - level1;

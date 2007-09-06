@@ -602,7 +602,7 @@ public final class PsiUtil {
     return false;
   }
 
-  public static int getAccessLevel(PsiModifierList modifierList) {
+  public static int getAccessLevel(@NotNull PsiModifierList modifierList) {
     if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
       return ACCESS_LEVEL_PRIVATE;
     }
