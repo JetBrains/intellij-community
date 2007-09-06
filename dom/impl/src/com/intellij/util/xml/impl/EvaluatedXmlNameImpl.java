@@ -107,7 +107,8 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   }
 
   private static boolean isNamespaceAllowed(final String namespace, final List<String> list) {
-    return StringUtil.isEmpty(namespace) ? list.isEmpty() : list.contains(namespace);
+    return list.contains(namespace) || StringUtil.isEmpty(namespace) && list.isEmpty();
+
   }
 
   public final boolean isNamespaceAllowed(DomInvocationHandler handler, String namespace) {
