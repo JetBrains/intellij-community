@@ -382,16 +382,17 @@ public class IntentionHintComponent extends JPanel implements Disposable {
       // already disposed
       return false;
     }
+    if (!myFile.isValid()) return false;
     IntentionListStep step = (IntentionListStep)myPopup.getListStep();
-    if (!step.updateActions(intentions, errorFixes, inspectionFixes)) {
-      if (!myPopupShown) {
-        myPopup = JBPopupFactory.getInstance().createListPopup(step);
-        return true;
-      }
-      return false;
+    if (step.updateActions(intentions, errorFixes, inspectionFixes)) {
+      return true;
     }
+    if (!myPopupShown) {
+      myPopup = JBPopupFactory.getInstance().createListPopup(step);
+      return true;
+    }
+    return false;
 
-    return true;
   }
 
   private void showIntentionHintImpl(final boolean delay) {
