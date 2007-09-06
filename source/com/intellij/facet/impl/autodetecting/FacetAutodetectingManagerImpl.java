@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.ide.impl.convert.ProjectFileVersion;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -172,6 +173,9 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   private List<Facet> process(final VirtualFile virtualFile, final FacetDetectorWrapper<?, ? extends FacetConfiguration, ?> detector,
                                                          List<Facet> facets) {
     if (detector.getVirtualFileFilter().accept(virtualFile)) {
+      if (!ProjectFileVersion.getInstance(myProject).isFacetAdditionEnabled(detector.getFacetType().getId())) {
+        return facets;
+      }
       Facet facet = detector.detectFacet(virtualFile, myPsiManager);
 
       if (facet != null) {

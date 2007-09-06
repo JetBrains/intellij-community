@@ -100,15 +100,15 @@ class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleSt
     protected Element save() {
       final Element root = super.save();
 
-      final ProjectConversionHelper conversionHelper = getConversionHelper(myModule);
-      if (conversionHelper != null) {
-        conversionHelper.convertModuleRootToOldFormat(root, myModule.getName());
-      }
-
       myOptions.put(VERSION_OPTION, Integer.toString(myVersion));
       Set<String> options = myOptions.keySet();
       for (String option : options) {
         root.setAttribute(option, myOptions.get(option));
+      }
+
+      final ProjectConversionHelper conversionHelper = getConversionHelper(myModule);
+      if (conversionHelper != null) {
+        conversionHelper.convertModuleRootToOldFormat(root, myModule.getName());
       }
 
       //need be last for compat reasons
