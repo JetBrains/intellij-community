@@ -15,28 +15,23 @@
 
 package org.jetbrains.plugins.grails.fileType;
 
-import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.InjectedLanguagePlaces;
-import com.intellij.psi.LanguageInjector;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-public class GroovyInjector implements ProjectComponent, LanguageInjector {
-  private Project project;
+public class GroovyInjector implements ProjectComponent {
+  private Project myProject;
 
   public GroovyInjector(Project project) {
-    this.project = project;
+    myProject = project;
   }
 
   public void initComponent() {
-    //PsiManager.getInstance(project).registerLanguageInjector(new MyLanguageInjector());
+    PsiManager.getInstance(myProject).registerLanguageInjector(new MyLanguageInjector());
   }
 
   public void disposeComponent() {
@@ -55,40 +50,34 @@ public class GroovyInjector implements ProjectComponent, LanguageInjector {
     // called when project is being closed
   }
 
-  public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
-  }
+  public static final String EVAL_NAME = "evaluate";
+  public static final String PARSE_NAME = "parse";
+  private static final String GROOVY_SHELL_QNAME = "groovy.lang.GroovyShell";
 
   private static class MyLanguageInjector implements LanguageInjector {
+
     public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
-      if (!(host.getLanguage() instanceof XMLLanguage))
-        return;
-
-      VirtualFile virtualFile = PsiUtil.getVirtualFile(host);
-      if (virtualFile == null || !virtualFile.getName().toLowerCase().endsWith(".gsp"))
-        return;
-
-      String value = null;
-      if (host instanceof XmlAttributeValue) {
-        XmlAttributeValue attr = (XmlAttributeValue) host;
-        value = attr.getValue();
-      }
-//        else
-//        if (host instanceof XmlText)
-//        {
-//          XmlText xmlText = (XmlText) host;
-//          value = xmlText.getText();
-//        }
-
-      if (value != null) {
-        int start = value.indexOf("${");
-        if (start == -1)
-          return;
-
-        int end = value.indexOf("}", start + 2);
-        if (end == -1)
-          return;
-
-        injectionPlacesRegistrar.addPlace(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), new TextRange(start + 2, end), "", ";");
+      final Language groovyLanguage = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
+      if (host instanceof PsiLiteralExpression && host.getParent() instanceof PsiExpressionList) {
+        final PsiExpression[] args = ((PsiExpressionList) host.getParent()).getExpressions();
+        if (host == args[0]) {
+          final PsiElement pparent = host.getParent().getParent();
+          if (pparent instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression call = (PsiMethodCallExpression) pparent;
+            final String refName = call.getMethodExpression().getReferenceName();
+            if (PARSE_NAME.equals(refName) || EVAL_NAME.equals(refName)) {
+              final PsiMethod method = call.resolveMethod();
+              if (method != null) {
+                final PsiClass clazz = method.getContainingClass();
+                if (clazz != null) {
+                  if (GROOVY_SHELL_QNAME.equals(clazz.getQualifiedName())) {
+                    injectionPlacesRegistrar.addPlace(groovyLanguage, new TextRange(1, host.getTextLength() - 1), "", "");
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

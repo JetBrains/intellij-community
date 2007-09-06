@@ -240,7 +240,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     mySyntheticArgsParameter = null;
   }
 
-  public GroovyPsiElement getContext() {
+  public PsiElement getContext() {
+    final PsiElement context = super.getContext();
+    if (context != null) return context;
     return myContext;
   }
 
