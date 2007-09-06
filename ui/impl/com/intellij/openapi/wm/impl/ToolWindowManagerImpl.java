@@ -189,7 +189,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   private void execute(final ArrayList<FinalizableCommand> commandList) {
     fireStateChanged();
-    myWindowManager.getCommandProcessor().execute(commandList, myProject.getDisposed());
+    myWindowManager.getCommandProcessor().execute(commandList);
   }
 
   public void activateEditorComponent() {
