@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,9 +161,9 @@ public interface Application extends ComponentManager {
    *
    * @param runnable the runnable to execute.
    */
-  void invokeLater(Runnable runnable);
+  ActionCallback invokeLater(Runnable runnable);
 
-  void invokeLater(Runnable runnable, @NotNull Condition expired);
+  ActionCallback invokeLater(Runnable runnable, @NotNull Condition expired);
 
   /**
    * Causes <i>runnable.run()</i> to be executed asynchronously on the
@@ -172,9 +173,9 @@ public interface Application extends ComponentManager {
    * @param runnable the runnable to execute.
    * @param state the state in which the runnable will be executed.
    */
-  void invokeLater(Runnable runnable, @NotNull ModalityState state);
+  ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState state);
 
-  void invokeLater(Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
+  ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
 
   /**
    * Causes <code>runnable.run()</code> to be executed synchronously on the

@@ -434,20 +434,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return result;
   }
 
-  public void invokeLater(Runnable runnable) {
-    invokeLater(runnable, Conditions.FALSE);
+  public ActionCallback invokeLater(Runnable runnable) {
+    return invokeLater(runnable, Conditions.FALSE);
   }
 
-  public void invokeLater(final Runnable runnable, @NotNull final Condition expired) {
-    LaterInvocator.invokeLater(runnable, expired);
+  public ActionCallback invokeLater(final Runnable runnable, @NotNull final Condition expired) {
+    return LaterInvocator.invokeLater(runnable, expired);
   }
 
-  public void invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
-    LaterInvocator.invokeLater(runnable, state, expired);
+  public ActionCallback invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
+    return LaterInvocator.invokeLater(runnable, state, expired);
   }
 
-  public void invokeLater(Runnable runnable, @NotNull ModalityState state) {
-    invokeLater(runnable, state, Conditions.FALSE);
+  public ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState state) {
+    return invokeLater(runnable, state, Conditions.FALSE);
   }
 
   public void invokeAndWait(Runnable runnable, @NotNull ModalityState modalityState) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.ArrayUtil;
@@ -36,11 +37,13 @@ public class LaterInvocator {
     final Runnable runnable;
     final ModalityState modalityState;
     final Condition<Object> expired;
+    final ActionCallback callback;
 
-    public RunnableInfo(Runnable runnable, ModalityState modalityState, @NotNull Condition expired) {
+    public RunnableInfo(Runnable runnable, ModalityState modalityState, @NotNull Condition expired, @NotNull ActionCallback callback) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
+      this.callback = callback;
     }
 
     @NonNls
@@ -99,24 +102,26 @@ public class LaterInvocator {
     return new ModalityStateEx(result.toArray());
   }
 
-  public static void invokeLater(Runnable runnable) {
-    invokeLater(runnable, Conditions.FALSE);
+  public static ActionCallback invokeLater(Runnable runnable) {
+    return invokeLater(runnable, Conditions.FALSE);
   }
 
-  public static void invokeLater(Runnable runnable, @NotNull Condition expired) {
+  public static ActionCallback invokeLater(Runnable runnable, @NotNull Condition expired) {
     ModalityState modalityState = ModalityState.defaultModalityState();
-    invokeLater(runnable, modalityState, expired);
+    return invokeLater(runnable, modalityState, expired);
   }
 
-  public static void invokeLater(Runnable runnable, @NotNull ModalityState modalityState) {
-    invokeLater(runnable, modalityState, Conditions.FALSE);
+  public static ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState modalityState) {
+    return invokeLater(runnable, modalityState, Conditions.FALSE);
   }
 
-  public static void invokeLater(Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
+  public static ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
+    final ActionCallback callback = new ActionCallback();
     synchronized (LOCK) {
-      ourQueue.add(new RunnableInfo(runnable, modalityState, expired));
+      ourQueue.add(new RunnableInfo(runnable, modalityState, expired, callback));
     }
     requestFlush();
+    return callback;
   }
 
 
@@ -237,13 +242,15 @@ public class LaterInvocator {
   }
 
   @Nullable
-  private static Runnable pollNext() {
+  private static RunnableInfo pollNext() {
     synchronized (LOCK) {
       if (ourForcedFlushQueue.size() > 0) {
         final RunnableInfo toRun = ourForcedFlushQueue.get(0);
         ourForcedFlushQueue.remove(0);
         if (!toRun.expired.value(null)) {
-          return toRun.runnable;
+          return toRun;
+        } else {
+          toRun.callback.setDone();
         }
       }
 
@@ -257,12 +264,13 @@ public class LaterInvocator {
 
         if (info.expired.value(null)) {
           ourQueue.remove(ourQueueSkipCount);
+          info.callback.setDone();
           continue;
         }
 
         if (!currentModality.dominates(info.modalityState)) {
           ourQueue.remove(ourQueueSkipCount);
-          return info.runnable;
+          return info;
         }
         ourQueueSkipCount++;
       }
@@ -274,19 +282,21 @@ public class LaterInvocator {
   private static final Object RUN_LOCK = new Object();
 
   static class FlushQueue implements Runnable {
-    private Runnable myLastRunnable;
+    private RunnableInfo myLastInfo;
 
     public void run() {
-      myLastRunnable = pollNext();
+      final RunnableInfo lastInfo = pollNext();
+      myLastInfo = lastInfo;
 
-      if (myLastRunnable != null) {
+      if (lastInfo != null) {
         synchronized (RUN_LOCK) { // necessary only because of switching to our own event queue
           AWTEvent event = ourEventQueue.getTrueCurrentEvent();
           ourEventStack.push(event);
           int stackSize = ourEventStack.size();
 
           try {
-            myLastRunnable.run();
+            lastInfo.runnable.run();
+            lastInfo.callback.setDone();
           }
           catch (Throwable t) {
             if (t instanceof StackOverflowError){
@@ -298,7 +308,7 @@ public class LaterInvocator {
             LOG.assertTrue(ourEventStack.size() == stackSize);
             ourEventStack.pop();
 
-            if (!DEBUG) myLastRunnable = null;
+            if (!DEBUG) myLastInfo = null;
           }
         }
 
@@ -308,7 +318,7 @@ public class LaterInvocator {
 
     @NonNls
     public String toString() {
-      return "LaterInvocator[lastRunnable=" + myLastRunnable + "]";
+      return "LaterInvocator[lastRunnable=" + myLastInfo + "]";
     }
   }
 
