@@ -790,6 +790,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       if (!myActiveVcss.contains(vcs)) {
         vcs.deactivate();
       }
+      else {
+        vcs.directoryMappingChanged();
+      }
     }
 
     notifyDirectoryMappingChanged();
