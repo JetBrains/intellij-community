@@ -60,6 +60,7 @@ import java.util.concurrent.*;
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
   private ModalityState MODALITY_STATE_NONE;
+  private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
   private final List<ApplicationListener> myListeners = new CopyOnWriteArrayList<ApplicationListener>();
 
@@ -305,6 +306,27 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return EventQueue.isDispatchThread();
   }
 
+  @NotNull
+  public ModalityInvokator getInvokator() {
+    return myInvokator;
+  }
+
+  
+  public void invokeLater(final Runnable runnable) {
+    myInvokator.invokeLater(runnable);
+  }
+
+  public void invokeLater(final Runnable runnable, @NotNull final Condition expired) {
+    myInvokator.invokeLater(runnable, expired);
+  }
+
+  public void invokeLater(final Runnable runnable, @NotNull final ModalityState state) {
+    myInvokator.invokeLater(runnable, state);
+  }
+
+  public void invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
+    myInvokator.invokeLater(runnable, state, expired);
+  }
 
   public void load(String path) throws IOException, InvalidDataException {
     getStateStore().setConfigPath(path);
@@ -432,22 +454,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     });
     if (exception.get() != null) throw exception.get();
     return result;
-  }
-
-  public ActionCallback invokeLater(Runnable runnable) {
-    return invokeLater(runnable, Conditions.FALSE);
-  }
-
-  public ActionCallback invokeLater(final Runnable runnable, @NotNull final Condition expired) {
-    return LaterInvocator.invokeLater(runnable, expired);
-  }
-
-  public ActionCallback invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
-    return LaterInvocator.invokeLater(runnable, state, expired);
-  }
-
-  public ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState state) {
-    return invokeLater(runnable, state, Conditions.FALSE);
   }
 
   public void invokeAndWait(Runnable runnable, @NotNull ModalityState modalityState) {

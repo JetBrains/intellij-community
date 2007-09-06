@@ -2,6 +2,7 @@ package com.intellij.mock;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationListener;
+import com.intellij.openapi.application.ModalityInvokator;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ModalityStateEx;
@@ -10,9 +11,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -170,20 +170,21 @@ public class MockApplication extends MockComponentManager implements Application
     return false;
   }
 
-  public ActionCallback invokeLater(final Runnable runnable, @NotNull final Condition expired) {
-    return new ActionCallback.Done();
+  public void invokeLater(final Runnable runnable, @NotNull final Condition expired) {
   }
 
-  public ActionCallback invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
-    return new ActionCallback.Done();
+  public void invokeLater(final Runnable runnable, @NotNull final ModalityState state, @NotNull final Condition expired) {
   }
 
-  public ActionCallback invokeLater(Runnable runnable) {
-    return new ActionCallback.Done();
+  public void invokeLater(Runnable runnable) {
   }
 
-  public ActionCallback invokeLater(Runnable runnable, ModalityState state) {
-    return new ActionCallback.Done();
+  public void invokeLater(Runnable runnable, ModalityState state) {
+  }
+
+  @NotNull
+  public ModalityInvokator getInvokator() {
+    throw new UnsupportedOperationException();
   }
 
   public void invokeAndWait(Runnable runnable, ModalityState modalityState) {

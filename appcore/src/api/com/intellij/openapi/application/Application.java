@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -155,15 +154,21 @@ public interface Application extends ComponentManager {
   boolean isDispatchThread();
 
   /**
+   * @return a facade, which lets to call all those invokeLater() with a ActionCallback handle returned.
+   */
+  @NotNull
+  ModalityInvokator getInvokator();
+
+  /**
    * Causes <i>runnable.run()</i> to be executed asynchronously on the
    * AWT event dispatching thread.  This will happen after all
    * pending AWT events have been processed.
    *
    * @param runnable the runnable to execute.
    */
-  ActionCallback invokeLater(Runnable runnable);
+  void invokeLater(Runnable runnable);
 
-  ActionCallback invokeLater(Runnable runnable, @NotNull Condition expired);
+  void invokeLater(Runnable runnable, @NotNull Condition expired);
 
   /**
    * Causes <i>runnable.run()</i> to be executed asynchronously on the
@@ -173,9 +178,9 @@ public interface Application extends ComponentManager {
    * @param runnable the runnable to execute.
    * @param state the state in which the runnable will be executed.
    */
-  ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState state);
+  void invokeLater(Runnable runnable, @NotNull ModalityState state);
 
-  ActionCallback invokeLater(Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
+  void invokeLater(Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired);
 
   /**
    * Causes <code>runnable.run()</code> to be executed synchronously on the
