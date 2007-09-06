@@ -1,5 +1,6 @@
 package com.intellij.ide;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -94,6 +95,8 @@ public class SaveAndSyncHandler implements ApplicationComponent {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: save()");
     }
+    if (ApplicationManager.getApplication().isDisposed()) return;
+    
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
       FileDocumentManager.getInstance().saveAllDocuments();
     }
