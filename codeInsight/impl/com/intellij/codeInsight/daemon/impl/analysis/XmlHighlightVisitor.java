@@ -52,6 +52,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -83,7 +84,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   private static final @NonNls String TAGLIB_DIRECTIVE = "taglib";
   private static final @NonNls String URI_ATT = "uri";
   private static final @NonNls String TAGDIR_ATT = "tagdir";
-  private static final @NonNls String LOCATION_ATT_SUFFIX = "Location";
   @NonNls private static final String IMPORT_ATTR_NAME = "import";
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
@@ -143,24 +143,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (myResult == null) {
       if (tag.getUserData(DO_NOT_VALIDATE_KEY) == null) {
         final XmlElementDescriptor descriptor = tag.getDescriptor();
+
         if (tag instanceof HtmlTag &&
             ( descriptor instanceof AnyXmlElementDescriptor ||
               descriptor == null
             )
            ) {
-          final String name = tag.getName();
-          //XmlEntitiesInspection inspection = getInspectionProfile(tag, HtmlStyleLocalInspection.SHORT_NAME);
-
-          //reportOneTagProblem(
-          //  tag,
-          //  name,
-          //  XmlErrorMessages.message("unknown.html.tag", name),
-          //  null,
-          //  HighlightDisplayKey.find(HtmlStyleLocalInspection.SHORT_NAME),
-          //  inspection,
-          //  XmlEntitiesInspection.UNKNOWN_TAG
-          //);
-
           return;
         }
 
@@ -170,7 +158,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private void checkUnboundNamespacePrefix(final XmlElement element, final XmlTag context, String namespacePrefix) {
-    if (namespacePrefix.length() > 0) {
+    if (namespacePrefix.length() > 0 || element instanceof XmlTag) {
       final String namespaceByPrefix = context.getNamespaceByPrefix(namespacePrefix);
 
       if (namespaceByPrefix.length() == 0) {
@@ -200,9 +188,24 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             }
           }
 
+          final String localizedMessage = XmlErrorMessages.message("unbound.namespace", namespacePrefix);
+
+          if (namespacePrefix.length() == 0) {
+            final XmlTag tag = (XmlTag)element;
+            if (!XmlUtil.JSP_URI.equals(tag.getNamespace())) {
+              addElementsForTag(tag,
+                localizedMessage,
+                HighlightInfoType.INFORMATION,
+                new CreateNSDeclarationIntentionFix(context, namespacePrefix,taglibDeclaration)
+              );
+            }
+
+            return;
+          }
+
           final boolean error = containingFile.getFileType() == StdFileTypes.JSPX || containingFile.getFileType() == StdFileTypes.XHTML ||
                                 containingFile.getFileType() == StdFileTypes.XML;
-          final String localizedMessage = XmlErrorMessages.message("unbound.namespace", namespacePrefix);
+
           final int messageLength = namespacePrefix.length();
           final HighlightInfoType infoType = error ? HighlightInfoType.ERROR:HighlightInfoType.WARNING;
 
@@ -969,6 +972,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
       final JspManager jspManager = JspManager.getInstance(project);
+      final String localName = tag.getLocalName();
+
       if (acceptTaglib && jspManager != null) {
         if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.tlds"));
         final JspFile jspFile = (JspFile)file;
@@ -976,7 +981,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
         Arrays.sort(possibleTldUris);
         int i = 0;
-        final String localName = tag.getLocalName();
 
         for(String uri:possibleTldUris) {
           if (pi != null) {
@@ -986,22 +990,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           }
 
           final XmlFile tldFileByUri = jspManager.getTldFileByUri(uri, jspFile);
-          final boolean[] wordFound = new boolean[1];
-          IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
-            public void run(final CharSequence chars, int start, int end, char[] charArray) {
-              if (end - start != localName.length() || wordFound[0]) return;
-              for(int i = 0; i < localName.length(); ++i) {
-                if (chars.charAt(start + i) != localName.charAt(i)) return;
-              }
-              wordFound[0] = true;
-            }
-          };
-
           if (tldFileByUri == null) continue;
-          final CharSequence contents = tldFileByUri.getViewProvider().getContents();
-          wordFound[0] = false;
-          IdTableBuilding.scanWords(wordProcessor, contents, 0, contents.length());
-          if (!wordFound[0]) continue;
+
+          final boolean wordFound = checkIfGivenXmlHasTheseWords(localName, tldFileByUri);
+          if (!wordFound) continue;
           final PsiMetaDataBase metaData = tldFileByUri.getDocument().getMetaData();
 
           if (metaData instanceof TldDescriptor) {
@@ -1032,18 +1024,54 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           final XmlFile xmlFile = XmlUtil.findXmlFile(file, url);
 
           if (xmlFile != null) {
+            final boolean wordFound = checkIfGivenXmlHasTheseWords(localName, xmlFile);
+            if (!wordFound) continue;
             final PsiMetaDataBase metaData = xmlFile.getDocument().getMetaData();
 
             if (metaData instanceof XmlNSDescriptorImpl) {
-              XmlElementDescriptor elementDescriptor = ((XmlNSDescriptorImpl)metaData).getElementDescriptor(tag.getLocalName(),url);
+              final XmlNSDescriptorImpl descriptor = (XmlNSDescriptorImpl)metaData;
+              XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(tag.getLocalName(),url);
 
               if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
-                possibleUris.add(url);
+                possibleUris.add(descriptor.getDefaultNamespace());
               }
             }
           }
         }
       }
+    }
+
+    private static boolean checkIfGivenXmlHasTheseWords(final String name, final XmlFile tldFileByUri) {
+      final String[] words = StringUtil.getWordsIn(name).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+      final boolean[] wordsFound = new boolean[words.length];
+      final int[] wordsFoundCount = new int[1];
+
+      IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
+        public void run(final CharSequence chars, int start, int end, char[] charArray) {
+          if (wordsFoundCount[0] == words.length) return;
+          final int foundWordLen = end - start;
+
+          Next:
+          for(int i = 0; i < words.length;++i) {
+            final String localName = words[i];
+            if (wordsFound[i] || localName.length() != foundWordLen) continue;
+
+            for(int j = 0; j < localName.length(); ++j) {
+              if (chars.charAt(start + j) != localName.charAt(j)) continue Next;
+            }
+
+            wordsFound[i] = true;
+            wordsFoundCount[0]++;
+            break;
+          }
+        }
+      };
+
+      final CharSequence contents = tldFileByUri.getViewProvider().getContents();
+
+      IdTableBuilding.scanWords(wordProcessor, contents, 0, contents.length());
+
+      return wordsFoundCount[0] == words.length;
     }
 
     public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
@@ -1152,7 +1180,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         return ((XmlTag)element).getAttribute(URI_ATTR_NAME,null);
       }
       else {
-        @NonNls final String name = "xmlns:" + myNamespacePrefix;
+        @NonNls final String name = "xmlns" + (myNamespacePrefix.length() > 0 ? ":"+myNamespacePrefix:"");
         rootTag.add(
           elementFactory.createXmlAttribute(name,namespace)
         );
