@@ -30,5 +30,6 @@ public interface ILocalFileReader {
 
 	boolean isWritable(FileObject fileObject, ICvsFileSystem cvsFileSystem);
 
-	void listFilesAndDirectories(DirectoryObject directoryObject, Collection fileNames, Collection directoryNames, ICvsFileSystem cvsFileSystem);
+	void listFilesAndDirectories(DirectoryObject directoryObject, Collection<String> fileNames, Collection<String> directoryNames, 
+                                     ICvsFileSystem cvsFileSystem);
 }

@@ -23,119 +23,115 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * @author  Thomas Singer
+ * @author Thomas Singer
  */
 final class FileSystemScanner {
 
-	// Fields =================================================================
+  // Fields =================================================================
 
-	private final IClientEnvironment clientEnvironment;
-	private final boolean recursive;
+  private final IClientEnvironment clientEnvironment;
+  private final boolean recursive;
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
-	public FileSystemScanner(IClientEnvironment clientEnvironment, boolean recursive) {
-		BugLog.getInstance().assertNotNull(clientEnvironment);
+  public FileSystemScanner(IClientEnvironment clientEnvironment, boolean recursive) {
+    BugLog.getInstance().assertNotNull(clientEnvironment);
 
-		this.clientEnvironment = clientEnvironment;
-		this.recursive = recursive;
-	}
+    this.clientEnvironment = clientEnvironment;
+    this.recursive = recursive;
+  }
 
-	// Actions ================================================================
+  // Actions ================================================================
 
-	public void scan(List abstractFileObjects, CvsFiles cvsFiles) throws IOException {
-		cvsFiles.clear();
+  public void scan(List abstractFileObjects, CvsFiles cvsFiles) throws IOException {
+    cvsFiles.clear();
 
-		if (abstractFileObjects.size() == 0) {
-			// if no arguments have been specified, then specify the
-			// local directory - the "top level" for this command
-			scanDirectories(DirectoryObject.getRoot(), cvsFiles);
-		}
-		else {
-			for (Iterator it = abstractFileObjects.iterator(); it.hasNext();) {
-				final AbstractFileObject fileOrDirectory = (AbstractFileObject)it.next();
-				if (fileOrDirectory instanceof DirectoryObject) {
-					final DirectoryObject directoryObject = (DirectoryObject)fileOrDirectory;
-					scanDirectories(directoryObject, cvsFiles);
-				}
-				else if (fileOrDirectory instanceof FileObject) {
-					final FileObject fileObject = (FileObject)fileOrDirectory;
-					addRequestsForFile(fileObject, cvsFiles);
-				}
-			}
-		}
-	}
+    if (abstractFileObjects.size() == 0) {
+      // if no arguments have been specified, then specify the
+      // local directory - the "top level" for this command
+      scanDirectories(DirectoryObject.getRoot(), cvsFiles);
+    }
+    else {
+      for (Iterator it = abstractFileObjects.iterator(); it.hasNext();) {
+        final AbstractFileObject fileOrDirectory = (AbstractFileObject)it.next();
+        if (fileOrDirectory instanceof DirectoryObject) {
+          final DirectoryObject directoryObject = (DirectoryObject)fileOrDirectory;
+          scanDirectories(directoryObject, cvsFiles);
+        }
+        else if (fileOrDirectory instanceof FileObject) {
+          final FileObject fileObject = (FileObject)fileOrDirectory;
+          addRequestsForFile(fileObject, cvsFiles);
+        }
+      }
+    }
+  }
 
-	// Utils ==================================================================
+  // Utils ==================================================================
 
-	private void scanDirectories(DirectoryObject rootDirectoryObject, CvsFiles cvsFiles) throws IOException {
-		final List directories = new LinkedList();
-		directories.add(rootDirectoryObject);
-		while (directories.size() > 0) {
-			final DirectoryObject directoryObject = (DirectoryObject)directories.remove(0);
+  private void scanDirectories(DirectoryObject rootDirectoryObject, CvsFiles cvsFiles) throws IOException {
+    final List<DirectoryObject> directories = new LinkedList<DirectoryObject>();
+    directories.add(rootDirectoryObject);
+    while (directories.size() > 0) {
+      final DirectoryObject directoryObject = directories.remove(0);
 
-			final List subDirectories = scanDirectory(directoryObject, cvsFiles);
-			if (recursive) {
-				directories.addAll(subDirectories);
-			}
-		}
-	}
+      final List<DirectoryObject> subDirectories = scanDirectory(directoryObject, cvsFiles);
+      if (recursive) {
+        directories.addAll(subDirectories);
+      }
+    }
+  }
 
-	private List scanDirectory(DirectoryObject directoryObject, CvsFiles cvsFiles) throws IOException {
-		if (!clientEnvironment.getLocalFileReader().exists(directoryObject, clientEnvironment.getCvsFileSystem())) {
-			return Collections.EMPTY_LIST;
-		}
+  private List<DirectoryObject> scanDirectory(DirectoryObject directoryObject, CvsFiles cvsFiles) throws IOException {
+    if (!clientEnvironment.getLocalFileReader().exists(directoryObject, clientEnvironment.getCvsFileSystem())) {
+      return Collections.EMPTY_LIST;
+    }
 
-		cvsFiles.add(CvsFile.createCvsDirectory(directoryObject));
+    cvsFiles.add(CvsFile.createCvsDirectory(directoryObject));
 
-		final Set subDirectoryNames = new HashSet();
-		final LocalFiles localFiles = new LocalFiles(directoryObject, clientEnvironment);
+    final Set<String> subDirectoryNames = new HashSet<String>();
+    final LocalFiles localFiles = new LocalFiles(directoryObject, clientEnvironment);
 
-		// get all the entries we know about, and process them
-		final Collection entries = clientEnvironment.getAdminReader().getEntries(directoryObject, clientEnvironment.getCvsFileSystem());
-		for (Iterator it = entries.iterator(); it.hasNext();) {
-			final Entry entry = (Entry)it.next();
-			if (entry.isDirectory()) {
-				subDirectoryNames.add(entry.getFileName());
-			}
-			else {
-				final FileObject fileObject = FileObject.createInstance(directoryObject, entry.getFileName());
-				final boolean fileExists = clientEnvironment.getLocalFileReader().exists(fileObject, clientEnvironment.getCvsFileSystem());
+    // get all the entries we know about, and process them
+    final Collection<Entry> entries = clientEnvironment.getAdminReader().getEntries(directoryObject, clientEnvironment.getCvsFileSystem());
+    for (final Entry entry : entries) {
+      if (entry.isDirectory()) {
+        subDirectoryNames.add(entry.getFileName());
+      }
+      else {
+        final FileObject fileObject = FileObject.createInstance(directoryObject, entry.getFileName());
+        final boolean fileExists = clientEnvironment.getLocalFileReader().exists(fileObject, clientEnvironment.getCvsFileSystem());
 
-				cvsFiles.add(CvsFile.createCvsFileForEntry(fileObject, entry, fileExists));
+        cvsFiles.add(CvsFile.createCvsFileForEntry(fileObject, entry, fileExists));
 
-				localFiles.removeFile(entry.getFileName());
-			}
-		}
+        localFiles.removeFile(entry.getFileName());
+      }
+    }
 
-		for (Iterator it = localFiles.getFileNames().iterator(); it.hasNext();) {
-			final String fileName = (String)it.next();
+    for (final String fileName : localFiles.getFileNames()) {
+      cvsFiles.add(CvsFile.createCvsFileForExistingFile(FileObject.createInstance(directoryObject, fileName)));
+    }
 
-			cvsFiles.add(CvsFile.createCvsFileForExistingFile(FileObject.createInstance(directoryObject, fileName)));
-		}
+    final List<DirectoryObject> subDirectories = new ArrayList<DirectoryObject>(subDirectoryNames.size());
+    for (final String directoryName : subDirectoryNames) {
+      subDirectories.add(DirectoryObject.createInstance(directoryObject, directoryName));
+    }
+    return subDirectories;
+  }
 
-		final List subDirectories = new ArrayList(subDirectoryNames.size());
-		for (Iterator it = subDirectoryNames.iterator(); it.hasNext();) {
-			final String directoryName = (String)it.next();
-			subDirectories.add(DirectoryObject.createInstance(directoryObject, directoryName));
-		}
-		return subDirectories;
-	}
+  private void addRequestsForFile(FileObject fileObject, CvsFiles cvsFiles) {
+    cvsFiles.add(CvsFile.createCvsDirectory(fileObject.getParent()));
 
-	private void addRequestsForFile(FileObject fileObject, CvsFiles cvsFiles) {
-		cvsFiles.add(CvsFile.createCvsDirectory(fileObject.getParent()));
-
-		try {
-			final Entry entry = clientEnvironment.getAdminReader().getEntry(fileObject, clientEnvironment.getCvsFileSystem());
-			// a non-null entry means the file does exist in the
-			// Entries file for this directory
-			if (entry != null) {
-				final boolean exists = clientEnvironment.getLocalFileReader().exists(fileObject, clientEnvironment.getCvsFileSystem());
-				cvsFiles.add(CvsFile.createCvsFileForEntry(fileObject, entry, exists));
-			}
-		}
-		catch (IOException ex) {
-			ex.printStackTrace();
-		}
-	}
+    try {
+      final Entry entry = clientEnvironment.getAdminReader().getEntry(fileObject, clientEnvironment.getCvsFileSystem());
+      // a non-null entry means the file does exist in the
+      // Entries file for this directory
+      if (entry != null) {
+        final boolean exists = clientEnvironment.getLocalFileReader().exists(fileObject, clientEnvironment.getCvsFileSystem());
+        cvsFiles.add(CvsFile.createCvsFileForEntry(fileObject, entry, exists));
+      }
+    }
+    catch (IOException ex) {
+      ex.printStackTrace();
+    }
+  }
 }

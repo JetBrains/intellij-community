@@ -28,7 +28,7 @@ public class ConstantLocalFileReader implements ILocalFileReader{
   public void transmitTextFile(FileObject fileObject, IConnectionStreams connectionStreams, ICvsFileSystem cvsFileSystem) throws IOException {
   }
 
-  public void listFilesAndDirectories(DirectoryObject directoryObject, Collection fileNames, Collection directoryNames, ICvsFileSystem cvsFileSystem) {
+  public void listFilesAndDirectories(DirectoryObject directoryObject, Collection<String> fileNames, Collection<String> directoryNames, ICvsFileSystem cvsFileSystem) {
   }
 
   public boolean isWritable(FileObject fileObject, ICvsFileSystem cvsFileSystem) {

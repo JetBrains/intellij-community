@@ -20,30 +20,30 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 /**
- * @author  Thomas Singer
+ * @author Thomas Singer
  */
 final class LocalFiles {
 
-	// Fields =================================================================
+  // Fields =================================================================
 
-	private final Collection fileNames = new ArrayList();
+  private final Collection<String> fileNames = new ArrayList<String>();
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
-	public LocalFiles(DirectoryObject directoryObject, IClientEnvironment clientEnvironment) {
-		BugLog.getInstance().assertNotNull(directoryObject);
-		BugLog.getInstance().assertNotNull(clientEnvironment);
+  public LocalFiles(DirectoryObject directoryObject, IClientEnvironment clientEnvironment) {
+    BugLog.getInstance().assertNotNull(directoryObject);
+    BugLog.getInstance().assertNotNull(clientEnvironment);
 
-		clientEnvironment.getLocalFileReader().listFilesAndDirectories(directoryObject, fileNames, null, clientEnvironment.getCvsFileSystem());
-	}
+    clientEnvironment.getLocalFileReader().listFilesAndDirectories(directoryObject, fileNames, null, clientEnvironment.getCvsFileSystem());
+  }
 
-	// Accessing ==============================================================
+  // Accessing ==============================================================
 
-	public void removeFile(String fileName) {
-		fileNames.remove(fileName);
-	}
+  public void removeFile(String fileName) {
+    fileNames.remove(fileName);
+  }
 
-	public Collection getFileNames() {
-		return fileNames;
-	}
+  public Collection<String> getFileNames() {
+    return fileNames;
+  }
 }

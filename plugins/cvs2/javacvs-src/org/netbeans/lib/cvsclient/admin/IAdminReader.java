@@ -42,7 +42,7 @@ public interface IAdminReader {
 	 * Get the entries for a specified directory.
 	 * @return an iterator of Entry objects
 	 */
-	Collection getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException;
+	Collection<Entry> getEntries(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException;
 
 	/**
 	 * Get the repository path for a given directory, for example in

@@ -58,16 +58,15 @@ public class LocalFileReaderBasedOnVFS implements ILocalFileReader {
   }
 
   public void listFilesAndDirectories(DirectoryObject directoryObject,
-                                      Collection fileNames,
-                                      Collection directoryNames,
+                                      Collection<String> fileNames,
+                                      Collection<String> directoryNames,
                                       ICvsFileSystem cvsFileSystem) {
     VirtualFile virtualDirectory = getVirtualFile(directoryObject, cvsFileSystem);
     if (virtualDirectory == null) return;
     VirtualFile[] children = CvsVfsUtil.getChildrenOf(virtualDirectory);
     if (children == null) return;
 
-    for (int i = 0; i < children.length; i++) {
-      final VirtualFile fileOrDirectory = children[i];
+    for (final VirtualFile fileOrDirectory : children) {
       if (CvsUtil.CVS.equals(fileOrDirectory.getName())) continue;
       if (!myProjectContentInfoProvider.fileIsUnderProject(fileOrDirectory)) continue;
       final String name = fileOrDirectory.getName();

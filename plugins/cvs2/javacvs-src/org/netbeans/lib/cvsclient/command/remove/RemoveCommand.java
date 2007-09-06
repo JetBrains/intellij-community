@@ -35,120 +35,129 @@ import org.jetbrains.annotations.NonNls;
 import java.io.IOException;
 
 /**
- * @author  Thomas Singer
+ * @author Thomas Singer
  */
 public final class RemoveCommand extends AbstractCommand {
 
-	// Fields =================================================================
+  // Fields =================================================================
 
-	private boolean deleteBeforeRemove;
-	private boolean ignoreLocallyExistingFiles;
+  private boolean deleteBeforeRemove;
+  private boolean ignoreLocallyExistingFiles;
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
-	public RemoveCommand() {
-	}
+  public RemoveCommand() {
+  }
 
-	// Implemented ============================================================
+  // Implemented ============================================================
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventSender, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException {
-		final ICvsFiles cvsFiles;
-		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
-		}
-		catch (IOException ex) {
-			throw new IOCommandException(ex);
-		}
+  public boolean execute(IRequestProcessor requestProcessor,
+                         IEventSender eventSender,
+                         ICvsListenerRegistry listenerRegistry,
+                         IClientEnvironment clientEnvironment,
+                         IProgressViewer progressViewer) throws CommandException {
+    final ICvsFiles cvsFiles;
+    try {
+      cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+    }
+    catch (IOException ex) {
+      throw new IOCommandException(ex);
+    }
 
-		final Requests requests = new Requests(CommandRequest.REMOVE, clientEnvironment);
-		addFileRequests(cvsFiles, requests, clientEnvironment);
-		requests.addLocalPathDirectoryRequest();
-		addArgumentRequests(requests);
+    final Requests requests = new Requests(CommandRequest.REMOVE, clientEnvironment);
+    addFileRequests(cvsFiles, requests, clientEnvironment);
+    requests.addLocalPathDirectoryRequest();
+    addArgumentRequests(requests);
 
-		final ICvsListener parser = new RemoveParser(eventSender, clientEnvironment.getCvsFileSystem());
-		parser.registerListeners(listenerRegistry);
-		try {
-			return requestProcessor.processRequests(requests, FileStateRequestsProgressHandler.create(progressViewer, cvsFiles));
-		}
-		finally {
-			parser.unregisterListeners(listenerRegistry);
-		}
-	}
+    final ICvsListener parser = new RemoveParser(eventSender, clientEnvironment.getCvsFileSystem());
+    parser.registerListeners(listenerRegistry);
+    try {
+      return requestProcessor.processRequests(requests, FileStateRequestsProgressHandler.create(progressViewer, cvsFiles));
+    }
+    finally {
+      parser.unregisterListeners(listenerRegistry);
+    }
+  }
 
-	protected void addRequestForFile(FileObject fileObject, Entry entry, boolean fileExists, Requests requests, IClientEnvironment clientEnvironment) {
-		if (isDeleteBeforeRemove()) {
-			try {
-				clientEnvironment.getLocalFileWriter().removeLocalFile(fileObject, clientEnvironment.getCvsFileSystem(), clientEnvironment.getFileReadOnlyHandler());
-			}
-			catch (IOException ex) {
-				BugLog.getInstance().showException(ex);
-			}
-			fileExists = false;
-		}
-		if (isIgnoreLocallyExistingFiles()) {
-			fileExists = false;
-		}
-		super.addRequestForFile(fileObject, entry, fileExists, requests, clientEnvironment);
-	}
+  protected void addRequestForFile(FileObject fileObject,
+                                   Entry entry,
+                                   boolean fileExists,
+                                   Requests requests,
+                                   IClientEnvironment clientEnvironment) {
+    if (isDeleteBeforeRemove()) {
+      try {
+        clientEnvironment.getLocalFileWriter()
+          .removeLocalFile(fileObject, clientEnvironment.getCvsFileSystem(), clientEnvironment.getFileReadOnlyHandler());
+      }
+      catch (IOException ex) {
+        BugLog.getInstance().showException(ex);
+      }
+      fileExists = false;
+    }
+    if (isIgnoreLocallyExistingFiles()) {
+      fileExists = false;
+    }
+    super.addRequestForFile(fileObject, entry, fileExists, requests, clientEnvironment);
+  }
 
-	public String getCvsCommandLine() {
-		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("remove ");
-		cvsCommandLine.append(getCvsArguments());
-		appendFileArguments(cvsCommandLine);
-		return cvsCommandLine.toString();
-	}
+  public String getCvsCommandLine() {
+    @NonNls final StringBuffer cvsCommandLine = new StringBuffer("remove ");
+    cvsCommandLine.append(getCvsArguments());
+    appendFileArguments(cvsCommandLine);
+    return cvsCommandLine.toString();
+  }
 
-	public void resetCvsCommand() {
-		super.resetCvsCommand();
-		setRecursive(false);
-		setDeleteBeforeRemove(false);
-		setIgnoreLocallyExistingFiles(false);
-	}
+  public void resetCvsCommand() {
+    super.resetCvsCommand();
+    setRecursive(false);
+    setDeleteBeforeRemove(false);
+    setIgnoreLocallyExistingFiles(false);
+  }
 
-	// Accessing ==============================================================
+  // Accessing ==============================================================
 
-	/**
-	 * Returns true if the local files will be deleted automatically.
-	 */
-	private boolean isDeleteBeforeRemove() {
-		return deleteBeforeRemove;
-	}
+  /**
+   * Returns true if the local files will be deleted automatically.
+   */
+  private boolean isDeleteBeforeRemove() {
+    return deleteBeforeRemove;
+  }
 
-	/**
-	 * Sets whether the local files will be deleted before.
-	 */
-	public void setDeleteBeforeRemove(boolean deleteBeforeRemove) {
-		this.deleteBeforeRemove = deleteBeforeRemove;
-	}
+  /**
+   * Sets whether the local files will be deleted before.
+   */
+  public void setDeleteBeforeRemove(boolean deleteBeforeRemove) {
+    this.deleteBeforeRemove = deleteBeforeRemove;
+  }
 
-	/**
-	 * Returns true to indicate that locally existing files are treated as they
-	 * would not exist.
-	 * This is a extension to the standard cvs-behaviour!
-	 */
-	private boolean isIgnoreLocallyExistingFiles() {
-		return ignoreLocallyExistingFiles;
-	}
+  /**
+   * Returns true to indicate that locally existing files are treated as they
+   * would not exist.
+   * This is a extension to the standard cvs-behaviour!
+   */
+  private boolean isIgnoreLocallyExistingFiles() {
+    return ignoreLocallyExistingFiles;
+  }
 
-	/**
-	 * Sets whether locally existing files will be treated as they were deleted
-	 * before.
-	 * This is a extension to the standard cvs-behaviour!
-	 */
-	public void setIgnoreLocallyExistingFiles(boolean ignoreLocallyExistingFiles) {
-		this.ignoreLocallyExistingFiles = ignoreLocallyExistingFiles;
-	}
+  /**
+   * Sets whether locally existing files will be treated as they were deleted
+   * before.
+   * This is a extension to the standard cvs-behaviour!
+   */
+  public void setIgnoreLocallyExistingFiles(boolean ignoreLocallyExistingFiles) {
+    this.ignoreLocallyExistingFiles = ignoreLocallyExistingFiles;
+  }
 
-	// Utils ==================================================================
+  // Utils ==================================================================
 
-	private String getCvsArguments() {
-		@NonNls final StringBuffer toReturn = new StringBuffer("");
-		if (!isRecursive()) {
-			toReturn.append("-l ");
-		}
-		if (isDeleteBeforeRemove()) {
-			toReturn.append("-f ");
-		}
-		return toReturn.toString();
-	}
+  private String getCvsArguments() {
+    @NonNls final StringBuffer toReturn = new StringBuffer("");
+    if (!isRecursive()) {
+      toReturn.append("-l ");
+    }
+    if (isDeleteBeforeRemove()) {
+      toReturn.append("-f ");
+    }
+    return toReturn.toString();
+  }
 }
