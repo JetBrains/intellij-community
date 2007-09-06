@@ -107,11 +107,11 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   }
 
   interface BestLocationPointProvider {
-    Point getBestPointPosition(LightweightHint hint);
+    Point getBestPointPosition(LightweightHint hint, final PsiElement list, int offset);
   }
 
   private static void showParameterHint(final PsiElement element, final Editor editor, final Object[] descriptors,
-                                        final Project project, BestLocationPointProvider provider,
+                                        final Project project, final BestLocationPointProvider provider,
                                         @Nullable PsiElement highlighted,
                                         final int elementStart, final ParameterInfoHandler handler
                                         ) {
@@ -129,7 +129,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     final LightweightHint hint = new LightweightHint(component);
     hint.setSelectingHint(true);
     final HintManager hintManager = HintManager.getInstance();
-    final Point p = provider.getBestPointPosition(hint);
+    final Point p = provider.getBestPointPosition(hint, element, elementStart);
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -138,7 +138,8 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                                     editor,
                                     elementStart,
                                     hint,
-                                    handler
+                                    handler,
+                                    provider
                                     );
       }
     });
@@ -151,7 +152,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                                      int offset,
                                      ParameterInfoHandler handler
                                      ) {
-    showParameterHint(list, editor, candidates, project, new MyBestLocationPointProvider(list, editor, project,offset),
+    showParameterHint(list, editor, candidates, project, new MyBestLocationPointProvider(editor),
                       candidates.length > 1 ? highlighted: null,offset, handler);
   }
 
@@ -272,27 +273,26 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   }
 
   private static class MyBestLocationPointProvider implements BestLocationPointProvider {
-    private final PsiElement myList;
     private final Editor myEditor;
-    private final Project myProject;
-    private final int myStartOffset;
+    private int previousOffset;
+    private Point previousBestPoint;
 
-    public MyBestLocationPointProvider(final PsiElement list, final Editor editor, final Project project, int offset) {
-      myList = list;
+    public MyBestLocationPointProvider(final Editor editor) {
       myEditor = editor;
-      myProject = project;
-      final TextRange textRange = myList.getTextRange();
-      myStartOffset = textRange.contains(offset) ? offset:textRange.getStartOffset() + 1;
     }
 
-    public Point getBestPointPosition(LightweightHint hint) {
-      String listText = myList.getText();
+    public Point getBestPointPosition(LightweightHint hint, final PsiElement list, int offset) {
+      final TextRange textRange = list.getTextRange();
+      offset = textRange.contains(offset) ? offset:textRange.getStartOffset() + 1;
+      if (previousOffset == offset) return previousBestPoint;
+
+      String listText = list.getText();
       final boolean isMultiline = listText.indexOf('\n') >= 0 || listText.indexOf('\r') >= 0;
-      final LogicalPosition pos = myEditor.offsetToLogicalPosition(myStartOffset);
+      final LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
       Point p;
 
       if (!isMultiline) {
-        p = chooseBestHintPosition(myProject, myEditor, pos.line, pos.column, hint);
+        p = chooseBestHintPosition(myEditor.getProject(), myEditor, pos.line, pos.column, hint);
       }
       else {
         p = HintManager.getInstance().getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
@@ -302,6 +302,8 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
         p.x = Math.min(p.x, layeredPane.getWidth() - hintSize.width);
         p.x = Math.max(p.x, 0);
       }
+      previousBestPoint = p;
+      previousOffset = offset;
       return p;
     }
   }

@@ -301,12 +301,7 @@ public class HintManager implements ApplicationComponent {
 
     Component component = hint.getComponent();
 
-    JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
-    Dimension size = component.getPreferredSize();
-    if(layeredPane.getWidth() < p.x + size.width) {
-      p.x = Math.max(0, layeredPane.getWidth() - size.width);
-    }
-    hint.show(layeredPane, p.x, p.y, editor.getContentComponent());
+    doShowInGivenLocation(hint, editor, p);
 
     ListenerUtil.addMouseListener(
       component,
@@ -339,6 +334,20 @@ public class HintManager implements ApplicationComponent {
       timer.setRepeats(false);
       timer.start();
     }
+  }
+
+  private void doShowInGivenLocation(final LightweightHint hint, final Editor editor, final Point p) {
+    JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
+    Dimension size = hint.getComponent().getPreferredSize();
+    if(layeredPane.getWidth() < p.x + size.width) {
+      p.x = Math.max(0, layeredPane.getWidth() - size.width);
+    }
+    if (!hint.isVisible()) hint.show(layeredPane, p.x, p.y, editor.getContentComponent());
+    else hint.setLocation(p.x, p.y);
+  }
+
+  public void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p) {
+    doShowInGivenLocation(hint, editor, p);
   }
 
   public void hideAllHints() {

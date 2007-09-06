@@ -41,6 +41,7 @@ public class ParameterInfoController {
   private final DocumentListener myEditorDocumentListener;
   private final PropertyChangeListener myLookupListener;
   private final @NotNull ParameterInfoHandler myHandler;
+  private ShowParameterInfoHandler.BestLocationPointProvider myProvider;
 
   private final Alarm myAlarm = new Alarm();
   private static final int DELAY = 200;
@@ -121,16 +122,12 @@ public class ParameterInfoController {
     return findControllerAtOffset(editor, lbraceOffset) != null;
   }
 
-  public ParameterInfoController(
-      Project project,
-      Editor editor,
-      int lbraceOffset,
-      LightweightHint hint,
-      @NotNull ParameterInfoHandler handler
-      ) {
+  public ParameterInfoController(Project project, Editor editor, int lbraceOffset, LightweightHint hint, @NotNull ParameterInfoHandler handler,
+                                 final ShowParameterInfoHandler.BestLocationPointProvider provider) {
     myProject = project;
     myEditor = editor;
     myHandler = handler;
+    myProvider = provider;
     myParameterCloseChars = handler.getParameterCloseChars();
     myLbraceMarker = editor.getDocument().createRangeMarker(lbraceOffset, lbraceOffset);
     myHint = hint;
@@ -264,7 +261,12 @@ public class ParameterInfoController {
     final UpdateParameterInfoContext context = new MyUpdateParameterInfoContext(offset, file);
     final Object elementForUpdating = myHandler.findElementForUpdatingParameterInfo(context);
 
-    if (elementForUpdating != null) myHandler.updateParameterInfo(elementForUpdating, context);
+    if (elementForUpdating != null) {
+      myHandler.updateParameterInfo(elementForUpdating, context);
+      if (myHint.isVisible()) {
+        HintManager.getInstance().adjustEditorHintPosition(myHint, myEditor, myProvider.getBestPointPosition(myHint, (PsiElement)elementForUpdating,offset));
+      }
+    }
     else context.removeHint();
 
     myComponent.update();
