@@ -1,27 +1,27 @@
 package org.jetbrains.idea.eclipse.config;
 
-import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
-import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
-import com.intellij.openapi.roots.impl.storage.FileSet;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
+import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
+import com.intellij.openapi.roots.impl.storage.FileSet;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.action.EclipseBundle;
-import org.jetbrains.idea.eclipse.*;
-import org.jetbrains.idea.eclipse.util.XmlDocumentSet;
-import org.jetbrains.idea.eclipse.util.JDOM;
 import org.jdom.Document;
-import org.jdom.JDOMException;
 import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.*;
+import org.jetbrains.idea.eclipse.action.EclipseBundle;
+import org.jetbrains.idea.eclipse.util.JDOM;
+import org.jetbrains.idea.eclipse.util.XmlDocumentSet;
 
 import java.io.IOException;
 
@@ -161,7 +161,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
     public FileSet getFileSet() {
       CachedXmlDocumentSet fileCache = EclipseModuleManager.getInstance(module).getDocumentSet();
-      return fileCache != null ? fileCache : FileSet.dummy;
+      return fileCache != null ? fileCache : getFileCache(module);
     }
 
     public void getClasspath(final Element element) throws IOException, InvalidDataException {
