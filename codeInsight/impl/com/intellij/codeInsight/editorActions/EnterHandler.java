@@ -339,6 +339,11 @@ public class EnterHandler extends EditorWriteActionHandler {
         }
       }
       if (lexer.getTokenEnd() == commentText.length()) {
+        if (lexer.getTokenType() == commenter.getLineCommentTokenType()) {
+          lexer.start(commentText, lexer.getTokenStart() + commenter.getLineCommentPrefix().length(), commentText.length(), 0);
+          lexer.advance();
+          continue;
+        }
         return lexer.getTokenEnd() - lexer.getTokenStart() == 1;
       }
       if (tokenType == commenter.getDocumentationCommentTokenType() || tokenType == commenter.getBlockCommentTokenType()) {
