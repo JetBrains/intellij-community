@@ -1,14 +1,12 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -20,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -103,16 +100,6 @@ public class SvnRenameTest extends SvnTestCase {
 
     VirtualFile oldChild = myWorkingCopyDir.findChild("child");
     Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(oldChild));
-  }
-
-  private void sortChanges(final List<Change> changes) {
-    Collections.sort(changes, new Comparator<Change>() {
-      public int compare(final Change o1, final Change o2) {
-        final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
-        final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());
-        return p1.compareTo(p2);
-      }
-    });
   }
 
   private VirtualFile prepareDirectoriesForRename() throws IOException {
