@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.generation.ui.GenerateEqualsWizard;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -88,7 +89,10 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
     try {
       Project project = aClass.getProject();
-      GenerateEqualsHelper helper = new GenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields);
+      final boolean useInstanceofToCheckParameterType = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
+
+      GenerateEqualsHelper helper = new GenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields,
+                                                             useInstanceofToCheckParameterType);
       return OverrideImplementUtil.convert2GenerationInfos(helper.generateMembers());
     }
     catch (GenerateEqualsHelper.NoObjectClassException e) {

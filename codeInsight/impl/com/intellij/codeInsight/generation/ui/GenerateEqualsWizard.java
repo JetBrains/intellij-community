@@ -1,23 +1,30 @@
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.MemberInfoModel;
 import com.intellij.refactoring.util.classMembers.MemberInfoTooltipManager;
+import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -91,6 +98,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
     final MyTableModelListener listener = new MyTableModelListener();
     if (myEqualsPanel != null) {
       myEqualsPanel.getTable().getModel().addTableModelListener(listener);
+      addStep(new InstanceofOptionStep());
       addStep(new MyStep(myEqualsPanel));
     }
     if (myHashCodePanel != null) {
@@ -153,7 +161,10 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
   protected void updateStep() {
     super.updateStep();
-    ((MemberSelectionPanel)getCurrentStepComponent()).getTable().requestFocus();
+    final Component stepComponent = getCurrentStepComponent();
+    if (stepComponent instanceof MemberSelectionPanel) {
+      ((MemberSelectionPanel)stepComponent).getTable().requestFocus();
+    }
   }
 
   protected String getHelpID() {
@@ -248,12 +259,45 @@ public class GenerateEqualsWizard extends AbstractWizard {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return ((MemberSelectionPanel)getCurrentStepComponent()).getTable();
+    final Component stepComponent = getCurrentStepComponent();
+    if (stepComponent instanceof MemberSelectionPanel) {
+      return ((MemberSelectionPanel)stepComponent).getTable();
+    }
+    else {
+      return null;
+    }
   }
 
   private class MyTableModelListener implements TableModelListener {
     public void tableChanged(TableModelEvent e) {
       updateStatus();
+    }
+  }
+
+  private static class InstanceofOptionStep extends StepAdapter {
+    private JComponent myPanel;
+
+    private InstanceofOptionStep() {
+      final JCheckBox checkbox = new NonFocusableCheckBox(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses"));
+      checkbox.setSelected(CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
+      checkbox.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = checkbox.isSelected();
+        }
+      });
+
+      myPanel = new JPanel(new VerticalFlowLayout());
+      myPanel.add(checkbox);
+      myPanel.add(new JLabel(CodeInsightBundle.message("generate.equals.hashcode.accept.sublcasses.explanation")));
+    }
+
+    public JComponent getComponent() {
+      return myPanel;
+    }
+
+    @Nullable
+    public Icon getIcon() {
+      return null;
     }
   }
 

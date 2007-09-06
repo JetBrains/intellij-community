@@ -121,6 +121,8 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
 
   public boolean AUTOINDENT_CLOSING_BRACE = true;
 
+  public boolean USE_INSTANCEOF_ON_EQUALS_PARAMETER = false;
+
   @Property(surroundWithTag = false)
   @AbstractCollection(
     surroundWithTag = false,

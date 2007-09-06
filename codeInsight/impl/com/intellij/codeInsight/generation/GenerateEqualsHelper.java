@@ -46,6 +46,7 @@ public class GenerateEqualsHelper implements Runnable {
   private final boolean mySuperHasHashCode;
   private CodeStyleManager myCodeStyleManager;
   private final Project myProject;
+  private boolean myCheckParameterWithInstanceof;
 
   public static class NoObjectClassException extends Exception {
   }
@@ -54,11 +55,13 @@ public class GenerateEqualsHelper implements Runnable {
                               PsiClass aClass,
                               PsiField[] equalsFields,
                               PsiField[] hashCodeFields,
-                              PsiField[] nonNullFields) throws NoObjectClassException {
+                              PsiField[] nonNullFields,
+                              boolean useInstanceofToCheckParameterType) throws NoObjectClassException {
     myClass = aClass;
     myEqualsFields = equalsFields;
     myHashCodeFields = hashCodeFields;
     myProject = project;
+    myCheckParameterWithInstanceof = useInstanceofToCheckParameterType;
 
     myNonNullSet = new HashSet<PsiField>();
     for (PsiField field : nonNullFields) {
@@ -257,8 +260,14 @@ public class GenerateEqualsHelper implements Runnable {
 
   @SuppressWarnings("HardCodedStringLiteral")
   private void addInstanceOfToText(@NonNls StringBuffer buffer, String returnValue) {
-    buffer.append("if(").append(myParameterName).append("== null || getClass() != ").append(myParameterName)
-      .append(".getClass()) " + "return ").append(returnValue).append(";\n");
+    if (myCheckParameterWithInstanceof) {
+      buffer.append("if(!(").append(myParameterName).append(" instanceof ").append(myClass.getName())
+        .append(")) " + "return ").append(returnValue).append(";\n");
+    }
+    else {
+      buffer.append("if(").append(myParameterName).append("== null || getClass() != ").append(myParameterName)
+        .append(".getClass()) " + "return ").append(returnValue).append(";\n");
+    }
   }
 
   @SuppressWarnings("HardCodedStringLiteral")

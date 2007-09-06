@@ -15,9 +15,11 @@
  */
 package com.intellij.ide.wizard;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Vladimir Kondratyev
@@ -34,6 +36,7 @@ public class StepAdapter implements Step {
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   public Icon getIcon() {
     throw new UnsupportedOperationException();
   }
