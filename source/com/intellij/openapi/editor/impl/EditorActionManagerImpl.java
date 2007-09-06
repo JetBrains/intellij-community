@@ -36,11 +36,11 @@ public class EditorActionManagerImpl extends EditorActionManager implements Appl
     BraceMatchingUtil.registerBraceMatcher(StdFileTypes.XHTML,braceMatcher);
   }
 
-  public EditorActionHandler getActionHandler(String actionId) {
+  public EditorActionHandler getActionHandler(@NotNull String actionId) {
     return ((EditorAction) myActionManager.getAction(actionId)).getHandler();
   }
 
-  public EditorActionHandler setActionHandler(String actionId, EditorActionHandler handler) {
+  public EditorActionHandler setActionHandler(@NotNull String actionId, @NotNull EditorActionHandler handler) {
     EditorAction action = (EditorAction)myActionManager.getAction(actionId);
     return action.setupHandler(handler);
   }
@@ -59,7 +59,7 @@ public class EditorActionManagerImpl extends EditorActionManager implements Appl
     return myReadonlyFragmentsHandler;
   }
 
-  public ReadonlyFragmentModificationHandler setReadonlyFragmentModificationHandler(ReadonlyFragmentModificationHandler handler) {
+  public ReadonlyFragmentModificationHandler setReadonlyFragmentModificationHandler(@NotNull ReadonlyFragmentModificationHandler handler) {
     ReadonlyFragmentModificationHandler oldHandler = myReadonlyFragmentsHandler;
     myReadonlyFragmentsHandler = handler;
     return oldHandler;

@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * Allows to register actions which are activated by typing and navigation keystrokes
@@ -40,7 +41,7 @@ public abstract class EditorActionManager {
    *                 by constants starting with <code>ACTION_EDITOR_</code>.
    * @return the handler currently defined for the action.
    */
-  public abstract EditorActionHandler getActionHandler(String actionId);
+  public abstract EditorActionHandler getActionHandler(@NonNls @NotNull String actionId);
 
   /**
    * Sets the handler for the specified editor actions.
@@ -50,7 +51,7 @@ public abstract class EditorActionManager {
    *                 by constants starting with <code>ACTION_EDITOR_</code>.
    * @return the handler previously defined for the action.
    */
-  public abstract EditorActionHandler setActionHandler(String actionId, EditorActionHandler handler);
+  public abstract EditorActionHandler setActionHandler(@NonNls @NotNull String actionId, @NotNull EditorActionHandler handler);
 
   /**
    * Returns the service for registering actions activated by typing visible characters
@@ -76,6 +77,6 @@ public abstract class EditorActionManager {
    * @return the old instance of the handler.
    * @see com.intellij.openapi.editor.Document#createGuardedBlock(int, int)
    */
-  public abstract ReadonlyFragmentModificationHandler setReadonlyFragmentModificationHandler(ReadonlyFragmentModificationHandler handler);
+  public abstract ReadonlyFragmentModificationHandler setReadonlyFragmentModificationHandler(@NotNull ReadonlyFragmentModificationHandler handler);
 }
 

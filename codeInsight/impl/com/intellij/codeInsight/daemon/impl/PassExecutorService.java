@@ -272,13 +272,11 @@ public abstract class PassExecutorService {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
-                if (myUpdateProgress.isCanceled()) {
-                  throw new ProcessCanceledException();
+                if (!myUpdateProgress.isCanceled()) {
+                  myPass.collectInformation(myUpdateProgress);
                 }
-                myPass.collectInformation(myUpdateProgress);
               }
               catch (ProcessCanceledException e) {
-                myUpdateProgress.cancel();
                 log(myUpdateProgress, myPass, "Canceled ");
               }
               catch(RuntimeException e) {

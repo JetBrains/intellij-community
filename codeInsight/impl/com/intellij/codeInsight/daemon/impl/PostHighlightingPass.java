@@ -144,7 +144,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         myHighlights = highlights;
       }
     };
-    myRefCountHolder.retrieveUnusedReferencesInfo(doCollectInfo);
+    myRefCountHolder.retrieveUnusedReferencesInfo(doCollectInfo, progress);
   }
 
   public void doApplyInformationToEditor() {

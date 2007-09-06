@@ -175,7 +175,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       };
       if (refCountHolder != null) {
-        refCountHolder.analyzeAndStoreReferences(doCollectInfo);
+        refCountHolder.analyzeAndStoreReferences(doCollectInfo, progress);
       }
       else {
         doCollectInfo.run();

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -228,9 +228,12 @@ public class RefCountHolder {
     return result;
   }
 
-  public void analyzeAndStoreReferences(Runnable analyze) throws ProcessCanceledException {
+  public void analyzeAndStoreReferences(Runnable analyze, ProgressIndicator progress) {
     myState.compareAndSet(State.READY, State.VIRGIN);
-    if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) throw new ProcessCanceledException();
+    if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) {
+      progress.cancel();
+      return;
+    }
     int newState;
     try {
       analyze.run();
@@ -243,8 +246,11 @@ public class RefCountHolder {
     assert set : myState.get();
   }
 
-  public void retrieveUnusedReferencesInfo(Runnable analyze) throws ProcessCanceledException {
-    if (!myState.compareAndSet(State.READY, State.BEING_USED_BY_PHP)) throw new ProcessCanceledException();
+  public void retrieveUnusedReferencesInfo(Runnable analyze, ProgressIndicator progress) {
+    if (!myState.compareAndSet(State.READY, State.BEING_USED_BY_PHP)) {
+      progress.cancel();
+      return;
+    }
     try {
       analyze.run();
     }
