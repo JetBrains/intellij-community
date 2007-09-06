@@ -24,6 +24,7 @@ import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.lang.ref.WeakReference;
 
 /**
  * Spies how focus goes in the component.
@@ -34,13 +35,13 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   /**
    * Last component that had focus.
    */
-  private Component myFocusedComponent;
+  private WeakReference<Component> myFocusedComponent;
   /**
    * TODO[vova,anton] the name getMostRecentFocusOwner is better. The description could be copied from
    * java.awt.Window.getMostRecentFocusOwner() method.
    * This is the nearest component to the myFocusableComponent
    */
-  private Component myNearestFocusableComponent;
+  private WeakReference<Component> myNearestFocusableComponent;
 
   /**
    * @return top component on which focus watcher was installed.
@@ -57,11 +58,11 @@ public class FocusWatcher implements ContainerListener,FocusListener{
 
   public final void componentRemoved(final ContainerEvent e){
     Component removedChild=e.getChild();
-    if(myNearestFocusableComponent!=null&&SwingUtilities.isDescendingFrom(myNearestFocusableComponent,removedChild)){
-      myNearestFocusableComponent=null;
+    if(getNearestFocusableComponent() !=null&&SwingUtilities.isDescendingFrom(getNearestFocusableComponent(),removedChild)){
+      setNearestFocusableComponent(null);
     }
-    if(myFocusedComponent!=null&&SwingUtilities.isDescendingFrom(myFocusedComponent,removedChild)){
-      myNearestFocusableComponent=e.getContainer();
+    if(getFocusedComponent() !=null&&SwingUtilities.isDescendingFrom(getFocusedComponent(),removedChild)){
+      setNearestFocusableComponent(e.getContainer());
     }
     deinstall(removedChild, e);
   }
@@ -80,7 +81,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
       container.removeContainerListener(this);
     }
     component.removeFocusListener(this);
-    if(myFocusedComponent==component){
+    if(getFocusedComponent() ==component){
       setFocusedComponentImpl(null, cause);
     }
   }
@@ -91,7 +92,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
       return;
     }
     setFocusedComponentImpl(component, e);
-    myNearestFocusableComponent=component.getParent();
+    setNearestFocusableComponent(component.getParent());
   }
 
   public final void focusLost(final FocusEvent e){
@@ -105,11 +106,11 @@ public class FocusWatcher implements ContainerListener,FocusListener{
    * @return last focused component or <code>null</code>.
    */
   public final Component getFocusedComponent(){
-    return myFocusedComponent;
+    return myFocusedComponent != null ? myFocusedComponent.get() : null;
   }
 
   public final Component getNearestFocusableComponent() {
-    return myNearestFocusableComponent;
+    return myNearestFocusableComponent != null ? myNearestFocusableComponent.get() : null;
   }
 
   public final void install(@NotNull Component component){
@@ -139,7 +140,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   public void setFocusedComponentImpl(Component component, @Nullable AWTEvent cause){
     if (!isFocusedComponentChangeValid(component, cause)) return;
 
-    myFocusedComponent=component;
+    setFocusedComponent(component);
     focusedComponentChanged(component, cause);
   }
 
@@ -158,4 +159,12 @@ public class FocusWatcher implements ContainerListener,FocusListener{
   protected void focusedComponentChanged(Component component, @Nullable final AWTEvent cause){}
   
   protected void focusLostImpl(final FocusEvent e){}
+
+  private void setFocusedComponent(final Component focusedComponent) {
+    myFocusedComponent = new WeakReference<Component>(focusedComponent);
+  }
+
+  private void setNearestFocusableComponent(final Component nearestFocusableComponent) {
+    myNearestFocusableComponent = new WeakReference<Component>(nearestFocusableComponent);
+  }
 }
