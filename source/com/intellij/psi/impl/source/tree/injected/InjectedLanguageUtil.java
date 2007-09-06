@@ -395,7 +395,7 @@ public class InjectedLanguageUtil {
       if (hostDocument == null) return null;
 
       final Places result = new PlacesImpl();
-      InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstance(element.getProject());
+      InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstance(hostPsiFile.getProject());
       if (injectedManager == null) return null; //for tests
       injectedManager.processInPlaceInjectorsFor(element, new Processor<InjectedLanguageManager.MultiHostInjector>() {
         public boolean process(InjectedLanguageManager.MultiHostInjector injector) {
