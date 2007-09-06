@@ -318,6 +318,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   @NotNull
   public PsiMethod[] findSuperMethods() {
     PsiClass containingClass = getContainingClass();
+    if (containingClass == null) return PsiMethod.EMPTY_ARRAY;
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this), new HashSet<MethodSignature>());
