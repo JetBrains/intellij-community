@@ -56,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -63,6 +64,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -508,6 +510,22 @@ public class GroovyAnnotator implements Annotator {
   private void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
     if (typeDefinition.getParent() instanceof GrClassBody) {
       holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), "Inner classes are not supported in Groovy");
+    }
+
+    final GrImplementsClause implementsClause = ((GrTypeDefinitionImpl) typeDefinition).getImplementsClause();
+    if (implementsClause == null) return;
+
+    final GrCodeReferenceElement[] implementsList = implementsClause.getReferenceElements();
+
+    if (implementsList.length != 0) {
+      for (GrCodeReferenceElement implementElement : implementsList) {
+        final PsiElement implClass = implementElement.resolve();
+        if (implClass == null || !(implClass instanceof PsiClass)) return;
+
+        if (!((PsiClass) implClass).isInterface()) {
+          holder.createErrorAnnotation(implementElement, GroovyBundle.message("interface.expected.here"));
+        }
+      }
     }
   }
 
