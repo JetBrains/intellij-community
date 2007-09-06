@@ -33,10 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -253,7 +250,11 @@ public class AbstractVcsTestCase {
   }
 
   protected void deleteFileInCommand(final VirtualFile file) {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+    doDeleteFileInCommand(myProject, file);
+  }
+
+  public static void doDeleteFileInCommand(final Project project, final VirtualFile file) {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         try {
           file.delete(this);
@@ -262,7 +263,7 @@ public class AbstractVcsTestCase {
           throw new RuntimeException(ex);
         }
       }
-    }, "", this);
+    }, "", file);
   }
 
   protected void copyFileInCommand(final VirtualFile file, final String toName) {
@@ -311,6 +312,16 @@ public class AbstractVcsTestCase {
     String beforeFullPath = FileUtil.toSystemIndependentName(beforeFile.getPath());
     final String beforeRevPath = FileUtil.toSystemIndependentName(beforeRevision.getFile().getPath());
     Assert.assertTrue(beforeFullPath.equalsIgnoreCase(beforeRevPath));
+  }
+
+  public static void sortChanges(final List<Change> changes) {
+    Collections.sort(changes, new Comparator<Change>() {
+      public int compare(final Change o1, final Change o2) {
+        final String p1 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o1).getPath());
+        final String p2 = FileUtil.toSystemIndependentName(ChangesUtil.getFilePath(o2).getPath());
+        return p1.compareTo(p2);
+      }
+    });
   }
 
   protected static class RunResult {
