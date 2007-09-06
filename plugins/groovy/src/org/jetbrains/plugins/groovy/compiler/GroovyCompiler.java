@@ -78,6 +78,10 @@ public class GroovyCompiler implements TranslatingCompiler {
       commandLine = new GeneralCommandLine();
       commandLine.setExePath(JAVA_EXE);
 
+/*
+      commandLine.addParameter("-Xdebug");
+      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5046");
+*/
       commandLine.addParameter("-cp");
 
       String myJarPath = PathUtil.getJarPathForClass(getClass());
@@ -307,27 +311,21 @@ public class GroovyCompiler implements TranslatingCompiler {
       cpVFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
     }
 
-    StringBuffer path = new StringBuffer();
-
     VirtualFile[] filesArray = cpVFiles.toArray(new VirtualFile[cpVFiles.size()]);
-    for (int i = 0; i < filesArray.length; i++) {
-      VirtualFile file = filesArray[i];
+    PathsList pathsList = new PathsList();
+    for (VirtualFile file : filesArray) {
       String filePath = file.getPath();
 
       int jarSeparatorIndex = filePath.indexOf(JarFileSystem.JAR_SEPARATOR);
       if (jarSeparatorIndex > 0) {
         filePath = filePath.substring(0, jarSeparatorIndex);
       }
-      path.append(filePath);
 
-      if (i < filesArray.length - 1) {
-        path.append(CLASS_PATH_LIST_SEPARATOR);
-      }
+      pathsList.add(filePath);
     }
 
-    PathsList pathsList = new PathsList();
-    pathsList.add(path.toString());
-
+    final String output = CompilerPaths.getModuleOutputPath(module, false);
+    if (output != null) pathsList.add(output);
     return pathsList;
   }
 
