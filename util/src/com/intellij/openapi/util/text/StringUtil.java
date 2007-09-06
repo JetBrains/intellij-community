@@ -707,19 +707,20 @@ public class StringUtil {
     return stringWriter.getBuffer().toString();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getMessage(Throwable e) {
     String result = e.getMessage();
-    final String exceptionPattern = "Exception: ";
-    final String errorPattern = "Error: ";
+    @NonNls final String exceptionPattern = "Exception: ";
+    @NonNls final String errorPattern = "Error: ";
 
-    while ((result.contains(exceptionPattern) || result.contains(errorPattern)) && e.getCause() != null) {
+    while ((result == null || result.contains(exceptionPattern) || result.contains(errorPattern)) && e.getCause() != null) {
       e = e.getCause();
       result = e.getMessage();
     }
 
-    result = extractMessage(result, exceptionPattern);
-    result = extractMessage(result, errorPattern);
+    if (result != null) {
+      result = extractMessage(result, exceptionPattern);
+      result = extractMessage(result, errorPattern);
+    }
 
     return result;
   }
