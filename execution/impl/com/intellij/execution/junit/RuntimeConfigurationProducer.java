@@ -13,10 +13,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +93,9 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
     return null;
   }
 
+  @Nullable
   protected static PsiPackage checkPackage(final PsiElement element) {
+    if (element == null || !element.isValid()) return null;
     final Project project = element.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (element instanceof PsiPackage) {
