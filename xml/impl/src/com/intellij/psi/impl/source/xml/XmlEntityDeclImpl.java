@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.parsing.xml.OldXmlParsing;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
 import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -25,6 +26,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -221,15 +223,23 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return filterLexer;
   }
 
+  @Nullable
   private PsiElement getValueElement(PsiFile baseFile) {
-    final XmlAttributeValue value = getValueElement();
-    if (isInternalReference()) {
-      return value;
-    }
-    else if (value != null) {
-      final XmlFile xmlFile = XmlUtil.findXmlFile(baseFile, value.getValue());
-      if (xmlFile != null) {
-        return xmlFile;
+    final XmlAttributeValue attributeValue = getValueElement();
+    if (isInternalReference()) return attributeValue;
+
+    if (attributeValue != null) {
+      final String value = attributeValue.getValue();
+      if (value != null) {
+        XmlFile xmlFile = XmlUtil.findXmlFile(baseFile, value);
+        if (xmlFile != null) {
+          return xmlFile;
+        }
+
+        final int i = URIReferenceProvider.getPrefixLength(value);
+        if (i > 0) {
+          return XmlUtil.findXmlFile(baseFile, value.substring(i));
+        }
       }
     }
 

@@ -50,6 +50,7 @@ public class URIReferenceProvider implements PsiReferenceProvider {
   @NonNls private static final String HTTP = "http://";
   @NonNls private static final String URN = "urn:";
   @NonNls private static final String FILE = "file:";
+  @NonNls private static final String CLASSPATH = "classpath:/";
 
   public static class DependentNSReference extends BasicAttributeValueReference implements QuickFixProvider {
     private final URLReference myReference;
@@ -114,34 +115,25 @@ public class URIReferenceProvider implements PsiReferenceProvider {
       return refs.toArray(new PsiReference[refs.size()]);
     }
 
-    if (isUrlText(s) ||
-        ( parent instanceof XmlAttribute &&
-          ((XmlAttribute)parent).isNamespaceDeclaration()
-        )
-       ) {
+    if (isUrlText(s) || (parent instanceof XmlAttribute && ((XmlAttribute)parent).isNamespaceDeclaration())) {
       if (!s.startsWith(JspManager.TAG_DIR_NS_PREFIX)) {
-        final boolean namespaceSoftRef = ( parent instanceof XmlAttribute &&
-          "namespace".equals(((XmlAttribute)parent).getName())) &&
+        final boolean namespaceSoftRef = parent instanceof XmlAttribute &&
+          "namespace".equals(((XmlAttribute)parent).getName()) &&
           ((XmlAttribute)parent).getParent().getAttributeValue("schemaLocation") != null;
 
         return getUrlReference(element, namespaceSoftRef);
       }
-      else {
-        final int offset = text.indexOf(s);
-        s = s.substring(JspManager.TAG_DIR_NS_PREFIX.length());
-        return new FileReferenceSet(
-          s,
-          element,
-          offset + JspManager.TAG_DIR_NS_PREFIX.length(),
-          ReferenceType.FILE_TYPE,
-          this,
-          true
-        ).getAllReferences();
-      }
-    } else {
-      if (s.startsWith(FILE)) s = s.substring(FILE.length());
-      return new FileReferenceSet(s,element,text.indexOf(s), ReferenceType.FILE_TYPE, this,true).getAllReferences();
     }
+
+    s = s.substring(getPrefixLength(s));
+    return new FileReferenceSet(s,element,text.indexOf(s), ReferenceType.FILE_TYPE, this,true).getAllReferences();
+  }
+
+  public static int getPrefixLength(@NotNull final String s) {
+    if (s.startsWith(JspManager.TAG_DIR_NS_PREFIX)) return JspManager.TAG_DIR_NS_PREFIX.length();
+    if (s.startsWith(FILE)) return FILE.length();
+    if (s.startsWith(CLASSPATH)) return CLASSPATH.length();
+    return 0;
   }
 
   static boolean isUrlText(final String s) {

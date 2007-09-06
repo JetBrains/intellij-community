@@ -137,7 +137,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
       if (attribute != null) {
         final XmlAttributeValue value = attribute.getValueElement();
         if (value != null && value.getTextLength() >= 2) {          
-          return XmlUtil.unescape(value.getValue());
+          return attribute.getDisplayValue();
         }
       }
     }

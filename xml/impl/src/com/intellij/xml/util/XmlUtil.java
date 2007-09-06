@@ -196,7 +196,7 @@ public class XmlUtil {
 
   private static final Key<String> findXmlFileInProgressKey = Key.create("find.xml.file.in.progress");
 
-  public static XmlFile findXmlFile(PsiFile base, String uri) {
+  public static XmlFile findXmlFile(PsiFile base, @NotNull String uri) {
     PsiFile result = null;
     final JspFile jspFile = PsiUtil.getJspFile(base);
 
@@ -397,6 +397,20 @@ public class XmlUtil {
         presentNames.put(nameKey,t);
       }
     }
+  }
+
+  public static String getEntityValue(final XmlEntityRef entityRef) {
+    final XmlEntityDecl decl = entityRef.resolve(entityRef.getContainingFile());
+    if (decl != null) {
+      final XmlAttributeValue valueElement = decl.getValueElement();
+      if (valueElement != null) {
+        final String value = valueElement.getValue();
+        if (value != null) {
+          return value;
+        }
+      }
+    }
+    return entityRef.getText();
   }
 
   private static class XmlElementProcessor {

@@ -162,6 +162,9 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
         buffer.append(XmlUtil.getCharFromEntityRef(child.getText()));
       }
+      else if (elementType == XmlElementType.XML_ENTITY_REF) {
+        buffer.append(XmlUtil.getEntityValue((XmlEntityRef)child));
+      }
       else {
         buffer.append(child.getText());
       }
@@ -185,6 +188,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     return myDisplayText = buffer.toString();
   }
+
   public int physicalToDisplay(int physicalIndex) {
     getDisplayValue();
     if (physicalIndex < 0 || physicalIndex > myValueTextRange.getLength()) return -1;

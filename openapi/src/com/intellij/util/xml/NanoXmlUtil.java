@@ -203,7 +203,11 @@ public class NanoXmlUtil {
 
     public void parseDTD(String publicID, IXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
       if (!external) {
-        super.parseDTD(publicID, reader, entityResolver, external);
+        //super.parseDTD(publicID, reader, entityResolver, external);
+        int cnt = 1;
+        for (char ch = reader.read(); !(ch == ']' && --cnt == 0); ch = reader.read()) {
+          if (ch == '[') cnt ++;
+        }
       }
       else {
         int origLevel = reader.getStreamLevel();
