@@ -634,6 +634,7 @@
         <separator/>
         <action id="Register" class="com.intellij.ide.actions.RegisterAction"/>
         <action id="ObtainPermanentTicket" class="com.intellij.ide.actions.ObtainPermanentTicketAction"/>
+        <action id="ReleasePermanentTicket" class="com.intellij.ide.actions.ReleasePermanentTicketAction"/>
         <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>
       </group>
