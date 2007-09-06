@@ -41,4 +41,8 @@ public class MultiMap<K, V> extends FactoryMap<K, List<V>> {
     }
     return true;    
   }
+
+  public List<V> remove(final K k) {
+    return myMap.remove(k);
+  }
 }

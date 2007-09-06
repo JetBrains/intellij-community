@@ -17,9 +17,13 @@
 
 package com.intellij.psi.search.searches;
 
-import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryFactory;
 import com.intellij.util.SmartList;
@@ -50,6 +54,15 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
         };
       }
     };
+
+  public void registerExecutor(final QueryExecutor<Result, Parameters> queryExecutor, Disposable parentDisposable) {
+    registerExecutor(queryExecutor);
+    Disposer.register(parentDisposable, new Disposable() {
+      public void dispose() {
+        unregisterExecutor(queryExecutor);
+      }
+    });
+  }
 
   public void registerExecutor(final QueryExecutor<Result, Parameters> queryExecutor) {
     myPoint.getValue().addExplicitExtension(queryExecutor);

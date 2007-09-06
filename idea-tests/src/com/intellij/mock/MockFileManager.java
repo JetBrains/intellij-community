@@ -84,7 +84,7 @@ public class MockFileManager implements FileManager {
 
   @NotNull
   public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
-    throw new UnsupportedOperationException("Method getUseScope is not yet implemented in " + getClass().getName());
+    return GlobalSearchScope.allScope(element.getProject());
   }
 
   public Collection<String> getNonTrivialPackagePrefixes() {

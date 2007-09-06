@@ -127,7 +127,7 @@ public class MockProject extends MockComponentManager implements ProjectEx {
   public GlobalSearchScope getAllScope() {
     return new GlobalSearchScope() {
       public boolean contains(final VirtualFile file) {
-        return false;
+        return true;
       }
 
       public int compare(final VirtualFile file1, final VirtualFile file2) {
@@ -135,11 +135,11 @@ public class MockProject extends MockComponentManager implements ProjectEx {
       }
 
       public boolean isSearchInModuleContent(@NotNull final Module aModule) {
-        return false;
+        return true;
       }
 
       public boolean isSearchInLibraries() {
-        return false;
+        return true;
       }
     };
   }

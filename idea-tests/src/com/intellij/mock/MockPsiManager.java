@@ -22,17 +22,18 @@ import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.javadoc.JavadocManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LiteFixture;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ide.startup.CacheUpdater;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,7 @@ public class MockPsiManager extends PsiManagerEx {
   private CachedValuesManagerImpl myCachedValuesManager;
   private MockFileManager myMockFileManager;
   private PsiModificationTrackerImpl myPsiModificationTracker;
+  private final CompositeCacheManager myCompositeCacheManager = new CompositeCacheManager();
 
   public MockPsiManager() {
     this(null);
@@ -358,7 +360,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public ElementManipulatorsRegistry getElementManipulatorsRegistry() {
-    return null;
+    return ReferenceProvidersRegistry.getInstance(myProject);
   }
 
   public void postponeAutoFormattingInside(Runnable runnable) {
@@ -428,7 +430,49 @@ public class MockPsiManager extends PsiManagerEx {
   public void beforeChildRemoval(final PsiTreeChangeEventImpl event) {
   }
 
+  public void addFileToCacheManager(final PsiFile file) {
+    myCompositeCacheManager.addCacheManager(new CacheManager() {
+      public void initialize() {
+      }
+
+      public void dispose() {
+      }
+
+      @NotNull
+      public CacheUpdater[] getCacheUpdaters() {
+        return new CacheUpdater[0];
+      }
+
+      @NotNull
+      public PsiFile[] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope,
+                                        final boolean caseSensitively) {
+        return new PsiFile[]{file};
+      }
+
+      public boolean processFilesWithWord(@NotNull final Processor<PsiFile> processor, @NotNull final String word, final short occurenceMask,
+                                          @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+        return processor.process(file);
+      }
+
+      @NotNull
+      public PsiFile[] getFilesWithTodoItems() {
+        return PsiFile.EMPTY_ARRAY;
+      }
+
+      public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {
+        return 0;
+      }
+
+      public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
+        return 0;
+      }
+
+      public void addOrInvalidateFile(@NotNull final VirtualFile file) {
+      }
+    });
+  }
+
   public CacheManager getCacheManager() {
-    return new CompositeCacheManager();
+    return myCompositeCacheManager;
   }
 }
