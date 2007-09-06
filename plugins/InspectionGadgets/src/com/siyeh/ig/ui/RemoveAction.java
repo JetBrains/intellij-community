@@ -18,7 +18,6 @@ package com.siyeh.ig.ui;
 import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.ListSelectionModel;
 import java.awt.event.ActionEvent;
 
@@ -28,8 +27,7 @@ public class RemoveAction extends AbstractAction {
 
     public RemoveAction(IGTable table) {
         this.table = table;
-        putValue(Action.NAME,
-                InspectionGadgetsBundle.message("button.remove"));
+        putValue(NAME, InspectionGadgetsBundle.message("button.remove"));
     }
 
     public void actionPerformed(ActionEvent e) {

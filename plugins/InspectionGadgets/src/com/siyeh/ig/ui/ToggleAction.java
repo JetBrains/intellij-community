@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
-import javax.swing.Action;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.Field;
 
@@ -33,12 +32,12 @@ public class ToggleAction extends AbstractAction {
                         @NonNls String propertyName) {
         this.owner = owner;
         this.propertyName = propertyName;
-        putValue(Action.NAME, labelText);
+        putValue(NAME, labelText);
         //putValue(Action.SELECTED_KEY, getPropertyValue());
     }
 
     public void actionPerformed(ActionEvent event) {
-        AbstractButton button = (AbstractButton)event.getSource();
+        final AbstractButton button = (AbstractButton)event.getSource();
         final boolean selected = button.isSelected();
         try {
             final Class<? extends BaseInspection> aClass =

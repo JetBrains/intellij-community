@@ -1,5 +1,7 @@
 package com.siyeh.igtest.style;
 
+import java.util.Vector;
+
 public class UnnecessarilyQualifiedStaticUsageInspection {
 
     private static Object q;
@@ -16,6 +18,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection {
 
             // can't be removed
             UnnecessarilyQualifiedStaticUsageInspection.r();
+
         }
     }
 
@@ -31,7 +34,27 @@ public class UnnecessarilyQualifiedStaticUsageInspection {
         // can be removed
         UnnecessarilyQualifiedStaticUsageInspection.q = new Object();
 
+        final UnnecessarilyQualifiedStaticUsageInspection.M m;
+
         // can be removed
         UnnecessarilyQualifiedStaticUsageInspection.r();
+    }
+}
+
+class TestUnnecessaryQualifiedNested
+{
+    static class Nested
+    {
+    }
+
+    /**
+     * A link to {@link TestUnnecessaryQualifiedNested.Nested} -- no warning here
+     * <p/>
+     * A link to {@link #doit(TestUnnecessaryQualifiedNested.Nested)} -- warns about an
+     * unnecessary qualified static access but the quickfix does not work.
+     *
+     */
+    public static void doit(Nested arg) {
+
     }
 }

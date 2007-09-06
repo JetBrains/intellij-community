@@ -18,7 +18,6 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -36,8 +35,10 @@ public class UnnecessarilyQualifiedStaticUsageInspection
 
     /** @noinspection PublicField*/
     public boolean m_ignoreStaticFieldAccesses = false;
+
     /** @noinspection PublicField*/
     public boolean m_ignoreStaticMethodCalls = false;
+
     /** @noinspection PublicField*/
     public boolean m_ignoreStaticAccessFromStaticContext = false;
 
@@ -49,8 +50,10 @@ public class UnnecessarilyQualifiedStaticUsageInspection
 
     @NotNull
     public String buildErrorString(Object... infos) {
-        final boolean methodCall = ((Boolean)infos[0]).booleanValue();
-        if (methodCall) {
+         final PsiJavaCodeReferenceElement element =
+        (PsiJavaCodeReferenceElement)infos[0];
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiMethodCallExpression) {
             return InspectionGadgetsBundle.message(
                     "unnecessarily.qualified.static.usage.problem.descriptor");
         } else {
@@ -74,10 +77,6 @@ public class UnnecessarilyQualifiedStaticUsageInspection
         return optionsPanel;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessarilyQualifiedStaticUsageVisitor();
-    }
-
     public InspectionGadgetsFix buildFix(PsiElement location) {
         return new UnnecessarilyQualifiedStaticUsageFix();
     }
@@ -94,92 +93,46 @@ public class UnnecessarilyQualifiedStaticUsageInspection
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement element = descriptor.getPsiElement();
-            if (element instanceof PsiReferenceExpression) {
-                final PsiReferenceExpression expression =
-                        (PsiReferenceExpression) element;
-                final String newExpression = expression.getReferenceName();
-                if (newExpression == null) {
+            if (element instanceof PsiJavaCodeReferenceElement) {
+                final PsiJavaCodeReferenceElement reference =
+                        (PsiJavaCodeReferenceElement) element;
+                final PsiElement qualifier = reference.getQualifier();
+                if (qualifier == null) {
                     return;
                 }
-                replaceExpression(expression, newExpression);
-            } else {
-                final PsiManager manager = element.getManager();
-                final CodeStyleManager styleManager =
-                        manager.getCodeStyleManager();
-                styleManager.shortenClassReferences(element);
+                qualifier.delete();
             }
         }
+    }
+
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessarilyQualifiedStaticUsageVisitor();
     }
 
     private class UnnecessarilyQualifiedStaticUsageVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(PsiNewExpression expression) {
-            super.visitNewExpression(expression);
-            final PsiJavaCodeReferenceElement classReference =
-                    expression.getClassReference();
-            if (classReference == null) {
+        public void visitReferenceElement(
+                PsiJavaCodeReferenceElement reference) {
+            super.visitReferenceElement(reference);
+            if (!isUnnecessarilyQualifiedAccess(reference)) {
                 return;
             }
-            if (!isUnnecessarilyQualifiedAccess(classReference)) {
-                return;
-            }
-            registerNewExpressionError(expression, Boolean.FALSE);
-        }
-
-        public void visitReferenceList(PsiReferenceList list) {
-            super.visitReferenceList(list);
-            final PsiJavaCodeReferenceElement[] referenceElements =
-                    list.getReferenceElements();
-            for (PsiJavaCodeReferenceElement referenceElement :
-                    referenceElements) {
-                if (isUnnecessarilyQualifiedAccess(referenceElement)) {
-                    registerError(referenceElement, Boolean.FALSE);
-                }
-            }
-        }
-
-        public void visitTypeElement(PsiTypeElement type) {
-            super.visitTypeElement(type);
-            final PsiJavaCodeReferenceElement typeReference =
-                    type.getInnermostComponentReferenceElement();
-            if (typeReference == null) {
-                return;
-            }
-            if (!isUnnecessarilyQualifiedAccess(typeReference)) {
-                return;
-            }
-            registerError(typeReference, Boolean.FALSE);
-        }
-
-        public void visitMethodCallExpression(
-                @NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (m_ignoreStaticMethodCalls) {
-                return;
-            }
-            final PsiReferenceExpression methodExpression =
-                    expression.getMethodExpression();
-            if (!isUnnecessarilyQualifiedMethodCall(methodExpression)) {
-                return;
-            }
-            registerError(methodExpression, Boolean.TRUE);
+            registerError(reference, reference);
         }
 
         public void visitReferenceExpression(
-                @NotNull PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            if (m_ignoreStaticFieldAccesses) {
-                return;
-            }
-            if (!isUnnecessarilyQualifiedAccess(expression)) {
-                return;
-            }
-            registerError(expression, Boolean.FALSE);
+                PsiReferenceExpression expression) {
+            visitReferenceElement(expression);
         }
 
         private boolean isUnnecessarilyQualifiedAccess(
                 @NotNull PsiJavaCodeReferenceElement referenceElement) {
+            final PsiElement parent = referenceElement.getParent();
+            if (parent instanceof PsiJavaCodeReferenceElement ||
+                    parent instanceof PsiImportStatementBase) {
+                return false;
+            }
             final PsiElement qualifierElement =
                     referenceElement.getQualifier();
             if(!(qualifierElement instanceof PsiJavaCodeReferenceElement)){
@@ -187,7 +140,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             }
             final PsiElement target = referenceElement.resolve();
             if (!(target instanceof PsiField) &&
-                    !(target instanceof PsiClass)) {
+                    !(target instanceof PsiClass) &&
+                    !(target instanceof PsiMethod)) {
                 return false;
             }
             if (m_ignoreStaticAccessFromStaticContext) {
@@ -204,87 +158,63 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             if(referenceName == null) {
                 return false;
             }
+            final PsiReference reference = (PsiReference)qualifierElement;
+            final PsiElement resolvedQualifier = reference.resolve();
+            if (!(resolvedQualifier instanceof PsiClass)) {
+                return false;
+            }
+            final PsiClass qualifyingClass = (PsiClass)resolvedQualifier;
             final PsiManager manager = referenceElement.getManager();
             final PsiResolveHelper resolveHelper = manager.getResolveHelper();
             final PsiMember member = (PsiMember) target;
+            final PsiClass containingClass;
             if (target instanceof PsiField) {
-                if (!member.hasModifierProperty(PsiModifier.STATIC)) {
-                    return false;
-                }
                 final PsiVariable variable =
                         resolveHelper.resolveReferencedVariable(referenceName,
                                 referenceElement);
                 if (variable == null || !variable.equals(member)) {
                     return false;
                 }
-            } else {
+                final PsiMember memberVariable = (PsiMember)variable;
+                containingClass = memberVariable.getContainingClass();
+            } else if (target instanceof PsiClass) {
                 final PsiClass aClass =
                         resolveHelper.resolveReferencedClass(referenceName,
                                 referenceElement);
                 if (aClass == null || !aClass.equals(member)) {
                     return false;
                 }
+                containingClass = aClass.getContainingClass();
+            } else {
+                return isMethodAccessibleWithoutQualifier(referenceElement,
+                        qualifyingClass);
             }
-            final PsiReference reference = (PsiReference)qualifierElement;
-            final PsiElement resolvedQualifier =
-                    reference.resolve();
-            if (!(resolvedQualifier instanceof PsiClass)) {
-                return false;
-            }
-            final PsiClass containingClass =
-                    ClassUtils.getContainingClass(referenceElement);
             return resolvedQualifier.equals(containingClass);
         }
 
-        private boolean isUnnecessarilyQualifiedMethodCall(
-                PsiReferenceExpression expression) {
-            final PsiExpression qualifierExpression =
-                    expression.getQualifierExpression();
-            if(!(qualifierExpression instanceof PsiJavaCodeReferenceElement)) {
+        private boolean isMethodAccessibleWithoutQualifier(
+                PsiJavaCodeReferenceElement referenceElement,
+                PsiClass qualifyingClass) {
+            final String referenceName = referenceElement.getReferenceName();
+            if (referenceName == null) {
                 return false;
             }
-            final PsiElement element = expression.resolve();
-            if (!(element instanceof PsiMethod)) {
-                return false;
-            }
-            final PsiMember member = (PsiMember) element;
-            if (!member.hasModifierProperty(PsiModifier.STATIC)) {
-                return false;
-            }
-            if (m_ignoreStaticAccessFromStaticContext) {
-                final PsiMember containingMember =
-                        PsiTreeUtil.getParentOfType(expression,
-                                PsiMember.class);
-                if (containingMember != null &&
-                        !containingMember.hasModifierProperty(
-                                PsiModifier.STATIC)) {
-                    return false;
-                }
-            }
-            final PsiReference reference = (PsiReference)qualifierExpression;
-            final PsiElement qualifierElement = reference.resolve();
-            if (!(qualifierElement instanceof PsiClass)) {
-                return false;
-            }
-            final String referenceName = expression.getReferenceName();
-            if(referenceName == null) {
-                return false;
-            }
-            PsiClass parentClass = ClassUtils.getContainingClass(expression);
-            PsiClass containingClass = parentClass;
-            while (parentClass != null) {
-                containingClass = parentClass;
-                final PsiMethod[] methods = containingClass.getAllMethods();
+            PsiClass containingClass =
+                    ClassUtils.getContainingClass(referenceElement);
+            while (containingClass != null) {
+                final PsiMethod[] methods =
+                        containingClass.findMethodsByName(referenceName,
+                                true);
                 for(final PsiMethod method : methods) {
                     final String name = method.getName();
-                    if(referenceName.equals(name) &&
-                            !containingClass.equals(qualifierElement)) {
-                        return false;
+                    if(referenceName.equals(name)) {
+                        return containingClass.equals(qualifyingClass);
                     }
                 }
-                parentClass = ClassUtils.getContainingClass(containingClass);
+                containingClass =
+                        ClassUtils.getContainingClass(containingClass);
             }
-            return qualifierElement.equals(containingClass);
+            return false;
         }
     }
 }

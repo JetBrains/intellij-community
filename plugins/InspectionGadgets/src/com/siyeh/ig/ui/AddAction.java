@@ -18,7 +18,6 @@ package com.siyeh.ig.ui;
 import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
 import java.awt.Component;
@@ -32,7 +31,7 @@ public class AddAction extends AbstractAction {
 
     public AddAction(IGTable table) {
         this.table = table;
-        putValue(Action.NAME,
+        putValue(NAME,
                 InspectionGadgetsBundle.message("button.add"));
     }
 
