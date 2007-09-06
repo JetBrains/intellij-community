@@ -60,7 +60,7 @@ public class GroovyInjector implements ProjectComponent {
       final Language groovyLanguage = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
       if (host instanceof PsiLiteralExpression && host.getParent() instanceof PsiExpressionList) {
         final PsiExpression[] args = ((PsiExpressionList) host.getParent()).getExpressions();
-        if (host == args[0]) {
+        if (host == args[0]) { //first argument to 'parse' and 'evaluate" is groovy script
           final PsiElement pparent = host.getParent().getParent();
           if (pparent instanceof PsiMethodCallExpression) {
             final PsiMethodCallExpression call = (PsiMethodCallExpression) pparent;
