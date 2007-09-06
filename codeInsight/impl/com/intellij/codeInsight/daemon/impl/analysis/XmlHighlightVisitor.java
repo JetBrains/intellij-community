@@ -158,7 +158,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private void checkUnboundNamespacePrefix(final XmlElement element, final XmlTag context, String namespacePrefix) {
-    if (namespacePrefix.length() > 0 || element instanceof XmlTag) {
+    if (namespacePrefix.length() > 0 || ( element instanceof XmlTag && element.getParent() instanceof XmlDocument)) {
       final String namespaceByPrefix = context.getNamespaceByPrefix(namespacePrefix);
 
       if (namespaceByPrefix.length() == 0) {
