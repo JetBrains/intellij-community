@@ -20,8 +20,12 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -52,15 +56,27 @@ public class ClasspathStorage implements StateStorage {
   private Object mySession;
   private ClasspathStorageProvider.ClasspathConverter myConverter;
 
-  private FileSet getFileSet() {
-    return myConverter.getFileSet();
+
+  public ClasspathStorage(Module module) {
+    myConverter = getProvider(getStorageType(module)).createConverter(module);
+    final MessageBus messageBus = module.getMessageBus();
+    final VirtualFileTracker virtualFileTracker = (VirtualFileTracker)module.getPicoContainer().getComponentInstanceOfType(VirtualFileTracker.class);
+    if (virtualFileTracker != null && messageBus != null) {
+      final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
+      myConverter.getFileSet().listFiles(files);
+      for (VirtualFile file : files) {
+        final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
+        virtualFileTracker.addTracker(VfsUtil.pathToUrl(file.getPath()), new VirtualFileAdapter() {
+          public void contentsChanged(final VirtualFileEvent event) {
+            listener.storageFileChanged(event, ClasspathStorage.this);
+          }
+        }, true, module);
+      }
+    }
   }
 
-  private ClasspathStorageProvider.ClasspathConverter getConverter(final Module module) {
-    if (myConverter == null) {
-      myConverter = getProvider(getStorageType(module)).createConverter(module);
-    }
-    return myConverter;
+  private FileSet getFileSet() {
+    return myConverter.getFileSet();
   }
 
   @Nullable
@@ -73,7 +89,7 @@ public class ClasspathStorage implements StateStorage {
     try {
       final Module module = ((ModuleRootManagerImpl)component).getModule();
       final Element element = new Element(ClasspathStorage.COMPONENT_TAG);
-      getConverter(module).getClasspath(element);
+      myConverter.getClasspath(element);
       PathMacroManager.getInstance(module).expandPaths(element);
       ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
       moduleRootManagerState.readExternal(element);
@@ -103,7 +119,7 @@ public class ClasspathStorage implements StateStorage {
       final Element element = new Element(ClasspathStorage.COMPONENT_TAG);
       ((ModuleRootManagerImpl.ModuleRootManagerState)state).writeExternal(element);
       PathMacroManager.getInstance(module).collapsePaths(element);
-      getConverter(module).setClasspath(element);
+      myConverter.setClasspath(element);
     }
     catch (WriteExternalException e) {
       throw new StateStorageException(e);

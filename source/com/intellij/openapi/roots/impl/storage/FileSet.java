@@ -12,15 +12,4 @@ public interface FileSet {
 
   void commit() throws IOException;
 
-  FileSet dummy = new FileSet() {
-    public void listFiles(final List<VirtualFile> list) {
-    }
-
-    public boolean hasChanged() {
-      return false;
-    }
-
-    public void commit() throws IOException {
-    }
-  };
 }

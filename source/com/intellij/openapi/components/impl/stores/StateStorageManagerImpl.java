@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.*;
@@ -69,15 +70,10 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   @Nullable
   private StateStorage createStateStorage(final Storage storageSpec) throws StateStorage.StateStorageException {
     if (!storageSpec.storageClass().equals(StorageAnnotationsDefaultValues.NullStateStorage.class)) {
-      try {
-        return storageSpec.storageClass().newInstance();
-      }
-      catch (InstantiationException e) {
-        throw new StateStorage.StateStorageException(e);
-      }
-      catch (IllegalAccessException e) {
-        throw new StateStorage.StateStorageException(e);
-      }
+      final String key = UUID.randomUUID().toString();
+      ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
+
+      return (StateStorage)myPicoContainer.getComponentInstance(key);
     }
     else if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
       return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
