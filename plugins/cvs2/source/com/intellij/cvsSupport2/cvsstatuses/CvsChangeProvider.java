@@ -1,7 +1,6 @@
 package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.CvsBundle;
-import com.intellij.util.containers.HashMap;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
@@ -17,6 +16,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.RevisionTimestampComparator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -27,17 +27,18 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.peer.PeerFactory;
+import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.Collection;
+import java.util.Date;
 
 /**
  * @author max
@@ -369,7 +370,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private class CvsUpToDateRevision implements ContentRevision {
-    private FilePath myPath;
+    protected FilePath myPath;
     private VcsRevisionNumber myRevisionNumber;
     private String myContent;
 
@@ -426,6 +427,11 @@ public class CvsChangeProvider implements ChangeProvider {
     public VcsRevisionNumber getRevisionNumber() {
       return myRevisionNumber;
     }
+
+    @NonNls
+    public String toString() {
+      return "CvsUpToDateRevision:" + myPath; 
+    }
   }
 
   private class CvsUpToDateBinaryRevision extends CvsUpToDateRevision implements BinaryContentRevision {
@@ -446,6 +452,11 @@ public class CvsChangeProvider implements ChangeProvider {
         }
       }
       return myBinaryContent;
+    }
+
+    @NonNls
+    public String toString() {
+      return "CvsUpToDateBinaryRevision:" + myPath;
     }
   }
 }
