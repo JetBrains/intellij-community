@@ -5,7 +5,6 @@ import com.intellij.lang.ant.misc.PsiReferenceListSpinAllocator;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntStructuredElement;
-import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.util.TextRange;
@@ -31,7 +30,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
     if (attributes.length > 0) {
       final List<PsiReference> refs = PsiReferenceListSpinAllocator.alloc();
       try {
-        final boolean isTarget = antElement instanceof AntTarget;
+        //final boolean isTarget = antElement instanceof AntTarget;
         final boolean isSet = "isset".equals(sourceElement.getName());
         for (final XmlAttribute attr : attributes) {
           @NonNls final String attName = attr.getName();

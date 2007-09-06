@@ -7,6 +7,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.lang.ant.psi.impl.reference.AntReference;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
@@ -98,6 +99,24 @@ public class AntAnnotator implements Annotator {
     return false;
   }
 
+  private static boolean isReferencedPropertyUsedInCondition(AntPropertyReference propRef, final AntTarget.ConditionalAttribute conditionalAttribute) {
+    final String referencedPropertyName = propRef.getCanonicalText();
+    if (referencedPropertyName == null) {
+      return false;
+    }
+    AntElement element = propRef.getElement();
+    while (element instanceof AntStructuredElement) {
+      if (element instanceof AntTarget) {
+        final String conditionalProperty = ((AntTarget)element).getConditionalPropertyName(conditionalAttribute);
+        if (referencedPropertyName.equals(conditionalProperty))  {
+          return true;
+        }
+      }
+      element = element.getAntParent();
+    }
+    return false;
+  }
+
   private static void addDefinitionQuickFixes(final Annotation annotation, final AntStructuredElement se) {
     if (se.getSourceElement().getName().length() == 0) return;
 
@@ -145,6 +164,11 @@ public class AntAnnotator implements Annotator {
       if (ref instanceof AntReference) {
         final AntReference antRef = (AntReference)ref;
         if (!antRef.shouldBeSkippedByAnnotator() && ref.resolve() == null) {
+          if (antRef instanceof AntPropertyReference && isReferencedPropertyUsedInCondition((AntPropertyReference)antRef, AntTarget.ConditionalAttribute.IF)) {
+            // in runtime, if execution reaches this task the property is defined since it is used in if-condition
+            // so it is would be a mistake to highlight this as unresolved prop
+            continue;
+          }
           final TextRange absoluteRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
           final Annotation annotation = holder.createErrorAnnotation(absoluteRange, antRef.getUnresolvedMessagePattern());
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
