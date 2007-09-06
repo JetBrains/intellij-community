@@ -75,7 +75,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private ExecutionConsole  myConsole;
   private JavaProgramRunner myRunner;
   private RunProfile        myConfiguration;
-  private DebuggerSession   myDebuggerSession;
+  private volatile DebuggerSession   myDebuggerSession;
 
   private RunnerSettings myRunnerSettings;
   private ConfigurationPerRunnerSettings myConfigurationSettings;
@@ -383,14 +383,17 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   }
 
   private void disposeSession() {
-    if(myDebuggerSession != null) {
-      myDebuggerSession.dispose();
+    final DebuggerSession session = myDebuggerSession;
+    myDebuggerSession = null;
+    if(session != null) {
+      session.dispose();
     }
   }
 
   @Nullable
   private DebugProcessImpl getDebugProcess() {
-    return myDebuggerSession != null ? myDebuggerSession.getProcess() : null;
+    final DebuggerSession session = myDebuggerSession;
+    return session != null ? session.getProcess() : null;
   }
 
   public void reuse(DebuggerSessionTab reuseSession) {
@@ -419,7 +422,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
   @Nullable
   public TextWithImports getSelectedExpression() {
-    if (myDebuggerSession.getState() != DebuggerSession.STATE_PAUSED) {
+    final DebuggerSession session = myDebuggerSession;
+    if (session == null || session.getState() != DebuggerSession.STATE_PAUSED) {
       return null;
     }
     JTree tree = myVariablesPanel.getFrameTree();
@@ -469,7 +473,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
       myManager.registerFileMatcher((RunConfigurationBase)myConfiguration);
     }
 
-    myDebuggerSession.getContextManager().addListener(new DebuggerContextListener() {
+    session.getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {
         myStateManager.fireStateChanged(newContext, event);
       }
@@ -519,11 +523,15 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     }
 
     public DebuggerContextImpl getContext() {
-      return myDebuggerSession != null? myDebuggerSession.getContextManager().getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
+      final DebuggerSession session = myDebuggerSession;
+      return session != null? session.getContextManager().getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
     }
 
     public void setState(DebuggerContextImpl context, int state, int event, String description) {
-      myDebuggerSession.getContextManager().setState(context, state, event, description);
+      final DebuggerSession session = myDebuggerSession;
+      if (session != null) {
+        session.getContextManager().setState(context, state, event, description);
+      }
     }
   }
 
