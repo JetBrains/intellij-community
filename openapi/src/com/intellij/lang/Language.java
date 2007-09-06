@@ -15,7 +15,6 @@
  */
 package com.intellij.lang;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.formatting.CustomFormattingModelBuilder;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -555,7 +554,17 @@ public abstract class Language {
   }
 
   @Nullable
-  public CodeInsightActionHandler getGotoSuperHandler() {
+  public LanguageCodeInsightActionHandler getGotoSuperHandler() {
+    return null;
+  }
+
+  @Nullable
+  public LanguageCodeInsightActionHandler getImplementMethodsHandler() {
+    return null;
+  }
+
+  @Nullable
+  public LanguageCodeInsightActionHandler getOverrideMethodsHandler() {
     return null;
   }
 }
