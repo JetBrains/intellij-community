@@ -5,7 +5,10 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -32,20 +35,36 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   private final WeakList<VirtualFileWindow> cachedFiles = new WeakList<VirtualFileWindow>();
+  private final Project myProject;
 
   public static InjectedLanguageManagerImpl getInstance(Project project) {
     return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
   }
 
   public void projectOpened() {
+    Object[] extensions = Extensions.getExtensions(CONCATENATION_INJECTOR_EP_NAME, myProject);
+    for (Object injector : extensions) {
+       registerConcatenationInjector((ConcatenationInjector)injector);
+    }
+    final ExtensionPoint<ConcatenationInjector> point = Extensions.getArea(myProject).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
 
+    point.addExtensionPointListener(new ExtensionPointListener<ConcatenationInjector>() {
+      public void extensionAdded(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+        registerConcatenationInjector(extension);
+      }
+
+      public void extensionRemoved(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+
+      }
+    });
   }
 
   public void projectClosed() {
 
   }
 
-  public InjectedLanguageManagerImpl() {
+  public InjectedLanguageManagerImpl(Project project) {
+    myProject = project;
     registerMultiHostInjector(PsiLanguageInjectionHost.class, null, new MultiHostInjector() {
       public void getLanguagesToInject(@NotNull PsiElement context, @NotNull final MultiHostRegistrar injectionPlacesRegistrar) {
         final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
@@ -159,7 +178,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
         PsiElement[] elements = operands.toArray(new PsiElement[operands.size()]);
         tryInjectors(injectionPlacesRegistrar, elements);  
       }
-      else {
+      else if (context instanceof PsiLanguageInjectionHost) {
         tryInjectors(injectionPlacesRegistrar, context);
       }
     }

@@ -531,7 +531,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
     String rangeText2 = getRangeText(hostText, j);
     if (StringUtil.endsWith(newText, rangeText2)) {
       result[j] = null;  //no change
-      calculateMinEditSequence(hostText, newText.substring(rangeText2.length()), result, i, j-1);
+      calculateMinEditSequence(hostText, newText.substring(0, newText.length() - rangeText2.length()), result, i, j-1);
       return;
     }
     if (i+1 == j) {

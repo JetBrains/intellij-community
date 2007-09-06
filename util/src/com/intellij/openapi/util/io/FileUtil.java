@@ -609,7 +609,7 @@ public class FileUtil {
     try {
       int asteriskCount = 0;
       boolean recursive = true;
-      for (int idx = (antPattern.startsWith("/") || antPattern.startsWith("\\")) ? 1 : 0; idx < antPattern.length(); idx++) {
+      for (int idx = antPattern.startsWith("/") || antPattern.startsWith("\\") ? 1 : 0; idx < antPattern.length(); idx++) {
         final char ch = antPattern.charAt(idx);
         
         if (ch == '*') {
@@ -650,7 +650,7 @@ public class FileUtil {
 
       // handle ant shorthand: mypackage/test/ is interpreted as if it were mypackage/test/**
       final boolean isTrailingSlash =  builder.length() > 0 && builder.charAt(builder.length() - 1) == '/';
-      if ((asteriskCount == 0 && isTrailingSlash) || (recursive && asteriskCount == 2)) {
+      if (asteriskCount == 0 && isTrailingSlash || recursive && asteriskCount == 2) {
         if (isTrailingSlash) {
           builder.setLength(builder.length() - 1);
         }

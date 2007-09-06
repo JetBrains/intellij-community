@@ -63,6 +63,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
+    assert range.getStartOffset() <= range.getEndOffset() : range;
     //noinspection HardCodedStringLiteral
     String tooltip = message == null ? null : "<html><body>" + XmlStringUtil.escapeString(message) + "</body></html>";
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);

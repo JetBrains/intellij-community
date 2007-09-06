@@ -1076,7 +1076,7 @@ public class StringUtil {
     int l2 = suffix.length();
     if (l1 < l2) return false;
 
-    for (int i = l1-1; i >= l1-l2; i++) {
+    for (int i = l1-1; i >= l1-l2; i--) {
       if (text.charAt(i) != suffix.charAt(i+l2-l1)) return false;
     }
 

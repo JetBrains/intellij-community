@@ -6,7 +6,6 @@ import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -54,7 +53,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author cdr
  */
 public class InjectedLanguageUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtill");
   private static final Key<ParameterizedCachedValue<Places>> INJECTED_PSI_KEY = Key.create("INJECTED_PSI");
   private static final Key<List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
@@ -107,6 +105,7 @@ public class InjectedLanguageUtil {
       int prevHostsCombinedLength = documentWindow.getPrevHostsCombinedLength(i);
       int start = escaper.getOffsetInHost(editable.getStartOffset() - prevHostsCombinedLength - prefixLength, rangeInsideHost);
       int end = escaper.getOffsetInHost(editable.getEndOffset() - prevHostsCombinedLength - prefixLength, rangeInsideHost);
+      if (end == -1) end = rangeInsideHost.getEndOffset();
       TextRange rangeInHost = new TextRange(start, end);
 
       tokens.add(Trinity.create(tokenType, host, rangeInHost));
@@ -138,7 +137,7 @@ public class InjectedLanguageUtil {
   }
 
   private static class MyFileViewProvider extends SingleRootFileViewProvider {
-    private final PsiLanguageInjectionHost[] myHosts;
+    private PsiLanguageInjectionHost[] myHosts;
 
     private MyFileViewProvider(@NotNull Project project, @NotNull VirtualFileWindow virtualFile, List<PsiLanguageInjectionHost> hosts) {
       super(PsiManager.getInstance(project), virtualFile);
@@ -194,6 +193,15 @@ public class InjectedLanguageUtil {
       if (file == null || file.getContext() == null) return null;
       return file;
     }
+
+    private void replace(PsiFile injectedPsi, List<PsiLanguageInjectionHost.Shred> shreds) {
+      setVirtualFile(injectedPsi.getVirtualFile());
+      myHosts = new PsiLanguageInjectionHost[shreds.size()];
+      for (int i = 0; i < shreds.size(); i++) {
+        PsiLanguageInjectionHost.Shred shred = shreds.get(i);
+        myHosts[i] = shred.host;
+      }
+    }
   }
 
   private static void patchLeafs(final ASTNode parsedNode,
@@ -216,14 +224,14 @@ public class InjectedLanguageUtil {
         TextRange range = leaf.getTextRange();
         int prefixLength = contentsRange.getStartOffset();
         if (prefixLength > range.getStartOffset() && prefixLength < range.getEndOffset()) {
-          LOG.error("Prefix must not contain text that will be glued with the element body after parsing. " +
-                    "However, parsed element of "+leaf.getClass()+" contains "+(prefixLength-range.getStartOffset()) + " characters from the prefix. " +
-                    "Parsed text is '"+leaf.getText()+"'");
+          //LOG.error("Prefix must not contain text that will be glued with the element body after parsing. " +
+          //          "However, parsed element of "+leaf.getClass()+" contains "+(prefixLength-range.getStartOffset()) + " characters from the prefix. " +
+          //          "Parsed text is '"+leaf.getText()+"'");
         }
         if (range.getStartOffset() < contentsRange.getEndOffset() && contentsRange.getEndOffset() < range.getEndOffset()) {
-          LOG.error("Suffix must not contain text that will be glued with the element body after parsing. " +
-                    "However, parsed element of "+leaf.getClass()+" contains "+(range.getEndOffset()-contentsRange.getEndOffset()) + " characters from the suffix. " +
-                    "Parsed text is '"+leaf.getText()+"'");
+          //LOG.error("Suffix must not contain text that will be glued with the element body after parsing. " +
+          //          "However, parsed element of "+leaf.getClass()+" contains "+(range.getEndOffset()-contentsRange.getEndOffset()) + " characters from the suffix. " +
+          //          "Parsed text is '"+leaf.getText()+"'");
         }
         if (!contentsRange.contains(range)) return;
         int startOffsetInHost = currentInHostOffset;
@@ -505,7 +513,7 @@ public class InjectedLanguageUtil {
                 virtualFile.setContent(null, documentWindow.getText(), false);
                 FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
                 synchronized (PsiLock.LOCK) {
-                  psiFile = registerDocument(documentWindow, psiFile);
+                  psiFile = registerDocument(documentWindow, psiFile, shreds);
                   MyFileViewProvider myFileViewProvider = (MyFileViewProvider)psiFile.getViewProvider();
                   myFileViewProvider.setVirtualFile(virtualFile);
                   myFileViewProvider.forceCachedPsi(psiFile);
@@ -586,7 +594,8 @@ public class InjectedLanguageUtil {
     InjectedLanguageManagerImpl.getInstance(injected.getProject()).clearCaches(virtualFile);
   }
 
-  private static PsiFile registerDocument(final DocumentWindow documentWindow, final PsiFile injectedPsi) {
+  private static PsiFile registerDocument(final DocumentWindow documentWindow, final PsiFile injectedPsi,
+                                          List<PsiLanguageInjectionHost.Shred> shreds) {
     DocumentEx hostDocument = documentWindow.getDelegate();
     List<DocumentWindow> injected = getCachedInjectedDocuments(hostDocument);
 
@@ -594,11 +603,13 @@ public class InjectedLanguageUtil {
     for (int i = injected.size()-1; i>=0; i--) {
       DocumentWindow oldDocument = injected.get(i);
       PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
-      if (oldFile == null || !(oldFile.getViewProvider() instanceof MyFileViewProvider)) {
+      FileViewProvider oldViewProvider;
+
+      if (oldFile == null || !((oldViewProvider = oldFile.getViewProvider()) instanceof MyFileViewProvider)) {
         injected.remove(i);
         oldDocument.dispose();
         continue;
-      }       
+      }
 
       ASTNode injectedNode = injectedPsi.getNode();
       ASTNode oldFileNode = oldFile.getNode();
@@ -627,8 +638,8 @@ public class InjectedLanguageUtil {
           FileDocumentManagerImpl.registerDocument(documentWindow, oldFile.getVirtualFile());
           oldFile.subtreeChanged();
 
-          SingleRootFileViewProvider viewProvider = (SingleRootFileViewProvider)oldFile.getViewProvider();
-          viewProvider.setVirtualFile(injectedPsi.getVirtualFile());
+          MyFileViewProvider viewProvider = (MyFileViewProvider)oldViewProvider;
+          viewProvider.replace(injectedPsi, shreds);
         }
         return oldFile;
       }

@@ -8,6 +8,7 @@ package com.intellij.lang.injection;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -18,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class InjectedLanguageManager implements ProjectComponent {
+  public static final ExtensionPointName<ConcatenationInjector> CONCATENATION_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.concatenationInjector");
+
   public static InjectedLanguageManager getInstance(Project project) {
     return project.getComponent(InjectedLanguageManager.class);
   }
@@ -44,4 +47,5 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   }
   public abstract void registerConcatenationInjector(@NotNull ConcatenationInjector injector);
   public abstract boolean unregisterConcatenationInjector(@NotNull ConcatenationInjector injector);
+
 }
