@@ -1,26 +1,22 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsLog;
 
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
+import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
+import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
+import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchesProvider;
+import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.ConstantLocalFileReader;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.DeafAdminWriter;
-import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
-import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
-import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchesProvider;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
-import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchesProvider;
-import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
-import com.intellij.cvsSupport2.CvsUtil;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.log.LogCommand;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.file.ILocalFileReader;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -52,10 +48,9 @@ public class LocalPathIndifferentLogOperation extends LocalPathIndifferentOperat
 
   public LocalPathIndifferentLogOperation(File[] files) {
     this(CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(files[0].getParentFile()));
-    for (int i = 0; i < files.length; i++) {
-      addIOFile(files[i]);
+    for (File file : files) {
+      addIOFile(file);
     }
-
   }
 
   private void addIOFile(File file) {
@@ -106,5 +101,9 @@ public class LocalPathIndifferentLogOperation extends LocalPathIndifferentOperat
 
   protected String getOperationName() {
     return "log";
+  }
+
+  public boolean runInReadThread() {
+    return false;
   }
 }
