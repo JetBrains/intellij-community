@@ -224,7 +224,11 @@ public class AbstractVcsTestCase {
   }
 
   protected void renameFileInCommand(final VirtualFile file, final String newName) {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+    renameFileInCommand(myProject, file, newName);
+  }
+
+  public static void renameFileInCommand(final Project project, final VirtualFile file, final String newName) {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         try {
           file.rename(this, newName);
@@ -250,10 +254,10 @@ public class AbstractVcsTestCase {
   }
 
   protected void deleteFileInCommand(final VirtualFile file) {
-    doDeleteFileInCommand(myProject, file);
+    deleteFileInCommand(myProject, file);
   }
 
-  public static void doDeleteFileInCommand(final Project project, final VirtualFile file) {
+  public static void deleteFileInCommand(final Project project, final VirtualFile file) {
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         try {
