@@ -20,7 +20,7 @@ import java.util.*;
  */
 public class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil");
-  private static final @NonNls String ANNOTATION_TARGET_MESSAGE_KEY_PREFIX = "annotation.target.";
+  @NonNls private static final String ANNOTATION_TARGET_MESSAGE_KEY_PREFIX = "annotation.target.";
   @NonNls private static final String PACKAGE_INFO_JAVA = "package-info.java";
   private static String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
 
@@ -103,8 +103,7 @@ public class AnnotationsHighlightUtil {
       PsiExpression expr = (PsiExpression)value;
       PsiType type = expr.getType();
       if (type != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expr) ||
-          (expectedType instanceof PsiArrayType && TypeConversionUtil.areTypesAssignmentCompatible(((PsiArrayType)expectedType).getComponentType(),
-                                                                                                   expr))) {
+          expectedType instanceof PsiArrayType && TypeConversionUtil.areTypesAssignmentCompatible(((PsiArrayType)expectedType).getComponentType(), expr)) {
         return null;
       }
 
@@ -113,7 +112,7 @@ public class AnnotationsHighlightUtil {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, value, description);
     }
 
-    LOG.error("Unknown annotation member value");
+    LOG.error("Unknown annotation member value: "+value);
     return null;
   }
 
@@ -167,7 +166,7 @@ public class AnnotationsHighlightUtil {
         }
       }
 
-      if (missed.size() > 0) {
+      if (!missed.isEmpty()) {
         StringBuffer buff = new StringBuffer("'" + missed.get(0) + "'");
         for (int i = 1; i < missed.size(); i++) {
           buff.append(", ");
