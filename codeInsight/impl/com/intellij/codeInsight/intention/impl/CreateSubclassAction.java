@@ -49,7 +49,7 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
     if (element == null) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum()) return false;
+    if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass) return false;
     PsiJavaToken lBrace = psiClass.getLBrace();
     if (lBrace == null) return false;
     if (element.getTextOffset() >= lBrace.getTextOffset()) return false;
