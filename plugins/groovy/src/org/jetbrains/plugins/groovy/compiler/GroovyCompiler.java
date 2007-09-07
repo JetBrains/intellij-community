@@ -35,9 +35,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.groovy.compiler.rt.CompilerMessage;
+import org.jetbrains.groovy.compiler.rt.MessageCollector;
+import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -53,9 +55,8 @@ import java.util.*;
  */
 
 public class GroovyCompiler implements TranslatingCompiler {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovyCompiler");
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.groovy.compiler.GroovyCompiler");
 
-  private static final String GROOVYC_RUNNER_QUALIFIED_NAME = "org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner";
   private static final String JAVA_EXE = "java";
   private static final String XMX_COMPILER_PROPERTY = "-Xmx";
   private static final String XMX_COMPILER_VALUE = "300m";
@@ -81,15 +82,13 @@ public class GroovyCompiler implements TranslatingCompiler {
       commandLine = new GeneralCommandLine();
       commandLine.setExePath(JAVA_EXE);
 
-/*
       commandLine.addParameter("-Xdebug");
       commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5046");
-*/
       commandLine.addParameter("-cp");
 
-      String myJarPath = PathUtil.getJarPathForClass(getClass());
+      String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
       final StringBuilder classPathBuilder = new StringBuilder();
-      classPathBuilder.append(myJarPath);
+      classPathBuilder.append(rtJarPath);
       classPathBuilder.append(CLASS_PATH_LIST_SEPARATOR);
 
       String libPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath() + "/lib";
@@ -107,7 +106,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       commandLine.addParameter(classPathBuilder.toString());
       commandLine.addParameter(XMX_COMPILER_PROPERTY + XMX_COMPILER_VALUE);
 
-      commandLine.addParameter(GROOVYC_RUNNER_QUALIFIED_NAME);
+      commandLine.addParameter(GroovycRunner.class.getName());
 
       try {
         File fileWithParameters = File.createTempFile("toCompile", "");

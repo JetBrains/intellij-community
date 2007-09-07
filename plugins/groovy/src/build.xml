@@ -20,6 +20,7 @@
 
   <property name="production.dest" location="${project.dir}/classes/production"/>
   <property name="production.dest.groovy" location="${production.dest}/Groovy"/>
+  <property name="production.dest.groovy_rt" location="${production.dest}/groovy_rt"/>
   <property name="idea.dir" value="${project.dir}/lib/idea"/>
   <property name="idea.lib" location="${idea.dir}/lib"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
@@ -77,7 +78,25 @@
 
   <property name="stubsOutput" value="${production.dest}/stubs"/>
 
-  <target name="make.project" description="makes project" depends="build.lexer, unzip.last.successful.IDEA.build">
+
+  <path id="rtFiles">
+      <pathelement path="../rt/src/"/>
+  </path>
+
+  <path id="rtFiles.output">
+      <pathelement path="${production.dest.groovy_rt}"/>
+  </path>
+
+  <target name="make.rt" description="makes runtime classes" depends="build.lexer, unzip.last.successful.IDEA.build">
+    <mkdir dir="${production.dest.groovy_rt}"/>
+    
+    <javac destdir="${production.dest.groovy_rt}">
+      <src refId="rtFiles"/>
+      <classpath refid="groovy.path"/>
+    </javac>
+  </target>
+
+  <target name="make.project" description="makes project" depends="build.lexer, make.rt">
     <copy todir="${production.dest.groovy}/META-INF">
       <fileset dir="${project.dir}/META-INF"/>
     </copy>
@@ -118,6 +137,7 @@
 
       <classpath refid="idea.lib.path"/>
       <classpath refid="groovy.path"/>
+      <classpath refid="rtFiles.output"/>
     </javac2>
 
     <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc" classpathref="groovy.path"/>
@@ -146,6 +166,11 @@
     <mkdir dir="${project.dir}/tempzip/Groovy/lib"/>
 
     <mkdir dir="${project.dir}/tempjar/lib/"/>
+
+    <jar destfile="${project.dir}/tempzip/Groovy/lib/groovy_rt.jar">
+      <fileset dir="${production.dest.groovy_rt}">
+      </fileset>
+    </jar>
 
     <jar destfile="${project.dir}/tempzip/Groovy/lib/Groovy.jar">
       <fileset dir="${production.dest.groovy}" excludes="**/*build.xml, **/groovy.properties">

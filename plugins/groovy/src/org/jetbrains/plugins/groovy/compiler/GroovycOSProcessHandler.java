@@ -16,12 +16,13 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner;
+import org.jetbrains.groovy.compiler.rt.CompilerMessage;
+import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
