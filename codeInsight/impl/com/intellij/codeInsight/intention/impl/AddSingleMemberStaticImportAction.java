@@ -57,7 +57,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     return false;
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
@@ -77,7 +77,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
     PsiImportStaticStatement importStaticStatement = file.getManager().getElementFactory().createImportStaticStatement(((PsiMember)resolved).getContainingClass(),
                                                                                                                        ((PsiNamedElement)resolved).getName());
-    ((PsiJavaFile)file).getImportList().addAfter(importStaticStatement, null);
+    ((PsiJavaFile)file).getImportList().add(importStaticStatement);
 
     file.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
