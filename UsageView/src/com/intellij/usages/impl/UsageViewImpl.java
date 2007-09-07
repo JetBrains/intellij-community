@@ -56,10 +56,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -94,7 +91,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<Usage, UsageNode>();
   private static final UsageNode NULL_NODE = new UsageNode(new NullUsage(), new UsageViewTreeModelBuilder(new UsageViewPresentation(), new UsageTarget[0]));
   private final ButtonPanel myButtonPanel = new ButtonPanel();
-
+  private volatile boolean isDisposed;
   private boolean myChangesDetected = false;
   private final Queue<Usage> myUsagesToFlush = new ConcurrentLinkedQueue<Usage>();
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
@@ -165,6 +162,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (!myPresentation.isDetachedMode()) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          if (isDisposed) return;
           myTree.setModel(model);
 
           myRootPanel.setLayout(new BorderLayout());
@@ -198,6 +196,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             public void valueChanged(final TreeSelectionEvent e) {
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
+                  if (isDisposed) return;
                   List<UsageInfo> infos = getSelectedUsageInfos();
                   if (infos != null && myUsagePreviewPanel != null) {
                     myUsagePreviewPanel.updateLayout(infos);
@@ -464,6 +463,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     setupCentralPanel();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (isDisposed) return;
         restoreUsageExpandState(states);
         updateImmediately();
       }
@@ -606,6 +606,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       ((UsageViewTreeModelBuilder)myTree.getModel()).reset();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          if (isDisposed) return;
           TreeUtil.expand(myTree, 2);
         }
       });
@@ -662,7 +663,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (node != NULL_NODE) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          ((DefaultTreeModel)myTree.getModel()).removeNodeFromParent(node);
+          if (isDisposed) return;
+          TreeModel treeModel = myTree.getModel();
+          ((DefaultTreeModel)treeModel).removeNodeFromParent(node);
           ((GroupNode)myTree.getModel().getRoot()).removeUsage(node);
         }
       });
@@ -753,6 +756,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   public void dispose() {
+    isDisposed = true;
     ToolTipManager.sharedInstance().unregisterComponent(myTree);
     for (Disposable disposable : myDisposables) {
       disposable.dispose();
@@ -779,6 +783,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (!myPresentation.isDetachedMode()) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          if (isDisposed) return;
           final UsageNode firstUsageNode = ((UsageViewTreeModelBuilder)myTree.getModel()).getFirstUsageNode();
           if (firstUsageNode != null) { //first usage;
             showNode(firstUsageNode);
@@ -792,6 +797,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     if (!myPresentation.isDetachedMode()) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          if (isDisposed) return;
           TreePath usagePath = new TreePath(node.getPath());
           myTree.expandPath(usagePath.getParentPath());
           myTree.setSelectionPath(usagePath);
@@ -982,7 +988,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     }
 
-    return !targets.isEmpty() ? targets.toArray(new UsageTarget[targets.size()]) : null;
+    return targets.isEmpty() ? null : targets.toArray(new UsageTarget[targets.size()]);
   }
 
   private static Navigatable getNavigatableForNode(DefaultMutableTreeNode node) {
