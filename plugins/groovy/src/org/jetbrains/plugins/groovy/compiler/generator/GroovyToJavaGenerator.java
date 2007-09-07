@@ -663,36 +663,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append(";");
     }
 
-//      PsiClassType[] extendsListTypes = constructor.getContainingClass().getExtendsListTypes();
-//      assert extendsListTypes.length == 1;
-//
-//      PsiClassType superType = extendsListTypes[0];
-//      PsiClass superClass = superType.resolve();
-//      if (superClass != null) {
-//        superClass.getConstructors();
-//      }
-
-//      int i1 = 0;
-//      while (i1 < parameters.length) {
-//
-//        if (i1 > 0) text.append(", ");
-//
-//        PsiParameter grParameter = parameters[i1];
-//        PsiType type = grParameter.getType();
-//        String initValueToText;
-//
-//        String typeText = computeTypeText(type);
-//        if (typesToInitialValues.containsKey(typeText))
-//          initValueToText = typesToInitialValues.get(typeText);
-//        else
-//          initValueToText = "null";
-//
-//        text.append(initValueToText);
-//        i1++;
-//      }
-//      text.append(")");
-//      text.append(";");
-//    }
     text.append("\n}");
     text.append("\n");
   }
