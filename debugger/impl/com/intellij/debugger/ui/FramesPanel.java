@@ -2,6 +2,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
@@ -135,7 +136,10 @@ public class FramesPanel extends UpdatableDebuggerView {
       }
     }
 
-    getContext().getDebugProcess().getManagerThread().invokeLater(new RefreshFramePanelCommand(updateOnly && myThreadsCombo.getItemCount() != 0));
+    final DebugProcessImpl process = getContext().getDebugProcess();
+    if (process != null) {
+      process.getManagerThread().invokeLater(new RefreshFramePanelCommand(updateOnly && myThreadsCombo.getItemCount() != 0));
+    }
   }
 
   private class RefreshFramePanelCommand extends DebuggerContextCommandImpl {
