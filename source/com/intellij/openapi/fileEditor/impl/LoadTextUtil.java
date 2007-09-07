@@ -195,13 +195,13 @@ public final class LoadTextUtil {
       return ((LightVirtualFile)file).getContent();
     }
 
-    assert !file.isDirectory() : file.getPresentableUrl() + "is directory";
+    assert !file.isDirectory() : "'"+file.getPresentableUrl() + "' is directory";
     final FileType fileType = file.getFileType();
 
     if (fileType.equals(StdFileTypes.CLASS)) {
       return decompile(file);
     }
-    assert !fileType.isBinary() : file.getPresentableUrl() + "is binary";
+    assert !fileType.isBinary() : "'"+file.getPresentableUrl() + "' is binary";
 
     try {
       final byte[] bytes = file.contentsToByteArray();
