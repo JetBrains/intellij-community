@@ -9,7 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author Maxim.Mossienko
  */
-public class XmlTagValueManipulator extends AbstractElementManipulator<XmlTag> {
+public class XmlTagManipulator extends AbstractElementManipulator<XmlTag> {
 
   public XmlTag handleContentChange(XmlTag tag, TextRange range, String newContent) throws IncorrectOperationException {
     

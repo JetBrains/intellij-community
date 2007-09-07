@@ -77,12 +77,13 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
     // Manipulators mapping
     registerManipulator(XmlAttributeValue.class, new XmlAttributeValueManipulator());
+    registerManipulator(XmlAttribute.class, new XmlAttributeManipulator());
     registerManipulator(PsiPlainTextFile.class, new PlainFileManipulator());
     registerManipulator(XmlToken.class, new XmlTokenManipulator());
     registerManipulator(XmlComment.class, new XmlCommentManipulator());
 
     registerManipulator(PsiLiteralExpression.class, new StringLiteralManipulator());
-    registerManipulator(XmlTag.class, new XmlTagValueManipulator());
+    registerManipulator(XmlTag.class, new XmlTagManipulator());
     registerManipulator(PsiDocTag.class, new PsiDocTagValueManipulator());
 
     // Binding declarations
