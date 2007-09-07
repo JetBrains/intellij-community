@@ -57,6 +57,9 @@ public class GroovyCompiler implements TranslatingCompiler {
 
   private static final String GROOVYC_RUNNER_QUALIFIED_NAME = "org.jetbrains.plugins.groovy.compiler.rt.GroovycRunner";
   private static final String JAVA_EXE = "java";
+  private static final String XMX_COMPILER_PROPERTY = "-Xmx";
+  private static final String XMX_COMPILER_VALUE = "300m";
+
   private static final String CLASS_PATH_LIST_SEPARATOR = File.pathSeparator;
   private Project myProject;
 
@@ -102,6 +105,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       }
 
       commandLine.addParameter(classPathBuilder.toString());
+      commandLine.addParameter(XMX_COMPILER_PROPERTY + XMX_COMPILER_VALUE);
 
       commandLine.addParameter(GROOVYC_RUNNER_QUALIFIED_NAME);
 
@@ -182,6 +186,8 @@ public class GroovyCompiler implements TranslatingCompiler {
     required.add("asm");
     required.add("antlr");
     required.add("junit");
+    required.add("ant");
+    required.add("commons");
   }
 
   private boolean required(String name) {
@@ -189,13 +195,17 @@ public class GroovyCompiler implements TranslatingCompiler {
     if (!name.endsWith(".jar"))
       return false;
 
-    name = name.substring(0, name.indexOf('.'));
+    name = name.substring(0, name.lastIndexOf('.'));
     int ind = name.lastIndexOf('-');
     if (ind != -1 && name.length() > ind + 1 && Character.isDigit(name.charAt(ind + 1))) {
       name = name.substring(0, ind);
     }
 
-    return required.contains(name);
+    for (String requiredStr : required) {
+      if (name.contains(requiredStr)) return true;
+    }
+
+    return false;
   }
 
   private CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
