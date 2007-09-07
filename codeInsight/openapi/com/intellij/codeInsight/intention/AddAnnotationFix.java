@@ -120,7 +120,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
         annotationsManager.annotateExternally(myModifierListOwner, myAnnotation);
       }
       else {
-        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) return;
+        if (!file.isWritable() && ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) return;
         for (String fqn : myAnnotationsToRemove) {
           PsiAnnotation annotation = AnnotationUtil.findAnnotation(myModifierListOwner, fqn);
           if (annotation != null) {
