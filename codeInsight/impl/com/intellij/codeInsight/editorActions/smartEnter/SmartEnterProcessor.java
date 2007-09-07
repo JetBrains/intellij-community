@@ -134,7 +134,16 @@ public class SmartEnterProcessor {
   private void moveCaretInsideBracesIfAny() throws IncorrectOperationException {
     int caretOffset = myEditor.getCaretModel().getOffset();
     final CharSequence chars = myEditor.getDocument().getCharsSequence();
+
+    if (CharArrayUtil.regionMatches(chars, caretOffset, "{}")) {
+      caretOffset+=2;
+    }
+    else if (CharArrayUtil.regionMatches(chars, caretOffset, "{\n}")) {
+      caretOffset+=3;
+    }
+
     caretOffset = CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t") + 1;
+
     if (CharArrayUtil.regionMatches(chars, caretOffset - "{}".length(), "{}") ||
         CharArrayUtil.regionMatches(chars, caretOffset - "{\n}".length(), "{\n}")) {
       commit();
