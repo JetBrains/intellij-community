@@ -217,7 +217,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     viewSide.setEditorSource(source);
     myScrollSupport.dispose();
     if (editor == null) {
-      rediff();
+      if (!myDisposed) {
+        rediff();
+      }
       return;
     }
     PopupHandler.installUnknownPopupHandler(editor.getContentComponent(), new MergeActionGroup(this, source.getSide()), ActionManager.getInstance());
