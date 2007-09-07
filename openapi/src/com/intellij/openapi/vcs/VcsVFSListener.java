@@ -150,7 +150,7 @@ public abstract class VcsVFSListener {
   }
 
 
-  private void processMovedFile(VirtualFile file, String newParentPath, String newName) {
+  protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
     if (FileStatusManager.getInstance(myProject).getStatus(file) != FileStatus.UNKNOWN) {
       final String newPath = newParentPath + "/" + newName;
       boolean foundExistingInfo = false;
