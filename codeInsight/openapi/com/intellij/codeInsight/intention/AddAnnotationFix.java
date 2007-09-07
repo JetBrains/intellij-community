@@ -1,16 +1,15 @@
-package com.intellij.codeInsight.intention.impl;
+package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -121,7 +120,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
         annotationsManager.annotateExternally(myModifierListOwner, myAnnotation);
       }
       else {
-        if (!CodeInsightUtil.preparePsiElementForWrite(modifierList)) return;
+        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) return;
         for (String fqn : myAnnotationsToRemove) {
           PsiAnnotation annotation = AnnotationUtil.findAnnotation(myModifierListOwner, fqn);
           if (annotation != null) {
