@@ -18,9 +18,9 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
 
@@ -128,13 +128,12 @@ final class FindDialog extends DialogWrapper {
     panel.add(prompt, gbConstraints);
 
     myInputComboBox = new ComboBox(300);
-    StringComboboxEditor comboBoxEditor = new RevealingSpaceComboboxEditor(myProject);
-    myInputComboBox.setEditor(comboBoxEditor);
+    revealWhitespaces(myInputComboBox);
     initCombobox(myInputComboBox);
 
     if (myModel.isReplaceState()){
       myReplaceComboBox = new ComboBox(300);
-      myReplaceComboBox.setEditor(new RevealingSpaceComboboxEditor(myProject));
+      revealWhitespaces(myReplaceComboBox);
       
       initCombobox(myReplaceComboBox);
       final Component editorComponent = myReplaceComboBox.getEditor().getEditorComponent();
@@ -170,6 +169,12 @@ final class FindDialog extends DialogWrapper {
     }
 
     return panel;
+  }
+
+  private void revealWhitespaces(ComboBox comboBox) {
+    ComboBoxEditor comboBoxEditor = new RevealingSpaceComboboxEditor(myProject);
+    comboBox.setEditor(comboBoxEditor);
+    comboBox.setRenderer(new EditorComboBoxRenderer(comboBoxEditor));
   }
 
   private void initCombobox(final ComboBox comboBox) {
