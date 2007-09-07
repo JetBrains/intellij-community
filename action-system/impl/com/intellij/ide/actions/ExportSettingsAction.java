@@ -30,7 +30,8 @@ public class ExportSettingsAction extends AnAction {
 
     final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(exportableComponents, fileToComponents, true,
                                                                                      IdeBundle.message("title.select.components.to.export"),
-                                                                                     IdeBundle.message("propt.please.check.all.components.to.export"));
+                                                                                     IdeBundle.message(
+                                                                                       "prompt.please.check.all.components.to.export"));
     dialog.show();
     if (!dialog.isOK()) return;
     Set<ExportableApplicationComponent> markedComponents = dialog.getExportableComponents();
