@@ -171,6 +171,12 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       if (element instanceof PsiAnonymousClass) {
         return (PsiAnonymousClass) element;
       }
+      if (element instanceof PsiNewExpression) {
+        final PsiNewExpression newExpression = (PsiNewExpression)element;
+        if (newExpression.getAnonymousClass() != null) {
+          return newExpression.getAnonymousClass();          
+        }
+      }
       element = element.getParent();
     }
     return null;
