@@ -74,7 +74,13 @@ public class DfaValueFactory {
       }
     }
     else if (psiExpression instanceof PsiLiteralExpression) {
-      result = getConstFactory().create((PsiLiteralExpression)psiExpression);
+      final PsiLiteralExpression literal = (PsiLiteralExpression)psiExpression;
+      if (literal.getValue() instanceof String) {
+        result = getNotNullFactory().create(psiExpression.getType()); // Non-null string literal.
+      }
+      else {
+        result = getConstFactory().create(literal);
+      }
     }
     else if (psiExpression instanceof PsiNewExpression) {
       result = getNotNullFactory().create(psiExpression.getType());
@@ -82,7 +88,12 @@ public class DfaValueFactory {
     else {
       final Object value = ConstantExpressionEvaluator.computeConstantExpression(psiExpression, new THashSet<PsiVariable>(), false);
       if (value != null) {
-        result = getConstFactory().createFromValue(value, psiExpression.getType());
+        if (value instanceof String) {
+          result  = getNotNullFactory().create(psiExpression.getType()); // Non-null string literal.
+        }
+        else {
+          result = getConstFactory().createFromValue(value, psiExpression.getType());
+        }
       }
     }
 
