@@ -22,7 +22,7 @@
   <property name="production.dest.groovy" location="${production.dest}/Groovy"/>
   <property name="production.dest.groovy_rt" location="${production.dest}/groovy_rt"/>
   <property name="idea.dir" value="${project.dir}/lib/idea"/>
-  <property name="idea.lib" location="${idea.dir}/lib"/>
+  <property name="idea.lib" location="${idea.pack}/lib"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
   <property name="test.dir" value="${project.dir}/test"/>
   <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
@@ -58,7 +58,7 @@
   <target name="unzip.last.successful.IDEA.build">
     <unzip dest="${idea.dir}">
       <fileset dir="${idea.pack}">
-        <include name="*.zip"/>
+        <include name="*jdk15.zip"/>
       </fileset>
     </unzip>
   </target>
