@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class HighlightInfoFilterImpl implements HighlightInfoFilter {
-  private final static boolean ourTestMode = ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean ourTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   public boolean accept(@NotNull HighlightInfo info, PsiFile file) {
     if (ourTestMode) return true; // Tests need to verify highlighting is applied no matter what attributes are defined for this kind of highlighting

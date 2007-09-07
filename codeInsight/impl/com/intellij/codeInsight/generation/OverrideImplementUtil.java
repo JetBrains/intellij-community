@@ -197,6 +197,17 @@ public class OverrideImplementUtil {
 
       PsiElementFactory factory = method.getManager().getElementFactory();
       PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);
+      if (result instanceof PsiAnnotationMethod) {
+        PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)result).getDefaultValue();
+        if (defaultValue != null) {
+          PsiElement defaultKeyword = defaultValue;
+          while (!(defaultKeyword instanceof PsiKeyword) && defaultKeyword != null) {
+            defaultKeyword = defaultKeyword.getPrevSibling();
+          }
+          if (defaultKeyword == null) defaultKeyword = defaultValue;
+          defaultValue.getParent().deleteChildRange(defaultKeyword, defaultValue);
+        }
+      }
       results.add(result);
     }
 
