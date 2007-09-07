@@ -81,11 +81,16 @@ public class GroovyCompiler implements TranslatingCompiler {
       commandLine = new GeneralCommandLine();
       commandLine.setExePath(JAVA_EXE);
 
-      /*commandLine.addParameter("-Xdebug");
-      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5046");*/
+/*
+      commandLine.addParameter("-Xdebug");
+      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5046");
+*/
       commandLine.addParameter("-cp");
 
+      String myJarPath = PathUtil.getJarPathForClass(getClass());
       final StringBuilder classPathBuilder = new StringBuilder();
+      classPathBuilder.append(myJarPath);
+      classPathBuilder.append(CLASS_PATH_LIST_SEPARATOR);
 
       String libPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath() + "/lib";
       libPath = libPath.replace(File.separatorChar, '/');
