@@ -177,7 +177,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
       PsiManager manager = PsiManager.getInstance(project);
       final Collection<PsiReference> refs = ReferencesSearch.search(myField).findAll();
-      LOG.assertTrue(!refs.isEmpty());
+      if (refs.isEmpty()) return;
       Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
       PsiCodeBlock anchorBlock = findAnchorBlock(refs);
       if (anchorBlock == null) return; //was assert, but need to fix the case when obsolete inspection highlighting is left
