@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -64,8 +65,8 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -300,6 +301,31 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         checkResultByFile(fileAfter, myFile, false);
       }
     }.execute().throwException();
+  }
+
+  @Nullable
+  public GutterIconRenderer findGutter(final String filePath) throws Throwable {
+    final Project project = myProjectFixture.getProject();
+    final Ref<GutterIconRenderer> result = new Ref<GutterIconRenderer>();
+    new WriteCommandAction.Simple(project) {
+
+      protected void run() throws Throwable {
+        final int offset = configureByFiles(filePath);
+
+        final Collection<HighlightInfo> infos = doHighlighting();
+        for (HighlightInfo info :infos) {
+          if (info.endOffset >= offset && info.startOffset <= offset) {
+            final GutterIconRenderer renderer = info.getGutterIconRenderer();
+            if (renderer != null) {
+              result.set(renderer);
+              return;
+            }
+          }
+        }
+
+      }
+    }.execute().throwException();
+    return result.get();
   }
 
   public void checkResultByFile(final String filePath) throws Throwable {

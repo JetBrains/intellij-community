@@ -18,9 +18,10 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -184,4 +185,15 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @throws Throwable any exception.
    */
   void testRename(String fileBefore, String fileAfter, String newName) throws Throwable;
+
+  /**
+   * Returns gutter renderer at the caret position.
+   * Use {@link #CARET_MARKER} to mark the element to check.
+   *
+   * @param filePath file path
+   * @return gutter renderer at the caret position.
+   * @throws Throwable any exception.
+   */
+  @Nullable
+  GutterIconRenderer findGutter(String filePath) throws Throwable;
 }
