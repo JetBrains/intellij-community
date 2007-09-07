@@ -42,21 +42,21 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   public void projectOpened() {
-    Object[] extensions = Extensions.getExtensions(CONCATENATION_INJECTOR_EP_NAME, myProject);
-    for (Object injector : extensions) {
-       registerConcatenationInjector((ConcatenationInjector)injector);
-    }
-    final ExtensionPoint<ConcatenationInjector> point = Extensions.getArea(myProject).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
-
-    point.addExtensionPointListener(new ExtensionPointListener<ConcatenationInjector>() {
-      public void extensionAdded(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
-        registerConcatenationInjector(extension);
-      }
-
-      public void extensionRemoved(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
-
-      }
-    });
+    //Object[] extensions = Extensions.getExtensions(CONCATENATION_INJECTOR_EP_NAME, myProject);
+    //for (Object injector : extensions) {
+    //   registerConcatenationInjector((ConcatenationInjector)injector);
+    //}
+    //final ExtensionPoint<ConcatenationInjector> point = Extensions.getArea(myProject).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
+    //
+    //point.addExtensionPointListener(new ExtensionPointListener<ConcatenationInjector>() {
+    //  public void extensionAdded(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+    //    registerConcatenationInjector(extension);
+    //  }
+    //
+    //  public void extensionRemoved(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+    //
+    //  }
+    //});
   }
 
   public void projectClosed() {
@@ -86,6 +86,18 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       }
     });
     registerMultiHostInjector(PsiElement.class, null, new Concatenation2InjectorAdapter());
+
+    final ExtensionPoint<ConcatenationInjector> point = Extensions.getArea(myProject).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
+
+    point.addExtensionPointListener(new ExtensionPointListener<ConcatenationInjector>() {
+      public void extensionAdded(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+        registerConcatenationInjector(extension);
+      }
+
+      public void extensionRemoved(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+
+      }
+    });
   }
 
   VirtualFileWindow createVirtualFile(final Language language,
