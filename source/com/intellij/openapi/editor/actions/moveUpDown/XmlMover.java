@@ -1,6 +1,7 @@
 package com.intellij.openapi.editor.actions.moveUpDown;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,24 +23,26 @@ class XmlMover extends LineMover {
     if (!available) return false;
 
     // updated moved range end to cover multiline tag start
-    int movedLineStart = editor.getDocument().getLineStartOffset(toMove.startLine);
-    final int movedLineEnd = editor.getDocument().getLineEndOffset(toMove.endLine - 1);
+    final Document document = editor.getDocument();
+    int movedLineStart = document.getLineStartOffset(toMove.startLine);
+    final int movedLineEnd = document.getLineEndOffset(toMove.endLine - 1);
 
     final PsiElement movedEndElement = file.findElementAt(movedLineEnd);
 
     if (movedEndElement != null && movedEndElement.getParent() instanceof XmlTag) {
       final XmlTag tag = (XmlTag)movedEndElement.getParent();
       final TextRange valueRange = tag.getValue().getTextRange();
+      final int valueStart = valueRange.getStartOffset();
 
-      if (movedLineStart < valueRange.getStartOffset()) {
-        final int line = editor.getDocument().getLineNumber(valueRange.getStartOffset() + 1);
+      if (movedLineStart < valueStart && valueStart + 1 < document.getTextLength()) {
+        final int line = document.getLineNumber(valueStart + 1);
         int delta = line - toMove.endLine;
         toMove = new LineRange(toMove.startLine, Math.max(line, toMove.endLine));
 
         // update moved range
         if (delta > 0 && isDown) {
           toMove2 = new LineRange(toMove2.startLine + delta, toMove2.endLine + delta);
-          movedLineStart = editor.getDocument().getLineStartOffset(toMove.startLine);
+          movedLineStart = document.getLineStartOffset(toMove.startLine);
         }
       }
     }
@@ -52,21 +55,21 @@ class XmlMover extends LineMover {
       final TextRange valueRange = tag.getValue().getTextRange();
 
       if (movedLineStart < valueRange.getStartOffset()) {
-        final int line = editor.getDocument().getLineNumber(tag.getTextRange().getStartOffset());
+        final int line = document.getLineNumber(tag.getTextRange().getStartOffset());
         int delta = toMove.startLine - line;
         toMove = new LineRange(Math.min(line, toMove.startLine), toMove.endLine);
 
         // update moved range
         if (delta > 0 && !isDown) {
           toMove2 = new LineRange(toMove2.startLine - delta, toMove2.endLine - delta);
-          movedLineStart = editor.getDocument().getLineStartOffset(toMove.startLine);
+          movedLineStart = document.getLineStartOffset(toMove.startLine);
         }
       }
     }
 
     final TextRange moveDestinationRange = new TextRange(
-      editor.getDocument().getLineStartOffset(toMove2.startLine),
-      editor.getDocument().getLineStartOffset(toMove2.endLine)
+      document.getLineStartOffset(toMove2.startLine),
+      document.getLineStartOffset(toMove2.endLine)
     );
     
     if (isDown) {
@@ -74,7 +77,7 @@ class XmlMover extends LineMover {
 
       if (updatedElement != null && updatedElement.getParent() instanceof XmlTag) {
         final XmlTag tag = (XmlTag)updatedElement.getParent();
-        final int line = editor.getDocument().getLineNumber(tag.getValue().getTextRange().getStartOffset() + 1);
+        final int line = document.getLineNumber(tag.getValue().getTextRange().getStartOffset() + 1);
         toMove2 = new LineRange(toMove2.startLine, Math.max(line, toMove2.endLine));
       }
     } else {
@@ -88,7 +91,7 @@ class XmlMover extends LineMover {
         if (tagValueRange.contains(movedLineStart) ||
             ( tagValueRange.getLength() == 0 && tag.getTextRange().intersects(moveDestinationRange))
            ) {
-          final int line = editor.getDocument().getLineNumber(tag.getTextRange().getStartOffset());
+          final int line = document.getLineNumber(tag.getTextRange().getStartOffset());
           toMove2 = new LineRange(Math.min(line, toMove2.startLine), toMove2.endLine);
         }
       }
