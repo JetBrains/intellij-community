@@ -495,6 +495,8 @@ public class CodeInsightUtil {
           return true;
         }
 
+        if (CompletionUtil.isInExcludedPackage(inheritor)) return true;
+
         PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
         if(superSubstitutor == null) return true;
         if(getRawSubtypes){
