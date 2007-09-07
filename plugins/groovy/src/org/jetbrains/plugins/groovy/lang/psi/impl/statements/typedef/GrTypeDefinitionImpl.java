@@ -105,10 +105,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return this.findChildByClass(GrTypeDefinitionBody.class);
   }
 
-  @Nullable
+  @NotNull
   public GrMembersDeclaration[] getMemberDeclarations() {
     GrTypeDefinitionBody body = getBody();
-    if (body == null) return null;
+    if (body == null) return GrMembersDeclaration.EMPTY_ARRAY;
     return body.getMemberDeclarations();
   }
 

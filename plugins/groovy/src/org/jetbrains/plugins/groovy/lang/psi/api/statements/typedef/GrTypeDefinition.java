@@ -38,6 +38,7 @@ public interface GrTypeDefinition extends GrComparableByName, GrTopStatement, Na
 
   public GrTypeDefinitionBody getBody();
 
+  @NotNull
   public GrMembersDeclaration[] getMemberDeclarations();
 
   @Nullable

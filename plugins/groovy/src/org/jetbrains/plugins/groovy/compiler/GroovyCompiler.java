@@ -87,9 +87,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 */
       commandLine.addParameter("-cp");
 
-      String myJarPath = PathUtil.getJarPathForClass(getClass());
       final StringBuilder classPathBuilder = new StringBuilder();
-      classPathBuilder.append(myJarPath);
       classPathBuilder.append(CLASS_PATH_LIST_SEPARATOR);
       
       String libPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath() + "/lib";
