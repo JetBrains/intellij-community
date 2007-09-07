@@ -613,21 +613,50 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     /************* body **********/
     text.append("{\n");
 
-    GrConstructorInvocation grConstructorInvocation = constrDefinition.getConstructorInvocation();
-    if (grConstructorInvocation != null && grConstructorInvocation.isSuperCall()) {
+    final GrConstructorInvocation constructorInvocation = constrDefinition.getConstructorInvocation();
+    if (constructorInvocation != null && constructorInvocation.isSuperCall()) {
+      final PsiMethod superConstructor = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod>() {
+        public PsiMethod compute() {
+          return constructorInvocation.resolveConstructor();
+        }
+      });
+
       text.append("  ");
       text.append("super");
       text.append("(");
 
       //TODO: check NamedArguments
-      GrArgumentList grArgumentList = grConstructorInvocation.getArgumentList();
+      GrArgumentList argumentList = constructorInvocation.getArgumentList();
 
-      if (grArgumentList != null) {
-        GrExpression[] expressions = grArgumentList.getExpressionArguments();
+      if (argumentList != null) {
+        final GrExpression[] expressions = argumentList.getExpressionArguments();
 
-        for (int i1 = 0; i1 < expressions.length; i1++) {
-          if (i1 > 0) text.append(", ");
-          text.append(expressions[i1].getText());
+        for (int j = 0; j < expressions.length; j++) {
+          if (j > 0) text.append(", ");
+          final int j1 = j;
+          String argText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            public String compute() {
+              if (superConstructor != null) {
+                final PsiParameter[] superParams = superConstructor.getParameterList().getParameters();
+                PsiType type;
+                if (j1 < superParams.length) type = superParams[j1].getType();
+                else {
+                  type = superParams[superParams.length - 1].getType();
+                  if (type instanceof PsiEllipsisType) {
+                    type = ((PsiEllipsisType) type).getComponentType();
+                  }
+                }
+                final String typeText = type.getCanonicalText();
+                if (typeText != null) {
+                  return "(" + typeText + ")null";
+                }
+              }
+
+              return expressions[j1].getText();
+            }
+          });
+
+          text.append(argText);
         }
       }
       text.append(")");
