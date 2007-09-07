@@ -2,7 +2,7 @@ package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;

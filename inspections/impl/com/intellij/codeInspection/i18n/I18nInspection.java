@@ -7,7 +7,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;

@@ -2,7 +2,7 @@ package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.intention.impl.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
