@@ -405,7 +405,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
   public int getOffsetInElement(final PsiElement element) {
     final ElementManipulator<PsiElement> manipulator = getManipulator(element);
-    assert manipulator != null;
+    assert manipulator != null: element.getClass().getName();
     return manipulator.getRangeInElement(element).getStartOffset();
   }
 
