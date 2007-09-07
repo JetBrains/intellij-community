@@ -19,9 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.PomModelAspect;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.event.PomModelListener;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -116,13 +114,28 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     scrollPane.setBorder(new BegPopupMenuBorder());
     getComponent().add(scrollPane, BorderLayout.CENTER);
 
-    project.getModel().addModelListener(new PomModelListener() {
-      public void modelChanged(final PomModelEvent event) {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+      public void contentsChanged(final VirtualFileEvent event) {
+      }
+
+      public void fileCopied(final VirtualFileCopyEvent event) {
         hide();
       }
 
-      public boolean isAspectChangeInteresting(final PomModelAspect aspect) {
-        return true;
+      public void fileCreated(final VirtualFileEvent event) {
+        hide();
+      }
+
+      public void fileDeleted(final VirtualFileEvent event) {
+        hide();
+      }
+
+      public void fileMoved(final VirtualFileMoveEvent event) {
+        hide();
+      }
+
+      public void propertyChanged(final VirtualFilePropertyEvent event) {
+        hide();
       }
     }, this);
 
