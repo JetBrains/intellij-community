@@ -77,7 +77,7 @@ public class EditTemplateDialog extends DialogWrapper {
   }
 
   public void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("editing.templates.defineTemplates.editTemplate");
+    HelpManager.getInstance().invokeHelp("reference.dialogs.edittemplate");
   }
 
   protected String getDimensionServiceKey(){
