@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class InjectedLanguageManager implements ProjectComponent {
-  public static final ExtensionPointName<ConcatenationInjector> CONCATENATION_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.concatenationInjector");
+  public static final ExtensionPointName<ConcatenationAwareInjector> CONCATENATION_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.concatenationAwareInjector");
 
   public static InjectedLanguageManager getInstance(Project project) {
     return project.getComponent(InjectedLanguageManager.class);
@@ -42,10 +42,10 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   public abstract void registerMultiHostInjector(@NotNull Class<? extends PsiElement> place, @Nullable ElementFilter filter, @NotNull MultiHostInjector injector);
   public abstract boolean unregisterMultiPlaceInjector(@NotNull MultiHostInjector injector);
 
-  public interface ConcatenationInjector {
+  public interface ConcatenationAwareInjector {
     void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement... operands);
   }
-  public abstract void registerConcatenationInjector(@NotNull ConcatenationInjector injector);
-  public abstract boolean unregisterConcatenationInjector(@NotNull ConcatenationInjector injector);
+  public abstract void registerConcatenationInjector(@NotNull ConcatenationAwareInjector injector);
+  public abstract boolean unregisterConcatenationInjector(@NotNull ConcatenationAwareInjector injector);
 
 }

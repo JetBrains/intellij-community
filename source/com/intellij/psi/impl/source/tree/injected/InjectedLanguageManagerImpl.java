@@ -44,16 +44,16 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   public void projectOpened() {
     //Object[] extensions = Extensions.getExtensions(CONCATENATION_INJECTOR_EP_NAME, myProject);
     //for (Object injector : extensions) {
-    //   registerConcatenationInjector((ConcatenationInjector)injector);
+    //   registerConcatenationInjector((ConcatenationAwareInjector)injector);
     //}
-    //final ExtensionPoint<ConcatenationInjector> point = Extensions.getArea(myProject).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
+    //final ExtensionPoint<ConcatenationAwareInjector> point = Extensions.getArea(myProject).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
     //
-    //point.addExtensionPointListener(new ExtensionPointListener<ConcatenationInjector>() {
-    //  public void extensionAdded(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+    //point.addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
+    //  public void extensionAdded(ConcatenationAwareInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
     //    registerConcatenationInjector(extension);
     //  }
     //
-    //  public void extensionRemoved(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+    //  public void extensionRemoved(ConcatenationAwareInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
     //
     //  }
     //});
@@ -87,14 +87,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     });
     registerMultiHostInjector(PsiElement.class, null, new Concatenation2InjectorAdapter());
 
-    final ExtensionPoint<ConcatenationInjector> point = Extensions.getArea(myProject).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
+    final ExtensionPoint<ConcatenationAwareInjector> point = Extensions.getArea(myProject).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
 
-    point.addExtensionPointListener(new ExtensionPointListener<ConcatenationInjector>() {
-      public void extensionAdded(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+    point.addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
+      public void extensionAdded(ConcatenationAwareInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
         registerConcatenationInjector(extension);
       }
 
-      public void extensionRemoved(ConcatenationInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(ConcatenationAwareInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
 
       }
     });
@@ -207,17 +207,17 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     }
 
     void tryInjectors(MultiHostRegistrar registrar, PsiElement... elements) {
-      for (ConcatenationInjector concatenationInjector : myConcatenationInjectors) {
+      for (ConcatenationAwareInjector concatenationInjector : myConcatenationInjectors) {
         concatenationInjector.getLanguagesToInject(registrar, elements);
       }
     }
   }
-  private final List<ConcatenationInjector> myConcatenationInjectors = new CopyOnWriteArrayList<ConcatenationInjector>();
-  public void registerConcatenationInjector(@NotNull ConcatenationInjector injector) {
+  private final List<ConcatenationAwareInjector> myConcatenationInjectors = new CopyOnWriteArrayList<ConcatenationAwareInjector>();
+  public void registerConcatenationInjector(@NotNull ConcatenationAwareInjector injector) {
     myConcatenationInjectors.add(injector);
   }
 
-  public boolean unregisterConcatenationInjector(@NotNull ConcatenationInjector injector) {
+  public boolean unregisterConcatenationInjector(@NotNull ConcatenationAwareInjector injector) {
     return myConcatenationInjectors.remove(injector);
   }
 
