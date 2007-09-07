@@ -20,6 +20,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
 
@@ -127,10 +128,14 @@ final class FindDialog extends DialogWrapper {
     panel.add(prompt, gbConstraints);
 
     myInputComboBox = new ComboBox(300);
+    StringComboboxEditor comboBoxEditor = new RevealingSpaceComboboxEditor(myProject);
+    myInputComboBox.setEditor(comboBoxEditor);
     initCombobox(myInputComboBox);
 
     if (myModel.isReplaceState()){
       myReplaceComboBox = new ComboBox(300);
+      myReplaceComboBox.setEditor(new RevealingSpaceComboboxEditor(myProject));
+      
       initCombobox(myReplaceComboBox);
       final Component editorComponent = myReplaceComboBox.getEditor().getEditorComponent();
       editorComponent.addFocusListener(
@@ -695,7 +700,7 @@ final class FindDialog extends DialogWrapper {
   }
 
   private String getStringToFind() {
-    return (String)myInputComboBox.getSelectedItem();
+    return (String)myInputComboBox.getEditor().getItem();
   }
 
   private String getDirectory() {
@@ -747,7 +752,7 @@ final class FindDialog extends DialogWrapper {
     findSettings.setWholeWordsOnly(myCbWholeWordsOnly.isSelected());
     model.setRegularExpressions(myCbRegularExpressions.isSelected());
     findSettings.setRegularExpressions(myCbRegularExpressions.isSelected());
-    model.setStringToFind((String)myInputComboBox.getSelectedItem());
+    model.setStringToFind(getStringToFind());
 
     if (model.isReplaceState()){
       model.setPromptOnReplace(true);
