@@ -5,8 +5,8 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.application.options.colors.ColorAndFontDescriptionPanel;
-import com.intellij.application.options.colors.TextAttributesDescription;
 import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.application.options.colors.TextAttributesDescription;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -20,15 +20,18 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ReorderableListController;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +40,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -185,8 +188,24 @@ public class SeverityEditorDialog extends DialogWrapper {
     final ReorderableListController<SeverityRegistrar.SeverityBasedTextAttributes> controller =
       ReorderableListController.create(myOptionsList, group);
     controller.addAddAction(IdeBundle.message("action.add"), new Factory<SeverityRegistrar.SeverityBasedTextAttributes>() {
+      @Nullable
       public SeverityRegistrar.SeverityBasedTextAttributes create() {
-        final String name = Messages.showInputDialog(myPanel, InspectionsBundle.message("highlight.severity.create.dialog.name.label"), InspectionsBundle.message("highlight.severity.create.dialog.title"), Messages.getQuestionIcon());
+        final String name = Messages.showInputDialog(myPanel, InspectionsBundle.message("highlight.severity.create.dialog.name.label"),
+                                                     InspectionsBundle.message("highlight.severity.create.dialog.title"), Messages.getQuestionIcon(),
+                                                     "", new InputValidator() {
+          public boolean checkInput(final String inputString) {
+            final ListModel listModel = myOptionsList.getModel();
+            for (int i = 0; i < listModel.getSize(); i++) {
+              final String severityName = ((SeverityRegistrar.SeverityBasedTextAttributes)listModel.getElementAt(i)).getSeverity().myName;
+              if (Comparing.strEqual(severityName, inputString)) return false;
+            }
+            return true;
+          }
+
+          public boolean canClose(final String inputString) {
+            return checkInput(inputString);
+          }
+        });
         if (name == null) return null;
         final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
         HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, 50),
@@ -214,8 +233,7 @@ public class SeverityEditorDialog extends DialogWrapper {
 
   private static boolean isDefaultSetting(HighlightInfoType info) {
     HighlightSeverity severity = info.getSeverity(null);
-    if (severity == HighlightSeverity.ERROR || severity == HighlightSeverity.WARNING || severity == HighlightSeverity.INFORMATION || severity == HighlightSeverity.INFO
-        || severity == HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) {
+    if (ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, severity) != -1) {
       return true;
     }
     return false;
