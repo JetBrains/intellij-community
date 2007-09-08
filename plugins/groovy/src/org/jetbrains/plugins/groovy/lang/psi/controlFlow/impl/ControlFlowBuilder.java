@@ -269,7 +269,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
     } else if (clause instanceof GrForInClause) {
       final GrExpression expression = ((GrForInClause) clause).getIteratedExpression();
-      expression.accept(this);
+      if (expression != null) {
+        expression.accept(this);
+      }
     }
 
     InstructionImpl instruction = startNode(forStatement);

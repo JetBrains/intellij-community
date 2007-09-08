@@ -39,6 +39,7 @@ public class ForToEachIntention extends Intention {
     }
 
     final GrExpression collection = clause.getIteratedExpression();
+    assert collection != null;
     @NonNls final String statement = collection.getText() + ".each{" + var.getText() + " -> " + bodyText + " }";
     replaceStatement(statement, parentStatement);
   }

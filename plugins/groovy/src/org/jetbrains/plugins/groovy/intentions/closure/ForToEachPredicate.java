@@ -15,7 +15,7 @@ class ForToEachPredicate implements PsiElementPredicate {
     }
     final GrForStatement statement = (GrForStatement) element;
     final GrForClause clause = statement.getClause();
-    if (!(clause instanceof GrForInClause)) {
+    if (!(clause instanceof GrForInClause) || ((GrForInClause) clause).getIteratedExpression() == null) {
       return false;
     }
     return !ErrorUtil.containsError(element);
