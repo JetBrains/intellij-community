@@ -64,6 +64,9 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           if (type2 instanceof PsiEllipsisType) {
             type2 = ((PsiEllipsisType)type2).toArrayType();
           }
+          if (type1 instanceof PsiEllipsisType) {
+            type1 = ((PsiEllipsisType)type1).toArrayType();
+          }
           if (!type1.equals(type2)) continue nextMethod;
         }
 
