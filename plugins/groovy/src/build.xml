@@ -58,7 +58,7 @@
   <target name="unzip.last.successful.IDEA.build">
     <unzip dest="${idea.dir}">
       <fileset dir="${idea.pack}">
-        <include name="*jdk15.zip"/>
+        <include name="*.zip"/>
       </fileset>
     </unzip>
   </target>
