@@ -64,7 +64,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
       clazz.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
       return processor.getCandidates();
     }
-    return null;
+    return GroovyResolveResult.EMPTY_ARRAY;
   }
 
   public PsiMethod resolveConstructor() {
