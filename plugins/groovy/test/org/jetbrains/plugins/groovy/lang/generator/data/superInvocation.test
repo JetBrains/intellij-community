@@ -1,0 +1,20 @@
+class Base {
+  Base(String s, int i) {}
+}
+
+class Derived {
+  Derived() {
+    super("", 0)
+  }
+}
+-----
+class Base {
+  Base(java.lang.String s, int i) {}
+}
+-----
+class Derived {
+  Derived() {
+    super((java.lang.String)null, (int)0)
+  }
+}
+---
