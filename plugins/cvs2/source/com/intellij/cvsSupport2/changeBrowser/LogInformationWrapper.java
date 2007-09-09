@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.changeBrowser;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
@@ -37,7 +38,7 @@ public class LogInformationWrapper {
     LogInformationWrapper wrapper = null;
     if (!log.getRevisionList().isEmpty()) {
       final String rcsFileName = log.getRcsFileName();
-      if (rcsFileName.startsWith(repository)) {
+      if (FileUtil.toSystemIndependentName(rcsFileName).startsWith(FileUtil.toSystemIndependentName(repository))) {
         String relativePath = rcsFileName.substring(repository.length());
         if (relativePath.startsWith("/")) {
           relativePath = relativePath.substring(1);
