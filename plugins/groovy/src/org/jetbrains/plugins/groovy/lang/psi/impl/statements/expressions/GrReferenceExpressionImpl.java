@@ -318,7 +318,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         if (clazz != null) {
           PsiClass listClass = ResolveUtil.findListClass(refExpr.getManager(), refExpr.getResolveScope());
           if (listClass != null && listClass.getTypeParameters().length == 1) {
-            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(clazz, listClass, result.getSubstitutor());
+            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(listClass, clazz, result.getSubstitutor());
             if (substitutor != null) {
               PsiType componentType = substitutor.substitute(listClass.getTypeParameters()[0]);
               if (componentType != null) {
