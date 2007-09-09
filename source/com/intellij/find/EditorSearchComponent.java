@@ -179,18 +179,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
 
-    mySearchField.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        searchForward();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED);
-
-    mySearchField.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        searchBackward();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), JComponent.WHEN_FOCUSED);
-
     final String initialText = myEditor.getSelectionModel().getSelectedText();
 
     SwingUtilities.invokeLater(new Runnable() {
@@ -406,7 +394,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private class PrevOccurenceAction extends AnAction {
     public PrevOccurenceAction() {
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
-      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS));
+
+      ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
+      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS).getShortcutSet().getShortcuts()));
+      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).getShortcutSet().getShortcuts()));
+
+      registerCustomShortcutSet(
+        new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
+        mySearchField);
     }
 
     public void actionPerformed(final AnActionEvent e) {
@@ -421,7 +416,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private class NextOccurenceAction extends AnAction {
     public NextOccurenceAction() {
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE));
-      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT));
+      ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
+      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT).getShortcutSet().getShortcuts()));
+      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).getShortcutSet().getShortcuts()));
+
+      registerCustomShortcutSet(
+        new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
+        mySearchField);
     }
 
     public void actionPerformed(final AnActionEvent e) {
