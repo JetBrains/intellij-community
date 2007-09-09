@@ -42,6 +42,8 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   private static void fastenBeltsInSingleFile(final PsiFile file) {
     synchronized (file) {
+      if (areBeltsFastened(file)) return;
+
       file.putUserData(BELTS_ARE_FASTEN_KEY, Boolean.TRUE);
 
       ArrayList<WeakReference<SmartPointerEx>> pointers = file.getUserData(SMART_POINTERS_IN_PSI_FILE_KEY);
@@ -176,12 +178,15 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         }
         pointers.add(new WeakReference<SmartPointerEx>(pointer));
 
-        Boolean isFasten = file.getUserData(BELTS_ARE_FASTEN_KEY);
-        if (isFasten == Boolean.TRUE) {
+        if (areBeltsFastened(file)) {
           pointer.fastenBelt();
         }
       }
     }
+  }
+
+  private static boolean areBeltsFastened(final PsiFile file) {
+    return file.getUserData(BELTS_ARE_FASTEN_KEY) == Boolean.TRUE;
   }
 
   @NotNull

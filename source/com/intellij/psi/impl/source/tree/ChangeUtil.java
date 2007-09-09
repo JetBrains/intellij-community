@@ -23,6 +23,7 @@ import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightTypeElement;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
@@ -281,6 +282,11 @@ public class ChangeUtil {
           final PsiManagerEx psiManager = (PsiManagerEx) manager;
           RepositoryManager repositoryManager = psiManager.getRepositoryManager();
           final PsiFile file = (PsiFile)changedFile.getPsi();
+
+          if (file.isPhysical()) {
+            SmartPointerManagerImpl.fastenBelts(file);
+          }
+
           if (repositoryManager != null) {
             repositoryManager.beforeChildAddedOrRemoved(file, changedElement);
             action.makeChange(destinationTreeChange);
