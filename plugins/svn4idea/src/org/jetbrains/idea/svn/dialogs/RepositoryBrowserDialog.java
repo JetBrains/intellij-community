@@ -709,7 +709,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     if (files.length != 1 || files[0] == null) {
       return null;
     }
-    return new File(files[0].getPath());
+    final String path = files[0].getPath();
+    if (path.endsWith(":")) {   // workaround for VFS oddities with drive root (IDEADEV-20870)
+      return new File(path + "/");
+    }
+    return new File(path);
   }
 
   protected void doMkdir(final SVNURL url, final String comment) {
