@@ -129,14 +129,6 @@ public class RollbackChangesDialog extends DialogWrapper {
     return myBrowser;
   }
 
-  private static List<FilePath> getFilePaths(Collection<Change> changes) {
-    List<FilePath> paths = new ArrayList<FilePath>();
-    for (Change change : changes) {
-      paths.add(ChangesUtil.getFilePath(change));
-    }
-    return paths;
-  }
-
   public static void doRollback(final Project project,
                                 final Collection<Change> changes,
                                 final boolean deleteLocallyAddedFiles,
@@ -150,7 +142,7 @@ public class RollbackChangesDialog extends DialogWrapper {
           public void process(AbstractVcs vcs, List<Change> changes) {
             final RollbackEnvironment environment = vcs.getRollbackEnvironment();
             if (environment != null) {
-              pathsToRefresh.addAll(getFilePaths(changes));
+              pathsToRefresh.addAll(ChangesUtil.getPaths(changes));
 
               final List<VcsException> exceptions = environment.rollbackChanges(changes);
               if (exceptions.size() > 0) {
@@ -199,7 +191,12 @@ public class RollbackChangesDialog extends DialogWrapper {
         action.finish();
         if (!project.isDisposed()) {
           for (FilePath path : pathsToRefresh) {
-            VcsDirtyScopeManager.getInstance(project).fileDirty(path);
+            if (path.isDirectory()) {
+              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(path);
+            }
+            else {
+              VcsDirtyScopeManager.getInstance(project).fileDirty(path);
+            }
           }
         }
       }

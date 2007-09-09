@@ -207,6 +207,10 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   public void dirDirtyRecursively(final VirtualFile dir, final boolean scheduleUpdate) {
+    dirDirtyRecursively(dir);
+  }
+
+  public void dirDirtyRecursively(final VirtualFile dir) {
     AbstractVcs vcs = getVcsForDirty(dir);
     if (vcs != null) {
       getScope(vcs).addDirtyDirRecursively(new FilePathImpl(dir));
@@ -214,7 +218,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
-  private void dirDirtyRecursively(final FilePathImpl path) {
+  public void dirDirtyRecursively(final FilePath path) {
     AbstractVcs vcs = getVcsForDirty(path);
     if (vcs != null) {
       getScope(vcs).addDirtyDirRecursively(path);
