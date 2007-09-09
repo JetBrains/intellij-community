@@ -265,11 +265,12 @@ public class ShowDiffAction extends AnAction {
       });
     }
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         diffReq.setContents(createContent(project, (ContentRevision) bRev), createContent(project, (ContentRevision) aRev));
       }
-    }, "Getting revisions content", false, project);
+    }, VcsBundle.message("progress.loading.diff.revisions"), true, project);
+    if (!result) return null;
 
     String beforeRevisionTitle = (bRev != null) ? bRev.getRevisionNumber().asString() : "";
     String afterRevisionTitle = (aRev != null) ? aRev.getRevisionNumber().asString() : "";
@@ -300,6 +301,7 @@ public class ShowDiffAction extends AnAction {
 
   @NotNull
   private static DiffContent createContent(Project project, ContentRevision revision) {
+    ProgressManager.getInstance().checkCanceled();
     if (revision == null) return new SimpleContent("");
     if (revision instanceof CurrentContentRevision) {
       final CurrentContentRevision current = (CurrentContentRevision)revision;
