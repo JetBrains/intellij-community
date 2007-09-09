@@ -54,6 +54,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
+    if (DataConstants.EDITOR_EVEN_IF_INACTIVE.equals(dataId)) {
+      return myEditor;
+    }
     return null;
   }
 
@@ -441,8 +444,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       getTemplatePresentation().setText("Search History");
 
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
-      shortcuts.add(new KeyboardShortcut(
-        KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK), null));
+      shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_H, KeyEvent.CTRL_DOWN_MASK), null));
       shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction("IncrementalSearch").getShortcutSet().getShortcuts()));
       shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts()));
 

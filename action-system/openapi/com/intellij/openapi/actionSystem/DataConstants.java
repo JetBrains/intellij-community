@@ -166,4 +166,9 @@ public interface DataConstants {
    * Returns com.intellij.ide.DeleteProvider
    */
   @NonNls String DELETE_ELEMENT_PROVIDER = "deleteElementProvider";
+
+  /**
+   * Returns com.intellij.openapi.editor.Editor even if foces currently is in find bar
+   */
+  @NonNls String EDITOR_EVEN_IF_INACTIVE = "editor.even.if.inactive";
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -25,6 +26,7 @@ public abstract class CodeInsightAction extends AnAction {
     actionPerformedImpl(project, editor);
   }
 
+  @Nullable
   protected Editor getEditor(final DataContext dataContext, final Project project) {
     return DataKeys.EDITOR.getData(dataContext);
   }

@@ -8,12 +8,11 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
-public class ScrollDownAction extends EditorAction {
+public class ScrollDownAction extends InactiveEditorAction {
   public ScrollDownAction() {
     super(new Handler());
   }

@@ -52,6 +52,7 @@ public final class DataKeys {
   public static final DataKey<VirtualFile> VIRTUAL_FILE = DataKey.create(DataConstants.VIRTUAL_FILE);
   public static final DataKey<VirtualFile[]> VIRTUAL_FILE_ARRAY = DataKey.create(DataConstants.VIRTUAL_FILE_ARRAY);
   public static final DataKey<Editor> EDITOR = DataKey.create(DataConstants.EDITOR);
+  public static final DataKey<Editor> EDITOR_EVEN_IF_INACTIVE = DataKey.create(DataConstants.EDITOR_EVEN_IF_INACTIVE);
   public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create(DataConstants.FILE_EDITOR);
   public static final DataKey<String> FILE_TEXT = DataKey.create(DataConstants.FILE_TEXT);
   public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create(DataConstants.IS_MODAL_CONTEXT);

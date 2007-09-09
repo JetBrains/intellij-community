@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseCodeInsightAction extends CodeInsightAction {
   private final boolean myLookForInjectedEditor;
@@ -18,11 +19,14 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
   protected BaseCodeInsightAction() {
     this(true);
   }
+
   protected BaseCodeInsightAction(boolean lookForInjectedEditor) {
     myLookForInjectedEditor = lookForInjectedEditor;
   }
+
+  @Nullable
   protected Editor getEditor(final DataContext dataContext, final Project project) {
-    Editor editor = super.getEditor(dataContext, project);
+    Editor editor = getBaseEditor(dataContext, project);
     if (!myLookForInjectedEditor) return editor;
     Editor injectedEditor = editor;
     if (editor != null) {
@@ -30,6 +34,11 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
       injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile);
     }
     return injectedEditor;
+  }
+
+  @Nullable
+  protected Editor getBaseEditor(final DataContext dataContext, final Project project) {
+    return super.getEditor(dataContext, project);
   }
 
   public boolean isValidForLookup(Lookup lookup, DataContext context) {
