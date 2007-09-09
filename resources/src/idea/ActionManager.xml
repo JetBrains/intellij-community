@@ -180,7 +180,7 @@
       <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control">
         <action id="Vcs.ChangesView" class="com.intellij.openapi.vcs.changes.ShowChangesViewAction"/>
         <reference ref="CheckinProject"/>
-        <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction">
+        <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="/_cvs/checkOut.png">
           <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
         </action>
         <action id="Vcs.ProjectStatus" class="com.intellij.openapi.vcs.update.CommonStatusProjectAction">
@@ -1480,8 +1480,11 @@
       <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
               icon="/vcs/refresh.png"/>
       <reference ref="CommittedChanges.Details"/>
+      <!--
       <action id="IncomingChanges.Get" class="com.intellij.openapi.vcs.changes.committed.GetCommittedChangelistAction"
               icon="/actions/get.png"/>
+      -->
+      <reference ref="Vcs.UpdateProject"/>
     </group>
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
