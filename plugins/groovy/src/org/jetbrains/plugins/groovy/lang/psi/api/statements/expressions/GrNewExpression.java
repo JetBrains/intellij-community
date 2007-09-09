@@ -30,5 +30,7 @@ public interface GrNewExpression extends GrCallExpression {
 
   PsiMethod resolveConstructor();
 
+  GroovyResolveResult resolveConstructorGenerics();
+
   int getArrayCount();
 }

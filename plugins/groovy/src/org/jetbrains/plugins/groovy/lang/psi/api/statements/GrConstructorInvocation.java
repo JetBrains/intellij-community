@@ -22,6 +22,8 @@ public interface GrConstructorInvocation extends GrStatement, PsiReference {
 
   PsiMethod resolveConstructor();
 
+  GroovyResolveResult resolveConstructorGenerics();
+
   PsiClass getDelegatedClass();
 
   GroovyResolveResult[] multiResolveConstructor();

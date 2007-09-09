@@ -55,7 +55,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
       if (!isAccessible((PsiNamedElement) element)) return true;
 
-      if (myForCompletion || PsiUtil.isApplicable(myArgumentTypes, method)) {
+      if (myForCompletion || PsiUtil.isApplicable(myArgumentTypes, method, PsiSubstitutor.EMPTY)) { //do not use substitutor here!
         myCandidates.add(new GroovyResolveResultImpl(method, true, myImportStatementContext, substitutor));
       }
       else {

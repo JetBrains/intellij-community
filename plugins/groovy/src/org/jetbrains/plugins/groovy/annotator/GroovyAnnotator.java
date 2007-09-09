@@ -135,9 +135,9 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkConstructorInvocation(AnnotationHolder holder, GrConstructorInvocation invocation) {
-    final PsiMethod resolved = invocation.resolveConstructor();
-    if (resolved != null) {
-      checkMethodApplicability(resolved, invocation.getThisOrSuperKeyword(), holder);
+    final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
+    if (resolveResult != null) {
+      checkMethodApplicability(resolveResult, invocation.getThisOrSuperKeyword(), holder);
     } else {
       final GroovyResolveResult[] results = invocation.multiResolveConstructor();
       final GrArgumentList argList = invocation.getArgumentList();
@@ -151,7 +151,7 @@ public class GroovyAnnotator implements Annotator {
           //default constructor invocation
           PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getThisOrSuperKeyword(), true);
           if (argumentTypes != null && argumentTypes.length > 0) {
-            String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass) clazz).getName());
+            String message = GroovyBundle.message("cannot.find.default.constructor", clazz.getName());
             holder.createWarningAnnotation(toHighlight, message);
           }
         }
@@ -538,8 +538,7 @@ public class GroovyAnnotator implements Annotator {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
       } else if (element instanceof PsiMethod && element.getUserData(GrMethod.BUILDER_METHOD) == null) {
-        final PsiMethod method = (PsiMethod) element;
-        checkMethodApplicability(method, refExpr, holder);
+        checkMethodApplicability(resolveResult, refExpr, holder);
       }
       if (isAssignmentLHS(refExpr) || element instanceof PsiPackage) return;
     } else {
@@ -585,9 +584,11 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkMethodApplicability(PsiMethod method, PsiElement place, AnnotationHolder holder) {
+  private void checkMethodApplicability(GroovyResolveResult methodResolveResult, PsiElement place, AnnotationHolder holder) {
+    final PsiMethod method = (PsiMethod) methodResolveResult.getElement();
+    assert method != null;
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor());
-    if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, method)) {
+    if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor())) {
       PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
       if (elementToHighlight == null) {
         elementToHighlight = place;
@@ -647,33 +648,9 @@ public class GroovyAnnotator implements Annotator {
     if (newExpression.getArrayCount() > 0) return;
     GrCodeReferenceElement refElement = newExpression.getReferenceElement();
     if (refElement == null) return;
-    final PsiMethod resolved = newExpression.resolveConstructor();
-    if (resolved != null) {
-      checkMethodApplicability(resolved, refElement, holder);
-    } else {
-      final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
-      final GrArgumentList argList = newExpression.getArgumentList();
-      PsiElement toHighlight = argList != null ? argList : refElement.getReferenceNameElement();
-      if (results.length > 0) {
-        String message = GroovyBundle.message("ambiguous.constructor.call");
-        holder.createWarningAnnotation(toHighlight, message);
-      } else {
-        final PsiElement element = refElement.resolve();
-        if (element instanceof PsiClass) {
-          //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true);
-          if (argumentTypes != null && argumentTypes.length > 0) {
-            String message = GroovyBundle.message("cannot.find.default.constructor", ((PsiClass) element).getName());
-            holder.createWarningAnnotation(toHighlight, message);
-          }
-        }
-      }
-    }
-  }
-
-  private void checkConstructor(AnnotationHolder holder, GrNewExpression newExpression, GrCodeReferenceElement refElement, PsiMethod resolved) {
-    if (resolved != null) {
-      checkMethodApplicability(resolved, refElement, holder);
+    final GroovyResolveResult resolveResult = newExpression.resolveConstructorGenerics();
+    if (resolveResult != null) {
+      checkMethodApplicability(resolveResult, refElement, holder);
     } else {
       final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
       final GrArgumentList argList = newExpression.getArgumentList();

@@ -68,6 +68,10 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
   }
 
   public PsiMethod resolveConstructor() {
+    return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
+  }
+
+  public GroovyResolveResult resolveConstructorGenerics() {
     return PsiImplUtil.extractUniqueResult(multiResolveConstructor());
   }
 

@@ -73,11 +73,11 @@ public class PsiUtil {
     return false;
   }
 
-  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, PsiMethod method) {
+  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, PsiMethod method, PsiSubstitutor substitutor) {
     if (argumentTypes == null) return true;
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    PsiType[] parameterTypes = skipOptionalParameters(argumentTypes.length, parameters);
+    PsiType[] parameterTypes = skipOptionalParametersAndSubstitute(argumentTypes.length, parameters, substitutor);
     if (parameterTypes.length - 1 > argumentTypes.length) return false; //one Map type might represent named arguments
     if (parameterTypes.length == 0 && argumentTypes.length > 0) return false;
 
@@ -116,7 +116,7 @@ public class PsiUtil {
     return true;
   }
 
-  private static PsiType[] skipOptionalParameters(int argNum, PsiParameter[] parameters) {
+  private static PsiType[] skipOptionalParametersAndSubstitute(int argNum, PsiParameter[] parameters, PsiSubstitutor substitutor) {
     int diff = parameters.length - argNum;
     List<PsiType> result = new ArrayList<PsiType>(argNum);
     for (PsiParameter parameter : parameters) {
@@ -125,7 +125,7 @@ public class PsiUtil {
         continue;
       }
 
-      result.add(parameter.getType());
+      result.add(substitutor.substitute(parameter.getType()));
     }
 
     return result.toArray(new PsiType[result.size()]);
