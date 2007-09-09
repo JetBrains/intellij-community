@@ -17,12 +17,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -44,7 +48,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   private static final Map<String, String> typesToInitialValues = new HashMap<String, String>();
 
   static {
-    typesToInitialValues.put("String", "\"\"");
     typesToInitialValues.put("boolean", "false");
     typesToInitialValues.put("int", "0");
     typesToInitialValues.put("short", "0");
@@ -509,9 +512,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append(" ");
       text.append("{\n");
 
-      String returnValue = typesToInitialValues.get(type);
-
-      if (returnValue == null) returnValue = "null";
+      String returnValue = getDefaultValueText(type);
 
       text.append("    return ");
       text.append(returnValue);
@@ -625,11 +626,15 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("super");
       text.append("(");
 
-      //TODO: check NamedArguments
       GrArgumentList argumentList = constructorInvocation.getArgumentList();
 
       if (argumentList != null) {
         final GrExpression[] expressions = argumentList.getExpressionArguments();
+        final GrNamedArgument[] namedArguments = argumentList.getNamedArguments();
+        if (namedArguments.length > 0) {
+          text.append("(java.util.Map)null");
+          if (expressions.length > 0) text.append(", ");
+        }
 
         for (int j = 0; j < expressions.length; j++) {
           if (j > 0) text.append(", ");
@@ -648,7 +653,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
                 }
                 final String typeText = type.getCanonicalText();
                 if (typeText != null) {
-                  return "(" + typeText + ")null";
+                  return "(" + typeText + ")" + getDefaultValueText(typeText);
                 }
               }
 
@@ -667,15 +672,17 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append("\n");
   }
 
+  private String getDefaultValueText(String typeCanonicalText) {
+    final String result = typesToInitialValues.get(typeCanonicalText);
+    if (result == null) return "null";
+    return result;
+  }
+
   private void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
     GrTypeElement varTypeElement = variableDeclaration.getTypeElementGroovy();
     String varQualifiedTypeName = getTypeText(varTypeElement);
 
-    String initValueToText;
-    if (typesToInitialValues.containsKey(varQualifiedTypeName))
-      initValueToText = typesToInitialValues.get(varQualifiedTypeName);
-    else
-      initValueToText = "null";
+    String initValueText = getDefaultValueText(varQualifiedTypeName);
 
     //append method name
     PsiModifierList modifierList = variableDeclaration.getModifierList();
@@ -697,7 +704,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append(variable.getName());
       text.append(" = ");
 
-      text.append(initValueToText);
+      text.append(initValueText);
       text.append(";");
       text.append("\n");
       i++;
@@ -754,10 +761,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("{\n");
       text.append("    return ");
 
-      if (typesToInitialValues.containsKey(qualifiedTypeName))
-        text.append(typesToInitialValues.get(qualifiedTypeName));
-      else
-        text.append("null");
+      text.append(getDefaultValueText(qualifiedTypeName));
 
       text.append(";");
 
