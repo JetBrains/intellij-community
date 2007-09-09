@@ -178,7 +178,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private PsiType getNominalType() {
     IElementType dotType = getDotTokenType();
-    PsiElement resolved = resolve();
+    final GroovyResolveResult resolveResult = advancedResolve();
+    PsiElement resolved = resolveResult.getElement();
     PsiType result = null;
     PsiManager manager = getManager();
     if (resolved instanceof PsiClass) {
@@ -229,7 +230,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     }
 
-    result = TypesUtil.boxPrimitiveType(result, manager, getResolveScope());
+    if (result != null) {
+      result = resolveResult.getSubstitutor().substitute(result);
+      result = TypesUtil.boxPrimitiveType(result, manager, getResolveScope());
+    }
     if (dotType != GroovyTokenTypes.mSPREAD_DOT) {
       return result;
     } else {
@@ -360,9 +364,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     private void processClassQualifierType(GrReferenceExpressionImpl refExpr, ResolverProcessor processor, PsiType qualifierType) {
       Project project = refExpr.getProject();
       if (qualifierType instanceof PsiClassType) {
-        PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
+        PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType) qualifierType).resolveGenerics();
+        PsiClass qualifierClass = qualifierResult.getElement();
         if (qualifierClass != null) {
-          if (!qualifierClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
+          if (!qualifierClass.processDeclarations(processor, qualifierResult.getSubstitutor(), null, refExpr)) return;
         }
       } else if (qualifierType instanceof PsiArrayType) {
         final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();

@@ -314,4 +314,8 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertEquals(parameters[0].getType().getCanonicalText(), "int");
   }
 
+  public void testGenerics1() throws Exception {
+    PsiReference ref = configureByFile("generics1/A.groovy");
+    assertNotNull(ref.resolve());
+  }
 }

@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
@@ -42,8 +43,8 @@ import java.util.Arrays;
 /**
  * @author ilyas
  */
-public class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCallExpression {
-  public GrMethodCallImpl(@NotNull ASTNode node) {
+public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements GrMethodCallExpression {
+  public GrMethodCallExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -59,10 +60,14 @@ public class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCa
     GrExpression invoked = getInvokedExpression();
     if (invoked instanceof GrReferenceExpression) {
       GrReferenceExpression refExpr = (GrReferenceExpression) invoked;
-      PsiElement resolved = refExpr.resolve();
+      final GroovyResolveResult resolveResult = refExpr.advancedResolve();
+      PsiElement resolved = resolveResult.getElement();
       if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
         PsiType returnType = ((PsiMethod) resolved).getReturnType();
-        returnType = TypesUtil.boxPrimitiveType(returnType, getManager(), getResolveScope());
+        if (returnType != null) {
+          returnType = resolveResult.getSubstitutor().substitute(returnType);
+          returnType = TypesUtil.boxPrimitiveType(returnType, getManager(), getResolveScope());
+        }
         if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
           return returnType;
         } else {
