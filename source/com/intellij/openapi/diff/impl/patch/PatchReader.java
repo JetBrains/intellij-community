@@ -236,7 +236,8 @@ public class PatchReader {
           lastAfterPatchLine.setSuppressNewLine(true);
           afterLineIndex++;
         }
-        else if (startsWith(beforeLine, " ") && startsWith(afterLine, " ")) {
+        else if (startsWith(beforeLine, " ") &&
+                 (startsWith(afterLine, " ") || afterLine == null /* handle some weird cases with line breaks truncated at EOF */ )) {
           addContextDiffLine(hunk, beforeLine, PatchLine.Type.CONTEXT);
           beforeLineIndex++;
           afterLineIndex++;
