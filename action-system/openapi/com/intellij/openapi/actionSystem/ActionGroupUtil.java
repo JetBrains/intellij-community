@@ -24,26 +24,28 @@ public class ActionGroupUtil {
         continue;
       }
       else if (action instanceof ActionGroup) {
-        if (!isGroupEmpty((ActionGroup)action, e, action2presentation)) {
+        if (isActionEnabledAndVisible(e, action2presentation, action) && !isGroupEmpty((ActionGroup)action, e, action2presentation)) {
           return false;
         }
-      }
-      else {
-        Presentation presentation = getPresentation(action, action2presentation);
-        AnActionEvent event = new AnActionEvent(e.getInputEvent(),
-                                                e.getDataContext(),
-                                                ActionPlaces.UNKNOWN,
-                                                presentation,
-                                                ActionManager.getInstance(),
-                                                e.getModifiers());
-        event.setInjectedContext(action.isInInjectedContext());
-        action.update(event);
-        final boolean enabled = presentation.isEnabled() && presentation.isVisible();
-        if (enabled) {
-          return false;
-        }
+      } else {
+        if(isActionEnabledAndVisible(e, action2presentation, action)) return false;
       }
     }
     return true;
+  }
+
+  private static boolean isActionEnabledAndVisible(final AnActionEvent e, final Map<AnAction, Presentation> action2presentation,
+                                         final AnAction action) {
+    Presentation presentation = getPresentation(action, action2presentation);
+    AnActionEvent event = new AnActionEvent(e.getInputEvent(),
+                                            e.getDataContext(),
+                                            ActionPlaces.UNKNOWN,
+                                            presentation,
+                                            ActionManager.getInstance(),
+                                            e.getModifiers());
+    event.setInjectedContext(action.isInInjectedContext());
+    action.update(event);
+
+    return presentation.isEnabled() && presentation.isVisible();
   }
 }
