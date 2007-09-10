@@ -5,6 +5,8 @@
 package com.intellij.openapi.paths;
 
 import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
@@ -24,7 +26,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
-  implements PsiPolyVariantReference, QuickFixProvider<PsiDynaReference> {
+  implements PsiPolyVariantReference, QuickFixProvider<PsiDynaReference>, EmptyResolveMessageProvider {
 
   private List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private int myChoosenOne = -1;
@@ -222,5 +224,13 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
         ((QuickFixProvider)ref).registerQuickfix(info, (PsiReference)ref);
       }
     }
+  }
+
+  public String getUnresolvedMessagePattern() {
+    final PsiReference reference = chooseReference();
+
+    return reference instanceof EmptyResolveMessageProvider ?
+           ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern() :
+            XmlErrorMessages.message("cannot.resolve.symbol");
   }
 }
