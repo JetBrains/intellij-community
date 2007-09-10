@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 public class UnselectWordAtCaretAction extends EditorAction {
   public UnselectWordAtCaretAction() {
     super(new Handler());
+    setInjectedContext(true);
   }
 
   private static class Handler extends EditorActionHandler {

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.injected.EditorWindow;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -34,7 +35,14 @@ public class SelectWordHandler extends EditorActionHandler {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: execute(editor='" + editor + "')");
     }
-
+    if (editor instanceof EditorWindow && editor.getSelectionModel().hasSelection()) {
+      int start = editor.getSelectionModel().getSelectionStart();
+      int end = editor.getSelectionModel().getSelectionEnd();
+      if (end - start == editor.getDocument().getTextLength()) {
+        //spread selection beyond injected fragment
+        editor = ((EditorWindow)editor).getDelegate();
+      }
+    }
     Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null) {
       if (myOriginalHandler != null) {
@@ -84,7 +92,6 @@ public class SelectWordHandler extends EditorActionHandler {
     }
 
     while (element instanceof PsiWhiteSpace) {
-      nextParent:
       while (element.getNextSibling() == null) {
         final PsiElement parent = element.getParent();
         final PsiElement[] children = parent.getChildren();
@@ -94,7 +101,7 @@ public class SelectWordHandler extends EditorActionHandler {
         }
         else {
           element = parent;
-          break nextParent;
+          break;
         }
       }
 

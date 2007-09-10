@@ -439,7 +439,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
   }
 
   public boolean containsRange(int start, int end) {
-    if (end - start >= myRelevantRangesInHostDocument[0].getEndOffset() - myRelevantRangesInHostDocument[0].getStartOffset()) return false;
+    if (end - start > myRelevantRangesInHostDocument[0].getEndOffset() - myRelevantRangesInHostDocument[0].getStartOffset()) return false;
     for (RangeMarker hostRange : myRelevantRangesInHostDocument) {
       if (InjectedLanguageUtil.toTextRange(hostRange).contains(new TextRange(start, end))) return true;
     }
