@@ -170,7 +170,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public GrCodeReferenceElement createTypeOrPackageReference(String qName) {
-    final GroovyFileBase file = createDummyFile(qName + " i");
+    final GroovyFileBase file = createDummyFile("def "+ qName + " i");
     GrVariableDeclaration varDecl = (GrVariableDeclaration) file.getTopStatements()[0];
     final GrClassTypeElement typeElement = (GrClassTypeElement) varDecl.getTypeElementGroovy();
     assert typeElement != null;
