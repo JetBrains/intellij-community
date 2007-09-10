@@ -114,7 +114,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
         }
 
         for (TextRange range : ranges) {
-          if (range == null) {
+          if (range == null || range.isEmpty()) {
             continue;
           }
 

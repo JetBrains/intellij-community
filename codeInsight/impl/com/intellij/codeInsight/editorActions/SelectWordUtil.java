@@ -86,7 +86,7 @@ public class SelectWordUtil {
     return start;
   }
 
-  private static int findClosingBrace(PsiElement[] children) {
+  private static int findClosingBrace(PsiElement[] children, int startOffset) {
     int end = children[children.length - 1].getTextRange().getEndOffset();
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
@@ -97,7 +97,7 @@ public class SelectWordUtil {
         if (token.getTokenType() == JavaTokenType.RBRACE) {
           int j = i - 1;
 
-          while (children[j] instanceof PsiWhiteSpace) {
+          while (children[j] instanceof PsiWhiteSpace && children[j].getTextRange().getStartOffset() > startOffset) {
             j--;
           }
 
@@ -536,7 +536,7 @@ public class SelectWordUtil {
       PsiElement[] children = e.getChildren();
 
       int start = findOpeningBrace(children);
-      int end = findClosingBrace(children);
+      int end = findClosingBrace(children, start);
 
       result.add(e.getTextRange());
       result.addAll(expandToWholeLine(editorText, new TextRange(start, end)));
@@ -591,7 +591,7 @@ public class SelectWordUtil {
 
       if (e instanceof PsiClass) {
         int start = findOpeningBrace(children);
-        int end = findClosingBrace(children);
+        int end = findClosingBrace(children, start);
 
         result.addAll(expandToWholeLine(editorText, new TextRange(start, end)));
       }

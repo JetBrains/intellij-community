@@ -119,7 +119,7 @@ public class SelectWordHandler extends EditorActionHandler {
     while (element != null && !(element instanceof PsiFile)) {
       newRange = advance(selectionRange, element, text, caretOffset, editor);
 
-      if (newRange != null) {
+      if (newRange != null && !newRange.isEmpty()) {
         break;
       }
 
