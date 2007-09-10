@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.*;
+import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsInSuppressedPlaceIntention;
@@ -127,6 +128,7 @@ public class IntentionManagerImpl extends IntentionManager {
   public List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, final PsiElement context) {
     List<IntentionAction> options = new ArrayList<IntentionAction>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));
+    options.add(new RunInspectionIntention(displayKey));
     options.add(new AddNoInspectionCommentFix(displayKey, context));
     options.add(new AddNoInspectionDocTagFix(displayKey, context));
     options.add(new AddNoInspectionForClassFix(displayKey, context));
