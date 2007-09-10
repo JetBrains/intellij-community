@@ -17,6 +17,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -42,9 +43,9 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -194,48 +195,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   public List<IntentionAction> getAvailableIntentions(final String... filePaths) throws Throwable {
-    final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
+
     final Project project = myProjectFixture.getProject();
-    new WriteCommandAction.Simple(project) {
-
-      protected void run() throws Throwable {
+    return new WriteCommandAction<List<IntentionAction>>(project) {
+      protected void run(final Result<List<IntentionAction>> result) throws Throwable {
         final int offset = configureByFiles(filePaths);
-
-        final Collection<HighlightInfo> infos = doHighlighting();
-        for (HighlightInfo info :infos) {
-          if (info.quickFixActionRanges != null) {
-            for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-              if (offset > 0 && !pair.getSecond().contains(offset)) {
-                continue;
-              }
-              final HighlightInfo.IntentionActionDescriptor actionDescriptor = pair.first;
-              final IntentionAction action = actionDescriptor.getAction();
-              if (action.isAvailable(project, myEditor, myFile)) {
-                availableActions.add(action);
-                final List<IntentionAction> actions = actionDescriptor.getOptions(myFile.findElementAt(myEditor.getCaretModel().getOffset()));
-                if (actions != null) {
-                  for (IntentionAction intentionAction : actions) {
-                    if (intentionAction.isAvailable(project, myEditor, myFile)) {
-                      availableActions.add(intentionAction);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        final IntentionAction[] intentionActions = IntentionManager.getInstance().getIntentionActions();
-        for (IntentionAction intentionAction : intentionActions) {
-          if (intentionAction.isAvailable(getProject(), getEditor(), getFile())) {
-            availableActions.add(intentionAction);
-          }
-        }
-        
+        result.setResult(getAvailableIntentions(project, doHighlighting(), offset,
+                                                                                CodeInsightTestFixtureImpl.this.myEditor,
+                                                                                CodeInsightTestFixtureImpl.this.myFile));
       }
-    }.execute().throwException();
-
-    return availableActions;
+    }.execute().getResultObject();
   }
 
   public void launchAction(final IntentionAction action) throws Throwable {
@@ -373,7 +342,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myAvailableTools.put(shortName, tool);
     myAvailableLocalTools.put(shortName, new LocalInspectionToolWrapper(tool));
   }
-  
+
   private void configureInspections(final LocalInspectionTool[] tools) {
     for (LocalInspectionTool tool : tools) {
       enableInspectionTool(tool);
@@ -415,6 +384,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void tearDown() throws Exception {
+    LookupManager.getInstance(getProject()).hideActiveLookup();
+
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     VirtualFile[] openFiles = editorManager.getOpenFiles();
     for (VirtualFile openFile : openFiles) {
@@ -583,6 +554,41 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public PsiFile getFile() {
     return myFile;
+  }
+
+  public static List<IntentionAction> getAvailableIntentions(final Project project, final Collection<HighlightInfo> infos, final int offset,
+                                                       final Editor editor, final PsiFile file) {
+    final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
+
+    for (HighlightInfo info :infos) {
+      if (info.quickFixActionRanges != null) {
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+          if (offset > 0 && !pair.getSecond().contains(offset)) {
+            continue;
+          }
+          final HighlightInfo.IntentionActionDescriptor actionDescriptor = pair.first;
+          final IntentionAction action = actionDescriptor.getAction();
+          if (action.isAvailable(project, editor, file)) {
+            availableActions.add(action);
+            final List<IntentionAction> actions = actionDescriptor.getOptions(file.findElementAt(editor.getCaretModel().getOffset()));
+            if (actions != null) {
+              for (IntentionAction intentionAction : actions) {
+                if (intentionAction.isAvailable(project, editor, file)) {
+                  availableActions.add(intentionAction);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    for (IntentionAction intentionAction : IntentionManager.getInstance().getIntentionActions()) {
+      if (intentionAction.isAvailable(project, editor, file)) {
+        availableActions.add(intentionAction);
+      }
+    }
+    return availableActions;
   }
 
   static class SelectionAndCaretMarkupLoader {

@@ -13,7 +13,7 @@ public class EditorInfo {
   @NonNls public static final String SELECTION_END_MARKER = "</selection>";
 
   String newFileText = null;
-  RangeMarker caretMarker = null;
+  public RangeMarker caretMarker = null;
   RangeMarker selStartMarker = null;
   RangeMarker selEndMarker = null;
 
