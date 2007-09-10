@@ -14,7 +14,6 @@ import com.intellij.util.pico.AssignableToComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
-import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 public class ServiceManagerImpl implements BaseComponent {
