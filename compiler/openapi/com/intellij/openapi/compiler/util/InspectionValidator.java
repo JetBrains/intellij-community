@@ -67,7 +67,7 @@ public abstract class InspectionValidator {
   }
 
   @NotNull
-  public final Class<? extends LocalInspectionTool>[] getInspectionToolClasses() {
+  public Class<? extends LocalInspectionTool>[] getInspectionToolClasses(final CompileContext context) {
     return myInspectionToolClasses;
   }
 

@@ -15,12 +15,11 @@
  */
 package com.intellij.openapi.compiler.util;
 
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.util.descriptors.ConfigFile;
-import com.intellij.compiler.impl.ModuleCompileScope;
 
 import java.util.Collection;
 
@@ -34,9 +33,13 @@ public class InspectionValidatorUtil {
   public static void addDescriptor(@NotNull final Collection<VirtualFile> result, @NotNull final CompileScope scope, @Nullable final ConfigFile configFile) {
     if (configFile != null) {
       final VirtualFile virtualFile = configFile.getVirtualFile();
-      if (virtualFile != null && scope instanceof ModuleCompileScope) {
-        result.add(virtualFile);
-      }
+      addVirtualFile(result, scope, virtualFile);
+    }
+  }
+
+  public static void addVirtualFile(final Collection<VirtualFile> result, final CompileScope scope, final VirtualFile virtualFile) {
+    if (virtualFile != null && scope.belongs(virtualFile.getUrl())) {
+      result.add(virtualFile);
     }
   }
 }
