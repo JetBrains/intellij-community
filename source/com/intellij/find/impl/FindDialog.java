@@ -707,6 +707,9 @@ final class FindDialog extends DialogWrapper {
   private String getStringToFind() {
     return (String)myInputComboBox.getEditor().getItem();
   }
+  private String getStringToReplace() {
+    return (String)myReplaceComboBox.getEditor().getItem();
+  }
 
   private String getDirectory() {
     return (String)myDirectoryComboBox.getSelectedItem();
@@ -762,7 +765,7 @@ final class FindDialog extends DialogWrapper {
     if (model.isReplaceState()){
       model.setPromptOnReplace(true);
       model.setReplaceAll(false);
-      String stringToReplace = (String)myReplaceComboBox.getSelectedItem();
+      String stringToReplace = getStringToReplace();
       if (stringToReplace == null){
         stringToReplace = "";
       }
@@ -813,6 +816,7 @@ final class FindDialog extends DialogWrapper {
       }
     }
   }
+
 
   private void initByModel() {
     myCbCaseSensitive.setSelected(myModel.isCaseSensitive());
