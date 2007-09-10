@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -594,8 +595,15 @@ public class GroovyAnnotator implements Annotator {
         elementToHighlight = place;
       }
 
-      //todo more specific error message
-      String message = GroovyBundle.message("cannot.apply.method", method.getName());
+      final String typesString = buildArgTypesList(argumentTypes);
+      String message;
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null) {
+        final PsiClassType containingType = method.getManager().getElementFactory().createType(containingClass, methodResolveResult.getSubstitutor());
+        message = GroovyBundle.message("cannot.apply.method1", method.getName(), containingType.getInternalCanonicalText(), typesString);
+      } else {
+        message = GroovyBundle.message("cannot.apply.method", method.getName(), typesString);
+      }
       holder.createWarningAnnotation(elementToHighlight, message);
     }
   }
@@ -610,9 +618,6 @@ public class GroovyAnnotator implements Annotator {
     GroovyResolveResult resolveResult = refElement.advancedResolve();
     registerUsedImport(refElement, resolveResult);
     if (refElement.getReferenceName() != null) {
-
-//todo [to ven] for what?
-//      if (parent instanceof GrNewExpression) return;
 
       if (parent instanceof GrImportStatement &&
           ((GrImportStatement) parent).isStatic() &&
@@ -699,6 +704,20 @@ public class GroovyAnnotator implements Annotator {
     }
 
     return map;
+  }
+
+  private static String buildArgTypesList(PsiType[] argTypes) {
+    StringBuilder builder = new StringBuilder();
+    builder.append("(");
+    for (int i = 0; i < argTypes.length; i++) {
+      if (i > 0) {
+        builder.append(", ");
+      }
+      PsiType argType = argTypes[i];
+      builder.append(argType != null ? argType.getInternalCanonicalText() : "?");
+    }
+    builder.append(")");
+    return builder.toString();
   }
 }
 
