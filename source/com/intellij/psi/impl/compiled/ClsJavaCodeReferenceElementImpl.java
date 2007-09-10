@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -198,7 +198,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    final ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
+    final ResolveCache resolveCache = ((PsiManagerEx)getManager()).getResolveCache();
     return (JavaResolveResult[])resolveCache.resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
   }
 
@@ -208,7 +208,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
   private PsiElement resolveElement() {
     PsiElement element = getParent();
-    while(!(element instanceof PsiClass) || element instanceof PsiTypeParameter){
+    while(element != null && (!(element instanceof PsiClass) || element instanceof PsiTypeParameter)) {
       if(element instanceof PsiMethod){
         final PsiMethod method = (PsiMethod)element;
         final PsiTypeParameterList list = method.getTypeParameterList();
@@ -216,17 +216,17 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
           final PsiTypeParameter[] parameters = list.getTypeParameters();
           for (int i = 0; parameters != null && i < parameters.length; i++) {
             final PsiTypeParameter parameter = parameters[i];
-            if (parameter.getName().equals(myQualifiedName)) return parameter;
+            if (myQualifiedName.equals(parameter.getName())) return parameter;
           }
         }
       }
       element = element.getParent();
     }
-
+    if (element == null) return null;
     Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator((PsiClass)element);
     while (it.hasNext()) {
       PsiTypeParameter parameter = it.next();
-      if (parameter.getName().equals(myQualifiedName)) return parameter;
+      if (myQualifiedName.equals(parameter.getName())) return parameter;
     }
     return getManager().findClass(myQualifiedName, getResolveScope());
   }

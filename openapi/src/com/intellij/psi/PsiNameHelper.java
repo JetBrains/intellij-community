@@ -138,7 +138,7 @@ public abstract class PsiNameHelper {
       referenceText = removeWhitespace(referenceText);
     }
     if (referenceText.indexOf('<') < 0) return referenceText;
-    final StringBuffer buffer = new StringBuffer(referenceText.length());
+    final StringBuilder buffer = new StringBuilder(referenceText.length());
     final char[] chars = referenceText.toCharArray();
     int gtPos = 0;
     int count = 0;
