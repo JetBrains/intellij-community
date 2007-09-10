@@ -80,7 +80,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       // bulk mode was reset
       doSetText(document.getCharsSequence());
     }
-    return new HighlighterIteratorImpl(mySegments, startOffset);
+    return new HighlighterIteratorImpl(startOffset);
   }
 
   private int packData(IElementType tokenType, int state) {
@@ -223,7 +223,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
           tokenStartOffset = -1;
         }
       }
-      document.putUserData(CHANGED_TOKEN_START_OFFSET, new Integer(tokenStartOffset));
+      document.putUserData(CHANGED_TOKEN_START_OFFSET, Integer.valueOf(tokenStartOffset));
     }
 
     int lastDocOffset = document.getTextLength();
@@ -326,11 +326,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   public class HighlighterIteratorImpl implements HighlighterIterator {
     private int mySegmentIndex = 0;
-    private SegmentArrayWithData mySegments;
 
-    HighlighterIteratorImpl(SegmentArrayWithData segments,
-                            int startOffset) {
-      mySegments = segments;
+    HighlighterIteratorImpl(int startOffset) {
       mySegmentIndex = mySegments.findSegmentIndex(startOffset);
     }
 
