@@ -576,7 +576,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         "  }\n");
   }
 
-  private void writeConstructor(StringBuffer text, GrMethod constructor) {
+  private void writeConstructor(final StringBuffer text, GrMethod constructor) {
     GrConstructorDefinitionImpl constrDefinition = (GrConstructorDefinitionImpl) constructor;
 
     writeMethodModifiers(text, constrDefinition.getModifierList(), JAVA_MODIFIERS);
@@ -593,10 +593,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     String paramType;
     GrTypeElement paramTypeElement;
 
-    //writes parameters
-    int i = 0;
-    while (i < parameterList.length) {
-      if (i > 0) text.append(", ");  //append ','
+    for (int i = 0; i < parameterList.length; i++) {
+      if (i > 0) text.append(", ");
 
       GrParameter parameter = parameterList[i];
       paramTypeElement = parameter.getTypeElementGroovy();
@@ -605,46 +603,54 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append(paramType);
       text.append(" ");
       text.append(parameter.getName());
-
-      i++;
     }
+
     text.append(")");
     text.append(" ");
 
     /************* body **********/
-    text.append("{\n");
 
     final GrConstructorInvocation constructorInvocation = constrDefinition.getConstructorInvocation();
     if (constructorInvocation != null && constructorInvocation.isSuperCall()) {
-      final PsiMethod superConstructor = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod>() {
-        public PsiMethod compute() {
-          return constructorInvocation.resolveConstructor();
-        }
-      });
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          final PsiMethod superConstructor = constructorInvocation.resolveConstructor();
+          if (superConstructor != null) {
+            final PsiClassType[] throwsTypes = superConstructor.getThrowsList().getReferencedTypes();
+            if (throwsTypes.length > 0) {
+              text.append(" throws ");
+              for (int i = 0; i < throwsTypes.length; i++) {
+                if (i > 0) text.append(", ");
+                text.append(throwsTypes[i].getCanonicalText());
+              }
+            }
+          }
 
-      text.append("  ");
-      text.append("super");
-      text.append("(");
+          text.append("{\n");
 
-      GrArgumentList argumentList = constructorInvocation.getArgumentList();
+          text.append("  ");
+          text.append("super");
+          text.append("(");
 
-      if (argumentList != null) {
-        final GrExpression[] expressions = argumentList.getExpressionArguments();
-        final GrNamedArgument[] namedArguments = argumentList.getNamedArguments();
-        if (namedArguments.length > 0) {
-          text.append("(java.util.Map)null");
-          if (expressions.length > 0) text.append(", ");
-        }
+          GrArgumentList argumentList = constructorInvocation.getArgumentList();
 
-        for (int j = 0; j < expressions.length; j++) {
-          if (j > 0) text.append(", ");
-          final int j1 = j;
-          String argText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-            public String compute() {
+          if (argumentList != null) {
+            final GrExpression[] expressions = argumentList.getExpressionArguments();
+            final GrNamedArgument[] namedArguments = argumentList.getNamedArguments();
+            if (namedArguments.length > 0) {
+              text.append("(java.util.Map)null");
+              if (expressions.length > 0) text.append(", ");
+            }
+
+            for (int i = 0; i < expressions.length; i++) {
+              if (i > 0) text.append(", ");
+              String argText = null;
               if (superConstructor != null) {
                 final PsiParameter[] superParams = superConstructor.getParameterList().getParameters();
+                final int paramIndex = namedArguments.length == 0 ? i : i + 1;
+
                 PsiType type;
-                if (j1 < superParams.length) type = superParams[j1].getType();
+                if (paramIndex < superParams.length) type = superParams[paramIndex].getType();
                 else {
                   type = superParams[superParams.length - 1].getType();
                   if (type instanceof PsiEllipsisType) {
@@ -653,19 +659,21 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
                 }
                 final String typeText = type.getCanonicalText();
                 if (typeText != null) {
-                  return "(" + typeText + ")" + getDefaultValueText(typeText);
+                  argText = "(" + typeText + ")" + getDefaultValueText(typeText);
                 }
               }
 
-              return expressions[j1].getText();
+              if (argText == null) argText = expressions[i].getText();
+              text.append(argText);
             }
-          });
-
-          text.append(argText);
+          }
+          text.append(")");
+          text.append(";");
         }
-      }
-      text.append(")");
-      text.append(";");
+      });
+
+    } else {
+      text.append("{\n");
     }
 
     text.append("\n}");

@@ -1,0 +1,20 @@
+class Base {
+  Base(String s, int i) throws Exception {}
+}
+
+class Derived {
+  Derived() {
+    super("", 0)
+  }
+}
+-----
+class Base {
+  Base(java.lang.String s, int i) throws java.lang.Exception{}
+}
+-----
+class Derived {
+  Derived() throws java.lang.Exception{
+    super((java.lang.String)null, (int)0)
+  }
+}
+---
