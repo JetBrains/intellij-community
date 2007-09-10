@@ -16,11 +16,14 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class NonNlsUtils {
+
+    private static final Key<Boolean> KEY = new Key("IG_NON_NLS_ANNOTATED_USE");
 
     private NonNlsUtils() {
     }
@@ -57,21 +60,34 @@ public class NonNlsUtils {
                         PsiAssignmentExpression.class,
                         PsiVariable.class,
                         PsiReturnStatement.class);
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof PsiExpression) {
+            final PsiExpression parentExpression = (PsiExpression)parent;
+            final Boolean data = parentExpression.getUserData(KEY);
+            if (data != null) {
+                expression.putUserData(KEY, data);
+                return data.booleanValue();
+            }
+        }
+        final boolean result;
         if (element instanceof PsiExpressionList) {
             final PsiExpressionList expressionList = (PsiExpressionList) element;
-            return isNonNlsAnnotatedParameter(expression, expressionList);
+            result = isNonNlsAnnotatedParameter(expression, expressionList);
         } else if (element instanceof PsiVariable) {
-            return isNonNlsAnnotatedModifierListOwner(element);
+            result = isNonNlsAnnotatedModifierListOwner(element);
         } else if (element instanceof PsiAssignmentExpression) {
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression) element;
-            return isAssignmentToNonNlsAnnotatedVariable(assignmentExpression);
+            result = isAssignmentToNonNlsAnnotatedVariable(assignmentExpression);
         } else if (element instanceof PsiReturnStatement) {
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-            return isNonNlsAnnotatedModifierListOwner(method);
+            result = isNonNlsAnnotatedModifierListOwner(method);
+        } else {
+            result = false;
         }
-        return false;
+        expression.putUserData(KEY, Boolean.valueOf(result));
+        return result;
     }
 
     private static boolean isAssignmentToNonNlsAnnotatedVariable(
