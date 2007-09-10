@@ -22,6 +22,7 @@ public class ApplyPatchContext {
   private final boolean myCreateDirectories;
   private final boolean myAllowRename;
   private Map<VirtualFile, String> myPendingRenames = null;
+  private Map<VirtualFile, FilePath> myPathsBeforeRename = new HashMap<VirtualFile, FilePath>();
   private TreeSet<String> myMissingDirectories = new TreeSet<String>();
   private List<FilePath> myAffectedFiles = new ArrayList<FilePath>();
   
@@ -63,7 +64,7 @@ public class ApplyPatchContext {
     if (myPendingRenames != null) {
       for(Map.Entry<VirtualFile, String> entry: myPendingRenames.entrySet()) {
         final VirtualFile file = entry.getKey();
-        addAffectedFile(file);
+        registerBeforeRename(file);
         file.rename(FilePatch.class, entry.getValue());
         addAffectedFile(file);
       }
@@ -89,6 +90,18 @@ public class ApplyPatchContext {
 
   public List<FilePath> getAffectedFiles() {
     return Collections.unmodifiableList(myAffectedFiles);
+  }
+
+  public void registerBeforeRename(final VirtualFile file) {
+    final FilePathImpl path = new FilePathImpl(new File(file.getPath()), file.isDirectory());
+    addAffectedFile(path);
+    myPathsBeforeRename.put(file, path);
+  }
+
+  public FilePath getPathBeforeRename(final VirtualFile file) {
+    final FilePath path = myPathsBeforeRename.get(file);
+    if (path != null) return path;
+    return new FilePathImpl(file);
   }
 
   public void addAffectedFile(final VirtualFile file) {

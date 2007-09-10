@@ -21,15 +21,14 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DefaultPatchBaseVersionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider");
@@ -42,8 +41,8 @@ public class DefaultPatchBaseVersionProvider {
     myProject = project;
   }
 
-  public void getBaseVersionContent(VirtualFile virtualFile, String versionId, Processor<CharSequence> processor) {
-    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
+  public void getBaseVersionContent(VirtualFile virtualFile, FilePath filePath, String versionId, Processor<CharSequence> processor) {
+    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(filePath);
     if (vcs == null) {
       return;
     }
@@ -63,7 +62,6 @@ public class DefaultPatchBaseVersionProvider {
         return;
       }
     }
-    final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(virtualFile);
     try {
       final VcsHistorySession session = vcs.getVcsHistoryProvider().createSessionFor(filePath);
       if (session == null) return;

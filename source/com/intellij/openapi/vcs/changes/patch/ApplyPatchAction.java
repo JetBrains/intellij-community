@@ -181,12 +181,13 @@ public class ApplyPatchAction extends AnAction {
     }
     catch(ApplyPatchException ex) {
       if (!patch.isNewFile() && !patch.isDeletedFile()) {
+        FilePath pathBeforeRename = context.getPathBeforeRename(file);
         final DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project);
         if (provider.canProvideContent(file, patch.getBeforeVersionId())) {
           final StringBuilder newText = new StringBuilder();
           final Ref<CharSequence> contentRef = new Ref<CharSequence>();
           final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
-          provider.getBaseVersionContent(file, patch.getBeforeVersionId(), new Processor<CharSequence>() {
+          provider.getBaseVersionContent(file, pathBeforeRename, patch.getBeforeVersionId(), new Processor<CharSequence>() {
             public boolean process(final CharSequence text) {
               newText.setLength(0);
               try {

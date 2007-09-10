@@ -172,7 +172,7 @@ public class FilePatch {
       String[] beforeNameComponents = beforeName.split("/");
       String[] afterNameComponents = afterName.split("/");
       if (!beforeNameComponents [beforeNameComponents.length-1].equals(afterNameComponents [afterNameComponents.length-1])) {
-        context.addAffectedFile(file);
+        context.registerBeforeRename(file);
         file.rename(FilePatch.class, afterNameComponents [afterNameComponents.length-1]);
         context.addAffectedFile(file);
       }
@@ -185,7 +185,7 @@ public class FilePatch {
         if (moveTarget == null) {
           return null;
         }
-        context.addAffectedFile(file);
+        context.registerBeforeRename(file);
         file.move(FilePatch.class, moveTarget);
         context.addAffectedFile(file);
       }
