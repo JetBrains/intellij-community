@@ -69,6 +69,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
     if (myToUnpluralize.contains(psiVariable)) {
       final String singular = StringUtil.unpluralize(propertyName);
       if (singular != null) return singular;
+      myToUnpluralize.remove(psiVariable); // no need to pluralize since it was initially in singular form
     }
     return propertyName;
   }

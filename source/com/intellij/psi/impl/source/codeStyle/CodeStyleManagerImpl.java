@@ -53,12 +53,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
   private StatisticsManagerEx myStatisticsManager;
 
   private final List<PostFormatProcessor> myPostFormatProcessors = new ArrayList<PostFormatProcessor>();
-  private static final @NonNls String DUMMY_IDENTIFIER = "xxx";
-  private static final @NonNls String IMPL_TYPNAME_SUFFIX = "Impl";
-  private static final @NonNls String GET_PREFIX = "get";
-  private static final @NonNls String IS_PREFIX = "is";
-  private static final @NonNls String FIND_PREFIX = "find";
-  private static final @NonNls String CREATE_PREFIX = "create";
+  @NonNls private static final String DUMMY_IDENTIFIER = "xxx";
+  @NonNls private static final String IMPL_TYPNAME_SUFFIX = "Impl";
+  @NonNls private static final String GET_PREFIX = "get";
+  @NonNls private static final String IS_PREFIX = "is";
+  @NonNls private static final String FIND_PREFIX = "find";
+  @NonNls private static final String CREATE_PREFIX = "create";
 
   public CodeStyleManagerImpl(Project project, StatisticsManagerEx statisticsManagerEx) {
     myProject = project;
@@ -213,7 +213,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
 
-    return !canChangeWhiteSpacesOnly ? postProcessElement(formatted) : formatted;
+    return canChangeWhiteSpacesOnly ? formatted : postProcessElement(formatted);
   }
 
   public PsiElement shortenClassReferences(@NotNull PsiElement element) throws IncorrectOperationException {
@@ -400,7 +400,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
     return bottomost;
   }
 
-  public int adjustLineIndent(final @NotNull Document document, final int offset) {
+  public int adjustLineIndent(@NotNull final Document document, final int offset) {
     return PostprocessReformattingAspect.getInstance(getProject()).disablePostprocessFormattingInside(new Computable<Integer>() {
       public Integer compute() {
         return adjustLineIndentInner(document, offset);
@@ -717,7 +717,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
     }
   }
 
-  public SuggestedNameInfo suggestVariableName(final @NotNull VariableKind kind,
+  public SuggestedNameInfo suggestVariableName(@NotNull final VariableKind kind,
                                                @Nullable final String propertyName,
                                                @Nullable final PsiExpression expr,
                                                @Nullable PsiType type) {
@@ -1041,10 +1041,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
   }
 
   private static ASTNode splitSpaceElement(TreeElement space, int offset, CharTable charTable) {
-    LOG.assertTrue(space.getElementType() == ElementType.WHITE_SPACE);
-    CharSequence chars = ((CharTableBasedLeafElementImpl)space).getInternedText();
-    LeafElement space1 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, 0, offset, charTable, SharedImplUtil.getManagerByTree(space));
-    LeafElement space2 = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, chars, offset, chars.length(), charTable, SharedImplUtil.getManagerByTree(space));
+    LOG.assertTrue(space.getElementType() == TokenType.WHITE_SPACE);
+    CharSequence chars = ((LeafElement)space).getInternedText();
+    LeafElement space1 = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, chars, 0, offset, charTable, SharedImplUtil.getManagerByTree(space));
+    LeafElement space2 = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, chars, offset, chars.length(), charTable, SharedImplUtil.getManagerByTree(space));
     ASTNode parent = space.getTreeParent();
     parent.replaceChild(space, space1);
     parent.addChild(space2, space1.getTreeNext());
@@ -1548,7 +1548,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
     }
   }
 
-  private @NonNls String changeIfNotIdentifier(String name) {
+  @NonNls
+  private String changeIfNotIdentifier(String name) {
     PsiManager manager = PsiManager.getInstance(myProject);
 
     if (!manager.getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {

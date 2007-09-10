@@ -84,8 +84,8 @@ public class NameSuggester {
   private static Pair<int[],int[]> calculateWordPositions(String s, String[] words) {
     int[] starts = new int[words.length + 1];
     int[] prevEnds = new int[words.length + 1];
-    int pos = 0;
     prevEnds[0] = -1;
+    int pos = 0;
     for (int i = 0; i < words.length; i++) {
       final String word = words[i];
       final int index = s.indexOf(word, pos);
@@ -245,7 +245,7 @@ public class NameSuggester {
     }
 
     String getOldString() {
-      final StringBuffer buffer = new StringBuffer();
+      final StringBuilder buffer = new StringBuilder();
       for (int i = oldFirst; i <= oldLast; i++) {
         buffer.append(myOldClassName[i]);
       }
@@ -253,7 +253,7 @@ public class NameSuggester {
     }
 
     String getNewString() {
-      final StringBuffer buffer = new StringBuffer();
+      final StringBuilder buffer = new StringBuilder();
       for (int i = newFirst; i <= newLast; i++) {
         buffer.append(myNewClassName[i]);
       }
