@@ -65,7 +65,7 @@ public class RollbackAction extends AnAction {
     if (missingFiles != null && !missingFiles.isEmpty()) {
       return true;
     }
-    List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(project, e);
+    List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e);
     if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
       return true;
     }
@@ -73,20 +73,20 @@ public class RollbackAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
+    FileDocumentManager.getInstance().saveAllDocuments();
     Project project = e.getData(DataKeys.PROJECT);
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     if (missingFiles != null && !missingFiles.isEmpty()) {
       new RollbackDeletionAction().actionPerformed(e);
     }
     else {
-      List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(project, e);
+      List<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e);
       if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
         rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
       }
       else {
         Change[] changes = getChanges(project, e);
         if (changes != null) {
-          FileDocumentManager.getInstance().saveAllDocuments();
           RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes));
         }
       }
@@ -114,24 +114,12 @@ public class RollbackAction extends AnAction {
   }
 
   @Nullable
-  private static List<VirtualFile> getModifiedWithoutEditing(Project project, final AnActionEvent e) {
+  private static List<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e) {
     final List<VirtualFile> modifiedWithoutEditing = e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     if (modifiedWithoutEditing != null && modifiedWithoutEditing.size() > 0) {
       return modifiedWithoutEditing;
     }
-    List<VirtualFile> result = null;
-    final VirtualFile[] virtualFiles = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
-    if (virtualFiles != null && virtualFiles.length > 0) {
-      for(VirtualFile file: virtualFiles) {
-        if (FileStatusManager.getInstance(project).getStatus(file).equals(FileStatus.HIJACKED)) {
-          if (result == null) {
-            result = new ArrayList<VirtualFile>();
-          }
-          result.add(file);
-        }
-      }
-    }
-    return result;
+    return null;
   }
 
   private static void rollbackModifiedWithoutEditing(final Project project, final List<VirtualFile> modifiedWithoutEditing) {
