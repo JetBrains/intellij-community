@@ -160,6 +160,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myText.setText(getText() != null ? getText() : "");
     myText2.setText(getText2() != null ? getText2() : "");
 
+    if (myCompact && myText.getText().length() == 0) {
+      myText.setText(myInfo.getTitle());
+    }
+
     myCancelButton.setPainting(isCancelable());
   }
 

@@ -22,7 +22,7 @@ public class AddTestProcessAction extends AnAction {
             public void onCount(int each) throws InterruptedException {
               indicator.setText("Found: " + each / 20 + 1);
               if (each / 10.0 == Math.round(each / 10.0)) {
-                indicator.setText("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+                indicator.setText(null);
               }
               indicator.setFraction(each / 1000.0);
               Thread.currentThread().sleep(100);

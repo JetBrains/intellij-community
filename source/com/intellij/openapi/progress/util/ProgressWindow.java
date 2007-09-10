@@ -203,7 +203,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
   }
 
   public void setText(String text) {
-    if (!text.equals(getText())) {
+    if (!Comparing.equal(text, getText())) {
       super.setText(text);
       update();
     }
@@ -217,7 +217,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
   }
 
   public void setText2(String text) {
-    if (!text.equals(getText2())) {
+    if (!Comparing.equal(text, getText2())) {
       super.setText2(text);
       update();
     }
