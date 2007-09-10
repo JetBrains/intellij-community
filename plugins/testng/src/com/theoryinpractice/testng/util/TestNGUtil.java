@@ -314,19 +314,15 @@ public class TestNGUtil implements TestFramework
     Collection<String> results = new ArrayList<String>();
     Matcher matcher = Pattern.compile("\\@testng.test(?:.*)" + parameter + "\\s*=\\s*\"(.*?)\".*").matcher(tag.getText());
     if (matcher.matches()) {
-      appendGroups(results, matcher.group(1));
-    }
-    return results;
-  }
-
-  private static void appendGroups(final Collection<String> results, final String groupTag) {
-    String[] groups = groupTag.split("[,\\s]");
-    for (String group : groups) {
-      final String trimmed = group.trim();
-      if (trimmed.length() > 0) {
-        results.add(trimmed);
+      String[] groups = matcher.group(1).split("[,\\s]");
+      for (String group : groups) {
+        final String trimmed = group.trim();
+        if (trimmed.length() > 0) {
+          results.add(trimmed);
+        }
       }
     }
+    return results;
   }
 
   private static Collection<String> extractValuesFromParameter(PsiNameValuePair aPair) {
@@ -335,12 +331,12 @@ public class TestNGUtil implements TestFramework
     if (value instanceof PsiArrayInitializerMemberValue) {
       for (PsiElement child : value.getChildren()) {
         if (child instanceof PsiLiteralExpression) {
-          appendGroups(results, (String) ((PsiLiteralExpression) child).getValue());
+          results.add((String) ((PsiLiteralExpression) child).getValue());
         }
       }
     } else {
       if (value instanceof PsiLiteralExpression) {
-        appendGroups(results, (String) ((PsiLiteralExpression) value).getValue());
+        results.add((String) ((PsiLiteralExpression) value).getValue());
       }
     }
     return results;
