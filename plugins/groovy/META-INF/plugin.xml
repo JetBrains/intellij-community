@@ -21,7 +21,7 @@
   <description>Plugin for Groovy language support</description>
   <version>VERSION</version>
   <vendor url="http://www.jetbrains.com">JetBrains Inc.</vendor>
-  <idea-version since-build="7065"/>
+  <idea-version since-build="7269"/>
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
