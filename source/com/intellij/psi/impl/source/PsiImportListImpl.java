@@ -209,33 +209,37 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
   }
 
   private void initializeMaps() {
-    if (myClassNameToImportMap == null) {
-      myClassNameToImportMap = new HashMap<String, PsiImportStatement>();
-      myPackageNameToImportMap = new HashMap<String, PsiImportStatement>();
-      myNameToSingleImportMap = new HashMap<String, PsiImportStatementBase>();
-      PsiImportStatement[] imports = getImportStatements();
-      for (PsiImportStatement anImport : imports) {
-        String qName = anImport.getQualifiedName();
-        if (qName == null) continue;
-        if (anImport.isOnDemand()) {
-          myPackageNameToImportMap.put(qName, anImport);
-        }
-        else {
-          myClassNameToImportMap.put(qName, anImport);
-          myNameToSingleImportMap.put(anImport.getImportReference().getReferenceName(), anImport);
-        }
+    Map<String, PsiImportStatement> classNameToImportMap = new HashMap<String, PsiImportStatement>();
+    Map<String, PsiImportStatement> packageNameToImportMap = new HashMap<String, PsiImportStatement>();
+    Map<String, PsiImportStatementBase> nameToSingleImportMap = new HashMap<String, PsiImportStatementBase>();
+    PsiImportStatement[] imports = getImportStatements();
+    for (PsiImportStatement anImport : imports) {
+      String qName = anImport.getQualifiedName();
+      if (qName == null) continue;
+      if (anImport.isOnDemand()) {
+        packageNameToImportMap.put(qName, anImport);
       }
+      else {
+        classNameToImportMap.put(qName, anImport);
+        PsiJavaCodeReferenceElement importReference = anImport.getImportReference();
+        if (importReference == null) continue;
+        nameToSingleImportMap.put(importReference.getReferenceName(), anImport);
+      }
+    }
 
-      PsiImportStaticStatement[] importStatics = getImportStaticStatements();
-      for (PsiImportStaticStatement importStatic : importStatics) {
-        if (!importStatic.isOnDemand()) {
-          String referenceName = importStatic.getReferenceName();
-          if (referenceName != null) {
-            myNameToSingleImportMap.put(referenceName, importStatic);
-          }
+    PsiImportStaticStatement[] importStatics = getImportStaticStatements();
+    for (PsiImportStaticStatement importStatic : importStatics) {
+      if (!importStatic.isOnDemand()) {
+        String referenceName = importStatic.getReferenceName();
+        if (referenceName != null) {
+          nameToSingleImportMap.put(referenceName, importStatic);
         }
       }
     }
+
+    myClassNameToImportMap = classNameToImportMap;
+    myPackageNameToImportMap = packageNameToImportMap;
+    myNameToSingleImportMap = nameToSingleImportMap;
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
