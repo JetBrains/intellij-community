@@ -2,7 +2,7 @@ class Base {
   Base(String s, int i) {}
 }
 
-class Derived {
+class Derived extends Base {
   Derived() {
     super("", 0)
   }
@@ -12,7 +12,7 @@ class Base {
   Base(java.lang.String s, int i) {}
 }
 ---
-class Derived {
+class Derived extends Base {
   Derived() {
     super((java.lang.String)null, (int)0)
   }
