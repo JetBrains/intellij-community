@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.impl.injected.EditorWindow;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -117,7 +118,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   private static void doRangeHighlighting(Editor editor, Project project) {
     if (!editor.getSelectionModel().hasSelection()) return;
-
+    if (editor instanceof EditorWindow) {
+      // highlight selection in the whole editor, not injected fragment only  
+      editor = ((EditorWindow)editor).getDelegate();
+    }
     final EditorSearchComponent header = new EditorSearchComponent(editor, project);
     editor.setHeaderComponent(header);
   }
