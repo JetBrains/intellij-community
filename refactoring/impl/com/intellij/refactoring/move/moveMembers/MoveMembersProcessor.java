@@ -36,8 +36,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveMembers.MoveMembersProcessor");
 
   private PsiClass myTargetClass;
-  private LinkedHashSet<PsiMember> myMembersToMove = new LinkedHashSet<PsiMember>();
-  private MoveCallback myMoveCallback;
+  private final Set<PsiMember> myMembersToMove = new LinkedHashSet<PsiMember>();
+  private final MoveCallback myMoveCallback;
   private String myNewVisibility; // "null" means "as is"
   private String myCommandName = MoveMembersImpl.REFACTORING_NAME;
 
@@ -48,8 +48,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   public MoveMembersProcessor(Project project, MoveMembersOptions options) {
-    super(project);
-    setOptions(options);
+    this(project, null, options);
   }
 
   protected String getCommandName() {
@@ -59,9 +58,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private void setOptions(MoveMembersOptions dialog) {
     PsiMember[] members = dialog.getSelectedMembers();
     myMembersToMove.clear();
-    for (PsiMember member : members) {
-      myMembersToMove.add(member);
-    }
+    myMembersToMove.addAll(Arrays.asList(members));
 
     setCommandName(members);
 
@@ -71,7 +68,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   private void setCommandName(final PsiMember[] members) {
-    StringBuffer commandName = new StringBuffer();
+    StringBuilder commandName = new StringBuilder();
     commandName.append(RefactoringBundle.message("move.tltle"));
     commandName.append(" ");
     boolean first = true;
@@ -107,8 +104,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
               }
             }
             else {
-              if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier)
-                .isReferenceTo(member.getContainingClass())) {
+              if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(member.getContainingClass())) {
                 usagesList.add(new MyUsageInfo(member, refExpr, null, qualifier, psiReference));  // change qualifier
               }
             }
@@ -213,9 +209,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         }
         member.delete();
 
-        PsiMember newMember = (anchor != null)
-                              ? (PsiMember)myTargetClass.addAfter(memberCopy, anchor)
-                              : (PsiMember)myTargetClass.add(memberCopy); 
+        PsiMember newMember =
+          anchor != null ? (PsiMember)myTargetClass.addAfter(memberCopy, anchor) : (PsiMember)myTargetClass.add(memberCopy);
 
         fixVisibility(newMember, usages);
         for (PsiReference reference : refsToBeRebind) {
@@ -257,7 +252,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           }
         });
       }
-      if (referencedFields.size() > 0) {
+      if (!referencedFields.isEmpty()) {
         Collections.sort(referencedFields, new Comparator<PsiField>() {
           public int compare(final PsiField o1, final PsiField o2) {
             return -PsiUtil.compareElementsByPosition(o1, o2);
@@ -344,9 +339,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         PsiElement element = usage.getElement();
         if (element != null) {
           final PsiMember member = usageInfo.member;
-          PsiClass accessObjectClass = null;
           if (element instanceof PsiReferenceExpression) {
             PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
+            PsiClass accessObjectClass = null;
             if (qualifier != null) {
               accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
             }
@@ -365,7 +360,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   public void doRun() {
-    if (myMembersToMove.size() == 0){
+    if (myMembersToMove.isEmpty()){
       String message = RefactoringBundle.message("no.members.selected");
       CommonRefactoringUtil.showErrorMessage(MoveMembersImpl.REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, myProject);
       return;
@@ -385,7 +380,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private static String[] analyzeMoveConflicts(final Set<PsiMember> membersToMove, final PsiClass targetClass, final String newVisibility) {
+  private static String[] analyzeMoveConflicts(@NotNull Set<PsiMember> membersToMove, final PsiClass targetClass, final String newVisibility) {
     final LinkedHashSet<String> conflicts = new LinkedHashSet<String>();
     for (final PsiMember member : membersToMove) {
       if (member instanceof PsiMethod) {
@@ -408,7 +403,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     return analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility);
   }
 
-  public static String[] analyzeAccessibilityConflicts(final Set<PsiMember> membersToMove,
+  public static String[] analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
                                                 final PsiClass targetClass,
                                                 final LinkedHashSet<String> conflicts, String newVisibility) {
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
@@ -456,7 +451,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     return conflicts.toArray(new String[conflicts.size()]);
   }
 
-  private static void checkUsedElements(PsiMember member, PsiElement scope, Set<PsiMember> membersToMove, PsiClass newContext, LinkedHashSet<String> conflicts) {
+  private static void checkUsedElements(PsiMember member, PsiElement scope, @NotNull Set<PsiMember> membersToMove, PsiClass newContext, LinkedHashSet<String> conflicts) {
     if(scope instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)scope;
       PsiElement refElement = refExpr.resolve();
@@ -464,7 +459,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, newContext, false)){
           PsiExpression qualifier = refExpr.getQualifierExpression();
           PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(qualifier).getElement() : null);
-          checkAccessibility(((PsiMember)refElement), newContext, accessClass, member, conflicts);
+          checkAccessibility((PsiMember)refElement, newContext, accessClass, member, conflicts);
         }
       }
     }
@@ -481,7 +476,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, membersToMove, newContext, false)){
-          checkAccessibility(((PsiMember)refElement), newContext, null, member, conflicts);
+          checkAccessibility((PsiMember)refElement, newContext, null, member, conflicts);
         }
       }
     }

@@ -13,10 +13,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import org.jetbrains.annotations.Nullable;
 
 public class RefactoringHierarchyUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringHierarchyUtil");
@@ -27,7 +27,7 @@ public class RefactoringHierarchyUtil {
   private RefactoringHierarchyUtil() {}
 
   public static boolean willBeInTargetClass(PsiElement place,
-                                            Set<PsiMember> membersToMove,
+                                            @NotNull Set<PsiMember> membersToMove,
                                             PsiClass targetClass,
                                             boolean includeSubclasses) {
     PsiElement parent = place;
