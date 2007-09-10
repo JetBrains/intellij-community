@@ -11,7 +11,7 @@ class Derived {
 class Base {
   Base(java.lang.String s, int i) throws java.lang.Exception{}
 }
------
+---
 class Derived {
   Derived() throws java.lang.Exception{
     super((java.lang.String)null, (int)0)
