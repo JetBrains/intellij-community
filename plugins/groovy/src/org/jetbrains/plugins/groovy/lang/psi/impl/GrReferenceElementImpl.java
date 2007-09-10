@@ -82,6 +82,10 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
     if (isReferenceTo(element)) return this;
 
     if (element instanceof PsiClass) {
+      final String newName = ((PsiClass) element).getName();
+      handleElementRename(newName);
+      if (isReferenceTo(element)) return this;
+
       final GroovyFileBase file = (GroovyFileBase) getContainingFile();
       final PsiClass clazz = (PsiClass) element;
       final String qName = clazz.getQualifiedName();
