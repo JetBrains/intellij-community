@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.javaee.ExternalResourceManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,9 @@ public class MavenApplicationComponent implements ApplicationComponent, IconProv
     return "MavenApplicationComponent";
   }
 
-  public void initComponent() {}
+  public void initComponent() {
+    ExternalResourceManager.getInstance().addStdResource("http://maven.apache.org/POM/4.0.0","maven-v4_0_0.xsd",getClass());
+  }
 
   public void disposeComponent() {
   }
