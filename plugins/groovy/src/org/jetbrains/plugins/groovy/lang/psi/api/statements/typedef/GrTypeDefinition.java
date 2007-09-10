@@ -20,7 +20,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrComparableByName;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
@@ -31,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrTypeDefinition extends GrComparableByName, GrTopStatement, NavigationItem, PsiClass, GrTopLevelDefintion {
+public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiClass, GrTopLevelDefintion {
   String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObjectSupport";
 
   public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
