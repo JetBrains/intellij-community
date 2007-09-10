@@ -52,7 +52,7 @@ public class DialogAppender extends AppenderSkeleton {
       return;
     }
 
-    final IdeaLoggingEvent ideaEvent = new IdeaLoggingEvent((String)event.getMessage(), throwable.getThrowable());
+    final IdeaLoggingEvent ideaEvent = new IdeaLoggingEvent(event.getMessage().toString(), throwable.getThrowable());
     for (int i = errorLoggers.length - 1; i >= 0; i--) {
 
       final ErrorLogger logger = errorLoggers[i];
