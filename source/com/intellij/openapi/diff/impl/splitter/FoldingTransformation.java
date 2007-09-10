@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import gnu.trove.TIntArrayList;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -47,7 +48,11 @@ public class FoldingTransformation implements Transformation {
       line = startLine;
     }
     yOffset += myEditor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
-    return yOffset - myEditor.getScrollingModel().getVerticalScrollOffset();
+
+    final JComponent header = myEditor.getHeaderComponent();
+    int headerOffset = header == null ? 0 : header.getHeight();
+
+    return yOffset - myEditor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
   }
 
   private int getLineLength(FoldRegion foldRegion) {

@@ -301,4 +301,10 @@ public interface Editor extends UserDataHolder {
    * @return <code>true</code> if this editor has active header component set up by {@link #setHeaderComponent(javax.swing.JComponent)}
    */
   boolean hasHeaderComponent();
+
+  /**
+   * @return a component set by {@link #setHeaderComponent(javax.swing.JComponent)} or <code>null</code> if no header currently installed.
+   */
+  @Nullable
+  JComponent getHeaderComponent();
 }

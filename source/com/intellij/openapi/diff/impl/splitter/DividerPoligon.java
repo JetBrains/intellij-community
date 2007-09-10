@@ -101,10 +101,10 @@ class DividerPoligon {
     return new DividerPoligon(start1, start2, end1, end2, color);
   }
 
-  static Interval getVisibleInterval(Editor editor1) {
-    int offset = editor1.getScrollingModel().getVerticalScrollOffset();
-    LogicalPosition logicalPosition = editor1.xyToLogicalPosition(new Point(0, offset));
+  static Interval getVisibleInterval(Editor editor) {
+    int offset = editor.getScrollingModel().getVerticalScrollOffset();
+    LogicalPosition logicalPosition = editor.xyToLogicalPosition(new Point(0, offset));
     int line = logicalPosition.line;
-    return new Interval(line, editor1.getComponent().getHeight() / editor1.getLineHeight() + 1);
+    return new Interval(line, editor.getComponent().getHeight() / editor.getLineHeight() + 1);
   }
 }

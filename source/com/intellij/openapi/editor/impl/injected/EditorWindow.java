@@ -150,6 +150,11 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return false;
   }
 
+  @Nullable
+  public JComponent getHeaderComponent() {
+    return null;
+  }
+
   @NotNull
   public SelectionModel getSelectionModel() {
     return mySelectionModelDelegate;

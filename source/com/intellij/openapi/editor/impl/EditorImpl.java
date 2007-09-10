@@ -1090,6 +1090,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myHeaderPanel.getComponentCount() > 0;
   }
 
+  @Nullable
+  public JComponent getHeaderComponent() {
+    if (hasHeaderComponent()) {
+      return (JComponent)myHeaderPanel.getComponent(0);
+    }
+    return null;
+  }
+
   public void setBackgroundColor(Color color) {
     myForcedBackground = color;
   }
