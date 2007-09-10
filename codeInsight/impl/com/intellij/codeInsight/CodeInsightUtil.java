@@ -238,16 +238,13 @@ public class CodeInsightUtil {
     return Collections.unmodifiableList(list);
   }
 
+  @Nullable
   private static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
+    if (startOffset == endOffset) return null;
     final PsiElement left = findElementAtInRoot(root, startOffset);
-    PsiElement right = findElementAtInRoot(root, endOffset);
-    if (right == null) right = findElementAtInRoot(root, endOffset - 1);
+    PsiElement right = findElementAtInRoot(root, endOffset - 1);
     if (left == null || right == null) return null;
 
-    //ASTNode prev = leafElementAt2.getTreePrev();
-    //if (prev != null && prev.getTextRange().getEndOffset() == endOffset) {
-    //  leafElementAt2 = prev;
-    //}
     PsiElement commonParent = PsiTreeUtil.findCommonParent(left, right);
     LOG.assertTrue(commonParent != null);
     LOG.assertTrue(commonParent.getTextRange() != null);
