@@ -64,8 +64,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private PomModel myModel = null;
 
   public boolean myOptimiseTestLoadSpeed;
-  private GlobalSearchScope myAllScope;
-  private GlobalSearchScope myProjectScope;
+  private volatile GlobalSearchScope myAllScope;
+  private volatile GlobalSearchScope myProjectScope;
   @NonNls private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
   @NonNls private static final String DUMMY_PROJECT_NAME = "Dummy (Mock) Project";
   private boolean myDefault;

@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -449,9 +449,9 @@ public class FindInProjectUtil {
   private static Collection<PsiFile> getFilesForFastWordSearch(final FindModel findModel, final Project project,
                                                                final PsiDirectory psiDirectory, final Pattern fileMaskRegExp,
                                                                final Module module) {
-    CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
+    CacheManager cacheManager = ((PsiManagerEx)PsiManager.getInstance(project)).getCacheManager();
     SearchScope customScope = findModel.getCustomScope();
-    GlobalSearchScope scope = psiDirectory != null
+    @NotNull GlobalSearchScope scope = psiDirectory != null
                               ? GlobalSearchScope.directoryScope(psiDirectory, true)
                               : module != null ? moduleContentScope(module)
                               : customScope instanceof GlobalSearchScope
@@ -507,6 +507,9 @@ public class FindInProjectUtil {
       else {
         result = result.uniteWith(moduleContent);
       }
+    }
+    if (result == null) {
+      result = GlobalSearchScope.EMPTY_SCOPE;
     }
     return result;
   }
