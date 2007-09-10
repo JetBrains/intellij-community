@@ -49,8 +49,11 @@ public class TextRange {
     return myStartOffset + myEndOffset;
   }
 
-  public boolean contains(TextRange anotherRange) {
-    return myStartOffset <= anotherRange.getStartOffset() && myEndOffset >= anotherRange.getEndOffset();
+  public boolean contains(TextRange range) {
+    TextRange normalized = range.getStartOffset() <= range.getEndOffset() ? range : new TextRange(range.getEndOffset(), range.getStartOffset());
+    TextRange me = getStartOffset() <= getEndOffset() ? this : new TextRange(getEndOffset(), getStartOffset());
+
+    return me.getStartOffset() <= normalized.getStartOffset() && me.getEndOffset() >= normalized.getEndOffset();
   }
 
   public String toString() {
@@ -58,7 +61,8 @@ public class TextRange {
   }
 
   public boolean contains(int offset) {
-    return myStartOffset <= offset && offset < myEndOffset;
+    TextRange me = getStartOffset() <= getEndOffset() ? this : new TextRange(getEndOffset(), getStartOffset());
+    return me.getStartOffset() <= offset && offset < me.getEndOffset();
   }
 
   @NotNull
