@@ -241,21 +241,23 @@ public class AntBuildFileImpl implements AntBuildFileBase {
           return target.getName();
         }
       });
-    final ArrayList<TargetFilter> filters = TARGET_FILTERS.getModifiableList(getAllOptions());
-    for (Iterator<TargetFilter> iterator = filters.iterator(); iterator.hasNext();) {
-      TargetFilter filter = iterator.next();
-      String name = filter.getTargetName();
-      AntBuildTarget target = targetByName.get(name);
-      if (target != null) {
-        filter.updateDescription(target);
-        targetByName.remove(name);
+    final ArrayList<TargetFilter> filters = TARGET_FILTERS.getModifiableList(myAllOptions);
+    synchronized (this) {
+      for (Iterator<TargetFilter> iterator = filters.iterator(); iterator.hasNext();) {
+        TargetFilter filter = iterator.next();
+        String name = filter.getTargetName();
+        AntBuildTarget target = targetByName.get(name);
+        if (target != null) {
+          filter.updateDescription(target);
+          targetByName.remove(name);
+        }
+        else {
+          iterator.remove();
+        }
       }
-      else {
-        iterator.remove();
+      for (AntBuildTarget target : targetByName.values()) {
+        filters.add(TargetFilter.fromTarget(target));
       }
-    }
-    for (AntBuildTarget target : targetByName.values()) {
-      filters.add(TargetFilter.fromTarget(target));
     }
   }
 
@@ -327,9 +329,11 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   @Nullable
   private TargetFilter findFilter(final String targetName) {
     final List<TargetFilter> targetFilters = TARGET_FILTERS.get(myAllOptions);
-    for (TargetFilter targetFilter : targetFilters) {
-      if (Comparing.equal(targetName, targetFilter.getTargetName())) {
-        return targetFilter;
+    synchronized (this) {
+      for (TargetFilter targetFilter : targetFilters) {
+        if (Comparing.equal(targetName, targetFilter.getTargetName())) {
+          return targetFilter;
+        }
       }
     }
     return null;
