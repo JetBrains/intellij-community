@@ -156,6 +156,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NotNull
   public PsiElement[] getChildren() {
     synchronized (PsiLock.LOCK) {
+      buildPropertiesIfNeeded();
       if (myChildren == null) {
         final AntProject project = getAntProject();
         final ArrayList<PsiElement> children = new ArrayList<PsiElement>(3);

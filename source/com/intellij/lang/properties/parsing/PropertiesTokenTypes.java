@@ -18,5 +18,5 @@ public interface PropertiesTokenTypes {
 
   TokenSet COMMENTS = TokenSet.create(END_OF_LINE_COMMENT);
   TokenSet WHITESPACES = TokenSet.create(WHITE_SPACE);
-  TokenSet PROPERTIES_TYPES_TO_IGNORE = TokenSet.create(END_OF_LINE_COMMENT, VALUE_CHARACTERS);
+  TokenSet PROPERTIES_TYPES_TO_IGNORE = TokenSet.create(END_OF_LINE_COMMENT);
 }
