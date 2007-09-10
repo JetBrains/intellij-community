@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * @author peter
@@ -99,6 +101,11 @@ public class FileReferenceHelperRegistrar {
 
     public PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file) {
       return null;
+    }
+
+    @NotNull
+    public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
+      return Collections.emptyList();
     }
   }
 }

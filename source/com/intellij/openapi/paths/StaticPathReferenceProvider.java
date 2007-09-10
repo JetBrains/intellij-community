@@ -5,11 +5,8 @@
 package com.intellij.openapi.paths;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,16 +28,7 @@ public class StaticPathReferenceProvider implements PathReferenceProvider {
       return false;
     }
     if (!myRelativePathsAllowed) {
-      set.addCustomization(
-        FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION,
-        new Function<PsiFile, PsiFileSystemItem>() {
-          @Nullable
-          public PsiFileSystemItem fun(final PsiFile file) {
-            return FileReferenceSet.getAbsoluteTopLevelDirLocation(file
-            );
-          }
-        }
-      );
+      set.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, FileReferenceSet.ABSOLUTE_TOP_LEVEL);
     }
     Collections.addAll(references, set.getAllReferences());
     return true;

@@ -6,6 +6,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -14,6 +15,7 @@ import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -39,4 +41,6 @@ public interface FileReferenceHelper<T extends PsiFileSystemItem> {
   @Nullable
   PsiFileSystemItem findRoot(final Project project, @NotNull VirtualFile file);
 
+  @NotNull
+  Collection<PsiFileSystemItem> getRoots(@NotNull Module module);
 }

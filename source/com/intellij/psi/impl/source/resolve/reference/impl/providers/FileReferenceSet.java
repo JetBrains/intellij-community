@@ -1,17 +1,19 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -23,7 +25,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +39,14 @@ public class FileReferenceSet {
   private static final char SEPARATOR = '/';
   private static final String SEPARATOR_STRING = "/";
   private static final Key<CachedValue<PsiFileSystemItem>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<PsiFileSystemItem>>("default file contexts");
-  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiFileSystemItem>> DEFAULT_PATH_EVALUATOR_OPTION =
-    new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, PsiFileSystemItem>>(PsiBundle.message("default.path.evaluator.option"));
+  public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>> DEFAULT_PATH_EVALUATOR_OPTION =
+    new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>(PsiBundle.message("default.path.evaluator.option"));
+  public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL = new Function<PsiFile, Collection<PsiFileSystemItem>>() {
+          @Nullable
+          public Collection<PsiFileSystemItem> fun(final PsiFile file) {
+            return FileReferenceSet.getAbsoluteTopLevelDirLocations(file);
+          }
+        };
 
   private FileReference[] myReferences;
   private PsiElement myElement;
@@ -227,15 +234,14 @@ public class FileReferenceSet {
     if (file == null) return Collections.emptyList();
     
     if (myOptions != null) {
-      final Function<PsiFile, PsiFileSystemItem> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
+      final Function<PsiFile, Collection<PsiFileSystemItem>> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
 
       if (value != null) {
-        final PsiFileSystemItem result = value.fun(file);
-        return result == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.singleton(result);
+        return value.fun(file);
       }
     }
     if (isAbsolutePathReference()) {
-      return ContainerUtil.createMaybeSingletonList(getAbsoluteTopLevelDirLocation(file));
+      return getAbsoluteTopLevelDirLocations(file);
     }
 
     final CachedValueProvider<PsiFileSystemItem> myDefaultContextProvider = new CachedValueProvider<PsiFileSystemItem>() {
@@ -306,20 +312,19 @@ public class FileReferenceSet {
     return myReferences == null || myReferences.length == 0 ? null : myReferences[myReferences.length - 1].resolve();
   }
 
-  @Nullable
-  public static PsiFileSystemItem getAbsoluteTopLevelDirLocation(final @NotNull PsiFile file) {
-    final VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return null;
+  @NotNull
+  public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(final @NotNull PsiFile file) {
+    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    if (module == null) return Collections.emptyList();
 
-    final Project project = file.getProject();
     for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      final PsiFileSystemItem element = helper.findRoot(project, virtualFile);
-      if (element != null) {
-        return element;
+      final Collection<PsiFileSystemItem> roots = helper.getRoots(module);
+      if (roots.size() > 0) {
+        return roots;
       }
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
   protected PsiScopeProcessor createProcessor(final List<CandidateInfo> result, List<Class> allowedClasses, List<PsiConflictResolver> resolvers)

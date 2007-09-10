@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -16,6 +17,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -51,6 +53,11 @@ public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory>
       return PsiManager.getInstance(project).findDirectory(contentRootForFile);
     }
     return null;
+  }
+
+  @NotNull
+  public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
+    return FilePathReferenceProvider.getRoots(module, false);
   }
 
   @NotNull
