@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
@@ -169,7 +170,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   }                               
 
   public int getTextWrap(final XmlTag tag) {
-    return isScriptletObject(tag) ? CodeStyleSettings.DO_NOT_WRAP : mySettings.HTML_TEXT_WRAP;
+    return tag.getContainingFile() instanceof JspFile ? CodeStyleSettings.DO_NOT_WRAP : mySettings.HTML_TEXT_WRAP;
   }
 
   public int getAttributesWrap() {
