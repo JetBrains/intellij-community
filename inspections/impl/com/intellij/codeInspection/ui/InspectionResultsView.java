@@ -77,7 +77,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private InspectionProfile myInspectionProfile;
   private AnalysisScope myScope;
   @NonNls
-  public static final String HELP_ID = "ideaInterface.codeInspection";
+  public static final String HELP_ID = "reference.toolWindows.inspections";
   public final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
 
   private Splitter mySplitter;
