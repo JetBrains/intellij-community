@@ -94,7 +94,7 @@ public class ConvertAnnotationInspection extends LocalInspectionTool {
 
             @NonNls String parameterText = StringUtil.stripQuotesAroundValue(pair.getValue().getText());
             if (parameterText.startsWith("{")) {
-              parameterText = parameterText.replaceAll("(\\{\\\"|\\\"\\}|\\\"\\w*\\,\\w*\\\")", " ").trim();
+              parameterText = parameterText.replaceAll("(\\{\\\"|\\\"\\}|\\\"\\w*\\s*\\,\\s*\\w*\\\")", " ").trim();
             }
             text.append(parameterText);
             text.append('\"');
