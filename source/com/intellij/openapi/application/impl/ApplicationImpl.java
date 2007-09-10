@@ -2,7 +2,6 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.HackyRepaintManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
@@ -566,8 +565,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private static boolean showConfirmation() {
-    if (GeneralSettings.getInstance().isConfirmExit()) {
-      final ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog();
+    final ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog();
+    if (confirmExitDialog.isToBeShown()) {
       confirmExitDialog.show();
       if (!confirmExitDialog.isOK()) {
         return false;
