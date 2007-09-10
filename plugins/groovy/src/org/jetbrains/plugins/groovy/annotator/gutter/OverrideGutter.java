@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiClass;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,13 +29,21 @@ import java.awt.event.MouseEvent;
 public class OverrideGutter extends GutterIconRenderer {
   private final AnAction myClickAction;
 
-  private GrMethodsListCellRenderer GROOVY_METHOD_LIST_CELL_RNDERER = new GrMethodsListCellRenderer();
-  private int myIconType;
-  public static final int OVERRIDDEN_ICON_TYPE = 0;
+  private GrMethodsListCellRenderer GROOVY_METHOD_LIST_CELL_RENDERER = new GrMethodsListCellRenderer();
+  private boolean myIsImplements;
+
+  private String myTooltipText;
+
+  @Nullable
+  public String getTooltipText() {
+    return myTooltipText;
+  }
+
   public static final int OVERRIDING_ICON_TYPE = 1;
 
-  public OverrideGutter(final PsiMethod[] methods, int iconType) {
-    myIconType = iconType;
+  public OverrideGutter(final PsiMethod[] methods, boolean isImplements) {
+    myIsImplements = isImplements;
+    myTooltipText = getTooltipText(methods);
     myClickAction = new AnAction() {
 
       public void actionPerformed(final AnActionEvent e) {
@@ -49,13 +58,25 @@ public class OverrideGutter extends GutterIconRenderer {
           // show popup for selecting navigation target from list
           final JBPopup gotoDeclarationPopup = NavigationUtil.getPsiElementPopup(
               methods,
-              GROOVY_METHOD_LIST_CELL_RNDERER,
+              GROOVY_METHOD_LIST_CELL_RENDERER,
               GroovyBundle.message("goto.override.method.declaration"));
 
           gotoDeclarationPopup.show(new RelativePoint((MouseEvent) e.getInputEvent()));
         }
       }
     };
+  }
+
+  private String getTooltipText(PsiMethod[] methods) {
+    assert methods.length > 0;
+    final PsiClass containingClass = methods[0].getContainingClass();
+    assert containingClass != null; //otherwise it could not have been overridden
+    String classDescr = containingClass.getQualifiedName();
+    if (classDescr == null) classDescr = containingClass.getName();
+    if (myIsImplements) {
+      return GroovyBundle.message("implements.method.from.super", classDescr);
+    }
+    return GroovyBundle.message("overrides.method.from.super", classDescr);
   }
 
   @Nullable
@@ -65,11 +86,10 @@ public class OverrideGutter extends GutterIconRenderer {
 
   @NotNull
   public Icon getIcon() {
-    switch (myIconType) {
-      case OVERRIDDEN_ICON_TYPE : return IconLoader.getIcon("/gutter/overridenMethod.png");
-      case OVERRIDING_ICON_TYPE : return IconLoader.getIcon("/gutter/overridingMethod.png");
+    if (myIsImplements) {
+      return IconLoader.getIcon("/gutter/implementingMethod.png");
     }
-    return IconLoader.getIcon("/gutter/overridenMethod.png");
+    return IconLoader.getIcon("/gutter/overridingMethod.png");
   }
 
   class GrMethodsListCellRenderer extends PsiElementListCellRenderer {
