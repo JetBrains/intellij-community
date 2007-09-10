@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.TagNameReference;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.getters.AllWordsGetter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
@@ -231,7 +232,7 @@ public class XmlCompletionData extends CompletionData {
       }
       final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
-      if (tag == null) return;
+      if (tag == null || tag instanceof JspXmlRootTag) return;
 
       final XmlElementDescriptor descriptor = tag.getDescriptor();
 
