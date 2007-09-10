@@ -1,19 +1,20 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -53,6 +54,7 @@ public class PermuteArgumentsFix implements IntentionAction {
   }                               
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     myCall.getArgumentList().replace(myPermutation.getArgumentList());
   }
 
