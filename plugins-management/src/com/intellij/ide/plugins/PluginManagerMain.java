@@ -26,7 +26,8 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -218,9 +219,11 @@ public class PluginManagerMain {
     myPluginUrlLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myPluginUrlLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
+        if (e.isConsumed()) return;
         IdeaPluginDescriptor pluginDescriptor = getPluginTable().getSelectedObject();
         if (pluginDescriptor != null) {
           launchBrowserAction(pluginDescriptor.getUrl(), "");
+          e.consume();
         }
       }
     });
