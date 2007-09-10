@@ -208,15 +208,15 @@ public class EditorModificationUtil {
           int longestLineLength = 0;
           for (String line : lines) {
             longestLineLength = Math.max(longestLineLength, line.length());
-            insertStringAtCaret(editor, line, false, false);
-            editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
+            insertStringAtCaret(editor, line, false, true);
+            editor.getCaretModel().moveCaretRelatively(-line.length(), 1, false, false, true);
           }
           caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + longestLineLength);
         }
         else {
           for (int i = 0; i <= selectedLinesCount; i++) {
-            insertStringAtCaret(editor, s, false, false);
-            editor.getCaretModel().moveCaretRelatively(0, 1, false, false, true);
+            insertStringAtCaret(editor, s, false, true);
+            editor.getCaretModel().moveCaretRelatively(-s.length(), 1, false, false, true);
           }
           caretToRestore = new LogicalPosition(originalCaretLine, caretToRestore.column + s.length());
         }
