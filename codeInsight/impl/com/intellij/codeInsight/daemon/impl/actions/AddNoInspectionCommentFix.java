@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspMethodCall;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +46,7 @@ public class AddNoInspectionCommentFix implements IntentionAction {
   @Nullable
   private PsiStatement getContainer() {
     PsiElement context = myContext.getElement();
-    if (context == null) return null;
+    if (context == null || PsiTreeUtil.getParentOfType(context, JspMethodCall.class) != null) return null;
     return PsiTreeUtil.getParentOfType(context, PsiStatement.class);
   }
 
