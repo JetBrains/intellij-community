@@ -61,7 +61,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
       myEqualsPanel =
         new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.equals.fields.chooser.title"), myClassFields, null);
       myEqualsPanel.getTable().setMemberInfoModel(new EqualsMemberInfoModel());
-      myTestBoxedStep++;
+      myTestBoxedStep+=2;
     }
     else {
       myEqualsPanel = null;
