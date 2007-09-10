@@ -5,11 +5,14 @@ package com.intellij.util.xml.reflect;
 
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.impl.DomChildDescriptionImpl;
 import com.intellij.util.xml.impl.ConvertAnnotationImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Type;
+import java.lang.annotation.Annotation;
 
 /**
  * @author peter
@@ -18,6 +21,7 @@ public class DomExtensionImpl implements DomExtension {
   private final XmlName myXmlName;
   private final Type myType;
   private Converter myConverter;
+  private String myExtendClass;
   private boolean mySoft;
   private int myCount = 1;
 
@@ -46,6 +50,11 @@ public class DomExtensionImpl implements DomExtension {
     return this;
   }
 
+  public DomExtension setExtendClass(@NotNull @NonNls final String className) {
+    myExtendClass = className;
+    return this;
+  }
+
   public final DomExtensionImpl setCount(final int count) {
     myCount = count;
     return this;
@@ -58,6 +67,39 @@ public class DomExtensionImpl implements DomExtension {
   public final <T extends DomChildDescriptionImpl> T addAnnotations(T t) {
     if (myConverter != null) {
       t.addCustomAnnotation(new ConvertAnnotationImpl(myConverter, mySoft));
+    }
+    if (myExtendClass != null) {
+      t.addCustomAnnotation(new ExtendClass() {
+
+
+        public boolean instantiatable() {
+          return false;
+        }
+
+        public boolean canBeDecorator() {
+          return false;
+        }
+
+        public boolean allowEmpty() {
+          return false;
+        }
+
+        public boolean allowAbstract() {
+          return true;
+        }
+
+        public boolean allowInterface() {
+          return true;
+        }
+
+        public String value() {
+          return myExtendClass;
+        }
+
+        public Class<? extends Annotation> annotationType() {
+          return ExtendClass.class;
+        }
+      });
     }
     return t;
   }

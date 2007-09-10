@@ -67,9 +67,9 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
 
   XmlTag createChildTag(@NonNls String localName, @NonNls String namespace, @NonNls String bodyText, boolean enforceNamespacesDeep);
 
-  XmlTag[] getSubTags();
-  XmlTag[] findSubTags(@NonNls String qname);
-  XmlTag[] findSubTags(@NonNls String localName, @NonNls String namespace);
+  @NotNull XmlTag[] getSubTags();
+  @NotNull XmlTag[] findSubTags(@NonNls String qname);
+  @NotNull XmlTag[] findSubTags(@NonNls String localName, @NonNls String namespace);
   @Nullable XmlTag findFirstSubTag(@NonNls String qname);
 
   @NotNull @NonNls String getNamespacePrefix();

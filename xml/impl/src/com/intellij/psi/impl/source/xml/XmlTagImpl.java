@@ -469,6 +469,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return null;
   }
 
+  @NotNull
   public XmlTag[] getSubTags() {
     XmlTag[] tags = myTags;
     if (tags == null) {
@@ -486,10 +487,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return tags;
   }
 
+  @NotNull
   public XmlTag[] findSubTags(String name) {
     return findSubTags(name, null);
   }
 
+  @NotNull
   public XmlTag[] findSubTags(final String name, final String namespace) {
     final XmlTag[] subTags = getSubTags();
     final List<XmlTag> result = new ArrayList<XmlTag>();

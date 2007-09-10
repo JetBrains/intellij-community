@@ -20,6 +20,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
     super(HTML_TAG);
   }
 
+  @NotNull
   public XmlTag[] findSubTags(String name, String namespace) {
     final XmlTag[] subTags = getSubTags();
     final List<XmlTag> result = new ArrayList<XmlTag>();
