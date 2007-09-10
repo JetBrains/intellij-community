@@ -29,8 +29,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
@@ -314,13 +314,19 @@ public class TestNGUtil implements TestFramework
     Collection<String> results = new ArrayList<String>();
     Matcher matcher = Pattern.compile("\\@testng.test(?:.*)" + parameter + "\\s*=\\s*\"(.*?)\".*").matcher(tag.getText());
     if (matcher.matches()) {
-      String groupTag = matcher.group(1);
-      String[] groups = groupTag.split("[,\\s]");
-      for (String group : groups) {
-        results.add(group.trim());
-      }
+      appendGroups(results, matcher.group(1));
     }
     return results;
+  }
+
+  private static void appendGroups(final Collection<String> results, final String groupTag) {
+    String[] groups = groupTag.split("[,\\s]");
+    for (String group : groups) {
+      final String trimmed = group.trim();
+      if (trimmed.length() > 0) {
+        results.add(trimmed);
+      }
+    }
   }
 
   private static Collection<String> extractValuesFromParameter(PsiNameValuePair aPair) {
@@ -329,12 +335,12 @@ public class TestNGUtil implements TestFramework
     if (value instanceof PsiArrayInitializerMemberValue) {
       for (PsiElement child : value.getChildren()) {
         if (child instanceof PsiLiteralExpression) {
-          results.add((String) ((PsiLiteralExpression) child).getValue());
+          appendGroups(results, (String) ((PsiLiteralExpression) child).getValue());
         }
       }
     } else {
       if (value instanceof PsiLiteralExpression) {
-        results.add((String) ((PsiLiteralExpression) value).getValue());
+        appendGroups(results, (String) ((PsiLiteralExpression) value).getValue());
       }
     }
     return results;
