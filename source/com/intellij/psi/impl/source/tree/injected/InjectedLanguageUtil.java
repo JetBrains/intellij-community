@@ -4,7 +4,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -405,9 +406,9 @@ public class InjectedLanguageUtil {
       final Places result = new PlacesImpl();
       InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstance(hostPsiFile.getProject());
       if (injectedManager == null) return null; //for tests
-      injectedManager.processInPlaceInjectorsFor(element, new Processor<InjectedLanguageManager.MultiHostInjector>() {
-        public boolean process(InjectedLanguageManager.MultiHostInjector injector) {
-          injector.getLanguagesToInject(element, new InjectedLanguageManager.MultiHostRegistrar() {
+      injectedManager.processInPlaceInjectorsFor(element, new Processor<MultiHostInjector>() {
+        public boolean process(MultiHostInjector injector) {
+          injector.getLanguagesToInject(element, new MultiHostRegistrar() {
             private Language myLanguage;
             private final List<TextRange> relevantRangesInHostDocument = new SmartList<TextRange>();
             private final List<String> prefixes = new SmartList<String>();
@@ -419,7 +420,7 @@ public class InjectedLanguageUtil {
             boolean isOneLineEditor = false;
             boolean cleared = true;
             @NotNull
-            public InjectedLanguageManager.MultiHostRegistrar startInjecting(@NotNull Language language) {
+            public MultiHostRegistrar startInjecting(@NotNull Language language) {
               if (!cleared) {
                 clear();
                 throw new IllegalStateException("Seems you haven't called doneInjecting()");
@@ -446,7 +447,7 @@ public class InjectedLanguageUtil {
             }
 
             @NotNull
-            public InjectedLanguageManager.MultiHostRegistrar addPlace(@NonNls @Nullable String prefix,
+            public MultiHostRegistrar addPlace(@NonNls @Nullable String prefix,
                                                                         @NonNls @Nullable String suffix,
                                                                         @NotNull PsiLanguageInjectionHost host,
                                                                         @NotNull TextRange rangeInsideHost) {

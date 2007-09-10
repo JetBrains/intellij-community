@@ -2,6 +2,9 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.ConcatenationAwareInjector;
+import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;

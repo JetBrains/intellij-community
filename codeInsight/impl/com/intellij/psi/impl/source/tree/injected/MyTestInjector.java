@@ -10,6 +10,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.ConcatenationAwareInjector;
+import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -25,9 +27,9 @@ import java.util.List;
 
 public class MyTestInjector {
   private LanguageInjector myInjector;
-  private InjectedLanguageManager.ConcatenationAwareInjector myQLInPlaceInjector;
-  private InjectedLanguageManager.ConcatenationAwareInjector myJSInPlaceInjector;
-  private InjectedLanguageManager.ConcatenationAwareInjector mySeparatedJSInjector;
+  private ConcatenationAwareInjector myQLInPlaceInjector;
+  private ConcatenationAwareInjector myJSInPlaceInjector;
+  private ConcatenationAwareInjector mySeparatedJSInjector;
   private final PsiManager myPsiManager;
 
   public MyTestInjector(PsiManager psiManager) {
@@ -45,11 +47,11 @@ public class MyTestInjector {
     mySeparatedJSInjector = registerForStringVarInitializer(project, js, "jsSeparated", " + ", " + 'separator'");
   }
 
-  private static InjectedLanguageManager.ConcatenationAwareInjector registerForStringVarInitializer(Project project, final Language language,
+  private static ConcatenationAwareInjector registerForStringVarInitializer(Project project, final Language language,
                                                                                                final String varName,
                                                                                                final String prefix, final String suffix) {
-    InjectedLanguageManager.ConcatenationAwareInjector injector = new InjectedLanguageManager.ConcatenationAwareInjector() {
-      public void getLanguagesToInject(@NotNull InjectedLanguageManager.MultiHostRegistrar injectionPlacesRegistrar,
+    ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
+      public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar,
                                        @NotNull PsiElement... operands) {
         PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class);
         if (variable == null) return;
