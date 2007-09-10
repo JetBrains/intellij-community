@@ -114,31 +114,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     scrollPane.setBorder(new BegPopupMenuBorder());
     getComponent().add(scrollPane, BorderLayout.CENTER);
 
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-      public void contentsChanged(final VirtualFileEvent event) {
-      }
-
-      public void fileCopied(final VirtualFileCopyEvent event) {
-        hide();
-      }
-
-      public void fileCreated(final VirtualFileEvent event) {
-        hide();
-      }
-
-      public void fileDeleted(final VirtualFileEvent event) {
-        hide();
-      }
-
-      public void fileMoved(final VirtualFileMoveEvent event) {
-        hide();
-      }
-
-      public void propertyChanged(final VirtualFilePropertyEvent event) {
-        hide();
-      }
-    }, this);
-
     myEditorCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e){
         int curOffset = myEditor.getCaretModel().getOffset();
