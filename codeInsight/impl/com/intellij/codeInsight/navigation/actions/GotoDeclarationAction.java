@@ -112,7 +112,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return false;
   }
 
-  private static Collection<PsiElement> suggestCandidates(Project project, final PsiReference reference) {
+  static Collection<PsiElement> suggestCandidates(Project project, final PsiReference reference) {
     if (reference == null) {
       return Collections.emptyList();
     }
@@ -155,7 +155,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
       for(ResolveResult r:results) {
         PsiElement element = r.getElement();
-        if (EditSourceUtil.canNavigate(element) || element instanceof Navigatable && ((Navigatable)element).canNavigateToSource()) {
+        if (element != reference.getElement() && (EditSourceUtil.canNavigate(element) || element instanceof Navigatable && ((Navigatable)element).canNavigateToSource())) {
           navigatableResults.add(element);
         }
       }
