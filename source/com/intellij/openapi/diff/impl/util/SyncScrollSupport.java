@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.util.Pair;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -125,8 +126,8 @@ public class SyncScrollSupport implements Disposable {
     Rectangle viewRect = master.getScrollingModel().getVisibleArea();
     int middleY = viewRect.height / 3;
 
-    int masterVerticalScrollOffset = master.getScrollingModel().getVerticalScrollOffset();
-    int slaveVerticalScrollOffset = slave.getScrollingModel().getVerticalScrollOffset();
+    int masterVerticalScrollOffset = getScrollOffset(master);
+    int slaveVerticalScrollOffset = getScrollOffset(slave);
 
     LogicalPosition masterPos = master.xyToLogicalPosition(new Point(viewRect.x, masterVerticalScrollOffset + middleY));
     int masterCenterLine = masterPos.line;
@@ -149,6 +150,13 @@ public class SyncScrollSupport implements Disposable {
     slave.getScrollingModel().scrollVertically(scrollOffset + correction);
 
     slave.getScrollingModel().enableAnimation();
+  }
+
+  private static int getScrollOffset(final Editor editor) {
+    final JComponent header = editor.getHeaderComponent();
+    int headerOffset = header == null ? 0 : header.getHeight();
+    
+    return editor.getScrollingModel().getVerticalScrollOffset() - headerOffset;
   }
 
   public static void scrollEditor(Editor editor, int logicalLine) {
