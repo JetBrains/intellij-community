@@ -143,8 +143,11 @@ public class JDParser {
     StringTokenizer st = new StringTokenizer(s, separators, true);
     boolean first = true;
     int preCount = 0;
+    int curPos = 0;
     while (st.hasMoreTokens()) {
       String token = st.nextToken();
+      curPos += token.length();
+
       if (separators.indexOf(token) >= 0) {
         if (!first) {
           list.add("");
@@ -155,7 +158,7 @@ public class JDParser {
       else {
         first = true;
         if (p2nl) {
-          if (isParaTag(token)) {
+          if (isParaTag(token) && s.indexOf("</p>", curPos) < 0) {
             list.add("");
             markers.add(Boolean.valueOf(preCount > 0));
             continue;
