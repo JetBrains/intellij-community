@@ -1,5 +1,6 @@
 package com.intellij.lang.ant.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.misc.AntPsiUtil;
@@ -65,7 +66,7 @@ public class AntCreatePropertyFix extends BaseIntentionAction {
     final String name = myRef.getCanonicalRepresentationText();
     if( name == null) return;
     
-    final Navigatable result;
+    Navigatable result = null;
     if (myPropFile != null) {
       result = (Navigatable)myPropFile.addProperty(PropertiesElementFactory.createProperty(myPropFile.getProject(), name, ""));
     }
@@ -75,8 +76,12 @@ public class AntCreatePropertyFix extends BaseIntentionAction {
       final XmlTag projectTag = element.getAntProject().getSourceElement();
       XmlTag propTag = projectTag.createChildTag(AntFileImpl.PROPERTY, projectTag.getNamespace(), null, false);
       propTag.setAttribute(AntFileImpl.NAME_ATTR, name);
-      result = (Navigatable)((anchor == null) ? projectTag.add(propTag) : projectTag.addBefore(propTag, anchor.getSourceElement()));
+      if (CodeInsightUtil.preparePsiElementForWrite(projectTag)) {
+        result = (Navigatable)((anchor == null) ? projectTag.add(propTag) : projectTag.addBefore(propTag, anchor.getSourceElement()));
+      }
     }
-    result.navigate(true);
+    if (result != null) {
+      result.navigate(true);
+    }
   }
 }
