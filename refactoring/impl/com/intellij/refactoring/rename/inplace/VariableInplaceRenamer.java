@@ -21,18 +21,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,90 +50,97 @@ public class VariableInplaceRenamer {
   private PsiVariable myElementToRename;
   @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
+  private ArrayList<RangeHighlighter> myHighlighters;
+  private final Editor myEditor;
+  private final Project myProject;
 
-  public VariableInplaceRenamer(PsiVariable elementToRename) {
+  private final static Stack<VariableInplaceRenamer> ourRenamersStack = new Stack<VariableInplaceRenamer>();
+
+  public VariableInplaceRenamer(PsiVariable elementToRename, Editor editor) {
     myElementToRename = elementToRename;
+    myEditor = editor;
+    myProject = myElementToRename.getProject();
   }
 
-  public void performInplaceRename(@NotNull final Editor editor) {
+  public void performInplaceRename() {
+    while (!ourRenamersStack.isEmpty()) {
+      ourRenamersStack.peek().finish();
+    }
+    ourRenamersStack.push(this);
 
     final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
-    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     final Map<TextRange, TextAttributes> rangesToHighlight = new HashMap<TextRange, TextAttributes>();
     //it is crucial to highlight AFTER the template is started, so we collect ranges first
     collectRangesToHighlight(rangesToHighlight, refs);
 
-    final HighlightManager highlightManager = HighlightManager.getInstance(myElementToRename.getProject());
+    final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
 
-    final PsiElement scope = myElementToRename instanceof PsiParameter ?
-        ((PsiParameter) myElementToRename).getDeclarationScope() :
-        PsiTreeUtil.getParentOfType(myElementToRename, PsiCodeBlock.class);
+    final PsiElement scope = myElementToRename instanceof PsiParameter
+                             ? ((PsiParameter)myElementToRename).getDeclarationScope()
+                             : PsiTreeUtil.getParentOfType(myElementToRename, PsiCodeBlock.class);
     final ResolveSnapshot snapshot = scope == null ? null : ResolveSnapshot.createSnapshot(scope);
     final TemplateBuilder builder = new TemplateBuilder(scope);
 
-    final Project project = myElementToRename.getProject();
     final PsiIdentifier nameIdentifier = myElementToRename.getNameIdentifier();
-    PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, editor.getCaretModel().getOffset());
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myElementToRename)) return;
+    PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, myEditor.getCaretModel().getOffset());
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return;
 
     if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder);
     for (PsiReference ref : refs) {
       addVariable(ref.getElement(), selectedElement, builder);
     }
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            int offset = editor.getCaretModel().getOffset();
+            int offset = myEditor.getCaretModel().getOffset();
             Template template = builder.buildInlineTemplate();
             template.setToShortenLongNames(false);
             assert scope != null;
             TextRange range = scope.getTextRange();
             assert range != null;
-            editor.getCaretModel().moveToOffset(range.getStartOffset());
-            TemplateManager.getInstance(project).startTemplate(editor, template,
-                new TemplateEditingListener() {
-                  private void removeHighlighters(final ArrayList<RangeHighlighter> highlighters,
-                                                  final HighlightManager highlightManager,
-                                                  final Editor editor) {
-                    for (RangeHighlighter highlighter : highlighters) {
-                      highlightManager.removeSegmentHighlighter(editor, highlighter);
+            myEditor.getCaretModel().moveToOffset(range.getStartOffset());
+            myHighlighters = new ArrayList<RangeHighlighter>();
+            TemplateManager.getInstance(myProject).startTemplate(myEditor, template, new TemplateEditingListener() {
+              public void templateFinished(Template template) {
+                finish();
+
+                if (snapshot != null) {
+                  final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+                  if (templateState != null) {
+                    String newName = templateState.getVariableValue(PRIMARY_VARIABLE_NAME).toString();
+                    if (PsiManager.getInstance(myProject).getNameHelper().isIdentifier(newName)) {
+                      snapshot.apply(newName);
                     }
                   }
+                }
+              }
 
-
-                  public void templateFinished(Template template) {
-                    removeHighlighters(highlighters, highlightManager, editor);
-
-                    if (snapshot != null) {
-                      final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-                      if (templateState != null) {
-                        String newName = templateState.getVariableValue(PRIMARY_VARIABLE_NAME).toString();
-                        if (PsiManager.getInstance(project).getNameHelper().isIdentifier(newName)) {
-                          snapshot.apply(newName);
-                        }
-                      }
-                    }
-                  }
-
-                  public void templateCancelled(Template template) {
-                    removeHighlighters(highlighters, highlightManager, editor);
-                  }
-                });
+              public void templateCancelled(Template template) {
+                finish();
+              }
+            });
 
             //move to old offset
-            editor.getCaretModel().moveToOffset(offset);
+            myEditor.getCaretModel().moveToOffset(offset);
 
             //add highlights
-            addHighlights(rangesToHighlight, editor, highlighters, highlightManager);
+            addHighlights(rangesToHighlight, myEditor, myHighlighters, highlightManager);
           }
 
         });
       }
 
     }, RefactoringBundle.message("rename.title"), null);
+  }
 
+  public void finish() {
+    ourRenamersStack.pop();
 
+    final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
+    for (RangeHighlighter highlighter : myHighlighters) {
+      highlightManager.removeSegmentHighlighter(myEditor, highlighter);
+    }
   }
 
   private void collectRangesToHighlight(Map<TextRange,TextAttributes> rangesToHighlight, Collection<PsiReference> refs) {

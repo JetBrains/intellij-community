@@ -16,8 +16,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -144,7 +144,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     if (editor != null) {
       if (elementToRename instanceof PsiVariable && VariableInplaceRenamer.mayRenameInplace((PsiVariable)elementToRename, editor,
                                                                                             nameSuggestionContext)) {
-        new VariableInplaceRenamer((PsiVariable)elementToRename).performInplaceRename(editor);
+        new VariableInplaceRenamer((PsiVariable)elementToRename, editor).performInplaceRename();
         return;
       }
     }
