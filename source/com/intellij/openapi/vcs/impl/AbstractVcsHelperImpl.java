@@ -456,7 +456,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                  final Component parent) {
     final ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
     ChangeBrowserSettings settings = provider.createDefaultSettings();
-    boolean ok = true;
+    boolean ok;
     if (filterUI != null) {
       final CommittedChangesFilterDialog dlg = new CommittedChangesFilterDialog(myProject, filterUI, settings);
       dlg.show();
@@ -601,6 +601,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private void collectErrorsAndWarnings(final Collection<HighlightInfo> highlights,
                                                final List<CodeSmellInfo> result,
                                                final Document document) {
+    if (highlights == null) return;
     for (HighlightInfo highlightInfo : highlights) {
       final HighlightSeverity severity = highlightInfo.getSeverity();
       if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
