@@ -95,12 +95,57 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     LocalInspectionTool[] tools = tool2Wrapper.keySet().toArray(new LocalInspectionTool[tool2Wrapper.size()]);
     inspect(tools, progress, iManager, false);
+    addDescriptorsFromInjectedResults(tool2Wrapper, iManager);
     for (int i = 0; i < myTools.size(); i++) {
       final LocalInspectionTool tool = myTools.get(i);
       ProblemDescriptor descriptor = myDescriptors.get(i);
       LocalInspectionToolWrapper toolWrapper = tool2Wrapper.get(tool);
 
       toolWrapper.addProblemDescriptors(Collections.singletonList(descriptor), true);
+    }
+  }
+
+  private void addDescriptorsFromInjectedResults(Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper,
+                                                 InspectionManagerEx iManager) {
+    Set<TextRange> emptyActionRegistered = new THashSet<TextRange>();
+    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < myInjectedPsiInspectionResults.size(); i++) {
+      InjectedPsiInspectionUtil.InjectedPsiInspectionResult result = myInjectedPsiInspectionResults.get(i);
+      LocalInspectionTool tool = result.tool;
+      HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
+
+      PsiElement injectedPsi = result.injectedPsi;
+      DocumentWindow documentRange = (DocumentWindow)documentManager.getDocument((PsiFile)injectedPsi);
+      if (documentRange == null) continue;
+      //noinspection ForLoopReplaceableByForEach
+      for (int j = 0; j < result.foundProblems.size(); j++) {
+        ProblemDescriptor descriptor = result.foundProblems.get(j);
+        PsiElement psiElement = descriptor.getPsiElement();
+        if (InspectionManagerEx.inspectionResultSuppressed(psiElement, tool)) continue;
+        HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
+        HighlightInfo info = createHighlightInfo(descriptor, tool, level,emptyActionRegistered);
+        if (info == null) continue;
+        TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
+        if (editable == null) continue;
+        TextRange hostRange = documentRange.injectedToHost(editable);
+
+        QuickFix[] fixes = descriptor.getFixes();
+        LocalQuickFix[] localFixes = null;
+        if (fixes != null) {
+          localFixes = new LocalQuickFix[fixes.length];
+          for (int k = 0; k < fixes.length; k++) {
+            QuickFix fix = fixes[k];
+            localFixes[k] = (LocalQuickFix)fix;
+          }
+        }
+        ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(myFile, hostRange, descriptor.getDescriptionTemplate(),
+                                                                               descriptor.getHighlightType(),
+                                                                               localFixes);
+        LocalInspectionToolWrapper toolWrapper = tool2Wrapper.get(tool);
+        toolWrapper.addProblemDescriptors(Collections.singletonList(patchedDescriptor), true);
+      }
     }
   }
 

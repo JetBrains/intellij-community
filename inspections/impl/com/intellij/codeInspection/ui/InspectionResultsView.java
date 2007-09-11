@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -66,7 +67,6 @@ import java.util.List;
  * @author max
  */
 public class InspectionResultsView extends JPanel implements Disposable, OccurenceNavigator, DataProvider {
-
   public static final RefElement[] EMPTY_ELEMENTS_ARRAY = new RefElement[0];
   public static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
   private Project myProject;
@@ -460,11 +460,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private boolean buildTree() {
-    boolean resultsFound = false;
     final InspectionProfile profile = myInspectionProfile;
     final boolean isGroupedBySeverity = myGlobalInspectionContext.getUIOptions().GROUP_BY_SEVERITY;
     myGroups = new HashMap<HighlightDisplayLevel, Map<String, InspectionGroupNode>>();
     final Map<String, Set<Pair<InspectionTool, InspectionProfile>>> tools = myGlobalInspectionContext.getTools();
+    boolean resultsFound = false;
     for (Set<Pair<InspectionTool, InspectionProfile>> toolsInsideProfile : tools.values()) {
       for (Pair<InspectionTool, InspectionProfile> toolWithProfile : toolsInsideProfile) {
         final InspectionTool tool = toolWithProfile.first;
@@ -482,7 +482,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private InspectionTreeNode getToolParentNode(String groupName, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
-    if ((groupName == null || groupName.length() == 0)) {
+    if (groupName == null || groupName.length() == 0) {
       return getRelativeRootNode(groupedBySeverity, errorLevel);
     }
     Map<String, InspectionGroupNode> map = myGroups.get(errorLevel);
@@ -634,7 +634,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (psiElement == null || !psiElement.isValid()) return null;
     final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
     if (virtualFile != null) {
-      return new OpenFileDescriptor(myProject, virtualFile, psiElement.getTextOffset());
+      int startOffset = 0;
+      if (descriptor instanceof ProblemDescriptorImpl) {
+        TextRange range = ((ProblemDescriptorImpl)descriptor).getTextRange();
+        if (range != null) {
+          startOffset = range.getStartOffset();
+        }
+      }
+      return new OpenFileDescriptor(myProject, virtualFile, psiElement.getTextOffset() + startOffset);
     }
     return null;
   }
@@ -705,7 +712,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   protected RefManagerImpl getRefManager() {
-    return ((RefManagerImpl)myGlobalInspectionContext.getRefManager());
+    return (RefManagerImpl)myGlobalInspectionContext.getRefManager();
   }
 
   public GlobalInspectionContextImpl getGlobalInspectionContext() {

@@ -167,7 +167,7 @@ public class AnalysisScope {
       fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     } else if (myModule != null){
       fileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
-    } else if (myModules != null && myModules.size() > 0){
+    } else if (myModules != null && !myModules.isEmpty()){
       fileIndex = ProjectRootManager.getInstance(myModules.get(0).getProject()).getFileIndex();
     } else if (myElement != null){
       fileIndex = ProjectRootManager.getInstance(myElement.getProject()).getFileIndex();
@@ -216,7 +216,7 @@ public class AnalysisScope {
   private void initFilesSet() {
     if (myType == FILE) {
       myFilesSet = new HashSet<VirtualFile>(1);
-      myFilesSet.add(((PsiFile)myElement).getVirtualFile());
+      myFilesSet.add(((PsiFileSystemItem)myElement).getVirtualFile());
     }
     else if (myType == DIRECTORY || myType == PROJECT || myType == MODULES || myType == MODULE || myType == PACKAGE || myType == CUSTOM) {
       myFilesSet = new HashSet<VirtualFile>();
@@ -247,11 +247,11 @@ public class AnalysisScope {
           }
         }
       }
-      final VirtualFile vFile = ((PsiFile)myElement).getVirtualFile();
+      final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
       modules.addAll(getAllInterestingModules(fileIndex, vFile));
     }
     else if (myType == DIRECTORY) {
-      final VirtualFile vFile = ((PsiDirectory)myElement).getVirtualFile();
+      final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
       modules.addAll(getAllInterestingModules(fileIndex, vFile));
     }
     else if (myType == PACKAGE) {
@@ -287,7 +287,7 @@ public class AnalysisScope {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof ModuleOrderEntry && ((ModuleOrderEntry)orderEntry).isExported() &&
+        if (orderEntry instanceof ModuleOrderEntry && ((ExportableOrderEntry)orderEntry).isExported() &&
             fromModule == ((ModuleOrderEntry)orderEntry).getModule()) {
           result.addAll(getDirectBackwardDependencies(module, allModules));
         }
@@ -471,7 +471,7 @@ public class AnalysisScope {
       }
       return true;
     }
-    return myType == VIRTUAL_FILES || myType == CUSTOM || (myElement != null && myElement.isValid());
+    return myType == VIRTUAL_FILES || myType == CUSTOM || myElement != null && myElement.isValid();
   }
 
   public int getScopeType() {
@@ -499,12 +499,12 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.project", pathToName(myProject.getPresentableUrl()));
 
       case FILE:
-        final VirtualFile virtualFile = ((PsiFile)myElement).getVirtualFile();
+        final VirtualFile virtualFile = ((PsiFileSystemItem)myElement).getVirtualFile();
         LOG.assertTrue(virtualFile != null);
         return AnalysisScopeBundle.message("scope.file", virtualFile.getPresentableUrl());
 
       case DIRECTORY:
-        return AnalysisScopeBundle.message("scope.directory", ((PsiDirectory)myElement).getVirtualFile().getPresentableUrl());
+        return AnalysisScopeBundle.message("scope.directory", ((PsiFileSystemItem)myElement).getVirtualFile().getPresentableUrl());
 
       case PACKAGE:
         return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
@@ -533,10 +533,10 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.project", myProject.getName());
 
       case FILE:
-        return AnalysisScopeBundle.message("scope.file", VfsUtil.calcRelativeToProjectPath(((PsiFile)myElement).getVirtualFile(), myElement.getProject()));
+        return AnalysisScopeBundle.message("scope.file", VfsUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject()));
 
       case DIRECTORY:
-        return AnalysisScopeBundle.message("scope.directory", VfsUtil.calcRelativeToProjectPath(((PsiDirectory)myElement).getVirtualFile(), myElement.getProject()));
+        return AnalysisScopeBundle.message("scope.directory", VfsUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject()));
 
       case PACKAGE:
         return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
@@ -679,12 +679,12 @@ public class AnalysisScope {
       final Project project = myElement.getProject();
       final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
       if (myElement instanceof PsiDirectory) {
-        final VirtualFile directory = ((PsiDirectory)myElement).getVirtualFile();
+        final VirtualFile directory = ((PsiFileSystemItem)myElement).getVirtualFile();
         if (index.isInSourceContent(directory)) {
           return isTest ? index.isInTestSourceContent(directory) : !index.isInTestSourceContent(directory);
         }
       } else if (myElement instanceof PsiFile) {
-        final VirtualFile file = ((PsiFile)myElement).getVirtualFile();
+        final VirtualFile file = ((PsiFileSystemItem)myElement).getVirtualFile();
         if (file != null) {
           return isTest ? index.isInTestSourceContent(file) : !index.isInTestSourceContent(file);
         }

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
@@ -123,12 +124,12 @@ public abstract class BaseAnalysisAction extends AnAction {
       return new AnalysisScope(projectContext);
     }
 
-    Module moduleContext = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
+    Module moduleContext = DataKeys.MODULE_CONTEXT.getData(dataContext);
     if (moduleContext != null) {
       return new AnalysisScope(moduleContext);
     }
 
-    Module [] modulesArray = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
+    Module [] modulesArray = DataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     if (modulesArray != null) {
       return new AnalysisScope(modulesArray);
     }
@@ -154,13 +155,17 @@ public abstract class BaseAnalysisAction extends AnAction {
       return null;
     }
 
-    final VirtualFile[] virtualFiles = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] virtualFiles = DataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (virtualFiles != null) { //analyze on selection
       final Project project = DataKeys.PROJECT.getData(dataContext);
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       Set<VirtualFile> files = new HashSet<VirtualFile>();
       for (VirtualFile vFile : virtualFiles) {
         if (fileIndex.isInContent(vFile)) {
+          if (vFile instanceof VirtualFileWindow) {
+            files.add(vFile);
+            vFile = ((VirtualFileWindow)vFile).getDelegate();
+          }
           traverseDirectory(vFile, files);
         }
       }
@@ -178,13 +183,14 @@ public abstract class BaseAnalysisAction extends AnAction {
     return null;
   }
 
-  private static void traverseDirectory(VirtualFile vFile, Set<VirtualFile> files){
-    if (vFile.isDirectory()){
+  private static void traverseDirectory(VirtualFile vFile, Set<VirtualFile> files) {
+    if (vFile.isDirectory()) {
       final VirtualFile[] virtualFiles = vFile.getChildren();
       for (VirtualFile virtualFile : virtualFiles) {
         traverseDirectory(virtualFile, files);
       }
-    } else {
+    }
+    else {
       files.add(vFile);
     }
   }
