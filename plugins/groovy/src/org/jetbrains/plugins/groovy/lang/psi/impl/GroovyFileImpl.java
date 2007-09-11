@@ -217,10 +217,18 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   public void setPackageDefinition(String packageName) {
-    final GrPackageDefinition currentPackage = getPackageDefinition();
-    final GrTopStatement newPackage = GroovyElementFactory.getInstance(getProject()).createTopElementFromText("package " + packageName);
     final ASTNode fileNode = getNode();
     assert fileNode != null;
+    final GrPackageDefinition currentPackage = getPackageDefinition();
+    if (packageName == null || packageName.length() == 0) {
+      if (currentPackage != null) {
+        final ASTNode currNode = currentPackage.getNode();
+        assert currNode != null;
+        fileNode.removeChild(currNode);
+        return;
+      }
+    }
+    final GrTopStatement newPackage = GroovyElementFactory.getInstance(getProject()).createTopElementFromText("package " + packageName);
     final ASTNode newNode = newPackage.getNode();
     if (currentPackage != null) {
       final ASTNode currNode = currentPackage.getNode();
