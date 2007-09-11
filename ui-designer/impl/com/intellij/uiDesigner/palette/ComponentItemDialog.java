@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -187,6 +188,14 @@ public final class ComponentItemDialog extends DialogWrapper {
     myDocument = PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
     myEditorTextField.setDocument(myDocument);
     updateOKAction();
+  }
+
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp("reference.dialogs.addEditPaletteComponent");
   }
 
   protected void doOKAction() {
