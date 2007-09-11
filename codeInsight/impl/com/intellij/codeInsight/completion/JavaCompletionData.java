@@ -471,6 +471,7 @@ public class JavaCompletionData extends CompletionData{
     }
     {
 // Class field completion
+
       final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new LeftNeighbour(
         new AndFilter(
             new TextFilter("."),
@@ -479,7 +480,7 @@ public class JavaCompletionData extends CompletionData{
                     new ReferenceOnFilter(new ClassFilter(PsiClass.class)),
                     new TextFilter(PRIMITIVE_TYPES),
                     new TextFilter("]"))))));
-
+      variant.includeScopeClass(PsiAnnotationParameterList.class);
       variant.includeScopeClass(PsiVariable.class);
       variant.addCompletion(PsiKeyword.CLASS, TailType.NONE);
       registerVariant(variant);
@@ -575,6 +576,7 @@ public class JavaCompletionData extends CompletionData{
       variant.addCompletionFilterOnElement(
         new OrFilter(new ClassFilter(PsiAnnotationMethod.class),
                      new ClassFilter(PsiClass.class),
+                     new ClassFilter(PsiPackage.class),
                      new AndFilter (
                        new ClassFilter(PsiField.class),
                        new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL))));
