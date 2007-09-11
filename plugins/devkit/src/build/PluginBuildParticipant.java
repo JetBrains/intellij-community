@@ -57,7 +57,7 @@ public class PluginBuildParticipant extends BuildParticipantBase {
       return;
     }
 
-    super.registerBuildInstructions(instructions, context);
+    registerDescriptorCopyingInstructions(instructions, context);
 
     if (jdk == null) {
       context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("jdk.type.incorrect", getModule().getName()), null, -1, -1);
