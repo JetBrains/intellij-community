@@ -4,12 +4,14 @@
 
 package com.intellij.openapi.paths;
 
-import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -26,7 +29,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
-  implements PsiPolyVariantReference, QuickFixProvider<PsiDynaReference>, EmptyResolveMessageProvider {
+  implements PsiPolyVariantReference, QuickFixProvider<PsiDynaReference>, LocalQuickFixProvider, EmptyResolveMessageProvider {
 
   private List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private int myChoosenOne = -1;
@@ -146,17 +149,19 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
             prefix = null;
           }
           Object[] refVariants = ref.getVariants();
-          for(Object refVariant : refVariants) {
-            if (prefix != null) {
-              if (refVariant instanceof CandidateInfo) {
-                refVariant = ((CandidateInfo)refVariant).getElement();
+          if (refVariants != null) {
+            for(Object refVariant : refVariants) {
+              if (prefix != null) {
+                if (refVariant instanceof CandidateInfo) {
+                  refVariant = ((CandidateInfo)refVariant).getElement();
+                }
+                final LookupItem item = LookupItemUtil.objectToLookupItem(refVariant);
+                final String s = item.getLookupString();
+                item.setLookupString(prefix + s);
+                variants.add(item);
+              } else {
+                variants.add(refVariant);
               }
-              final LookupItem item = LookupItemUtil.objectToLookupItem(refVariant);
-              final String s = item.getLookupString();
-              item.setLookupString(prefix + s);
-              variants.add(item);
-            } else {
-              variants.add(refVariant);
             }
           }
         }
@@ -232,5 +237,15 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return reference instanceof EmptyResolveMessageProvider ?
            ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern() :
             XmlErrorMessages.message("cannot.resolve.symbol");
+  }
+
+  public LocalQuickFix[] getQuickFixes() {
+    final ArrayList<LocalQuickFix> list = new ArrayList<LocalQuickFix>();
+    for (Object ref: myReferences) {
+      if (ref instanceof LocalQuickFixProvider) {
+        list.addAll(Arrays.asList(((LocalQuickFixProvider)ref).getQuickFixes()));
+      }
+    }
+    return list.toArray(new LocalQuickFix[list.size()]);
   }
 }
