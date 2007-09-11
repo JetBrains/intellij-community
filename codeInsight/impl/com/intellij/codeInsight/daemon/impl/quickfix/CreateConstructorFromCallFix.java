@@ -73,7 +73,6 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     }
   }
 
-
   private static PsiFile getTargetFile(PsiElement element) {
     final PsiConstructorCall constructorCall = (PsiConstructorCall)element;
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +44,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   protected void registerInDocument() {
-    ((DocumentImpl)myDocument).addRangeMarker(this);
+    ((DocumentEx)myDocument).addRangeMarker(this);
   }
 
   public long getId() {
@@ -103,12 +104,12 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     final int newLength = e.getNewLength();
 
     // changes after the end.
-    if (myEnd < offset || (!isExpandToRight && myEnd == offset)) {
+    if (myEnd < offset || !isExpandToRight && myEnd == offset) {
       return;
     }
 
     // changes before start
-    if (myStart > offset + oldLength || (!isExpandToLeft && myStart == offset + oldLength)) {
+    if (myStart > offset + oldLength || !isExpandToLeft && myStart == offset + oldLength) {
       myStart += newLength - oldLength;
       myEnd += newLength - oldLength;
       return;
