@@ -28,7 +28,8 @@ public class NonNlsUtils {
     private NonNlsUtils() {
     }
 
-    public static boolean isNonNlsAnnotated(@Nullable PsiExpression expression) {
+    public static boolean isNonNlsAnnotated(
+            @Nullable PsiExpression expression) {
         if (isReferenceToNonNlsAnnotatedElement(expression)) {
             return true;
         }
@@ -36,49 +37,51 @@ public class NonNlsUtils {
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression) expression;
             final PsiMethod method = methodCallExpression.resolveMethod();
-	        if (isNonNlsAnnotatedModifierListOwner(method)) {
-		        return true;
-	        }
-	        final PsiReferenceExpression methodExpression =
-			        methodCallExpression.getMethodExpression();
-	        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-	        return isNonNlsAnnotated(qualifier);
+            if (isNonNlsAnnotatedModifierListOwner(method)) {
+                return true;
+            }
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            return isNonNlsAnnotated(qualifier);
         } else if (expression instanceof PsiArrayAccessExpression) {
-	        final PsiArrayAccessExpression arrayAccessExpression =
-			        (PsiArrayAccessExpression)expression;
-	        final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
-	        return isNonNlsAnnotated(arrayExpression);
+            final PsiArrayAccessExpression arrayAccessExpression =
+                    (PsiArrayAccessExpression)expression;
+            final PsiExpression arrayExpression =
+                    arrayAccessExpression.getArrayExpression();
+            return isNonNlsAnnotated(arrayExpression);
         }
         return false;
     }
 
     public static boolean isNonNlsAnnotatedUse(
             @Nullable PsiExpression expression) {
+        if (expression == null) {
+            return false;
+        }
+        final Boolean value = getCachedValue(expression, KEY);
+        if (value != null) {
+            return value.booleanValue();
+        }
         final PsiElement element =
                 PsiTreeUtil.getParentOfType(expression,
                         PsiExpressionList.class,
                         PsiAssignmentExpression.class,
                         PsiVariable.class,
                         PsiReturnStatement.class);
-        final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiExpression) {
-            final PsiExpression parentExpression = (PsiExpression)parent;
-            final Boolean data = parentExpression.getUserData(KEY);
-            if (data != null) {
-                expression.putUserData(KEY, data);
-                return data.booleanValue();
-            }
-        }
         final boolean result;
         if (element instanceof PsiExpressionList) {
-            final PsiExpressionList expressionList = (PsiExpressionList) element;
+            final PsiExpressionList expressionList =
+                    (PsiExpressionList) element;
             result = isNonNlsAnnotatedParameter(expression, expressionList);
         } else if (element instanceof PsiVariable) {
             result = isNonNlsAnnotatedModifierListOwner(element);
         } else if (element instanceof PsiAssignmentExpression) {
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression) element;
-            result = isAssignmentToNonNlsAnnotatedVariable(assignmentExpression);
+            result =
+                    isAssignmentToNonNlsAnnotatedVariable(assignmentExpression);
         } else if (element instanceof PsiReturnStatement) {
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -86,8 +89,40 @@ public class NonNlsUtils {
         } else {
             result = false;
         }
-        expression.putUserData(KEY, Boolean.valueOf(result));
+        putCachedValue(expression, KEY, Boolean.valueOf(result));
         return result;
+    }
+
+    private static <T> void putCachedValue(PsiExpression expression,
+                                       Key<T> key, T value) {
+        if (expression instanceof PsiBinaryExpression) {
+            expression.putUserData(key, value);
+        }
+    }
+
+    @Nullable
+    private static <T> T getCachedValue(PsiExpression expression, Key<T> key) {
+        final T data = expression.getUserData(key);
+        if (!(expression instanceof PsiBinaryExpression)) {
+            return data;
+        }
+        final PsiBinaryExpression binaryExpression =
+                (PsiBinaryExpression)expression;
+        final PsiExpression lhs = binaryExpression.getLOperand();
+        T childData = null;
+        if (lhs instanceof PsiBinaryExpression ){
+            childData = lhs.getUserData(key);
+        }
+        if (childData == null) {
+            final PsiExpression rhs = binaryExpression.getROperand();
+            if (rhs instanceof PsiBinaryExpression) {
+                childData = rhs.getUserData(key);
+            }
+        }
+        if (childData != data) {
+            expression.putUserData(key, childData);
+        }
+        return childData;
     }
 
     private static boolean isAssignmentToNonNlsAnnotatedVariable(
