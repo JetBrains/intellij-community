@@ -74,20 +74,6 @@ public class MavenCoreState implements Cloneable {
     this.outputLevel = outputLevel;
   }
 
-  public String getOutputLevelString() {
-    return String.valueOf(outputLevel);
-  }
-
-  public void setOutputLevelString(String outputLevel) {
-    if (outputLevel != null) {
-      try {
-        setOutputLevel(Integer.parseInt(outputLevel));
-      }
-      catch (NumberFormatException ignore) {
-      }
-    }
-  }
-
   @NotNull
   public String getLocalRepository() {
     return localRepository;

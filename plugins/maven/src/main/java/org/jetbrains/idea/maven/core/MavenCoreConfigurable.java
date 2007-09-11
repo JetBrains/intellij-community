@@ -102,7 +102,7 @@ public abstract class MavenCoreConfigurable implements Configurable {
 
   private void fillComboboxPluginUpdatePolicy() {
     ComboBoxUtil.setModel(comboboxPluginUpdatePolicy, comboboxModelPluginUpdatePolicy,
-                          new Object[][]{{"true", "Check For Updates"}, {"false", "Supress Checking"}});
+                          new Object[][]{{true, "Check For Updates"}, {false, "Supress Checking"}});
   }
 
   private void fillComboboxChecksumPolicy() {
@@ -152,10 +152,16 @@ public abstract class MavenCoreConfigurable implements Configurable {
     data.setUsePluginRegistry(checkboxUsePluginRegistry.isSelected());
     data.setNonRecursive(checkboxNonRecursive.isSelected());
 
-    data.setOutputLevelString(ComboBoxUtil.getSelectedString(comboboxModelOutputLevel));
+    Integer level = (Integer)ComboBoxUtil.getSelectedValue(comboboxModelOutputLevel);
+    if(level!=null){
+      data.setOutputLevel(level);
+    }
     data.setChecksumPolicy(ComboBoxUtil.getSelectedString(comboboxModelChecksumPolicy));
     data.setFailureBehavior(ComboBoxUtil.getSelectedString(comboboxModelMultiprojectBuildFailPolicy));
-    data.setPluginUpdatePolicy(Boolean.valueOf(ComboBoxUtil.getSelectedString(comboboxModelPluginUpdatePolicy)).booleanValue());
+    Boolean policy = (Boolean)ComboBoxUtil.getSelectedValue(comboboxModelPluginUpdatePolicy);
+    if(policy!=null){
+      data.setPluginUpdatePolicy(policy);
+    }
   }
 
   private void getData(MavenCoreState data) {
@@ -169,10 +175,10 @@ public abstract class MavenCoreConfigurable implements Configurable {
     checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxNonRecursive.setSelected(data.isNonRecursive());
 
-    ComboBoxUtil.select(comboboxModelOutputLevel, data.getOutputLevelString());
+    ComboBoxUtil.select(comboboxModelOutputLevel, data.getOutputLevel());
     ComboBoxUtil.select(comboboxModelChecksumPolicy, data.getChecksumPolicy());
     ComboBoxUtil.select(comboboxModelMultiprojectBuildFailPolicy, data.getFailureBehavior());
-    ComboBoxUtil.select(comboboxModelPluginUpdatePolicy, Boolean.toString(data.getPluginUpdatePolicy()));
+    ComboBoxUtil.select(comboboxModelPluginUpdatePolicy, data.getPluginUpdatePolicy());
   }
 
   public void disposeUIResources() {
