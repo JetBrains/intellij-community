@@ -1158,6 +1158,26 @@ public final class FormSourceCodeGenerator {
     endMethod();
   }
 
+  void push(final byte value) {
+    checkParameter();
+    append(value);
+  }
+
+  void append(byte value) {
+    myBuffer.append("(byte) ");
+    myBuffer.append(value);
+  }
+
+  void push(final short value) {
+    checkParameter();
+    append(value);
+  }
+
+  void append(short value) {
+    myBuffer.append("(short) ");  
+    myBuffer.append(value);
+  }
+
   void push(final int value) {
     checkParameter();
     append(value);
