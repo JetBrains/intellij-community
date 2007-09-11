@@ -125,6 +125,12 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
       return;
     }
     varIsConst.put(variable, Boolean.FALSE);
+    if (variable.computeConstantValue() != null) {
+      // there are some hardcoded constants
+      myIsConstant = true;
+      varIsConst.put(variable, Boolean.TRUE);
+      return;
+    }
     if (!variable.hasModifierProperty(PsiModifier.FINAL)){
       myIsConstant = false;
       return;

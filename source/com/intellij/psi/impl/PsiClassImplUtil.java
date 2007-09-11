@@ -196,7 +196,7 @@ public class PsiClassImplUtil {
     return ret;
   }
 
-  private static final @NonNls String ALL = "Intellij-IDEA-ALL";
+  @NonNls private static final String ALL = "Intellij-IDEA-ALL";
 
   private static Map<Class<? extends PsiMember>, Map<String, List>> buildAllMaps(final PsiClass psiClass) {
     final List<Pair<PsiClass, PsiSubstitutor>> classes = new ArrayList<Pair<PsiClass, PsiSubstitutor>>();
