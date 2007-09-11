@@ -763,12 +763,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
     }
 
-    /* TODO
-    final boolean allTokensInserted = curToken == myLexStarts.size();
+    final boolean allTokensInserted = myCurrentLexem >= myLexemCount && eof();
     if (!allTokensInserted) {
-      LOG.assertTrue(false, "Not all of the tokens inserted to the tree, parsed text:\n" + myText);
+      LOG.error("Not all of the tokens inserted to the tree, parsed text:\n" + myText);
     }
-    */
 
     if (myLexStarts.length <= myCurrentLexem) {
       resizeLexems(myCurrentLexem + 1);
@@ -778,7 +776,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexEnds[myCurrentLexem] = 0;
     myLexTypes[myCurrentLexem] = null;
 
-    LOG.assertTrue(curNode == rootMarker, "Unbalanced tree");
+    LOG.assertTrue(curNode == rootMarker, "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem");
     return rootMarker;
   }
 
