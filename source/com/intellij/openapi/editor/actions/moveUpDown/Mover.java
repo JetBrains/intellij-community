@@ -2,10 +2,13 @@ package com.intellij.openapi.editor.actions.moveUpDown;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,10 +92,27 @@ abstract class Mover {
     final int line2 = editor.offsetToLogicalPosition(range2.getEndOffset()).line;
     caretModel.moveToOffset(range2.getStartOffset() + caretRelativePos);
 
-    for (int line = line1; line <= line2; line++) {
-      if (lineContainsNonSpaces(document, line)) {
-        int lineStart = document.getLineStartOffset(line);
-        codeStyleManager.adjustLineIndent(document, lineStart);
+    if (PsiUtil.isInJspFile(file)) {
+      // This version is slow because of each moved line cause commit
+      // and right now we unable to fix JSP formatter quickly
+      // TODO: remove this code
+      for (int line = line1; line <= line2; line++) {
+        if (lineContainsNonSpaces(document, line)) {
+          int lineStart = document.getLineStartOffset(line);
+          codeStyleManager.adjustLineIndent(document, lineStart);
+        }
+      }
+    } else {
+      int realLine1 = line1;
+      int realLine2 = line2;
+
+      while(!lineContainsNonSpaces(document, realLine1) && realLine1 <= line2) realLine1++;
+      while(!lineContainsNonSpaces(document, realLine2) && realLine2 > realLine1) realLine2--;
+
+      try {
+        codeStyleManager.adjustLineIndent(file, new TextRange(document.getLineStartOffset(realLine1), document.getLineStartOffset(realLine2)));
+      } catch (IncorrectOperationException ex) {
+        throw new RuntimeException(ex);
       }
     }
 
