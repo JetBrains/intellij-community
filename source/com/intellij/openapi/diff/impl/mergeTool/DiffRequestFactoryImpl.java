@@ -34,10 +34,10 @@ package com.intellij.openapi.diff.impl.mergeTool;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffRequestFactory;
-import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.DiffRequestFactory;
+import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -45,6 +45,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -55,7 +56,7 @@ public class DiffRequestFactoryImpl implements DiffRequestFactory {
   public MergeRequest createMergeRequest(String leftText,
                                          String rightText,
                                          String originalContent,
-                                         VirtualFile file,
+                                         @NotNull VirtualFile file,
                                          Project project,
                                          final ActionButtonPresentation actionButtonPresentation) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);

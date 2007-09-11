@@ -17,20 +17,52 @@ package com.intellij.openapi.diff;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * A request for a merge operation.
+ *
+ * @see DiffRequestFactory#createMergeRequest
+ */
 public abstract class MergeRequest extends DiffRequest {
-  public MergeRequest(Project project) {
+  protected MergeRequest(Project project) {
     super(project);
   }
 
+  /**
+   * Sets the titles of panes in the merge dialog.
+   *
+   * @param versionTitles Array of 3 strings. First string specifies left pane title, second string specifies middle pane (merged content)
+   * title, third string specifies right pane.
+   */
   public abstract void setVersionTitles(String[] versionTitles);
 
+  /**
+   * Sets the title of the merge dialog.
+   *
+   * @param windowTitle The dialog title.
+   */
   public abstract void setWindowTitle(String windowTitle);
 
-  public abstract void setHelpId(@NonNls String helpId);
+  /**
+   * Specifies the ID of the help topic which is shown when the Help button is pressed. If null, the Help button is not shown.
+   *
+   * @param helpId the ID of the help topic for the merge operation.
+   */
+  public abstract void setHelpId(@Nullable @NonNls String helpId);
 
-
+  /**
+   * After the merge operation is completed, returns the exit code of the merge dialog.
+   *
+   * @return {@link com.intellij.openapi.ui.DialogWrapper#OK_EXIT_CODE} if the user accepted the merge, or a different value if the merge
+   * operation was cancelled.
+   */
   public abstract int getResult();
 
+  /**
+   * After the merge operation is completed, returns the merged text.
+   *
+   * @return the merged text.
+   */
   public abstract DiffContent getResultContent();
 }

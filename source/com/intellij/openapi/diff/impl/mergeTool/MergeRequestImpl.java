@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -27,7 +28,7 @@ public class MergeRequestImpl extends MergeRequest {
   private String[] myVersionTitles = null;
   private int myResult = DialogWrapper.CANCEL_EXIT_CODE;
   private String myHelpId;
-  private final ActionButtonPresentation myActionButtonPresenation;
+  private final ActionButtonPresentation myActionButtonPresentation;
 
   public MergeRequestImpl(String left,
                           MergeVersion base,
@@ -35,7 +36,7 @@ public class MergeRequestImpl extends MergeRequest {
                           Project project,
                           final ActionButtonPresentation actionButtonPresentation) {
     super(project);
-    myActionButtonPresenation = actionButtonPresentation;
+    myActionButtonPresentation = actionButtonPresentation;
     myDiffContents[0] = new SimpleContent(left);
     myDiffContents[1] = new MergeContent(base);
     myDiffContents[2] = new SimpleContent(right);
@@ -72,11 +73,11 @@ public class MergeRequestImpl extends MergeRequest {
       builder.addCancelAction();
     }
 
-    (builder.getOkAction()).setText(myActionButtonPresenation.getName());
+    (builder.getOkAction()).setText(myActionButtonPresentation.getName());
 
-    builder.setOkActionEnabled(myActionButtonPresenation.isEnabled());
+    builder.setOkActionEnabled(myActionButtonPresentation.isEnabled());
     final Action action = ((DialogBuilder.ActionDescriptor)builder.getOkAction()).getAction(builder.getDialogWrapper());
-    String actionName = myActionButtonPresenation.getName();
+    String actionName = myActionButtonPresentation.getName();
     final int index = actionName.indexOf("&");
     final char mnemonic;
     if (index >= 0 && index < actionName.length() - 1) {
@@ -91,8 +92,8 @@ public class MergeRequestImpl extends MergeRequest {
     }
     builder.setOkOperation(new Runnable() {
       public void run() {
-        myActionButtonPresenation.run((DiffViewer)DataManager.getInstance().getDataContext(builder.getCenterPanel()).getData(DataConstants.DIFF_VIEWER));
-        if (myActionButtonPresenation.closeDialog()) {
+        myActionButtonPresentation.run((DiffViewer)DataManager.getInstance().getDataContext(builder.getCenterPanel()).getData(DataConstants.DIFF_VIEWER));
+        if (myActionButtonPresentation.closeDialog()) {
           builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
         }
       }
@@ -114,7 +115,7 @@ public class MergeRequestImpl extends MergeRequest {
     return myHelpId;
   }
 
-  public void setHelpId(@NonNls String helpId) {
+  public void setHelpId(@Nullable @NonNls String helpId) {
     myHelpId = helpId;
   }
 
@@ -171,7 +172,7 @@ public class MergeRequestImpl extends MergeRequest {
     }
 
     public void run() {
-      if (!myActionButtonPresenation.closeDialog()) return;
+      if (!myActionButtonPresentation.closeDialog()) return;
       if (myWasInvoked) return;
       if (!getWholePanel().isDisplayable()) return;
       myWasInvoked = true;

@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,7 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Several {@link DiffContent}s to compare
+ * A request for a diff or merge operation.
  */
 public abstract class DiffRequest {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.DiffData");
@@ -41,8 +42,7 @@ public abstract class DiffRequest {
     myProject = project;
   }
 
-  public void setToolbarAddons(ToolbarAddons toolbarAddons) {
-    LOG.assertTrue(toolbarAddons != null);
+  public void setToolbarAddons(@NotNull ToolbarAddons toolbarAddons) {
     myToolbarAddons = toolbarAddons;
   }
 
