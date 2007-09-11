@@ -183,7 +183,23 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   public AntFileImpl copyLight(final FileViewProvider viewProvider) {
-    return new AntFileImpl(viewProvider);
+    synchronized (PsiLock.LOCK) {
+      final AntFileImpl copy = new AntFileImpl(viewProvider);
+
+      final HashMap<String, AntTypeDefinition> defs = new HashMap<String, AntTypeDefinition>(myTypeDefinitions);
+      for (Map.Entry<String, AntTypeDefinition> entry : defs.entrySet()) {
+        final AntTypeDefinitionImpl original = (AntTypeDefinitionImpl)entry.getValue();
+        if (original != null) {
+          defs.put(entry.getKey(), new AntTypeDefinitionImpl(original));
+        }
+      }
+      copy.myTypeDefinitions = defs;
+
+      copy.myProjectElements = new HashMap<AntTypeId, String>(myProjectElements);
+      copy.myClassLoader = myClassLoader;
+
+      return copy;
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -596,7 +612,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       if (reflectedProject.myProject != null) {
         final AntInstrospector projectHelper = getHelperExceptionSafe(reflectedProject.myProject.getClass());
         try {
-          // first, create task definitons
+           //first, create task definitons
           updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
           // second, create definitions of data types
           updateTypeDefinitions(reflectedProject.myDataTypeDefinitions, false);
