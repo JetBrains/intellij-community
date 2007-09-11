@@ -189,6 +189,7 @@ public class MavenProjectModel {
     private boolean included = true;
 
     final List<Node> mavenModules = new ArrayList<Node>();
+    final List<Node> mavenModulesTopoSorted = new ArrayList<Node>(); // recursive
 
     private Node(@NotNull VirtualFile pomFile, @NotNull final MavenProject mavenProject, final Module linkedModule) {
       this.pomFile = pomFile;
@@ -245,10 +246,35 @@ public class MavenProjectModel {
     }
 
     public void resolve(final MavenProjectReader projectReader, final List<String> profiles) {
-      final MavenProject resolved = projectReader.readResolved(getPath(), profiles);
+      List<MavenProject> resolvedModules = new ArrayList<MavenProject>();
+      final MavenProject resolved = projectReader.readResolved(getPath(), profiles, resolvedModules);
       if (resolved != null) {
         mavenProject = resolved;
+
+        Map<String,Node> pathToNode = createPathToNodeMap(mavenModules, new HashMap<String, Node>());
+
+        mavenModulesTopoSorted.clear();
+        for (MavenProject resolvedModule : resolvedModules) {
+          Node node = pathToNode.get(getNormalizedPath(resolvedModule));
+          if(node!=null){
+            node.mavenProject = resolvedModule;
+            mavenModulesTopoSorted.add(node);
+          }
+        }
       }
     }
+
+  }
+
+  private static Map<String, Node> createPathToNodeMap(final List<Node> mavenModules, final Map<String, Node> pathToNode) {
+    for (Node mavenModule : mavenModules) {
+      pathToNode.put(getNormalizedPath(mavenModule.getMavenProject()), mavenModule);
+      createPathToNodeMap(mavenModule.mavenModules, pathToNode);
+    }
+    return pathToNode;
+  }
+
+  private static String getNormalizedPath(MavenProject mavenProject) {
+    return FileUtil.toSystemIndependentName(mavenProject.getFile().getAbsolutePath());
   }
 }

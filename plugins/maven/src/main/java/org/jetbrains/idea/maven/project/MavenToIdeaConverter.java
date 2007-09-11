@@ -51,9 +51,14 @@ public class MavenToIdeaConverter {
 
     final MavenToIdeaConverter mavenToIdeaConverter = new MavenToIdeaConverter(modifiableModel, mapping, preferences, markSynthetic);
 
-    for (MavenProjectModel.Node project : sortProjectsByDependencies(projectModel)) {
-      mavenToIdeaConverter.convert(project, profiles);
-    }
+    projectModel.visit(new MavenProjectModel.MavenProjectVisitorRoot() {
+      public void visit(final MavenProjectModel.Node node) {
+        mavenToIdeaConverter.convert(node, profiles);
+        for(MavenProjectModel.Node subnode : node.mavenModulesTopoSorted){
+          mavenToIdeaConverter.convert(subnode, profiles);
+        }
+      }
+    });
 
     createModuleGroups(modifiableModel, projectModel, mapping, preferences.isCreateModuleGroups());
 
@@ -66,26 +71,6 @@ public class MavenToIdeaConverter {
     }
     catch (ModuleCircularDependencyException ignore) {
     }
-  }
-
-  private static List<MavenProjectModel.Node> sortProjectsByDependencies(final MavenProjectModel projectModel) {
-    final List<MavenProjectModel.Node> projects = new ArrayList<MavenProjectModel.Node>();
-    projectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
-      public void visit(final MavenProjectModel.Node node) {
-        projects.add(node);
-      }
-    });
-
-    // Dumb implementation just puts all EAR modules after all others
-    // TODO replace with proper topo sort on dependencies
-    Collections.sort(projects, new Comparator<MavenProjectModel.Node>() {
-      public int compare(final MavenProjectModel.Node o1, final MavenProjectModel.Node o2) {
-        final boolean isEar1 = o1.getMavenProject().getPackaging().equalsIgnoreCase("ear");
-        final boolean isEar2 = o2.getMavenProject().getPackaging().equalsIgnoreCase("ear");
-        return !isEar1 && isEar2 ? -1 : isEar1 && !isEar2 ? 1 : 0;
-      }
-    });
-    return projects;
   }
 
   private static void createModuleGroups(final ModifiableModuleModel modifiableModel,
@@ -210,7 +195,6 @@ public class MavenToIdeaConverter {
   }
 
   private static void createGeneratedSourceRoots(RootModelAdapter rootModel, MavenProject mavenProject) {
-    // TODO: do this properly
     final File targetDir = new File(mavenProject.getFile().getParent(), TARGET);
     if (targetDir.isDirectory()) {
       for (File file : targetDir.listFiles()) {
