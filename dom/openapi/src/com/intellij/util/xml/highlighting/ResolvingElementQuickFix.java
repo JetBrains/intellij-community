@@ -32,6 +32,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   private final String myNewName;
   private final List<DomElement> myParents;
   private final DomCollectionChildDescription myChildDescription;
+  private String myTypeName;
 
   public ResolvingElementQuickFix(final Class<? extends DomElement> clazz, final String newName, final List<DomElement> parents,
                                   final DomCollectionChildDescription childDescription) {
@@ -39,11 +40,16 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
     myNewName = newName;
     myParents = parents;
     myChildDescription = childDescription;
+    myTypeName = ElementPresentationManager.getTypeName(myClazz);
+  }
+
+  public void setTypeName(final String typeName) {
+    myTypeName = typeName;
   }
 
   @NotNull
   public String getName() {
-    return DomBundle.message("create.new.element", ElementPresentationManager.getTypeName(myClazz), myNewName);
+    return DomBundle.message("create.new.element", myTypeName, myNewName);
   }
 
   @NotNull
