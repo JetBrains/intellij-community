@@ -96,12 +96,31 @@ public interface ParserDefinition {
    */
   PsiFile createFile(FileViewProvider viewProvider);
 
+  /**
+   * Checks if the specified two token types need to be separated by a space according to the language grammar.
+   * For example, in Java two keywords are always separated by a space; a keyword and an opening parenthesis may
+   * be separated or not separated. This is used for automatic whitespace insertion during AST modification operations.
+   *
+   * @param left  the first token to check.
+   * @param right the second token to check.
+   * @return the spacing requirements.
+   * @since 6.0
+   */
   SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right);
 
+  /**
+   * Requirements for spacing between tokens.
+   *
+   * @see ParserDefinition#spaceExistanceTypeBetweenTokens
+   */
   enum SpaceRequirements {
+    /** Whitespace between tokens is optional. */
     MAY,
+    /** Whitespace between tokens is required. */
     MUST,
+    /** Whitespace between tokens is not allowed. */
     MUST_NOT,
+    /** A line break is required between tokens. */
     MUST_LINE_BREAK,
   }
 }
