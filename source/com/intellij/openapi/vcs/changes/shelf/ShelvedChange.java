@@ -10,9 +10,10 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -24,8 +25,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +33,8 @@ import java.io.IOException;
 import java.util.List;
 
 public class ShelvedChange {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelvedChange");
+
   private String myPatchPath;
   private String myBeforePath;
   private String myAfterPath;
@@ -75,35 +76,43 @@ public class ShelvedChange {
     if (myChange == null) {
       ContentRevision beforeRevision = null;
       ContentRevision afterRevision = null;
-      FilePath filePath = null;
-      VirtualFile baseDir = project.getBaseDir();
+      File baseDir = new File(project.getBaseDir().getPath());
 
+      File file = getAbsolutePath(baseDir, myBeforePath);
+      final FilePathImpl beforePath = new FilePathImpl(file, false);
+      beforePath.refresh();
       if (myFileStatus != FileStatus.ADDED) {
-        VirtualFile changedFile = VfsUtil.findRelativeFile(myBeforePath, baseDir);
-        if (changedFile != null) {
-          filePath = new FilePathImpl(changedFile);
-          beforeRevision = new CurrentContentRevision(filePath);
-        }
+        beforeRevision = new CurrentContentRevision(beforePath);
       }
-      if (filePath == null) {
-        VirtualFile changedDir = VfsUtil.findRelativeFile(getBeforeDirectory(), baseDir);
-        filePath = new FilePathImpl(changedDir, getBeforeFileName(), false);
-      }
-
       if (myFileStatus != FileStatus.DELETED) {
-        afterRevision = new PatchedContentRevision(filePath);
+        final FilePathImpl afterPath = new FilePathImpl(getAbsolutePath(baseDir, myAfterPath), false);
+        afterRevision = new PatchedContentRevision(beforePath, afterPath);
       }
       myChange = new Change(beforeRevision, afterRevision, myFileStatus);
     }
     return myChange;
   }
 
+  private static File getAbsolutePath(final File baseDir, final String relativePath) {
+    File file;
+    try {
+      file = new File(baseDir, relativePath).getCanonicalFile();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      file = new File(baseDir, relativePath);
+    }
+    return file;
+  }
+
   private class PatchedContentRevision implements ContentRevision {
-    private final FilePath myFilePath;
+    private final FilePath myBeforeFilePath;
+    private final FilePath myAfterFilePath;
     private String myContent;
 
-    public PatchedContentRevision(final FilePath filePath) {
-      myFilePath = filePath;
+    public PatchedContentRevision(final FilePath beforeFilePath, final FilePath afterFilePath) {
+      myBeforeFilePath = beforeFilePath;
+      myAfterFilePath = afterFilePath;
     }
 
     @Nullable
@@ -140,13 +149,14 @@ public class ShelvedChange {
     }
 
     private String getBaseContent() {
-      final Document doc = FileDocumentManager.getInstance().getDocument(myFilePath.getVirtualFile());
+      myBeforeFilePath.refresh();
+      final Document doc = FileDocumentManager.getInstance().getDocument(myBeforeFilePath.getVirtualFile());
       return doc.getText();
     }
 
     @NotNull
     public FilePath getFile() {
-      return myFilePath;
+      return myAfterFilePath;
     }
 
     @NotNull
