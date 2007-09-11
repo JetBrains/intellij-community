@@ -268,7 +268,7 @@ class LookupCellRenderer implements ListCellRenderer {
       Property property = (Property)o;
       PropertiesFile propertiesFile = property.getContainingFile();
       PropertiesFile defaultPropertiesFile = propertiesFile.getResourceBundle().getDefaultPropertiesFile(propertiesFile.getProject());
-      Property defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getKey());
+      Property defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getUnescapedKey());
       String value = defaultProperty == null ? property.getValue() : defaultProperty.getValue();
       if (trim && value != null && value.length() > 10) value = value.substring(0, 10) + "...";
       text = "="+ value;
@@ -413,7 +413,7 @@ class LookupCellRenderer implements ListCellRenderer {
         }
         else if (o instanceof Property) {
           Property property = (Property)o;
-          name = property.getKey();
+          name = property.getUnescapedKey();
         }
       }
     }

@@ -48,7 +48,7 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement 
     return new ItemPresentation() {
       public String getPresentableText() {
         if (myPresentableName == null) {
-          return myProperty.getKey();
+          return myProperty.getUnescapedKey();
         }
         else {
           return myPresentableName;

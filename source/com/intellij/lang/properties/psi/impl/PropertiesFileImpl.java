@@ -59,23 +59,23 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private void ensurePropertiesLoaded() {
-      if (myPropertiesMap != null) {
-        return;
+    if (myPropertiesMap != null) {
+      return;
+    }
+    final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
+    myPropertiesMap = new LinkedHashMap<String, List<Property>>();
+    myProperties = new ArrayList<Property>(props.length);
+    for (final ASTNode prop : props) {
+      final Property property = (Property)prop.getPsi();
+      String key = property.getUnescapedKey();
+      List<Property> list = myPropertiesMap.get(key);
+      if (list == null) {
+        list = new SmartList<Property>();
+        myPropertiesMap.put(key, list);
       }
-      final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
-      myPropertiesMap = new LinkedHashMap<String, List<Property>>();
-      myProperties = new ArrayList<Property>(props.length);
-      for (final ASTNode prop : props) {
-        final Property property = (Property) prop.getPsi();
-        String key = property.getKey();
-        List<Property> list = myPropertiesMap.get(key);
-        if (list == null) {
-          list = new SmartList<Property>();
-          myPropertiesMap.put(key, list);
-        }
-        list.add(property);
-        myProperties.add(property);
-      }
+      list.add(property);
+      myProperties.add(property);
+    }
   }
 
   public Property findPropertyByKey(@NotNull String key) {
@@ -89,9 +89,9 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @NotNull
   public List<Property> findPropertiesByKey(@NotNull String key) {
     synchronized (PsiLock.LOCK) {
-    ensurePropertiesLoaded();
-    List<Property> list = myPropertiesMap.get(key);
-    return list == null ? Collections.<Property>emptyList() : list;
+      ensurePropertiesLoaded();
+      List<Property> list = myPropertiesMap.get(key);
+      return list == null ? Collections.<Property>emptyList() : list;
     }
   }
 
@@ -169,7 +169,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   public Map<String, String> getNamesMap() {
     Map<String, String> result = new THashMap<String, String>();
     for (Property property : getProperties()) {
-      result.put(property.getName(), property.getValue());
+      result.put(property.getUnescapedKey(), property.getValue());
     }
     return result;
   }

@@ -52,7 +52,7 @@ public class GroupByWordPrefixes implements Grouper {
       String text = null;
       if (element instanceof PropertiesStructureViewElement) {
         Property property = ((PropertiesStructureViewElement)element).getValue();
-        text = property.getKey();
+        text = property.getUnescapedKey();
       }
       else if (element instanceof ResourceBundlePropertyStructureViewElement) {
         text = ((ResourceBundlePropertyStructureViewElement)element).getValue();

@@ -52,7 +52,7 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
     if (!(element instanceof Property)) {
       throw new IncorrectOperationException();
     }
-    updateRangeText(((Property)element).getKey());
+    updateRangeText(((Property)element).getUnescapedKey());
     return myFile;
   }
 
@@ -62,9 +62,6 @@ public final class ResourceBundleKeyReference extends ReferenceInForm {
     }
     Property property = (Property) element;
     String baseName = PropertiesUtil.getFullName(property.getContainingFile());
-    if (baseName == null) {
-      return false;
-    }
-    return myBundleName.equals(baseName.replace('.', '/')) && getRangeText().equals(property.getKey());
+    return baseName != null && myBundleName.equals(baseName.replace('.', '/')) && getRangeText().equals(property.getUnescapedKey());
   }
 }

@@ -60,7 +60,7 @@ public class PropertiesPrefixGroup implements Group {
         PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
         Property property = propertiesElement.getValue();
 
-        key = property.getKey();
+        key = property.getUnescapedKey();
       }
       else if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
         key = ((ResourceBundlePropertyStructureViewElement)treeElement).getValue();

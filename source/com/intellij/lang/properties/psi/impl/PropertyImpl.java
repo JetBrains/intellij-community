@@ -29,11 +29,11 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   }
 
   public String toString() {
-    return "Property:"+getKey();
+    return "Property:" + getKey();
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), name,"xxx");
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), name, "xxx");
     ASTNode keyNode = getKeyNode();
     ASTNode newKeyNode = property.getKeyNode();
     LOG.assertTrue(newKeyNode != null);
@@ -48,15 +48,15 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
 
   public void setValue(@NotNull String value) throws IncorrectOperationException {
     StringBuilder escapedName = new StringBuilder(value.length());
-    for (int i=0; i<value.length();i++) {
+    for (int i = 0; i < value.length(); i++) {
       char c = value.charAt(i);
-      if (c == '\n' && (i == 0 || value.charAt(i-1) != '\\')) {
+      if (c == '\n' && (i == 0 || value.charAt(i - 1) != '\\')) {
         escapedName.append('\\');
       }
       escapedName.append(c);
     }
     ASTNode node = getValueNode();
-    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx",escapedName.toString());
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", escapedName.toString());
     ASTNode valueNode = property.getValueNode();
     if (node == null) {
       if (valueNode != null) {
@@ -74,7 +74,7 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   }
 
   public String getName() {
-    return getKey();
+    return getUnescapedKey();
   }
 
   public String getKey() {
@@ -89,6 +89,7 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   public ASTNode getKeyNode() {
     return getNode().findChildByType(PropertiesTokenTypes.KEY_CHARACTERS);
   }
+
   @Nullable
   public ASTNode getValueNode() {
     return getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS);
@@ -104,7 +105,10 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
 
   @Nullable
   public String getUnescapedValue() {
-    String s = getValue();
+    return unescape(getValue());
+  }
+
+  private static String unescape(String s) {
     if (s == null) {
       return null;
     }
@@ -115,50 +119,90 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     while (off < len) {
       char aChar = s.charAt(off++);
       if (aChar == '\\') {
+        aChar = s.charAt(off++);
+        if (aChar == 'u') {
+          // Read the xxxx
+          int value = 0;
+          boolean error = false;
+          for (int i = 0; i < 4; i++) {
             aChar = s.charAt(off++);
-            if(aChar == 'u') {
-                // Read the xxxx
-                int value=0;
-                for (int i=0; i<4; i++) {
-                    aChar = s.charAt(off++);
-                    switch (aChar) {
-                      case '0': case '1': case '2': case '3': case '4':
-                      case '5': case '6': case '7': case '8': case '9':
-                         value = (value << 4) + aChar - '0';
-                         break;
-                      case 'a': case 'b': case 'c':
-                      case 'd': case 'e': case 'f':
-                         value = (value << 4) + 10 + aChar - 'a';
-                         break;
-                      case 'A': case 'B': case 'C':
-                      case 'D': case 'E': case 'F':
-                         value = (value << 4) + 10 + aChar - 'A';
-                         break;
-                      default:
-                          throw new IllegalArgumentException(
-                                       "Malformed \\uxxxx encoding.");
-                    }
-                }
-                out.append((char) value);
+            switch (aChar) {
+              case '0':
+              case '1':
+              case '2':
+              case '3':
+              case '4':
+              case '5':
+              case '6':
+              case '7':
+              case '8':
+              case '9':
+                value = (value << 4) + aChar - '0';
+                break;
+              case 'a':
+              case 'b':
+              case 'c':
+              case 'd':
+              case 'e':
+              case 'f':
+                value = (value << 4) + 10 + aChar - 'a';
+                break;
+              case 'A':
+              case 'B':
+              case 'C':
+              case 'D':
+              case 'E':
+              case 'F':
+                value = (value << 4) + 10 + aChar - 'A';
+                break;
+              default:
+                out.append("\\u");
+                int start = off - i - 1;
+                int end = start + 4 < s.length() ? start + 4 : s.length();
+                out.append(s, start, end);
+                i=4;
+                error = true;
+                off = end;
+                break;
+                //throw new IllegalArgumentException("Malformed \\uxxxx encoding.");
             }
-            else if (aChar == '\n') {
-              // escaped linebreak: skip whitespace in the beginning of next line
-              while(off < len && (s.charAt(off) == ' ' || s.charAt(off) == '\t')) {
-                off++;
-              }
-            }
-            else {
-                if (aChar == 't') aChar = '\t';
-                else if (aChar == 'r') aChar = '\r';
-                else if (aChar == 'n') aChar = '\n';
-                else if (aChar == 'f') aChar = '\f';
-                out.append(aChar);
-            }
-        } else {
-            out.append(aChar);
+          }
+          if (!error) {
+            out.append((char)value);
+          }
         }
+        else if (aChar == '\n') {
+          // escaped linebreak: skip whitespace in the beginning of next line
+          while (off < len && (s.charAt(off) == ' ' || s.charAt(off) == '\t')) {
+            off++;
+          }
+        }
+        else if (aChar == 't') {
+          out.append('\t');
+        }
+        else if (aChar == 'r') {
+          out.append('\r');
+        }
+        else if (aChar == 'n') {
+          out.append('\n');
+        }
+        else if (aChar == 'f') {
+          out.append('\f');
+        }
+        else {
+          out.append(aChar);
+        }
+      }
+      else {
+        out.append(aChar);
+      }
     }
     return out.toString();
+  }
+
+  @Nullable
+  public String getUnescapedKey() {
+    return unescape(getKey());
   }
 
   @Nullable
@@ -182,7 +226,8 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     ASTNode prev = node.getTreePrev();
     ASTNode next = node.getTreeNext();
     parentNode.removeChild(node);
-    if ((prev == null || prev.getElementType() == TokenType.WHITE_SPACE) && next != null && next.getElementType() == TokenType.WHITE_SPACE) {
+    if ((prev == null || prev.getElementType() == TokenType.WHITE_SPACE) && next != null &&
+        next.getElementType() == TokenType.WHITE_SPACE) {
       parentNode.removeChild(next);
     }
   }

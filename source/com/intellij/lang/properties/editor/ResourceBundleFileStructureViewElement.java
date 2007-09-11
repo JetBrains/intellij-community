@@ -37,7 +37,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     for (PropertiesFile propertiesFile : propertiesFiles) {
       List<Property> properties = propertiesFile.getProperties();
       for (Property property : properties) {
-        String name = property.getKey();
+        String name = property.getUnescapedKey();
         if (!propertyNames.containsKey(name)) {
           propertyNames.put(name, property);
         }

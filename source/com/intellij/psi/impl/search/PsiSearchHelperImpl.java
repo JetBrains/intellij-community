@@ -29,7 +29,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.text.StringSearcher;
@@ -462,9 +461,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                   searchContext, caseSensitively);
     }
     else {
-      LocalSearchScope _scope = (LocalSearchScope)searchScope;
-      PsiElement[] scopeElements = _scope.getScope();
-      final boolean ignoreInjectedPsi = _scope.isIgnoreInjectedPsi();
+      LocalSearchScope scope = (LocalSearchScope)searchScope;
+      PsiElement[] scopeElements = scope.getScope();
+      final boolean ignoreInjectedPsi = scope.isIgnoreInjectedPsi();
 
       for (final PsiElement scopeElement : scopeElements) {
         if (!processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, ignoreInjectedPsi)) return false;
@@ -502,9 +501,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.startBatchFilesProcessingMode();
 
     try {
-      String[] words = StringUtil.getWordsIn(searcher.getPattern()).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
-      if (words.length == 0) return true;
-
+      List<String> words = StringUtil.getWordsIn(searcher.getPattern());
+      if (words.isEmpty()) return true;
       Set<PsiFile> fileSet = new THashSet<PsiFile>();
       final Application application = ApplicationManager.getApplication();
       for (final String word : words) {

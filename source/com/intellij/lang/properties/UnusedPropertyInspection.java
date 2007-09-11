@@ -63,7 +63,7 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
       public void run() {
         for (Property property : properties) {
           if (original != null) {
-            original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getKey()));
+            original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
           }
 
           final PsiReference usage = ReferencesSearch.search(property, searchScope, false).findFirst();

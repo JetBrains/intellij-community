@@ -273,7 +273,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       final AntStructuredElement parent = getAntParent();
       final AntFile antFile = parent != null? parent.getAntFile() : null;
       for (final Property property : propFile.getProperties()) {
-        loadClass(antFile, property.getValue(), property.getKey(), getUri(),getAntParent());
+        loadClass(antFile, property.getValue(), property.getUnescapedKey(), getUri(),getAntParent());
       }
     }
     catch (IOException e) {

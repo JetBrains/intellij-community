@@ -66,7 +66,7 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
       if (propertiesFile == null) continue;
       List<Property> properties = propertiesFile.getProperties();
       for (Property property : properties) {
-        String key = property.getKey();
+        String key = property.getUnescapedKey();
         if (key == null) continue;
         for (int i =0; i<key.length(); i++) {
           char c = key.charAt(i);

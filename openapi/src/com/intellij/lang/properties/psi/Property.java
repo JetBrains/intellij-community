@@ -28,6 +28,14 @@ public interface Property extends PsiNamedElement {
    */
   @Nullable String getUnescapedValue();
 
+  /**
+   * Returns the key with \n, \r, \t, \f and Unicode escape characters converted to their
+   * character equivalents.
+   *
+   * @return unescaped key, or null if no key is specified for this property.
+   */
+  @Nullable String getUnescapedKey();
+
   @Nullable String getKeyValueSeparator();
 
   void setValue(@NonNls @NotNull String value) throws IncorrectOperationException;

@@ -112,7 +112,7 @@ public class PropertyReference implements PsiPolyVariantReference, QuickFixProvi
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return element instanceof Property && Comparing.strEqual(((Property)element).getKey(), getKeyText());
+    return element instanceof Property && Comparing.strEqual(((Property)element).getUnescapedKey(), getKeyText());
   }
 
   public Object[] getVariants() {

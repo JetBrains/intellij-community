@@ -170,10 +170,10 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
         for (Property property : properties) {
           if (original != null) {
             if (original.isCanceled()) throw new ProcessCanceledException();
-            original.setText2(PropertiesBundle.message("searching.for.property.key.progress.text", property.getKey()));
+            original.setText2(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
           }
           processTextUsages(processedValueToFiles, property.getValue(), processedKeyToFiles, searchHelper, scope);
-          processTextUsages(processedKeyToFiles, property.getKey(), processedValueToFiles, searchHelper, scope);
+          processTextUsages(processedKeyToFiles, property.getUnescapedKey(), processedValueToFiles, searchHelper, scope);
         }
 
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();

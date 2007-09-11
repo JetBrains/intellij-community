@@ -133,7 +133,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   private void preparePropertyRenaming(final Property property, final String newName) {
     ResourceBundle resourceBundle = property.getContainingFile().getResourceBundle();
-    List<Property> properties = PropertiesUtil.findAllProperties(myProject, resourceBundle, property.getKey());
+    List<Property> properties = PropertiesUtil.findAllProperties(myProject, resourceBundle, property.getUnescapedKey());
     myAllRenames.clear();
     for (Property otherProperty : properties) {
       myAllRenames.put(otherProperty, newName);

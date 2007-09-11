@@ -109,7 +109,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
     final List<Property> properties = myBundle.getProperties();
     for (Property property : properties) {
-      final String key = property.getKey();
+      final String key = property.getUnescapedKey();
       final String value = property.getValue();
       if (key != null) {
         myPairs.add(new Pair<String, String>(key, value != null? value : NULL));

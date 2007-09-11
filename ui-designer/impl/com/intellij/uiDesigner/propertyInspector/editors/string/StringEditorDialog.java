@@ -135,7 +135,7 @@ public final class StringEditorDialog extends DialogWrapper{
         String newKeyName = null;
         if (references.size() > 1) {
           final int rc = Messages.showDialog(module.getProject(), UIDesignerBundle.message("edit.text.multiple.usages",
-                                                                                           propertyByKey.getKey(), references.size()),
+                                                                                           propertyByKey.getUnescapedKey(), references.size()),
                                              UIDesignerBundle.message("edit.text.multiple.usages.title"),
                                              new String[] {
                                                UIDesignerBundle.message("edit.text.change.all"),

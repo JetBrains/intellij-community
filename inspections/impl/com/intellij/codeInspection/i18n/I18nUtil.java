@@ -250,7 +250,7 @@ public class I18nUtil {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       documentManager.commitDocument(documentManager.getDocument(file));
 
-      Property existingProperty = file.findPropertyByKey(property.getKey());
+      Property existingProperty = file.findPropertyByKey(property.getUnescapedKey());
       if (existingProperty == null) {
         file.addProperty(property);
       }

@@ -108,4 +108,12 @@ public class PropertiesFileTest extends LightIdeaTestCase {
     propertiesFile.addPropertyAfter(myPropertyToAdd, null);
     assertEquals("kkk=vvv\na=b\nc=d\ne=f", propertiesFile.getText());
   }
+  public void testUnescapedKey() throws IncorrectOperationException {
+    PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "a\\:b=xxx\nc\\ d=xxx\n\\ e\\=f=xxx\n\\u1234\\uxyzt=xxxx");
+    List<Property> properties = propertiesFile.getProperties();
+    assertEquals("a:b", properties.get(0).getUnescapedKey());
+    assertEquals("c d", properties.get(1).getUnescapedKey());
+    assertEquals(" e=f", properties.get(2).getUnescapedKey());
+    assertEquals("\u1234\\uxyzt", properties.get(3).getUnescapedKey());
+  }
 }

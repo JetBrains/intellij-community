@@ -275,7 +275,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
     if (propertiesFile != null) {
       for (Property property : propertiesFile.getProperties()) {
         if (Comparing.strEqual(property.getValue(), value)) {
-          result.add(0, property.getKey());
+          result.add(0, property.getUnescapedKey());
         }
       }
     }
