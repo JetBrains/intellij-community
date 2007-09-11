@@ -14,6 +14,8 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 
@@ -77,8 +79,8 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     presentation.setEnabled(true);
 
     boolean isPackage = false;
-    for (int i = 0; i < directories.length; i++) {
-      if (directories[i].getPackage() != null) {
+    for (PsiDirectory directory : directories) {
+      if (directory.getPackage() != null) {
         isPackage = true;
         break;
       }
@@ -119,14 +121,14 @@ public class CreateDirectoryOrPackageAction extends AnAction {
         return false;
       }
 
-      //[ven] valentin thinks this is too restrictive
-      /*if (!myIsDirectory) {
+      if (!myIsDirectory) {
         PsiNameHelper helper = PsiManager.getInstance(myProject).getNameHelper();
         if (!helper.isQualifiedName(subDirName)) {
-          Messages.showMessageDialog(myProject, "A valid package name should be specified", "Error", Messages.getErrorIcon());
+          Messages.showMessageDialog(myProject, IdeBundle.message("a.valid.package.name.should.be.specified"),
+                                     IdeBundle.message("title.cannot.create.package"), Messages.getErrorIcon());
           return false;
         }
-      }*/
+      }
 
       final boolean multiCreation = !myIsDirectory && subDirName.indexOf('.') != -1;
       if (!multiCreation) {
@@ -189,7 +191,6 @@ public class CreateDirectoryOrPackageAction extends AnAction {
                                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
                   }
                 });
-                return;
               }
               finally {
                 action.finish();
