@@ -924,7 +924,7 @@ public class ExpectedTypesProvider {
               }
               final PsiClass aClass = PsiTreeUtil.getContextOfType(parent, PsiClass.class, true);
               if (aClass != null) {
-                return aClass.getManager().getElementFactory().createType(psiClass);
+                return aClass.getManager().getElementFactory().createType(aClass);
               }
             }
             return null;
