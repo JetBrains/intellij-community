@@ -850,18 +850,18 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   // navigate up/down in stack trace
   public boolean hasNextOccurence() {
-    return goNextOccurence() != null;
+    return next(1, false) != null;
   }
 
   public boolean hasPreviousOccurence() {
-    return goPreviousOccurence() != null;
+    return next(-1, false) != null;
   }
 
   public OccurenceInfo goNextOccurence() {
-    return next(1);
+    return next(1, true);
   }
 
-  private OccurenceInfo next(final int delta) {
+  private OccurenceInfo next(final int delta, boolean doMove) {
     List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(myHyperlinks.getRanges().keySet());
     Collections.sort(ranges, new Comparator<RangeHighlighter>() {
       public int compare(final RangeHighlighter o1, final RangeHighlighter o2) {
@@ -878,6 +878,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     int newIndex = ranges.isEmpty() ? -1 : i == ranges.size() ? 0 : (i + delta + ranges.size()) % ranges.size();
     RangeHighlighter next = newIndex < ranges.size() && newIndex >= 0 ? ranges.get(newIndex) : null;
     if (next == null) return null;
+    if (doMove) {
+      scrollTo(next.getStartOffset());
+    }
     final HyperlinkInfo hyperlinkInfo = myHyperlinks.getRanges().get(next);
     return new OccurenceInfo(new Navigatable() {
       public void navigate(final boolean requestFocus) {
@@ -893,11 +896,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         return true;
       }
     }, i, ranges.size());
-
   }
 
   public OccurenceInfo goPreviousOccurence() {
-    return next(-1);
+    return next(-1, true);
   }
 
   public String getNextOccurenceActionName() {
