@@ -171,7 +171,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final UsageInfo[] usageInfos = result.toArray(new UsageInfo[0]);
+    final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
@@ -450,7 +450,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
   private void fixActualArgumentsList(PsiCallExpression expression) throws IncorrectOperationException {
     PsiExpression newArg = (PsiExpression) expression.getArgumentList().add(myParameterInitializer);
-    new OldReferencesResolver(expression, newArg, myReplaceFieldsWithGetters).resolve();
+    new OldReferencesResolver(expression, newArg).resolve();
   }
 
   static PsiType getInitializerType(PsiType forcedType, PsiExpression parameterInitializer, PsiLocalVariable localVariable) {
@@ -540,7 +540,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     ChangeContextUtil.decodeContextInfo(newArg, null, null);
 
     // here comes some postprocessing...
-    new OldReferencesResolver(callExpression, newArg, myReplaceFieldsWithGetters).resolve();
+    new OldReferencesResolver(callExpression, newArg).resolve();
     
     removeParametersFromCall(callExpression.getArgumentList());
   }
@@ -576,15 +576,14 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     private final HashMap<PsiExpression,String> myTempVars;
     private final PsiExpression myInstanceRef;
     private final PsiExpression[] myActualArgs;
-    private final int myReplaceFieldsWithGetters;
 
-    public OldReferencesResolver(PsiCallExpression context, PsiExpression expr, int replaceFieldsWithGetters) throws IncorrectOperationException {
+    public OldReferencesResolver(PsiCallExpression context, PsiExpression expr) throws IncorrectOperationException {
       myContext = context;
       myExpr = expr;
       myTempVars = new HashMap<PsiExpression, String>();
       myActualArgs = myContext.getArgumentList().getExpressions();
       if(myActualArgs.length < myMethodToReplaceIn.getParameterList().getParametersCount()) {
-        LOG.error(myContext.getText() + "\n-----\n" + myMethodToReplaceIn.getText());
+        LOG.debug(myContext.getText() + "\n-----\n" + myMethodToReplaceIn.getText());
       }
       PsiElementFactory factory = myManager.getElementFactory();
       PsiExpression instanceRef;
@@ -606,7 +605,6 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         instanceRef = null;
       }
       myInstanceRef = instanceRef;
-      myReplaceFieldsWithGetters = replaceFieldsWithGetters;
     }
 
     public void resolve() throws IncorrectOperationException {
