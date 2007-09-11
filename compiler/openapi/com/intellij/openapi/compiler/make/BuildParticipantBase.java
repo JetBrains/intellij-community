@@ -50,8 +50,8 @@ public abstract class BuildParticipantBase extends BuildParticipant {
       }
     }.execute();
   }
-
-  protected void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
+                                   
+  protected void registerDescriptorCopyingInstructions(final BuildRecipe instructions, final CompileContext context) {
     final ConfigFile[] deploymentDescriptors = getDeploymentDescriptors();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {

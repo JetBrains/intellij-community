@@ -171,6 +171,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
       editor.init(selectedTab, myHistory);
     }
+    if (configurable instanceof FacetConfigurable) {
+      ((FacetConfigurable)configurable).getEditor().onFacetSelected();
+    }
   }
 
 

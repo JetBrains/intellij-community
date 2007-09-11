@@ -33,6 +33,7 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
   private @Nullable TabbedPaneWrapper myTabbedPane;
   private final FacetEditorContext myContext;
   private final Set<FacetEditorTab> myVisitedTabs = new HashSet<FacetEditorTab>();
+  private int mySelectedTabIndex = 0;
 
   public FacetEditor(final FacetEditorContext context, final FacetConfiguration configuration) {
     myContext = context;
@@ -63,12 +64,10 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
         tabbedPane.addTab(editorTab.getDisplayName(), editorTab.getIcon(), editorTab.createComponent(), null);
       }
       tabbedPane.addChangeListener(new ChangeListener() {
-        private int myTabIndex;
-
         public void stateChanged(ChangeEvent e) {
-          myEditorTabs[myTabIndex].onTabLeaving();
-          myTabIndex = tabbedPane.getSelectedIndex();
-          onTabSelected(myEditorTabs[myTabIndex]);
+          myEditorTabs[mySelectedTabIndex].onTabLeaving();
+          mySelectedTabIndex = tabbedPane.getSelectedIndex();
+          onTabSelected(myEditorTabs[mySelectedTabIndex]);
         }
       });
       editorComponent = tabbedPane.getComponent();
@@ -128,5 +127,9 @@ public class FacetEditor extends UnnamedConfigurableGroup implements UnnamedConf
 
   public FacetEditorContext getContext() {
     return myContext;
+  }
+
+  public void onFacetSelected() {
+    onTabSelected(myEditorTabs[mySelectedTabIndex]);
   }
 }
