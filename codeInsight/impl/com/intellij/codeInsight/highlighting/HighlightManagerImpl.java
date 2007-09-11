@@ -176,17 +176,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
                                               @NotNull TextAttributes attributes,
                                               boolean hideByTextChange,
                                               Collection<RangeHighlighter> outHighlighters) {
-    if (elements.length == 0) return;
-    int flags = HIDE_BY_ESCAPE;
-    if (hideByTextChange) {
-      flags |= HIDE_BY_TEXT_CHANGE;
-    }
-    Color scrollmarkColor = getScrollMarkColor(attributes);
-
-    for (final PsiElement element : elements) {
-      final TextRange range = element.getTextRange();
-      addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, flags, outHighlighters, scrollmarkColor);
-    }
+    addOccurrenceHighlights(editor, elements, attributes, hideByTextChange, outHighlighters);
   }
 
   public void addOccurrenceHighlight(@NotNull Editor editor,
