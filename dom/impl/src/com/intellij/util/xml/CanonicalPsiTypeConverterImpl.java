@@ -59,10 +59,14 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
 
             @NotNull
             public JavaResolveResult advancedResolve(final boolean incompleteCode) {
-              final PsiType type = genericDomValue.getValue();
+              PsiType type = genericDomValue.getValue();
+              if (type != null) {
+                type = type.getDeepComponentType();
+              }
               if (type instanceof PsiPrimitiveType) {
                 return new CandidateInfo(element, PsiSubstitutor.EMPTY, false, false, element);
               }
+
               return super.advancedResolve(incompleteCode);
             }
 
