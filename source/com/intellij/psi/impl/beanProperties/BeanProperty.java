@@ -38,8 +38,7 @@ public class BeanProperty {
   @NotNull
   public String getName() {
     final String name = PropertyUtil.getPropertyName(myMethod);
-    assert name != null;
-    return name;
+    return name == null ? "" : name;
   }
 
   @NotNull
