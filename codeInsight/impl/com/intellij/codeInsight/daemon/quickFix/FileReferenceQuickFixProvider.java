@@ -74,10 +74,9 @@ public class FileReferenceQuickFixProvider {
     if (directory == null) return Collections.emptyList();
 
     if (fileReferenceSet.isCaseSensitive()) {
-      boolean original = fileReferenceSet.isCaseSensitive();
       try {
         fileReferenceSet.setCaseSensitive(false);
-        final PsiElement psiElement = reference.resolve();
+        final PsiElement psiElement = reference.innerSingleResolve();
 
         if (psiElement instanceof PsiNamedElement) {
           final String existingElementName = ((PsiNamedElement)psiElement).getName();
@@ -90,7 +89,7 @@ public class FileReferenceQuickFixProvider {
           return Arrays.asList(renameRefAction, renameFileFix);
         }
       } finally {
-        fileReferenceSet.setCaseSensitive(original);
+        fileReferenceSet.setCaseSensitive(true);
       }
     }
 

@@ -148,9 +148,6 @@ public class FileReferenceSet {
 
   public void setCaseSensitive(final boolean caseSensitive) {
     myCaseSensitive = caseSensitive;
-    for (FileReference ref : myReferences) {
-      ref.clearResolveCaches();
-    }
   }
 
   public boolean isEndingSlashNotAllowed() {

@@ -238,6 +238,12 @@ public class FileReference
     return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
   }
 
+  @Nullable
+  public PsiFileSystemItem innerSingleResolve() {
+    final ResolveResult[] resolveResults = innerResolve();
+    return resolveResults.length == 1 ? (PsiFileSystemItem)resolveResults[0].getElement() : null;
+  }
+
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof PsiFileSystemItem)) return false;
 
