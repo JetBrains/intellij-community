@@ -4,7 +4,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
@@ -160,7 +160,7 @@ public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel 
     }
   }
 
-  protected LexerEditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     return HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST);
   }
 

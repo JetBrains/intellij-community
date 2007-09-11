@@ -3,8 +3,8 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 
 /**
  * @author peter

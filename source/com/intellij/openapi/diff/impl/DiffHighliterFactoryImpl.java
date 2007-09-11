@@ -1,7 +1,7 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.openapi.editor.ex.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 

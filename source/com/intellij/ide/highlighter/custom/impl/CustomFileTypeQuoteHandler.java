@@ -3,7 +3,7 @@ package com.intellij.ide.highlighter.custom.impl;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 

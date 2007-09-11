@@ -33,14 +33,13 @@ package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JTextField myKeepBlankLines;
@@ -67,7 +66,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     addPanelToWatch(myPanel);
   }
 
-  protected LexerEditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     return HighlighterFactory.createXMLHighlighter(scheme);
   }
 

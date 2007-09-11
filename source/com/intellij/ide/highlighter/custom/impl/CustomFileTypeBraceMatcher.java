@@ -1,7 +1,7 @@
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;

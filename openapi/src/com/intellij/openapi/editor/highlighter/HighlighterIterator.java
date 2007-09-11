@@ -1,4 +1,4 @@
-package com.intellij.openapi.editor.ex;
+package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.tree.IElementType;

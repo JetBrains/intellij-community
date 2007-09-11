@@ -1,7 +1,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ex.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;

@@ -11,8 +11,8 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorHighlighter;
-import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -21,9 +21,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.xml.XmlComment;
 
 import java.util.List;
 

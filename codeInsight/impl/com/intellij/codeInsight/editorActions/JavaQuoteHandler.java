@@ -3,11 +3,11 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
-import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * @author peter

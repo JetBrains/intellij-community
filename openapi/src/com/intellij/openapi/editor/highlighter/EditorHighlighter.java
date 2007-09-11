@@ -1,8 +1,7 @@
-package com.intellij.openapi.editor.ex;
+package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.util.HighlighterClient;
 
 public interface EditorHighlighter extends DocumentListener {
   HighlighterIterator createIterator(int startOffset);

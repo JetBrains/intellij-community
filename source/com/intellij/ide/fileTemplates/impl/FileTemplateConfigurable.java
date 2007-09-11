@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -376,7 +377,7 @@ public class FileTemplateConfigurable implements Configurable {
 
     SyntaxHighlighter originalHighlighter = fileType.getHighlighter(null, null);
     if (originalHighlighter == null) originalHighlighter = new PlainSyntaxHighlighter();
-    LexerEditorHighlighter highlighter = new LexerEditorHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
+    EditorHighlighter highlighter = new LexerEditorHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
     ((EditorEx)myTemplateEditor).setHighlighter(highlighter);
     ((EditorEx)myTemplateEditor).repaint(0, myTemplateEditor.getDocument().getTextLength());
   }

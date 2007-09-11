@@ -13,8 +13,8 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.HighlighterIterator;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -304,7 +304,7 @@ public class IdTableBuilding {
       });
 
       if (myHighlighter != null && myCommentTokens != null && todoCounts != null) {
-        final LexerEditorHighlighter highlighter = HighlighterFactory.createHighlighter(manager.getProject(), myFile);
+        final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(manager.getProject(), myFile);
         highlighter.setText(chars);
 
         final HighlighterIterator iterator = highlighter.createIterator(0);

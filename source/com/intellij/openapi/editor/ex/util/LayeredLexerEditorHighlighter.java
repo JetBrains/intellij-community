@@ -5,7 +5,9 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterClient;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -161,7 +163,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
   private class Mapper implements HighlighterClient {
     private final DocumentImpl doc;
-    private final LexerEditorHighlighter highlighter;
+    private final EditorHighlighter highlighter;
     private final String mySeparator;
     private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<IElementType, TextAttributes>();
     private final SyntaxHighlighter mySyntaxHighlighter;

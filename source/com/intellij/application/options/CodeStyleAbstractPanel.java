@@ -44,7 +44,7 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -130,7 +130,7 @@ public abstract class CodeStyleAbstractPanel {
     return editor;
   }
 
-  protected abstract LexerEditorHighlighter createHighlighter(final EditorColorsScheme scheme);
+  protected abstract EditorHighlighter createHighlighter(final EditorColorsScheme scheme);
 
   protected void fillEditorSettings(final EditorSettings editorSettings) {
     editorSettings.setWhitespacesShown(true);
