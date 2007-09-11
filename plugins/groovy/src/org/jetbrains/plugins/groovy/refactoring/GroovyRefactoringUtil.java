@@ -31,6 +31,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspExprInjection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -59,6 +61,7 @@ public abstract class GroovyRefactoringUtil {
         !(parent instanceof GrCodeBlock) &&
         !(parent instanceof GrCaseSection) &&
         !(parent instanceof GroovyFileBase) &&
+        !(parent instanceof GrGspDeclarationHolder) &&
         !isLoopOrForkStatement(parent)) {
       parent = parent.getParent();
     }
@@ -89,7 +92,7 @@ public abstract class GroovyRefactoringUtil {
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
     final T element = ReflectionCache.isAssignable(klass, commonParent.getClass())
         ? (T) commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
-    if (element == null || element.getTextRange().getStartOffset() != startOffset || element.getTextRange().getEndOffset() != endOffset) {
+    if (element == null || element.getTextRange().getStartOffset() != startOffset) {
       return null;
     }
     return element;

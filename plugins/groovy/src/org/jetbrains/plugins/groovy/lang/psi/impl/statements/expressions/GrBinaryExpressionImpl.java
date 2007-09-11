@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,9 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
 
   public GrExpression getRightOperand() {
     PsiElement last = getLastChild();
+    while (last != null && last instanceof PsiWhiteSpace) {
+      last = last.getPrevSibling();
+    }
     if (last instanceof GrExpression) {
       return (GrExpression) last;
     } else {

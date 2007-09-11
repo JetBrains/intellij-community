@@ -67,7 +67,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    if (!(file instanceof GroovyFileBase /* || file instanceof GspFile*/)) {
+    if (!(file instanceof GroovyFileBase || file instanceof GspFile)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("only.in.groovy.files"));
       showErrorMessage(message, project);
       return false;
