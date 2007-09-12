@@ -90,7 +90,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     myExtensions = (DeadCodeExtension[])deadCodeAddins;
   }
 
-  public void initialize(final GlobalInspectionContextImpl context) {
+  public void initialize(@NotNull final GlobalInspectionContextImpl context) {
     super.initialize(context);
     ((EntryPointsManagerImpl)context.getRefManager().getEntryPointsManager()).setAddNonJavaEntries(ADD_NONJAVA_TO_ENTRIES);
   }

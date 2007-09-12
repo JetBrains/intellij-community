@@ -37,7 +37,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   private GlobalInspectionContextImpl myContext;
   protected static String ourOutputPath;
 
-  public void initialize(GlobalInspectionContextImpl context) {
+  public void initialize(@NotNull GlobalInspectionContextImpl context) {
     myContext = context;
   }
 

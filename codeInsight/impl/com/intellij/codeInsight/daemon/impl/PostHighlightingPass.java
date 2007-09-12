@@ -76,7 +76,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private final CodeStyleManagerEx myStyleManager;
   private int myCurentEntryIndex;
   private boolean myHasMissortedImports;
-  private ImplicitUsageProvider[] myImplicitUsageProviders;
+  private final ImplicitUsageProvider[] myImplicitUsageProviders;
 
   private PostHighlightingPass(@NotNull Project project,
                                @NotNull PsiFile file,

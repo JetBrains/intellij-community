@@ -29,13 +29,13 @@ import javax.swing.*;
  * Date: 28-Dec-2005
  */
 public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
-  @NotNull private GlobalInspectionTool myTool;
+  @NotNull private final GlobalInspectionTool myTool;
 
   public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool globalInspectionTool) {
     myTool = globalInspectionTool;
   }
 
-  public void initialize(GlobalInspectionContextImpl context) {
+  public void initialize(@NotNull GlobalInspectionContextImpl context) {
     super.initialize(context);
     final RefGraphAnnotator annotator = myTool.getAnnotator(getRefManager());
     if (annotator != null) {
@@ -155,11 +155,11 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
             return fix.getFamilyName();
           }
 
-          public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+          public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
             return true;
           }
 
-          public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+          public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
             fix.applyFix(project, problemDescriptor); //todo check type consistency
           }
 
