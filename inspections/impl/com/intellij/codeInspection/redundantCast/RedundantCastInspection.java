@@ -10,7 +10,7 @@ package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.miscGenerics.GenericsInspectionToolBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -19,47 +19,19 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class RedundantCastInspection extends BaseLocalInspectionTool {
+public class RedundantCastInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastInspection");
-  private LocalQuickFix myQuickFixAction;
-  public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.cast.display.name");
-  @NonNls public static final String SHORT_NAME = "RedundantCast";
+  private final LocalQuickFix myQuickFixAction;
+  private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.cast.display.name");
+  @NonNls private static final String SHORT_NAME = "RedundantCast";
 
   public RedundantCastInspection() {
     myQuickFixAction = new AcceptSuggested();
   }
 
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
-    final PsiClassInitializer[] initializers = aClass.getInitializers();
-    if (initializers.length == 0) return null;
-    List<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
-    for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] localDescriptions = getDescriptions(initializer, manager);
-      if (localDescriptions != null) {
-        descriptors.addAll(Arrays.asList(localDescriptions));
-      }
-    }
-    if (descriptors.isEmpty()) return null;
-    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
-  }
-
-  public ProblemDescriptor[] checkField(PsiField field, InspectionManager manager, boolean isOnTheFly) {
-    final PsiExpression initializer = field.getInitializer();
-    if (initializer != null) {
-      return getDescriptions(initializer, manager);
-    }
-    return null;
-  }
-
-  public ProblemDescriptor[] checkMethod(PsiMethod psiMethod, InspectionManager manager, boolean isOnTheFly) {
-    return getDescriptions(psiMethod, manager);
-  }
-
-  private ProblemDescriptor[] getDescriptions(PsiElement where, InspectionManager manager) {
+  public ProblemDescriptor[] getDescriptions(PsiElement where, InspectionManager manager) {
     List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
     if (redundantCasts.isEmpty()) return null;
     ProblemDescriptor[] descriptions = new ProblemDescriptor[redundantCasts.size()];

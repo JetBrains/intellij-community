@@ -716,8 +716,7 @@ public class TypeConversionUtil {
     final PsiClass psiClass = left.resolve();
     if (psiClass == null) return false;
     final PsiClassType rightBoxed = right.getBoxedType(psiClass.getManager(), left.getResolveScope());
-    if (rightBoxed == null) return false;
-    return isAssignable(left, rightBoxed);
+    return rightBoxed != null && isAssignable(left, rightBoxed);
   }
 
   private static boolean isClassAssignable(PsiClassType.ClassResolveResult leftResult,

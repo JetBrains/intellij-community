@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author ven
  */
-abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool {
+public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool {
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     if (initializers.length == 0) return null;

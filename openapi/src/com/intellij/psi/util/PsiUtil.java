@@ -892,16 +892,20 @@ public final class PsiUtil {
     return true;
   }
 
-  @Nullable  
-  public static PsiExpression deparenthesizeExpression(PsiExpression rExpression) {
-      if (rExpression instanceof PsiParenthesizedExpression) {
-        return deparenthesizeExpression(((PsiParenthesizedExpression)rExpression).getExpression());
+  @Nullable
+  public static PsiExpression deparenthesizeExpression(PsiExpression expression) {
+    while (true) {
+      if (expression instanceof PsiParenthesizedExpression) {
+        expression = ((PsiParenthesizedExpression)expression).getExpression();
+        continue;
       }
-      if (rExpression instanceof PsiTypeCastExpression) {
-        return deparenthesizeExpression(((PsiTypeCastExpression)rExpression).getOperand());
+      if (expression instanceof PsiTypeCastExpression) {
+        expression = ((PsiTypeCastExpression)expression).getOperand();
+        continue;
       }
-      return rExpression;
+      return expression;
     }
+  }
 
   /**
    * Checks whether given class is inner (as opposed to nested)

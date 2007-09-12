@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -27,15 +26,9 @@ public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
 
   public static List<PsiTypeCastExpression> getRedundantCastsInside(PsiElement where) {
-    final ArrayList<PsiTypeCastExpression> result = new ArrayList<PsiTypeCastExpression>();
-    PsiElementProcessor<PsiTypeCastExpression> processor = new PsiElementProcessor<PsiTypeCastExpression>() {
-      public boolean execute(PsiTypeCastExpression element) {
-        result.add(element);
-        return true;
-      }
-    };
-    where.acceptChildren(new MyCollectingVisitor(processor));
-    return result;
+    MyCollectingVisitor visitor = new MyCollectingVisitor();
+    where.acceptChildren(visitor);
+    return new ArrayList<PsiTypeCastExpression>(visitor.myFoundCasts);
   }
 
   public static boolean isCastRedundant (PsiTypeCastExpression typeCast) {
@@ -45,7 +38,7 @@ public class RedundantCastUtil {
     if (parent instanceof PsiReferenceExpression) parent = parent.getParent();
     MyIsRedundantVisitor visitor = new MyIsRedundantVisitor();
     parent.accept(visitor);
-    return visitor.isRedundant();
+    return visitor.isRedundant;
   }
 
   @Nullable
@@ -55,11 +48,7 @@ public class RedundantCastUtil {
   }
 
   private static class MyCollectingVisitor extends MyIsRedundantVisitor {
-    private final PsiElementProcessor<PsiTypeCastExpression> myProcessor;
-    private Set<PsiTypeCastExpression> myFoundCasts = new HashSet<PsiTypeCastExpression>();
-    public MyCollectingVisitor(PsiElementProcessor<PsiTypeCastExpression> processor) {
-      myProcessor = processor;
-    }
+    private final Set<PsiTypeCastExpression> myFoundCasts = new HashSet<PsiTypeCastExpression>();
 
     public void visitElement(PsiElement element) {
       element.acceptChildren(this);
@@ -82,21 +71,17 @@ public class RedundantCastUtil {
     }
 
     protected void addToResults(PsiTypeCastExpression typeCast){
-      if (!isTypeCastSemantical(typeCast) && myFoundCasts.add(typeCast)) {
-        myProcessor.execute(typeCast);
+      if (!isTypeCastSemantical(typeCast)) {
+        myFoundCasts.add(typeCast);
       }
     }
   }
 
   private static class MyIsRedundantVisitor extends PsiElementVisitor {
-    public boolean isRedundant() {
-      return myIsRedundant;
-    }
-
-    boolean myIsRedundant = false;
+    private boolean isRedundant = false;
     protected void addToResults(PsiTypeCastExpression typeCast){
       if (!isTypeCastSemantical(typeCast)) {
-        myIsRedundant = true;
+        isRedundant = true;
       }
     }
 
@@ -139,11 +124,9 @@ public class RedundantCastUtil {
                                                 final IElementType binaryToken) {
       if (operand instanceof PsiTypeCastExpression) {
         PsiTypeCastExpression typeCast = (PsiTypeCastExpression)operand;
-        PsiExpression castOperand = typeCast.getOperand();
-        if (castOperand != null) {
-          if (TypeConversionUtil.isBinaryOperatorApplicable(binaryToken, castOperand, otherOperand, false)) {
-            addToResults(typeCast);
-          }
+        PsiExpression toCast = typeCast.getOperand();
+        if (toCast != null && TypeConversionUtil.isBinaryOperatorApplicable(binaryToken, toCast, otherOperand, false)) {
+          addToResults(typeCast);
         }
       }
     }
@@ -377,21 +360,43 @@ public class RedundantCastUtil {
 
   public static boolean isTypeCastSemantical(PsiTypeCastExpression typeCast) {
     PsiExpression operand = typeCast.getOperand();
-    if (operand != null) {
-      PsiType opType = operand.getType();
-      PsiTypeElement typeElement = typeCast.getCastType();
-      if (typeElement == null) return false;
-      PsiType castType = typeElement.getType();
-      if (castType instanceof PsiPrimitiveType) {
-        if (opType instanceof PsiPrimitiveType) {
-          return !opType.equals(castType); // let's suppose all not equal primitive casts are necessary
-        }
-      }
-      else if (castType instanceof PsiClassType && ((PsiClassType)castType).hasParameters()) {
-        if (opType instanceof PsiClassType && ((PsiClassType)opType).isRaw()) return true;
+    if (operand == null) return false;
+    PsiType opType = operand.getType();
+    PsiTypeElement typeElement = typeCast.getCastType();
+    if (typeElement == null) return false;
+    PsiType castType = typeElement.getType();
+    if (castType instanceof PsiPrimitiveType) {
+      if (opType instanceof PsiPrimitiveType) {
+        return !opType.equals(castType); // let's suppose all not equal primitive casts are necessary
       }
     }
+    else if (castType instanceof PsiClassType && ((PsiClassType)castType).hasParameters()) {
+      if (opType instanceof PsiClassType && ((PsiClassType)opType).isRaw()) return true;
+    }
 
+    PsiElement parent = typeCast.getParent();
+    while(parent instanceof PsiParenthesizedExpression) parent = parent.getParent();
+
+    if (parent instanceof PsiBinaryExpression) {
+      PsiBinaryExpression expression = (PsiBinaryExpression)parent;
+      PsiExpression firstOperand = expression.getLOperand();
+      PsiExpression otherOperand = expression.getROperand();
+      if (PsiTreeUtil.isAncestor(otherOperand, typeCast, false)) {
+        PsiExpression temp = otherOperand;
+        otherOperand = firstOperand;
+        firstOperand = temp;
+      }
+      if (firstOperand != null && otherOperand != null && wrapperCastChangeSemantics(firstOperand, otherOperand, operand)) {
+        return true;
+      }
+    }
     return false;
+  }
+  private static boolean wrapperCastChangeSemantics(PsiExpression operand, PsiExpression otherOperand, PsiExpression toCast) {
+    boolean isPrimitiveComparisonWithCast = TypeConversionUtil.isPrimitiveAndNotNull(operand.getType()) || TypeConversionUtil.isPrimitiveAndNotNull(otherOperand.getType());
+    boolean isPrimitiveComparisonWithoutCast = TypeConversionUtil.isPrimitiveAndNotNull(toCast.getType()) || TypeConversionUtil.isPrimitiveAndNotNull(otherOperand.getType());
+    // wrapper casted to primitive vs wrapper comparison
+
+    return isPrimitiveComparisonWithCast != isPrimitiveComparisonWithoutCast;
   }
 }
