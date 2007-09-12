@@ -262,7 +262,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       if (elementType == PropertiesTokenTypes.VALUE_CHARACTERS) {
         toInsert = "\\\n  ";
       }
-      else if (elementType == PropertiesTokenTypes.END_OF_LINE_COMMENT) {
+      else if (elementType == PropertiesTokenTypes.END_OF_LINE_COMMENT && "#!".indexOf(document.getText().charAt(caretOffset)) == -1) {
         toInsert = "\n#";
       }
       else {
@@ -474,8 +474,8 @@ public class EnterHandler extends EditorWriteActionHandler {
           final String text = element.getText();
           final PsiElement parent = element.getParent();
 
-          if ((text.equals(commenter.getDocumentationCommentPrefix()) && parent instanceof PsiDocComment) ||
-              (text.startsWith(commenter.getDocumentationCommentPrefix()) && element instanceof PsiComment)
+          if (text.equals(commenter.getDocumentationCommentPrefix()) && parent instanceof PsiDocComment ||
+              text.startsWith(commenter.getDocumentationCommentPrefix()) && element instanceof PsiComment
              ) {
             PsiComment comment = parent instanceof PsiDocComment? (PsiDocComment)parent:(PsiComment)element;
             int commentEnd = comment.getTextRange().getEndOffset();
@@ -665,9 +665,8 @@ public class EnterHandler extends EditorWriteActionHandler {
       return myFile.getProject();
     }
 
-    private static void removeTrailingSpaces(final Document document, final int offset) {
-      int startOffset = offset;
-      int endOffset = offset;
+    private static void removeTrailingSpaces(final Document document, final int startOffset) {
+      int endOffset = startOffset;
 
       final CharSequence charsSequence = document.getCharsSequence();
 
@@ -694,17 +693,15 @@ public class EnterHandler extends EditorWriteActionHandler {
       final String text = atLineStart.getText();
       final TextRange textRange = atLineStart.getTextRange();
 
-      if ((text.equals(documentationCommentLinePrefix) ||
-           text.equals(docommentPrefix)) ||
-           text.regionMatches(lineStart - textRange.getStartOffset(), docommentPrefix, 0, docommentPrefix.length()) ||
+      if (text.equals(documentationCommentLinePrefix) ||
+          text.equals(docommentPrefix) ||
+          text.regionMatches(lineStart - textRange.getStartOffset(), docommentPrefix, 0, docommentPrefix.length()) ||
            text.regionMatches(lineStart - textRange.getStartOffset(), documentationCommentLinePrefix, 0 , documentationCommentLinePrefix.length())
         ) {
         PsiElement element = myFile.findElementAt(myOffset);
         if (element == null) return false;
 
-        PsiComment comment = (element instanceof PsiComment)
-                             ? (PsiComment) element
-                             : PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false);
+        PsiComment comment = element instanceof PsiComment ? (PsiComment)element : PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false);
         if (comment != null) {
           int commentEnd = comment.getTextRange().getEndOffset();
           if (myOffset >= commentEnd) {
@@ -729,8 +726,7 @@ public class EnterHandler extends EditorWriteActionHandler {
           if (nextLineOffset < textRange.getEndOffset()) {
             final CharSequence chars = myDocument.getCharsSequence();
             nextLineOffset = CharArrayUtil.shiftForward(chars, nextLineOffset, " \t");
-            final String commentLinePrefix = documentationCommentLinePrefix;
-            usesAstersk = CharArrayUtil.regionMatches(chars, nextLineOffset, commentLinePrefix);
+            usesAstersk = CharArrayUtil.regionMatches(chars, nextLineOffset, documentationCommentLinePrefix);
           }
         }
         if (usesAstersk) {
