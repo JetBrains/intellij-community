@@ -105,7 +105,8 @@ public class MavenArtifactDownloader {
                 Map<MavenProject, Collection<String>> mavenProjects,
                 Collection<MavenId> mappedToModules,
                 boolean demand) {
-    final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(mavenProjects.keySet(), mappedToModules);
+    final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
+    final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(projectsState, mavenProjects.keySet(), mappedToModules);
 
     if (myProgressIndicator.isCanceled()) return;
 
@@ -122,7 +123,6 @@ public class MavenArtifactDownloader {
     if (myProgressIndicator.isCanceled()) return;
 
     if (isEnabled(myPreferences.getDownloadPlugins(), demand)) {
-      final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
       final Map<Plugin, MavenProject> plugins = ProjectUtil.collectPlugins(mavenProjects);
       collectAttachedPlugins(projectsState, plugins);
       downloadPlugins(plugins);
@@ -152,25 +152,31 @@ public class MavenArtifactDownloader {
     return level == MavenArtifactPreferences.UPDATE_MODE.ALWAYS || (level == MavenArtifactPreferences.UPDATE_MODE.ON_DEMAND && demand);
   }
 
-  static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(Collection<MavenProject> mavenProjects,
+  static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(MavenProjectsState projectsState,
+                                                                       Collection<MavenProject> mavenProjects,
                                                                        Collection<MavenId> mappedToModules) {
     final Map<MavenId, Set<ArtifactRepository>> repositoryArtifacts = new TreeMap<MavenId, Set<ArtifactRepository>>();
 
     for (MavenProject mavenProject : mavenProjects) {
-      final List remoteRepositories = mavenProject.getRemoteArtifactRepositories();
-      for (Object o : mavenProject.getArtifacts()) {
-        Artifact artifact = (Artifact)o;
-        if (artifact.getType().equalsIgnoreCase(MavenToIdeaConverter.JAR_TYPE) &&
-            !artifact.getScope().equalsIgnoreCase(Artifact.SCOPE_SYSTEM)) {
-          MavenId id = new MavenId(artifact);
-          if (!mappedToModules.contains(id)) {
-            Set<ArtifactRepository> repos = repositoryArtifacts.get(id);
-            if (repos == null) {
-              repos = new HashSet<ArtifactRepository>();
-              repositoryArtifacts.put(id, repos);
+      VirtualFile file = projectsState.getFile(mavenProject);
+      if (file != null) {
+        Collection<Artifact> artifacts = projectsState.getArtifacts(file);
+        if (artifacts != null) {
+          final List remoteRepositories = mavenProject.getRemoteArtifactRepositories();
+          for (Artifact artifact : artifacts) {
+            if (artifact.getType().equalsIgnoreCase(MavenToIdeaConverter.JAR_TYPE) &&
+                !artifact.getScope().equalsIgnoreCase(Artifact.SCOPE_SYSTEM)) {
+              MavenId id = new MavenId(artifact);
+              if (!mappedToModules.contains(id)) {
+                Set<ArtifactRepository> repos = repositoryArtifacts.get(id);
+                if (repos == null) {
+                  repos = new HashSet<ArtifactRepository>();
+                  repositoryArtifacts.put(id, repos);
+                }
+                //noinspection unchecked
+                repos.addAll(remoteRepositories);
+              }
             }
-            //noinspection unchecked
-            repos.addAll(remoteRepositories);
           }
         }
       }
