@@ -38,7 +38,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   private boolean myIsReadOnly = false;
   private boolean isStripTrailingSpacesEnabled = true;
-  private long myModificationStamp;
+  private volatile long myModificationStamp;
   private final HashMap<Project, MarkupModel> myProjectToMarkupModelMap = new HashMap<Project, MarkupModel>();
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 

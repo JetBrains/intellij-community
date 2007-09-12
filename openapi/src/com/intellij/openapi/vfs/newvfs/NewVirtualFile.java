@@ -15,7 +15,7 @@ import java.io.InputStream;
 import java.util.Collection;
 
 public abstract class NewVirtualFile extends VirtualFile {
-  private long myModificationStamp = LocalTimeCounter.currentTime();
+  private volatile long myModificationStamp = LocalTimeCounter.currentTime();
 
   public boolean isValid() {
     return exists();
