@@ -1194,7 +1194,7 @@ public final class PsiUtil {
     while (true);
   }
 
-  public static Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = Key.create("FORCE_LANGUAGE_LEVEL"); 
+  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = Key.create("FORCE_LANGUAGE_LEVEL");
 
   @NotNull
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {

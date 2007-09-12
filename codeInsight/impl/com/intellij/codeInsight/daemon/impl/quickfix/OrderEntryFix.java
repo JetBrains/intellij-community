@@ -82,6 +82,10 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     if (currentModule == null) return null;
 
     if ("TestCase".equals(referenceName) || isAnnotation(psiElement) && isJunitAnnotationName(referenceName)) {
+      final boolean isJunit4 = !referenceName.equals("TestCase");
+      @NonNls final String className = isJunit4 ? "org.junit." + referenceName : "junit.framework.TestCase";
+      PsiClass found = PsiManager.getInstance(project).findClass(className, currentModule.getModuleWithDependenciesAndLibrariesScope(true));
+      if (found != null) return null; //no need to add junit to classpath
       final OrderEntryFix fix = new OrderEntryFix() {
         @NotNull
         public String getText() {
@@ -98,10 +102,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         }
 
         public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
-          boolean isJunit4 = !referenceName.equals("TestCase");
           String jarPath = isJunit4 ? PathUtilEx.getJunit4JarPath() : PathUtilEx.getJunit3JarPath();
-          addBundledJarToRoots(project, editor, currentModule, reference,
-                               isJunit4 ? "org.junit." + referenceName : "junit.framework.TestCase", jarPath);
+          addBundledJarToRoots(project, editor, currentModule, reference, className, jarPath);
         }
       };
       QuickFixAction.registerQuickFixAction(info, fix);
