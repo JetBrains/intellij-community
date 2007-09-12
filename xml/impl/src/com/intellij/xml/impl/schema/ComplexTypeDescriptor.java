@@ -68,6 +68,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   @NonNls private static final String ELEMENT_TAG_NAME = "element";
   @NonNls private static final String ATTRIBUTE_TAG_NAME = "attribute";
   private boolean myHasAnyInContentModel;
+  @NonNls private static final String RESTRICTION_TAG_NAME = "restriction";
+  @NonNls private static final String EXTENSION_TAG_NAME = "extension";
+  @NonNls private static final String BASE_ATTR_NAME = "base";
 
   public ComplexTypeDescriptor(XmlNSDescriptorImpl documentDescriptor, XmlTag tag) {
     myDocumentDescriptor = documentDescriptor;
@@ -195,9 +198,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         }
       }
     }
-    else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "restriction") ||
-             XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
-      String base = tag.getAttributeValue("base");
+    else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, RESTRICTION_TAG_NAME) ||
+             XmlNSDescriptorImpl.equalsToSchemaName(tag, EXTENSION_TAG_NAME)) {
+      String base = tag.getAttributeValue(BASE_ATTR_NAME);
 
       if (base != null) {
         TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
@@ -280,12 +283,20 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         final XmlTag parentTag = tag.getParentTag();
 
         // TODO: 
-        if (parentTag != null && !XmlNSDescriptorImpl.equalsToSchemaName(parentTag, "attributeGroup") && context instanceof XmlTag) {
-          final XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(myDocumentDescriptor.getDefaultNamespace(), true);
+        if (parentTag != null && context instanceof XmlTag) {
+          if (XmlNSDescriptorImpl.equalsToSchemaName(parentTag, "attributeGroup")) {
+            String parentGroupName = parentTag.getAttributeValue("name");
+            if (ref.equals(parentGroupName)) {
+              final PsiElement element = tag.getAttribute(REF_ATTR_NAME).getValueElement().getReferences()[0].resolve();
+              if (element instanceof XmlTag) groupTag = (XmlTag)element;
+            }
+          } else {
+            final XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(myDocumentDescriptor.getDefaultNamespace(), true);
 
-          if (descriptor instanceof XmlNSDescriptorImpl && descriptor != myDocumentDescriptor) {
-            final XmlTag group = ((XmlNSDescriptorImpl)descriptor).findAttributeGroup(ref);
-            if (group != null) groupTag = group;
+            if (descriptor instanceof XmlNSDescriptorImpl && descriptor != myDocumentDescriptor) {
+              final XmlTag group = ((XmlNSDescriptorImpl)descriptor).findAttributeGroup(ref);
+              if (group != null) groupTag = group;
+            }
           }
         }
 
@@ -299,18 +310,27 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         }
       }
     }
-    else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "restriction") ||
-             XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
-      String base = tag.getAttributeValue("base");
+    else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, RESTRICTION_TAG_NAME) ||
+             XmlNSDescriptorImpl.equalsToSchemaName(tag, EXTENSION_TAG_NAME)) {
+      String base = tag.getAttributeValue(BASE_ATTR_NAME);
 
       if (base != null) {
-        TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
-          myDocumentDescriptor.getTag(),
-          base);
+        if (base.equals(myTag.getAttributeValue(NAME_ATTR_NAME))) {
+          final PsiElement element = tag.getAttribute(BASE_ATTR_NAME).getValueElement().getReferences()[0].resolve();
+          if (element instanceof XmlTag) {
+            for (XmlTag subTag : ((XmlTag)element).getSubTags()) {
+              collectAttributes(result, subTag, visited, context);
+            }
+          }
+        } else {
+          TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
+            myDocumentDescriptor.getTag(),
+            base);
 
-        if (descriptor instanceof ComplexTypeDescriptor) {
-          ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
-          complexTypeDescriptor.collectAttributes(result, complexTypeDescriptor.myTag, visited, context);
+          if (descriptor instanceof ComplexTypeDescriptor) {
+            ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
+            complexTypeDescriptor.collectAttributes(result, complexTypeDescriptor.myTag, visited, context);
+          }
         }
 
         XmlTag[] tags = tag.getSubTags();
@@ -372,9 +392,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         if (groupTag != null && _canContainTag(localName, namespace, groupTag,visited)) return true;
       }
     }
-    else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "restriction") ||
-             XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
-      String base = tag.getAttributeValue("base");
+    else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, RESTRICTION_TAG_NAME) ||
+             XmlNSDescriptorImpl.equalsToSchemaName(tag, EXTENSION_TAG_NAME)) {
+      String base = tag.getAttributeValue(BASE_ATTR_NAME);
 
       if (base != null) {
         TypeDescriptor descriptor = myDocumentDescriptor.findTypeDescriptor(
@@ -455,9 +475,9 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         }
       }
     }
-    else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "restriction") ||
-             XmlNSDescriptorImpl.equalsToSchemaName(tag, "extension")) {
-      String base = tag.getAttributeValue("base");
+    else if (XmlNSDescriptorImpl.equalsToSchemaName(tag, RESTRICTION_TAG_NAME) ||
+             XmlNSDescriptorImpl.equalsToSchemaName(tag, EXTENSION_TAG_NAME)) {
+      String base = tag.getAttributeValue(BASE_ATTR_NAME);
 
       if (base != null && !visited.contains(base)) {
         visited.add(base);

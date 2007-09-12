@@ -2,6 +2,7 @@ package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlNSDescriptor;
@@ -34,7 +35,7 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
   public XmlNSDescriptor getNSDescriptor() {
     XmlNSDescriptor nsDescriptor = NSDescriptor;
     if (nsDescriptor ==null) {
-      final XmlFile file = XmlUtil.getContainingFile(getType().getDeclaration());
+      final XmlFile file = XmlUtil.getContainingFile(getType(null).getDeclaration());
       if(file == null) return null;
       final XmlDocument document = file.getDocument();
       if(document == null) return null;
@@ -44,12 +45,12 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
     return nsDescriptor;
   }
 
-  public ComplexTypeDescriptor getType() {
+  public ComplexTypeDescriptor getType(XmlElement context) {
     return myType;
   }
 
   public String getDefaultName() {
-    XmlTag rootTag = ((XmlFile)getType().getDeclaration().getContainingFile()).getDocument().getRootTag();
+    XmlTag rootTag = ((XmlFile)getType(null).getDeclaration().getContainingFile()).getDocument().getRootTag();
 
     if (QUALIFIED_ATTR_VALUE.equals(rootTag.getAttributeValue("elementFormDefault"))) {
       return getQualifiedName();

@@ -109,6 +109,24 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return new Object[]{myDescriptorTag};
   }
 
+  private XmlNSDescriptor getNSDescriptor(XmlElement context) {
+    XmlNSDescriptor nsDescriptor = getNSDescriptor();
+    if (context instanceof XmlTag && nsDescriptor instanceof XmlNSDescriptorImpl) {
+      final String defaultNamespace = ((XmlNSDescriptorImpl)nsDescriptor).getDefaultNamespace();
+      if (XmlUtil.XML_SCHEMA_URI.equals(defaultNamespace)) return nsDescriptor; // do not check for overriden for efficiency
+
+      final XmlTag tag = (XmlTag)context;
+      final String tagNs = tag.getNamespace();
+      if (tagNs.equals(defaultNamespace)) {
+        XmlNSDescriptor previousDescriptor = nsDescriptor;
+        nsDescriptor = tag.getNSDescriptor(tagNs, true);
+        if (nsDescriptor == null) nsDescriptor = previousDescriptor;
+      }
+    }
+    
+    return nsDescriptor;
+  }
+
   public XmlNSDescriptor getNSDescriptor() {
     XmlNSDescriptor nsDescriptor = NSDescriptor;
     if (nsDescriptor == null || !NSDescriptor.getDeclaration().isValid()) {
@@ -123,7 +141,11 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public TypeDescriptor getType() {
-    final XmlNSDescriptor nsDescriptor = getNSDescriptor();
+    return getType(null);
+  }
+
+  public TypeDescriptor getType(XmlElement context) {
+    final XmlNSDescriptor nsDescriptor = getNSDescriptor(context);
     if (nsDescriptor == null) return null;
 
     TypeDescriptor type = ((XmlNSDescriptorImpl) nsDescriptor).getTypeDescriptor(myDescriptorTag);
@@ -137,7 +159,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
         final String local = XmlUtil.findLocalNameByQualifiedName(substAttr);
         final XmlElementDescriptorImpl originalElement = (XmlElementDescriptorImpl)((XmlNSDescriptorImpl)getNSDescriptor()).getElementDescriptor(local, namespace);
         if (originalElement != null) {
-          type = originalElement.getType();
+          type = originalElement.getType(context);
         }
       }
     }
@@ -155,7 +177,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
     XmlElementDescriptor[] elementsDescriptors = getElementsDescriptorsImpl(context);
 
-    final TypeDescriptor type = getType();
+    final TypeDescriptor type = getType(context);
 
     if (type instanceof ComplexTypeDescriptor) {
       final ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
@@ -187,7 +209,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   private XmlElementDescriptor[] getElementsDescriptorsImpl(XmlElement context) {
-    TypeDescriptor type = getType();
+    TypeDescriptor type = getType(context);
 
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
@@ -199,7 +221,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
-    TypeDescriptor type = getType();
+    TypeDescriptor type = getType(context);
 
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor typeDescriptor = (ComplexTypeDescriptor)type;
@@ -292,7 +314,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       }
     }
 
-    TypeDescriptor type = getType();
+    TypeDescriptor type = getType(context);
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
       final ComplexTypeDescriptor.CanContainAttributeType containAttributeType = descriptor.canContainAttribute(attributeName, namespace);
@@ -357,7 +379,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       }
     }
 
-    TypeDescriptor type = getType();
+    TypeDescriptor type = getType(context);
     if (type instanceof ComplexTypeDescriptor) {
       ComplexTypeDescriptor descriptor = (ComplexTypeDescriptor)type;
       if (descriptor.canContainTag(localName, namespace)) {
@@ -436,7 +458,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
-    final TypeDescriptor type = getType();
+    final TypeDescriptor type = getType(context);
     
     if (type instanceof ComplexTypeDescriptor) {
       return ((ComplexTypeDescriptor)type).canContainTag("a", namespace) ||

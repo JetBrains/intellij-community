@@ -157,7 +157,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   private XmlTag getComplexTypeDefinition(PsiElement element, PsiElement originalElement) {
     XmlElementDescriptor descriptor = element.getUserData(DESCRIPTOR_KEY);
 
-    XmlTag contextTag;
+    XmlTag contextTag = null;
 
     if (descriptor == null &&
         originalElement != null &&
@@ -166,7 +166,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     }
 
     if (descriptor instanceof XmlElementDescriptorImpl) {
-      TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType();
+      TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType(contextTag);
 
       if (type instanceof ComplexTypeDescriptor) {
         return ((ComplexTypeDescriptor)type).getDeclaration();

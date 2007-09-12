@@ -347,7 +347,7 @@ public class XmlUtil {
     XmlElementDescriptor descriptor = tag.getDescriptor();
 
     if (descriptor instanceof XmlElementDescriptorImpl) {
-      final TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType();
+      final TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType(tag);
 
       if (type instanceof ComplexTypeDescriptor) {
         final XmlTag[] simpleContent = new XmlTag[1];
