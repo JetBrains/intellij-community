@@ -11,6 +11,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
@@ -20,7 +22,10 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +39,8 @@ import java.util.List;
 public class IntentionManagerImpl extends IntentionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl");
 
-  private List<IntentionAction> myActions = new ArrayList<IntentionAction>();
-  private IntentionManagerSettings mySettings;
+  private final List<IntentionAction> myActions = new ArrayList<IntentionAction>();
+  private final IntentionManagerSettings mySettings;
 
   public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
@@ -138,6 +143,30 @@ public class IntentionManagerImpl extends IntentionManager {
     options.add(new AddSuppressWarningsAnnotationForAllFix(context));
     options.add(new DisableInspectionToolAction(displayKey));
     return options;
+  }
+
+  public LocalQuickFix convertToFix(final IntentionAction action) {
+    return new LocalQuickFix() {
+      @NotNull
+      public String getName() {
+        return action.getText();
+      }
+
+      @NotNull
+      public String getFamilyName() {
+        return action.getFamilyName();
+      }
+
+      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+        final PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
+        try {
+          action.invoke(project, new LazyEditor(psiFile), psiFile);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    };
   }
 
   public void addAction(IntentionAction action) {

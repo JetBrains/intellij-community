@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.codeInspection.LocalQuickFix;
 
 import java.util.List;
 
@@ -91,4 +92,11 @@ public abstract class IntentionManager  {
    * and edit corresponding inspection settings.   
    */
   public abstract List<IntentionAction> getStandardIntentionOptions(final HighlightDisplayKey displayKey, PsiElement context);
+
+  /**
+   * Wraps given action in a LocalQuickFix object.
+   * @param action action to convert.
+   * @return quick fix instance.
+   */
+  public abstract LocalQuickFix convertToFix(IntentionAction action);
 }
