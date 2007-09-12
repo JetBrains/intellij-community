@@ -15,12 +15,15 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
@@ -65,19 +68,17 @@ public class StringConcatenationInspection extends BaseInspection {
                 (PsiBinaryExpression)parent;
         final PsiExpression lhs = binaryExpression.getLOperand();
         final Collection<InspectionGadgetsFix> result = new ArrayList();
-        final PsiModifierListOwner element1 =
-                AnnotateForBinaryExpressionFix.extractAnnotatableElement(lhs);
+        final PsiModifierListOwner element1 = getAnnotatableElement(lhs);
         if (element1 != null) {
-            final AnnotateForBinaryExpressionFix fix =
-                    new AnnotateForBinaryExpressionFix(element1, true);
+            final InspectionGadgetsFix fix = new DelegatingFix(
+                    new AddAnnotationFix(AnnotationUtil.NON_NLS, element1));
             result.add(fix);
         }
         final PsiExpression rhs = binaryExpression.getROperand();
-        final PsiModifierListOwner element2 =
-                AnnotateForBinaryExpressionFix.extractAnnotatableElement(rhs);
+        final PsiModifierListOwner element2 = getAnnotatableElement(rhs);
         if (element2 != null) {
-            final AnnotateForBinaryExpressionFix fix =
-                    new AnnotateForBinaryExpressionFix(element2, false);
+            final InspectionGadgetsFix fix = new DelegatingFix(
+                    new AddAnnotationFix(AnnotationUtil.NON_NLS, element2));
             result.add(fix);
         }
         final PsiElement expressionParent = PsiTreeUtil.getParentOfType(
@@ -88,9 +89,26 @@ public class StringConcatenationInspection extends BaseInspection {
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(expressionParent,
                             PsiMethod.class);
-            result.add(new AnnotateContainingMethodFix(method));
+            final InspectionGadgetsFix fix = new DelegatingFix(
+                    new AddAnnotationFix(AnnotationUtil.NON_NLS, method));
+            result.add(fix);
         }
         return result.toArray(new InspectionGadgetsFix[result.size()]);
+    }
+
+    @Nullable
+    public static PsiModifierListOwner getAnnotatableElement(
+            PsiExpression expression) {
+        if (!(expression instanceof PsiReferenceExpression)) {
+            return null;
+        }
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression)expression;
+        final PsiElement element = referenceExpression.resolve();
+        if (!(element instanceof PsiModifierListOwner)) {
+            return null;
+        }
+        return (PsiModifierListOwner)element;
     }
 
     @Nullable

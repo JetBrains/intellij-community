@@ -15,11 +15,14 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -56,7 +59,10 @@ public class StringCompareToInspection extends BaseInspection {
                 AnnotateQualifierFix.extractAnnotatableQualifier(
                         methodExpression);
         if (annotatableQualifier != null) {
-            result.add(new AnnotateQualifierFix(annotatableQualifier));
+            final InspectionGadgetsFix fix = new DelegatingFix(
+                    new AddAnnotationFix(AnnotationUtil.NON_NLS,
+                            annotatableQualifier));
+            result.add(fix);
         }
         final PsiMethodCallExpression methodCallExpression =
                 (PsiMethodCallExpression)methodExpression.getParent();
@@ -64,7 +70,10 @@ public class StringCompareToInspection extends BaseInspection {
                 AnnotateArgumentFix.extractAnnotatableArgument(
                         methodCallExpression);
         if (annotatableArgument != null) {
-            result.add(new AnnotateArgumentFix(annotatableArgument));
+            final InspectionGadgetsFix fix = new DelegatingFix(
+                    new AddAnnotationFix(AnnotationUtil.NON_NLS,
+                            annotatableArgument));
+            result.add(fix);
         }
         return result.toArray(new InspectionGadgetsFix[result.size()]);
     }
