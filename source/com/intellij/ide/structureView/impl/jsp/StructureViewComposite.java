@@ -19,9 +19,9 @@ public class StructureViewComposite implements StructureView {
   @NotNull private final TabbedPaneWrapper myTabbedPaneWrapper;
 
   public static class StructureViewDescriptor {
-    public String title;
-    public StructureView structureView;
-    public Icon icon;
+    public final String title;
+    public final StructureView structureView;
+    public final Icon icon;
 
     public StructureViewDescriptor(final String title, final StructureView structureView, Icon icon) {
       this.title = title;
@@ -55,6 +55,7 @@ public class StructureViewComposite implements StructureView {
 
   public void setStructureView(int index, StructureViewDescriptor view) {
     myStructureViews[index] = view;
+    Disposer.register(this, view.structureView);
   }
 
   public FileEditor getFileEditor() {

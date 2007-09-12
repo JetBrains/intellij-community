@@ -48,7 +48,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class StructureViewComponent extends JPanel implements TreeActionsOwner, DataProvider, StructureView {
-  private static Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
   @NonNls private static final String ourHelpID = "viewingStructure.fileStructureView";
 
   private AbstractTreeBuilder myAbstractTreeBuilder;
