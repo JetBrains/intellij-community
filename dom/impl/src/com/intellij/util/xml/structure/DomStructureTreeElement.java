@@ -10,6 +10,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.util.Function;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,7 +24,9 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   private final Function<DomElement, DomService.StructureViewMode> myDescriptor;
   private final DomElementNavigationProvider myNavigationProvider;
 
-  public DomStructureTreeElement(final DomElement element, final Function<DomElement,DomService.StructureViewMode> descriptor, final DomElementNavigationProvider navigationProvider) {
+  public DomStructureTreeElement(@NotNull final DomElement element,
+                                 @NotNull final Function<DomElement,DomService.StructureViewMode> descriptor,
+                                 @Nullable final DomElementNavigationProvider navigationProvider) {
     myElement = element;
     myDescriptor = descriptor;
     myNavigationProvider = navigationProvider;
