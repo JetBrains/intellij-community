@@ -101,37 +101,25 @@ public class GroovyPositionManager implements PositionManager {
     return PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class);
   }
 
-  private GrTypeDefinition getToplevelTypeDefinition(GroovyPsiElement inner) {
-    GrTypeDefinition outer = PsiTreeUtil.getParentOfType(inner, GrTypeDefinition.class);
-    while (outer != null) {
-      if (outer.getQualifiedName() != null) return outer;
-      outer = PsiTreeUtil.getParentOfType(inner, GrTypeDefinition.class);
-    }
-
-    return null;
-  }
-
   public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position) throws NoDataException {
-    GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
+    GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
     String qName = null;
-    if (typeDefinition != null) {
-      qName = typeDefinition.getQualifiedName();
+    if (sourceImage instanceof GrTypeDefinition) {
+      qName = ((GrTypeDefinition) sourceImage).getQualifiedName();
+    } else if (sourceImage == null){
+      qName = getScriptQualifiedName(position);
     }
 
     String waitPrepareFor;
     ClassPrepareRequestor waitRequestor;
 
     if (qName == null) {
-      GrTypeDefinition toplevel = getToplevelTypeDefinition(typeDefinition);
+      GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
 
-      if (toplevel == null) {
-        PsiFile file = position.getFile();
-        if (file instanceof GroovyFile) {
-          qName = getScriptFQName((GroovyFile) file);
-        }
-        if (qName == null) throw new NoDataException();
+      if (typeDefinition != null) {
+        qName = typeDefinition.getQualifiedName();
       } else {
-        qName = toplevel.getQualifiedName();
+        qName = getScriptQualifiedName(position);
       }
 
       if (qName == null) throw new NoDataException();
@@ -155,6 +143,14 @@ public class GroovyPositionManager implements PositionManager {
     }
 
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor, waitPrepareFor);
+  }
+
+  private String getScriptQualifiedName(SourcePosition position) {
+    PsiFile file = position.getFile();
+    if (file instanceof GroovyFile) {
+      return getScriptFQName((GroovyFile) file);
+    }
+    return null;
   }
 
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
@@ -238,13 +234,7 @@ public class GroovyPositionManager implements PositionManager {
         }
 
         if (qName == null) {
-          final GroovyPsiElement toplevel = getToplevelTypeDefinition(typeDefinition);
-          if (toplevel == null) {
-            PsiFile file = classPosition.getFile();
-            if (file instanceof GroovyFile) {
-              qName = getScriptFQName((GroovyFile) file);
-            }
-          }
+          qName = getScriptQualifiedName(classPosition);
 
           if (qName == null) return Collections.emptyList();
 
