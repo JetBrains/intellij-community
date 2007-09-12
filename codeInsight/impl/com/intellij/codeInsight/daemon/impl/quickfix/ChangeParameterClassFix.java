@@ -35,7 +35,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     return QuickFixBundle.message("change.parameter.class.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
         super.isAvailable(project, editor, file)
         && myClass != null
@@ -48,7 +48,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     ;
   }
 
-  public void invoke(final Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {

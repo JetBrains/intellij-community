@@ -9,10 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtendsListFix implements IntentionAction {
+public class ExtendsListFix implements IntentionAction, LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ExtendsListFix");
 
   final PsiClass myClass;
@@ -24,6 +26,13 @@ public class ExtendsListFix implements IntentionAction {
     myClass = aClass;
     myClassToExtendFrom = typeToExtendFrom.resolve();
     myTypeToExtendFrom = typeToExtendFrom;
+    myToAdd = toAdd;
+  }
+
+  public ExtendsListFix(PsiClass aClass, PsiClass classToExtendFrom, boolean toAdd) {
+    myClass = aClass;
+    myClassToExtendFrom = classToExtendFrom;
+    myTypeToExtendFrom = aClass.getManager().getElementFactory().createType(classToExtendFrom);
     myToAdd = toAdd;
   }
 
@@ -41,11 +50,20 @@ public class ExtendsListFix implements IntentionAction {
   }
 
   @NotNull
+  public String getName() {
+    return getText();
+  }
+
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("change.extends.list.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    invoke(project, null, descriptor.getPsiElement().getContainingFile());
+  }
+
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
         myClass != null
         && myClass.isValid()
@@ -81,7 +99,7 @@ public class ExtendsListFix implements IntentionAction {
     }
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     invokeImpl();
     UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
   }
