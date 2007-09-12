@@ -137,6 +137,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void beforeContentsSynchronized() {
+    unsetPsiContent();
   }
 
   public void contentsSynchronized() {
