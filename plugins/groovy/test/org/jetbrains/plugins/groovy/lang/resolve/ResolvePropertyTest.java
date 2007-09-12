@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -52,11 +53,13 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void testFromGetter() throws Exception {
-    doTest("fromGetter/A.groovy");
+    PsiReference ref = configureByFile("fromGetter/A.groovy");
+    assertTrue(ref.resolve() instanceof AccessorMethod);
   }
 
   public void testFromSetter() throws Exception {
-    doTest("fromSetter/A.groovy");
+    PsiReference ref = configureByFile("fromGetter/A.groovy");
+    assertTrue(ref.resolve() instanceof AccessorMethod);
   }
 
   public void testForVariable2() throws Exception {
