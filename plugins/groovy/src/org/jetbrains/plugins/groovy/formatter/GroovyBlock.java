@@ -147,13 +147,7 @@ public class GroovyBlock implements Block, GroovyElementTypes {
         (lastChild.getPsi() instanceof PsiWhiteSpace || lastChild.getPsi() instanceof PsiComment)) {
       lastChild = lastChild.getTreePrev();
     }
-    if (lastChild == null) {
-      return false;
-    }
-    if (lastChild.getPsi() instanceof PsiErrorElement) {
-      return true;
-    }
-    return isIncomplete(lastChild);
+    return lastChild != null && (lastChild.getPsi() instanceof PsiErrorElement || isIncomplete(lastChild));
   }
 
   public boolean isLeaf() {

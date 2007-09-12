@@ -22,5 +22,5 @@ import java.util.ArrayList;
 public interface Semilattice<E> {
   E join(ArrayList<E> ins);
 
-  boolean eq (E e1, E e2);
+  boolean eq(E e1, E e2);
 }

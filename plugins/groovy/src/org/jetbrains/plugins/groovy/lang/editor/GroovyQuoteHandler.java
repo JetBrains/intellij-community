@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.editor;
 
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
@@ -30,7 +30,7 @@ public class GroovyQuoteHandler implements TypedHandler.QuoteHandler {
     final IElementType tokenType = iterator.getTokenType();
 
     if (tokenType == GroovyTokenTypes.mSTRING_LITERAL ||
-        tokenType == GroovyTokenTypes.mGSTRING_LITERAL){
+        tokenType == GroovyTokenTypes.mGSTRING_LITERAL) {
       int start = iterator.getStart();
       int end = iterator.getEnd();
       return end - start >= 1 && offset == end - 1;
@@ -42,7 +42,7 @@ public class GroovyQuoteHandler implements TypedHandler.QuoteHandler {
     final IElementType tokenType = iterator.getTokenType();
 
     if (tokenType == GroovyTokenTypes.mWRONG_GSTRING_LITERAL ||
-        tokenType == GroovyTokenTypes.mWRONG_STRING_LITERAL){
+        tokenType == GroovyTokenTypes.mWRONG_STRING_LITERAL) {
       int start = iterator.getStart();
       return offset == start;
     }
@@ -56,6 +56,6 @@ public class GroovyQuoteHandler implements TypedHandler.QuoteHandler {
   public boolean isInsideLiteral(HighlighterIterator iterator) {
     final IElementType tokenType = iterator.getTokenType();
     return tokenType == GroovyTokenTypes.mSTRING_LITERAL ||
-           tokenType == GroovyTokenTypes.mGSTRING_LITERAL;
+        tokenType == GroovyTokenTypes.mGSTRING_LITERAL;
   }
 }
