@@ -211,4 +211,8 @@ public class AccessorMethod extends LightElement implements PsiMethod {
   public PsiTypeParameter[] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
+
+  public GrField getProperty() {
+    return myProperty;
+  }
 }
