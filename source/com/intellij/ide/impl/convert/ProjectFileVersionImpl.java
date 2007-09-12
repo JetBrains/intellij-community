@@ -116,19 +116,23 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
     }
   }
 
-  public boolean isFacetAdditionEnabled(final FacetTypeId<?> facetType) {
+  public boolean isFacetAdditionEnabled(final FacetTypeId<?> facetType, final boolean showErrorMessage) {
     if (getFeaturesFilter().isFacetAdditionEnabled(facetType)) {
       return true;
     }
-    showNotAllowedMessage();
+    if (showErrorMessage) {
+      showNotAllowedMessage();
+    }
     return false;
   }
 
-  public boolean isFacetDeletionEnabled(final FacetTypeId<?> facetType) {
+  public boolean isFacetDeletionEnabled(final FacetTypeId<?> facetType, final boolean showErrorMessage) {
     if (getFeaturesFilter().isFacetDeletionEnabled(facetType)) {
       return true;
     }
-    showNotAllowedMessage();
+    if (showErrorMessage) {
+      showNotAllowedMessage();
+    }
     return false;
   }
 

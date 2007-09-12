@@ -18,9 +18,9 @@ public abstract class ProjectFileVersion {
   }
 
 
-  public abstract boolean isFacetAdditionEnabled(FacetTypeId<?> facetType);
+  public abstract boolean isFacetAdditionEnabled(FacetTypeId<?> facetType, final boolean showErrorMessage);
 
-  public abstract boolean isFacetDeletionEnabled(FacetTypeId<?> facetType);
+  public abstract boolean isFacetDeletionEnabled(FacetTypeId<?> facetType, final boolean showErrorMessage);
 
   public abstract boolean isConverted();
 

@@ -97,7 +97,7 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
 
   public boolean isProjectVersionSupportsFacetAddition(final FacetType type) {
     final ProjectFileVersion instance = ProjectFileVersion.getInstance(myConfigurable.getProject());
-    if (!instance.isFacetAdditionEnabled(type.getId())) {
+    if (!instance.isFacetAdditionEnabled(type.getId(), true)) {
       return false;
     }
     return true;

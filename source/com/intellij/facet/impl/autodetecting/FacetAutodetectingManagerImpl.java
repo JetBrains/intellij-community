@@ -173,7 +173,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   private List<Facet> process(final VirtualFile virtualFile, final FacetDetectorWrapper<?, ? extends FacetConfiguration, ?> detector,
                                                          List<Facet> facets) {
     if (detector.getVirtualFileFilter().accept(virtualFile)) {
-      if (!ProjectFileVersion.getInstance(myProject).isFacetAdditionEnabled(detector.getFacetType().getId())) {
+      if (!ProjectFileVersion.getInstance(myProject).isFacetAdditionEnabled(detector.getFacetType().getId(), false)) {
         return facets;
       }
       Facet facet = detector.detectFacet(virtualFile, myPsiManager);
