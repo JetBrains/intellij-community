@@ -878,4 +878,17 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   public boolean markNewFilesAsDirty() {
     return true;
   }
+
+  public String getCanonicallyCasedName(final VirtualFile file) {
+    if (isCaseSensitive()) {
+      return super.getCanonicallyCasedName(file);
+    }
+
+    try {
+      return convertToIOFile(file).getCanonicalFile().getName();
+    }
+    catch (IOException e) {
+      return file.getName();
+    }
+  }
 }

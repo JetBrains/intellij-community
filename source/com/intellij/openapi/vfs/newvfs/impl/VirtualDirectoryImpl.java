@@ -104,9 +104,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     final NewVirtualFileSystem delegate = getFileSystem();
     VirtualFile fake = new FakeVirtualFile(name, this);
     if (delegate.exists(fake)) {
-      VFileCreateEvent event = new VFileCreateEvent(null, this, fake.getName(), delegate.isDirectory(fake), true);
+      final String realName = delegate.getCanonicallyCasedName(fake);
+      VFileCreateEvent event = new VFileCreateEvent(null, this, realName, delegate.isDirectory(fake), true);
       RefreshQueue.getInstance().processSingleEvent(event);
-      return findChild(fake.getName());
+      return findChild(realName);
     }
     else {
       return null;

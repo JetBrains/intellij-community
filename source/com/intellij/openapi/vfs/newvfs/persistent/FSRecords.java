@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FSRecords implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private final static int VERSION = 4;
+  private final static int VERSION = 5;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;

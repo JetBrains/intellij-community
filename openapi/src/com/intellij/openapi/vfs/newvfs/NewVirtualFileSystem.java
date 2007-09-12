@@ -140,4 +140,8 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public boolean markNewFilesAsDirty() {
     return false;
   }
+
+  public String getCanonicallyCasedName(VirtualFile file) {
+    return file.getName();
+  }
 }
