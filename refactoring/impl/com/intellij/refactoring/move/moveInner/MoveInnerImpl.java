@@ -4,13 +4,13 @@
  */
 package com.intellij.refactoring.move.moveInner;
 
+import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ide.util.PackageChooserDialog;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveInnerImpl {
@@ -21,7 +21,7 @@ public class MoveInnerImpl {
   public static void doMove(final Project project, PsiElement[] elements, final MoveCallback moveCallback) {
     if (elements.length != 1) return;
     final PsiClass aClass = (PsiClass) elements[0];
-    boolean condition = aClass.getParent() instanceof PsiClass;
+    boolean condition = aClass.getContainingClass() != null;
     LOG.assertTrue(condition);
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
@@ -41,7 +41,10 @@ public class MoveInnerImpl {
    * must be called in atomic action
    */
   public static @Nullable PsiElement getTargetContainer(PsiClass innerClass, final boolean chooseIfNotUnderSource) {
-    PsiElement outerClassParent = innerClass.getParent().getParent();
+    final PsiClass outerClass = innerClass.getContainingClass();
+    assert outerClass != null; // Only inner classes allowed.
+
+    PsiElement outerClassParent = outerClass.getParent();
     while (outerClassParent != null) {
       if (outerClassParent instanceof PsiClass && !(outerClassParent instanceof PsiAnonymousClass)) {
         return outerClassParent;

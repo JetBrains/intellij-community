@@ -119,9 +119,14 @@ public class MoveHandler implements RefactoringActionHandler {
       return true;
     } else if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
-      if (aClass.getContainingClass() != null) { // this is inner class
+      final PsiClass containingClass = aClass.getContainingClass();
+      if (containingClass != null) { // this is inner class
         FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
         if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
+          if (containingClass instanceof JspClass) {
+            CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, RefactoringBundle.message("move.nonstatic.class.from.jsp.not.supported"), null, project);
+            return true;
+          }
           MoveInnerImpl.doMove(project, new PsiElement[]{aClass}, null);
         }
         else {

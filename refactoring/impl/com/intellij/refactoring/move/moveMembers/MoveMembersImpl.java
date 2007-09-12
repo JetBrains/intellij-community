@@ -28,15 +28,18 @@ public class MoveMembersImpl {
     if (elements.length == 0) {
       return;
     }
+
     final PsiClass sourceClass;
-    if (elements[0].getParent() instanceof PsiClass) {
-      sourceClass = (PsiClass) elements[0].getParent();
+    final PsiElement first = elements[0];
+    if (first instanceof PsiMember && ((PsiMember)first).getContainingClass() != null) {
+      sourceClass = ((PsiMember)first).getContainingClass();
     } else {
       return;
     }
+    
     final Set<PsiMember> preselectMembers = new HashSet<PsiMember>();
     for (PsiElement element : elements) {
-      if (!sourceClass.equals(element.getParent())) {
+      if (element instanceof PsiMember && !sourceClass.equals(((PsiMember)element).getContainingClass())) {
         String message = RefactoringBundle.getCannotRefactorMessage(
           RefactoringBundle.message("members.to.be.moved.should.belong.to.the.same.class"));
         CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_MEMBERS, project);
