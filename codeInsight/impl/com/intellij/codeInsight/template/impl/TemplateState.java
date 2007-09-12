@@ -380,6 +380,9 @@ public class TemplateState implements Disposable {
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
 
     final int currentSegmentNumber = getCurrentSegmentNumber();
+    
+    lockSegmentAtTheSameOffsetIfAny();
+
     if (currentSegmentNumber < 0) return;
     final int start = mySegments.getSegmentStart(currentSegmentNumber);
     final int end = mySegments.getSegmentEnd(currentSegmentNumber);
@@ -701,6 +704,10 @@ public class TemplateState implements Disposable {
     doReformat();
     setCurrentVariableNumber(nextVariableNumber);
     focusCurrentExpression();
+  }
+
+  private void lockSegmentAtTheSameOffsetIfAny() {
+    mySegments.lockSegmentAtTheSameOffsetIfAny(getCurrentSegmentNumber());
   }
 
   private ExpressionContext createExpressionContext(final int start) {

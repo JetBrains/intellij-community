@@ -76,4 +76,28 @@ public class TemplateSegments {
       right.setGreedyToRight(greedy);
     }
   }
+
+  /**
+   * IDEADEV-13618
+   *
+   * prevent two different segments to grow simultaneously if they both starts at the same offset.
+   */
+  public void lockSegmentAtTheSameOffsetIfAny(final int number) {
+    if (number == -1) {
+      return;
+    }
+
+    final RangeMarker current = mySegments.get(number);
+    int offset = current.getStartOffset();
+
+    for (int i = 0; i < mySegments.size(); i++) {
+      if (i != number) {
+        final RangeMarker segment = mySegments.get(i);
+        final int startOffset2 = segment.getStartOffset();
+        if (offset == startOffset2) {
+          segment.setGreedyToLeft(false);
+        }
+      }
+    }
+  }
 }
