@@ -247,7 +247,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           LOG.assertTrue(target == null);
           return getTextSkipWhiteSpaceAndComments();
         }
-
       case PACKAGE_NAME_KIND:
       case CLASS_FQ_NAME_KIND:
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
@@ -326,8 +325,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
 
     final ResolveCache resolveCache = manager.getResolveCache();
-    final boolean needToPreventRecursion = getContext() instanceof PsiReferenceList;
-    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, needToPreventRecursion, incompleteCode);
+    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
   }
 
   private PsiSubstitutor updateSubstitutor(PsiSubstitutor subst, final PsiClass psiClass) {

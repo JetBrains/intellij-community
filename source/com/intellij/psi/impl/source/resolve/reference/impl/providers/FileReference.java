@@ -16,7 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -49,7 +49,7 @@ public class FileReference
   @NotNull private final FileReferenceSet myFileReferenceSet;
   private static final List<PsiConflictResolver> RESOLVERS = Arrays.<PsiConflictResolver>asList(new DuplicateConflictResolver());
 
-  public FileReference(final @NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
+  public FileReference(@NotNull final FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
     myFileReferenceSet = fileReferenceSet;
     myIndex = index;
     myRange = range;
@@ -118,7 +118,7 @@ public class FileReference
         if (decoded != null) {
           processVariants(context, new BaseScopeProcessor() {
             public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
-              final String name = ((PsiFileSystemItem)element).getName();
+              final String name = ((PsiNamedElement)element).getName();
               if (name != null) {
                 if (myFileReferenceSet.isCaseSensitive() ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0) {
                   result.add(new PsiElementResolveResult(element));
@@ -268,7 +268,7 @@ public class FileReference
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final ElementManipulator<PsiElement> manipulator = GenericReference.getManipulator(getElement());
+    final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(getElement());
     if (manipulator != null) {
       myFileReferenceSet.setElement(manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName));
       //Correct ranges
@@ -345,7 +345,7 @@ public class FileReference
     }
 
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
-    final ElementManipulator<PsiElement> manipulator = GenericReference.getManipulator(getElement());
+    final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(getElement());
     if (manipulator == null) {
       throw new IncorrectOperationException("Manipulator not defined for: " + getElement());
     }
@@ -373,7 +373,7 @@ public class FileReference
   }
 
   public String getUnresolvedMessagePattern() {
-    final StringBuffer builder = new StringBuffer(JavaErrorMessages.message("error.cannot.resolve"));
+    final StringBuilder builder = new StringBuilder(JavaErrorMessages.message("error.cannot.resolve"));
     builder.append(" ").append(myFileReferenceSet.getTypeName());
     if (!isLast()) {
       for (final FileReferenceHelper helper : getHelpers()) {
@@ -409,7 +409,7 @@ public class FileReference
   }
 
   static class MyResolver implements ResolveCache.PolyVariantResolver<FileReference> {
-    static MyResolver INSTANCE = new MyResolver();
+    static final MyResolver INSTANCE = new MyResolver();
 
     public ResolveResult[] resolve(FileReference ref, boolean incompleteCode) {
       return ref.innerResolve();

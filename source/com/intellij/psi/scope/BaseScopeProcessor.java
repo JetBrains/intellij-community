@@ -5,7 +5,7 @@ import com.intellij.util.ReflectionCache;
 public abstract class BaseScopeProcessor implements PsiScopeProcessor{
 
   public <T> T getHint(Class<T> hintClass) {
-    if (ReflectionCache.isAssignable(hintClass, this.getClass())){
+    if (ReflectionCache.isAssignable(hintClass, getClass())){
       return (T)this;
     }
     else{
@@ -13,5 +13,5 @@ public abstract class BaseScopeProcessor implements PsiScopeProcessor{
     }
   }
 
-  public void handleEvent(PsiScopeProcessor.Event event, Object associated){}
+  public void handleEvent(Event event, Object associated){}
 }

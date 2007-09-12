@@ -70,7 +70,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       }
       PsiReferenceExpression classRef = getManager().getElementFactory().createReferenceExpression(qualifierClass);
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-      LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, treeCharTab, getManager());
+      LeafElement dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, treeCharTab, getManager());
       addInternal(dot, dot, SourceTreeToPsiMap.psiElementToTree(getParameterList()), Boolean.TRUE);
       addBefore(classRef, SourceTreeToPsiMap.treeElementToPsi(dot));
     }
@@ -212,8 +212,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       LOG.assertTrue(false, "getManager() == null!");
       return null;
     }
-
-    return (JavaResolveResult[])manager.getResolveCache().resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode);
+    return (JavaResolveResult[])manager.getResolveCache().resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
   }
 
   public String getCanonicalText() {

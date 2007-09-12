@@ -157,7 +157,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   private static class Resolver implements ResolveCache.PolyVariantResolver<ClsJavaCodeReferenceElementImpl> {
-    public static Resolver INSTANCE = new Resolver();
+    public static final Resolver INSTANCE = new Resolver();
 
     public JavaResolveResult[] resolve(ClsJavaCodeReferenceElementImpl ref, boolean incompleteCode) {
       final JavaResolveResult resolveResult = ref.advancedResolveImpl();
@@ -199,7 +199,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ((PsiManagerEx)getManager()).getResolveCache();
-    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
+    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, Resolver.INSTANCE, true, incompleteCode);
   }
 
   public PsiElement resolve() {
@@ -223,7 +223,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       element = element.getParent();
     }
     if (element == null) return null;
-    Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator((PsiClass)element);
+    Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator((PsiTypeParameterListOwner)element);
     while (it.hasNext()) {
       PsiTypeParameter parameter = it.next();
       if (myQualifiedName.equals(parameter.getName())) return parameter;
@@ -262,8 +262,8 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   public boolean isReferenceTo(PsiElement element) {
     if (!(element instanceof PsiClass)) return false;
     PsiClass aClass = (PsiClass)element;
-    if (myCanonicalText.equals(aClass.getQualifiedName())) return true;
-    return getManager().areElementsEquivalent(resolve(), element);
+    return myCanonicalText.equals(aClass.getQualifiedName())
+           || getManager().areElementsEquivalent(resolve(), element);
   }
 
   public Object[] getVariants() {

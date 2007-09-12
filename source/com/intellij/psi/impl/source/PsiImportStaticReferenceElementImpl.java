@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.OrFilter;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.*;
@@ -126,12 +125,12 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
       return (PsiImportStaticStatement)getParent();
     }
     else {
-      final LeafElement dot = Factory.createSingleLeafElement(ElementType.DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
+      final LeafElement dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, SharedImplUtil.findCharTableByTree(newRef), getManager());
       TreeUtil.insertAfter(newRef, dot);
       final CompositeElement errorElement =
         Factory.createErrorElement(JavaErrorMessages.message("import.statement.identifier.or.asterisk.expected."));
       TreeUtil.insertAfter(dot, errorElement);
-      final CompositeElement parentComposite = ((CompositeElement)SourceTreeToPsiMap.psiElementToTree(getParent()));
+      final CompositeElement parentComposite = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(getParent());
       parentComposite.addInternal(newRef, errorElement, this, Boolean.TRUE);
       parentComposite.deleteChildInternal(this);
       return (PsiImportStaticStatement)SourceTreeToPsiMap.treeElementToPsi(parentComposite);
@@ -198,12 +197,12 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-    final ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
-    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode);
+    final ResolveCache resolveCache = getManager().getResolveCache();
+    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
   }
 
   private class OurResolveResult implements JavaResolveResult {
-    PsiMember myTarget;
+    final PsiMember myTarget;
     Boolean myAccessible = null;
 
 
@@ -330,9 +329,8 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     PsiElement qualifier = getQualifier();
     if (qualifier == null) {
       throw new IncorrectOperationException();
-    } else {
-      ((PsiJavaCodeReferenceElement)qualifier).bindToElement(containingClass);
     }
+    ((PsiJavaCodeReferenceElement)qualifier).bindToElement(containingClass);
 
     PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
     if (oldIdentifier == null){

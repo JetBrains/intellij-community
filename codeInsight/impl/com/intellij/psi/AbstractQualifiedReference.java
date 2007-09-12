@@ -37,7 +37,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     }
   };
 
-  public AbstractQualifiedReference(@NotNull final ASTNode node) {
+  protected AbstractQualifiedReference(@NotNull final ASTNode node) {
     super(node);
   }
 
@@ -53,7 +53,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
 
   @NotNull
   public final ResolveResult[] multiResolve(final boolean incompleteCode) {
-    return getManager().getResolveCache().resolveWithCaching(this, MY_RESOLVER, false, false);
+    return getManager().getResolveCache().resolveWithCaching(this, MY_RESOLVER, true, false);
   }
 
   @Nullable
@@ -160,7 +160,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   }
 
   @NotNull
-  public AbstractQualifiedReference shortenReferences() {
+  protected AbstractQualifiedReference shortenReferences() {
     final PsiElement refElement = resolve();
     if (refElement instanceof PsiClass) {
       final PsiQualifiedReference reference = ReferenceAdjuster.getClassReferenceToShorten((PsiClass)refElement, false, this);
