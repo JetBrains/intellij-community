@@ -90,7 +90,7 @@ public class GroovyPositionManager implements PositionManager {
     if (!(file instanceof GroovyFileBase)) return null;
     PsiElement element = file.findElementAt(position.getOffset());
     if (element == null) return null;
-    return PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, GrClosableBlock.class);
+    return PsiTreeUtil.getParentOfType(element, GrClosableBlock.class, GrTypeDefinition.class);
   }
 
   private GrTypeDefinition findEnclosingTypeDefinition(SourcePosition position) {
@@ -223,36 +223,34 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @NotNull
-  public List<ReferenceType> getAllClasses(final SourcePosition classPosition) throws NoDataException {
+  public List<ReferenceType> getAllClasses(final SourcePosition position) throws NoDataException {
     List<ReferenceType> result = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
       public List<ReferenceType> compute() {
-        GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(classPosition);
+        GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
+        final String scriptName = getScriptQualifiedName(position);
 
-        String qName = null;
-        if (typeDefinition != null) {
-          qName = typeDefinition.getQualifiedName();
-        }
+        if (sourceImage instanceof GrTypeDefinition) {
+          String qName = ((GrTypeDefinition) sourceImage).getQualifiedName();
+          if (qName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(qName);
+        } else if (sourceImage == null) {
+          if (scriptName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(scriptName);
+        } else {
+          final GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
+          String enclosingName;
+          if (typeDefinition != null) enclosingName = typeDefinition.getQualifiedName(); else enclosingName = scriptName;
+          if (enclosingName == null) return Collections.emptyList();
 
-        if (qName == null) {
-          qName = getScriptQualifiedName(classPosition);
-
-          if (qName == null) return Collections.emptyList();
-
-          final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(qName);
-          final GroovyPsiElement sourceImage = findReferenceTypeSourceImage(classPosition);
-          if (sourceImage == null) return Collections.emptyList(); 
-
+          final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(enclosingName);
           final List<ReferenceType> result = new ArrayList<ReferenceType>(outers.size());
           for (ReferenceType outer : outers) {
-            final ReferenceType nested = findNested(outer, sourceImage, classPosition);
+            final ReferenceType nested = findNested(outer, sourceImage, position);
             if (nested != null) {
               result.add(nested);
             }
           }
           return result;
-        } else {
-          return myDebugProcess.getVirtualMachineProxy().classesByName(qName);
         }
+        return Collections.emptyList();
       }
     });
 
