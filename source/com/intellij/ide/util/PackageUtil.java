@@ -350,7 +350,7 @@ public class PackageUtil {
     }
   }
 
-  private static boolean checkSourceRootsConfigured(final Module module) {
+  public static boolean checkSourceRootsConfigured(final Module module) {
     VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
     if (sourceRoots.length == 0) {
       Messages.showErrorDialog(
