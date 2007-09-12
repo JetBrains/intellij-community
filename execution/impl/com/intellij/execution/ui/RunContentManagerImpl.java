@@ -195,11 +195,13 @@ public class RunContentManagerImpl implements RunContentManager {
   public void hideRunContent(final JavaProgramRunner requestor, final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (myProject.isDisposed()) return;
-        final String toolWindowId = requestor.getInfo().getToolWindowId();
-        final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
-        if (toolWindow == null) return;
-        toolWindow.show(null);
+        if (!myProject.isDisposed()) {
+          final String toolWindowId = requestor.getInfo().getToolWindowId();
+          final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
+          if (toolWindow != null) {
+            toolWindow.hide(null);
+          }
+        }
       }
     });
   }
