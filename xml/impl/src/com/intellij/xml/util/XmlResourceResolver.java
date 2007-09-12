@@ -195,10 +195,12 @@ public class XmlResourceResolver implements XMLEntityResolver {
     if (psiFile == null) return null;
 
     XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
-    //VirtualFile virtualFile = psiFile.getVirtualFile();
-    //final String url = VfsUtil.fixIDEAUrl(virtualFile.getUrl());
-    //source.setBaseSystemId(url);
-    //source.setSystemId(url);
+    if (xmlResourceIdentifier.getLiteralSystemId() == null) {
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      final String url = VfsUtil.fixIDEAUrl(virtualFile.getUrl());
+      source.setBaseSystemId(url);
+      source.setSystemId(url);
+    }
     source.setPublicId(publicId);
     source.setCharacterStream(new StringReader(psiFile.getText()));
 
