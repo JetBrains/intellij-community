@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -72,7 +73,7 @@ public class ExternalDocumentValidator {
   private WeakReference<List<ValidationInfo>> myInfos; // last jaxp validation result
 
   private void runJaxpValidation(final XmlElement element, Validator.ValidationHost host) {
-    PsiFile file = element.getContainingFile();
+    final PsiFile file = element.getContainingFile();
 
     if (myFile == file &&
         file != null &&
@@ -114,6 +115,11 @@ public class ExternalDocumentValidator {
             public void run() {
               if (e.getPublicId() != null) {
                 return;
+              }
+
+              final VirtualFile errorFile = myHandler.getFile(e.getPublicId(), e.getSystemId());
+              if (errorFile != file.getVirtualFile() && errorFile != null) {
+                return; // error in attached schema
               }
 
               if (document.getLineCount() < e.getLineNumber() || e.getLineNumber() <= 0) {

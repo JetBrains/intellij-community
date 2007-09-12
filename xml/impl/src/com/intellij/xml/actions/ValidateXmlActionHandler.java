@@ -83,8 +83,14 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     myErrorReporter = errorReporter;
   }
 
-  private VirtualFile getFile(String publicId) {
-    if (publicId == null) return myFile.getVirtualFile();
+  public VirtualFile getFile(String publicId, String systemId) {
+    if (publicId == null) {
+      if (systemId != null) {
+        final String path = myXmlResourceResolver.getPathByPublicId(systemId);
+        if (path != null) return VfsUtil.findRelativeFile(path,null);
+      }
+      return myFile.getVirtualFile();
+    }
     final String path = myXmlResourceResolver.getPathByPublicId(publicId);
     if (path != null) return VfsUtil.findRelativeFile(path,null);
     return null;
@@ -132,7 +138,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
   private String buildMessageString(SAXParseException ex) {
     String msg = "(" + ex.getLineNumber() + ":" + ex.getColumnNumber() + ") " + ex.getMessage();
-    final VirtualFile file = getFile(ex.getPublicId());
+    final VirtualFile file = getFile(ex.getPublicId(), ex.getSystemId());
 
     if ( file != null && !file.equals(myFile.getVirtualFile())) {
       msg = file.getName() + ":" + msg;
@@ -257,7 +263,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
                 myErrorsView.addMessage(
                     warning ? MessageCategory.WARNING : MessageCategory.ERROR,
                     new String[]{ex.getLocalizedMessage()},
-                    getFile(ex.getPublicId()),
+                    getFile(ex.getPublicId(), ex.getSystemId()),
                     ex.getLineNumber() - 1 ,
                     ex.getColumnNumber() - 1, null);
               }
