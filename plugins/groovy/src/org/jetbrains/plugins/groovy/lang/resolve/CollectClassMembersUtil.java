@@ -2,19 +2,23 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 /**
  * @author ven
@@ -65,6 +69,11 @@ public class CollectClassMembersUtil {
       String name = field.getName();
       if (!allFields.containsKey(name)) {
         allFields.put(name, field);
+      }
+      if (field instanceof GrField && ((GrField) field).isProperty() && field.getName() != null) {
+        final GrField property = (GrField) field;
+        addMethod(allMethods, new AccessorMethod(property, true));
+        addMethod(allMethods, new AccessorMethod(property, false));
       }
     }
 

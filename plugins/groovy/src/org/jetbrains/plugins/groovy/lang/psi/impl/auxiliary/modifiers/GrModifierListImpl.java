@@ -71,24 +71,31 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
     return findChildByType(TokenSets.VISIBILITY_MODIFIERS) != null;
   }
 
-  public boolean hasModifierProperty(@NotNull @NonNls String name) {
-    if (name.equals(PsiModifier.PUBLIC)) {
+  public boolean hasModifierProperty(@NotNull @NonNls String modifier) {
+    final PsiElement parent = getParent();
+    /*if (parent instanceof GrVariableDeclaration && !hasExplicitVisibilityModifiers()) { //properties are backed by private fields
+      if (modifier.equals(PsiModifier.PUBLIC)) return false;
+      if (modifier.equals(PsiModifier.PROTECTED)) return false;
+      if (modifier.equals(PsiModifier.PRIVATE)) return true;
+    }*/
+
+    if (modifier.equals(PsiModifier.PUBLIC)) {
       //groovy type definitions and methods are public by default
       return findChildByType(GroovyElementTypes.kPRIVATE) == null && findChildByType(GroovyElementTypes.kPROTECTED) == null;
     }
 
-    if (name.equals(PsiModifier.PRIVATE)) return findChildByType(GroovyElementTypes.kPRIVATE) != null;
-    if (name.equals(PsiModifier.PROTECTED)) return findChildByType(GroovyElementTypes.kPROTECTED) != null;
-    if (name.equals(PsiModifier.SYNCHRONIZED)) return findChildByType(GroovyElementTypes.kSYNCHRONIZED) != null;
-    if (name.equals(PsiModifier.STRICTFP)) return findChildByType(GroovyElementTypes.kSTRICTFP) != null;
-    if (name.equals(PsiModifier.STATIC)) return findChildByType(GroovyElementTypes.kSTATIC) != null;
-    if (name.equals(PsiModifier.FINAL)) return findChildByType(GroovyElementTypes.kFINAL) != null;
-    if (name.equals(PsiModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
-    if (name.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
+    if (modifier.equals(PsiModifier.PRIVATE)) return findChildByType(GroovyElementTypes.kPRIVATE) != null;
+    if (modifier.equals(PsiModifier.PROTECTED)) return findChildByType(GroovyElementTypes.kPROTECTED) != null;
+    if (modifier.equals(PsiModifier.SYNCHRONIZED)) return findChildByType(GroovyElementTypes.kSYNCHRONIZED) != null;
+    if (modifier.equals(PsiModifier.STRICTFP)) return findChildByType(GroovyElementTypes.kSTRICTFP) != null;
+    if (modifier.equals(PsiModifier.STATIC)) return findChildByType(GroovyElementTypes.kSTATIC) != null;
+    if (modifier.equals(PsiModifier.FINAL)) return findChildByType(GroovyElementTypes.kFINAL) != null;
+    if (modifier.equals(PsiModifier.TRANSIENT)) return findChildByType(GroovyElementTypes.kTRANSIENT) != null;
+    if (modifier.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
 
-    if (!(getParent() instanceof GrVariableDeclaration)) {
-      if (name.equals(PsiModifier.ABSTRACT)) return findChildByType(GroovyElementTypes.kABSTRACT) != null;
-      if (name.equals(PsiModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
+    if (!(parent instanceof GrVariableDeclaration)) {
+      if (modifier.equals(PsiModifier.ABSTRACT)) return findChildByType(GroovyElementTypes.kABSTRACT) != null;
+      if (modifier.equals(PsiModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
     }
 
     return false;
