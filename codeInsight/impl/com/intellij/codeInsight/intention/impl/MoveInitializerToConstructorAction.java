@@ -6,13 +6,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -43,7 +44,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     if (!field.hasInitializer()) return false;
     PsiClass psiClass = field.getContainingClass();
     
-    return psiClass != null && !psiClass.isInterface() && !(psiClass instanceof PsiAnonymousClass);
+    return psiClass != null && !psiClass.isInterface() && !(psiClass instanceof PsiAnonymousClass) && !(psiClass instanceof JspClass);
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

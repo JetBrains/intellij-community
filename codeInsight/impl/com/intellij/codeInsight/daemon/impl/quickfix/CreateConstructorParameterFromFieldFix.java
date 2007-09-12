@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
            field != null
            && field.getManager().isInProject(field)
            && field.getContainingClass() != null
+           && !(field.getContainingClass() instanceof JspClass)
            && !field.hasModifierProperty(PsiModifier.STATIC)
       ;
   }
