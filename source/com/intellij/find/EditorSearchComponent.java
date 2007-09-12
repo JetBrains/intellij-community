@@ -141,7 +141,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     });
 
     JPanel tailPanel = new NonOpaquePanel(new BorderLayout(5, 0));
-    add(tailPanel, BorderLayout.EAST);
+    JPanel tailContainer = new NonOpaquePanel(new BorderLayout(5, 0));
+    tailContainer.add(tailPanel, BorderLayout.EAST);
+    add(tailContainer, BorderLayout.CENTER);
 
     myMatchInfoLabel = new JLabel();
     setSmallerFontAndOpaque(myMatchInfoLabel);
@@ -154,9 +156,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     });
 
     closeLabel.setToolTipText("Close search bar (Escape)");
-    
+
+    tailPanel.add(myMatchInfoLabel, BorderLayout.CENTER);
     tailPanel.add(closeLabel, BorderLayout.EAST);
-    tailPanel.add(myMatchInfoLabel, BorderLayout.WEST);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
