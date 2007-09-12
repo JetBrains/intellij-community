@@ -15,11 +15,14 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,12 +51,13 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
         final PsiReferenceExpression methodExpression =
                 (PsiReferenceExpression)location.getParent();
         final PsiModifierListOwner annotatableQualifier =
-                AnnotateQualifierFix.extractAnnotatableQualifier(
+                NonNlsUtils.getAnnotatableQualifier(
                         methodExpression);
         if (annotatableQualifier == null) {
             return null;
         }
-        return new AnnotateQualifierFix(annotatableQualifier);
+        return new DelegatingFix(new AddAnnotationFix(
+                AnnotationUtil.NON_NLS, annotatableQualifier));
     }
 
     public BaseInspectionVisitor buildVisitor() {

@@ -28,6 +28,43 @@ public class NonNlsUtils {
     private NonNlsUtils() {
     }
 
+    @Nullable
+    public static PsiModifierListOwner getAnnotatableArgument(
+            PsiMethodCallExpression methodCallExpression) {
+        final PsiExpressionList argumentList =
+                methodCallExpression.getArgumentList();
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        if (arguments.length < 1) {
+            return null;
+        }
+        final PsiExpression argument = arguments[0];
+        if (argument instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)argument;
+            final PsiElement element = referenceExpression.resolve();
+            if (element instanceof PsiModifierListOwner) {
+                return (PsiModifierListOwner)element;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    public static PsiModifierListOwner getAnnotatableQualifier(
+            PsiReferenceExpression expression) {
+        final PsiExpression qualifierExpression =
+                expression.getQualifierExpression();
+        if (qualifierExpression instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression =
+                    (PsiReferenceExpression)qualifierExpression;
+            final PsiElement element = referenceExpression.resolve();
+            if (element instanceof PsiModifierListOwner) {
+                return (PsiModifierListOwner)element;
+            }
+        }
+        return null;
+    }
+
     public static boolean isNonNlsAnnotated(
             @Nullable PsiExpression expression) {
         if (isReferenceToNonNlsAnnotatedElement(expression)) {

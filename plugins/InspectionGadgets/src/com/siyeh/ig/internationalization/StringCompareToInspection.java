@@ -56,7 +56,7 @@ public class StringCompareToInspection extends BaseInspection {
         final PsiReferenceExpression methodExpression =
                 (PsiReferenceExpression)location.getParent();
         final PsiModifierListOwner annotatableQualifier =
-                AnnotateQualifierFix.extractAnnotatableQualifier(
+                NonNlsUtils.getAnnotatableQualifier(
                         methodExpression);
         if (annotatableQualifier != null) {
             final InspectionGadgetsFix fix = new DelegatingFix(
@@ -67,7 +67,7 @@ public class StringCompareToInspection extends BaseInspection {
         final PsiMethodCallExpression methodCallExpression =
                 (PsiMethodCallExpression)methodExpression.getParent();
         final PsiModifierListOwner annotatableArgument =
-                AnnotateArgumentFix.extractAnnotatableArgument(
+                NonNlsUtils.getAnnotatableArgument(
                         methodCallExpression);
         if (annotatableArgument != null) {
             final InspectionGadgetsFix fix = new DelegatingFix(
