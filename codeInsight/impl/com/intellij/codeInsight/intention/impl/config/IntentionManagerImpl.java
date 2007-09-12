@@ -146,6 +146,9 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   public LocalQuickFix convertToFix(final IntentionAction action) {
+    if (action instanceof LocalQuickFix) {
+      return (LocalQuickFix)action;
+    }
     return new LocalQuickFix() {
       @NotNull
       public String getName() {
