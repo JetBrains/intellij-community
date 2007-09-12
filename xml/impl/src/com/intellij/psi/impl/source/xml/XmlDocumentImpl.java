@@ -3,8 +3,8 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -14,18 +14,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.xml.XmlElementDescriptor;
@@ -125,7 +124,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
 
             return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
                                                                          ? defaultNSDescriptorInner.getDependences()
-                                                                         : ArrayUtil.EMPTY_OBJECT_ARRAY);
+                                                                         : ExternalResourceManager.getInstance());
           }
         }, false);
       defaultNSDescriptor = value.getValue();
