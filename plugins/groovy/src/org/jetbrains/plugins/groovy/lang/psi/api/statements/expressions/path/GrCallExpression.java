@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
 /**
  * @author ven
@@ -41,5 +42,5 @@ public interface GrCallExpression extends GrExpression {
   PsiMethod resolveMethod();
 
   @NotNull
-  PsiNamedElement[] getMethodVariants(); 
+  GroovyResolveResult[] getMethodVariants(); 
 }

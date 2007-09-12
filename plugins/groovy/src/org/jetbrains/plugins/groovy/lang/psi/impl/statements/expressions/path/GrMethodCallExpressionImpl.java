@@ -18,12 +18,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -33,12 +32,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author ilyas
@@ -126,11 +125,11 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
   }
 
   @NotNull
-  public PsiNamedElement[] getMethodVariants() {
+  public GroovyResolveResult[] getMethodVariants() {
     final GrExpression invoked = getInvokedExpression();
-    if (!(invoked instanceof GrReferenceExpression)) return PsiMethod.EMPTY_ARRAY;
+    if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
 
-    return PsiImplUtil.getMethodVariants((GrReferenceExpression) invoked);
+    return ((GrReferenceExpression) invoked).getSameNameVariants();
   }
 
 }

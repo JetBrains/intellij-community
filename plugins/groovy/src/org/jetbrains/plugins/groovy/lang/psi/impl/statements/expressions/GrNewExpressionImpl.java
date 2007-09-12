@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
@@ -121,11 +122,11 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   @NotNull
-  public PsiNamedElement[] getMethodVariants() {
+  public GroovyResolveResult[] getMethodVariants() {
     final GrCodeReferenceElement referenceElement = getReferenceElement();
-    if (referenceElement == null) return PsiMethod.EMPTY_ARRAY;
+    if (referenceElement == null) return GroovyResolveResult.EMPTY_ARRAY;
     final GroovyResolveResult[] classResults = referenceElement.multiResolve(false);
-    List<PsiNamedElement> result = new ArrayList<PsiNamedElement>();
+    List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
     final PsiResolveHelper helper = getManager().getResolveHelper();
     for (GroovyResolveResult classResult : classResults) {
       final PsiElement element = classResult.getElement();
@@ -133,12 +134,12 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
         final PsiMethod[] constructors = ((PsiClass) element).getConstructors();
         for (PsiMethod constructor : constructors) {
           if (helper.isAccessible(constructor, this, null)) {
-            result.add(constructor);
+            result.add(new GroovyResolveResultImpl(constructor, true));
           }
         }
       }
     }
 
-    return result.toArray(new PsiNamedElement[result.size()]);
+    return result.toArray(new GroovyResolveResult[result.size()]);
   }
 }

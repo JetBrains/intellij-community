@@ -76,11 +76,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   public GroovyResolveResult[] getCandidates() {
     if (myCandidates.size() > 0) {
-      if (myForCompletion ||
-          myArgumentTypes == null) { //should not filter
-        return myCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
-      }
-
       return filterCandidates();
     }
     return myInapplicableCandidates.toArray(new GroovyResolveResult[myInapplicableCandidates.size()]);
@@ -133,6 +128,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
   private boolean dominated(PsiMethod method1, PsiMethod method2, PsiManager manager, GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
+    if (!method1.getName().equals(method2.getName())) return false;
+    
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
 
