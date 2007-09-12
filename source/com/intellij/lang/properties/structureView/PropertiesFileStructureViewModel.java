@@ -3,24 +3,22 @@ package com.intellij.lang.properties.structureView;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewModel;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Comparator;
 
 /**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 10, 2005
- * Time: 3:13:23 PM
- * To change this template use File | Settings | File Templates.
+ * @author max
  */
 public class PropertiesFileStructureViewModel extends TextEditorBasedStructureViewModel implements PropertiesGroupingStructureViewModel {
-  private PropertiesFile myPropertiesFile;
+  private final PropertiesFile myPropertiesFile;
   private final GroupByWordPrefixes myGroupByWordPrefixes;
   @NonNls public static final String KIND_SORTER_ID = "KIND_SORTER";
   private static final Sorter KIND_SORTER = new Sorter() {
@@ -36,8 +34,8 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
 
     @NotNull
     public ActionPresentation getPresentation() {
-      String name = "Sort by kind";
-      return new ActionPresentationData(name, name, null);
+      String name = IdeBundle.message("action.sort.by.type");
+      return new ActionPresentationData(name, name, IconLoader.getIcon("/objectBrowser/sortByType.png"));
     }
 
     @NotNull
