@@ -259,7 +259,7 @@ public class DaemonListeners {
     if (activeVcs == null) return true;
     FileStatus status = FileStatusManager.getInstance(project).getStatus(virtualFile);
 
-    return status != FileStatus.NOT_CHANGED;
+    return status == FileStatus.MODIFIED || status == FileStatus.ADDED;
   }
 
   private class MyApplicationListener extends ApplicationAdapter {
