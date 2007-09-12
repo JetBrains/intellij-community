@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
@@ -20,39 +21,29 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 
 public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JEditorPane myModuleDescriptionPane;
   private JList myTypesList;
-  private LabeledComponent<JTextField> myModuleName = new LabeledComponent<JTextField>();
+  private LabeledField myModuleName;
+  private LabeledField myModuleContentRoot;
   private boolean myInSync = false;
-  private boolean myChangedByUser = false;
+  private boolean myModuleNameChangedByUser = false;
   @NonNls private static final String NAME = "NAME";
   @NonNls private static final String EMPTY = "EMPTY";
 
   public ProjectNameWithTypeStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     super(wizardContext, sequence, mode);
-    final JTextField component = new JTextField();
-    component.setText(myNamePathComponent.getNameValue());
-    myModuleName.setComponent(component);
-    myModuleName.setText(ProjectBundle.message("project.new.wizard.module.name.title"));
-    myModuleName.getLabel().setFont(myModuleName.getFont().deriveFont(Font.BOLD));
-    final CardLayout card = new CardLayout();
-    final JPanel moduleNamePanel = new JPanel(card);
-    final JPanel nonEmpty = new JPanel(new BorderLayout());
-    moduleNamePanel.add(NAME, nonEmpty);
-    nonEmpty.add(myModuleName, BorderLayout.CENTER);
-    moduleNamePanel.add(EMPTY, new JPanel(new BorderLayout()));
-    card.show(moduleNamePanel, NAME);
-    moduleNamePanel.setVisible(myWizardContext.getProject() == null);
-    myAdditionalContentPanel.add(moduleNamePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST,
-                                                                        GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
-    component.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (myInSync) return;
-        myChangedByUser = true;
-      }
-    });
+
+    myModuleName = new LabeledField(myNamePathComponent.getNameValue(), ProjectBundle.message("project.new.wizard.module.name.title"));
+    myModuleName.getComponent().setColumns(20);
+    myModuleContentRoot = new LabeledField(FileUtil.toSystemDependentName(myNamePathComponent.getPath()), ProjectBundle.message("project.new.wizard.module.root.title"));
+    
+    updateModuleNameComponent(myWizardContext.getProject() == null);
+    
+    myAdditionalContentPanel.add(myModuleName, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    myAdditionalContentPanel.add(myModuleContentRoot, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 0, 0), 0, 0));
 
     myModuleDescriptionPane = new JEditorPane();
     myModuleDescriptionPane.setContentType(UIUtil.HTML_MIME);
@@ -94,10 +85,11 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
         final ModuleType typeSelected = (ModuleType)myTypesList.getSelectedValue();
         //noinspection HardCodedStringLiteral
-        myModuleDescriptionPane
-          .setText("<html><body><font face=\"verdana\" size=\"-1\">" + typeSelected.getDescription() + "</font></body></html>");
-        moduleNamePanel.setVisible(myWizardContext.getProject() == null);
-        card.show(moduleNamePanel, typeSelected != ModuleType.EMPTY ? NAME : EMPTY);
+        myModuleDescriptionPane.setText("<html><body><font face=\"verdana\" size=\"-1\">" + typeSelected.getDescription() + "</font></body></html>");
+
+        final boolean isModuleNameVisible = (myWizardContext.getProject() == null) && (typeSelected != ModuleType.EMPTY);
+        updateModuleNameComponent(isModuleNameVisible);
+
         fireStateChanged();
         SwingUtilities.invokeLater(new Runnable(){
           public void run() {
@@ -115,32 +107,56 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       }
     });
 
-
+    final DocumentAdapter contentRootUpdater = new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (!myModuleContentRoot.isChangedByUser()) {
+          final String currentModuleName = myModuleName.getFieldText();
+          final String filePath; 
+          if (currentModuleName.equals(myNamePathComponent.getNameValue())) {
+            filePath = myNamePathComponent.getPath();
+          }
+          else {
+            filePath = myNamePathComponent.getPath() + File.separator + currentModuleName;
+          }
+          myModuleContentRoot.setFieldText(FileUtil.toSystemDependentName(filePath));
+        }
+      }
+    };
+    
+    myModuleName.getComponent().getDocument().addDocumentListener(contentRootUpdater);
+    myNamePathComponent.getPathComponent().getDocument().addDocumentListener(contentRootUpdater);
     myNamePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
-        myInSync = true;
-        if (!myChangedByUser) {
-          myModuleName.getComponent().setText(myNamePathComponent.getNameValue());
+        if (!myModuleName.isChangedByUser()) {
+          myModuleName.setFieldText(myNamePathComponent.getNameValue());
         }
-        myInSync = false;
       }
     });
-
+    
+    final JLabel moduleTypeLabel = new JLabel(IdeBundle.message("label.select.module.type"));
+    moduleTypeLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    myAdditionalContentPanel.add(moduleTypeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(7, 0, 0, 0), 0, 0));
 
     final JLabel descriptionLabel = new JLabel(IdeBundle.message("label.description"));
     descriptionLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    myAdditionalContentPanel.add(Box.createHorizontalGlue(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    myAdditionalContentPanel.add(descriptionLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    myAdditionalContentPanel.add(descriptionLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(7, 5, 0, 0), 0, 0));
 
     final JScrollPane typesListScrollPane = ScrollPaneFactory.createScrollPane(myTypesList);
     final Dimension preferredSize = calcTypeListPreferredSize(allModuleTypes);
     typesListScrollPane.setPreferredSize(preferredSize);
     typesListScrollPane.setMinimumSize(preferredSize);
-    myAdditionalContentPanel.add(typesListScrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.2, 1.0 , GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    myAdditionalContentPanel.add(typesListScrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0 , GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     final JScrollPane descriptionScrollPane = ScrollPaneFactory.createScrollPane(myModuleDescriptionPane);
     descriptionScrollPane.setPreferredSize(new Dimension(preferredSize.width * 3, preferredSize.height));
-    myAdditionalContentPanel.add(descriptionScrollPane, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.8, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    myAdditionalContentPanel.add(descriptionScrollPane, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 5, 0, 0), 0, 0));
+  }
+
+  private void updateModuleNameComponent(final boolean isEditable) {
+    myModuleName.getComponent().setEditable(isEditable);
+    myModuleName.setEnabled(isEditable);
+    myModuleContentRoot.getComponent().setEditable(isEditable);
+    myModuleContentRoot.setEnabled(isEditable);
   }
 
   public void updateStep() {
@@ -189,5 +205,45 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
   public String getHelpId() {
     return "reference.dialogs.new.project.fromScratch";
+  }
+  
+  private static class LabeledField extends LabeledComponent<JTextField> {
+    private boolean myDocListenerEnabled = true;
+    private boolean myChangedByUser = false;
+    
+    public LabeledField(String initialValue, final String labelText) {
+      final JTextField field = new JTextField();
+      if (initialValue != null) {
+        field.setText(initialValue);
+      }
+      setComponent(field);
+      setText(labelText);
+      getLabel().setFont(getFont().deriveFont(Font.BOLD));
+      field.getDocument().addDocumentListener(new DocumentAdapter() {
+        protected void textChanged(final DocumentEvent e) {
+          if (myDocListenerEnabled) {
+            myChangedByUser = true;
+          }
+        }
+      });
+    }
+
+    public boolean isChangedByUser() {
+      return myChangedByUser;
+    }
+    
+    public void setFieldText(String text) {
+      myDocListenerEnabled = false;
+      try {
+        getComponent().setText(text);
+      }
+      finally {
+        myDocListenerEnabled = true;
+      }
+    }
+    
+    public String getFieldText() {
+      return getComponent().getText();
+    }
   }
 }
