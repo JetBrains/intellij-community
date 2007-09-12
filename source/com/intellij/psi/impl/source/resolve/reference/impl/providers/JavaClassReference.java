@@ -30,6 +30,7 @@ import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -165,7 +166,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     final String newName;
     if (element instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)element;
-      newName = psiClass.getQualifiedName();
+      final boolean jvmFormat = Boolean.TRUE.equals(JavaClassReferenceProvider.JVM_FORMAT.getValue(getOptions()));
+      newName = jvmFormat? ClassUtil.getJVMClassName(psiClass) : psiClass.getQualifiedName();
     }
     else if (element instanceof PsiPackage) {
       PsiPackage psiPackage = (PsiPackage)element;
