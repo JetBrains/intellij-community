@@ -129,6 +129,12 @@ public class CaughtExceptionImmediatelyRethrownInspection
             if (!(expression instanceof PsiReferenceExpression)) {
                 return;
             }
+            final PsiStatement previousStatement =
+                    PsiTreeUtil.getPrevSiblingOfType(statement,
+                            PsiStatement.class);
+            if (previousStatement != null) {
+                return;
+            }
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression)expression;
             final PsiElement target = referenceExpression.resolve();
