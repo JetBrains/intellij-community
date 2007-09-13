@@ -9,21 +9,17 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MyTestInjector {
   private LanguageInjector myInjector;
@@ -48,15 +44,14 @@ public class MyTestInjector {
   }
 
   private static ConcatenationAwareInjector registerForStringVarInitializer(Project project, final Language language,
-                                                                                               final String varName,
-                                                                                               final String prefix, final String suffix) {
+                                                                                               @NonNls final String varName,
+                                                                                               final String prefix, @NonNls final String suffix) {
     ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
       public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar,
                                        @NotNull PsiElement... operands) {
-        PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class, true, PsiClass.class);
+        PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class);
         if (variable == null) return;
-        String name = variable.getName();
-        if (!varName.equals(name)) return;
+        if (!varName.equals(variable.getName())) return;
         if (!(operands[0] instanceof PsiLiteralExpression)) return;
         injectionPlacesRegistrar.startInjecting(language);
         for (int i = 0; i < operands.length; i++) {
@@ -84,13 +79,13 @@ public class MyTestInjector {
     assert b;
   }
 
-  private static Language findLanguageByID(String name) {
+  private static Language findLanguageByID(@NonNls String name) {
     for (Language language : Language.getRegisteredLanguages()) {
       if (language.getID().equals(name)) return language;
     }
     return null;
   }
-  public static LanguageInjector injectVariousStuffEverywhere(PsiManager psiManager) {
+  private static LanguageInjector injectVariousStuffEverywhere(PsiManager psiManager) {
     LanguageInjector myInjector = new LanguageInjector() {
       public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces placesToInject) {
         Language ql = findLanguageByID("FQL");
@@ -207,18 +202,6 @@ public class MyTestInjector {
     psiManager.registerLanguageInjector(myInjector);
 
     return myInjector;
-  }
-
-  private static List<PsiLanguageInjectionHost> getHosts(PsiElement element) {
-    ArrayList<PsiLanguageInjectionHost> list = new ArrayList<PsiLanguageInjectionHost>();
-    if (element instanceof PsiBinaryExpression) {
-      list.addAll(getHosts(((PsiBinaryExpression)element).getLOperand()));
-      list.addAll(getHosts(((PsiBinaryExpression)element).getROperand()));
-    }
-    else if (element instanceof PsiLiteralExpressionImpl) {
-      list.add((PsiLiteralExpressionImpl)element);
-    }
-    return list;
   }
 
   private static void inject(final PsiLanguageInjectionHost host, final InjectedLanguagePlaces placesToInject, final Language language) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -22,55 +23,66 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 public class ClassMapCachingNulls<T> {
-  private static final List NULL = new ArrayList(0);
-  private final Map<Class, List<T>> myBackingMap;
-  private final Map<Class, List<T>> myMap = new ConcurrentHashMap<Class, List<T>>();
+  private static final Object[] NULL = ArrayUtil.EMPTY_OBJECT_ARRAY;
+  private final Map<Class, T[]> myBackingMap;
+  private final Map<Class, T[]> myMap = new ConcurrentHashMap<Class, T[]>();
 
-  public ClassMapCachingNulls(@NotNull Map<Class, List<T>> backingMap) {
+  public ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap) {
     myBackingMap = backingMap;
   }
 
-  public List<T> get(Class aClass) {
-    List<T> value = myMap.get(aClass);
-    if (value == null) {
-      value = myBackingMap.get(aClass);
-      if (value != null) {
-        myMap.put(aClass, value);
+  public T[] get(Class aClass) {
+    T[] value = myMap.get(aClass);
+    if (value != null) {
+      if (value == NULL) {
+        return null;
+      }
+      else {
+        assert value.length != 0;
+        return value;
       }
     }
+    value = myBackingMap.get(aClass);
+    List<T> result = null;
     if (value != null) {
-      return value == NULL ? null : value;
+      assert value.length != 0;
+      result = new ArrayList<T>(Arrays.asList(value));
     }
-
     for (final Class aClass1 : ReflectionCache.getInterfaces(aClass)) {
-      value = addFromUpper(value, aClass1);
+      result = addFromUpper(result, aClass1);
     }
     final Class superclass = ReflectionCache.getSuperClass(aClass);
     if (superclass != null) {
-      value = addFromUpper(value, superclass);
+      result = addFromUpper(result, superclass);
     }
-    if (value == NULL) {
+    if (result == null) {
+      myMap.put(aClass, (T[])NULL);
       value = null;
     }
-    myMap.put(aClass, value == null ? (List<T>)NULL : value);
+    else {
+      Class<T> type = (Class<T>)result.get(0).getClass();
+      value = ArrayUtil.toObjectArray(result, type);
+      myMap.put(aClass, value);
+    }
     return value;
   }
 
   private List<T> addFromUpper(List<T> value, Class superclass) {
-    List<T> fromUpper = get(superclass);
+    T[] fromUpper = get(superclass);
     if (fromUpper != null) {
+      assert fromUpper.length != 0;
       if (value == null) {
-        value = new ArrayList<T>(fromUpper);
+        value = new ArrayList<T>(fromUpper.length);
       }
-      else {
-        for (T t : fromUpper) {
-          if (!value.contains(t)) {
-            value.add(t);
-          }
+      for (T t : fromUpper) {
+        if (!value.contains(t)) {
+          value.add(t);
         }
       }
+      assert !value.isEmpty();
     }
     return value;
   }

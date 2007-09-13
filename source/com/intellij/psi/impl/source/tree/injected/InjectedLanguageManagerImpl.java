@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
-import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
+import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
@@ -13,14 +13,13 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
@@ -31,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -38,28 +38,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   private final WeakList<VirtualFileWindow> cachedFiles = new WeakList<VirtualFileWindow>();
-  private final Project myProject;
 
-  public static InjectedLanguageManagerImpl getInstance(Project project) {
+  public static InjectedLanguageManagerImpl getInstanceImpl(Project project) {
     return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
   }
 
   public void projectOpened() {
-    //Object[] extensions = Extensions.getExtensions(CONCATENATION_INJECTOR_EP_NAME, myProject);
-    //for (Object injector : extensions) {
-    //   registerConcatenationInjector((ConcatenationAwareInjector)injector);
-    //}
-    //final ExtensionPoint<ConcatenationAwareInjector> point = Extensions.getArea(myProject).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
-    //
-    //point.addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
-    //  public void extensionAdded(ConcatenationAwareInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
-    //    registerConcatenationInjector(extension);
-    //  }
-    //
-    //  public void extensionRemoved(ConcatenationAwareInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
-    //
-    //  }
-    //});
   }
 
   public void projectClosed() {
@@ -67,7 +51,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   public InjectedLanguageManagerImpl(Project project) {
-    myProject = project;
     registerMultiHostInjector(PsiLanguageInjectionHost.class, null, new MultiHostInjector() {
       public void getLanguagesToInject(@NotNull PsiElement context, @NotNull final MultiHostRegistrar injectionPlacesRegistrar) {
         final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
@@ -90,7 +73,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     });
     registerMultiHostInjector(PsiElement.class, null, new Concatenation2InjectorAdapter());
 
-    final ExtensionPoint<ConcatenationAwareInjector> point = Extensions.getArea(myProject).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
+    final ExtensionPoint<ConcatenationAwareInjector> point = Extensions.getArea(project).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
 
     point.addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
       public void extensionAdded(ConcatenationAwareInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
@@ -123,7 +106,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       while (iterator.hasNext()) {
         VirtualFileWindow cachedFile = iterator.next();
         PsiFile cached = ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().getCachedPsiFile(cachedFile);
-        if (cached == null || cached.getContext() == null || !cached.getContext().isValid()) {
+        PsiElement context;
+        if (cached == null || (context = cached.getContext()) == null || !context.isValid()) {
           iterator.remove();
           continue;
         }
@@ -151,32 +135,67 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return documentWindow.injectedToHost(textRange);
   }
 
-  private final Map<Class, List<Pair<ElementFilter, MultiHostInjector>>> injectors = new ConcurrentHashMap<Class, List<Pair<ElementFilter, MultiHostInjector>>>();
-  private final ClassMapCachingNulls<Pair<ElementFilter, MultiHostInjector>> cachedInjectors = new ClassMapCachingNulls<Pair<ElementFilter, MultiHostInjector>>(injectors);
-  public void registerMultiHostInjector(@NotNull Class<? extends PsiElement> place, ElementFilter filter, @NotNull MultiHostInjector injector) {
-    List<Pair<ElementFilter, MultiHostInjector>> collection = injectors.get(place);
-    if (collection == null) {
-      collection = new SmartList<Pair<ElementFilter, MultiHostInjector>>();
-      injectors.put(place, collection);
+  private static class InjectorInfo {
+    private final ElementFilter filter;
+    private final MultiHostInjector injector;
+
+    private InjectorInfo(ElementFilter filter, @NotNull MultiHostInjector injector) {
+      this.filter = filter;
+      this.injector = injector;
     }
-    Pair<ElementFilter, MultiHostInjector> pair = Pair.create(filter, injector);
-    collection.add(pair);
+
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      InjectorInfo that = (InjectorInfo)o;
+
+      return injector.equals(that.injector);
+    }
+
+    public int hashCode() {
+      return injector.hashCode();
+    }
+  }
+  private final ConcurrentMap<Class, InjectorInfo[]> injectors = new ConcurrentHashMap<Class, InjectorInfo[]>();
+  private final ClassMapCachingNulls<InjectorInfo> cachedInjectors = new ClassMapCachingNulls<InjectorInfo>(injectors);
+  public void registerMultiHostInjector(@NotNull Class<? extends PsiElement> place, ElementFilter filter, @NotNull MultiHostInjector injector) {
+    InjectorInfo newInfo = new InjectorInfo(filter, injector);
+    while (true) {
+      InjectorInfo[] infos = injectors.get(place);
+      if (infos == null) {
+        if (injectors.putIfAbsent(place, new InjectorInfo[]{newInfo}) == null) break;
+      }
+      else {
+        InjectorInfo[] newInfos = ArrayUtil.append(infos, newInfo);
+        if (injectors.replace(place, infos, newInfos)) break;
+      }
+    }
     cachedInjectors.clearCache();
   }
   public boolean unregisterMultiPlaceInjector(@NotNull MultiHostInjector injector) {
-    Iterator<List<Pair<ElementFilter, MultiHostInjector>>> iterator = injectors.values().iterator();
     boolean removed = false;
+    Iterator<Map.Entry<Class,InjectorInfo[]>> iterator = injectors.entrySet().iterator();
     while (iterator.hasNext()) {
-      List<Pair<ElementFilter, MultiHostInjector>> collection = iterator.next();
-      Iterator<Pair<ElementFilter, MultiHostInjector>> cot = collection.iterator();
-      while (cot.hasNext()) {
-        Pair<ElementFilter, MultiHostInjector> pair = cot.next();
-        if (pair.getSecond() == injector) {
-          cot.remove();
-          removed = true;
+      Map.Entry<Class,InjectorInfo[]> entry = iterator.next();
+      InjectorInfo[] infos = entry.getValue();
+      int i;
+      for (i = 0; i < infos.length; i++) {
+        InjectorInfo info = infos[i];
+        if (info.injector == injector) {
+          break;
         }
       }
-      if (collection.isEmpty()) iterator.remove();
+      if (i != infos.length) {
+        InjectorInfo[] newInfos = ArrayUtil.remove(infos, i);
+        if (newInfos.length == 0) {
+          iterator.remove();
+        }
+        else {
+          injectors.put(entry.getKey(), newInfos);
+        }
+        removed = true;
+      }
     }
     cachedInjectors.clearCache();
     return removed;
@@ -225,12 +244,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   public void processInPlaceInjectorsFor(@NotNull PsiElement element, @NotNull Processor<MultiHostInjector> processor) {
-    List<Pair<ElementFilter, MultiHostInjector>> pairs = cachedInjectors.get(element.getClass());
-    if (pairs != null) {
-      for (Pair<ElementFilter, MultiHostInjector> pair : pairs) {
-        ElementFilter filter = pair.getFirst();
-        if (filter == null || (filter.isClassAcceptable(element.getClass()) && filter.isAcceptable(element, element))) {
-          MultiHostInjector injector = pair.getSecond();
+    InjectorInfo[] infos = cachedInjectors.get(element.getClass());
+    if (infos != null) {
+      for (InjectorInfo info : infos) {
+        ElementFilter filter = info.filter;
+        if (filter == null || filter.isClassAcceptable(element.getClass()) && filter.isAcceptable(element, element)) {
+          MultiHostInjector injector = info.injector;
           if (!processor.process(injector)) return;
         }
       }

@@ -402,9 +402,9 @@ public class InjectedLanguageUtil {
       final DocumentEx hostDocument = (DocumentEx)viewProvider.getDocument();
       if (hostDocument == null) return null;
 
-      final Places result = new PlacesImpl();
-      InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstance(hostPsiFile.getProject());
+      InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(hostPsiFile.getProject());
       if (injectedManager == null) return null; //for tests
+      final Places result = new PlacesImpl();
       injectedManager.processInPlaceInjectorsFor(element, new Processor<MultiHostInjector>() {
         public boolean process(MultiHostInjector injector) {
           injector.getLanguagesToInject(element, new MultiHostRegistrar() {
@@ -486,7 +486,7 @@ public class InjectedLanguageUtil {
                 DocumentWindow documentWindow = new DocumentWindow(hostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
                 PsiManagerEx psiManager = (PsiManagerEx)element.getManager();
                 final Project project = psiManager.getProject();
-                VirtualFileWindow virtualFile = InjectedLanguageManagerImpl.getInstance(project).createVirtualFile(myLanguage, hostVirtualFile, documentWindow, outChars, project);
+                VirtualFileWindow virtualFile = InjectedLanguageManagerImpl.getInstanceImpl(project).createVirtualFile(myLanguage, hostVirtualFile, documentWindow, outChars, project);
 
                 DocumentImpl decodedDocument = new DocumentImpl(outChars);
                 FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
@@ -591,7 +591,7 @@ public class InjectedLanguageUtil {
   public static void clearCaches(PsiFile injected) {
     VirtualFileWindow virtualFile = (VirtualFileWindow)injected.getVirtualFile();
     ((PsiManagerEx)injected.getManager()).getFileManager().setViewProvider(virtualFile, null);
-    InjectedLanguageManagerImpl.getInstance(injected.getProject()).clearCaches(virtualFile);
+    InjectedLanguageManagerImpl.getInstanceImpl(injected.getProject()).clearCaches(virtualFile);
   }
 
   private static PsiFile registerDocument(final DocumentWindow documentWindow, final PsiFile injectedPsi,

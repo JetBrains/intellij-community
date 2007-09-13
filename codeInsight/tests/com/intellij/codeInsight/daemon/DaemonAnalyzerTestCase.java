@@ -38,8 +38,8 @@ import org.jetbrains.annotations.NonNls;
 import java.util.*;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
-  private Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
-  private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
+  private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
+  private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -197,9 +197,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       result.clear();
     }
 
-    if ((isToLaunchExternal && doExternalValidation()) ||
-        forceExternalValidation()
-       ) {
+    if (isToLaunchExternal && doExternalValidation() || forceExternalValidation()) {
       ExternalToolPass action3 = new ExternalToolPass(file, editor, 0, editor.getDocument().getTextLength());
       action3.doCollectInformation(new MockProgressIndicator());
       result.addAll(action3.getHighlights());

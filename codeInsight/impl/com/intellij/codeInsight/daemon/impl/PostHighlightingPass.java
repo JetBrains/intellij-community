@@ -56,6 +56,7 @@ import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -183,7 +184,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  // for tests only
+  @TestOnly
   public Collection<HighlightInfo> getHighlights() {
     return myHighlights;
   }
