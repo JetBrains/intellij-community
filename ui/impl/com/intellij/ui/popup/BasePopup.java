@@ -176,7 +176,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   public void dispose() {
     myAutoSelectionTimer.stop();
 
-    if (myPopup == null) return;
+    if (isDisposed()) return;
 
     myPopup.hide();
     mySpeedSearchPane.dispose();
@@ -195,6 +195,11 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
       myOwnerWindow.removeComponentListener(myOwnerListener);
     }
   }
+
+  protected final boolean isDisposed() {
+    return myPopup == null || myContainer == null;
+  }
+
 
   public void disposeChildren() {
     if (myChild != null) {
@@ -271,6 +276,8 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
       myPopup.show();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          if (isDisposed()) return;
+
           requestFocus();
           myFocusTrackback.registerFocusComponent(getPreferredFocusableComponent());
           registerAutoMove();
@@ -295,7 +302,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   }
 
   private void processParentWindowMoved() {
-    if (myPopup == null || myContainer == null) return;
+    if (isDisposed()) return;
 
     final Point newOwnerPoint = myOwnerWindow.getLocationOnScreen();
 
