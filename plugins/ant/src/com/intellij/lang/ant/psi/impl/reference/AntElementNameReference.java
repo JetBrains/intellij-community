@@ -11,8 +11,8 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericRefe
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -118,6 +118,13 @@ public class AntElementNameReference extends AntGenericReference {
     try {
       for (final AntTypeId id : def.getNestedElements()) {
         ids.add(new AntElementCompletionWrapper(id.getName(), project, AntElementRole.TASK_ROLE));
+      }
+      if (def.isAllTaskContainer()) {
+        for (final AntTypeDefinition _def : antFile.getBaseTypeDefinitions()) {
+          if (_def.isTask()) {
+            ids.add(new AntElementCompletionWrapper(_def.getTypeId().getName(), project, AntElementRole.TASK_ROLE));
+          }
+        }
       }
       return ids.toArray(new Object[ids.size()]);
     }

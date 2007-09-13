@@ -52,9 +52,7 @@ public class AntAnnotator implements Annotator {
         // impoted types wouldn't be registered as valid types of nested elements,
         // so we just don't check elements for nested validness if they have imported types
         if (!se.hasImportedTypeDefinition() && parent instanceof AntStructuredElement) {
-          final AntStructuredElement pe = (AntStructuredElement)parent;
-          final AntTypeDefinition parentDef = pe.getTypeDefinition();
-          if (parentDef != null && parentDef.getNestedClassName(def.getTypeId()) == null && !isExtensionPointType(pe, def) && !isSuccessorOfUndefinedElement(se)) {
+          if (!canBeNested((AntStructuredElement)parent, def) && !isSuccessorOfUndefinedElement(se)) {
             holder.createErrorAnnotation(absoluteRange, AntBundle.message("nested.element.is.not.allowed.here", name));
           }
         }
@@ -77,6 +75,17 @@ public class AntAnnotator implements Annotator {
       }
     }
     checkReferences(element, holder);
+  }
+
+  private static boolean canBeNested(final AntStructuredElement parent, final AntTypeDefinition maybeNestedDef) {
+    final AntTypeDefinition parentDef = parent.getTypeDefinition();
+    if (parentDef == null) {
+      return false;
+    }
+    return 
+      (parentDef.isAllTaskContainer() && maybeNestedDef.isTask()) ||
+      (parentDef.getNestedClassName(maybeNestedDef.getTypeId()) != null) || 
+      isExtensionPointType(parent, maybeNestedDef); 
   }
 
   private static boolean isExtensionPointType(final AntStructuredElement parent, final AntTypeDefinition maybeNested) {
