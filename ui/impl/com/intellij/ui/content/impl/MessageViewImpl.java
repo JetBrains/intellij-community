@@ -9,9 +9,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.MessageView;
-import com.intellij.ui.content.TabbedPaneContentUI;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.MessageView;
 
 /**
  * @author Eugene Belyaev
@@ -32,7 +31,7 @@ public class MessageViewImpl implements ProjectComponent, MessageView {
 
   public void projectOpened() {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, false, ToolWindowAnchor.BOTTOM);
+    myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM);
     myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowMessages.png"));
     new ContentManagerWatcher(myToolWindow, getContentManager());
   }

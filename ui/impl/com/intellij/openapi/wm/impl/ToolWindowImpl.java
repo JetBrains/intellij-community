@@ -70,7 +70,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public final void activate(final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myToolWindowManager.activateToolWindow(myId);
+    myToolWindowManager.activateToolWindow(myId, true);
     if (runnable != null) {
       myToolWindowManager.invokeLater(runnable);
     }

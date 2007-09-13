@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -87,21 +86,26 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   }
 
 
-  private void requestFocus(Component c) {
+  private void requestFocus(final Component c) {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
     if (owner != null && owner == c) {
       myFocusWatcher.setFocusedComponentImpl(c);
+      updateFocusedComponentForWatcher(c);
     }
     else {
-      if (!c.requestFocusInWindow()) {
-        c.requestFocus();
-      }
+      myManager.requestFocus(c, true).doWhenDone(new Runnable() {
+        public void run() {
+          updateFocusedComponentForWatcher(c);
+        }
+      });
     }
+  }
 
+  private void updateFocusedComponentForWatcher(final Component c) {
     final WindowWatcher watcher = ((WindowManagerImpl)WindowManager.getInstance()).getWindowWatcher();
     final FocusWatcher focusWatcher = watcher.getFocusWatcherFor(c);
     if (focusWatcher != null) {
-      focusWatcher.setFocusedComponentImpl(c);      
+      focusWatcher.setFocusedComponentImpl(c);
     }
   }
 

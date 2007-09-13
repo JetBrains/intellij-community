@@ -5,6 +5,7 @@ package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,11 +17,20 @@ import java.awt.*;
 public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
   private final FileEditorManagerEx myEditorManager;
   private final JComponent myComponent;
+  private boolean myForced;
+  private ActionCallback myDoneCallback;
 
-  public RequestFocusInEditorComponentCmd(@NotNull final FileEditorManagerEx editorManager, final Runnable finishCallBack){
+  public RequestFocusInEditorComponentCmd(@NotNull final FileEditorManagerEx editorManager, final Runnable finishCallBack, boolean forced){
     super(finishCallBack);
     myEditorManager = editorManager;
     myComponent = myEditorManager.getPreferredFocusedComponent();
+    myForced = forced;
+
+    myDoneCallback = new ActionCallback();
+  }
+
+  public ActionCallback getDoneCallback() {
+    return myDoneCallback;
   }
 
   public final void run(){
@@ -46,9 +56,7 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
       }
 
       if(myComponent != null){
-        if(!myComponent.requestFocusInWindow()){
-          myComponent.requestFocus();
-        }
+        myManager.requestFocus(myComponent, myForced).markDone(myDoneCallback);
       }
 
     }finally{

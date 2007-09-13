@@ -1,7 +1,14 @@
 package com.intellij.ui;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,11 +110,28 @@ public class FocusTrackback {
 
   public void restoreFocus() {
     if (wrongOS()) return;
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        _restoreFocus();
-      }
-    });
+
+    final DataContext context = myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
+    final Project project = (Project)context.getData(DataConstants.PROJECT);
+    if (project != null && !project.isDisposed()) {
+      final ToolWindowManagerImpl manager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+      manager.requestFocus(new ActionCallback.Runnable() {
+        public ActionCallback run() {
+          _restoreFocus();
+          return new ActionCallback.Done();
+        }
+
+        public String toString() {
+          return "focus trackback";
+        }
+      }, false);
+    } else {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          _restoreFocus();
+        }
+      });
+    }
   }
 
   private void _restoreFocus() {

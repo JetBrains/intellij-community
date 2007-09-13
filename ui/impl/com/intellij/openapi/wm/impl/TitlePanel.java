@@ -69,6 +69,7 @@ public final class TitlePanel extends JPanel {
     if (active == myActive) {
       return;
     }
+
     myActive = active;
     myFrameTicker.cancelAllRequests();
     if (myCurrentFrame > 0) { // reverse rendering

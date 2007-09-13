@@ -5,10 +5,13 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -79,6 +82,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private Alarm myFocusedComponentAlaram;
 
+  private Alarm myForcedFocusRequestsAlarm;
+  private boolean myUnforcedFocusRequestsAllowed = true;
+
+  private ActionCallback.Runnable myRequestFocusCmd;
+
   /**
    * invoked by reflection
    */
@@ -105,6 +113,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     mySideStack = new SideStack();
 
     myFocusedComponentAlaram = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);  
+    myForcedFocusRequestsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
   }
 
   public Project getProject() {
@@ -143,7 +152,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     appendSetEditorComponentCmd(editorComponent, commandsList);
     if (myEditorComponentActive) {
-      activateEditorComponentImpl(commandsList);
+      activateEditorComponentImpl(commandsList, true);
     }
     execute(commandsList);
   }
@@ -189,34 +198,47 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   private void execute(final ArrayList<FinalizableCommand> commandList) {
     fireStateChanged();
+    for (FinalizableCommand each : commandList) {
+      each.beforeExecute(this);
+    }
     myWindowManager.getCommandProcessor().execute(commandList, myProject.getDisposed());
   }
 
   public void activateEditorComponent() {
+    activateEditorComponent(true);    
+  }
+
+  public void activateEditorComponent(boolean forced) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateEditorComponent()");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
-    activateEditorComponentImpl(commandList);
+    activateEditorComponentImpl(commandList, forced);
     execute(commandList);
   }
 
-  private void activateEditorComponentImpl(final ArrayList<FinalizableCommand> commandList) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: activateEditorComponentImpl()");
-    }
-    final WindowInfoImpl[] infos = myLayout.getInfos();
-    for (int i = 0; i < infos.length; i++) {
-      final WindowInfoImpl info = infos[i];
-      deactivateToolWindowImpl(info.getId(), (info.isAutoHide() || info.isSliding()) && !(info.isFloating() && hasModalChild(info)),
-                               commandList);
-    }
-    myEditorComponentActive = true;
-
+  private void activateEditorComponentImpl(final ArrayList<FinalizableCommand> commandList, boolean forced) {
     // Now we have to request focus into most recent focused editor
-    appendRequestFocusInEditorComponentCmd(commandList);
-    myActiveStack.clear();
+    appendRequestFocusInEditorComponentCmd(commandList, forced).doWhenDone(new Runnable() {
+      public void run() {
+        final ArrayList<FinalizableCommand> postExecute = new ArrayList<FinalizableCommand>();
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("editor activated");
+        }
+        final WindowInfoImpl[] infos = myLayout.getInfos();
+        for (int i = 0; i < infos.length; i++) {
+          final WindowInfoImpl info = infos[i];
+          final boolean shouldHide = (info.isAutoHide() || info.isSliding()) && !(info.isFloating() && hasModalChild(info));
+          deactivateToolWindowImpl(info.getId(), shouldHide, postExecute);
+        }
+        myEditorComponentActive = true;
+        myActiveStack.clear();
+
+        execute(postExecute);
+      }
+    });
   }
 
   /**
@@ -245,18 +267,20 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     appendRequestFocusInToolWindowCmd(id, commandsList);
   }
 
-  void activateToolWindow(final String id) {
+  void activateToolWindow(final String id, boolean forced) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateToolWindow(" + id + ")");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
-    activateToolWindowImpl(id, commandList);
+    activateToolWindowImpl(id, commandList, forced);
     execute(commandList);
   }
 
-  private void activateToolWindowImpl(final String id, final ArrayList<FinalizableCommand> commandList) {
+  private void activateToolWindowImpl(final String id, final ArrayList<FinalizableCommand> commandList, boolean forced) {
+    if (!myUnforcedFocusRequestsAllowed && !forced) return;
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateToolWindowImpl(" + id + ")");
     }
@@ -408,7 +432,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       while (!mySideStack.isEmpty(info.getAnchor())) {
         mySideStack.pop(info.getAnchor());
       }
-      activateEditorComponentImpl(commandList);
+      activateEditorComponentImpl(commandList, true);
     } else {
 
       // first of all we have to find tool window that was located at the same side and
@@ -439,12 +463,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myActiveStack.remove(id, false); // hidden window should be at the top of stack
       if (wasActive) {
         if (myActiveStack.isEmpty()) {
-          activateEditorComponentImpl(commandList);
+          activateEditorComponentImpl(commandList, true);
         }
         else {
           final String toBeActivatedId = myActiveStack.pop();
           if (toBeActivatedId != null) {
-            activateToolWindowImpl(toBeActivatedId, commandList);
+            activateToolWindowImpl(toBeActivatedId, commandList, true);
           }
         }
       }
@@ -562,14 +586,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     if (!info.isAutoHide() && (info.isDocked() || info.isFloating())) {
       if (wasActive) {
-        activateToolWindowImpl(info.getId(), commandsList);
+        activateToolWindowImpl(info.getId(), commandsList, true);
       }
       else if (wasVisible) {
         showToolWindowImpl(info.getId(), false, commandsList);
       }
     }
     else if (wasActive) { // tool window was active but it cannot be activate again
-      activateEditorComponentImpl(commandsList);
+      activateEditorComponentImpl(commandsList, true);
     }
 
     execute(commandsList);
@@ -712,7 +736,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     // if there is no any active tool window and editor is also inactive
     // then activate editor
     if (!myEditorComponentActive && getActiveToolWindowId() == null) {
-      activateEditorComponentImpl(commandList);
+      activateEditorComponentImpl(commandList, true);
     }
     execute(commandList);
   }
@@ -940,12 +964,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     commandsList.add(command);
   }
 
-  private void appendRequestFocusInEditorComponentCmd(final ArrayList<FinalizableCommand> commandList) {
-    if (myProject.isDisposed()) return;
+  private ActionCallback appendRequestFocusInEditorComponentCmd(final ArrayList<FinalizableCommand> commandList, boolean forced) {
+    if (myProject.isDisposed()) return new ActionCallback.Done();
     final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
     final RequestFocusInEditorComponentCmd command =
-      new RequestFocusInEditorComponentCmd(FileEditorManagerEx.getInstanceEx(myProject), commandProcessor);
+      new RequestFocusInEditorComponentCmd(FileEditorManagerEx.getInstanceEx(myProject), commandProcessor, forced);
     commandList.add(command);
+    return command.getDoneCallback();
   }
 
   private void appendRequestFocusInToolWindowCmd(final String id, final ArrayList<FinalizableCommand> commandList) {
@@ -1164,6 +1189,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null) {
         return;
       }
+
       // Sometimes focus gained comes when editor is active. For example it can happen when
       // user switches between menus or closes some dialog. In that case we just ignore this event,
       // i.e. don't initiate deactivation of tool windows and requesting focus in editor.
@@ -1173,7 +1199,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       invokeLater(// we have to be last listener
                   new Runnable() {
                     public void run() {
-                      activateEditorComponent();
+                      activateEditorComponent(false);
                     }
                   });
     }
@@ -1207,7 +1233,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         myFocusedComponentAlaram.addRequest(new Runnable() {
           public void run() {
             if (!myLayout.isToolWindowRegistered(myId)) return;
-            activateToolWindow(myId);
+            activateToolWindow(myId, false);
           }
         }, 100);
       }
@@ -1273,7 +1299,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     public void activated(final InternalDecorator source) {
-      activateToolWindow(source.getToolWindow().getId());
+      activateToolWindow(source.getToolWindow().getId(), true);
     }
 
     public void typeChanged(final InternalDecorator source, final ToolWindowType type) {
@@ -1319,5 +1345,68 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public ToolWindowsPane getToolWindowsPane() {
     return myToolWindowsPane;
+  }
+
+  public ActionCallback requestFocus(final Component c, final boolean forced) {
+    return requestFocus(new ActionCallback.Runnable() {
+      public ActionCallback run() {
+        final ActionCallback result = new ActionCallback();
+        if (!c.requestFocusInWindow()) {
+          c.requestFocus();
+          result.setDone();
+        } else {
+          result.setDone();
+        }
+        return result;
+      }
+      public String toString() {
+        return "comp request=" + c;
+      }
+    }, forced);
+  }
+
+  public ActionCallback requestFocus(final ActionCallback.Runnable command, final boolean forced) {
+    final ActionCallback result = new ActionCallback();
+
+    if (!forced) {
+      LaterInvocator.invokeLater(new Runnable() {
+        public void run() {
+          _requestFocus(command, forced, result);
+        }
+      }, ModalityState.NON_MODAL);
+    } else {
+      _requestFocus(command, forced, result);
+    }
+
+    return result;
+  }
+
+  private void _requestFocus(final ActionCallback.Runnable command, final boolean forced, final ActionCallback result) {
+    if (!forced && !myUnforcedFocusRequestsAllowed) return;
+
+    myRequestFocusCmd = command;
+    if (forced) {
+      myForcedFocusRequestsAlarm.cancelAllRequests();
+      myUnforcedFocusRequestsAllowed = false;
+    }
+
+    LaterInvocator.invokeLater(new Runnable() {
+      public void run() {
+        if (!forced && !myUnforcedFocusRequestsAllowed) return;
+
+        if (myRequestFocusCmd == command) {
+          myRequestFocusCmd = null;
+          command.run().markDone(result);
+
+          if (forced) {
+            myForcedFocusRequestsAlarm.addRequest(new Runnable() {
+              public void run() {
+                myUnforcedFocusRequestsAllowed = true;
+              }
+            }, 250);
+          }
+        }
+      }
+    });
   }
 }

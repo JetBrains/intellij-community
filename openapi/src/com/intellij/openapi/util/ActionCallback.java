@@ -8,16 +8,16 @@ import java.util.ArrayList;
 public class ActionCallback {
 
   private boolean myDone;
-  private List<Runnable> myRunnables;
+  private List<java.lang.Runnable> myRunnables;
 
   public void setDone() {
     myDone = true;
     callback();
   }
 
-  public final ActionCallback doWhenDone(@NotNull final Runnable runnable) {
+  public final ActionCallback doWhenDone(@NotNull final java.lang.Runnable runnable) {
     if (myRunnables == null) {
-      myRunnables = new ArrayList<Runnable>();
+      myRunnables = new ArrayList<java.lang.Runnable>();
     }
 
     myRunnables.add(runnable);
@@ -28,7 +28,7 @@ public class ActionCallback {
   }
 
   public final void markDone(final ActionCallback child) {
-    doWhenDone(new Runnable() {
+    doWhenDone(new java.lang.Runnable() {
       public void run() {
         child.setDone();
       }
@@ -37,9 +37,9 @@ public class ActionCallback {
 
   private void callback() {
     if (myDone && myRunnables != null) {
-      final Runnable[] all = myRunnables.toArray(new Runnable[myRunnables.size()]);
+      final java.lang.Runnable[] all = myRunnables.toArray(new java.lang.Runnable[myRunnables.size()]);
       myRunnables.clear();
-      for (Runnable each : all) {
+      for (java.lang.Runnable each : all) {
         each.run();
       }
     }
@@ -49,5 +49,9 @@ public class ActionCallback {
     public Done() {
       setDone();
     }
+  }
+
+  public interface Runnable {
+    ActionCallback run();
   }
 }
