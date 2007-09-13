@@ -870,11 +870,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     public void update(AnActionEvent e) {
-      VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
-      VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
-      FileType fileType = revisionVirtualFile == null ? null : revisionVirtualFile.getFileType();
+      VirtualFile revVFile = e.getData( VcsDataKeys.VCS_VIRTUAL_FILE );
+      VcsFileRevision revision = e.getData( VcsDataKeys.VCS_FILE_REVISION );
+      FileType fileType = revVFile == null ? null : revVFile.getFileType();
       e.getPresentation()
-        .setEnabled(revision != null && revisionVirtualFile != null && !fileType.isBinary() && myAnnotationProvider != null);
+        .setEnabled( revision != null && revVFile != null && !fileType.isBinary() &&
+                     myAnnotationProvider != null && myAnnotationProvider.isAnnotationValid( revision ) );
     }
 
 

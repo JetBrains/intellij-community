@@ -32,10 +32,9 @@
 package com.intellij.cvsSupport2.annotate;
 
 import com.intellij.CvsBundle;
-import com.intellij.peer.PeerFactory;
 import com.intellij.cvsSupport2.CvsVcs2;
-import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
+import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
@@ -43,12 +42,13 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.peer.PeerFactory;
 
 import java.io.File;
 import java.util.List;
@@ -78,5 +78,9 @@ public class CvsAnnotationProvider implements AnnotationProvider{
   public FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException {
     final CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParent());
     return CvsVcs2.getInstance(myProject).createAnnotation(file, revision.getRevisionNumber().asString(), settings);
+  }
+
+  public boolean isAnnotationValid( VcsFileRevision rev ){
+    return true;
   }
 }

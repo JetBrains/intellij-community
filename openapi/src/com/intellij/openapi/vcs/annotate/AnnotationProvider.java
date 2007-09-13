@@ -19,10 +19,16 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public interface AnnotationProvider {
-
+public interface AnnotationProvider
+{
   FileAnnotation annotate(VirtualFile file) throws VcsException;
-
   FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException;
-  
+
+  /**
+   * Check whether the annotation retrieval is valid (or possible) for the
+   * particular file revision (or version in the repository).
+   * @param rev File revision to be checked.
+   * @return true if annotation it valid for the given revision.
+   */
+  boolean isAnnotationValid( VcsFileRevision rev );
 }
