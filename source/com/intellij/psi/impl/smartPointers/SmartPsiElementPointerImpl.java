@@ -102,7 +102,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     if (myElement instanceof PsiImportList) {
       return new ImportListInfo((PsiJavaFile)myElement.getContainingFile());
     }
-    LOG.assertTrue(myElement.isPhysical(),"Attempting to create smart pointer for non-physical element: " + myElement);
+
+    if (!myElement.isPhysical()) return null;
+
     PsiElement anchor = getAnchor(myElement);
     if (anchor != null) {
       return new AnchorElementInfo(anchor);
