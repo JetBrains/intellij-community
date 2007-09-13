@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -255,6 +256,14 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         childByRole, startOffset, startOffset + length,
         localizedMessage, HighlightInfo.htmlEscapeToolTip(localizedMessage)
       );
+
+      if (highlightInfo == null) {
+        highlightInfo = HighlightInfo.createHighlightInfo(
+          warning,
+          new TextRange(startOffset, startOffset + length),
+          localizedMessage, (TextAttributes)null
+        );
+      }
 
       for (final IntentionAction quickFixAction : quickFixActions) {
         if (quickFixAction == null) continue;
