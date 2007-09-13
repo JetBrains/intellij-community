@@ -297,7 +297,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
            XmlUtil.XML_SCHEMA_URI3.equals(namespace);
   }
 
-  private static boolean checkSchemaNamespace(XmlTag context){
+  static boolean checkSchemaNamespace(XmlTag context){
     final String namespace = context.getNamespace();
     if(namespace != null && namespace.length() > 0){
       return checkSchemaNamespace(namespace);

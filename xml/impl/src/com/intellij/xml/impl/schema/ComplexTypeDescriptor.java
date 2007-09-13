@@ -3,6 +3,7 @@ package com.intellij.xml.impl.schema;
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -11,6 +12,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -88,7 +90,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   // Read-only calculation
   private XmlElementDescriptor[] doCollectElements(@Nullable XmlElement context) {
     Map<String,XmlElementDescriptor> map = new LinkedHashMap<String,XmlElementDescriptor>(5);
-    collectElements(map, myTag, new THashSet<XmlTag>(), context);
+    collectElements(map, myTag, new THashSet<XmlTag>(), "", context);
     addSubstitutionGroups(map);
     filterAbstractElements(map);
     return map.values().toArray(
@@ -137,7 +139,37 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     return result.toArray(new XmlAttributeDescriptor[result.size()]);
   }
 
-  private void collectElements(Map<String,XmlElementDescriptor> result, XmlTag tag, Set<XmlTag> visited, @Nullable XmlElement context) {
+  interface TagSchemaProcessor {
+    enum ProcessingStrategy {
+      SkipChildren, ProcessChildren, Stop
+    }
+
+    ProcessingStrategy visitElement(XmlTag tag);
+    ProcessingStrategy visitTag(XmlTag tag);
+  }
+
+  static boolean processSchemaTags(XmlTag tag, THashSet<XmlTag> visited, TagSchemaProcessor processor) {
+    if (tag == null || ( visited != null && visited.contains(tag))) return true;
+    if (visited == null) visited = new THashSet<XmlTag>();
+    visited.add(tag);
+
+    for(XmlTag t:tag.getSubTags()) {
+      TagSchemaProcessor.ProcessingStrategy strategy = null;
+      final String name = t.getLocalName();
+      if ("element".equals(name) && XmlNSDescriptorImpl.checkSchemaNamespace(t)) {
+        if ((strategy = processor.visitElement(t)) == TagSchemaProcessor.ProcessingStrategy.Stop) return false;
+      } else {
+        if ((strategy = processor.visitTag(t)) == TagSchemaProcessor.ProcessingStrategy.Stop) return false;
+      }
+      if (strategy == TagSchemaProcessor.ProcessingStrategy.ProcessChildren) {
+        processSchemaTags(t,visited, processor);
+      }
+    }
+    return true;
+  }
+
+  private void collectElements(Map<String,XmlElementDescriptor> result, XmlTag tag, Set<XmlTag> visited, @NotNull String nsPrefixFromContext,
+                               @Nullable XmlElement context) {
     if(visited.contains(tag)) return;
     visited.add(tag);
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, ELEMENT_TAG_NAME)) {
@@ -151,10 +183,15 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         if (ref != null) {
           final String local = XmlUtil.findLocalNameByQualifiedName(ref);
-          final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(ref);
-          final String namespace = "".equals(namespacePrefix) ?
+          String namespacePrefix = XmlUtil.findPrefixByQualifiedName(ref);
+
+          String namespace = "".equals(namespacePrefix) ?
                                    myDocumentDescriptor.getDefaultNamespace() :
                                    tag.getNamespaceByPrefix(namespacePrefix);
+          if (namespacePrefix.length() == 0 && nsPrefixFromContext.length() != 0) {
+            String namespaceFromContext = ((XmlDocument)myDocumentDescriptor.getDeclaration()).getRootTag().getNamespaceByPrefix(nsPrefixFromContext);
+            if (namespaceFromContext.length() > 0) namespace = namespaceFromContext;
+          }
 
           XmlNSDescriptorImpl nsDescriptor = myDocumentDescriptor;
           if (!namespace.equals(myDocumentDescriptor.getDefaultNamespace())) {
@@ -165,7 +202,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           final XmlElementDescriptor element = nsDescriptor.getElementDescriptor(
             local,
             namespace,
-            new HashSet<XmlNSDescriptorImpl>(),
+            new THashSet<XmlNSDescriptorImpl>(),
             true
           );
 
@@ -193,7 +230,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         if (groupTag != null) {
           XmlTag[] tags = groupTag.getSubTags();
           for (XmlTag subTag : tags) {
-            collectElements(result, subTag, visited, context);
+            collectElements(result, subTag, visited, XmlUtil.findPrefixByQualifiedName(ref), context);
           }
         }
       }
@@ -209,13 +246,13 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
-          complexTypeDescriptor.collectElements(result, complexTypeDescriptor.myTag, visited, context);
+          complexTypeDescriptor.collectElements(result, complexTypeDescriptor.myTag, visited, base,context);
         }
 
         XmlTag[] tags = tag.getSubTags();
 
         for (XmlTag subTag : tags) {
-          collectElements(result, subTag, visited, context);
+          collectElements(result, subTag, visited, nsPrefixFromContext, context);
         }
       }
     }
@@ -223,7 +260,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       XmlTag[] tags = tag.getSubTags();
 
       for (XmlTag subTag : tags) {
-        collectElements(result, subTag, visited, context);
+        collectElements(result, subTag, visited, nsPrefixFromContext, context);
       }
     }
   }
