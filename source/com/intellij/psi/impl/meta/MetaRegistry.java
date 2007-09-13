@@ -66,7 +66,8 @@ public class MetaRegistry extends MetaDataRegistrar {
                   new ContentFilter(
                     new OrFilter(
                       new ClassFilter(XmlElementDecl.class),
-                      new ClassFilter(XmlConditionalSection.class)
+                      new ClassFilter(XmlConditionalSection.class),
+                      new ClassFilter(XmlEntityRef.class)
                     )
                   ),
                   new ClassFilter(XmlDocument.class)
