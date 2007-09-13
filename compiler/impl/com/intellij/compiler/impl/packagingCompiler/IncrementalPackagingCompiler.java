@@ -88,6 +88,14 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
         context.putUserData(ITEMS_BY_SOURCE_KEY, builderContext.getItemsBySourceMap());
         PackagingProcessingItem[] allProcessingItems = builderContext.getProcessingItems(affectedModules);
 
+        if (LOG.isDebugEnabled()) {
+          int num = Math.min(100, allProcessingItems.length);
+          LOG.debug("All files (" + num + " of " + allProcessingItems.length + "):");
+          for (int i = 0; i < num; i++) {
+              LOG.debug(allProcessingItems[i].getFile().getPath());
+          }
+        }
+
         boolean hasFilesToDelete = collectFilesToDelete(context, builderContext.getProcessingItems());
         if (hasFilesToDelete) {
           MockProcessingItem mockItem = new MockProcessingItem(new LightVirtualFile("239239293"));
@@ -179,6 +187,13 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
 
   private static boolean doBuild(final CompileContext context, final ProcessingItem[] items, final List<PackagingProcessingItem> processedItems,
                           final Set<String> writtenPaths) {
+    if (LOG.isDebugEnabled()) {
+      int num = Math.min(100, items.length);
+      LOG.debug("Files to process (" + num + " of " + items.length + "):");
+      for (int i = 0; i < num; i++) {
+        LOG.debug(items[i].getFile().getPath());
+      }
+    }
     final DeploymentUtil deploymentUtil = DeploymentUtil.getInstance();
     final FileFilter fileFilter = new IgnoredFileFilter();
     Map<ExplodedDestinationInfo, BuildParticipant> destinationOwners = context.getUserData(DESTINATION_OWNERS_KEY);
@@ -201,7 +216,8 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
               deploymentUtil.copyFile(fromFile, toFile, context, writtenPaths, fileFilter);
             }
             affectedParticipants.add(destinationOwners.get(explodedDestination));
-          } else {
+          }
+          else {
             changedJars.add(((JarDestinationInfo)destination).getJarInfo());
           }
         }
@@ -240,7 +256,8 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
       for (BuildParticipant participant : affectedParticipants) {
         BuildConfiguration buildConfiguration = participant.getBuildConfiguration();
         if (buildConfiguration.willBuildExploded()) {
-          participant.afterExplodedCreated(new File(FileUtil.toSystemDependentName(DeploymentUtilImpl.getOrCreateExplodedDir(participant))), context);
+          participant.afterExplodedCreated(new File(FileUtil.toSystemDependentName(DeploymentUtilImpl.getOrCreateExplodedDir(participant))),
+                                           context);
         }
         String jarPath = buildConfiguration.getJarPath();
         if (buildConfiguration.isJarEnabled() && jarPath != null) {
@@ -310,9 +327,7 @@ public class IncrementalPackagingCompiler implements PackagingCompiler {
   }
 
   protected void deleteFiles(final List<String> files) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Deleting outdated files...");
-    }
+    LOG.debug("Deleting outdated files...");
     for (String path : files) {
       File file = new File(FileUtil.toSystemDependentName(path));
       boolean deleted = FileUtil.delete(file);
