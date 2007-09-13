@@ -34,6 +34,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -234,25 +235,35 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       final boolean concrete = JavaClassReferenceProvider.CONCRETE.getBooleanValue(options);
       final boolean notInterface = JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(options);
       for (PsiClass clazz: classes) {
-        if (instantiatable) {
-          if (PsiUtil.isInstantiatable(clazz)) {
-            list.add(clazz);
-          }
-        } else if (concrete) {
-          if (!clazz.hasModifierProperty(PsiModifier.ABSTRACT) && !clazz.isInterface()) {
-            list.add(clazz);
-          }
-        } else if (notInterface) {
-          if (!clazz.isInterface()) {
-            list.add(clazz);
-          }
-        } else {
+        if (isClassAccepted(clazz, instantiatable, concrete, notInterface)) {
           list.add(clazz);
         }
       }
       return list.toArray();
     }
     return ArrayUtil.mergeArrays(subPackages, classes, Object.class);
+  }
+
+  private static boolean isClassAccepted(final PsiClass clazz, final boolean instantiatable, final boolean concrete, final boolean notInterface) {
+    if (instantiatable) {
+      if (PsiUtil.isInstantiatable(clazz)) {
+        return true;
+      }
+    }
+    else if (concrete) {
+      if (!clazz.hasModifierProperty(PsiModifier.ABSTRACT) && !clazz.isInterface()) {
+        return true;
+      }
+    }
+    else if (notInterface) {
+      if (!clazz.isInterface()) {
+        return true;
+      }
+    }
+    else {
+      return true;
+    }
+    return false;
   }
 
   @NotNull
@@ -421,23 +432,23 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       packageScope = packageScope.intersectWith(scope);
     }
     final GlobalSearchScope allScope = context.getProject().getAllScope();
-    boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(getOptions());
+    final boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(getOptions());
+    final boolean notInterface = JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(getOptions());
+    final boolean concrete = JavaClassReferenceProvider.CONCRETE.getBooleanValue(getOptions());
 
     for (String extendClassName : extendClasses) {
-      PsiClass extendClass = context.getManager().findClass(extendClassName, allScope);
+      final PsiClass extendClass = context.getManager().findClass(extendClassName, allScope);
       if (extendClass != null) {
-        PsiClass[] result = context.getManager().getSearchHelper().findInheritors(extendClass, packageScope, true);
-        for (final PsiClass clazz : result) {
-          Object value = createSubclassLookupValue(context, clazz, instantiatable);
-          if (value != null) {
-            lookups.add(value);
-          }
-        }
         // add itself
         if (packageScope.contains(extendClass.getContainingFile().getVirtualFile())) {
-          Object value = createSubclassLookupValue(context, extendClass, instantiatable);
-          if (value != null) {
-            lookups.add(value);
+          if (isClassAccepted(extendClass, instantiatable, concrete, notInterface)) {
+            ContainerUtil.addIfNotNull(createSubclassLookupValue(context, extendClass), lookups);
+          }
+        }
+        final PsiClass[] result = context.getManager().getSearchHelper().findInheritors(extendClass, packageScope, true);
+        for (final PsiClass clazz : result) {
+          if (isClassAccepted(clazz, instantiatable, concrete, notInterface)) {
+            ContainerUtil.addIfNotNull(createSubclassLookupValue(context, clazz), lookups);
           }
         }
       }
@@ -446,10 +457,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Nullable
-  private static Object createSubclassLookupValue(@NotNull final PsiPackage context, @NotNull final PsiClass clazz, boolean instantiatable) {
-    if (instantiatable && !PsiUtil.isInstantiatable(clazz)) {
-      return null;
-    }
+  private static Object createSubclassLookupValue(@NotNull final PsiPackage context, @NotNull final PsiClass clazz) {
     String name = clazz.getQualifiedName();
     if (name == null) return null;
     final String pack = context.getQualifiedName();
