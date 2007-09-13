@@ -30,7 +30,19 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
 
   public final void run() {
     try {
-      Component preferredFocusedComponent = myFocusWatcher.getFocusedComponent();
+      Component preferredFocusedComponent = null;
+
+      if (myToolWindow.getContentManager().getSelectedContent() != null) {
+        preferredFocusedComponent = myToolWindow.getContentManager().getSelectedContent().getPreferredFocusableComponent();
+        if (preferredFocusedComponent != null) {
+          preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent((JComponent)preferredFocusedComponent);
+        }
+      }
+
+      if (preferredFocusedComponent == null) {
+        preferredFocusedComponent = myFocusWatcher.getFocusedComponent();
+      }
+
       if (preferredFocusedComponent == null) {
         preferredFocusedComponent = myFocusWatcher.getNearestFocusableComponent();
         if (preferredFocusedComponent instanceof JComponent) {
