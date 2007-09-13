@@ -234,16 +234,15 @@ public class RefCountHolder {
       progress.cancel();
       return;
     }
-    int newState;
+    int newState = State.VIRGIN;
     try {
       analyze.run();
       newState = State.READY;
     }
-    catch (Exception e) {
-      newState = State.VIRGIN;
+    finally {
+      boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, newState);
+      assert set : myState.get();
     }
-    boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, newState);
-    assert set : myState.get();
   }
 
   public void retrieveUnusedReferencesInfo(Runnable analyze, ProgressIndicator progress) {

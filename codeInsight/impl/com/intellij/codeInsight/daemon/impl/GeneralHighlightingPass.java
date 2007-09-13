@@ -208,7 +208,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     hosts.addAll(elements);
 
     final Collection<PsiFile> injectedFiles = new THashSet<PsiFile>();
-    final AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl();
+    final AnnotationHolderImpl annotationHolder = createAnnotationHolder();
     final Map<TextRange,Collection<HighlightInfo>> result = new THashMap<TextRange, Collection<HighlightInfo>>(hosts.size());
     for (PsiElement element : hosts) {
       InjectedLanguageUtil.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
@@ -434,6 +434,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   protected HighlightInfoHolder createInfoHolder() {
     final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
     return new HighlightInfoHolder(myFile, filters);
+  }
+  protected AnnotationHolderImpl createAnnotationHolder() {
+    return new AnnotationHolderImpl();
   }
 
   private Collection<HighlightInfo> highlightTodos() {
