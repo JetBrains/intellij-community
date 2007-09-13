@@ -40,7 +40,8 @@ public class MoveInnerImpl {
   /**
    * must be called in atomic action
    */
-  public static @Nullable PsiElement getTargetContainer(PsiClass innerClass, final boolean chooseIfNotUnderSource) {
+  @Nullable
+  public static PsiElement getTargetContainer(PsiClass innerClass, final boolean chooseIfNotUnderSource) {
     final PsiClass outerClass = innerClass.getContainingClass();
     assert outerClass != null; // Only inner classes allowed.
 
@@ -48,7 +49,8 @@ public class MoveInnerImpl {
     while (outerClassParent != null) {
       if (outerClassParent instanceof PsiClass && !(outerClassParent instanceof PsiAnonymousClass)) {
         return outerClassParent;
-      } else if (outerClassParent instanceof PsiFile) {
+      }
+      else if (outerClassParent instanceof PsiFile) {
         final PsiDirectory directory = innerClass.getContainingFile().getContainingDirectory();
         final PsiPackage aPackage = directory.getPackage();
         if (aPackage == null) {

@@ -17,7 +17,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
     myIsNextParameterHandler = isNextParameterHandler;
   }
 
-  private boolean myIsNextParameterHandler;
+  private final boolean myIsNextParameterHandler;
 
   private static PsiElement getExpressionList(Editor editor, Project project) {
     int offset = editor.getCaretModel().getOffset();

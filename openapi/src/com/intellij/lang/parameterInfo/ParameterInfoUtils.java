@@ -33,9 +33,8 @@ public class ParameterInfoUtils {
     for (ASTNode child : children) {
       curOffset += child.getTextLength();
       if (offset < curOffset) break;
-      IElementType type;
 
-      type = child.getElementType();
+      IElementType type = child.getElementType();
       if (type == delimiterType) index++;
     }
 

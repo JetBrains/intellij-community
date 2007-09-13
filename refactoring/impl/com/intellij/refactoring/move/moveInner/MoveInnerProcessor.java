@@ -91,7 +91,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
     final String newQName;
     if (myTargetContainer instanceof PsiDirectory) {
-      final PsiDirectory targetDirectory = ((PsiDirectory)myTargetContainer);
+      final PsiDirectory targetDirectory = (PsiDirectory)myTargetContainer;
       final PsiPackage aPackage = targetDirectory.getPackage();
       LOG.assertTrue(aPackage != null);
       newQName = aPackage.getQualifiedName() + "." + myNewClassName;
@@ -313,14 +313,13 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
           final PsiPackage aPackage = ((PsiDirectory)myTargetContainer).getPackage();
           return !isInPackage(containingFile, aPackage);
         }
-        else { // target container is a class
-          PsiFile targetFile = myTargetContainer.getContainingFile();
-          if (targetFile != null) {
-            final PsiDirectory containingDirectory = targetFile.getContainingDirectory();
-            if (containingDirectory != null) {
-              final PsiPackage targetPackage = containingDirectory.getPackage();
-              return isInPackage(containingFile, targetPackage);
-            }
+        // target container is a class
+        PsiFile targetFile = myTargetContainer.getContainingFile();
+        if (targetFile != null) {
+          final PsiDirectory containingDirectory = targetFile.getContainingDirectory();
+          if (containingDirectory != null) {
+            final PsiPackage targetPackage = containingDirectory.getPackage();
+            return isInPackage(containingFile, targetPackage);
           }
         }
         return false;
@@ -359,7 +358,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
                     final String parameterName,
                     boolean searchInComments,
                     boolean searchInNonJava,
-                    final @NotNull PsiElement targetContainer) {
+                    @NotNull final PsiElement targetContainer) {
     myNewClassName = className;
     myInnerClass = innerClass;
     myDescriptiveName = UsageViewUtil.getDescriptiveName(myInnerClass);
