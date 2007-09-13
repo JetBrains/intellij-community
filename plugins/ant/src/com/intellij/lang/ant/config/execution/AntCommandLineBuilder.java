@@ -90,6 +90,9 @@ public class AntCommandLineBuilder {
     }
 
     myCommandLine.getClassPath().addAllFiles(AntBuildFileImpl.ALL_CLASS_PATH.get(container));
+    
+    myCommandLine.getClassPath().addAllFiles(AntBuildFileImpl.getUserHomeLibraries());
+    
     final String toolsJar = jdk.getToolsPath();
     if (toolsJar != null) {
       myCommandLine.getClassPath().add(toolsJar);

@@ -19,6 +19,7 @@ import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,8 @@ import java.util.*;
 public class AntBuildFileImpl implements AntBuildFileBase {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntBuildFileImpl");
+  @NonNls private static final String USER_HOME = "user.home";
+  @NonNls private static final String ANT_LIB = "/.ant/lib";
 
   public static final AbstractProperty<AntInstallation> ANT_INSTALLATION = new AbstractProperty<AntInstallation>() {
     public String getName() {
@@ -99,8 +102,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public static final ListProperty<TargetFilter> TARGET_FILTERS = ListProperty.create("targetFilters");
   public static final ListProperty<BuildFileProperty> ANT_PROPERTIES = ListProperty.create("properties");
   public static final AbstractProperty<String> ANT_COMMAND_LINE_PARAMETERS = new StringProperty("antCommandLine", "");
-  public static final AbstractProperty<AntReference> ANT_REFERENCE =
-    new ValueProperty<AntReference>("antReference", AntReference.PROJECT_DEFAULT);
+  public static final AbstractProperty<AntReference> ANT_REFERENCE = new ValueProperty<AntReference>("antReference", AntReference.PROJECT_DEFAULT);
   public static final ListProperty<AntClasspathEntry> ADDITIONAL_CLASSPATH = ListProperty.create("additionalClassPath");
   public static final AbstractProperty<AntInstallation> RUN_WITH_ANT = new AbstractProperty<AntInstallation>() {
     public String getName() {
@@ -122,6 +124,14 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     }
   };
 
+  public static List<File> getUserHomeLibraries() {
+    ArrayList<File> classpath = new ArrayList<File>();
+    final String homeDir = System.getProperty(USER_HOME);
+    new AllJarsUnderDirEntry(new File(homeDir, ANT_LIB)).addFilesTo(classpath);
+    return classpath;
+  }
+  
+  
   private final AntFile myFile;
   private final AntConfigurationBase myAntConfiguration;
   private final ExternalizablePropertyContainer myWorkspaceOptions;
