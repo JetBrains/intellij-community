@@ -1,4 +1,9 @@
 <components>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.xml.util.XmlApplicationComponent</implementation-class>
+    </component>
+  </application-components>
   <project-components>
     <component>
       <interface-class>com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponent</interface-class>
