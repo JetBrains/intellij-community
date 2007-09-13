@@ -79,20 +79,20 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
   }
 
   public PsiMethod getSetter() {
-    if (!mySetterInitialized) {
-      mySetterInitialized = true;
-      if (!isProperty()) return null;
-      final AccessorMethod setter = new AccessorMethod(this, true);
-      final PsiClass clazz = getContainingClass();
-      if (clazz == null || clazz.findMethodBySignature(setter, false) == null) {
-        mySetter = setter;
-      }
+    mySetterInitialized = true;
+    if (!isProperty()) return null;
+    final AccessorMethod setter = new AccessorMethod(this, true);
+    final PsiClass clazz = getContainingClass();
+    if (clazz == null || clazz.findMethodBySignature(setter, false) == null) {
+      mySetter = setter;
+    } else {
+      mySetter = null;
     }
+
     return mySetter;
   }
 
-  public void subtreeChanged() {
-    super.subtreeChanged();
+  public void clearCaches() {
     myGetter = null;
     mySetter = null;
     myGetterInitialized = false;
@@ -100,15 +100,16 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
   }
 
   public PsiMethod getGetter() {
-    if (!myGetterInitialized) {
-      myGetterInitialized = true;
-      if (!isProperty()) return null;
-      final AccessorMethod getter = new AccessorMethod(this, false);
-      final PsiClass clazz = getContainingClass();
-      if (clazz == null || clazz.findMethodBySignature(getter, false) == null) {
-        myGetter = getter;
-      }
+    myGetterInitialized = true;
+    if (!isProperty()) return null;
+    final AccessorMethod getter = new AccessorMethod(this, false);
+    final PsiClass clazz = getContainingClass();
+    if (clazz == null || clazz.findMethodBySignature(getter, false) == null) {
+      myGetter = getter;
+    } else {
+      myGetter = null;
     }
+
     return myGetter;
   }
 
