@@ -82,8 +82,8 @@ public class GroovyCompiler implements TranslatingCompiler {
       commandLine = new GeneralCommandLine();
       commandLine.setExePath(JAVA_EXE);
 
-      commandLine.addParameter("-Xdebug");
-      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5046");
+      /*commandLine.addParameter("-Xdebug");
+      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5046");*/
       commandLine.addParameter("-cp");
 
       String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
