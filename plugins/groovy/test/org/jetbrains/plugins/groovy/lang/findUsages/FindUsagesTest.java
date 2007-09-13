@@ -81,7 +81,7 @@ public class FindUsagesTest extends IdeaTestCase {
   }
 
   public void testProperty1() throws Throwable {
-    doTest("property1/A.groovy", 2);
+    doTest("property1/A.groovy", 1);
   }
 
   public void testEscapedReference() throws Throwable {
