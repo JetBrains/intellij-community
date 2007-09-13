@@ -207,7 +207,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute().getResultObject();
   }
 
-  public void launchAction(final IntentionAction action) throws Throwable {
+  public void launchAction(@NotNull final IntentionAction action) throws Throwable {
     new WriteCommandAction(myProjectFixture.getProject()) {
       protected void run(final Result result) throws Throwable {
         action.invoke(getProject(), getEditor(), getFile());

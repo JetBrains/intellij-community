@@ -148,7 +148,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @param action the action to be launched.
    * @throws Throwable any exception.
    */
-  void launchAction(IntentionAction action) throws Throwable;
+  void launchAction(@NotNull IntentionAction action) throws Throwable;
 
   void configureByFile(String file) throws Throwable;
 
