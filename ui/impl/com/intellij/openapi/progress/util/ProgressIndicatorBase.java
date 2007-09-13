@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.DoubleArrayList;
@@ -133,7 +134,7 @@ public class ProgressIndicatorBase implements ProgressIndicatorEx {
 
   public final void checkCanceled() {
     if (isCanceled() && myNonCancelableCount == 0) {
-      //throw new ProcessCanceledException();
+      throw new ProcessCanceledException();
     }
 
     delegate(new IndicatorAction() {
