@@ -81,7 +81,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
       myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
 
-      layeredPane.add(myComponent, new Integer(250 + layeredPane.getComponentCount()));
+      layeredPane.add(myComponent, Integer.valueOf(250 + layeredPane.getComponentCount()));
 
       myComponent.validate();
       myComponent.repaint();
@@ -197,10 +197,6 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public final void removeHintListener(final HintListener listener) {
     myListenerList.remove(HintListener.class, listener);
-  }
-
-  public String getTitle() {
-    return myTitle;
   }
 
   private final class MyEscListener implements ActionListener {

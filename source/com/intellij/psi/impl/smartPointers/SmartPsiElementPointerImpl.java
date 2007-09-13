@@ -162,8 +162,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   private static class SelfElementInfo implements ElementInfo {
-    protected PsiFile myFile;
-    private RangeMarker myMarker;
+    protected final PsiFile myFile;
+    private final RangeMarker myMarker;
     private int mySyncStartOffset;
     private int mySyncEndOffset;
     private boolean mySyncMarkerIsValid;
@@ -235,8 +235,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   private static class AnchorElementInfo implements ElementInfo {
-    protected PsiFile myFile;
-    private RangeMarker myMarker;
+    protected final PsiFile myFile;
+    private final RangeMarker myMarker;
     private int mySyncStartOffset;
     private int mySyncEndOffset;
     private boolean mySyncMarkerIsValid;
