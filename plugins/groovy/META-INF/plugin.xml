@@ -29,6 +29,7 @@
                         serviceImplementation="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings"/>
     <fileEditorProvider
         implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
+    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
   </extensions>
 
   <project-components>

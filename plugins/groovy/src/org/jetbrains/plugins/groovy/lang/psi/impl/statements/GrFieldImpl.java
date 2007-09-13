@@ -19,12 +19,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
 public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner, PsiMetaData {
+  private AccessorMethod mySetter;
+  private AccessorMethod myGetter;
+
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -70,6 +74,28 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
   public boolean isProperty() {
     final GrModifierList modifierList = getModifierList();
     return modifierList != null && !modifierList.hasExplicitVisibilityModifiers();
+  }
+
+  public PsiMethod getSetter() {
+    if (!isProperty()) return null;
+    if (mySetter == null) {
+      mySetter = new AccessorMethod(this, true);
+    }
+    return mySetter;
+  }
+
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myGetter = null;
+    mySetter = null;
+  }
+
+  public PsiMethod getGetter() {
+    if (!isProperty()) return null;
+    if (myGetter == null) {
+      myGetter = new AccessorMethod(this, false);
+    }
+    return myGetter;
   }
 
   @NotNull

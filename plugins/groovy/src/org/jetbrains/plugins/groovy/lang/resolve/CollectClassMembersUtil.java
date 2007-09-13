@@ -70,10 +70,12 @@ public class CollectClassMembersUtil {
       if (!allFields.containsKey(name)) {
         allFields.put(name, field);
       }
-      if (field instanceof GrField && ((GrField) field).isProperty() && field.getName() != null) {
+      if (field instanceof GrField && field.getName() != null) {
         final GrField property = (GrField) field;
-        addMethod(allMethods, new AccessorMethod(property, true));
-        addMethod(allMethods, new AccessorMethod(property, false));
+        final PsiMethod getter = property.getGetter();
+        if (getter != null) addMethod(allMethods, getter);
+        final PsiMethod setter = property.getSetter();
+        if (setter != null) addMethod(allMethods, setter);
       }
     }
 

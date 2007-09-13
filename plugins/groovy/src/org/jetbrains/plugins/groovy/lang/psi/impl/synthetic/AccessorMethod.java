@@ -150,7 +150,8 @@ public class AccessorMethod extends LightElement implements PsiMethod {
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Cannot set name");
+    //do nothing
+    return null;
   }
 
   @NotNull
