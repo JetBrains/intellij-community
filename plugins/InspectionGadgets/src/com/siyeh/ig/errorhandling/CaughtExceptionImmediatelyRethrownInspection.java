@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -51,7 +52,12 @@ public class CaughtExceptionImmediatelyRethrownInspection
 
     @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location) {
-        return new DeleteCatchSectionFix(true);
+        final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(
+                location, PsiTryStatement.class);
+        final boolean removeTryCatch =
+                tryStatement.getCatchSections().length == 1 &&
+                        tryStatement.getFinallyBlock() == null;
+        return new DeleteCatchSectionFix(removeTryCatch);
     }
 
     private static class DeleteCatchSectionFix extends InspectionGadgetsFix {
@@ -68,8 +74,8 @@ public class CaughtExceptionImmediatelyRethrownInspection
                 return InspectionGadgetsBundle.message(
                         "remove.try.catch.quickfix");
             } else {
-            return InspectionGadgetsBundle.message(
-                    "delete.catch.section.quickfix");
+                return InspectionGadgetsBundle.message(
+                        "delete.catch.section.quickfix");
             }
         }
 
@@ -87,11 +93,7 @@ public class CaughtExceptionImmediatelyRethrownInspection
             }
             final PsiCatchSection catchSection = (PsiCatchSection)grandParent;
             final PsiTryStatement tryStatement = catchSection.getTryStatement();
-            final PsiCatchSection[] catchSections =
-                    tryStatement.getCatchSections();
-            if (catchSections.length > 1) {
-                catchSection.delete();
-            } else {
+            if (removeTryCatch) {
                 final PsiCodeBlock codeBlock = tryStatement.getTryBlock();
                 if (codeBlock == null) {
                     return;
@@ -101,12 +103,14 @@ public class CaughtExceptionImmediatelyRethrownInspection
                     tryStatement.delete();
                 }
                 final PsiStatement firstStatement = statements[0];
-                final PsiElement newElement =
-                        tryStatement.replace(firstStatement);
-                final PsiElement target = newElement.getParent();
+
+                final PsiElement target = tryStatement.getParent();
                 for (int i = 1; i < statements.length; i++) {
-                    target.addAfter(statements[i], newElement);
+                    target.addAfter(statements[i], tryStatement);
                 }
+                tryStatement.replace(firstStatement);
+            } else {
+                catchSection.delete();
             }
         }
     }
