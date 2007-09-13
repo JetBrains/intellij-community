@@ -24,6 +24,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -495,6 +497,16 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
+    final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
+    final PsiMethod[] byName = findMethodsByName(patternMethod.getName(), checkBases);
+    for (PsiMethod method : byName) {
+      final PsiClass clazz = method.getContainingClass();
+      PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(clazz, this, PsiSubstitutor.EMPTY);
+      assert superSubstitutor != null;
+      final MethodSignature signature = method.getSignature(superSubstitutor);
+      if (signature.equals(patternSignature)) return method;
+    }
+
     return null;
   }
 

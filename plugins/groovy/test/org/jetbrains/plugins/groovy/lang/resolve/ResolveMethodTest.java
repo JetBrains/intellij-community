@@ -6,11 +6,12 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -317,5 +318,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   public void testGenerics1() throws Exception {
     PsiReference ref = configureByFile("generics1/A.groovy");
     assertNotNull(ref.resolve());
+  }
+
+  public void testExplicitGetter() throws Exception {
+    PsiReference ref = configureByFile("explicitGetter/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertNotNull(resolved);
+    assertFalse(resolved instanceof AccessorMethod);
+
   }
 }

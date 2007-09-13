@@ -28,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner, PsiMetaData {
   private AccessorMethod mySetter;
   private AccessorMethod myGetter;
+  private boolean myGetterInitialized = false;
+  private boolean mySetterInitialized = false;
 
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
@@ -77,9 +79,14 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
   }
 
   public PsiMethod getSetter() {
-    if (!isProperty()) return null;
-    if (mySetter == null) {
-      mySetter = new AccessorMethod(this, true);
+    if (!mySetterInitialized) {
+      mySetterInitialized = true;
+      if (!isProperty()) return null;
+      final AccessorMethod setter = new AccessorMethod(this, true);
+      final PsiClass clazz = getContainingClass();
+      if (clazz == null || clazz.findMethodBySignature(setter, false) == null) {
+        mySetter = setter;
+      }
     }
     return mySetter;
   }
@@ -88,12 +95,19 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
     super.subtreeChanged();
     myGetter = null;
     mySetter = null;
+    myGetterInitialized = false;
+    mySetterInitialized = false;
   }
 
   public PsiMethod getGetter() {
-    if (!isProperty()) return null;
-    if (myGetter == null) {
-      myGetter = new AccessorMethod(this, false);
+    if (!myGetterInitialized) {
+      myGetterInitialized = true;
+      if (!isProperty()) return null;
+      final AccessorMethod getter = new AccessorMethod(this, false);
+      final PsiClass clazz = getContainingClass();
+      if (clazz == null || clazz.findMethodBySignature(getter, false) == null) {
+        myGetter = getter;
+      }
     }
     return myGetter;
   }
