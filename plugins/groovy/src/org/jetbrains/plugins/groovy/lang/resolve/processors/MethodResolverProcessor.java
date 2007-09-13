@@ -117,10 +117,12 @@ public class MethodResolverProcessor extends ResolverProcessor {
       result.add(array[i]);
     }
 
-    if (methodsPresent && propertiesPresent) {
-      for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
-        GroovyResolveResult resolveResult =  iterator.next();
-        if (!(resolveResult.getElement() instanceof PsiMethod)) iterator.remove();
+    if (!myForCompletion) {
+      if (methodsPresent && propertiesPresent) {
+        for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
+          GroovyResolveResult resolveResult =  iterator.next();
+          if (!(resolveResult.getElement() instanceof PsiMethod)) iterator.remove();
+        }
       }
     }
 
