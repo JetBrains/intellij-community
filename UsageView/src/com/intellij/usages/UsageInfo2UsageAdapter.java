@@ -145,8 +145,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
     if (!isValid()) return;
 
     RangeMarker marker = getRangeMarker();
-    SelectInEditorManager.getInstance(getProject())
-      .selectInEditor(getFile(), marker.getStartOffset(), marker.getEndOffset(), false, false);
+    SelectInEditorManager.getInstance(getProject()).selectInEditor(getFile(), marker.getStartOffset(), marker.getEndOffset(), false, false);
   }
 
   public final RangeMarker getRangeMarker() {

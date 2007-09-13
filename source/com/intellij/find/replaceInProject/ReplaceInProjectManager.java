@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.Processor;
 
 import javax.swing.*;
@@ -36,7 +37,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ReplaceInProjectManager {
-  private Project myProject;
+  private final Project myProject;
   private boolean myIsFindInProgress = false;
 
   public static ReplaceInProjectManager getInstance(Project project) {
@@ -48,8 +49,8 @@ public class ReplaceInProjectManager {
   }
 
   static class ReplaceContext {
-    private UsageView usageView;
-    private FindModel findModel;
+    private final UsageView usageView;
+    private final FindModel findModel;
     private Set<Usage> excludedSet;
 
     ReplaceContext(UsageView _usageView, FindModel _findModel) {
@@ -303,26 +304,28 @@ public class ReplaceInProjectManager {
           return;
         }
 
-        RangeMarker marker = ((UsageInfo2UsageAdapter)usage).getRangeMarker();
-        Document document = marker.getDocument();
-        if (!document.isWritable()) return;
+        List<RangeMarker> markers = ((UsageInfo2UsageAdapter)usage).getRangeMarkers();
+        for (RangeMarker marker : markers) {
+          Document document = marker.getDocument();
+          if (!document.isWritable()) return;
 
-        final int textOffset = marker.getStartOffset();
-        if (textOffset < 0 || textOffset >= document.getTextLength()){
-          return;
+          final int textOffset = marker.getStartOffset();
+          if (textOffset < 0 || textOffset >= document.getTextLength()){
+            return;
+          }
+          final int textEndOffset = marker.getEndOffset();
+          if (textEndOffset < 0 || textOffset > document.getTextLength()){
+            return;
+          }
+          FindManager findManager = FindManager.getInstance(myProject);
+          final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
+          FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, replaceContext.getFindModel());
+          if (!findResult.isStringFound()){
+            return;
+          }
+          String stringToReplace = findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel());
+          document.replaceString(textOffset, textEndOffset, stringToReplace);
         }
-        final int textEndOffset = marker.getEndOffset();
-        if (textEndOffset < 0 || textOffset > document.getTextLength()){
-          return;
-        }
-        FindManager findManager = FindManager.getInstance(myProject);
-        final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
-        FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, replaceContext.getFindModel());
-        if (!findResult.isStringFound()){
-          return;
-        }
-        String stringToReplace = findManager.getStringToReplace(foundString.toString(), replaceContext.getFindModel());
-        document.replaceString(textOffset, textEndOffset, stringToReplace);
       }
     });
   }
@@ -335,7 +338,7 @@ public class ReplaceInProjectManager {
 
     Set<VirtualFile> readOnlyFiles = null;
     for (final Usage usage : selectedUsages) {
-      final VirtualFile file = ((UsageInfo2UsageAdapter)usage).getFile();
+      final VirtualFile file = ((UsageInFile)usage).getFile();
 
       if (!file.isWritable()) {
         if (readOnlyFiles == null) readOnlyFiles = new HashSet<VirtualFile>();
