@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -26,6 +27,8 @@ import java.util.Map;
  * @author spleaner
  */
 public class BreadcrumbsLoaderComponentImpl extends BreadcrumbsLoaderComponent {
+  public static final Key<Object> BREADCRUMBS_SUITABLE_FILE = new Key<Object>("breadcrumbs.suitable.file");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponentImpl");
   private Map<Language, BreadcrumbsInfoProvider> myProviders = new HashMap<Language, BreadcrumbsInfoProvider>();
 
@@ -100,7 +103,7 @@ public class BreadcrumbsLoaderComponentImpl extends BreadcrumbsLoaderComponent {
 
     private static boolean isSuitable(final Project project, final VirtualFile file) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      return psiFile != null && psiFile instanceof XmlFile;
+      return psiFile != null && ((psiFile instanceof XmlFile) || psiFile.getUserData(BREADCRUMBS_SUITABLE_FILE) != null);
     }
 
     public void fileClosed(final FileEditorManager source, final VirtualFile file) {

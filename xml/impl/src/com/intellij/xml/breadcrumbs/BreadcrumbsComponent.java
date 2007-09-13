@@ -193,7 +193,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         result.addFirst(new LineElement(element, provider));
       }
 
-      element = element.getParent();
+      element = (provider != null) ? provider.getParent(element) : element.getParent();
     }
 
     return result;

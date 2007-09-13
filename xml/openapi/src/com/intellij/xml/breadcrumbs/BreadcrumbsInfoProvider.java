@@ -17,6 +17,11 @@ public abstract class BreadcrumbsInfoProvider {
 
   public abstract boolean acceptElement(@NotNull final PsiElement e);
 
+  @Nullable
+  public PsiElement getParent(@NotNull final PsiElement e) {
+    return e.getParent();
+  }
+
   @NotNull
   public abstract String getElementInfo(@NotNull final PsiElement e);
 
