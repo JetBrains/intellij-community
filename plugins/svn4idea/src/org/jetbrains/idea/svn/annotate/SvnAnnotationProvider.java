@@ -106,4 +106,8 @@ public class SvnAnnotationProvider implements AnnotationProvider {
     }
     return annotation[0];
   }
+
+  public boolean isAnnotationValid( VcsFileRevision rev ){
+    return true;
+  }
 }
