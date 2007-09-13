@@ -53,7 +53,7 @@ public class MyTestInjector {
     ConcatenationAwareInjector injector = new ConcatenationAwareInjector() {
       public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar,
                                        @NotNull PsiElement... operands) {
-        PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class);
+        PsiVariable variable = PsiTreeUtil.getParentOfType(operands[0], PsiVariable.class, true, PsiClass.class);
         if (variable == null) return;
         String name = variable.getName();
         if (!varName.equals(name)) return;

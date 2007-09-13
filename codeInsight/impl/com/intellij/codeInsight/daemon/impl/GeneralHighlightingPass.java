@@ -189,20 +189,21 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myMarkers = lineMarkers;
   }
 
-  // rehighlight all injected PSI regardless the range,
-  // since change in one place can lead to invalidation of injected PSI in (completely) other place.
   private Map<TextRange,Collection<HighlightInfo>> highlightInjectedPsi(final List<PsiElement> elements) {
     Collection<PsiElement> hosts = new THashSet<PsiElement>();
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(getDocument());
 
+    // rehighlight all injected PSI regardless the range,
+    // since change in one place can lead to invalidation of injected PSI in (completely) other place.
     for (DocumentWindow documentRange : injected) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(documentRange);
       if (file == null) continue;
       PsiElement context = file.getContext();
       if (context != null
           && context.isValid()
-          && (myUpdateAll || new TextRange(myStartOffset, myEndOffset).contains(context.getTextRange()))
-        ) hosts.add(context);
+          && (myUpdateAll || new TextRange(myStartOffset, myEndOffset).contains(context.getTextRange()))) {
+        hosts.add(context);
+      }
     }
     hosts.addAll(elements);
 
