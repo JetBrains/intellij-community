@@ -36,6 +36,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Comparing;
@@ -69,6 +70,7 @@ public class ModuleLinkImpl extends ModuleLink {
     super(parentModule);
     LOG.assertTrue(module != null);
     myModule = module;
+    myModuleName = ModuleUtil.getModuleNameInReadAction(myModule);
   }
 
   public ModuleLinkImpl(String moduleName, Module parentModule) {
@@ -148,11 +150,7 @@ public class ModuleLinkImpl extends ModuleLink {
       return myModuleName;
     }
     else {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        public String compute() {
-          return myModule.getName();
-        }
-      });
+      return ModuleUtil.getModuleNameInReadAction(myModule);
     }
   }
 
