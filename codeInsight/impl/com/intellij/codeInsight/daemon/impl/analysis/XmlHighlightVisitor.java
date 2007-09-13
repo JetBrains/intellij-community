@@ -261,7 +261,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         highlightInfo = HighlightInfo.createHighlightInfo(
           warning,
           new TextRange(startOffset, startOffset + length),
-          localizedMessage, (TextAttributes)null
+          localizedMessage,
+          new TextAttributes() {
+            public boolean isEmpty() {
+              return false; 
+            }
+          }
         );
       }
 
