@@ -117,9 +117,16 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
     return false;
   }
 
-  public void setModifierProperty(@NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
-    if (value) {
+  public void setModifierProperty(@NotNull @NonNls String name, boolean doSet) throws IncorrectOperationException {
+    if (doSet) {
       getNode().addChild(GroovyElementFactory.getInstance(getProject()).createModifierFormText(name).getNode());
+    } else {
+      final PsiElement[] modifiers = findChildrenByType(TokenSets.MODIFIERS, PsiElement.class);
+      for (PsiElement modifier : modifiers) {
+        if (name.equals(modifier.getText())) {
+          getNode().removeChild(modifier.getNode());
+        }
+      }
     }
   }
 

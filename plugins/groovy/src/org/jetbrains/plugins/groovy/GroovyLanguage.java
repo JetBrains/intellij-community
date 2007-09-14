@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSur
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider;
 import org.jetbrains.plugins.groovy.structure.GroovyStructureViewBuilder;
 import org.jetbrains.plugins.groovy.override.OverrideMethodsHandler;
+import org.jetbrains.plugins.groovy.override.ImplementMethodsHandler;
 
 /**
  * All main properties for Groovy language
@@ -85,7 +86,7 @@ public class GroovyLanguage extends Language {
   }
 
   @NotNull
-  public RefactoringSupportProvider getRefactoringSupportProvider(){
+  public RefactoringSupportProvider getRefactoringSupportProvider() {
     return GroovyRefactoringSupportProvider.INSTANCE;
   }
 
@@ -116,6 +117,11 @@ public class GroovyLanguage extends Language {
   @Nullable
   public LanguageCodeInsightActionHandler getOverrideMethodsHandler() {
     return new OverrideMethodsHandler();
+  }
+
+  @Nullable
+  public LanguageCodeInsightActionHandler getImplementMethodsHandler() {
+    return new ImplementMethodsHandler();
   }
 
   @Nullable

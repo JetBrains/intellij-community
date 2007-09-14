@@ -202,7 +202,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public PsiElement createModifierFormText(String name) {
-    final GroovyFileBase file = createDummyFile(name + "def foo () {}");
+    final GroovyFileBase file = createDummyFile(name + " def foo () {}");
     return file.getTopLevelDefinitions()[0].getFirstChild().getFirstChild();
   }
 
