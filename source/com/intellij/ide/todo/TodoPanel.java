@@ -60,7 +60,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
   protected Project myProject;
   private final TodoPanelSettings mySettings;
   private final boolean myCurrentFileMode;
-  private Content myContent;
+  private final Content myContent;
 
   private final Tree myTree;
   private final MyTreeExpander myTreeExpander;
@@ -244,7 +244,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     return myTodoTreeBuilder.getFileForNode(node);
   }
 
-  public void setDisplayName(String tabName) {
+  protected void setDisplayName(String tabName) {
     myContent.setDisplayName(tabName);
   }
 
@@ -323,7 +323,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
   }
 
   @Nullable
-  public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
+  public OccurenceInfo goPreviousOccurence() {
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
@@ -332,7 +332,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
   }
 
   @Nullable
-  public OccurenceNavigator.OccurenceInfo goNextOccurence() {
+  public OccurenceInfo goNextOccurence() {
     return myOccurenceNavigator.goNextOccurence();
   }
 
@@ -420,12 +420,12 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     }
 
     @Nullable
-    public OccurenceNavigator.OccurenceInfo goNextOccurence() {
+    public OccurenceInfo goNextOccurence() {
       return goToPointer(getNextPointer());
     }
 
     @Nullable
-    public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
+    public OccurenceInfo goPreviousOccurence() {
       return goToPointer(getPreviousPointer());
     }
 
@@ -438,7 +438,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     }
 
     @Nullable
-    private OccurenceNavigator.OccurenceInfo goToPointer(TodoItemNode pointer) {
+    private OccurenceInfo goToPointer(TodoItemNode pointer) {
       if (pointer == null) return null;
       DefaultMutableTreeNode node = myTodoTreeBuilder.getNodeForElement(pointer);
       if (node == null) {
@@ -604,7 +604,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     }
 
     private final class TodoFilterApplier extends ToggleAction {
-      private TodoFilter myFilter;
+      private final TodoFilter myFilter;
 
       /**
        * @param text        action's text.

@@ -49,8 +49,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private int myOrientation;
   private final ActionGroup myActionGroup;
   private final String myPlace;
-  private final MyKeymapManagerListener myKeymapManagerListener;
-  private final MyTimerListener myTimerListener;
+  @SuppressWarnings({"FieldCanBeLocal"}) private final MyKeymapManagerListener myKeymapManagerListener;
+  @SuppressWarnings({"FieldCanBeLocal"}) private final MyTimerListener myTimerListener;
   private ArrayList<AnAction> myNewVisibleActions;
   protected ArrayList<AnAction> myVisibleActions;
   /**
@@ -69,7 +69,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private Rectangle myAutoPopupRec;
   private Icon myAutoPopupIcon = IconLoader.getIcon("/ide/link.png");
   private KeymapManagerEx myKeymapManager;
-  private PopupToolbar myPopupToolbar;
   private int myFirstOusideIndex = -1;
 
   private JBPopup myPopup;
@@ -105,7 +104,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     // If the panel doesn't handle mouse event then it will be passed to its parent.
     // It means that if the panel is in slidindg mode then the focus goes to the editor
     // and panel will be automatically hidden.
-    enableEvents(MouseEvent.MOUSE_MOTION_EVENT_MASK | MouseEvent.MOUSE_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
   }
 
   public JComponent getComponent() {
@@ -128,7 +127,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
       if (myAutoPopupRec != null) {
-        if (myOrientation == SwingUtilities.HORIZONTAL) {
+        if (myOrientation == SwingConstants.HORIZONTAL) {
           final int dy = myAutoPopupRec.height / 2 - myAutoPopupIcon.getIconHeight() / 2;
           myAutoPopupIcon.paintIcon(this, g, (int)myAutoPopupRec.getMaxX() - myAutoPopupIcon.getIconWidth() - 1, myAutoPopupRec.y + dy);
         }
@@ -160,8 +159,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   protected ActionButton createToolbarButton(final AnAction action) {
     if (action.displayTextInToolbar()) {
-      return new ActionButtonWithText(action, myPresentationFactory.getPresentation(action), myPlace,
-                                      ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      return new ActionButtonWithText(action, myPresentationFactory.getPresentation(action), myPlace, DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
     final ActionButton actionButton = new ActionButton(action, myPresentationFactory.getPresentation(action), myPlace, myMinimumButtonSize) {
@@ -526,7 +524,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     final Dimension dimension = new Dimension(xRight - xLeft, yBottom - yTop);
 
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
-      if (myOrientation == SwingUtilities.HORIZONTAL) {
+      if (myOrientation == SwingConstants.HORIZONTAL) {
         dimension.width += myAutoPopupIcon.getIconWidth();
       }
       else {
@@ -593,7 +591,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
 
     public void run() {
-      if (!ActionToolbarImpl.this.isShowing()) {
+      if (!isShowing()) {
         return;
       }
 
@@ -657,7 +655,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     if (!myNewVisibleActions.equals(myVisibleActions)) {
       // should rebuild UI
 
-      final boolean changeBarVisibility = myNewVisibleActions.size() == 0 || myVisibleActions.size() == 0;
+      final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
 
       final ArrayList<AnAction> temp = myVisibleActions;
       myVisibleActions = myNewVisibleActions;
@@ -688,11 +686,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     return myTargetComponent != null ? myDataManager.getDataContext(myTargetComponent) : ((DataManagerImpl)myDataManager).getDataContextTest(this);
   }
 
-  protected void processMouseEvent(final MouseEvent e) {
-    super.processMouseEvent(e);
-    if (getLayoutPolicy() != AUTO_LAYOUT_POLICY) return;
-  }
-
   protected void processMouseMotionEvent(final MouseEvent e) {
     super.processMouseMotionEvent(e);
 
@@ -719,7 +712,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       group = outside;
     }
 
-    myPopupToolbar = new PopupToolbar(myPlace, group, true, myDataManager, myActionManager, myKeymapManager) {
+    PopupToolbar popupToolbar = new PopupToolbar(myPlace, group, true, myDataManager, myActionManager, myKeymapManager) {
       protected void onOtherActionPerformed() {
         hidePopup();
       }
@@ -728,7 +721,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         return ActionToolbarImpl.this.getDataContext();
       }
     };
-    myPopupToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    popupToolbar.setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
 
     Point location;
     if (myOrientation == SwingConstants.HORIZONTAL) {
@@ -736,11 +729,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
     else {
       location = getLocationOnScreen();
-      location.y = location.y + getHeight() - myPopupToolbar.getPreferredSize().height;
+      location.y = location.y + getHeight() - popupToolbar.getPreferredSize().height;
     }
 
 
-    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myPopupToolbar, null);
+    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(popupToolbar, null);
     builder.setResizable(false)
       .setRequestFocus(false)
       .setTitle(null)
@@ -753,10 +746,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       })
       .setCancelOnMouseOutCallback(new MouseChecker() {
         public boolean check(final MouseEvent event) {
-          if (myAutoPopupRec != null && myActionManager.isActionPopupStackEmpty()) {
-            return !new RelativeRectangle(ActionToolbarImpl.this, myAutoPopupRec).contains(new RelativePoint(event));
-          }
-          return false;
+          return myAutoPopupRec != null &&
+                 myActionManager.isActionPopupStackEmpty() &&
+                 !new RelativeRectangle(ActionToolbarImpl.this, myAutoPopupRec).contains(new RelativePoint(event));
         }
       });
 
@@ -767,7 +759,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     });
     myPopup = builder.createPopup();
 
-    Disposer.register(myPopup, myPopupToolbar);
+    Disposer.register(myPopup, popupToolbar);
 
     myPopup.showInScreenCoordinates(this, location);
 
@@ -791,7 +783,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         }
       };
       window.addComponentListener(componentAdapter);
-      Disposer.register(myPopupToolbar, new Disposable() {
+      Disposer.register(popupToolbar, new Disposable() {
         public void dispose() {
           window.removeComponentListener(componentAdapter);
         }

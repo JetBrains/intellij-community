@@ -25,9 +25,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
   private PropertyChangeListener myActionButtonSynchronizer;
   private Icon myDisabledIcon;
   private Icon myIcon;
-  protected Presentation myPresentation;
-  protected AnAction myAction;
-  private String myPlace;
+  protected final Presentation myPresentation;
+  protected final AnAction myAction;
+  private final String myPlace;
   private ActionButtonLook myLook = ActionButtonLook.IDEA_LOOK;
   private boolean myMouseDown;
   private boolean myRollover;
@@ -71,11 +71,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     return myPresentation.isEnabled();
   }
 
-  protected void onMousePresenceChanged(boolean setInfo) {
+  private void onMousePresenceChanged(boolean setInfo) {
     ActionMenu.showDescriptionInStatusBar(setInfo, this, myPresentation.getDescription());
   }
 
-  protected void performAction(MouseEvent e) {
+  private void performAction(MouseEvent e) {
     AnActionEvent event = new AnActionEvent(
       e, getDataContext(),
       myPlace,
@@ -88,7 +88,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
       final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
       final DataContext dataContext = event.getDataContext();
       manager.fireBeforeActionPerformed(myAction, dataContext);
-      Component component = ((Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT));
+      Component component = DataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component != null && !component.isShowing()) {
         return;
       }
@@ -103,8 +103,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
 
   private void actionPerfomed(final AnActionEvent event) {
     if (myAction instanceof ActionGroup && !(myAction instanceof CustomComponentAction) && ((ActionGroup)myAction).isPopup()) {
-      Presentation presentation = event.getPresentation();
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(event.getPlace(), ((ActionGroup)myAction));
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(event.getPlace(), (ActionGroup)myAction);
       popupMenu.getComponent().show(this, getWidth(), 0);
     } else {
       myAction.actionPerformed(event);
@@ -213,47 +212,39 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     boolean flag = e.isMetaDown();
     switch (e.getID()) {
       case MouseEvent.MOUSE_PRESSED:
-        {
-          if (flag || !isButtonEnabled()) return;
-          myMouseDown = true;
-          ourGlobalMouseDown = true;
-          repaint();
-          break;
-        }
+        if (flag || !isButtonEnabled()) return;
+        myMouseDown = true;
+        ourGlobalMouseDown = true;
+        repaint();
+        break;
 
       case MouseEvent.MOUSE_RELEASED:
-        {
-          if (flag || !isButtonEnabled()) return;
-          myMouseDown = false;
-          ourGlobalMouseDown = false;
-          if (myRollover) {
-            performAction(e);
-          }
-          repaint();
-          break;
+        if (flag || !isButtonEnabled()) return;
+        myMouseDown = false;
+        ourGlobalMouseDown = false;
+        if (myRollover) {
+          performAction(e);
         }
+        repaint();
+        break;
 
       case MouseEvent.MOUSE_ENTERED:
-        {
-          if (!myMouseDown && ourGlobalMouseDown) break;
-          myRollover = true;
-          repaint();
-          onMousePresenceChanged(true);
-          break;
-        }
+        if (!myMouseDown && ourGlobalMouseDown) break;
+        myRollover = true;
+        repaint();
+        onMousePresenceChanged(true);
+        break;
 
       case MouseEvent.MOUSE_EXITED:
-        {
-          myRollover = false;
-          if (!myMouseDown && ourGlobalMouseDown) break;
-          repaint();
-          onMousePresenceChanged(false);
-          break;
-        }
+        myRollover = false;
+        if (!myMouseDown && ourGlobalMouseDown) break;
+        repaint();
+        onMousePresenceChanged(false);
+        break;
     }
   }
 
-  protected int getPopState(boolean isPushed) {
+  private int getPopState(boolean isPushed) {
     if (isPushed || myRollover && myMouseDown && isButtonEnabled()) {
       return PUSHED;
     }
