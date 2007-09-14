@@ -1,30 +1,31 @@
 package org.jetbrains.plugins.groovy.override;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.ide.fileTemplates.*;
+import com.intellij.ide.util.MemberChooser;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.codeInsight.generation.PsiMethodMember;
-import com.intellij.ide.util.MemberChooser;
-import com.intellij.ide.fileTemplates.*;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
-import java.util.*;
 import java.io.IOException;
+import java.util.*;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -46,13 +47,18 @@ public class GroovyOverrideImplementUtil {
 
     final PsiClass aClass = (PsiClass) parent;
 
+    if (isImplement && aClass.isInterface()) return;
+
     List<PsiMethodMember> classMembers = new ArrayList<PsiMethodMember>();
     Collection<CandidateInfo> candidates = com.intellij.codeInsight.generation.OverrideImplementUtil.getMethodsToOverrideImplement(aClass, isImplement);
     for (CandidateInfo candidate : candidates) {
       classMembers.add(new PsiMethodMember(candidate));
     }
 
+    if (classMembers.isEmpty()) return;
+
     MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(classMembers.toArray(new PsiMethodMember[classMembers.size()]), false, true, project);
+    chooser.setTitle(isImplement ? GroovyBundle.message("select.methods.to.override") : GroovyBundle.message("select.methods.to.implement"));
     chooser.show();
 
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
@@ -64,7 +70,7 @@ public class GroovyOverrideImplementUtil {
       final boolean isAbstract = selectedMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 
 //      assert isAbstract == isImplement;
-      String templName = isAbstract ? "Implemented Method Body.java" : "Overridden Method Body.java";
+      String templName = isAbstract ? FileTemplateManager.TEMPLATE_IMPLEMENTED_METHOD_BODY : FileTemplateManager.TEMPLATE_OVERRIDDEN_METHOD_BODY;
 
       final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
       final GrMethod result = createOverrideImplementMethodSignature(project, selectedMethod);
