@@ -439,12 +439,13 @@ public class ContainerUtil {
   }
 
   public static <T> void add(final T element, final Collection<T> result, final Disposable parentDisposable) {
-    result.add(element);
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        result.remove(element);
-      }
-    });
+    if (result.add(element)) {
+      Disposer.register(parentDisposable, new Disposable() {
+        public void dispose() {
+          result.remove(element);
+        }
+      });
+    }
   }
 
   public static <T> List<T> createMaybeSingletonList(@Nullable T element) {
