@@ -141,17 +141,17 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     for (NamedScope scope : allScopes) {
       String name = scope.getName();
       PackageSet packageSet = scope.getValue();
-      if (changeView(packageSet, psiFile, name, myNamedScopeManager)) break;
-      if (changeView(packageSet, psiFile, name, myDependencyValidationManager)) break;
+      if (changeView(packageSet, psiFile, name, myNamedScopeManager, requestFocus)) break;
+      if (changeView(packageSet, psiFile, name, myDependencyValidationManager, requestFocus)) break;
     }
   }
 
-  private boolean changeView(final PackageSet packageSet, final PsiFile psiFile, final String name, final NamedScopesHolder holder) {
+  private boolean changeView(final PackageSet packageSet, final PsiFile psiFile, final String name, final NamedScopesHolder holder, boolean requestFocus) {
     if (packageSet.contains(psiFile, holder)) {
       if (!name.equals(getSubId())) {
         myProjectView.changeView(getId(), name);
       }
-      myViewPanel.selectNode(psiFile);
+      myViewPanel.selectNode(psiFile, requestFocus);
       return true;
     }
     return false;

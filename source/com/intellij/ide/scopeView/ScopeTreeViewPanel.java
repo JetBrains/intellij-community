@@ -119,7 +119,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
 
-  public void selectNode(final PsiFile file) {
+  public void selectNode(final PsiFile file, final boolean requestFocus) {
     myUpdateQueue.queue(new Update("Select") {
       public void run() {
         if (myProject.isDisposed()) return;
@@ -137,6 +137,9 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
             }
           }
           TreeUtil.selectPath(myTree, path);
+          if (requestFocus) {
+            myTree.requestFocus();
+          }
         }
       }
     });

@@ -30,7 +30,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
       }
     };
     if (requestFocus) {
-      windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable);
+      windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable, false);
     }
     else {
       runnable.run();

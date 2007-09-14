@@ -250,7 +250,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    *                  It means that UI isn't validated and repainted just after each add/remove operation.
    * @see ToolWindowManagerImpl#prepareForActivation
    */
-  private void showAndActivate(final String id, final boolean dirtyMode, final ArrayList<FinalizableCommand> commandsList) {
+  private void showAndActivate(final String id, final boolean dirtyMode, final ArrayList<FinalizableCommand> commandsList, boolean autoFocusContents) {
     if (!getToolWindow(id).isAvailable()) {
       return;
     }
@@ -264,21 +264,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myActiveStack.push(id);
       myEditorComponentActive = false;
     }
-    appendRequestFocusInToolWindowCmd(id, commandsList);
+
+    if (autoFocusContents) {
+      appendRequestFocusInToolWindowCmd(id, commandsList);
+    }
   }
 
-  void activateToolWindow(final String id, boolean forced) {
+  void activateToolWindow(final String id, boolean forced, boolean autoFocusContents) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateToolWindow(" + id + ")");
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
-    activateToolWindowImpl(id, commandList, forced);
+    activateToolWindowImpl(id, commandList, forced, autoFocusContents);
     execute(commandList);
   }
 
-  private void activateToolWindowImpl(final String id, final ArrayList<FinalizableCommand> commandList, boolean forced) {
+  private void activateToolWindowImpl(final String id, final ArrayList<FinalizableCommand> commandList, boolean forced, boolean autoFocusContents) {
     if (!myUnforcedFocusRequestsAllowed && !forced) return;
 
     if (LOG.isDebugEnabled()) {
@@ -289,13 +292,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       // when the user switched to another application. So we just need to bring
       // tool window's window to front.
       final InternalDecorator decorator = getInternalDecorator(id);
-      if (!decorator.hasFocus()) {
+      if (!decorator.hasFocus() && autoFocusContents) {
         appendRequestFocusInToolWindowCmd(id, commandList);
       }
       return;
     }
     prepareForActivation(id, commandList);
-    showAndActivate(id, false, commandList);
+    showAndActivate(id, false, commandList, autoFocusContents);
   }
 
   /**
@@ -468,7 +471,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         else {
           final String toBeActivatedId = myActiveStack.pop();
           if (toBeActivatedId != null) {
-            activateToolWindowImpl(toBeActivatedId, commandList, true);
+            activateToolWindowImpl(toBeActivatedId, commandList, true, true);
           }
         }
       }
@@ -586,7 +589,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     if (!info.isAutoHide() && (info.isDocked() || info.isFloating())) {
       if (wasActive) {
-        activateToolWindowImpl(info.getId(), commandsList, true);
+        activateToolWindowImpl(info.getId(), commandsList, true, true);
       }
       else if (wasVisible) {
         showToolWindowImpl(info.getId(), false, commandsList);
@@ -877,7 +880,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     appendApplyWindowInfoCmd(info, commandsList);
     if (info.isVisible()) {
       prepareForActivation(id, commandsList);
-      showAndActivate(id, false, commandsList);
+      showAndActivate(id, false, commandsList, true);
     }
   }
 
@@ -906,7 +909,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       info.setType(type);
       appendApplyWindowInfoCmd(info, commandsList);
       prepareForActivation(id, commandsList);
-      showAndActivate(id, dirtyMode, commandsList);
+      showAndActivate(id, dirtyMode, commandsList, true);
       appendUpdateToolWindowsPaneCmd(commandsList);
     }
     else {
@@ -1233,7 +1236,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         myFocusedComponentAlaram.addRequest(new Runnable() {
           public void run() {
             if (!myLayout.isToolWindowRegistered(myId)) return;
-            activateToolWindow(myId, false);
+            activateToolWindow(myId, false, false);
           }
         }, 100);
       }
@@ -1299,7 +1302,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     public void activated(final InternalDecorator source) {
-      activateToolWindow(source.getToolWindow().getId(), true);
+      activateToolWindow(source.getToolWindow().getId(), true, true);
     }
 
     public void typeChanged(final InternalDecorator source, final ToolWindowType type) {

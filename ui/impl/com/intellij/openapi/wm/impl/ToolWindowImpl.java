@@ -69,8 +69,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   public final void activate(final Runnable runnable) {
+    activate(runnable, true);
+  }
+
+  public void activate(@Nullable final Runnable runnable, final boolean autoFocusContents) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myToolWindowManager.activateToolWindow(myId, true);
+    myToolWindowManager.activateToolWindow(myId, true, autoFocusContents);
     if (runnable != null) {
       myToolWindowManager.invokeLater(runnable);
     }
