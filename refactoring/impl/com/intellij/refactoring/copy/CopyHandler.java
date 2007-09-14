@@ -255,18 +255,19 @@ public class CopyHandler {
         final Runnable action = new Runnable() {
           public void run() {
             try {
-              ChangeContextUtil.encodeContextInfo(aClass.getNavigationElement(), true);
-              PsiClass classCopy = (PsiClass) aClass.getNavigationElement().copy();
+              PsiElement elementToCopy = aClass.getNavigationElement();
+              ChangeContextUtil.encodeContextInfo(elementToCopy, true);
+              PsiClass classCopy = (PsiClass)elementToCopy.copy();
               ChangeContextUtil.clearContextInfo(aClass);
               classCopy.setName(copyClassName);
               final String fileName = copyClassName + "." + StdFileTypes.JAVA.getDefaultExtension();
-              final PsiFile createdFile = targetDirectory.copyFileFrom(fileName, aClass.getContainingFile());
+              final PsiFile createdFile = targetDirectory.copyFileFrom(fileName, elementToCopy.getContainingFile());
               PsiElement newElement = createdFile;
               if (createdFile instanceof PsiJavaFile) {
-                final PsiClass[] classes = ((PsiJavaFile) createdFile).getClasses();
+                final PsiClass[] classes = ((PsiJavaFile)createdFile).getClasses();
                 assert classes.length > 0 : createdFile.getText();
                 createdFile.deleteChildRange(classes[0], classes[classes.length - 1]);
-                PsiClass newClass = (PsiClass) createdFile.add(classCopy);
+                PsiClass newClass = (PsiClass)createdFile.add(classCopy);
                 ChangeContextUtil.decodeContextInfo(newClass, newClass, null);
                 newElement = newClass;
               }
@@ -274,11 +275,11 @@ public class CopyHandler {
               EditorHelper.openInEditor(newElement);
 
               result[0] = true;
-            } catch (final IncorrectOperationException ex) {
+            }
+            catch (final IncorrectOperationException ex) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
-                  Messages.showMessageDialog(project, ex.getMessage(),
-                                             RefactoringBundle.message("error.title"), Messages.getErrorIcon());
+                  Messages.showMessageDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
                 }
               });
             }
