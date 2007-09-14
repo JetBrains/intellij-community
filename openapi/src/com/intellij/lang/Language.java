@@ -68,8 +68,8 @@ public abstract class Language {
 
   private static final SurroundDescriptor[] EMPTY_SURROUND_DESCRIPTORS_ARRAY = new SurroundDescriptor[0];
   private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
-  private String myID;
-  private String[] myMimeTypes;
+  private final String myID;
+  private final String[] myMimeTypes;
   public static final Language ANY = new Language("", "") { };
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 

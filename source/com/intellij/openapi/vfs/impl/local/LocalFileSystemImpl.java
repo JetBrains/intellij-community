@@ -22,6 +22,7 @@ import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.*;
@@ -31,7 +32,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class LocalFileSystemImpl extends LocalFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
-  private VirtualFileManagerEx myManager = null;
 
   private final ReadWriteLock LOCK = new ReentrantReadWriteLock();
   final Lock READ_LOCK = LOCK.readLock();
@@ -121,6 +121,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   public void disposeComponent() {
   }
 
+  @TestOnly
   public void cleanupForNextTest() throws IOException {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -248,7 +249,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return virtualFile.contentsToByteArray();
   }
 
-  public long physicalLength(final VirtualFile virtualFile) throws IOException {
+  public long physicalLength(final VirtualFile virtualFile) {
     return virtualFile.getLength();
   }
 
@@ -509,7 +510,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   @NotNull
-  public Set<WatchRequest> addRootsToWatch(final @NotNull Collection<String> rootPaths, final boolean toWatchRecursively) {
+  public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively) {
     Set<WatchRequest> result = new HashSet<WatchRequest>();
     Set<VirtualFile> filesToSynchronize = new HashSet<VirtualFile>();
 
@@ -812,7 +813,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     return "LocalFileSystem";
   }
 
-  public String extractRootPath(@NotNull final String path) {
+  protected String extractRootPath(@NotNull final String path) {
     if (path.length() == 0) {
       try {
         return extractRootPath(new File("").getCanonicalPath());

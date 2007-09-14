@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,6 +39,7 @@ public interface FileManager {
   @NotNull GlobalSearchScope getUseScope(@NotNull PsiElement element);
   Collection<String> getNonTrivialPackagePrefixes();
 
+  @TestOnly
   void cleanupForNextTest();
 
   FileViewProvider findViewProvider(VirtualFile file);

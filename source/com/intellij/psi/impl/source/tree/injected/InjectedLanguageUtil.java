@@ -115,8 +115,8 @@ public class InjectedLanguageUtil {
   }
 
   private static class Place {
-    final PsiFile myInjectedPsi;
-    final List<PsiLanguageInjectionHost.Shred> myShreds;
+    private final PsiFile myInjectedPsi;
+    private final List<PsiLanguageInjectionHost.Shred> myShreds;
 
     public Place(PsiFile injectedPsi, List<PsiLanguageInjectionHost.Shred> shreds) {
       myShreds = shreds;
@@ -331,7 +331,7 @@ public class InjectedLanguageUtil {
   private static final InjectedPsiProvider INJECTED_PSI_PROVIDER = new InjectedPsiProvider();
   private static Places probeElementsUp(PsiElement element, boolean probeUp) {
     for (PsiElement current = element; current != null; current = ResolveUtil.getContext(current)) {
-      if ("EL".equals(element.getLanguage().getID())) break;
+      if ("EL".equals(current.getLanguage().getID())) break;
       ParameterizedCachedValue<Places> data = current.getUserData(INJECTED_PSI_KEY);
       if (data != null) {
         Places value = data.getValue(current);
@@ -447,9 +447,9 @@ public class InjectedLanguageUtil {
 
             @NotNull
             public MultiHostRegistrar addPlace(@NonNls @Nullable String prefix,
-                                                                        @NonNls @Nullable String suffix,
-                                                                        @NotNull PsiLanguageInjectionHost host,
-                                                                        @NotNull TextRange rangeInsideHost) {
+                                               @NonNls @Nullable String suffix,
+                                               @NotNull PsiLanguageInjectionHost host,
+                                               @NotNull TextRange rangeInsideHost) {
               if (myLanguage == null) {
                 clear();
                 throw new IllegalStateException("Seems you haven't called startInjecting()");

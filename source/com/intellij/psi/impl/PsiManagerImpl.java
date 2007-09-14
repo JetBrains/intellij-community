@@ -67,6 +67,7 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -109,7 +110,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   private VirtualFileFilter myAssertOnFileLoadingFilter = VirtualFileFilter.NONE;
 
-  private AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
+  private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
   private static final Key<PsiFile> CACHED_PSI_FILE_COPY_IN_FILECONTENT = Key.create("CACHED_PSI_FILE_COPY_IN_FILECONTENT");
   public static final Key<LanguageDialect> LANGUAGE_DIALECT = Key.create("language.dialect");
@@ -128,7 +129,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   public static final int PROPERTY_CHANGED = 11;
   private PsiMigrationImpl myCurrentMigration;
   private LanguageLevel myLanguageLevel;
-  private PsiElementFinder[] myElementFinders;
+  private final PsiElementFinder[] myElementFinders;
 
   private final List<LanguageInjector> myLanguageInjectors = new ArrayList<LanguageInjector>();
   private final ProgressManager myProgressManager;
@@ -612,6 +613,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return myFileManager.findViewProvider(file);
   }
 
+  @TestOnly
   public void cleanupForNextTest() {
     //myFileManager.cleanupForNextTest();
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());

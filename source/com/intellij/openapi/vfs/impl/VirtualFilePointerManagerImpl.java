@@ -1,6 +1,5 @@
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -23,6 +22,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,12 +34,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   private WeakList<VirtualFilePointerContainerImpl> myContainers;
 
-  private VirtualFileManagerEx myVirtualFileManager;
+  private final VirtualFileManagerEx myVirtualFileManager;
 
 
-  VirtualFilePointerManagerImpl(VirtualFileManagerEx virtualFileManagerEx,
-                                CommandProcessor commandProcessor,
-                                MessageBus bus) {
+  VirtualFilePointerManagerImpl(VirtualFileManagerEx virtualFileManagerEx, MessageBus bus) {
     initContainers();
 
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new VFSEventsProcessor());
@@ -48,8 +46,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private class EventDescriptor {
-    private VirtualFilePointerListener myListener;
-    private List<VirtualFilePointer> myPointers;
+    private final VirtualFilePointerListener myListener;
+    private final List<VirtualFilePointer> myPointers;
 
     private EventDescriptor(VirtualFilePointerListener listener, List<VirtualFilePointer> pointers) {
       myListener = listener;
@@ -106,6 +104,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return url.substring(separatorIndex + JarFileSystem.JAR_SEPARATOR.length());
   }
 
+  @TestOnly
   public void cleanupForNextTest() {
     initContainers();
   }
@@ -173,7 +172,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       final THashSet<VirtualFilePointer> pointerSet = myListenerToPointersMap.get(listener);
       if (pointerSet != null) {
         pointerSet.remove(pointer);
-        if (pointerSet.size() == 0) myListenerToPointersMap.remove(listener);
+        if (pointerSet.isEmpty()) myListenerToPointersMap.remove(listener);
       }
     }
   }
