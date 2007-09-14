@@ -29,16 +29,16 @@ import java.awt.event.HierarchyListener;
  * @author Eugene Belyaev
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper {
-  private Project myProject;
+  private final Project myProject;
   private FileEditor myFileEditor;
 
   private StructureView myStructureView;
 
-  private JPanel myPanel;
+  private final JPanel myPanel;
 
-  private FileEditorManagerListener myEditorManagerListener;
+  private final FileEditorManagerListener myEditorManagerListener;
 
-  private Alarm myAlarm;
+  private final Alarm myAlarm;
 
   // -------------------------------------------------------------------------
   // Constructor

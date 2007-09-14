@@ -244,8 +244,10 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public void storeState() {
-    myStructureViewState = getState();
-    myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+    if (!isDisposed()) {
+      myStructureViewState = getState();
+      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+    }
   }
 
   public StructureViewState getState() {
