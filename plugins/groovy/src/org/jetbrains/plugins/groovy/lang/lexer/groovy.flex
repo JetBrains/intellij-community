@@ -52,7 +52,7 @@ import org.jetbrains.annotations.NotNull;
     blockStack.clear();
   }
 
-  private int braceCount = 0;
+  private Stack<IElementType> braceCount = new Stack <IElementType>();
 
 %}
 
@@ -281,6 +281,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
   {mIDENT}                                {  yybegin(IN_SINGLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLPAREN);
+                                             braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
   ([^{[:jletter:]\n\r] | "$") [^\n\r]*    {  gStringStack.clear();
@@ -318,6 +319,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 <IN_INNER_BLOCK>{
   "{"                                     {  blockStack.push(mLCURLY);
+                                             braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return(mLCURLY);  }
 
@@ -326,6 +328,9 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                                if (br.equals(mLPAREN)) yybegin(IN_SINGLE_GSTRING);
                                                if (br.equals(mLBRACK)) yybegin(IN_TRIPLE_GSTRING);
                                                if (br.equals(mDIV)) yybegin(IN_REGEX);
+                                             }
+                                             if (!braceCount.isEmpty() && mLCURLY == braceCount.peek()) {
+                                               braceCount.pop();
                                              }
                                              return mRCURLY; }
 }
@@ -356,6 +361,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
   {mIDENT}                                {  yybegin(IN_TRIPLE_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mLBRACK);
+                                             braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
   ([^{[:jletter:]] | "$")
@@ -429,6 +435,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
   {mIDENT}                                {  yybegin(IN_REGEX_DOT);
                                              return mIDENT; }
   "{"                                     {  blockStack.push(mDIV);
+                                             braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
   ([^{[:jletter:]\n\r] | "$") [^\n\r]*    {  gStringStack.clear();
@@ -461,7 +468,10 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 <YYINITIAL> {
 
-"}"                                       {  return(mRCURLY);  }
+"}"                                       {  if (!braceCount.isEmpty() && mLCURLY == braceCount.peek()) {
+                                               braceCount.pop();
+                                             }
+                                             return(mRCURLY);  }
 
 }
 
@@ -472,7 +482,8 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 {mWS}                                     {  return mWS; }
 {mNLS}                                    {  yybegin(NLS_AFTER_NLS);
                                              afterComment = WAIT_FOR_REGEX;
-                                             return braceCount > 0 ? mWS : mNLS; }
+                                             return !braceCount.isEmpty() &&
+                                                 mLPAREN == braceCount.peek() ? mWS : mNLS; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////Comments //////////////////////////////////////////////////////////////////////////////////////
@@ -528,20 +539,21 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 "/="                                      {  yybegin(WAIT_FOR_REGEX);
                                              return(mDIV_ASSIGN);  }
 "("                                       {  yybegin(WAIT_FOR_REGEX);
-                                             braceCount++;
+                                             braceCount.push(mLPAREN);
                                              return(mLPAREN);  }
-")"                                       {  if (braceCount > 0 ) {
-                                               braceCount--; 
-                                             } else braceCount = 0;
+")"                                       {  if (!braceCount.isEmpty() && mLPAREN == braceCount.peek()) {
+                                               braceCount.pop();
+                                             }
                                              return(mRPAREN);  }
 "["                                       {  yybegin(WAIT_FOR_REGEX);
-                                             braceCount++;
+                                             braceCount.push(mLPAREN);
                                              return(mLBRACK);  }
-"]"                                       {  if (braceCount > 0 )  {
-                                               braceCount--; 
-                                             } else braceCount = 0;
+"]"                                       {  if (!braceCount.isEmpty() && mLPAREN == braceCount.peek()) {
+                                               braceCount.pop();
+                                             }
                                              return(mRBRACK);  }
 "{"                                       {  yybegin(NLS_AFTER_LBRACE);
+                                             braceCount.push(mLCURLY);
                                              return(mLCURLY);  }
 ":"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mCOLON);  }

@@ -1,0 +1,28 @@
+interface a {
+  {
+  }
+  }
+}
+-----
+Groovy script
+  Interface definition
+    Modifiers
+      <empty list>
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Open block
+        PsiElement({)('{')
+        PsiWhiteSpace('\n  ')
+        PsiElement(})('}')
+      PsiErrorElement:compound statement unexpected in interface
+        <empty list>
+      PsiElement(new line)('\n  ')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')
+  PsiErrorElement:';' or new line expected
+    PsiElement(})('}')
