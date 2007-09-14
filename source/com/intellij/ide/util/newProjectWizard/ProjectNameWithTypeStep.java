@@ -14,7 +14,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -28,10 +27,6 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JList myTypesList;
   private LabeledField myModuleName;
   private LabeledField myModuleContentRoot;
-  private boolean myInSync = false;
-  private boolean myModuleNameChangedByUser = false;
-  @NonNls private static final String NAME = "NAME";
-  @NonNls private static final String EMPTY = "EMPTY";
 
   public ProjectNameWithTypeStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     super(wizardContext, sequence, mode);
@@ -40,7 +35,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     myModuleName.getComponent().setColumns(20);
     myModuleContentRoot = new LabeledField(FileUtil.toSystemDependentName(myNamePathComponent.getPath()), ProjectBundle.message("project.new.wizard.module.root.title"));
     
-    updateModuleNameComponent(myWizardContext.getProject() == null);
+    updateModuleNameComponent(false);
     
     myAdditionalContentPanel.add(myModuleName, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     myAdditionalContentPanel.add(myModuleContentRoot, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 0, 0), 0, 0));
@@ -87,8 +82,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         //noinspection HardCodedStringLiteral
         myModuleDescriptionPane.setText("<html><body><font face=\"verdana\" size=\"-1\">" + typeSelected.getDescription() + "</font></body></html>");
 
-        final boolean isModuleNameVisible = (myWizardContext.getProject() == null) && (typeSelected != ModuleType.EMPTY);
-        updateModuleNameComponent(isModuleNameVisible);
+        updateModuleNameComponent(typeSelected != ModuleType.EMPTY);
 
         fireStateChanged();
         SwingUtilities.invokeLater(new Runnable(){
@@ -153,10 +147,15 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
   }
 
   private void updateModuleNameComponent(final boolean isEditable) {
+    final boolean isVisible = myWizardContext.isCreatingNewProject();
+    
     myModuleName.getComponent().setEditable(isEditable);
     myModuleName.setEnabled(isEditable);
+    myModuleName.setVisible(isVisible);
+    
     myModuleContentRoot.getComponent().setEditable(isEditable);
     myModuleContentRoot.setEnabled(isEditable);
+    myModuleContentRoot.setVisible(isVisible);
   }
 
   public void updateStep() {
