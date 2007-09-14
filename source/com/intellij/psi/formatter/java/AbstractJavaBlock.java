@@ -26,7 +26,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.AbstractJavaBlock");
 
   protected final CodeStyleSettings mySettings;
-  protected Indent myIndent;
+  private final Indent myIndent;
   protected Indent myChildIndent;
   protected Alignment myChildAlignment;
   protected boolean myUseChildAttributes = false;
@@ -34,7 +34,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private Wrap myAnnotationWrap = null;
   
 
-  public AbstractJavaBlock(final ASTNode node,
+  protected AbstractJavaBlock(final ASTNode node,
                            final Wrap wrap,
                            final Alignment alignment,
                            final Indent indent,
@@ -86,10 +86,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (isLikeExtendsList(elementType)) {
       return new ExtendsListBlock(child, wrap, alignment, settings);
     }
-    else if (elementType == ElementType.CODE_BLOCK) {
+    else if (elementType == JavaElementType.CODE_BLOCK) {
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings);
     }
-    else if (elementType == ElementType.LABELED_STATEMENT) {
+    else if (elementType == JavaElementType.LABELED_STATEMENT) {
       return new LabeledJavaBlock(child, wrap, alignment, actualIndent, settings);
     }
     else if (elementType == JavaDocElementType.DOC_COMMENT) {
@@ -103,24 +103,24 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   private static boolean isLikeExtendsList(final IElementType elementType) {
-    return elementType == ElementType.EXTENDS_LIST
-           || elementType == ElementType.IMPLEMENTS_LIST
-           || elementType == ElementType.THROWS_LIST;
+    return elementType == JavaElementType.EXTENDS_LIST
+           || elementType == JavaElementType.IMPLEMENTS_LIST
+           || elementType == JavaElementType.THROWS_LIST;
   }
 
   private static boolean isBlockType(final IElementType elementType) {
-    return elementType == ElementType.SWITCH_STATEMENT
-           || elementType == ElementType.FOR_STATEMENT
-           || elementType == ElementType.WHILE_STATEMENT
-           || elementType == ElementType.DO_WHILE_STATEMENT
-           || elementType == ElementType.TRY_STATEMENT
-           || elementType == ElementType.CATCH_SECTION
-           || elementType == ElementType.IF_STATEMENT
-           || elementType == ElementType.METHOD
-           || elementType == ElementType.ARRAY_INITIALIZER_EXPRESSION
-           || elementType == ElementType.CLASS_INITIALIZER
-           || elementType == ElementType.SYNCHRONIZED_STATEMENT
-           || elementType == ElementType.FOREACH_STATEMENT;
+    return elementType == JavaElementType.SWITCH_STATEMENT
+           || elementType == JavaElementType.FOR_STATEMENT
+           || elementType == JavaElementType.WHILE_STATEMENT
+           || elementType == JavaElementType.DO_WHILE_STATEMENT
+           || elementType == JavaElementType.TRY_STATEMENT
+           || elementType == JavaElementType.CATCH_SECTION
+           || elementType == JavaElementType.IF_STATEMENT
+           || elementType == JavaElementType.METHOD
+           || elementType == JavaElementType.ARRAY_INITIALIZER_EXPRESSION
+           || elementType == JavaElementType.CLASS_INITIALIZER
+           || elementType == JavaElementType.SYNCHRONIZED_STATEMENT
+           || elementType == JavaElementType.FOREACH_STATEMENT;
   }
 
   public static Block createJavaBlock(final ASTNode child, final CodeStyleSettings settings) {
@@ -131,15 +131,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private static Indent getDefaultSubtreeIndent(final ASTNode child) {
     final ASTNode parent = child.getTreeParent();
     final IElementType childNodeType = child.getElementType();
-    if (childNodeType == ElementType.ANNOTATION) return Indent.getNoneIndent();
+    if (childNodeType == JavaElementType.ANNOTATION) return Indent.getNoneIndent();
 
     final ASTNode prevElement = getPrevElement(child);
-    if (prevElement != null && prevElement.getElementType() == ElementType.MODIFIER_LIST) {
+    if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
       return Indent.getNoneIndent();
     }
 
-    if (childNodeType == ElementType.DOC_TAG) return Indent.getNoneIndent();
-    if (childNodeType == ElementType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
+    if (childNodeType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
+    if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
     if (child.getPsi() instanceof PsiFile) return Indent.getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent);
@@ -152,25 +152,25 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   private static Indent getChildIndent(final ASTNode parent) {
     final IElementType parentType = parent.getElementType();
-    if (parentType == ElementType.MODIFIER_LIST) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.MODIFIER_LIST) return Indent.getNoneIndent();
     if (parentType == JspElementType.JSP_CODE_BLOCK) return Indent.getNormalIndent();
     if (parentType == JspElementType.JSP_CLASS_LEVEL_DECLARATION_STATEMENT) return Indent.getNormalIndent();
     if (parentType == ElementType.DUMMY_HOLDER) return Indent.getNoneIndent();
-    if (parentType == ElementType.CLASS) return Indent.getNoneIndent();
-    if (parentType == ElementType.IF_STATEMENT) return Indent.getNoneIndent();
-    if (parentType == ElementType.TRY_STATEMENT) return Indent.getNoneIndent();
-    if (parentType == ElementType.CATCH_SECTION) return Indent.getNoneIndent();
-    if (parentType == ElementType.FOR_STATEMENT) return Indent.getNoneIndent();
-    if (parentType == ElementType.FOREACH_STATEMENT) return Indent.getNoneIndent();
-    if (parentType == ElementType.BLOCK_STATEMENT) return Indent.getNoneIndent();
-    if (parentType == ElementType.DO_WHILE_STATEMENT) return Indent.getNoneIndent();
-    if (parentType == ElementType.WHILE_STATEMENT) return Indent.getNoneIndent();
-    if (parentType == ElementType.SWITCH_STATEMENT) return Indent.getNoneIndent();
-    if (parentType == ElementType.METHOD) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.CLASS) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.IF_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.TRY_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.CATCH_SECTION) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.FOR_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.FOREACH_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.BLOCK_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.DO_WHILE_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.WHILE_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.SWITCH_STATEMENT) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.METHOD) return Indent.getNoneIndent();
     if (parentType == JavaDocElementType.DOC_COMMENT) return Indent.getNoneIndent();
     if (parentType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
     if (parentType == JavaDocElementType.DOC_INLINE_TAG) return Indent.getNoneIndent();
-    if (parentType == ElementType.IMPORT_LIST) return Indent.getNoneIndent();
+    if (parentType == JavaElementType.IMPORT_LIST) return Indent.getNoneIndent();
     if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) {
       return Indent.getNoneIndent();
     }
@@ -180,7 +180,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   public Spacing getSpacing(Block child1, Block child2) {
-    return JavaSpacePropertyProcessor.getSpacing(AbstractJavaBlock.getTreeNode(child2), mySettings);
+    return JavaSpacePropertyProcessor.getSpacing(getTreeNode(child2), mySettings);
   }
 
   public ASTNode getFirstTreeNode() {
@@ -194,26 +194,24 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   protected static boolean isStatement(final ASTNode child, final ASTNode parentNode) {
     if (parentNode != null) {
       final IElementType parentType = parentNode.getElementType();
-      if (parentType == ElementType.CODE_BLOCK) return false;
+      if (parentType == JavaElementType.CODE_BLOCK) return false;
       final int role = ((CompositeElement)parentNode).getChildRole(child);
-      if (parentType == ElementType.IF_STATEMENT) return role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH;
-      if (parentType == ElementType.FOR_STATEMENT) return role == ChildRole.LOOP_BODY;
-      if (parentType == ElementType.WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
-      if (parentType == ElementType.DO_WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
-      if (parentType == ElementType.FOREACH_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentType == JavaElementType.IF_STATEMENT) return role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH;
+      if (parentType == JavaElementType.FOR_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentType == JavaElementType.WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentType == JavaElementType.DO_WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentType == JavaElementType.FOREACH_STATEMENT) return role == ChildRole.LOOP_BODY;
     }
     return false;
   }
 
-  protected abstract List<Block> buildChildren();
-
   @Nullable
   protected Wrap createChildWrap() {
     final IElementType nodeType = myNode.getElementType();
-    if (nodeType == ElementType.EXTENDS_LIST || nodeType == ElementType.IMPLEMENTS_LIST) {
+    if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
       return Wrap.createWrap(getWrapType(mySettings.EXTENDS_LIST_WRAP), false);
     }
-    else if (nodeType == ElementType.BINARY_EXPRESSION) {
+    else if (nodeType == JavaElementType.BINARY_EXPRESSION) {
       Wrap actualWrap = myWrap != null ? myWrap : getReservedWrap();
       if (actualWrap == null) {
         return Wrap.createWrap(getWrapType(mySettings.BINARY_OPERATION_WRAP), false);
@@ -227,19 +225,19 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         }
       }
     }
-    else if (nodeType == ElementType.CONDITIONAL_EXPRESSION) {
+    else if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
       return Wrap.createWrap(getWrapType(mySettings.TERNARY_OPERATION_WRAP), false);
     }
-    else if (nodeType == ElementType.ASSERT_STATEMENT) {
+    else if (nodeType == JavaElementType.ASSERT_STATEMENT) {
       return Wrap.createWrap(getWrapType(mySettings.ASSERT_STATEMENT_WRAP), false);
     }
-    else if (nodeType == ElementType.FOR_STATEMENT) {
+    else if (nodeType == JavaElementType.FOR_STATEMENT) {
       return Wrap.createWrap(getWrapType(mySettings.FOR_STATEMENT_WRAP), false);
     }
-    else if (nodeType == ElementType.THROWS_LIST) {
+    else if (nodeType == JavaElementType.THROWS_LIST) {
       return Wrap.createWrap(getWrapType(mySettings.THROWS_LIST_WRAP), true);
     }
-    else if (nodeType == ElementType.CODE_BLOCK) {
+    else if (nodeType == JavaElementType.CODE_BLOCK) {
       return Wrap.createWrap(Wrap.NORMAL, false);
     }
     else if (isAssignment()) {
@@ -252,16 +250,16 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   private boolean isAssignment() {
     final IElementType nodeType = myNode.getElementType();
-    return nodeType == ElementType.ASSIGNMENT_EXPRESSION || nodeType == ElementType.LOCAL_VARIABLE
-           || nodeType == ElementType.FIELD;
+    return nodeType == JavaElementType.ASSIGNMENT_EXPRESSION || nodeType == JavaElementType.LOCAL_VARIABLE
+           || nodeType == JavaElementType.FIELD;
   }
 
   @Nullable
   protected Alignment createChildAlignment() {
     final IElementType nodeType = myNode.getElementType();
-    if (nodeType == ElementType.ASSIGNMENT_EXPRESSION) {
+    if (nodeType == JavaElementType.ASSIGNMENT_EXPRESSION) {
       if (myNode.getTreeParent() != null
-          && myNode.getTreeParent().getElementType() == ElementType.ASSIGNMENT_EXPRESSION
+          && myNode.getTreeParent().getElementType() == JavaElementType.ASSIGNMENT_EXPRESSION
           && myAlignment != null) {
         return myAlignment;
       }
@@ -269,38 +267,38 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return createAlignment(mySettings.ALIGN_MULTILINE_ASSIGNMENT, null);
       }
     }
-    else if (nodeType == ElementType.PARENTH_EXPRESSION) {
+    else if (nodeType == JavaElementType.PARENTH_EXPRESSION) {
       return createAlignment(mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION, null);
     }
-    else if (nodeType == ElementType.CONDITIONAL_EXPRESSION) {
+    else if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
       return createAlignment(mySettings.ALIGN_MULTILINE_TERNARY_OPERATION, null);
     }
-    else if (nodeType == ElementType.FOR_STATEMENT) {
+    else if (nodeType == JavaElementType.FOR_STATEMENT) {
       return createAlignment(mySettings.ALIGN_MULTILINE_FOR, null);
     }
-    else if (nodeType == ElementType.EXTENDS_LIST) {
+    else if (nodeType == JavaElementType.EXTENDS_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_EXTENDS_LIST, null);
     }
-    else if (nodeType == ElementType.IMPLEMENTS_LIST) {
+    else if (nodeType == JavaElementType.IMPLEMENTS_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_EXTENDS_LIST, null);
     }
-    else if (nodeType == ElementType.THROWS_LIST) {
+    else if (nodeType == JavaElementType.THROWS_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_THROWS_LIST, null);
     }
-    else if (nodeType == ElementType.PARAMETER_LIST) {
+    else if (nodeType == JavaElementType.PARAMETER_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_PARAMETERS, null);
     }
-    else if (nodeType == ElementType.BINARY_EXPRESSION) {
+    else if (nodeType == JavaElementType.BINARY_EXPRESSION) {
       Alignment defaultAlignment = null;
       if (shouldInheritAlignment()) {
         defaultAlignment = myAlignment;
       }
       return createAlignment(mySettings.ALIGN_MULTILINE_BINARY_OPERATION, defaultAlignment);
     }
-    else if (nodeType == ElementType.CLASS) {
+    else if (nodeType == JavaElementType.CLASS) {
       return Alignment.createAlignment();
     }
-    else if (nodeType == ElementType.METHOD) {
+    else if (nodeType == JavaElementType.METHOD) {
       return Alignment.createAlignment();
     }
 
@@ -310,9 +308,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   private boolean shouldInheritAlignment() {
-    if (myNode.getElementType() == ElementType.BINARY_EXPRESSION) {
+    if (myNode.getElementType() == JavaElementType.BINARY_EXPRESSION) {
       final ASTNode treeParent = myNode.getTreeParent();
-      if (treeParent != null && treeParent.getElementType() == ElementType.BINARY_EXPRESSION) {
+      if (treeParent != null && treeParent.getElementType() == JavaElementType.BINARY_EXPRESSION) {
         return hasTheSamePriority(treeParent);
       }
     }
@@ -334,10 +332,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                  final Indent childIndent,
                                  int childOffset) {
     final IElementType childType = child.getElementType();
-    if (childType == ElementType.CLASS_KEYWORD || childType == ElementType.INTERFACE_KEYWORD) {
+    if (childType == JavaTokenType.CLASS_KEYWORD || childType == JavaTokenType.INTERFACE_KEYWORD) {
       myIsAfterClassKeyword = true;
     }
-    if (childType == ElementType.METHOD_CALL_EXPRESSION) {
+    if (childType == JavaElementType.METHOD_CALL_EXPRESSION) {
       result.add(createMethodCallExpressiobBlock(child,
                                                  arrangeChildWrap(child, defaultWrap),
                                                  arrangeChildAlignment(child, defaultAlignment)));
@@ -345,16 +343,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else {
       final IElementType nodeType = myNode.getElementType();
 
-      if (childType == ElementType.LBRACE && nodeType == ElementType.ARRAY_INITIALIZER_EXPRESSION) {
+      if (childType == JavaTokenType.LBRACE && nodeType == JavaElementType.ARRAY_INITIALIZER_EXPRESSION) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
-        child = processParenBlock(ElementType.LBRACE,
-                                  ElementType.RBRACE,
+        child = processParenBlock(JavaTokenType.LBRACE, JavaTokenType.RBRACE,
                                   result,
                                   child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                   mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
       }
-      else if (childType == ElementType.LPARENTH && nodeType == ElementType.EXPRESSION_LIST) {
+      else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.EXPRESSION_LIST) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
         if (mySettings.PREFER_PARAMETERS_WRAP) {
           wrap.ignoreParentWraps();
@@ -365,30 +362,30 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
       }
 
-      else if (childType == ElementType.LPARENTH && nodeType == ElementType.PARAMETER_LIST) {
+      else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARAMETER_LIST) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
         child = processParenBlock(result, child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                   mySettings.ALIGN_MULTILINE_PARAMETERS);
       }
-      else if (childType == ElementType.LPARENTH && nodeType == ElementType.ANNOTATION_PARAMETER_LIST) {
+      else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.ANNOTATION_PARAMETER_LIST) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
         child = processParenBlock(result, child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                   mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
       }
-      else if (childType == ElementType.LPARENTH && nodeType == ElementType.PARENTH_EXPRESSION) {
+      else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARENTH_EXPRESSION) {
         child = processParenBlock(result, child,
                                   WrappingStrategy.DO_NOT_WRAP,
                                   mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
       }
-      else if (childType == ElementType.ENUM_CONSTANT && myNode instanceof ClassElement) {
+      else if (childType == JavaElementType.ENUM_CONSTANT && myNode instanceof ClassElement) {
         child = processEnumBlock(result, child, ((ClassElement)myNode).findEnumConstantListDelimiterPlace());
       }
       else if (mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE && isTernaryOperationSign(child)) {
         child = processTernaryOperationRange(result, child, defaultAlignment, defaultWrap, childIndent);
       }
-      else if (childType == ElementType.FIELD) {
+      else if (childType == JavaElementType.FIELD) {
         child = processField(result, child, defaultAlignment, defaultWrap, childIndent);
       }
       else {
@@ -396,23 +393,23 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           createJavaBlock(child, mySettings, childIndent, arrangeChildWrap(child, defaultWrap),
                           arrangeChildAlignment(child, defaultAlignment), childOffset);
 
-        if (childType == ElementType.MODIFIER_LIST && containsAnnotations(child)) {
+        if (childType == JavaElementType.MODIFIER_LIST && containsAnnotations(child)) {
           myAnnotationWrap = Wrap.createWrap(getWrapType(getAnnotationWrapType()), true);
         }
 
         if (block instanceof AbstractJavaBlock) {
-          final AbstractJavaBlock javaBlock = ((AbstractJavaBlock)block);
-          if (nodeType == ElementType.METHOD_CALL_EXPRESSION && childType == ElementType.REFERENCE_EXPRESSION) {
+          final AbstractJavaBlock javaBlock = (AbstractJavaBlock)block;
+          if (nodeType == JavaElementType.METHOD_CALL_EXPRESSION && childType == JavaElementType.REFERENCE_EXPRESSION) {
             javaBlock.setReservedWrap(getReservedWrap());
           }
-          else if (nodeType == ElementType.REFERENCE_EXPRESSION &&
-                   childType == ElementType.METHOD_CALL_EXPRESSION) {
+          else if (nodeType == JavaElementType.REFERENCE_EXPRESSION &&
+                   childType == JavaElementType.METHOD_CALL_EXPRESSION) {
             javaBlock.setReservedWrap(getReservedWrap());
           }
-          else if (nodeType == ElementType.BINARY_EXPRESSION) {
+          else if (nodeType == JavaElementType.BINARY_EXPRESSION) {
             javaBlock.setReservedWrap(defaultWrap);
           }
-          else if (childType == ElementType.MODIFIER_LIST) {
+          else if (childType == JavaElementType.MODIFIER_LIST) {
             javaBlock.setReservedWrap(myAnnotationWrap);
             if (!lastChildIsAnnotation(child)) {
               myAnnotationWrap = null;
@@ -462,17 +459,17 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     ASTNode lastChildNode = child.getLastChildNode();
     if (lastChildNode == null) return child;
 
-    if (lastChildNode.getElementType() == ElementType.SEMICOLON) return child;
+    if (lastChildNode.getElementType() == JavaTokenType.SEMICOLON) return child;
 
     ASTNode currentResult = child;
     ASTNode currentNode = child.getTreeNext();
 
     while (currentNode != null) {
-      if (currentNode.getElementType() == ElementType.WHITE_SPACE
-          || currentNode.getElementType() == ElementType.COMMA
+      if (currentNode.getElementType() == TokenType.WHITE_SPACE
+          || currentNode.getElementType() == JavaTokenType.COMMA
           || StdTokenSets.COMMENT_BIT_SET.contains(currentNode.getElementType())) {
       }
-      else if (currentNode.getElementType() == ElementType.FIELD) {
+      else if (currentNode.getElementType() == JavaElementType.FIELD) {
         if (((PsiVariable)currentNode.getPsi()).getTypeElement() != typeElement) {
           return currentResult;
         }
@@ -520,7 +517,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   private boolean isTernaryOperationSign(final ASTNode child) {
-    if (myNode.getElementType() != ElementType.CONDITIONAL_EXPRESSION) return false;
+    if (myNode.getElementType() != JavaElementType.CONDITIONAL_EXPRESSION) return false;
     final int role = ((CompositeElement)child.getTreeParent()).getChildRole(child);
     return role == ChildRole.OPERATION_SIGN || role == ChildRole.COLON;
   }
@@ -544,7 +541,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private Block createSynthBlock(final ArrayList<ASTNode> subNodes, final Wrap wrap) {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     final ASTNode firstNode = subNodes.get(0);
-    if (firstNode.getElementType() == ElementType.DOT) {
+    if (firstNode.getElementType() == JavaTokenType.DOT) {
       subBlocks.add(createJavaBlock(firstNode, getSettings(), Indent.getNoneIndent(),
                                     null,
                                     null));
@@ -573,7 +570,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     result.add(nodes.remove(0));
     for (Iterator<ASTNode> iterator = nodes.iterator(); iterator.hasNext();) {
       ASTNode node = iterator.next();
-      if (node.getElementType() == ElementType.DOT) return result;
+      if (node.getElementType() == JavaTokenType.DOT) return result;
       result.add(node);
       iterator.remove();
     }
@@ -585,7 +582,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
-        if (child.getElementType() == ElementType.METHOD_CALL_EXPRESSION || child.getElementType() == ElementType.REFERENCE_EXPRESSION) {
+        if (child.getElementType() == JavaElementType.METHOD_CALL_EXPRESSION || child.getElementType() ==
+                                                                                JavaElementType
+                                                                                  .REFERENCE_EXPRESSION) {
           collectNodes(nodes, child);
         }
         else {
@@ -599,11 +598,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   private static boolean lastChildIsAnnotation(final ASTNode child) {
     ASTNode current = child.getLastChildNode();
-    while (current != null && current.getElementType() == ElementType.WHITE_SPACE) {
+    while (current != null && current.getElementType() == TokenType.WHITE_SPACE) {
       current = current.getTreePrev();
     }
-    if (current == null) return false;
-    return current.getElementType() == ElementType.ANNOTATION;
+    return current != null && current.getElementType() == JavaElementType.ANNOTATION;
   }
 
   private static boolean containsAnnotations(final ASTNode child) {
@@ -612,30 +610,30 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   private int getAnnotationWrapType() {
     final IElementType nodeType = myNode.getElementType();
-    if (nodeType == ElementType.METHOD) {
+    if (nodeType == JavaElementType.METHOD) {
       return mySettings.METHOD_ANNOTATION_WRAP;
     }
-    if (nodeType == ElementType.CLASS) {
+    if (nodeType == JavaElementType.CLASS) {
       return mySettings.CLASS_ANNOTATION_WRAP;
     }
-    if (nodeType == ElementType.FIELD) {
+    if (nodeType == JavaElementType.FIELD) {
       return mySettings.FIELD_ANNOTATION_WRAP;
     }
-    if (nodeType == ElementType.PARAMETER) {
+    if (nodeType == JavaElementType.PARAMETER) {
       return mySettings.PARAMETER_ANNOTATION_WRAP;
     }
-    if (nodeType == ElementType.LOCAL_VARIABLE) {
+    if (nodeType == JavaElementType.LOCAL_VARIABLE) {
       return mySettings.VARIABLE_ANNOTATION_WRAP;
     }
     return CodeStyleSettings.DO_NOT_WRAP;
   }
 
   @Nullable
-  protected Alignment arrangeChildAlignment(final ASTNode child, final Alignment defaultAlignment) {
+  private Alignment arrangeChildAlignment(final ASTNode child, final Alignment defaultAlignment) {
     int role = ((CompositeElement)child.getTreeParent()).getChildRole(child);
     final IElementType nodeType = myNode.getElementType();
 
-    if (nodeType == ElementType.FOR_STATEMENT) {
+    if (nodeType == JavaElementType.FOR_STATEMENT) {
       if (role == ChildRole.FOR_INITIALIZATION || role == ChildRole.CONDITION || role == ChildRole.FOR_UPDATE) {
         return defaultAlignment;
       }
@@ -643,7 +641,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return null;
       }
     }
-    else if (nodeType == ElementType.EXTENDS_LIST || nodeType == ElementType.IMPLEMENTS_LIST) {
+    else if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
       if (role == ChildRole.REFERENCE_IN_LIST || role == ChildRole.IMPLEMENTS_KEYWORD) {
         return defaultAlignment;
       }
@@ -651,7 +649,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return null;
       }
     }
-    else if (nodeType == ElementType.THROWS_LIST) {
+    else if (nodeType == JavaElementType.THROWS_LIST) {
       if (role == ChildRole.REFERENCE_IN_LIST) {
         return defaultAlignment;
       }
@@ -659,7 +657,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return null;
       }
     }
-    else if (nodeType == ElementType.CLASS) {
+    else if (nodeType == JavaElementType.CLASS) {
       if (role == ChildRole.CLASS_OR_INTERFACE_KEYWORD) return defaultAlignment;
       if (myIsAfterClassKeyword) return null;
       if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
@@ -667,16 +665,16 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return null;
     }
 
-    else if (nodeType == ElementType.METHOD) {
+    else if (nodeType == JavaElementType.METHOD) {
       if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
       if (role == ChildRole.TYPE) return defaultAlignment;
       if (role == ChildRole.NAME) return defaultAlignment;
       return null;
     }
 
-    else if (nodeType == ElementType.ASSIGNMENT_EXPRESSION) {
+    else if (nodeType == JavaElementType.ASSIGNMENT_EXPRESSION) {
       if (role == ChildRole.LOPERAND) return defaultAlignment;
-      if (role == ChildRole.ROPERAND && child.getElementType() == ElementType.ASSIGNMENT_EXPRESSION) {
+      if (role == ChildRole.ROPERAND && child.getElementType() == JavaElementType.ASSIGNMENT_EXPRESSION) {
         return defaultAlignment;
       }
       else {
@@ -704,8 +702,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   */
   private static Alignment createAlignment(final boolean alignOption, final Alignment defaultAlignment) {
-    return alignOption ?
-           (createAlignmentOrDefault(defaultAlignment)) : defaultAlignment;
+    return alignOption ? createAlignmentOrDefault(defaultAlignment) : defaultAlignment;
   }
 
   @Nullable
@@ -721,144 +718,141 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final ASTNode parent = child.getTreeParent();
     int role = ((CompositeElement)parent).getChildRole(child);
     final IElementType nodeType = myNode.getElementType();
-    if (nodeType == ElementType.BINARY_EXPRESSION) {
+    if (nodeType == JavaElementType.BINARY_EXPRESSION) {
       if (role == ChildRole.OPERATION_SIGN && !mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE) return null;
       if (role == ChildRole.ROPERAND && mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE) return null;
       return defaultWrap;
     }
-
-    else {
-      final IElementType childType = child.getElementType();
-      if (childType == ElementType.EXTENDS_LIST || childType == ElementType.IMPLEMENTS_LIST) {
-        return Wrap.createWrap(getWrapType(mySettings.EXTENDS_KEYWORD_WRAP), true);
-      }
-      else if (childType == ElementType.THROWS_LIST) {
-        return Wrap.createWrap(getWrapType(mySettings.THROWS_KEYWORD_WRAP), true);
-      }
-      else if (nodeType == ElementType.EXTENDS_LIST || nodeType == ElementType.IMPLEMENTS_LIST) {
-        if (role == ChildRole.REFERENCE_IN_LIST) {
-          return defaultWrap;
-        }
-        else {
-          return null;
-        }
-      }
-      else if (nodeType == ElementType.THROWS_LIST) {
-        if (role == ChildRole.REFERENCE_IN_LIST) {
-          return defaultWrap;
-        }
-        else {
-          return null;
-        }
-      }
-      else if (nodeType == ElementType.CONDITIONAL_EXPRESSION) {
-        if (role == ChildRole.COLON && !mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
-        if (role == ChildRole.QUEST && !mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
-        if (role == ChildRole.THEN_EXPRESSION && mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
-        if (role == ChildRole.ELSE_EXPRESSION && mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
+    final IElementType childType = child.getElementType();
+    if (childType == JavaElementType.EXTENDS_LIST || childType == JavaElementType.IMPLEMENTS_LIST) {
+      return Wrap.createWrap(getWrapType(mySettings.EXTENDS_KEYWORD_WRAP), true);
+    }
+    else if (childType == JavaElementType.THROWS_LIST) {
+      return Wrap.createWrap(getWrapType(mySettings.THROWS_KEYWORD_WRAP), true);
+    }
+    else if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
+      if (role == ChildRole.REFERENCE_IN_LIST) {
         return defaultWrap;
-
       }
+      else {
+        return null;
+      }
+    }
+    else if (nodeType == JavaElementType.THROWS_LIST) {
+      if (role == ChildRole.REFERENCE_IN_LIST) {
+        return defaultWrap;
+      }
+      else {
+        return null;
+      }
+    }
+    else if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
+      if (role == ChildRole.COLON && !mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
+      if (role == ChildRole.QUEST && !mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
+      if (role == ChildRole.THEN_EXPRESSION && mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
+      if (role == ChildRole.ELSE_EXPRESSION && mySettings.TERNARY_OPERATION_SIGNS_ON_NEXT_LINE) return null;
+      return defaultWrap;
 
-      else if (isAssignment()) {
-        if (role == ChildRole.INITIALIZER_EQ && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
-        if (role == ChildRole.OPERATION_SIGN && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
-        if (role == ChildRole.INITIALIZER && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
-        if (role == ChildRole.ROPERAND && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+    }
+
+    else if (isAssignment()) {
+      if (role == ChildRole.INITIALIZER_EQ && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      if (role == ChildRole.OPERATION_SIGN && mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      if (role == ChildRole.INITIALIZER && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      if (role == ChildRole.ROPERAND && !mySettings.PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE) return defaultWrap;
+      return null;
+    }
+
+    else if (nodeType == JavaElementType.REFERENCE_EXPRESSION) {
+      if (role == ChildRole.DOT) {
+        return getReservedWrap();
+      }
+      else {
+        return defaultWrap;
+      }
+    }
+    else if (nodeType == JavaElementType.FOR_STATEMENT) {
+      if (role == ChildRole.FOR_INITIALIZATION || role == ChildRole.CONDITION || role == ChildRole.FOR_UPDATE) {
+        return defaultWrap;
+      }
+      if (role == ChildRole.LOOP_BODY) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
+      }
+      else {
         return null;
       }
 
-      else if (nodeType == ElementType.REFERENCE_EXPRESSION) {
-        if (role == ChildRole.DOT) {
-          return getReservedWrap();
-        }
-        else {
-          return defaultWrap;
-        }
-      }
-      else if (nodeType == ElementType.FOR_STATEMENT) {
-        if (role == ChildRole.FOR_INITIALIZATION || role == ChildRole.CONDITION || role == ChildRole.FOR_UPDATE) {
-          return defaultWrap;
-        }
-        if (role == ChildRole.LOOP_BODY) {
-          return Wrap.createWrap(WrapType.NORMAL, true);
-        }
-        else {
-          return null;
-        }
+    }
 
+    else if (nodeType == JavaElementType.METHOD) {
+      if (role == ChildRole.THROWS_LIST) {
+        return defaultWrap;
       }
-
-      else if (nodeType == ElementType.METHOD) {
-        if (role == ChildRole.THROWS_LIST) {
-          return defaultWrap;
-        }
-        else {
-          return null;
-        }
-      }
-
-      else if (nodeType == ElementType.MODIFIER_LIST) {
-        if (childType == ElementType.ANNOTATION) {
-          return getReservedWrap();
-        }
-        ASTNode prevElement = getPrevElement(child);
-        if (prevElement != null && prevElement.getElementType() == ElementType.ANNOTATION) {
-          return getReservedWrap();
-        }
-        else {
-          return null;
-        }
-      }
-      else if (nodeType == ElementType.ASSERT_STATEMENT) {
-        if (role == ChildRole.CONDITION) {
-          return defaultWrap;
-        }
-        if (role == ChildRole.ASSERT_DESCRIPTION && !mySettings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE) {
-          return defaultWrap;
-        }
-        if (role == ChildRole.COLON && mySettings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE) {
-          return defaultWrap;
-        }
+      else {
         return null;
       }
-      else if (nodeType == ElementType.CODE_BLOCK) {
-        if (role == ChildRole.STATEMENT_IN_BLOCK) {
-          return defaultWrap;
-        }
-        else {
+    }
+
+    else if (nodeType == JavaElementType.MODIFIER_LIST) {
+      if (childType == JavaElementType.ANNOTATION) {
+        return getReservedWrap();
+      }
+      ASTNode prevElement = getPrevElement(child);
+      if (prevElement != null && prevElement.getElementType() == JavaElementType.ANNOTATION) {
+        return getReservedWrap();
+      }
+      else {
+        return null;
+      }
+    }
+    else if (nodeType == JavaElementType.ASSERT_STATEMENT) {
+      if (role == ChildRole.CONDITION) {
+        return defaultWrap;
+      }
+      if (role == ChildRole.ASSERT_DESCRIPTION && !mySettings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE) {
+        return defaultWrap;
+      }
+      if (role == ChildRole.COLON && mySettings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE) {
+        return defaultWrap;
+      }
+      return null;
+    }
+    else if (nodeType == JavaElementType.CODE_BLOCK) {
+      if (role == ChildRole.STATEMENT_IN_BLOCK) {
+        return defaultWrap;
+      }
+      else {
+        return null;
+      }
+    }
+
+    else if (nodeType == JavaElementType.IF_STATEMENT) {
+      if (role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH) {
+        if (childType == JavaElementType.BLOCK_STATEMENT) {
           return null;
         }
-      }
-
-      else if (nodeType == ElementType.IF_STATEMENT) {
-        if (role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH) {
-          if (childType == ElementType.BLOCK_STATEMENT) {
-            return null;
-          }
-          else {
-            return Wrap.createWrap(WrapType.NORMAL, true);
-          }
-        }
-      }
-
-      else if (nodeType == ElementType.FOREACH_STATEMENT || nodeType == ElementType.WHILE_STATEMENT) {
-        if (role == ChildRole.LOOP_BODY) {
-          if (childType == ElementType.BLOCK_STATEMENT) {
-            return null;
-          }
-          else {
-            return Wrap.createWrap(WrapType.NORMAL, true);
-          }
-        }
-      }
-
-      else if (nodeType == ElementType.DO_WHILE_STATEMENT) {
-        if (role == ChildRole.LOOP_BODY) {
-          return Wrap.createWrap(WrapType.NORMAL, true);
-        } else if (role == ChildRole.WHILE_KEYWORD) {
+        else {
           return Wrap.createWrap(WrapType.NORMAL, true);
         }
+      }
+    }
+
+    else if (nodeType == JavaElementType.FOREACH_STATEMENT || nodeType == JavaElementType.WHILE_STATEMENT) {
+      if (role == ChildRole.LOOP_BODY) {
+        if (childType == JavaElementType.BLOCK_STATEMENT) {
+          return null;
+        }
+        else {
+          return Wrap.createWrap(WrapType.NORMAL, true);
+        }
+      }
+    }
+
+    else if (nodeType == JavaElementType.DO_WHILE_STATEMENT) {
+      if (role == ChildRole.LOOP_BODY) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
+      } else if (role == ChildRole.WHILE_KEYWORD) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
       }
     }
 
@@ -867,7 +861,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   private static ASTNode getPrevElement(final ASTNode child) {
     ASTNode result = child.getTreePrev();
-    while (result != null && result.getElementType() == ElementType.WHITE_SPACE) {
+    while (result != null && result.getElementType() == TokenType.WHITE_SPACE) {
       result = result.getTreePrev();
     }
     return result;
@@ -875,7 +869,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   private boolean hasTheSamePriority(final ASTNode node) {
     if (node == null) return false;
-    if (node.getElementType() != ElementType.BINARY_EXPRESSION) {
+    if (node.getElementType() != JavaElementType.BINARY_EXPRESSION) {
       return false;
     }
     else {
@@ -887,7 +881,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  protected static WrapType getWrapType(final int wrap) {
+  private static WrapType getWrapType(final int wrap) {
     switch (wrap) {
       case CodeStyleSettings.WRAP_ALWAYS:
         return WrapType.ALWAYS;
@@ -907,8 +901,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     myUseChildAttributes = true;
 
-    final IElementType from = ElementType.LPARENTH;
-    final IElementType to = ElementType.RPARENTH;
+    final IElementType from = JavaTokenType.LPARENTH;
+    final IElementType to = JavaTokenType.RPARENTH;
 
     return processParenBlock(from, to, result, child, wrappingStrategy, doAlign);
 
@@ -929,8 +923,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     ASTNode prev = child;
     int startOffset = child.getTextRange().getStartOffset();
     while (child != null) {
-      isAfterIncomplete = isAfterIncomplete || child.getElementType() == ElementType.ERROR_ELEMENT ||
-                          child.getElementType() == ElementType.EMPTY_EXPRESSION;
+      isAfterIncomplete = isAfterIncomplete || child.getElementType() == JavaElementType.ERROR_ELEMENT ||
+                          child.getElementType() == JavaElementType.EMPTY_EXPRESSION;
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         if (child.getElementType() == from) {
           result.add(createJavaBlock(child, mySettings, externalIndent, null, null));
@@ -1036,8 +1030,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   private boolean isTopLevelClass() {
-    if (myNode.getElementType() != ElementType.CLASS) return false;
-    return SourceTreeToPsiMap.treeElementToPsi(myNode.getTreeParent()) instanceof PsiFile;
+    return myNode.getElementType() == JavaElementType.CLASS &&
+           SourceTreeToPsiMap.treeElementToPsi(myNode.getTreeParent()) instanceof PsiFile;
   }
 
   protected Indent getCodeBlockExternalIndent() {

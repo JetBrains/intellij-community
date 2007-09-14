@@ -50,7 +50,7 @@ public class PsiTypeCastExpressionImpl extends CompositePsiElement implements Ps
   }
 
   public int getChildRole(ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
+    assert child.getTreeParent() == this: "child:"+child+"; child.getTreeParent():"+child.getTreeParent();
     IElementType i = child.getElementType();
     if (i == LPARENTH) {
       return ChildRole.LPARENTH;
