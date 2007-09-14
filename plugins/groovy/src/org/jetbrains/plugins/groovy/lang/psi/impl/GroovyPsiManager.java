@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -83,6 +84,8 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public GroovyPsiManager(Project project) {
     myProject = project;
+
+    DirectClassInheritorsSearch.INSTANCE.registerExecutor(new GroovyDirectInheritorsSearcher());
   }
 
   public void projectOpened() {
