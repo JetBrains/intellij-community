@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludedOutputFolder;
+import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  *  @author dsl
  */
-public class ExcludedOutputFolderImpl implements ExcludedOutputFolder {
+public class ExcludedOutputFolderImpl implements ExcludedOutputFolder, ClonableContentFolder {
   private final ContentEntryImpl myContentEntry;
   private final VirtualFilePointer myOutputPath;
 
@@ -40,5 +41,9 @@ public class ExcludedOutputFolderImpl implements ExcludedOutputFolder {
 
   public boolean isSynthetic() {
     return true;
+  }
+
+  public ContentFolder cloneFolder(final ContentEntry contentEntry) {
+    return new ExcludedOutputFolderImpl((ContentEntryImpl)contentEntry, myOutputPath);
   }
 }
