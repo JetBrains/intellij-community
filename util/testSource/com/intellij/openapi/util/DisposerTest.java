@@ -164,10 +164,10 @@ public class DisposerTest extends TestCase {
 
   private void assertNoReferenceKeptInTree(ObjectNode aNode, MyDisposable aDisposable) {
     assertNotSame(aNode.getObject(), aDisposable);
-    final List children = aNode.getChildren();
+    final Collection<ObjectNode> children = aNode.getChildren();
     if (children != null) {
-      for (int i = 0; i < children.size(); i++) {
-        assertNoReferenceKeptInTree((ObjectNode)children.get(i), aDisposable);
+      for (ObjectNode node:children) {
+        assertNoReferenceKeptInTree(node, aDisposable);
       }
     }
   }

@@ -8,8 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 
 public final class ObjectNode {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectNode");
@@ -19,7 +19,7 @@ public final class ObjectNode {
   private ObjectNode myParent;
   private Object myObject;
 
-  private List<ObjectNode> myChildren;
+  private LinkedHashSet<ObjectNode> myChildren;
   private Throwable myTrace;
 
   public ObjectNode(ObjectTree tree, ObjectNode parentNode, Object object) {
@@ -72,7 +72,7 @@ public final class ObjectNode {
 
   private void ensureChildArray() {
     if (myChildren == null) {
-      myChildren = new ArrayList<ObjectNode>();
+      myChildren = new LinkedHashSet<ObjectNode>();
     }
   }
 
@@ -119,7 +119,7 @@ public final class ObjectNode {
     return myObject;
   }
 
-  public List getChildren() {
+  public Collection<ObjectNode> getChildren() {
     return myChildren;
   }
 
