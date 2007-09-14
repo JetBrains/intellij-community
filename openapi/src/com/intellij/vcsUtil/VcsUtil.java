@@ -589,6 +589,22 @@ public class VcsUtil {
     return localPath;
   }
 
+  public static String getCanonicalPath( String path )
+  {
+    String canonPath;
+    try {  canonPath = new File( path ).getCanonicalPath();  }
+    catch( IOException e ){  canonPath = path;  }
+    return canonPath;
+  }
+
+  public static String getCanonicalPath( File file )
+  {
+    String canonPath;
+    try {  canonPath = file.getCanonicalPath();  }
+    catch (IOException e) {  canonPath = file.getAbsolutePath();  }
+    return canonPath;
+  }
+
   /**
    * @param source Source string
    * @param chars  Symbols to be trimmed
