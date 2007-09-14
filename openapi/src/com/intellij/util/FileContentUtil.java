@@ -23,7 +23,10 @@ public class FileContentUtil {
   private FileContentUtil() {
   }
 
-  public static void setFileText(final @Nullable Project project, final VirtualFile virtualFile, final String text) throws IOException {
+  public static void setFileText(@Nullable Project project, final VirtualFile virtualFile, final String text) throws IOException {
+    if (project == null) {
+      project = VfsUtil.guessProjectForFile(virtualFile);
+    }
     if (project != null) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);

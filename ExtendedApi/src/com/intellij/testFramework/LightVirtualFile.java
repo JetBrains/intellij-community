@@ -53,6 +53,9 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
     myFileType = fileType;
     myContent = text;
     myModStamp = modificationStamp;
+    if (fileType instanceof LanguageFileType) {
+      setCharset(((LanguageFileType)fileType).extractCharsetFromFileContent(null, this, text.toString()));
+    }
   }
 
   public LightVirtualFile(final String name, final Language language, final String text) {
@@ -76,7 +79,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   }
 
   private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem {
-    @NonNls private final static String PROTOCOL = "mock";
+    @NonNls private static final String PROTOCOL = "mock";
 
     public String getProtocol() {
       return PROTOCOL;
@@ -117,7 +120,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
     }
   }
 
-  private static MyVirtualFileSystem ourFileSystem = new MyVirtualFileSystem();
+  private static final MyVirtualFileSystem ourFileSystem = new MyVirtualFileSystem();
 
   @NotNull
   public VirtualFileSystem getFileSystem() {
@@ -155,7 +158,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   }
 
   public VirtualFile[] getChildren() {
-    return VirtualFile.EMPTY_ARRAY;
+    return EMPTY_ARRAY;
   }
 
   public InputStream getInputStream() throws IOException {
@@ -164,7 +167,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
 
   public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
     return new ByteArrayOutputStream() {
-      public void close() throws IOException {
+      public void close() {
         myModStamp = newModificationStamp;
         myContent = toString();
       }

@@ -62,7 +62,7 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
   }
 
   @Nullable
-  private VirtualFile createFileFromTemplate(final @Nullable Project project, String url, final String templateName, final boolean forceNew) {
+  private VirtualFile createFileFromTemplate(@Nullable final Project project, String url, final String templateName, final boolean forceNew) {
     final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     final File file = new File(VfsUtil.urlToPath(url));
     final VirtualFile existingFile = fileSystem.refreshAndFindFileByIoFile(file);
@@ -71,9 +71,9 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     }
     try {
       String text = getText(templateName);
-      final VirtualFile virtualFile;
       final VirtualFile childData;
       if (existingFile == null || existingFile.isDirectory()) {
+        final VirtualFile virtualFile;
         if (!FileUtil.createParentDirs(file) ||
             (virtualFile = fileSystem.refreshAndFindFileByIoFile(file.getParentFile())) == null) {
           throw new IOException(IdeBundle.message("error.message.unable.to.create.file", file.getPath()));

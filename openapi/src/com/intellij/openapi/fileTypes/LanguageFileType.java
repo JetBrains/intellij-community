@@ -33,7 +33,7 @@ import java.nio.charset.Charset;
  * Kind of file types capable to provide {@link Language}.
  */
 public abstract class LanguageFileType implements FileType{
-  private Language myLanguage;
+  private final Language myLanguage;
 
   /**
    * Creates a language file type for the specified language.
