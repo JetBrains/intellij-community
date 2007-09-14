@@ -43,8 +43,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider;
 import org.jetbrains.plugins.groovy.structure.GroovyStructureViewBuilder;
-import org.jetbrains.plugins.groovy.override.OverrideMethodsHandler;
-import org.jetbrains.plugins.groovy.override.ImplementMethodsHandler;
+import org.jetbrains.plugins.groovy.overrideImplement.OverrideMethodsHandler;
+import org.jetbrains.plugins.groovy.overrideImplement.ImplementMethodsHandler;
 
 /**
  * All main properties for Groovy language

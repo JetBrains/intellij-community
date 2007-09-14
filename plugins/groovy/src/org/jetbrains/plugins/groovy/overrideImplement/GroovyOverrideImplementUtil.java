@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.override;
+package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.ide.fileTemplates.*;
