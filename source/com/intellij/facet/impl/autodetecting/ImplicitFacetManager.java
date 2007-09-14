@@ -74,9 +74,12 @@ public class ImplicitFacetManager implements Disposable {
     if (!Comparing.haveEqualElements(myImplicitFacets, implicitFacets)) {
       final Set<Facet> newFacets = new HashSet<Facet>(implicitFacets);
       newFacets.removeAll(myImplicitFacets);
-      final boolean someFacetsDeleted = !implicitFacets.containsAll(myImplicitFacets);
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        final boolean someFacetsDeleted = !implicitFacets.containsAll(myImplicitFacets);
+        final boolean stopBlinking = !myImplicitFacets.isEmpty() && implicitFacets.isEmpty();
+        final boolean startBlinking = myImplicitFacets.isEmpty() && !implicitFacets.isEmpty();
+
         Runnable runnable = new Runnable() {
           public void run() {
             if (someFacetsDeleted && myNotificationPopup != null) {
@@ -86,10 +89,10 @@ public class ImplicitFacetManager implements Disposable {
             myPendingNewFacets.addAll(newFacets);
             queueNotificationPopup();
 
-            if (!myImplicitFacets.isEmpty() && implicitFacets.isEmpty()) {
+            if (stopBlinking) {
               myAttentionComponent.stopBlinking();
             }
-            if (myImplicitFacets.isEmpty() && containsValid(implicitFacets)) {
+            if (startBlinking) {
               myAttentionComponent.startBlinking();
             }
           }
@@ -103,15 +106,6 @@ public class ImplicitFacetManager implements Disposable {
       }
       myImplicitFacets = implicitFacets;
     }
-  }
-
-  private static boolean containsValid(final List<Facet> facets) {
-    for (Facet facet : facets) {
-      if (FacetUtil.isRegistered(facet)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void queueNotificationPopup() {
