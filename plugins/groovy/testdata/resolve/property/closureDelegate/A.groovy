@@ -1,0 +1,3 @@
+def c = {
+  <ref>delegate
+}

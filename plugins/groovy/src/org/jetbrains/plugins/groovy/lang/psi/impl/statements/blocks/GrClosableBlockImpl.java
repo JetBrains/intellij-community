@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -39,7 +40,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl");
   private GrParameter mySyntheticItParameter;
+  private GrVariable myDelegate;
   private static final String SYNTHETIC_PARAMETER_NAME = "it";
+  private static final String DELEGATE_NAME = "delegate";
 
   public GrClosableBlockImpl(@NotNull ASTNode node) {
     super(node);
@@ -55,6 +58,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     for (final GrParameter parameter : getParameters()) {
       if (!ResolveUtil.processElement(processor, parameter)) return false;
     }
+
+    if (!ResolveUtil.processElement(processor, getDelegate())) return false;
 
     return true;
   }
@@ -103,6 +108,15 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
       }
     }
     return mySyntheticItParameter;
+  }
+
+  private GrVariable getDelegate() {
+    if (myDelegate == null) {
+      PsiType type = getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
+      myDelegate = GroovyElementFactory.getInstance(getProject()).createVariableDeclaration(null, DELEGATE_NAME, null, type).getVariables()[0];
+    }
+
+    return myDelegate;
   }
 
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr) throws IncorrectOperationException {

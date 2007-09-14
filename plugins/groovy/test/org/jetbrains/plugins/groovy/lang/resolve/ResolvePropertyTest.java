@@ -31,6 +31,10 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   public void testClosureParameter1() throws Exception {
     doTest("closureParameter1/A.groovy");
   }
+  
+  public void testClosureDelegate() throws Exception {
+    doTest("closureDelegate/A.groovy");
+  }
 
   public void testLocal1() throws Exception {
     doTest("local1/A.groovy");
