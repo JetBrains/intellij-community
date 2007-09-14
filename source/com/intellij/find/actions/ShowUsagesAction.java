@@ -101,7 +101,10 @@ public class ShowUsagesAction extends AnAction {
         }
       };
       final String title = presentation.getTabText();
-      getUsagePopup(usages, title, doNavigate, project).showInBestPositionFor(editor);
+      JBPopup popup = getUsagePopup(usages, title, doNavigate, project);
+      if (popup != null) {
+        popup.showInBestPositionFor(editor);
+      }
     }
   }
 
@@ -115,6 +118,12 @@ public class ShowUsagesAction extends AnAction {
     List<UsageNode> nodes = new ArrayList<UsageNode>();
 
     addUsageNodes(root, nodes);
+    if (usages.size() == 1) {
+      // usage view can filter usages down to one
+      Usage usage = nodes.get(0).getUsage();
+      processor.process(usage);
+      return null;
+    }
 
     final JList list = new JList(new Vector<UsageNode>(nodes));
     list.setCellRenderer(new ListCellRenderer(){
