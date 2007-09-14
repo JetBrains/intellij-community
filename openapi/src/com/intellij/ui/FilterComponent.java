@@ -95,6 +95,9 @@ public abstract class FilterComponent extends JPanel {
     myFilter.setText(filter);
   }
 
+  public void selectText(){
+    myFilter.selectText();
+  }
 
   public boolean requestFocusInWindow() {
     return myFilter.requestFocusInWindow();

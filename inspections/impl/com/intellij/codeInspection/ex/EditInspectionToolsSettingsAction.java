@@ -77,7 +77,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction {
     if (!canChooseDifferentProfile) {
       @NonNls final String dimensionServiceKey = "#Errors";
       return settingsUtil.editConfigurable(project, dimensionServiceKey,
-                                           new InspectionToolsConfigurable(project, inspectionProfile, selectedToolShortName));
+                                           new InspectionToolsConfigurable(inspectionProfile, selectedToolShortName));
     }
     else {
       final ErrorOptionsConfigurable errorsConfigurable = ErrorOptionsConfigurable.getInstance(project);

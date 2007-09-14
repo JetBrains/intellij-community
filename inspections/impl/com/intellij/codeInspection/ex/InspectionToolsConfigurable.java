@@ -14,7 +14,6 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
@@ -24,10 +23,10 @@ public class InspectionToolsConfigurable implements Configurable {
   private String mySelectedTool;
   private SingleInspectionProfilePanel myPanel;
 
-  public InspectionToolsConfigurable(final Project project, final InspectionProfile inspectionProfile, final String selectedTool) {
+  public InspectionToolsConfigurable(final InspectionProfile inspectionProfile, final String selectedTool) {
     myInspectionProfile = inspectionProfile;
     mySelectedTool = selectedTool;
-    myPanel = new SingleInspectionProfilePanel(myInspectionProfile.getName(), inspectionProfile.getModifiableModel(), project);
+    myPanel = new SingleInspectionProfilePanel(myInspectionProfile.getName(), inspectionProfile.getModifiableModel());
   }
 
   public String getDisplayName() {

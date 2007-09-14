@@ -38,15 +38,15 @@ import java.util.List;
 public class TextFieldWithHistory extends JPanel {
 
   private int myHistorySize = 5;
-  private MyModel myModel;
-  private TextFieldWithProcessing myTextField;
+  private final MyModel myModel;
+  private final TextFieldWithProcessing myTextField;
 
   private JBPopup myPopup;
-  private JLabel myClearFieldLabel;
-  private JLabel myToggleHistoryLabel;
+  private final JLabel myClearFieldLabel;
+  private final JLabel myToggleHistoryLabel;
 
   private boolean myFreaze = false;
-  private boolean myCropList;
+  private final boolean myCropList;
 
   private KeyListener myListener = null;
 
@@ -227,66 +227,6 @@ public class TextFieldWithHistory extends JPanel {
     getTextEditor().requestFocus();
   }
 
-  protected class HistoricalValuesHighlighter extends KeyAdapter {
-
-    public void keyPressed(KeyEvent e) {
-      if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-        updateCroppedList();
-      }
-    }
-
-    public void keyTyped(KeyEvent e) {
-      if (Character.isLetter(e.getKeyChar()) && noAltCtrl(e)) {
-        updateCroppedList();
-      }
-    }
-
-    private boolean noAltCtrl(KeyEvent aE) {
-      return 0 == (aE.getModifiers() & (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK));
-    }
-
-    private void updateCroppedList() {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          String text = getTextEditor().getText();
-          myModel.setSelectedItemAndCropList(text);
-        }
-      });
-
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (0 == myModel.getSize()) {
-            hidePopup();
-            myModel.uncropList();
-          }
-          else {
-            refreshPopup();
-          }
-        }
-      });
-    }
-
-    private void refreshPopup() {
-      Runnable hider = new Runnable() {
-        public void run() {
-          hidePopup();
-        }
-      };
-
-      Runnable shower = new Runnable() {
-        public void run() {
-          showPopup();
-        }
-      };
-
-      if (myModel.croppedListEnlarged()) {
-        SwingUtilities.invokeLater(hider);
-      }
-
-      SwingUtilities.invokeLater(shower);
-    }
-  }
-
   public class MyModel extends AbstractListModel {
 
     private List<String> myFullList = new ArrayList<String>();
@@ -355,7 +295,7 @@ public class TextFieldWithHistory extends JPanel {
 
     private void refreshCroppedList() {
       if (myCropList) {
-        if (null == getSelectedItem() && myCroppedList.size() > 0) {
+        if (null == getSelectedItem() && !myCroppedList.isEmpty()) {
           return;
         }
         myLastCroppedListSize = myCroppedList.size();

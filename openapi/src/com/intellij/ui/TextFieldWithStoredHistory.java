@@ -25,7 +25,7 @@ import java.util.ArrayList;
  * Date: 16-Dec-2005
  */
 public class TextFieldWithStoredHistory extends TextFieldWithHistory {
-  private String myPropertyName;
+  private final String myPropertyName;
 
   public TextFieldWithStoredHistory(@NonNls final String propertyName, boolean cropList) {
     super(cropList);
@@ -33,7 +33,6 @@ public class TextFieldWithStoredHistory extends TextFieldWithHistory {
   }
 
   public TextFieldWithStoredHistory(@NonNls final String propertyName) {
-    super();
     myPropertyName = propertyName;
   }
 
@@ -45,7 +44,7 @@ public class TextFieldWithStoredHistory extends TextFieldWithHistory {
     if (value == null) {
       propertiesComponent.setValue(myPropertyName, text);
     }
-    else if (value.indexOf(text) == -1) {
+    else if (!value.contains(text)) {
       propertiesComponent.setValue(myPropertyName, value + "\n" + text);
     }
   }
