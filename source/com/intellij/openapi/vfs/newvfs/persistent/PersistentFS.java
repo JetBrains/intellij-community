@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.AntivirusDetector;
 import com.intellij.util.io.DupOutputStream;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.messages.MessageBus;
@@ -39,9 +41,17 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private final Map<String, NewVirtualFile> myRoots = new HashMap<String, NewVirtualFile>();
 
-  public PersistentFS(MessageBus bus) {
+  public PersistentFS(MessageBus bus, PropertiesComponent properties) {
     myEventsBus = bus;
     myRecords = new FSRecords();
+
+    if (!properties.isTrueValue("AntivirusActivityReporter.disabled")) {
+      AntivirusDetector.getInstance().enable(new Runnable() {
+        public void run() {
+          LOG.info("Antivirus activity detected. Please make sure IDEA system and caches directory as well as project foler are exluded from antivirus on-the-fly check list.");
+        }
+      });
+    }
   }
 
   public void disposeComponent() {

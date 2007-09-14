@@ -64,17 +64,21 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
   }
 
   public synchronized void closeChannel(File ioFile) {
-    ChannelDescriptor descriptor = myCache.remove(ioFile);
+    final ChannelDescriptor descriptor = myCache.remove(ioFile);
 
     if (descriptor != null) {
       assert !descriptor.isLocked();
 
-      try {
-        descriptor.getChannel().close();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      AntivirusDetector.getInstance().execute(new Runnable() {
+        public void run() {
+          try {
+            descriptor.getChannel().close();
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
     }
   }
 
