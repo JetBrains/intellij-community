@@ -41,15 +41,13 @@ public class ExpectedHighlightingData {
   private final PsiFile myFile;
 
   protected static class ExpectedHighlightingSet {
-    public final String marker;
     private final boolean endOfLine;
     final boolean enabled;
     final Set<HighlightInfo> infos;
     final HighlightInfoType defaultErrorType;
     final HighlightSeverity severity;
 
-    public ExpectedHighlightingSet(String marker, HighlightInfoType defaultErrorType,HighlightSeverity severity, boolean endOfLine, boolean enabled) {
-      this.marker = marker;
+    public ExpectedHighlightingSet(HighlightInfoType defaultErrorType, HighlightSeverity severity, boolean endOfLine, boolean enabled) {
       this.endOfLine = endOfLine;
       this.enabled = enabled;
       infos = new THashSet<HighlightInfo>();
@@ -78,12 +76,12 @@ public class ExpectedHighlightingData {
                                   PsiFile file) {
     myFile = file;
     highlightingTypes = new THashMap<String,ExpectedHighlightingSet>();
-    highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(ERROR_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
-    highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(WARNING_MARKER, HighlightInfoType.UNUSED_SYMBOL, HighlightSeverity.WARNING, false, checkWarnings));
-    highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(INFORMATION_MARKER, HighlightInfoType.INFO, HighlightSeverity.INFO, false, checkWeakWarnings));
-    highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(INFO_MARKER, HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
-    highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(END_LINE_HIGHLIGHT_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
-    highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(END_LINE_WARNING_MARKER, HighlightInfoType.WARNING, HighlightSeverity.WARNING, true, checkWarnings));
+    highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
+    highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.UNUSED_SYMBOL, HighlightSeverity.WARNING, false, checkWarnings));
+    highlightingTypes.put(INFORMATION_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INFO, HighlightSeverity.INFO, false, checkWeakWarnings));
+    highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
+    highlightingTypes.put(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.ERROR, HighlightSeverity.ERROR, true, true));
+    highlightingTypes.put(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightInfoType.WARNING, HighlightSeverity.WARNING, true, checkWarnings));
     initAdditionalHighlightingTypes();
     extractExpectedHighlightsSet(document);
   }
@@ -261,6 +259,7 @@ public class ExpectedHighlightingData {
   }
 
   private boolean expectedInfosContainsInfo(HighlightInfo info) {
+    if (info.getTextAttributes(null) == TextAttributes.ERASE_MARKER) return true;
     final Collection<ExpectedHighlightingSet> expectedHighlights = highlightingTypes.values();
     for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
       if (highlightingSet.severity != info.getSeverity()) continue;

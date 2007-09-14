@@ -282,43 +282,37 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     };
 
     injectedPsi.accept(visitor);
-    highlightSyntax(injectedLanguage, injectedPsi, annotationHolder);
+    highlightInjectedSyntax(injectedLanguage, injectedPsi, annotationHolder);
   }
 
-  private static void highlightSyntax(final Language injectedLanguage, final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder) {
+  private static void highlightInjectedSyntax(final Language injectedLanguage, final PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder) {
     List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
     if (tokens == null) return;
 
     SyntaxHighlighter syntaxHighlighter = injectedLanguage.getSyntaxHighlighter(injectedPsi.getProject(), injectedPsi.getVirtualFile());
+    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final TextAttributes defaultAttrs = globalScheme.getAttributes(HighlighterColors.TEXT);
 
     for (Trinity<IElementType, PsiLanguageInjectionHost, TextRange> token : tokens) {
       IElementType tokenType = token.getFirst();
       PsiLanguageInjectionHost injectionHost = token.getSecond();
       TextRange textRange = token.getThird();
       TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(tokenType);
-      if (keys.length == 0) continue;
       if (textRange.getLength() == 0) continue;
 
       Annotation annotation = annotationHolder.createInfoAnnotation(textRange.shiftRight(injectionHost.getTextRange().getStartOffset()), null);
       if (annotation == null) continue; // maybe out of highlightable range
       // force attribute colors to override host' ones
 
-      if (keys.length == 0) {
+      TextAttributes attributes = keys.length == 0 ? null : globalScheme.getAttributes(keys[0]);
+      if (attributes == null || attributes.isEmpty() || attributes.equals(defaultAttrs)) {
         annotation.setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
       }
       else {
-        EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-        TextAttributes attributes = globalScheme.getAttributes(keys[0]);
-        final TextAttributes defaultAttrs = globalScheme.getAttributes(HighlighterColors.TEXT);
-        if (attributes == null || attributes.isEmpty() || attributes.equals(defaultAttrs)) {
-          annotation.setEnforcedTextAttributes(TextAttributes.ERASE_MARKER);
-        }
-        else {
-          Color back = attributes.getBackgroundColor() == null ? globalScheme.getDefaultBackground() : attributes.getBackgroundColor();
-          Color fore = attributes.getForegroundColor() == null ? globalScheme.getDefaultForeground() : attributes.getForegroundColor();
-          TextAttributes forced = new TextAttributes(fore, back, attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
-          annotation.setEnforcedTextAttributes(forced);
-        }
+        Color back = attributes.getBackgroundColor() == null ? globalScheme.getDefaultBackground() : attributes.getBackgroundColor();
+        Color fore = attributes.getForegroundColor() == null ? globalScheme.getDefaultForeground() : attributes.getForegroundColor();
+        TextAttributes forced = new TextAttributes(fore, back, attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
+        annotation.setEnforcedTextAttributes(forced);
       }
     }
   }
