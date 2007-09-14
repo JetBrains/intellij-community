@@ -14,10 +14,11 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 public class BraceHighlighter implements ProjectComponent {
-  private Project myProject;
-  private Alarm myAlarm = new Alarm();
+  private final Project myProject;
+  private final Alarm myAlarm = new Alarm();
   private CaretListener myCaretListener;
   private SelectionListener mySelectionListener;
   private DocumentListener myDocumentListener;
@@ -28,6 +29,7 @@ public class BraceHighlighter implements ProjectComponent {
     myProject = project;
   }
 
+  @NotNull
   public String getComponentName() {
     return "BraceHighlighter";
   }
@@ -103,7 +105,7 @@ public class BraceHighlighter implements ProjectComponent {
   private void updateBraces(final Editor editor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (!myIsDisposed && editor.getComponent().isShowing() && !editor.isViewer()) {
+          if (!myIsDisposed && !myProject.isDisposed() && editor.getComponent().isShowing() && !editor.isViewer()) {
             new BraceHighlightingHandler(myProject, editor, myAlarm).updateBraces();
           }
         }

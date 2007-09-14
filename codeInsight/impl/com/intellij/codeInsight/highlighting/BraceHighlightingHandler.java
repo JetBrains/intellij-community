@@ -48,7 +48,7 @@ public class BraceHighlightingHandler {
   private final DocumentEx myDocument;
   private final PsiFile myPsiFile;
   private FileType myFileType;
-  private CodeInsightSettings myCodeInsightSettings;
+  private final CodeInsightSettings myCodeInsightSettings;
 
   public BraceHighlightingHandler(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm) {
     myProject = project;
@@ -394,7 +394,7 @@ public class BraceHighlightingHandler {
   private static class MyLineMarkerRenderer implements LineMarkerRenderer {
     private static final int DEEPNESS = 2;
     private static final int THICKNESS = 2;
-    private Color myColor;
+    private final Color myColor;
 
     public MyLineMarkerRenderer(Color color) {
       myColor = color;

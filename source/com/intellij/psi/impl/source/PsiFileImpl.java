@@ -40,7 +40,6 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   protected IElementType myContentElementType;
 
   protected PsiFile myOriginalFile = null;
-  private boolean myExplicitlySetAsValid = false;
   private FileViewProvider myViewProvider;
   private static final Key<Document> HARD_REFERENCE_TO_DOCUMENT = new Key<Document>("HARD_REFERENCE_TO_DOCUMENT");
 
@@ -50,7 +49,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   protected PsiFileImpl( FileViewProvider provider ) {
-    super((PsiManagerEx)provider.getManager(), !provider.isPhysical() ? -1 : -2);
+    super((PsiManagerEx)provider.getManager(), provider.isPhysical() ? -2 : -1);
     myViewProvider = provider;
   }
 
@@ -149,7 +148,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public boolean isValid() {
-    if (!getViewProvider().isPhysical() || myExplicitlySetAsValid) return true; // "dummy" file
+    if (!getViewProvider().isPhysical()) return true; // "dummy" file
     final VirtualFile vFile = getViewProvider().getVirtualFile();
     return vFile.isValid() && isPsiUpToDate(vFile);
   }
