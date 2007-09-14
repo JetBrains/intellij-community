@@ -11,7 +11,6 @@ package com.intellij.compiler;
 import com.intellij.CommonBundle;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
-import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
@@ -48,18 +47,18 @@ import java.util.*;
 )
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
-  public static final @NonNls String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
+  @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
   public static final int DEPENDENCY_FORMAT_VERSION = 47;
   @NonNls private static final String PROPERTY_IDEA_USE_EMBEDDED_JAVAC = "idea.use.embedded.javac";
 
-  public String DEFAULT_COMPILER;
+  @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
   @NotNull private BackendCompiler myDefaultJavaCompiler;
 
   // extensions of the files considered as resource files
-  private List<Pattern> myRegexpResourcePaterns = new ArrayList<Pattern>(getDefaultRegexpPatterns());
+  private final List<Pattern> myRegexpResourcePaterns = new ArrayList<Pattern>(getDefaultRegexpPatterns());
   // extensions of the files considered as resource files. If present, Overrides patterns in old regexp format stored in myRegexpResourcePaterns
-  private List<String> myWildcardPatterns = new ArrayList<String>();
-  private List<Pattern> myWildcardCompiledPatterns = new ArrayList<Pattern>();
+  private final List<String> myWildcardPatterns = new ArrayList<String>();
+  private final List<Pattern> myWildcardCompiledPatterns = new ArrayList<Pattern>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
   private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
@@ -83,7 +82,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public Element getState() {
     try {
-      final Element e = new Element("state");
+      @NonNls final Element e = new Element("state");
       writeExternal(e);
       return e;
     }
@@ -182,13 +181,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       if (eclipse.isInitialized()) {
         registeredCompilers.add(eclipse);
       }
-      try {
-        final EclipseEmbeddedCompiler eclipseEmbedded = new EclipseEmbeddedCompiler(myProject);
-        registeredCompilers.add(eclipseEmbedded);
-      }
-      catch (NoClassDefFoundError e) {
-        // eclipse jar must be not in the classpath
-      }
+      //try {
+      //  final EclipseEmbeddedCompiler eclipseEmbedded = new EclipseEmbeddedCompiler(myProject);
+      //  registeredCompilers.add(eclipseEmbedded);
+      //}
+      //catch (NoClassDefFoundError e) {
+      //  // eclipse jar must be not in the classpath
+      //}
     }
     myDefaultJavaCompiler = JAVAC_EXTERNAL_BACKEND;
     for (BackendCompiler compiler : registeredCompilers) {
@@ -208,7 +207,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return getWildcardPatterns();
   }
 
-  public String[] getRegexpPatterns() {
+  private String[] getRegexpPatterns() {
     String[] patterns = new String[myRegexpResourcePaterns.size()];
     int index = 0;
     for (final Pattern myRegexpResourcePatern : myRegexpResourcePaterns) {
@@ -217,7 +216,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return patterns;
   }
 
-  public String[] getWildcardPatterns() {
+  private String[] getWildcardPatterns() {
     return myWildcardPatterns.toArray(new String[myWildcardPatterns.size()]);
   }
 
@@ -253,11 +252,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     removeWildcardPatterns();
   }
 
-  public void removeRegexpPatterns() {
+  private void removeRegexpPatterns() {
     myRegexpResourcePaterns.clear();
   }
 
-  public void removeWildcardPatterns() {
+  private void removeWildcardPatterns() {
     myWildcardPatterns.clear();
     myWildcardCompiledPatterns.clear();
   }
@@ -301,16 +300,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return false;
   }
 
-  public int getDeployAfterMake() {
-    return DEPLOY_AFTER_MAKE;
-  }
-
   // property names
-  private static final @NonNls String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
-  private static final @NonNls String RESOURCE_EXTENSIONS = "resourceExtensions";
-  private static final @NonNls String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
-  private static final @NonNls String ENTRY = "entry";
-  private static final @NonNls String NAME = "name";
+  @NonNls private static final String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
+  @NonNls private static final String RESOURCE_EXTENSIONS = "resourceExtensions";
+  @NonNls private static final String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
+  @NonNls private static final String ENTRY = "entry";
+  @NonNls private static final String NAME = "name";
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
@@ -430,7 +425,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
           }
           public boolean canClose(String inputString) {
             final StringTokenizer tokenizer = new StringTokenizer(inputString, ";", false);
-            StringBuffer malformedPatterns = new StringBuffer();
+            StringBuilder malformedPatterns = new StringBuilder();
 
             while (tokenizer.hasMoreTokens()) {
               String pattern = tokenizer.nextToken();
@@ -501,7 +496,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private static String patternsToString(final String[] patterns) {
-    final StringBuffer extensionsString = new StringBuffer();
+    final StringBuilder extensionsString = new StringBuilder();
     for (int idx = 0; idx < patterns.length; idx++) {
       if (idx > 0) {
         extensionsString.append(";");
