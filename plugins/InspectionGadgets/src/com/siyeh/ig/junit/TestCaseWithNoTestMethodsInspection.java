@@ -22,11 +22,18 @@ import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
 
 public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreSupers = false;
 
     @NotNull
     public String getID() {
@@ -45,11 +52,16 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
                 "test.case.with.no.test.methods.problem.descriptor");
     }
 
+    @Nullable
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel("Ignore test cases which have super classes with test methods", this, "ignoreSupers");
+    }
+
     public BaseInspectionVisitor buildVisitor() {
         return new TestCaseWithNoTestMethodsVisitor();
     }
 
-    private static class TestCaseWithNoTestMethodsVisitor
+    private class TestCaseWithNoTestMethodsVisitor
             extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
@@ -69,6 +81,17 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
             for (final PsiMethod method : methods) {
                 if (TestUtils.isJUnitTestMethod(method)) {
                     return;
+                }
+            }
+            if (ignoreSupers) {
+                final PsiClass superClass = aClass.getSuperClass();
+                if (superClass != null) {
+                    final PsiMethod[] superMethods = superClass.getMethods();
+                    for (PsiMethod superMethod : superMethods) {
+                        if (TestUtils.isJUnitTestMethod(superMethod)) {
+                            return;
+                        }
+                    }
                 }
             }
             registerClassError(aClass);
