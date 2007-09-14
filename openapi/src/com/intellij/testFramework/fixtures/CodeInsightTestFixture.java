@@ -57,7 +57,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   
   PsiFile getFile();
 
-  void setTestDataPath(String dataPath);
+  void setTestDataPath(@NonNls String dataPath);
 
   String getTempDirPath();
 
@@ -117,7 +117,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @see #getReferenceAtCaretPositionWithAssertion(String)
    */
   @Nullable
-  PsiReference getReferenceAtCaretPosition(String filePath) throws Throwable;
+  PsiReference getReferenceAtCaretPosition(@NonNls String filePath) throws Throwable;
 
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
@@ -130,7 +130,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @see #getReferenceAtCaretPosition(String)
    */
   @NotNull
-  PsiReference getReferenceAtCaretPositionWithAssertion(String filePath) throws Throwable;
+  PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls String filePath) throws Throwable;
 
   /**
    * Collects available intentions in the whole file or at caret position if {@link #CARET_MARKER} presents. 
@@ -140,7 +140,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @throws Throwable any exception.
    */
   @NotNull
-  List<IntentionAction> getAvailableIntentions(String... filePaths) throws Throwable;
+  List<IntentionAction> getAvailableIntentions(@NonNls String... filePaths) throws Throwable;
 
   /**
    * Launches the given action. Use {@link #checkResultByFile(String)} to check the result.
@@ -150,7 +150,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    */
   void launchAction(@NotNull IntentionAction action) throws Throwable;
 
-  void configureByFile(String file) throws Throwable;
+  void configureByFile(@NonNls String file) throws Throwable;
 
   /**
    * Compares current file against the given one.
@@ -158,7 +158,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @param expectedFile file to check against.
    * @throws Throwable any exception.
    */
-  void checkResultByFile(String expectedFile) throws Throwable;
+  void checkResultByFile(@NonNls String expectedFile) throws Throwable;
 
   /**
    * Compares two files.
@@ -168,13 +168,13 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @param ignoreWhitespaces set to true to ignore differences in whitespaces.
    * @throws Throwable any exception.
    */
-  void checkResultByFile(String filePath, String expectedFile, boolean ignoreWhitespaces) throws Throwable;
+  void checkResultByFile(@NonNls String filePath, @NonNls String expectedFile, boolean ignoreWhitespaces) throws Throwable;
 
-  void testCompletion(String[] filesBefore, String fileAfter) throws Throwable;
+  void testCompletion(@NonNls String[] filesBefore, @NonNls String fileAfter) throws Throwable;
 
-  void testCompletion(String fileBefore, String fileAfter) throws Throwable;
+  void testCompletion(@NonNls String fileBefore, @NonNls String fileAfter) throws Throwable;
 
-  void testCompletionVariants(String fileBefore, String... items) throws Throwable;
+  void testCompletionVariants(@NonNls String fileBefore, @NonNls String... items) throws Throwable;
 
   /**
    * Launches renaming refactoring and checks the result.
@@ -184,7 +184,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @param newName new name for the element.
    * @throws Throwable any exception.
    */
-  void testRename(String fileBefore, String fileAfter, String newName) throws Throwable;
+  void testRename(@NonNls String fileBefore, @NonNls String fileAfter, @NonNls String newName) throws Throwable;
 
   /**
    * Returns gutter renderer at the caret position.
@@ -195,5 +195,5 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @throws Throwable any exception.
    */
   @Nullable
-  GutterIconRenderer findGutter(String filePath) throws Throwable;
+  GutterIconRenderer findGutter(@NonNls String filePath) throws Throwable;
 }
