@@ -409,4 +409,8 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   public LanguageDialect getLanguageDialect() {
     return getUserData(PsiManagerImpl.LANGUAGE_DIALECT);
   }
+
+  public boolean isTemplateDataFile() {
+    return false;
+  }
 }

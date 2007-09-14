@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
@@ -356,6 +357,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
 
     final PsiFile containingFile = element.getContainingFile();
+    if (!(containingFile instanceof PsiFileImpl) || !((PsiFileImpl)containingFile).isTemplateDataFile()) return false;
 
     if (nextSibling == null) {
       if (PsiUtil.isInJspFile(containingFile)) {
