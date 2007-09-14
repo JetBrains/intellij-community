@@ -54,7 +54,8 @@ public class AccessorMethod extends LightElement implements PsiMethod {
   @NotNull
   public PsiParameterList getParameterList() {
     final PsiManager manager = getManager();
-    return new LightParameterList(manager, new Computable<LightParameter[]>() {
+    int parametersCount = myIsSetter ? 1 : 0;
+    return new LightParameterList(manager, parametersCount, new Computable<LightParameter[]>() {
       public LightParameter[] compute() {
         if (myIsSetter) {
           return new LightParameter[]{new LightParameter(manager, null, myProperty.getType(), AccessorMethod.this)};

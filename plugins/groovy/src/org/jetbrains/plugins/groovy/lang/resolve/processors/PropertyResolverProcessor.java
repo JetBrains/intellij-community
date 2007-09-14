@@ -38,14 +38,14 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     if (myName != null && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       boolean lValue = PsiUtil.isLValue(myPlace);
-      if (PsiUtil.isSimplePropertyGetter(method) && !lValue) {
+      if (!lValue && PsiUtil.isSimplePropertyGetter(method)) {
         String propName = PropertyUtil.getPropertyNameByGetter(method);
         if (myName.equals(propName)) {
           myCandidates.clear();
           super.execute(element, substitutor);
           return false;
         }
-      } else if (PsiUtil.isSimplePropertySetter(method) && lValue) {
+      } else if (lValue && PsiUtil.isSimplePropertySetter(method)) {
         String propName = PropertyUtil.getPropertyNameBySetter(method);
         if (myName.equals(propName)) {
           myCandidates.clear();

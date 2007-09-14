@@ -10,11 +10,14 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class LightParameterList extends LightElement implements PsiParameterList {
+  private int myParametersCount;
   private Computable<LightParameter[]> myParametersComputation;
   private LightParameter[] myParameters = null;
 
-  protected LightParameterList(PsiManager manager, Computable<LightParameter[]> parametersComputation) {
+  protected LightParameterList(PsiManager manager, int parametersCount,
+                               Computable<LightParameter[]> parametersComputation) {
     super(manager);
+    myParametersCount = parametersCount;
     myParametersComputation = parametersComputation;
   }
 
@@ -35,6 +38,7 @@ public class LightParameterList extends LightElement implements PsiParameterList
   public PsiParameter[] getParameters() {
     if (myParameters == null) {
       myParameters = myParametersComputation.compute();
+      assert myParameters.length == myParametersCount;
     }
 
     return myParameters;
@@ -49,7 +53,7 @@ public class LightParameterList extends LightElement implements PsiParameterList
   }
 
   public int getParametersCount() {
-    return getParameters().length;
+    return myParametersCount;
   }
 
   public String toString() {
