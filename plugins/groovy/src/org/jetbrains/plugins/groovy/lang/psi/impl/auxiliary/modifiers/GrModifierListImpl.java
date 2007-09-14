@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -117,6 +118,9 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
   }
 
   public void setModifierProperty(@NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
+    if (value) {
+      getNode().addChild(GroovyElementFactory.getInstance(getProject()).createModifierFormText(name).getNode());
+    }
   }
 
   public void checkSetModifierProperty(@NotNull @NonNls String name, boolean value) throws IncorrectOperationException {

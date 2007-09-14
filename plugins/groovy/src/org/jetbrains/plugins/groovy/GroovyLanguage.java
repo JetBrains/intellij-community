@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider;
 import org.jetbrains.plugins.groovy.structure.GroovyStructureViewBuilder;
+import org.jetbrains.plugins.groovy.override.OverrideMethodsHandler;
 
 /**
  * All main properties for Groovy language
@@ -110,6 +111,11 @@ public class GroovyLanguage extends Language {
   @Nullable
   public ImportOptimizer getImportOptimizer() {
     return new GroovyImportOptimizer();
+  }
+
+  @Nullable
+  public LanguageCodeInsightActionHandler getOverrideMethodsHandler() {
+    return new OverrideMethodsHandler();
   }
 
   @Nullable

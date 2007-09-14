@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
@@ -170,7 +171,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public GrCodeReferenceElement createTypeOrPackageReference(String qName) {
-    final GroovyFileBase file = createDummyFile("def "+ qName + " i");
+    final GroovyFileBase file = createDummyFile("def " + qName + " i");
     GrVariableDeclaration varDecl = (GrVariableDeclaration) file.getTopStatements()[0];
     final GrClassTypeElement typeElement = (GrClassTypeElement) varDecl.getTypeElementGroovy();
     assert typeElement != null;
@@ -198,6 +199,17 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
   public PsiElement createStringLiteral(String text) {
     return ((GrReferenceExpression) createDummyFile("a.'" + text + "'").getTopStatements()[0]).getReferenceNameElement();
+  }
+
+  public PsiElement createModifierFormText(String name) {
+    final GroovyFileBase file = createDummyFile(name + "def foo () {}");
+    return file.getTopLevelDefinitions()[0].getFirstChild().getFirstChild();
+  }
+
+  public GrCodeBlock createMetodBodyFormText(String text) {
+    final GroovyFileBase file = createDummyFile("def foo () {" + text + "}");
+    final GrMethod method = (GrMethod) file.getTopLevelDefinitions()[0];
+    return method.getBlock();
   }
 
   private PsiFile createGroovyFile(String idText) {
