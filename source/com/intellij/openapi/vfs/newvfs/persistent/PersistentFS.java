@@ -41,11 +41,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private final Map<String, NewVirtualFile> myRoots = new HashMap<String, NewVirtualFile>();
 
-  public PersistentFS(MessageBus bus, PropertiesComponent properties) {
+  public PersistentFS(MessageBus bus) {
     myEventsBus = bus;
     myRecords = new FSRecords();
 
-    if (!properties.isTrueValue("AntivirusActivityReporter.disabled")) {
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    if (properties != null && !properties.isTrueValue("AntivirusActivityReporter.disabled")) {
       AntivirusDetector.getInstance().enable(new Runnable() {
         public void run() {
           LOG.info("Antivirus activity detected. Please make sure IDEA system and caches directory as well as project foler are exluded from antivirus on-the-fly check list.");
