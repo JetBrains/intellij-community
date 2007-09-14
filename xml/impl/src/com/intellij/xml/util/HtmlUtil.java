@@ -65,6 +65,10 @@ public class HtmlUtil {
    // flow elements
    "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe","comment","nobr"
   };
+
+  // flow elements are block or inline, so they shuld not close <p> for example
+  @NonNls private static final String[] POSSIBLY_INLINE_TAGS = { "object", "applet", "ins", "del", "button", "nobr" };
+
   private static final Set<String> BLOCK_TAGS_MAP = new THashSet<String>();
 
   @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = { "p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt" };
@@ -73,12 +77,15 @@ public class HtmlUtil {
   @NonNls private static final String[] EMPTY_ATTRS = { "nowrap", "compact", "disabled", "readonly", "selected", "multiple", "nohref", "ismap", "declare", "noshade", "checked" };
   private static final Set<String> EMPTY_ATTRS_MAP = new THashSet<String>();
 
+  private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<String>();
+
   static {
     EMPTY_TAGS_MAP.addAll(Arrays.asList(EMPTY_TAGS));
     EMPTY_ATTRS_MAP.addAll(Arrays.asList(EMPTY_ATTRS));
     OPTIONAL_END_TAGS_MAP.addAll(Arrays.asList(OPTIONAL_END_TAGS));
     BLOCK_TAGS_MAP.addAll(Arrays.asList(BLOCK_TAGS));
     INLINE_ELEMENTS_CONTAINER_MAP.addAll(Arrays.asList(INLINE_ELEMENTS_CONTAINER));
+    POSSIBLY_INLINE_TAGS_MAP.addAll(Arrays.asList(POSSIBLY_INLINE_TAGS));
   }
 
   public static boolean isSingleHtmlTag(String tagName) {
@@ -103,6 +110,10 @@ public class HtmlUtil {
 
   public static boolean isHtmlBlockTag(String tagName) {
     return BLOCK_TAGS_MAP.contains(tagName.toLowerCase());
+  }
+
+  public static boolean isPossiblyInlineTag(String tagName) {
+    return POSSIBLY_INLINE_TAGS_MAP.contains(tagName);
   }
 
   public static boolean isHtmlBlockTagL(String tagName) {
