@@ -271,9 +271,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!ourIsUnitTestMode) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          myScrollingModel.disableAnimation();
-          myScrollingModel.scrollHorizontally(0);
-          myScrollingModel.enableAnimation();
+          if (!isDisposed()) {
+            myScrollingModel.disableAnimation();
+            myScrollingModel.scrollHorizontally(0);
+            myScrollingModel.enableAnimation();
+          }
         }
       });
     }
