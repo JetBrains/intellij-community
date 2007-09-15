@@ -47,7 +47,7 @@ public class StandardDataFlowRunner extends DataFlowRunner {
     mySuggestNullableAnnotations = suggestNullableAnnotations;
   }
 
-  public boolean analyzeMethod(PsiCodeBlock psiBlock) {
+  public RunnerResult analyzeMethod(PsiCodeBlock psiBlock) {
     myIsInMethod = psiBlock.getParent() instanceof PsiMethod;
 
     if (myIsInMethod) {

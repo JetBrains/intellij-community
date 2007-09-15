@@ -27,5 +27,6 @@ public enum ProblemHighlightType {
   LIKE_DEPRECATED,
   LIKE_UNKNOWN_SYMBOL,
   LIKE_UNUSED_SYMBOL,
-  J2EE_PROBLEM
+  J2EE_PROBLEM,
+  INFO
 }

@@ -62,13 +62,13 @@ public class DataFlowRunner {
     return myInstructionFactory;
   }
 
-  public boolean analyzeMethod(PsiCodeBlock psiBlock) {
+  public RunnerResult analyzeMethod(PsiCodeBlock psiBlock) {
     final boolean isInMethod = psiBlock.getParent() instanceof PsiMethod;
 
     try {
       final ControlFlowAnalyzer analyzer = createControlFlowAnalyzer();
       final ControlFlow flow = analyzer.buildControlFlow(psiBlock);
-      if (flow == null) return false;
+      if (flow == null) return RunnerResult.NOT_APPLICABLE;
 
       myInstructions = flow.getInstructions();
       myFields = flow.getFields();
@@ -85,7 +85,7 @@ public class DataFlowRunner {
         if (instruction instanceof BranchingInstruction) branchCount++;
       }
 
-      if (branchCount > 80) return false; // Do not even try. Definetly will out of time.
+      if (branchCount > 80) return RunnerResult.TOO_COMPLEX; // Do not even try. Definetly will out of time.
 
       final ArrayList<DfaInstructionState> queue = new ArrayList<DfaInstructionState>();
       final DfaMemoryState initialState = createMemoryState();
@@ -105,7 +105,7 @@ public class DataFlowRunner {
       final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       final long before = System.currentTimeMillis();
       while (!queue.isEmpty()) {
-        if (!unitTestMode && System.currentTimeMillis() - before > timeLimit) return false;
+        if (!unitTestMode && System.currentTimeMillis() - before > timeLimit) return RunnerResult.TOO_COMPLEX;
         ProgressManager.getInstance().checkCanceled();
 
         DfaInstructionState instructionState = queue.remove(0);
@@ -118,7 +118,7 @@ public class DataFlowRunner {
 
         if (instruction instanceof BranchingInstruction) {
           if (!instruction.setMemoryStateProcessed(instructionState.getMemoryState().createCopy())) {
-            return false; // Too complex :(
+            return RunnerResult.TOO_COMPLEX; // Too complex :(
           }
         }
 
@@ -134,14 +134,14 @@ public class DataFlowRunner {
         }
       }
 
-      return true;
+      return RunnerResult.OK;
     }
     catch (ArrayIndexOutOfBoundsException e) {
       LOG.error(psiBlock.getText(), e); /* TODO[max] !!! hack (of 18186). Please fix in better times. */
-      return false;
+      return RunnerResult.ABORTED;
     }
     catch (EmptyStackException e) /* TODO[max] !!! hack (of 18186). Please fix in better times. */ {
-      return false;
+      return RunnerResult.ABORTED;
     }
   }
 

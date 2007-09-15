@@ -26,8 +26,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -275,6 +275,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private HighlightInfoType highlightTypeFromDescriptor(final ProblemDescriptor problemDescriptor, final HighlightSeverity severity) {
     ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
     HighlightInfoType type = null;
+    if (highlightType == ProblemHighlightType.INFO) {
+      type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(HighlightSeverity.INFORMATION);
+    }
     if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING || highlightType == ProblemHighlightType.J2EE_PROBLEM) {
       type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity);
     }

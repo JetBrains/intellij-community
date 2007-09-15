@@ -68,9 +68,16 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   private void analyzeCodeBlock(final PsiCodeBlock body, ProblemsHolder holder) {
     if (body == null) return;
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
-    if (dfaRunner.analyzeMethod(body)) {
+    final RunnerResult rc = dfaRunner.analyzeMethod(body);
+    if (rc == RunnerResult.OK) {
       if (dfaRunner.problemsDetected()) {
         createDescription(dfaRunner, holder);
+      }
+    }
+    else if (rc == RunnerResult.TOO_COMPLEX) {
+      if (body.getParent() instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)body.getParent();
+        holder.registerProblem(method.getNameIdentifier(), InspectionsBundle.message("dataflow.too.complex"), ProblemHighlightType.INFO);
       }
     }
   }
