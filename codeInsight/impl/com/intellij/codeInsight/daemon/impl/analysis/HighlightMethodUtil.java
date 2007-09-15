@@ -1049,7 +1049,7 @@ public class HighlightMethodUtil {
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description, tooltip);
         QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallFix(constructorCall), null);
         if (classReference != null) {
-          CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info,getFixRange(list));
+          ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info,getFixRange(list));
         }
         info.navigationShift = +1;
         return info;
@@ -1074,7 +1074,7 @@ public class HighlightMethodUtil {
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description);
         QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallFix(constructorCall), null);
         if (classReference != null) {
-          CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info,getFixRange(list));
+          ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info,getFixRange(list));
           PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
         }
         WrapExpressionFix.registerWrapAction(results, list.getExpressions(), info);
@@ -1101,7 +1101,7 @@ public class HighlightMethodUtil {
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, infoElement, description, toolTip);
           QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallFix(constructorCall), null);
           if (classReference != null) {
-            CastConstructorParametersFix.registerCastActions(classReference, constructorCall, info, getFixRange(infoElement));
+            ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(infoElement));
             ChangeMethodSignatureFromUsageFix.registerIntentions(results, list, info, null);
             PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
           }
