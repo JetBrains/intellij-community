@@ -39,10 +39,10 @@ public class AccessToStaticFieldLockedOnInstanceInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new Visitor();
+        return new AccessToStaticFieldLockedOnInstanceVisitor();
     }
 
-    private static class Visitor
+    private static class AccessToStaticFieldLockedOnInstanceVisitor
             extends BaseInspectionVisitor {
 
         public void visitReferenceExpression(
@@ -62,16 +62,23 @@ public class AccessToStaticFieldLockedOnInstanceInspection
                     isLockedOnInstance = true;
                 }
             }
+            final PsiClass expressionClass =
+                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+            if (expressionClass == null) {
+                return;
+            }
             PsiElement elementToCheck = expression;
             while (true) {
-                final PsiSynchronizedStatement syncStatement =
+                final PsiSynchronizedStatement synchronizedStatement =
                         PsiTreeUtil.getParentOfType(elementToCheck,
                                 PsiSynchronizedStatement.class);
-                if (syncStatement == null) {
+                if (synchronizedStatement == null ||
+                        !PsiTreeUtil.isAncestor(expressionClass,
+                                synchronizedStatement, true)) {
                     break;
                 }
                 final PsiExpression lockExpression =
-                        syncStatement.getLockExpression();
+                        synchronizedStatement.getLockExpression();
                 if (lockExpression instanceof PsiReferenceExpression) {
                     final PsiReferenceExpression reference =
                             (PsiReferenceExpression) lockExpression;
@@ -91,7 +98,7 @@ public class AccessToStaticFieldLockedOnInstanceInspection
                         PsiClassObjectAccessExpression) {
                     isLockedOnClass = true;
                 }
-                elementToCheck = syncStatement;
+                elementToCheck = synchronizedStatement;
             }
             if (!isLockedOnInstance || isLockedOnClass) {
                 return;
