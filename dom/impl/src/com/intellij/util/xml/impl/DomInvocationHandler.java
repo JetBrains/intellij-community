@@ -349,7 +349,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     finally {
       myManager.setChanging(changing);
     }
-    setXmlTagToNull();
+    w.lock();
+    try {
+      setXmlTagToNull();
+    }
+    finally {
+      w.unlock();
+    }
   }
 
   protected final void setXmlTagToNull() {

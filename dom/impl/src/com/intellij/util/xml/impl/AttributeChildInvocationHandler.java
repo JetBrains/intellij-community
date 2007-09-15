@@ -103,8 +103,14 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
 
   public final void undefineInternal() {
     final XmlTag tag = getXmlTag();
-    setDefined(false);
-    setXmlTagToNull();
+    w.lock();
+    try {
+      setDefined(false);
+      setXmlTagToNull();
+    }
+    finally {
+      w.unlock();
+    }
     if (tag != null) {
       getManager().runChange(new Runnable() {
         public void run() {
