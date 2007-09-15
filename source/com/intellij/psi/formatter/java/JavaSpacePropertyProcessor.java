@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspJavaComment;
@@ -17,6 +18,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 
 public class JavaSpacePropertyProcessor extends PsiElementVisitor {
   private PsiElement myParent;
@@ -80,6 +82,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor {
 
   private static boolean shouldKeepSpace(final PsiElement parent) {
     final IElementType type = parent.getNode().getElementType();
+    if (type == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+      return PsiTreeUtil.getParentOfType(parent, PsiDocMethodOrFieldRef.class) != null;
+    }
+
     return type == JavaDocElementType.DOC_COMMENT || type == JavaDocElementType.DOC_TAG
       || type == JavaDocElementType.DOC_INLINE_TAG;
   }
