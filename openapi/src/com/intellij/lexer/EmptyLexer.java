@@ -43,7 +43,7 @@ public class EmptyLexer extends LexerBase {
   }
 
   public IElementType getTokenType() {
-    return (myStartOffset < myEndOffset ? IElementType.find((short)0) : null);
+    return (myStartOffset < myEndOffset ? IElementType.find(IElementType.FIRST_TOKEN_INDEX) : null);
   }
 
   public int getTokenStart() {

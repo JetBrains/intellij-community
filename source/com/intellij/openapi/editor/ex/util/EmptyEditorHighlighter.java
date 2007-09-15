@@ -78,7 +78,7 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       }
 
       public IElementType getTokenType(){
-        return IElementType.find((short)0);
+        return IElementType.find(IElementType.FIRST_TOKEN_INDEX);
       }
     };
   }

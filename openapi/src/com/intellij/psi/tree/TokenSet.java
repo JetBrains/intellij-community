@@ -37,7 +37,7 @@ public class TokenSet {
 
     IElementType[] types = new IElementType[elementCount];
     int count = 0;
-    for (short i = 0; i < mySet.length; i++) {
+    for (short i = IElementType.FIRST_TOKEN_INDEX; i < mySet.length; i++) {
       if (mySet[i]) {
         types[count++] = IElementType.find(i);
       }

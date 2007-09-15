@@ -6,8 +6,8 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -132,11 +132,19 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
 
       PsiElement block = decl.getParent();
       if (block instanceof PsiForStatement) {
-        block.getParent().addBefore(
-            psiManager.getElementFactory().createVariableDeclarationStatement(var.getName(),
-                                                                              var.getType(),
-                                                                              null),
-            block);
+        final PsiDeclarationStatement varDeclStatement =
+          psiManager.getElementFactory().createVariableDeclarationStatement(var.getName(), var.getType(), null);
+
+        // For index can't be final, right?
+        for (PsiElement varDecl : varDeclStatement.getDeclaredElements()) {
+          if (varDecl instanceof PsiModifierListOwner) {
+            final PsiModifierList modList = ((PsiModifierListOwner)varDecl).getModifierList();
+            assert modList != null;
+            modList.setModifierProperty(PsiModifier.FINAL, false);
+          }
+        }
+
+        block.getParent().addBefore(varDeclStatement, block);
         decl.replace(statement);
       } else {
         block.addAfter(statement, decl);

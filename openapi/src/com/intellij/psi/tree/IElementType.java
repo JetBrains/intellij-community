@@ -36,7 +36,7 @@ import java.util.List;
 public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
 
-  private static final int FIRST_TOKEN_INDEX = 1;
+  public static final short FIRST_TOKEN_INDEX = 1;
   private static short ourCounter = FIRST_TOKEN_INDEX;
 
   private static final short MAX_INDEXED_TYPES = 10000;
@@ -138,6 +138,7 @@ public class IElementType {
    */
 
   public static IElementType find(short idx) {
+    if (idx == 0) return ourRegistry.get(0); // We've changed FIRST_TOKEN_INDEX from 0 to 1. This is just for old plugins to avoid crashes.  
     return ourRegistry.get(idx - FIRST_TOKEN_INDEX);
   }
 
