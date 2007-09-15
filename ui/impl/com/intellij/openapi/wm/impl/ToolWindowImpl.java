@@ -55,9 +55,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
       myContentManager.setSelectedContent(content, false);
     }
 
-
-
     myComponent = myContentManager.getComponent();
+    myComponent.setFocusCycleRoot(true);
   }
 
   public final void addPropertyChangeListener(final PropertyChangeListener l) {
