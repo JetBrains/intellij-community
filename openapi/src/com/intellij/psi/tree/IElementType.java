@@ -36,7 +36,9 @@ import java.util.List;
 public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
 
-  private static short ourCounter = 0;
+  private static final int FIRST_TOKEN_INDEX = 1;
+  private static short ourCounter = FIRST_TOKEN_INDEX;
+
   private static final short MAX_INDEXED_TYPES = 10000;
   private static final List<IElementType> ourRegistry = new ArrayList<IElementType>(700);
   private final short myIndex;
@@ -136,7 +138,7 @@ public class IElementType {
    */
 
   public static IElementType find(short idx) {
-    return ourRegistry.get(idx);
+    return ourRegistry.get(idx - FIRST_TOKEN_INDEX);
   }
 
   /**
