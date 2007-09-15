@@ -132,7 +132,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     //adjustContextAfterLookupStringInsertion();
     myState = new InsertHandlerState(myContext.selectionEndOffset, myContext.selectionEndOffset);
 
-    final boolean needLeftParenth = isToInsertParenth(tailType);
+    final boolean needLeftParenth = isToInsertParenth();
     final boolean hasParams = needLeftParenth && hasParams();
 
     if (CompletionUtil.isOverwrite(item, completionChar))
@@ -306,7 +306,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     }
   }
 
-  private boolean isToInsertParenth(TailType tailType){
+  private boolean isToInsertParenth(){
     boolean needParens = false;
     if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null){
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
