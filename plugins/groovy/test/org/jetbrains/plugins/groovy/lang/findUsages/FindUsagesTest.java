@@ -15,10 +15,12 @@
 
 package org.jetbrains.plugins.groovy.lang.findUsages;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -74,6 +76,18 @@ public class FindUsagesTest extends IdeaTestCase {
     final Query<PsiReference> query = ReferencesSearch.search(method);
 
     assertEquals(expectedCount, query.findAll().size());
+  }
+
+  public void testDerivedClass() throws Throwable {
+    myFixture.configureByFile("derivedClass/p/B.java");
+    final PsiElement elementAt = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+    final PsiClass clazz = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
+    assertNotNull(clazz);
+
+    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
+    final Query<PsiClass> query = DirectClassInheritorsSearch.search(clazz, projectScope);
+
+    assertEquals(1, query.findAll().size());
   }
 
   public void testGetter1() throws Throwable {
