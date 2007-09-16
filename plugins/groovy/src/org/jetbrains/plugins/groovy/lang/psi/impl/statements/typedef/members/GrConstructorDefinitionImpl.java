@@ -42,7 +42,7 @@ public class GrConstructorDefinitionImpl extends GrMethodDefinitionImpl implemen
   }
 
   @Nullable
-  public GrConstructorInvocation getConstructorInvocation() {
+  public GrConstructorInvocation getChainingConstructorInvocation() {
     GrOpenBlock body = getBlock();
     if (body == null) return null;
 

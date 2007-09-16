@@ -23,5 +23,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocat
 public interface GrConstructor extends GrMethod {
 
   @Nullable
-  public GrConstructorInvocation getConstructorInvocation();
+  public GrConstructorInvocation getChainingConstructorInvocation();
 }
