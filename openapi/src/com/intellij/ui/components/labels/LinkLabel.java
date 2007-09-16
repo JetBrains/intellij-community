@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.UI;
 import com.intellij.util.ui.UIUtil;
 
@@ -245,7 +246,10 @@ public class LinkLabel extends JLabel {
     if (ApplicationManager.getApplication() == null) return; // makes this component work in UIDesigner preview.
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      WindowManager.getInstance().getStatusBar(project).setInfo(statusBarText);
+      final StatusBar bar = WindowManager.getInstance().getStatusBar(project);
+      if (bar != null) {
+        bar.setInfo(statusBarText);
+      }
     }
   }
 
