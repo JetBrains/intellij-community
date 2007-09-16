@@ -50,4 +50,10 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
 
   @NotNull
   GrField[] getFields();
+
+  @Nullable
+  GrExtendsClause getExtendsClause();
+
+  @Nullable
+  GrImplementsClause getImplementsClause();
 }

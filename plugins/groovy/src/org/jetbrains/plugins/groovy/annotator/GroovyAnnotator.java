@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -62,9 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -201,14 +198,14 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkVariableDeclaration(AnnotationHolder holder, GrVariableDeclaration grVariableDeclaration) {
+  private void checkVariableDeclaration(AnnotationHolder holder, GrVariableDeclaration variableDeclaration) {
 
-    PsiElement parent = grVariableDeclaration.getParent();
+    PsiElement parent = variableDeclaration.getParent();
     assert parent != null;
 
     PsiElement typeDef = parent.getParent();
     if (typeDef != null && typeDef instanceof GrTypeDefinition) {
-      GrModifierListImpl modifiersList = (GrModifierListImpl) grVariableDeclaration.getModifierList();
+      PsiModifierList modifiersList = variableDeclaration.getModifierList();
       checkAccessModifiers(holder, modifiersList);
 
       if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE)
@@ -227,10 +224,8 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkMethodDefinitionModifiers(AnnotationHolder holder, GrMethod grMethod) {
-    checkAccessModifiers(holder, ((GrModifierListImpl) grMethod.getModifierList()));
-
-    GrModifierListImpl modifiersList = (GrModifierListImpl) grMethod.getModifierList();
-    assert modifiersList != null;
+    final PsiModifierList modifiersList = grMethod.getModifierList();
+    checkAccessModifiers(holder, modifiersList);
 
     //script methods
     boolean isMethodAbstract = modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT);
@@ -266,7 +261,7 @@ public class GroovyAnnotator implements Annotator {
         } else {
           //class
           PsiModifierList typeDefModifiersList = containingTypeDef.getModifierList();
-          Assert.assertNotNull("modifiers list must be not null", typeDefModifiersList);
+          LOG.assertTrue(typeDefModifiersList != null, "modifiers list must be not null");
 
           if (!typeDefModifiersList.hasExplicitModifier(PsiModifier.ABSTRACT)) {
             if (isMethodAbstract) {
@@ -288,15 +283,15 @@ public class GroovyAnnotator implements Annotator {
       }
   }
 
-  private void checkTypeDefinitionModifiers(AnnotationHolder holder, GrTypeDefinition grTypeDefinition) {
-    GrModifierListImpl modifiersList = (GrModifierListImpl) grTypeDefinition.getModifierList();
+  private void checkTypeDefinitionModifiers(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
+    PsiModifierList modifiersList = typeDefinition.getModifierList();
 
     if (modifiersList == null) return;
 
     /**** class ****/
     checkAccessModifiers(holder, modifiersList);
 
-    PsiClassType[] extendsListTypes = grTypeDefinition.getExtendsListTypes();
+    PsiClassType[] extendsListTypes = typeDefinition.getExtendsListTypes();
 
     for (PsiClassType classType : extendsListTypes) {
       PsiClass psiClass = classType.resolve();
@@ -324,7 +319,7 @@ public class GroovyAnnotator implements Annotator {
     }
 
     /**** interface ****/
-    if (grTypeDefinition.isInterface()) {
+    if (typeDefinition.isInterface()) {
       if (modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("intarface.cannot.have.modifier.final"));
       }
@@ -339,9 +334,7 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private void checkAccessModifiers(AnnotationHolder holder, GrModifierListImpl modifierList) {
-    Assert.assertNotNull("modifiers list must be not null", modifierList);
-
+  private void checkAccessModifiers(AnnotationHolder holder, @NotNull PsiModifierList modifierList) {
     boolean hasPrivate = modifierList.hasExplicitModifier(PsiModifier.PRIVATE);
     boolean hasPublic = modifierList.hasExplicitModifier(PsiModifier.PUBLIC);
     boolean hasProtected = modifierList.hasExplicitModifier(PsiModifier.PROTECTED);
@@ -513,7 +506,7 @@ public class GroovyAnnotator implements Annotator {
       holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), "Inner classes are not supported in Groovy");
     }
 
-    final GrImplementsClause implementsClause = ((GrTypeDefinitionImpl) typeDefinition).getImplementsClause();
+    final GrImplementsClause implementsClause =typeDefinition.getImplementsClause();
     if (implementsClause == null) return;
 
     final GrCodeReferenceElement[] implementsList = implementsClause.getReferenceElements();
