@@ -718,7 +718,9 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   }
 
   private void drawSeparator(Graphics g, TabInfo info) {
-    final Rectangle bounds = myInfo2Label.get(info).getBounds();
+    final JBTabs.TabLabel label = myInfo2Label.get(info);
+    if (label == null) return;
+    final Rectangle bounds = label.getBounds();
 
     final double height = bounds.height * 0.85d;
     final double delta = bounds.height - height;
