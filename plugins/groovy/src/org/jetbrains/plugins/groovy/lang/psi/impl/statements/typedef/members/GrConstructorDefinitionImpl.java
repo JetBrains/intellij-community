@@ -22,14 +22,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-//todo remove
-public class GrConstructorDefinitionImpl extends GrMethodDefinitionImpl implements GrMethod {
+public class GrConstructorDefinitionImpl extends GrMethodDefinitionImpl implements GrConstructor {
   public GrConstructorDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -49,7 +48,7 @@ public class GrConstructorDefinitionImpl extends GrMethodDefinitionImpl implemen
 
     GrStatement[] statements = body.getStatements();
 
-    if (statements != null && statements.length > 0 && statements[0] instanceof GrConstructorInvocation) {
+    if (statements.length > 0 && statements[0] instanceof GrConstructorInvocation) {
       return (GrConstructorInvocation) statements[0];
     }
 

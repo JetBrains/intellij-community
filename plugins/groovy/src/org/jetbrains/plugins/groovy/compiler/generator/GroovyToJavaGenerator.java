@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -27,14 +28,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
 import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
 import java.io.*;
@@ -375,8 +375,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     for (GrMembersDeclaration declaration : membersDeclarations) {
       if (declaration instanceof GrMethod) {
         final GrMethod method = (GrMethod) declaration;
-        if (method.isConstructor()) {
-          writeConstructor(text, method);
+        if (method instanceof GrConstructor) {
+          writeConstructor(text, (GrConstructor)method);
         }
 
         Pair<String, MethodSignature> methodNameSignature = new Pair<String, MethodSignature>(method.getName(), method.getSignature(PsiSubstitutor.EMPTY));
@@ -482,7 +482,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private void writeGetter(StringBuffer text, GrVariableDeclaration variableDeclaration, Map<String, String> gettersNames) {
-    GrModifierListImpl list = (GrModifierListImpl) variableDeclaration.getModifierList();
+    GrModifierList list = variableDeclaration.getModifierList();
 
     GrTypeElement element = variableDeclaration.getTypeElementGroovy();
     String type;
@@ -525,7 +525,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private void writeSetter(StringBuffer text, GrVariableDeclaration variableDeclaration, Map<String, String> settersNames) {
-    GrModifierListImpl modifierList = (GrModifierListImpl) variableDeclaration.getModifierList();
+    GrModifierList modifierList = variableDeclaration.getModifierList();
     if (modifierList.hasModifierProperty(PsiModifier.FINAL)) return;
 
     GrTypeElement element = variableDeclaration.getTypeElementGroovy();
@@ -576,10 +576,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         "  }\n");
   }
 
-  private void writeConstructor(final StringBuffer text, GrMethod constructor) {
-    GrConstructorDefinitionImpl constrDefinition = (GrConstructorDefinitionImpl) constructor;
-
-    writeMethodModifiers(text, constrDefinition.getModifierList(), JAVA_MODIFIERS);
+  private void writeConstructor(final StringBuffer text, GrConstructor constructor) {
+    writeMethodModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
 
     /************* name **********/
     text.append("\n");
@@ -610,7 +608,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     /************* body **********/
 
-    final GrConstructorInvocation constructorInvocation = constrDefinition.getConstructorInvocation();
+    final GrConstructorInvocation constructorInvocation = constructor.getConstructorInvocation();
     if (constructorInvocation != null && constructorInvocation.isSuperCall()) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
@@ -781,12 +779,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private boolean writeMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
-    assert modifierList instanceof GrModifierListImpl;
-    GrModifierListImpl list = (GrModifierListImpl) modifierList;
-
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
-      if (list.hasModifierProperty(modifierType)) {
+      if (modifierList.hasModifierProperty(modifierType)) {
         text.append(modifierType);
         text.append(" ");
         wasAddedModifiers = true;
@@ -796,12 +791,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private boolean writeVariableDefinitionModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
-    assert modifierList instanceof GrModifierListImpl;
-    GrModifierListImpl list = (GrModifierListImpl) modifierList;
-
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
-      if (list.hasModifierProperty(modifierType)) {
+      if (modifierList.hasModifierProperty(modifierType)) {
         text.append(modifierType);
         text.append(" ");
         wasAddedModifiers = true;
@@ -811,12 +803,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private boolean writeTypeDefinitionMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
-    assert modifierList instanceof GrModifierListImpl;
-    GrModifierListImpl list = (GrModifierListImpl) modifierList;
-
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
-      if (list.hasModifierProperty(modifierType)) {
+      if (modifierList.hasModifierProperty(modifierType)) {
         text.append(modifierType);
         text.append(" ");
         wasAddedModifiers = true;

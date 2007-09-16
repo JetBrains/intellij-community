@@ -71,6 +71,7 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     return true;
   }
 
+  @NotNull
   public GrStatement[] getStatements() {
     return findChildrenByClass(GrStatement.class);
   }

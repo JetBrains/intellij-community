@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
  * @author ilyas
  */
 public interface GrCodeBlock extends GroovyPsiElement, GrVariableDeclarationOwner {
+  @NotNull
   GrStatement[] getStatements();
 
   GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException;
