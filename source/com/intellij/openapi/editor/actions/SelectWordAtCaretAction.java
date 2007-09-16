@@ -12,7 +12,6 @@ import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
 
@@ -40,6 +39,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction {
 
       int textLength = document.getTextLength();
       if (caretOffset == textLength) caretOffset--;
+      if (caretOffset < 0) return;
 
       SelectWordUtil.addWordSelection(camel, text, caretOffset, ranges);
 
