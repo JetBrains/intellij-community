@@ -533,15 +533,15 @@ public class GroovyAnnotator implements Annotator {
   private void checkReferenceExpression(AnnotationHolder holder, final GrReferenceExpression refExpr) {
     GroovyResolveResult resolveResult = refExpr.advancedResolve();
     registerUsedImport(refExpr, resolveResult);
-    PsiElement element = resolveResult.getElement();
-    if (element != null) {
+    PsiElement resolved = resolveResult.getElement();
+    if (resolved != null) {
       if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
-      } else if (element instanceof PsiMethod && element.getUserData(GrMethod.BUILDER_METHOD) == null) {
+      } else if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
         checkMethodApplicability(resolveResult, refExpr, holder);
       }
-      if (isAssignmentLHS(refExpr) || element instanceof PsiPackage) return;
+      if (isAssignmentLHS(refExpr) || resolved instanceof PsiPackage) return;
     } else {
       if (isAssignmentLHS(refExpr)) return;
 
@@ -551,15 +551,7 @@ public class GroovyAnnotator implements Annotator {
         if (context instanceof PsiModifierListOwner && ((PsiModifierListOwner) context).hasModifierProperty(PsiModifier.STATIC)) {
           Annotation annotation = holder.createErrorAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
           annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-        } else {
-          if (refExpr.getParent() instanceof GrReferenceExpression) {
-            Annotation annotation = holder.createWarningAnnotation(refExpr, GroovyBundle.message("cannot.resolve", refExpr.getReferenceName()));
-            if (refExpr.getQualifierExpression() == null) {
-              registerCreateClassByTypeFix(refExpr, annotation, false);
-              registerAddImportFixes(refExpr, annotation);
-            }
-
-          }
+          return;
         }
       }
     }
@@ -569,6 +561,10 @@ public class GroovyAnnotator implements Annotator {
       PsiElement elt = refNameElement == null ? refExpr : refNameElement;
       Annotation annotation = holder.createInformationAnnotation(elt,
           GroovyBundle.message("untyped.access", refExpr.getReferenceName()));
+      if (resolved == null && refExpr.getQualifierExpression() == null) {
+        registerCreateClassByTypeFix(refExpr, annotation, false);
+        registerAddImportFixes(refExpr, annotation);
+      }
 
       annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.black, EffectType.LINE_UNDERSCORE, 0));
     }
