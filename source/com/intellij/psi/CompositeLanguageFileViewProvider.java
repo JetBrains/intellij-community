@@ -17,8 +17,8 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -72,7 +72,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
           viewProvider.myRoots.put(entry.getKey(), clone);
         }
         else {
-          LOG.error("Only light files supported for language extensions");
+          LOG.error("Only light files supported for language extensions, passed: " + root);
         }
       }
     }
