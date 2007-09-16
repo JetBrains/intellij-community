@@ -56,7 +56,9 @@ public class Storage implements Disposable {
       }
 
       boolean deleted = deleteFiles(storageFilePath);
-      assert deleted;
+      if (!deleted) {
+        throw new IOException("Can't delete caches at: " + storageFilePath);
+      }
       return create(storageFilePath);
     }
 
