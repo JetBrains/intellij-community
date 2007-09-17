@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -100,26 +101,6 @@ public class ResolveUtil {
     }
 
     return elements;
-  }
-
-  public static boolean isSuperMethodDominated(PsiMethod method, List<PsiMethod> worklist) {
-    PsiParameter[] params = method.getParameterList().getParameters();
-    PsiModifierList modifierList = method.getModifierList();
-
-    NextMethod:
-    for (PsiMethod other : worklist) {
-      PsiParameter[] otherParams = other.getParameterList().getParameters();
-      if (otherParams.length != params.length) continue;
-      if (PsiUtil.getAccessLevel(other.getModifierList()) > PsiUtil.getAccessLevel(modifierList)) continue;
-      for (int i = 0; i < params.length; i++) {
-        PsiType type = TypeConversionUtil.erasure(params[i].getType());
-        PsiType otherType = TypeConversionUtil.erasure(otherParams[i].getType());
-        if (!type.isAssignableFrom(otherType)) continue NextMethod;
-      }
-      return true;
-    }
-
-    return false;
   }
 
   public static boolean processDefaultMethods(PsiType type, PsiScopeProcessor processor, Project project) {

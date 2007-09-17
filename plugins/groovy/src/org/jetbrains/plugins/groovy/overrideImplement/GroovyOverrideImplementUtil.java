@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,13 +55,14 @@ public class GroovyOverrideImplementUtil {
 
     if (isImplement && aClass.isInterface()) return;
 
-    List<PsiMethodMember> classMembers = new ArrayList<PsiMethodMember>();
     Collection<CandidateInfo> candidates = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, isImplement);
+    if (candidates.isEmpty()) return;
+
+    List<PsiMethodMember> classMembers = new ArrayList<PsiMethodMember>();
     for (CandidateInfo candidate : candidates) {
       classMembers.add(new PsiMethodMember(candidate));
     }
 
-    if (classMembers.isEmpty()) return;
 
     MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(classMembers.toArray(new PsiMethodMember[classMembers.size()]), false, true, project);
     chooser.setTitle(isImplement ? GroovyBundle.message("select.methods.to.override") : GroovyBundle.message("select.methods.to.implement"));
@@ -69,16 +71,17 @@ public class GroovyOverrideImplementUtil {
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null || selectedElements.size() == 0) return;
 
-    for (PsiMethodMember overridenMethodMember : selectedElements) {
-      final PsiMethod selectedMethod = overridenMethodMember.getElement();
+    for (PsiMethodMember methodMember : selectedElements) {
+      final PsiMethod method = methodMember.getElement();
+      final PsiSubstitutor substitutor = methodMember.getSubstitutor();
 
-      final boolean isAbstract = selectedMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+      final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
 //      assert isAbstract == isImplement;
       String templName = isAbstract ? FileTemplateManager.TEMPLATE_IMPLEMENTED_METHOD_BODY : FileTemplateManager.TEMPLATE_OVERRIDDEN_METHOD_BODY;
 
       final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
-      final GrMethod result = createOverrideImplementMethodSignature(project, selectedMethod);
+      final GrMethod result = createOverrideImplementMethodSignature(project, method, substitutor);
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
@@ -86,7 +89,7 @@ public class GroovyOverrideImplementUtil {
             result.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false/*aClass.isInterface()*/);
             result.getModifierList().setModifierProperty(PsiModifier.NATIVE, false);
 
-            doWriteOverridingMethod(project, selectedMethod, result, template);
+            setupOverridingMethodBody(project, method, result, template, substitutor);
 
             final GrTypeDefinitionBody classBody = ((GrTypeDefinition) aClass).getBody();
             final ASTNode anchor = classBody.getLastChild().getNode();
@@ -95,10 +98,9 @@ public class GroovyOverrideImplementUtil {
             classBody.getNode().addChild(lineTerminator, anchor);
             classBody.getNode().addChild(result.getNode(), lineTerminator);
 
-            final TextRange textRange = result.getTextRange();
-
-            CodeStyleManager.getInstance(project).reformatText(result.getContainingFile(),
-                textRange.getStartOffset(), textRange.getEndOffset());
+            final TextRange range = result.getTextRange();
+            CodeStyleManager.getInstance(project).reformatRange(result.getContainingFile(), range.getStartOffset(), range.getEndOffset());
+            PsiUtil.shortenReferences(result);
           } catch (IncorrectOperationException e) {
             LOG.error(e);
           }
@@ -136,14 +138,14 @@ public class GroovyOverrideImplementUtil {
   };
 
 
-  private static GrMethod createOverrideImplementMethodSignature(Project project, PsiMethod method) {
+  private static GrMethod createOverrideImplementMethodSignature(Project project, PsiMethod method, PsiSubstitutor substitutor) {
     StringBuffer buffer = new StringBuffer();
     writeMethodModifiers(buffer, method.getModifierList(), GROOVY_MODIFIERS);
 
-    final PsiType returnType = method.getReturnType();
+    final PsiType returnType = substitutor.substitute(method.getReturnType());
 
     if (returnType != null) {
-      buffer.append(returnType.getPresentableText());
+      buffer.append(returnType.getCanonicalText());
       buffer.append(" ");
     }
 
@@ -155,7 +157,11 @@ public class GroovyOverrideImplementUtil {
     for (int i = 0; i < parameters.length; i++) {
       if (i > 0) buffer.append(", ");
       PsiParameter parameter = parameters[i];
-      buffer.append(parameter.getText());
+      final PsiType parameterType = substitutor.substitute(parameter.getType());
+      buffer.append(parameterType.getCanonicalText());
+      buffer.append(" ");
+      final String paramName = parameter.getName();
+      if (paramName != null) buffer.append(paramName);
     }
 
     buffer.append(")");
@@ -167,8 +173,8 @@ public class GroovyOverrideImplementUtil {
     return (GrMethod) GroovyElementFactory.getInstance(project).createTopElementFromText(buffer.toString());
   }
 
-  private static void doWriteOverridingMethod(Project project, PsiMethod method, GrMethod result, FileTemplate template) {
-    final PsiType returnType = method.getReturnType();
+  private static void setupOverridingMethodBody(Project project, PsiMethod method, GrMethod result, FileTemplate template, PsiSubstitutor substitutor) {
+    final PsiType returnType = substitutor.substitute(method.getReturnType());
 
     String returnTypeText = "";
     if (returnType != null) {

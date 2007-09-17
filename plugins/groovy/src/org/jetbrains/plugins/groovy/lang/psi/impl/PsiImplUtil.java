@@ -18,24 +18,26 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -43,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrPowerExprImpl;
@@ -51,9 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.refactoring.GroovyVariableUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,33 +115,6 @@ public class PsiImplUtil {
         || binaryExpression instanceof GrRegexExprImpl
         || binaryExpression instanceof GrShiftExprImpl
         || binaryExpression instanceof GrPowerExprImpl;
-  }
-
-  public static void shortenReferences(GroovyPsiElement element) {
-    doShorten(element);
-  }
-
-  private static void doShorten(PsiElement element) {
-    PsiElement child = element.getFirstChild();
-    while (child != null) {
-      if (child instanceof GrReferenceElement) {
-        final GrCodeReferenceElement ref = (GrCodeReferenceElement) child;
-        if (ref.getQualifier() != null) {
-          final PsiElement resolved = ref.resolve();
-          if (resolved instanceof PsiClass) {
-            ref.setQualifier(null);
-            try {
-              ref.bindToElement(resolved);
-            } catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        }
-      }
-
-      doShorten(child);
-      child = child.getNextSibling();
-    }
   }
 
   public static SearchScope getUseScope(GrMember member) {
@@ -356,5 +328,15 @@ public class PsiImplUtil {
   public static GroovyResolveResult extractUniqueResult(GroovyResolveResult[] results) {
     if (results.length != 1) return null;
     return results[0];
+  }
+
+  public static PsiMethod[] mapToMethods(@Nullable List<CandidateInfo> list) {
+    if (list == null) return PsiMethod.EMPTY_ARRAY;
+    PsiMethod[] result = new PsiMethod[list.size()];
+    for (int i = 0; i < list.size(); i++) {
+      result[i] = (PsiMethod) list.get(i).getElement();
+
+    }
+    return result;
   }
 }

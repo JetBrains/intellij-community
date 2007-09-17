@@ -16,23 +16,26 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 
@@ -43,6 +46,8 @@ import java.util.List;
  * @author ven
  */
 public class PsiUtil {
+  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil");
+
   @Nullable
   public static String getQualifiedReferenceText(GrCodeReferenceElement referenceElement) {
     StringBuilder builder = new StringBuilder();
@@ -286,5 +291,32 @@ public class PsiUtil {
     if (Character.isLowerCase(methodName.charAt("set".length()))) return false;
 
     return method.getParameterList().getParametersCount() == 1;
+  }
+
+  public static void shortenReferences(GroovyPsiElement element) {
+    doShorten(element);
+  }
+
+  private static void doShorten(PsiElement element) {
+    PsiElement child = element.getFirstChild();
+    while (child != null) {
+      if (child instanceof GrReferenceElement) {
+        final GrCodeReferenceElement ref = (GrCodeReferenceElement) child;
+        if (ref.getQualifier() != null) {
+          final PsiElement resolved = ref.resolve();
+          if (resolved instanceof PsiClass) {
+            ref.setQualifier(null);
+            try {
+              ref.bindToElement(resolved);
+            } catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        }
+      }
+
+      doShorten(child);
+      child = child.getNextSibling();
+    }
   }
 }

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -141,7 +142,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
         parent.replaceChild(typeElementNode, newTypeElementNode);
       }
 
-      PsiImplUtil.shortenReferences(newTypeElement);
+      PsiUtil.shortenReferences(newTypeElement);
     }
   }
 

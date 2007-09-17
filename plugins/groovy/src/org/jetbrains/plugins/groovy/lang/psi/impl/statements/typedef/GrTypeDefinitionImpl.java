@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -181,31 +182,33 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     String name = nameHint == null ? null : nameHint.getName();
     ClassHint classHint = processor.getHint(ClassHint.class);
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
-      Map<String, PsiField> fieldsMap = CollectClassMembersUtil.getAllFields(this);
+      Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(this);
       if (name != null) {
-        PsiField field = fieldsMap.get(name);
-        if (field != null && !processor.execute(field, PsiSubstitutor.EMPTY)) return false;
+        CandidateInfo fieldInfo = fieldsMap.get(name);
+        if (fieldInfo != null && !processor.execute(fieldInfo.getElement(), fieldInfo.getSubstitutor())) return false;
       } else {
-        for (PsiField field : fieldsMap.values()) {
-          if (!processor.execute(field, PsiSubstitutor.EMPTY)) return false;
+        for (CandidateInfo info : fieldsMap.values()) {
+          if (!processor.execute(info.getElement(), info.getSubstitutor())) return false;
         }
       }
     }
 
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
-      Map<String, List<PsiMethod>> methodsMap = CollectClassMembersUtil.getAllMethods(this);
+      Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(this);
       boolean isPlaceGroovy = place.getLanguage() == GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
       if (name == null) {
-        for (List<PsiMethod> list : methodsMap.values()) {
-          for (PsiMethod method : list) {
+        for (List<CandidateInfo> list : methodsMap.values()) {
+          for (CandidateInfo info : list) {
+            PsiMethod method = (PsiMethod) info.getElement();
             if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY))
               return false;
           }
         }
       } else {
-        List<PsiMethod> byName = methodsMap.get(name);
+        List<CandidateInfo> byName = methodsMap.get(name);
         if (byName != null) {
-          for (PsiMethod method : byName) {
+          for (CandidateInfo info : byName) {
+            PsiMethod method = (PsiMethod) info.getElement();
             if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY))
               return false;
           }
@@ -216,10 +219,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
         if (isGetter || isSetter) {
           final String propName = StringUtil.decapitalize(name.substring(3));
           if (propName.length() > 0) {
-            Map<String, PsiField> fieldsMap = CollectClassMembersUtil.getAllFields(this); //cached
-            final PsiField aField = fieldsMap.get(propName);
-            if (aField instanceof GrField && ((GrField) aField).isProperty() && isPropertyReference(place, aField, isGetter)) {
-              if (!processor.execute(aField, PsiSubstitutor.EMPTY)) return false;
+            Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(this); //cached
+            final CandidateInfo info = fieldsMap.get(propName);
+            final PsiElement field = info.getElement();
+            if (field instanceof GrField && ((GrField) field).isProperty() && isPropertyReference(place, (PsiField) field, isGetter)) {
+              if (!processor.execute(field, info.getSubstitutor())) return false;
             }
           }
         }
@@ -489,8 +493,9 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       return null;
     }
 
-    Map<String, PsiField> fieldsMap = CollectClassMembersUtil.getAllFields(this);
-    return fieldsMap.get(name);
+    Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(this);
+    final CandidateInfo info = fieldsMap.get(name);
+    return info == null ? null : (PsiField)info.getElement();
   }
 
   @Nullable
@@ -524,9 +529,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       return result.toArray(new PsiMethod[result.size()]);
     }
 
-    Map<String, List<PsiMethod>> methodsMap = CollectClassMembersUtil.getAllMethods(this);
-    List<PsiMethod> list = methodsMap.get(name);
-    return list == null ? PsiMethod.EMPTY_ARRAY : list.toArray(new PsiMethod[list.size()]);
+    Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(this);
+    return PsiImplUtil.mapToMethods(methodsMap.get(name));
   }
 
   @NotNull
@@ -543,7 +547,15 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
-    return Collections.emptyList();
+    final Map<String, List<CandidateInfo>> allMethodsMap = CollectClassMembersUtil.getAllMethods(this);
+    List<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
+    for (List<CandidateInfo> infos : allMethodsMap.values()) {
+      for (CandidateInfo info : infos) {
+        result.add(new Pair<PsiMethod, PsiSubstitutor>((PsiMethod) info.getElement(), info.getSubstitutor()));
+      }
+    }
+
+    return result;
   }
 
   @Nullable
