@@ -330,8 +330,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
         }
       }
 
-      invokeRefactoring(new MoveClassesOrPackagesProcessor(myProject, myElementsToMove, destination, isSearchInComments(),
-                                                           isSearchInNonJavaFiles(), myMoveCallback));
+      MoveClassesOrPackagesProcessor processor = new MoveClassesOrPackagesProcessor(myProject, myElementsToMove, destination,
+                                                                                    isSearchInComments(), isSearchInNonJavaFiles(),
+                                                                                    myMoveCallback);
+      if (processor.verifyValidPackageName()) {
+        invokeRefactoring(processor);
+      }
     }
     catch (IncorrectOperationException e) {
       String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);

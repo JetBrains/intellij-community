@@ -14,8 +14,6 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiNameHelper;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 
@@ -97,9 +95,9 @@ public class CreateDirectoryOrPackageAction extends AnAction {
   }
 
   protected class MyInputValidator implements InputValidator {
-    private Project myProject;
-    private PsiDirectory myDirectory;
-    private boolean myIsDirectory;
+    private final Project myProject;
+    private final PsiDirectory myDirectory;
+    private final boolean myIsDirectory;
     private PsiElement myCreatedElement = null;
 
     public MyInputValidator(Project project, PsiDirectory directory, boolean isDirectory) {
@@ -121,14 +119,14 @@ public class CreateDirectoryOrPackageAction extends AnAction {
         return false;
       }
 
-      if (!myIsDirectory) {
+      //[ven] valentin thinks this is too restrictive
+      /*if (!myIsDirectory) {
         PsiNameHelper helper = PsiManager.getInstance(myProject).getNameHelper();
         if (!helper.isQualifiedName(subDirName)) {
-          Messages.showMessageDialog(myProject, IdeBundle.message("a.valid.package.name.should.be.specified"),
-                                     IdeBundle.message("title.cannot.create.package"), Messages.getErrorIcon());
+          Messages.showMessageDialog(myProject, "A valid package name should be specified", "Error", Messages.getErrorIcon());
           return false;
         }
-      }
+      }*/
 
       final boolean multiCreation = !myIsDirectory && subDirName.indexOf('.') != -1;
       if (!multiCreation) {

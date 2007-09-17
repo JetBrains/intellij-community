@@ -35,9 +35,9 @@ import java.awt.event.ActionListener;
 public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesToNewDirectoryDialog");
 
-  private PsiDirectory myDirectory;
-  private PsiElement[] myElementsToMove;
-  private MoveCallback myMoveCallback;
+  private final PsiDirectory myDirectory;
+  private final PsiElement[] myElementsToMove;
+  private final MoveCallback myMoveCallback;
 
   public MoveClassesOrPackagesToNewDirectoryDialog(final PsiDirectory directory, PsiElement[] elementsToMove,
                                                    final MoveCallback moveCallback) {
@@ -142,12 +142,12 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     final RefactoringFactory factory = RefactoringFactory.getInstance(project);
     final MoveDestination destination = factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
 
-    new MoveClassesOrPackagesProcessor(
-        myDirectory.getProject(),
-        myElementsToMove,
-        destination, searchInComments,
-        searchForTextOccurences,
-        myMoveCallback).run();
+    MoveClassesOrPackagesProcessor processor = new MoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,
+                                                                                  searchInComments, searchForTextOccurences,
+                                                                                  myMoveCallback);
+    if (processor.verifyValidPackageName()) {
+      processor.run();
+    }
   }
 }
 

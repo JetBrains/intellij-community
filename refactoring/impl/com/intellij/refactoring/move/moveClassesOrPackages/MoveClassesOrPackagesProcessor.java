@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
@@ -39,11 +40,11 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor");
 
-  private PsiElement[] myElementsToMove;
+  private final PsiElement[] myElementsToMove;
   private boolean mySearchInComments;
   private boolean mySearchInNonJavaFiles;
-  private PackageWrapper myTargetPackage;
-  private MoveCallback myMoveCallback;
+  private final PackageWrapper myTargetPackage;
+  private final MoveCallback myMoveCallback;
   private final MoveDestination myMoveDestination;
   private NonCodeUsageInfo[] myNonCodeUsages;
 
@@ -68,6 +69,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     System.arraycopy(myElementsToMove, 0, elements, 0, myElementsToMove.length);
     return new MoveClassesOrPackagesViewDescriptor(elements, mySearchInComments, mySearchInNonJavaFiles,
                                                    MoveClassesOrPackagesUtil.getPackageName(myTargetPackage));
+  }
+
+  public boolean verifyValidPackageName() {
+    PsiNameHelper helper = PsiManager.getInstance(myProject).getNameHelper();
+    if (!helper.isQualifiedName(myTargetPackage.getQualifiedName())) {
+      Messages.showMessageDialog(myProject, RefactoringBundle.message("invalid.target.package.name.specified"), "Invalid package name", Messages.getErrorIcon());
+      return false;
+    }
+    return true;
   }
 
   public boolean isSearchInComments() {
