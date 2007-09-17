@@ -1,18 +1,20 @@
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.ui.popup.util.MinimizeButton;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.SeparatorComponent;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ArrayUtil;
-import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class ProcessPopup  {
 
@@ -110,6 +112,7 @@ public class ProcessPopup  {
     builder.setResizable(true);
     builder.setTitle(IdeBundle.message("progress.window.title"));
     builder.setDimensionServiceKey(null, "ProcessPopupWindow", true);
+    builder.setMinSize(getMinSize());
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(true);
 
@@ -145,6 +148,13 @@ public class ProcessPopup  {
     final Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
     size.width *= 0.3d;
     size.height *= 0.3d;
+    return size;
+  }
+
+  private Dimension getMinSize() {
+    final Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+    size.width *= 0.1d;
+    size.height *= 0.1d;
     return size;
   }
 

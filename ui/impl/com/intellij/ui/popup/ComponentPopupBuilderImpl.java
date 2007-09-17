@@ -47,6 +47,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myCancelKeyEnabled = true;
   private boolean myLocateByContent = false;
   private boolean myPlacewithinScreen = true;
+  private Dimension myMinSize;
+
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -141,7 +143,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
-                                              myPlacewithinScreen);
+                                              myPlacewithinScreen, myMinSize);
     if (myPopupUpdater != null) {
       popup.setPopupUpdater(myPopupUpdater, myProject);
     }
@@ -177,6 +179,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setLocateWithinScreenBounds(final boolean within) {
     myPlacewithinScreen = within;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setMinSize(final Dimension minSize) {
+    myMinSize = minSize;
     return this;
   }
 }

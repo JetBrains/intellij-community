@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
+
 /**
  * @author max
  */
@@ -86,5 +88,7 @@ public interface ComponentPopupBuilder {
   @NotNull ComponentPopupBuilder setLocateByContent(boolean byContent);
 
   @NotNull ComponentPopupBuilder setLocateWithinScreenBounds(boolean within);
+
+  @NotNull ComponentPopupBuilder setMinSize(Dimension minSize);
 
 }
