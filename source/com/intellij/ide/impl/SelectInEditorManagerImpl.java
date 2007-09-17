@@ -8,6 +8,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.injected.DocumentWindow;
+import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -15,6 +17,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +30,7 @@ import java.awt.event.FocusListener;
  * Date: Jul 1, 2002
  */
 public class SelectInEditorManagerImpl extends SelectInEditorManager implements ProjectComponent, FocusListener, CaretListener{
-  private Project myProject;
+  private final Project myProject;
   private RangeHighlighter mySegmentHighlighter;
   private Editor myEditor;
 
@@ -54,13 +57,22 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
 
   public void selectInEditor(VirtualFile file, final int startOffset, final int endOffset, final boolean toSelectLine, final boolean toUseNormalSelection){
     releaseAll();
+    final TextRange textRange;
+    if (file instanceof VirtualFileWindow) {
+      DocumentWindow documentWindow = ((VirtualFileWindow)file).getDocumentWindow();
+      textRange = documentWindow.injectedToHost(new TextRange(startOffset, endOffset));
+      file = ((VirtualFileWindow)file).getDelegate();
+    }
+    else {
+      textRange = new TextRange(startOffset, endOffset);
+    }
     openEditor(file, endOffset);
-    final Editor editor = openEditor(file, startOffset);
+    final Editor editor = openEditor(file, textRange.getStartOffset());
 
     SwingUtilities.invokeLater(new Runnable(){ // later to let focus listener chance to handle events
       public void run() {
         if (editor != null && !editor.isDisposed()) {
-          doSelect(toUseNormalSelection, editor, toSelectLine, startOffset, endOffset);
+          doSelect(toUseNormalSelection, editor, toSelectLine, textRange);
         }
       }
     });
@@ -68,9 +80,10 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
 
   private void doSelect(final boolean toUseNormalSelection, @NotNull final Editor editor,
                         final boolean toSelectLine,
-                        final int startOffset,
-                        final int endOffset) {
-    if(toUseNormalSelection) {
+                        final TextRange textRange) {
+    int startOffset = textRange.getStartOffset();
+    int endOffset = textRange.getEndOffset();
+    if (toUseNormalSelection) {
       DocumentEx doc = (DocumentEx) editor.getDocument();
       if (toSelectLine){
         int lineNumber = doc.getLineNumber(startOffset);
