@@ -386,6 +386,7 @@ public class StructureConfigrableContext implements Disposable {
   @Nullable
   public Library getLibrary(final String libraryName, final String libraryLevel) {
 /* the null check is added only to prevent NPE when called from getLibrary */
+    if (myLevel2Providers.isEmpty()) resetLibraries();
     final LibrariesModifiableModel model = myLevel2Providers.get(libraryLevel);
     return model == null ? null : findLibraryModel(libraryName, model);
   }
