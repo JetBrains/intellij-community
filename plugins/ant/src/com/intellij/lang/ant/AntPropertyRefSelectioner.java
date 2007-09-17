@@ -8,9 +8,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -19,40 +21,47 @@ import java.util.List;
  */
 public class AntPropertyRefSelectioner implements SelectWordUtil.Selectioner{
   public boolean canSelect(final PsiElement e) {
-    return getRangeToSelect(e) != null;
+    return getRangesToSelect(e).size() > 0;
   }
 
   public List<TextRange> select(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {
-    final TextRange textRange = getRangeToSelect(e);
-    return textRange == null? Collections.<TextRange>emptyList() : Collections.singletonList(textRange);
+    List<TextRange> rangesToSelect = getRangesToSelect(e);
+    for (Iterator it = rangesToSelect.iterator(); it.hasNext();) {
+      final TextRange range = (TextRange)it.next();
+      if (!range.contains(cursorOffset)) {
+        it.remove();
+      }
+    }
+    return rangesToSelect;
   }
   
-  @Nullable
-  private static TextRange getRangeToSelect(PsiElement e) {
+  @NotNull
+  private static List<TextRange> getRangesToSelect(PsiElement e) {
     final PsiFile containingFile = e.getContainingFile();
     if (containingFile == null) {
-      return null;
+      return Collections.emptyList();
     }
     final AntFile antFile = AntSupport.getAntFile(containingFile);
     if (antFile == null) {
-      return null;
+      return Collections.emptyList();
     }
     final PsiElement antElement = antFile.findElementAt(e.getTextOffset());
     if (antElement == null) {
-      return null;
+      return Collections.emptyList();
     }
     final TextRange antElementRange = antElement.getTextRange();
     final TextRange selectionElementRange = e.getTextRange();
     final PsiReference[] refs = antElement.getReferences();
+    ArrayList<TextRange> ranges = new ArrayList<TextRange>(refs.length);
     for (PsiReference ref : refs) {
       if (ref instanceof AntPropertyReference) {
         TextRange refRange = ref.getRangeInElement();
         refRange = refRange.shiftRight(antElementRange.getStartOffset());
         if (selectionElementRange.contains(refRange)) {
-          return refRange;
+          ranges.add(refRange);
         }
       }
     }
-    return null;
+    return ranges;
   }
 }
