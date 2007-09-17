@@ -207,10 +207,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   public List<ExecutionEvent> getEventsForTarget(final AntBuildTarget target) {
     final List<ExecutionEvent> list = new ArrayList<ExecutionEvent>();
-    for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
-      final AntBuildTarget targetForEvent = getTargetForEvent(event);
-      if (target.equals(targetForEvent)) {
-        list.add(event);
+    synchronized (myEventToTargetMap) {
+      for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
+        final AntBuildTarget targetForEvent = getTargetForEvent(event);
+        if (target.equals(targetForEvent)) {
+          list.add(event);
+        }
       }
     }
     return list;
@@ -218,7 +220,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   @Nullable
   public AntBuildTarget getTargetForEvent(final ExecutionEvent event) {
-    final Pair pair = myEventToTargetMap.get(event);
+    final Pair<AntBuildFile, String> pair;
+    synchronized (myEventToTargetMap) {
+      pair = myEventToTargetMap.get(event);
+    }
     if (pair == null) {
       return null;
     }
@@ -246,11 +251,15 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   public void setTargetForEvent(final AntBuildFile buildFile, final String targetName, final ExecutionEvent event) {
-    myEventToTargetMap.put(event, new Pair<AntBuildFile, String>(buildFile, targetName));
+    synchronized (myEventToTargetMap) {
+      myEventToTargetMap.put(event, new Pair<AntBuildFile, String>(buildFile, targetName));
+    }
   }
 
   public void clearTargetForEvent(final ExecutionEvent event) {
-    myEventToTargetMap.remove(event);
+    synchronized (myEventToTargetMap) {
+      myEventToTargetMap.remove(event);
+    }
   }
 
   public void updateBuildFile(final AntBuildFile buildFile) {
@@ -339,19 +348,21 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private void saveEvents(final Element element, final AntBuildFile buildFile) {
     List<Element> events = null;
-    for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
-      final Pair<AntBuildFile, String> pair = myEventToTargetMap.get(event);
-      if (!buildFile.equals(pair.first)) {
-        continue;
+    synchronized (myEventToTargetMap) {
+      for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
+        final Pair<AntBuildFile, String> pair = myEventToTargetMap.get(event);
+        if (!buildFile.equals(pair.first)) {
+          continue;
+        }
+        Element eventElement = new Element(EXECUTE_ON_ELEMENT);
+        eventElement.setAttribute(EVENT_ELEMENT, event.getTypeId());
+        eventElement.setAttribute(TARGET_ELEMENT, pair.second);
+        event.writeExternal(eventElement);
+        if (events == null) {
+          events = new ArrayList<Element>();
+        }
+        events.add(eventElement);
       }
-      Element eventElement = new Element(EXECUTE_ON_ELEMENT);
-      eventElement.setAttribute(EVENT_ELEMENT, event.getTypeId());
-      eventElement.setAttribute(TARGET_ELEMENT, pair.second);
-      event.writeExternal(eventElement);
-      if (events == null) {
-        events = new ArrayList<Element>();
-      }
-      events.add(eventElement);
     }
 
     if (events != null) {
@@ -537,9 +548,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private List<ExecutionEvent> getEventsByClass(Class eventClass) {
     final List<ExecutionEvent> list = new ArrayList<ExecutionEvent>();
-    for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
-      if (eventClass.isInstance(event)) {
-        list.add(event);
+    synchronized (myEventToTargetMap) {
+      for (final ExecutionEvent event : myEventToTargetMap.keySet()) {
+        if (eventClass.isInstance(event)) {
+          list.add(event);
+        }
       }
     }
     return list;
