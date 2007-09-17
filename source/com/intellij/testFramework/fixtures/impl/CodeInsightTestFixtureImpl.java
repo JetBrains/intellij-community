@@ -43,9 +43,9 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -92,8 +92,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private String myTestDataPath;
 
   private LocalInspectionTool[] myInspections;
-  private Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
-  private Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
+  private final Map<String, LocalInspectionTool> myAvailableTools = new THashMap<String, LocalInspectionTool>();
+  private final Map<String, LocalInspectionToolWrapper> myAvailableLocalTools = new THashMap<String, LocalInspectionToolWrapper>();
 
   private final TempDirTestFixture myTempDirFixture = new TempDirTextFixtureImpl();
   private final IdeaProjectTestFixture myProjectFixture;
@@ -200,9 +200,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return new WriteCommandAction<List<IntentionAction>>(project) {
       protected void run(final Result<List<IntentionAction>> result) throws Throwable {
         final int offset = configureByFiles(filePaths);
-        result.setResult(getAvailableIntentions(project, doHighlighting(), offset,
-                                                                                CodeInsightTestFixtureImpl.this.myEditor,
-                                                                                CodeInsightTestFixtureImpl.this.myFile));
+        result.setResult(getAvailableIntentions(project, doHighlighting(), offset, myEditor, myFile));
       }
     }.execute().getResultObject();
   }
@@ -466,8 +464,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return instance.openTextEditor(new OpenFileDescriptor(project, file, 0), false);
   }
 
-  @NotNull
-  private Collection<HighlightInfo> collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, Ref<Long> duration)
+  private void collectAndCheckHighlightings(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, Ref<Long> duration)
     throws Exception {
     final Project project = getProject();
     ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
@@ -495,8 +492,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myPsiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     data.checkResult(infos, myEditor.getDocument().getText());
-
-    return infos;
   }
 
   @NotNull
@@ -650,6 +645,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     String text = originalFile.getText();
     text = StringUtil.convertLineSeparators(text, "\n");
 
+    //noinspection HardCodedStringLiteral
     TestCase.assertEquals( "Text mismatch in file " + expectedFile, newFileText1, text );
 
     if (loader.caretMarker != null) {
