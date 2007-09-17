@@ -78,7 +78,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
   public String getDemoText() {
     return "import javax.swing.JPanel\n" +
         "class Demo {\n" +
-        "\\\\This is a line comment\n" +
+        "//This is a line comment\n" +
         "/*This is a block comment*/\n" +
         "  JPanel panel = new JPanel()\n" +
         "  panel.size = [10, 10]\n" +
