@@ -128,7 +128,7 @@ public class JDomConvertingUtil {
     return element;
   }
 
-  public static void addChildAfter(final Element parent, final Element child, final Condition<Element> filter) {
+  public static void addChildAfter(final Element parent, final Element child, final Condition<Element> filter, boolean addFirstIfNotFound) {
     List list = parent.getContent();
     for (int i = 0; i < list.size(); i++) {
       Object o = list.get(i);
@@ -141,6 +141,9 @@ public class JDomConvertingUtil {
         }
         return;
       }
+    }
+    if (addFirstIfNotFound) {
+      parent.addContent(0, child);
     }
   }
 
