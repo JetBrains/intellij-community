@@ -26,7 +26,6 @@ public class EditSourceUtil {
       return false;
     }
     final PsiElement navigationElement = element.getNavigationElement();
-    if (navigationElement instanceof Navigatable && !((Navigatable)navigationElement).canNavigate()) return false;
     final VirtualFile virtualFile = PsiUtil.getVirtualFile(navigationElement);
     return virtualFile != null && virtualFile.isValid();
   }
