@@ -69,6 +69,12 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
 
     @NotNull
     public Collection<? extends Boolean> getVariants(final ConvertContext context) {
+      final DomElement element = context.getInvocationElement();
+      if (element instanceof GenericDomValue) {
+        final SubTag annotation = element.getAnnotation(SubTag.class);
+        if (annotation != null && annotation.indicator()) return Collections.emptyList();
+      }
+
       return Arrays.asList(Boolean.FALSE, Boolean.TRUE);
     }
   };
