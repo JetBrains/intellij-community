@@ -28,4 +28,13 @@ public class CodeInsightTestUtil {
     }
     return null;
   }
+
+  public static void doIntentionTest(CodeInsightTestFixture fixture, @NonNls String file, @NonNls String actionText) throws Throwable {
+    final List<IntentionAction> list = fixture.getAvailableIntentions(file + ".xml");
+    assert list.size() > 0;
+    final IntentionAction intentionAction = findIntentionByText(list, actionText);
+    assert intentionAction != null;
+    fixture.launchAction(intentionAction);
+    fixture.checkResultByFile(file + "_after.xml");
+  }
 }
