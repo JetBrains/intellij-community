@@ -137,8 +137,10 @@ public class HtmlParsing {
     do {
       final IElementType tt = token();
       if (freeMakerTag) {
-        if (tt == XmlTokenType.XML_EMPTY_ELEMENT_END || tt == XmlTokenType.XML_TAG_END || tt == XmlTokenType.XML_END_TAG_START
-          || tt == XmlTokenType.XML_START_TAG_START) break;
+        if (tt == XmlTokenType.XML_EMPTY_ELEMENT_END ||
+            tt == XmlTokenType.XML_TAG_END ||
+            tt == XmlTokenType.XML_END_TAG_START ||
+            tt == XmlTokenType.XML_START_TAG_START) break;
         advance();
       }
       else {
@@ -153,7 +155,7 @@ public class HtmlParsing {
         }
       }
     }
-    while (true);
+    while (!eof());
 
     if (token() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
       advance();
