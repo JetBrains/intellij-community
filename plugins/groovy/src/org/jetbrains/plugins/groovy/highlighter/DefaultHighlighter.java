@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.highlighter;
 
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NonNls;
@@ -26,54 +28,61 @@ import org.jetbrains.annotations.NonNls;
 public class DefaultHighlighter {
 
   @NonNls
-  private static final String LINE_COMMENT_ID = "GROOVY_LINE_COMMENT";
+  static final String LINE_COMMENT_ID = "line comments";
   @NonNls
-  private static final String BLOCK_COMMENT_ID = "GROOVY_BLOCK_COMMENT";
+  static final String BLOCK_COMMENT_ID = "block comments";
   @NonNls
-  private static final String KEYWORD_ID = "GROOVY_KEYWORD";
+  static final String KEYWORD_ID = "keywords";
   @NonNls
-  private static final String NUMBER_ID = "GROOVY_NUMBER";
+  static final String NUMBER_ID = "numbers";
   @NonNls
-  private static final String STRING_ID = "GROOVY_STRING";
+  static final String STRING_ID = "strings";
   @NonNls
-  private static final String REGEXP_ID = "GROOVY_REGEXP";
+  static final String REGEXP_ID = "regular expressions";
   @NonNls
-  private static final String BRACKETS_ID = "GROOVY_BRACKETS";
+  static final String BRACES_ID = "braces";
 
   @NonNls
-  private static final String OPERATION_SIGN_ID = "GROOVY_OPERATION_SIGN";
+  static final String OPERATION_SIGN_ID = "operation signs";
   @NonNls
-  private static final String BAD_CHARACTER_ID = "GROOVY_BAD_CHARACTER";
+  static final String BAD_CHARACTER_ID = "bad character";
   @NonNls
-  private static final String WRONG_STRING_ID = "GROOVY_WRONG_CONSTRUCTION";
+  static final String WRONG_STRING_ID = "wrong construction";
 
+  @NonNls
+  static final String UNTYPED_ACCESS_ID = "untyped access";
 
-  // Registering TextAttributes
-  static {
-    TextAttributesKey.createTextAttributesKey(WRONG_STRING_ID, HighlighterColors.JAVA_STRING.getDefaultAttributes());
-    TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID, HighlighterColors.JAVA_LINE_COMMENT.getDefaultAttributes());
-    TextAttributesKey.createTextAttributesKey(BLOCK_COMMENT_ID, HighlighterColors.JAVA_BLOCK_COMMENT.getDefaultAttributes());
-    TextAttributesKey.createTextAttributesKey(KEYWORD_ID, HighlighterColors.JAVA_KEYWORD.getDefaultAttributes());
-    TextAttributesKey.createTextAttributesKey(NUMBER_ID, HighlighterColors.JAVA_NUMBER.getDefaultAttributes());
-    TextAttributesKey.createTextAttributesKey(STRING_ID, HighlighterColors.JAVA_STRING.getDefaultAttributes());
+  public static TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID,
+      HighlighterColors.JAVA_LINE_COMMENT.getDefaultAttributes());
 
-    TextAttributesKey.createTextAttributesKey(REGEXP_ID, HighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes());
-    TextAttributesKey.createTextAttributesKey(BRACKETS_ID, HighlighterColors.JAVA_BRACKETS.getDefaultAttributes());
+  public static TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey(BLOCK_COMMENT_ID,
+      HighlighterColors.JAVA_BLOCK_COMMENT.getDefaultAttributes());
 
-    TextAttributesKey.createTextAttributesKey(OPERATION_SIGN_ID, HighlighterColors.JAVA_OPERATION_SIGN.getDefaultAttributes());
-    TextAttributesKey.createTextAttributesKey(BAD_CHARACTER_ID, CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES.getDefaultAttributes());
-  }
+  public static TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(KEYWORD_ID,
+      HighlighterColors.JAVA_KEYWORD.getDefaultAttributes());
 
-  public static TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID);
-  public static TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey(BLOCK_COMMENT_ID);
-  public static TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey(KEYWORD_ID);
-  public static TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey(NUMBER_ID);
-  public static TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey(STRING_ID);
-  public static TextAttributesKey REGEXP = TextAttributesKey.createTextAttributesKey(REGEXP_ID);
-  public static TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey(BRACKETS_ID);
+  public static TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey(NUMBER_ID,
+      HighlighterColors.JAVA_NUMBER.getDefaultAttributes());
 
-  public static TextAttributesKey OPERATION_SIGN = TextAttributesKey.createTextAttributesKey(OPERATION_SIGN_ID);
-  public static TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey(BAD_CHARACTER_ID);
-  public static TextAttributesKey WRONG_STRING = TextAttributesKey.createTextAttributesKey(WRONG_STRING_ID);
+  public static TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey(STRING_ID,
+      HighlighterColors.JAVA_STRING.getDefaultAttributes());
+
+  public static TextAttributesKey REGEXP = TextAttributesKey.createTextAttributesKey(REGEXP_ID,
+      HighlighterColors.JAVA_VALID_STRING_ESCAPE.getDefaultAttributes());
+
+  public static TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey(BRACES_ID,
+      HighlighterColors.JAVA_BRACKETS.getDefaultAttributes());
+
+  public static TextAttributesKey OPERATION_SIGN = TextAttributesKey.createTextAttributesKey(OPERATION_SIGN_ID,
+      HighlighterColors.JAVA_OPERATION_SIGN.getDefaultAttributes());
+
+  public static TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey(BAD_CHARACTER_ID,
+      CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES.getDefaultAttributes());
+
+  public static TextAttributesKey WRONG_STRING = TextAttributesKey.createTextAttributesKey(WRONG_STRING_ID,
+      HighlighterColors.JAVA_STRING.getDefaultAttributes());
+
+  public static TextAttributesKey UNTYPED_ACCESS = TextAttributesKey.createTextAttributesKey(UNTYPED_ACCESS_ID,
+      new TextAttributes(null, null, HighlighterColors.JAVA_BRACKETS.getDefaultAttributes().getForegroundColor(), EffectType.LINE_UNDERSCORE, 0));
 
 }
