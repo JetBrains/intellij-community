@@ -221,9 +221,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
           if (propName.length() > 0) {
             Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(this); //cached
             final CandidateInfo info = fieldsMap.get(propName);
-            final PsiElement field = info.getElement();
-            if (field instanceof GrField && ((GrField) field).isProperty() && isPropertyReference(place, (PsiField) field, isGetter)) {
-              if (!processor.execute(field, info.getSubstitutor())) return false;
+            if (info != null) {
+              final PsiElement field = info.getElement();
+              if (field instanceof GrField && ((GrField) field).isProperty() && isPropertyReference(place, (PsiField) field, isGetter)) {
+                if (!processor.execute(field, info.getSubstitutor())) return false;
+              }
             }
           }
         }
