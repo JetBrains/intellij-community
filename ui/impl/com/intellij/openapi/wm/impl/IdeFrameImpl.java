@@ -105,8 +105,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     addWindowListener(
       new WindowAdapter() {
         public void windowClosing(final WindowEvent e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
+          final Application app = ApplicationManager.getApplication();
+          app.invokeLater(new Runnable() {
             public void run() {
+              if (app.isDisposed()) return;
               final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
               if (openProjects.length > 1) {
                 if (myProject != null && myProject.isOpen()) {
