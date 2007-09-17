@@ -18,6 +18,8 @@ public class AddTestProcessAction extends AnAction {
     new Task.Backgroundable(project, "Test Process", true) {
       public void run(final ProgressIndicator indicator) {
         try {
+          Thread.currentThread().sleep(6000);
+
           countTo(1000, new Count() {
             public void onCount(int each) throws InterruptedException {
               indicator.setText("Found: " + each / 20 + 1);

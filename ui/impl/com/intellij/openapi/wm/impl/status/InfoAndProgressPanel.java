@@ -1,23 +1,24 @@
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.ui.StatusBarInformer;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.StatusBarInformer;
+import com.intellij.util.Alarm;
+import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.idea.ActionsBundle;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public class InfoAndProgressPanel extends JPanel {
 
   private MergingUpdateQueue myUpdateQueue;
   private AsyncProcessIcon myProgressIcon;
+  private Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myShouldClosePopupAndOnProcessFinish;
   private final EmptyBorder myEmptyBorder;
@@ -87,6 +89,8 @@ public class InfoAndProgressPanel extends JPanel {
       else {
         buildInProcessCount();
       }
+
+      runQuery();
     }
   }
 
@@ -119,6 +123,8 @@ public class InfoAndProgressPanel extends JPanel {
           restoreEmptyStatus();
         }
       }
+
+      runQuery();
     }
   }
 
@@ -209,6 +215,8 @@ public class InfoAndProgressPanel extends JPanel {
 
     myProgressIcon.setBorder(myCompoundBorder);
     inlinePanel.add(myProgressIcon, BorderLayout.WEST);
+
+    inline.updateProgressNow();
 
     add(inlinePanel);
 
@@ -348,5 +356,20 @@ public class InfoAndProgressPanel extends JPanel {
         }
       });
     }
+  }
+
+  private void runQuery() {
+    if (getRootPane() == null) return;
+
+    synchronized (myOriginals) {
+      for (InlineProgressIndicator each : myInline2Original.keySet()) {
+        each.updateProgress();
+      }
+    }
+    myQueryAlarm.addRequest(new Runnable() {
+      public void run() {
+        runQuery();
+      }
+    }, 2000);
   }
 }

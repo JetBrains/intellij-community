@@ -36,6 +36,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   private final FixedHeightLabel myProcessName = new FixedHeightLabel();
   private boolean myDisposed;
 
+  private long myLastTimeProgressWasAtZero;
+  private boolean myLastTimeProgressWasZero;
+
   public InlineProgressIndicator(boolean compact, TaskInfo processInfo) {
     myCompact = compact;
     myInfo = processInfo;
@@ -105,6 +108,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       content.add(myText2, BorderLayout.SOUTH);
 
       myComponent.setBorder(new EmptyBorder(2, 2, 2, 2));
+      myProgress.setActive(false);
     }
 
     UIUtil.removeQuaquaVisualMarginsIn(myComponent);
@@ -132,24 +136,43 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     });
   }
 
-  private void updateProgress() {
+  protected void updateProgress() {
     queueProgressUpdate(new Runnable() {
       public void run() {
         if (isDisposed()) return;
 
-        _updateProgress();
+        updateProgressNow();
 
         myComponent.repaint();
       }
     });
   }
 
-  private void _updateProgress() {
-    updateVisibility(myProgress, getFraction() > 0 && !isIndeterminate());
-    if (isIndeterminate()) {
+  public void updateProgressNow() {
+    if (myLastTimeProgressWasAtZero == 0 && getFraction() == 0) {
+      myLastTimeProgressWasAtZero = System.currentTimeMillis();
+    }
+
+    final long delta = System.currentTimeMillis() - myLastTimeProgressWasAtZero;
+    boolean forcedIndeterminite = false;
+
+    boolean indeterminate = isIndeterminate();
+    if (!indeterminate && getFraction() == 0) {
+      if (delta > 2000 && !myCompact) {
+          indeterminate = true;
+          forcedIndeterminite = true;
+        } else {
+          forcedIndeterminite = false;
+        }
+    }
+
+    final boolean visible = getFraction() > 0 || (indeterminate || forcedIndeterminite);
+    updateVisibility(myProgress, visible);
+    if (indeterminate || forcedIndeterminite) {
       myProgress.setIndeterminate(true);
     }
     else {
+      myProgress.setIndeterminate(false);
       myProgress.setMinimum(0);
       myProgress.setMaximum(100);
     }
@@ -165,6 +188,15 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     }
 
     myCancelButton.setPainting(isCancelable());
+
+    if (getFraction() == 0) {
+      if (!myLastTimeProgressWasZero) {
+        myLastTimeProgressWasAtZero = System.currentTimeMillis();
+        myLastTimeProgressWasZero = true;
+      }
+    } else {
+      myLastTimeProgressWasZero = false;
+    }
   }
 
   protected void queueProgressUpdate(Runnable update) {
@@ -247,10 +279,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     }
 
 
-    protected void paintComponent(final Graphics g) {
+    public void paint(final Graphics g) {
       if (!myActive) return;
-
-      super.paintComponent(g);
+      super.paint(g);
     }
 
 
