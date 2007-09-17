@@ -15,6 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 public class SimplifyBooleanExpressionFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
@@ -39,14 +40,14 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     return QuickFixBundle.message("simplify.boolean.expression.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return mySubExpression.isValid()
            && mySubExpression.getManager().isInProject(mySubExpression)
            && !PsiUtil.isAccessedForWriting(mySubExpression)
       ;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!isAvailable(project, editor, file)) return;
     LOG.assertTrue(mySubExpression.isValid());
     PsiExpression expression;
@@ -191,7 +192,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       falseExpression = createResult ? createExpression(psiManager, Boolean.toString(false)) : null;
     }
 
-    private static PsiExpression createExpression(final PsiManager psiManager, String text) {
+    private static PsiExpression createExpression(final PsiManager psiManager, @NonNls String text) {
       try {
         return psiManager.getElementFactory().createExpressionFromText(text, null);
       }
@@ -264,7 +265,14 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     }
 
     private static PsiPrefixExpression createNegatedExpression(PsiExpression otherOperand)  {
-      return (PsiPrefixExpression)createExpression(otherOperand.getManager(), "!(" + otherOperand.getText()+")");
+      PsiPrefixExpression expression = (PsiPrefixExpression)createExpression(otherOperand.getManager(), "!(xxx)");
+      try {
+        expression.getOperand().replace(otherOperand);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      return expression;
     }
 
     public void visitPrefixExpression(PsiPrefixExpression expression) {
