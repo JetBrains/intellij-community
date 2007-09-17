@@ -1,10 +1,14 @@
 package org.jetbrains.plugins.groovy.overrideImplement;
 
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
-import com.intellij.ide.fileTemplates.*;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -15,25 +19,27 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 14.09.2007
  */
 public class GroovyOverrideImplementUtil {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil");
+
   protected static void invokeOverrideImplement(final Project project, Editor editor, PsiFile file, boolean isImplement) {
-    assert file instanceof GroovyFileBase;
-    ((GroovyFileBase) file).getTypeDefinitions();
     final int offset = editor.getCaretModel().getOffset();
 
     PsiElement parent = file.findElementAt(offset);
@@ -49,7 +55,7 @@ public class GroovyOverrideImplementUtil {
     if (isImplement && aClass.isInterface()) return;
 
     List<PsiMethodMember> classMembers = new ArrayList<PsiMethodMember>();
-    Collection<CandidateInfo> candidates = com.intellij.codeInsight.generation.OverrideImplementUtil.getMethodsToOverrideImplement(aClass, isImplement);
+    Collection<CandidateInfo> candidates = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, isImplement);
     for (CandidateInfo candidate : candidates) {
       classMembers.add(new PsiMethodMember(candidate));
     }
@@ -94,7 +100,7 @@ public class GroovyOverrideImplementUtil {
             CodeStyleManager.getInstance(project).reformatText(result.getContainingFile(),
                 textRange.getStartOffset(), textRange.getEndOffset());
           } catch (IncorrectOperationException e) {
-            e.printStackTrace();
+            LOG.error(e);
           }
         }
       });
@@ -181,7 +187,7 @@ public class GroovyOverrideImplementUtil {
       result.getNode().replaceChild(result.getBlock().getNode(), newBody.getNode());
 
     } catch (IOException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
   }
 
