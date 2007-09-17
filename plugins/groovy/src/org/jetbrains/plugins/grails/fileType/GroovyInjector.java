@@ -16,10 +16,14 @@
 package org.jetbrains.plugins.grails.fileType;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.ConcatenationAwareInjector;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
@@ -31,7 +35,7 @@ public class GroovyInjector implements ProjectComponent {
   }
 
   public void initComponent() {
-    PsiManager.getInstance(myProject).registerLanguageInjector(new MyLanguageInjector());
+    InjectedLanguageManager.getInstance(myProject).registerConcatenationInjector(new MyLanguageInjector());
   }
 
   public void disposeComponent() {
@@ -54,16 +58,19 @@ public class GroovyInjector implements ProjectComponent {
   public static final String PARSE_NAME = "parse";
   private static final String GROOVY_SHELL_QNAME = "groovy.lang.GroovyShell";
 
-  private static class MyLanguageInjector implements LanguageInjector {
+  private static class MyLanguageInjector implements ConcatenationAwareInjector {
+    public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
+      for (PsiElement operand : operands) {
+        if (!(operand instanceof PsiLanguageInjectionHost)) return;
+      }
 
-    public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
-      final Language groovyLanguage = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
-      if (host instanceof PsiLiteralExpression && host.getParent() instanceof PsiExpressionList) {
-        final PsiExpression[] args = ((PsiExpressionList) host.getParent()).getExpressions();
-        if (host == args[0]) { //first argument to 'parse' and 'evaluate" is groovy script
-          final PsiElement pparent = host.getParent().getParent();
-          if (pparent instanceof PsiMethodCallExpression) {
-            final PsiMethodCallExpression call = (PsiMethodCallExpression) pparent;
+      final PsiExpressionList argList = PsiTreeUtil.getParentOfType(operands[0], PsiExpressionList.class);
+      if (argList != null) {
+        final PsiExpression firstArg = argList.getExpressions()[0];
+        if (contains(firstArg, operands)) {
+          final PsiElement parent = argList.getParent();
+          if (parent instanceof PsiMethodCallExpression) {
+            final PsiMethodCallExpression call = (PsiMethodCallExpression) parent;
             final String refName = call.getMethodExpression().getReferenceName();
             if (PARSE_NAME.equals(refName) || EVAL_NAME.equals(refName)) {
               final PsiMethod method = call.resolveMethod();
@@ -71,7 +78,12 @@ public class GroovyInjector implements ProjectComponent {
                 final PsiClass clazz = method.getContainingClass();
                 if (clazz != null) {
                   if (GROOVY_SHELL_QNAME.equals(clazz.getQualifiedName())) {
-                    injectionPlacesRegistrar.addPlace(groovyLanguage, new TextRange(1, host.getTextLength() - 1), "", "");
+                    final Language groovyLanguage = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
+                    registrar.startInjecting(groovyLanguage);
+                    for (PsiElement operand : operands) {
+                      registrar.addPlace("", "", (PsiLanguageInjectionHost)operand, new TextRange(1, operand.getTextLength() - 1));
+                    }
+                    registrar.doneInjecting();
                   }
                 }
               }
@@ -79,6 +91,18 @@ public class GroovyInjector implements ProjectComponent {
           }
         }
       }
+    }
+
+    private boolean contains(PsiExpression arg, PsiElement[] operands) {
+      if (operands.length == 1) return arg.equals(operands[0]);
+      if (arg instanceof PsiBinaryExpression) {
+        final PsiExpression lop = ((PsiBinaryExpression) arg).getLOperand();
+        for (PsiElement operand : operands) {
+          if (operand.equals(lop)) return true;
+        }
+      }
+
+      return false;
     }
   }
 }
