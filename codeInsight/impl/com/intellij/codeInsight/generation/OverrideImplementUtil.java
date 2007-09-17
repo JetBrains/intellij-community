@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
@@ -524,6 +525,7 @@ public class OverrideImplementUtil {
     while (element instanceof PsiTypeParameter);
 
     final PsiClass aClass = (PsiClass)element;
+    if (aClass instanceof JspClass) return null;
     return aClass == null ||
            !allowInterface && aClass.isInterface() ? null : aClass;
   }
