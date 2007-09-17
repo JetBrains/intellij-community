@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 
 /**
@@ -29,6 +30,8 @@ public interface ExpectedTypeInfo {
   int TYPE_OR_SUBTYPE = 1;
   int TYPE_OR_SUPERTYPE = 2;
   ExpectedTypeInfo[] EMPTY = new ExpectedTypeInfo[0];
+
+  PsiMethod getCalledMethod();
 
   PsiType getType ();
 

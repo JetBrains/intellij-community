@@ -813,6 +813,7 @@ public class ExpectedTypesProvider {
 
         ExpectedTypeInfoImpl info = createInfoImpl(parameterType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, defaultType, tailType);
         info.setInsertExplicitTypeParams(true);
+        info.setCalledMethod(method);
         String propertyName = getPropertyName(parameter);
         if (propertyName != null) info.expectedName = propertyName;
         array.add(info);
@@ -822,6 +823,7 @@ public class ExpectedTypesProvider {
           final PsiArrayType arrayType = parameterType.createArrayType();
           ExpectedTypeInfoImpl info1 = createInfoImpl(arrayType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, arrayType, tailType);
           info1.setInsertExplicitTypeParams(true);
+          info1.setCalledMethod(method);
           info1.expectedName = propertyName;
           array.add(info1);
         }
@@ -852,6 +854,7 @@ public class ExpectedTypesProvider {
           ExpectedTypeInfoImpl info = createInfoImpl(parmType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, parmType,
                                                      tailType);
           info.expectedName = getPropertyName(parm);
+          info.setCalledMethod(method);
           array.add(info);
         }
       }

@@ -4,6 +4,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
@@ -33,6 +34,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   public TailType myTailType;
 
   public String expectedName;
+  private PsiMethod myCalledMethod;
 
 
   ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, int dimCount, @NotNull PsiType defaultType, @NotNull TailType myTailType) {
@@ -41,6 +43,14 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     this.defaultType = defaultType;
     this.myTailType = myTailType;
     this.dimCount = dimCount;
+  }
+
+  public PsiMethod getCalledMethod() {
+    return myCalledMethod;
+  }
+
+  public void setCalledMethod(final PsiMethod calledMethod) {
+    myCalledMethod = calledMethod;
   }
 
   @NotNull
