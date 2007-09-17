@@ -314,7 +314,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     int offset = range.getStartOffset();
     PsiFile containingFile = element.getContainingFile();
     int fileLength = containingFile.getTextLength();
-    PsiElement elementAtOffset = containingFile.findElementAt(offset);
+    FileViewProvider viewProvider = containingFile.getViewProvider();
+    PsiElement elementAtOffset = viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
     HighlightInfo info;
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
