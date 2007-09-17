@@ -249,7 +249,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
           try {
             ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()));
           } catch (IncorrectOperationException e) {
-            e.printStackTrace();
+            LOG.error(e);
           }
         }
       } else {
