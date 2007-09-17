@@ -40,7 +40,7 @@ import java.util.Properties;
 public class GroovyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil");
 
-  protected static void invokeOverrideImplement(final Project project, Editor editor, PsiFile file, boolean isImplement) {
+  public static void invokeOverrideImplement(final Project project, Editor editor, PsiFile file, boolean isImplement) {
     final int offset = editor.getCaretModel().getOffset();
 
     PsiElement parent = file.findElementAt(offset);

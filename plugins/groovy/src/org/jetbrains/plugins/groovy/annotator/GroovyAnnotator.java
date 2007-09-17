@@ -17,42 +17,33 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
@@ -61,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -86,6 +78,7 @@ public class GroovyAnnotator implements Annotator {
       checkTypeDefinition(holder, (GrTypeDefinition) element);
       checkTypeDefinitionModifiers(holder, (GrTypeDefinition) element);
       checkDuplicateMethod(((GrTypeDefinition) element).getBody().getMethods(), holder);
+      checkImplementedMethodsOfClass(holder, (GrTypeDefinition) element);
     } else if (element instanceof GrMethod) {
       checkMethodDefinitionModifiers(holder, (GrMethod) element);
       checkInnerMethod(holder, (GrMethod) element);
@@ -117,6 +110,71 @@ public class GroovyAnnotator implements Annotator {
     } else if (!(element instanceof PsiWhiteSpace) && element.getContainingFile() instanceof GroovyFile) {
       GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
     }
+  }
+
+  private void checkImplementedMethodsOfClass(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
+    //todo: Needs tests
+    if (typeDefinition.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+    if (typeDefinition.isInterface()) return;
+
+    List<MethodSignature> implementedClassesMethodsSignatures = new ArrayList<MethodSignature>();
+    //implements list
+    final PsiClassType[] implementsList = typeDefinition.getImplementsListTypes();
+
+    for (PsiClassType implementedInterface : implementsList) {
+      final PsiClass resolvedImplementedInterface = implementedInterface.resolve();
+      if (resolvedImplementedInterface == null) return;
+
+      final PsiMethod[] interfaceMethods = resolvedImplementedInterface.getMethods();
+      for (PsiMethod interfaceMethod : interfaceMethods) {
+        if (interfaceMethod.isConstructor()) {
+          continue;
+        }
+        //todo: remove empty substiturtor
+        implementedClassesMethodsSignatures.add(interfaceMethod.getSignature(PsiSubstitutor.EMPTY));
+      }
+    }
+
+    List<MethodSignature> typeDefMethodsSignatures = new ArrayList<MethodSignature>();
+    final PsiMethod[] typeDefMethods = typeDefinition.getMethods();
+    for (PsiMethod typeDefMethod : typeDefMethods) {
+      //todo: remove empty substiturtor
+      if (typeDefMethod.isConstructor()) {
+        continue;
+      }
+      typeDefMethodsSignatures.add(typeDefMethod.getSignature(PsiSubstitutor.EMPTY));
+    }
+
+    String notImpledMethodName = null;
+    boolean isImplemented = false;
+    for (MethodSignature implementedClassesMethodsSignature : implementedClassesMethodsSignatures) {
+      for (MethodSignature typeDefMethodsSignature : typeDefMethodsSignatures) {
+        isImplemented = isImplemented | PsiImplUtil.isExtendsSignature(implementedClassesMethodsSignature, typeDefMethodsSignature);
+
+        //if one is super for this type definition methods breaks
+        if (isImplemented) break;
+      }
+      if (!isImplemented) {
+        notImpledMethodName = implementedClassesMethodsSignature.getName();
+        break;
+      }
+      isImplemented = false;
+    }
+    final PsiElement firstChild = typeDefinition.getFirstChild();
+    final PsiElement lBrace = typeDefinition.getBody().getFirstChild();
+    if (firstChild == null || lBrace == null) {
+      return;
+    }
+
+    if (notImpledMethodName == null) {
+      return;
+    }
+    final Annotation annotation = holder.createErrorAnnotation(new TextRange(firstChild.getTextRange().getStartOffset(), lBrace.getTextRange().getStartOffset()), GroovyBundle.message("method.is.not.implemented", notImpledMethodName));
+    registerImplementsMethodsFix(typeDefinition, annotation);
+  }
+
+  private void registerImplementsMethodsFix(GrTypeDefinition typeDefinition, Annotation annotation) {
+    annotation.registerFix(new ImplementMethodsQuickFix(typeDefinition));
   }
 
   private void addOverrideGutter(AnnotationHolder holder, GrMethod method) {
@@ -503,7 +561,7 @@ public class GroovyAnnotator implements Annotator {
       holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), "Inner classes are not supported in Groovy");
     }
 
-    final GrImplementsClause implementsClause =typeDefinition.getImplementsClause();
+    final GrImplementsClause implementsClause = typeDefinition.getImplementsClause();
     if (implementsClause == null) return;
 
     final GrCodeReferenceElement[] implementsList = implementsClause.getReferenceElements();

@@ -114,7 +114,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
         commandLine.addParameter(fileWithParameters.getPath());
       } catch (IOException e) {
-        e.printStackTrace();
+        LOG.error(e);        
       }
 
       GroovycOSProcessHandler processHandler;
