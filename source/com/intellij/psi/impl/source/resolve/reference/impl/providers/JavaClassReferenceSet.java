@@ -20,7 +20,7 @@ import java.util.Map;
  * @author peter
 */
 public class JavaClassReferenceSet {
-  private static final char SEPARATOR = '.';
+  public static final char SEPARATOR = '.';
   public static final char SEPARATOR2 = '$';
   private static final char SEPARATOR3 = '<';
   private static final char SEPARATOR4 = ',';
