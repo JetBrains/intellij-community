@@ -20,11 +20,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiExternalChangeAction;
 import com.intellij.psi.PsiManager;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-
 /**
  * author: lesya
  */
@@ -34,54 +29,29 @@ class DocumentEditingUndoProvider {
 
   private final MyEditorDocumentListener myDocumentListener;
   private final Project myProject;
-  private final Map<Document, List<Document>> myDocumentCopies = new HashMap<Document, List<Document>>();
 
   public DocumentEditingUndoProvider(Project project, EditorFactory editorFactory) {
     myDocumentListener = new MyEditorDocumentListener();
     myProject = project;
 
-    EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
-    eventMulticaster.addDocumentListener(myDocumentListener);
+    EditorEventMulticaster m = editorFactory.getEventMulticaster();
+    m.addDocumentListener(myDocumentListener);
   }
 
   public void dispose() {
-    EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    eventMulticaster.removeDocumentListener(myDocumentListener);
+    EditorEventMulticaster m = EditorFactory.getInstance().getEventMulticaster();
+    m.removeDocumentListener(myDocumentListener);
   }
 
-  public void registerDocumentCopy(Document d, Document copy) {
-    List<Document> copies = myDocumentCopies.get(d);
-    if (copies == null) {
-      copies = new ArrayList<Document>();
-      myDocumentCopies.put(d, copies);
-    }
-    copies.add(copy);
+  private boolean isCopy(Document d) {
+    return getUndoManager().isCopy(d);
   }
 
-  public void unregisterDocumentCopy(Document d, Document copy) {
-    List<Document> copies = myDocumentCopies.get(d);
-    copies.remove(copy);
-    if (copies.isEmpty()) myDocumentCopies.remove(d);
-  }
-
-  public Document getOriginal(Document d) {
-    for (Map.Entry<Document,List<Document>> copies: myDocumentCopies.entrySet()) {
-      for (Document copy : copies.getValue()) {
-        if (d == copy) return copies.getKey();
-      }
-    }
-    return d;
-  }
-
-  private boolean isCopy(Document document) {
-    for (List<Document> dd : myDocumentCopies.values()) {
-      if(dd.contains(document)) return true;
-    }
-    return false;
+  private UndoManagerImpl getUndoManager() {
+    return (UndoManagerImpl)(myProject == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(myProject));
   }
 
   private class MyEditorDocumentListener extends DocumentAdapter {
-
     public void documentChanged(final DocumentEvent e) {
       final Document document = e.getDocument();
       if (isCopy(document)) return;
@@ -159,34 +129,6 @@ class DocumentEditingUndoProvider {
 
     private boolean externalChanges() {
       return ApplicationManager.getApplication().getCurrentWriteAction(PsiExternalChangeAction.class) != null;
-    }
-  }
-
-  private UndoManagerImpl getUndoManager() {
-    return (UndoManagerImpl)(myProject == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(myProject));
-  }
-
-  static class EditorPosition {
-    int line;
-    int col;
-    final float scrollProportion;
-
-    public EditorPosition(int line, int col, float scrollProportion) {
-      this.line = line;
-      this.col = col;
-      this.scrollProportion = scrollProportion;
-    }
-
-    public boolean equals(Object obj) {
-      if (obj instanceof EditorPosition) {
-        EditorPosition position = (EditorPosition)obj;
-        return position.line == line && position.col == col;
-      }
-      return false;
-    }
-
-    public int hashCode() {
-      return line + col;
     }
   }
 }
