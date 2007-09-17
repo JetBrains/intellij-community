@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import java.io.IOException;
@@ -104,12 +103,9 @@ public class GroovyOverrideImplementUtil {
   }
 
   private static boolean writeMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
-    assert modifierList instanceof GrModifierListImpl;
-    GrModifierListImpl list = (GrModifierListImpl) modifierList;
-
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
-      if (list.hasModifierProperty(modifierType)) {
+      if (modifierList.hasModifierProperty(modifierType)) {
         text.append(modifierType);
         text.append(" ");
         wasAddedModifiers = true;
@@ -149,7 +145,13 @@ public class GroovyOverrideImplementUtil {
     buffer.append(" ");
 
     buffer.append("(");
-    buffer.append(method.getParameterList().getText());
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      if (i > 0) buffer.append(", ");
+      PsiParameter parameter = parameters[i];
+      buffer.append(parameter.getText());
+    }
+
     buffer.append(")");
     buffer.append(" ");
 
