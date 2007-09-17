@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.hint.api.*;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.lang.parameterInfo.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -16,10 +16,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +31,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     return true;
   }
 
-  public Object[] getParametersForLookup(LookupItem item, ParameterInfoContext context) {
-    final PsiElement[] elements = LookupManager.getInstance(context.getProject()).getAllElementsForItem(item);
+  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
+    final PsiElement[] elements = LookupManager.getInstance(context.getProject()).getAllElementsForItem((LookupItem) item);
 
     if (elements != null) {
       List<PsiMethod> methods = new ArrayList<PsiMethod>();

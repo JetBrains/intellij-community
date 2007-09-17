@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.*;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -41,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
+import org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider;
 import org.jetbrains.plugins.groovy.structure.GroovyStructureViewBuilder;
 import org.jetbrains.plugins.groovy.overrideImplement.OverrideMethodsHandler;
@@ -127,5 +129,10 @@ public class GroovyLanguage extends Language {
   @Nullable
   public DocumentationProvider getDocumentationProvider() {
     return new GroovyDocumentationProvider();
+  }
+
+  @Nullable
+  public ParameterInfoHandler[] getParameterInfoHandlers() {
+    return new ParameterInfoHandler[]{new GroovyParameterInfoHandler()};
   }
 }
