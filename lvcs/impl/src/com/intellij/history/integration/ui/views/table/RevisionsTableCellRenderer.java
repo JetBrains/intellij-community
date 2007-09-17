@@ -42,6 +42,7 @@ public class RevisionsTableCellRenderer extends DefaultTableCellRenderer {
 
   private Color getSpecifiedColorForRevision(JTable t, int row) {
     Change c = getModel(t).getRevisionAt(row).getCauseChange();
+    if (c == null) return null;
 
     // todo a bit of hack... but its much more simple than doing something right...
     if (c.isSystemLabel()) {
