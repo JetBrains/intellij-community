@@ -144,7 +144,13 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return isPhysical();
   }
 
-  public void setProperty(@NotNull final String name, @NotNull final String value) {
+  public void clearExternalProperties() {
+    synchronized (PsiLock.LOCK) {
+      myExternalProperties = null;
+    }
+  }
+
+  public void setExternalProperty(@NotNull final String name, @NotNull final String value) {
     synchronized (PsiLock.LOCK) {
       if (myExternalProperties == null) {
         myExternalProperties = new HashMap<String, String>();
@@ -194,9 +200,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         }
       }
       copy.myTypeDefinitions = defs;
-
       copy.myProjectElements = new HashMap<AntTypeId, String>(myProjectElements);
       copy.myClassLoader = myClassLoader;
+      copy.myExternalProperties = myExternalProperties != null? new HashMap<String, String>(myExternalProperties) : null;
 
       return copy;
     }

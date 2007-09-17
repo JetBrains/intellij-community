@@ -200,7 +200,7 @@ public class PropertiesBuilder extends AntElementVisitor {
         final AntFile propertyHolder = target.getAntFile();
         if (propertyHolder.getProperty(value) == null) {
           target.setPropertyDefinitionElement(valueElement);
-          propertyHolder.setProperty(value, target);
+          propertyHolder.setExternalProperty(value, target);
         }
       }
     }

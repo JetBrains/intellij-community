@@ -318,13 +318,14 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     final DataContext context = MapDataContext.singleData(DataConstants.PROJECT, getProject());
     final MacroManager macroManager = MacroManager.getInstance();
     Iterator<BuildFileProperty> properties = ANT_PROPERTIES.getIterator(myAllOptions);
+    myFile.clearExternalProperties();
     while (properties.hasNext()) {
       BuildFileProperty property = properties.next();
       try {
         String value = property.getPropertyValue();
         value = macroManager.expandSilentMarcos(value, true, context);
         value = macroManager.expandSilentMarcos(value, false, context);
-        myFile.setProperty(property.getPropertyName(), value);
+        myFile.setExternalProperty(property.getPropertyName(), value);
       }
       catch (Macro.ExecutionCancelledException e) {
         LOG.debug(e);

@@ -40,7 +40,9 @@ public interface AntFile extends PsiFile, AntElement, PsiNamedElement, Modificat
 
   VirtualFile getVirtualFile();
 
-  void setProperty(@NotNull final String name, @NotNull final String value);
+  void clearExternalProperties();
+  
+  void setExternalProperty(@NotNull final String name, @NotNull final String value);
 
   @Nullable
   VirtualFile getContainingPath();
