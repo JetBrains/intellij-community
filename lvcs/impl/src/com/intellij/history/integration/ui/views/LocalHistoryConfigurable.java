@@ -31,7 +31,6 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
   private JCheckBox myOnRunningBox;
   private JCheckBox myOnUnitTestsPassedBox;
   private JCheckBox myOnUnitTestsFailedBox;
-  private JPanel myPanel;
 
   public String getDisplayName() {
     return LocalHistoryBundle.message("config.dialog.title");
@@ -59,14 +58,17 @@ public class LocalHistoryConfigurable extends BaseConfigurable implements Search
   }
 
   public void disposeUIResources() {
-    myPanel = null;
   }
 
   public JComponent createComponent() {
-    myPanel = new JPanel(new BorderLayout(0, 5));
-    myPanel.add(createPurgePeriodPanel(), BorderLayout.NORTH);
-    myPanel.add(createLabelingPanel(), BorderLayout.CENTER);
-    return myPanel;
+    JPanel controls = new JPanel(new BorderLayout(0, 5));
+    controls.add(createPurgePeriodPanel(), BorderLayout.NORTH);
+    controls.add(createLabelingPanel(), BorderLayout.CENTER);
+    
+    JPanel panel = new JPanel(new BorderLayout(0, 0));
+    panel.add(controls, BorderLayout.NORTH);
+    panel.add(Box.createVerticalGlue(), BorderLayout.CENTER);
+    return panel;
   }
 
   private JPanel createPurgePeriodPanel() {
