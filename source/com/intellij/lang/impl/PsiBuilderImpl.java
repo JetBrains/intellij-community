@@ -37,6 +37,7 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,6 +95,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       doneMarker.clean();
     }
   });
+
+  @NonNls private static final String UNBALANCED_MESSAGE =
+    "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
 
   public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {
     myText = text;
@@ -701,6 +705,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+    catch (Throwable e) {
+      throw new RuntimeException(UNBALANCED_MESSAGE, e);
+    }
   }
 
   private StartMarker prepareLightTree() {
@@ -776,7 +783,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myLexEnds[myCurrentLexem] = 0;
     myLexTypes[myCurrentLexem] = null;
 
-    LOG.assertTrue(curNode == rootMarker, "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem");
+    LOG.assertTrue(curNode == rootMarker, UNBALANCED_MESSAGE);
     return rootMarker;
   }
 
@@ -837,6 +844,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     else if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) { // hack....
       return Factory.createCompositeElement(type);
     }
+
+    if (type == null) {
+      throw new RuntimeException(UNBALANCED_MESSAGE);
+    }
+
     return new CompositeElement(type);
   }
 
