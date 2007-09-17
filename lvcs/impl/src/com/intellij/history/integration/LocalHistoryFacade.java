@@ -6,6 +6,8 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 // todo synchronization
 public class LocalHistoryFacade {
@@ -68,18 +70,33 @@ public class LocalHistoryFacade {
   }
 
   public void create(VirtualFile f) {
+    doCreate(f, null);
+  }
+
+  public List<VirtualFile> createOnlyDirectories(VirtualFile f) {
+    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    doCreate(f, files);
+    return files;
+  }
+
+  private void doCreate(VirtualFile f, List<VirtualFile> files) {
     myVcs.beginChangeSet();
-    createRecursively(f);
+    createRecursively(f, files);
     myVcs.endChangeSet(null);
   }
 
-  private void createRecursively(VirtualFile f) {
+  private void createRecursively(VirtualFile f, List<VirtualFile> filesToCollect) {
     if (f.isDirectory()) {
       myVcs.createDirectory(f.getPath());
-      for (VirtualFile child : f.getChildren()) createRecursively(child);
+      for (VirtualFile child : f.getChildren()) createRecursively(child, filesToCollect);
     }
     else {
-      myVcs.createFile(f.getPath(), contentFactoryFor(f), f.getTimeStamp());
+      if (filesToCollect == null) {
+        myVcs.createFile(f.getPath(), contentFactoryFor(f), f.getTimeStamp());
+      }
+      else {
+        filesToCollect.add(f);
+      }
     }
   }
 

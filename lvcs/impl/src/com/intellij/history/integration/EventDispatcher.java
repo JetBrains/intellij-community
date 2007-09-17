@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 public class EventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener, CacheUpdater {
   private ILocalVcs myVcs;
@@ -102,12 +103,15 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
     changeContent(e.getFile());
   }
 
-  private void create(VirtualFile f) {
-    if (isRefreshing && !f.isDirectory()) {
-      getOrInitProcessor().addFileToCreate(f);
+  private void create(VirtualFile fileOrDir) {
+    if (!isRefreshing) {
+      myFacade.create(fileOrDir);
+      return;
     }
-    else {
-      myFacade.create(f);
+
+    List<VirtualFile> files = myFacade.createOnlyDirectories(fileOrDir);
+    for (VirtualFile f : files) {
+      getOrInitProcessor().addFileToCreate(f);
     }
   }
 

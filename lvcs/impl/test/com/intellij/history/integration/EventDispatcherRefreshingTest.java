@@ -100,7 +100,36 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     assertEquals(c("new"), vcs.getEntry("f1").getContent());
     assertTrue(vcs.hasEntry("f2"));
   }
-  
+
+  @Test
+  public void testAddingDirectoriesAntItsChildDirsRightAway() {
+    fireRefreshStarted();
+
+    TestVirtualFile dir = new TestVirtualFile("dir");
+    dir.addChild(new TestVirtualFile("subDir"));
+    fireCreated(dir);
+
+    assertTrue(vcs.hasEntry("dir"));
+    assertTrue(vcs.hasEntry("dir/subDir"));
+  }
+
+  @Test
+  public void testAddingDirectoryChildFilesOnlyOnProcessing() {
+    fireRefreshStarted();
+
+    TestVirtualFile dir = new TestVirtualFile("dir");
+    dir.addChild(new TestVirtualFile("f", null, -1));
+    fireCreated(dir);
+
+    assertTrue(vcs.hasEntry("dir"));
+    assertFalse(vcs.hasEntry("dir/f"));
+
+    d.afterRefreshFinish(false);
+
+    CacheUpdaterHelper.performUpdate(d);
+    assertTrue(vcs.hasEntry("dir/f"));
+  }
+
   @Test
   public void testClearingRefreshTemporariesAfterRefreshFinishes() {
     fireRefreshStarted();
@@ -112,14 +141,6 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
     fireRefreshFinished();  // shouldn't throw 'already exists' exception
   }
 
-  @Test
-  public void testAddingDirectoriesRightAway() {
-    fireRefreshStarted();
-    fireCreated(new TestVirtualFile("dir"));
-
-    assertTrue(vcs.hasEntry("dir"));
-  }
-  
   @Test
   public void testSeveralUpdatesInsideOneRefresh() {
     vcs.createDirectory("dir");
