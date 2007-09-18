@@ -301,7 +301,7 @@ public class PsiUtil {
   private static void doShorten(PsiElement element) {
     PsiElement child = element.getFirstChild();
     while (child != null) {
-      if (child instanceof GrReferenceElement) {
+      if (child instanceof GrCodeReferenceElement) {
         final GrCodeReferenceElement ref = (GrCodeReferenceElement) child;
         if (ref.getQualifier() != null) {
           final PsiElement resolved = ref.resolve();
