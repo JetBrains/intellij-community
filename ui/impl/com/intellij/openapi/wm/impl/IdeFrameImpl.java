@@ -108,7 +108,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
           final Application app = ApplicationManager.getApplication();
           app.invokeLater(new Runnable() {
             public void run() {
-              if (app.isDisposed()) return;
+              if (app.isDisposed()) {
+                ApplicationManagerEx.getApplicationEx().exit();
+                return;
+              }
+              
               final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
               if (openProjects.length > 1) {
                 if (myProject != null && myProject.isOpen()) {
