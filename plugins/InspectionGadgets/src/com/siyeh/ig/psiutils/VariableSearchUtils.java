@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class VariableSearchUtils {
 
-    private VariableSearchUtils() {
-        super();
-    }
+    private VariableSearchUtils() {}
 
     public static boolean existsLocalOrParameter(@NotNull String varName,
                                                  @Nullable PsiElement context) {
@@ -43,7 +44,7 @@ public class VariableSearchUtils {
         return existsForeachLoopLocal(varName, context);
     }
 
-    private static boolean existsParameter(@NotNull String varName,
+    private static boolean existsParameter(@NotNull String variableName,
                                            PsiElement context) {
         PsiMethod ancestor =
                 PsiTreeUtil.getParentOfType(context, PsiMethod.class);
@@ -52,7 +53,7 @@ public class VariableSearchUtils {
             final PsiParameter[] parameters = parameterList.getParameters();
             for (final PsiParameter parameter : parameters) {
                 final String parameterName = parameter.getName();
-                if (varName.equals(parameterName)) {
+                if (variableName.equals(parameterName)) {
                     return true;
                 }
             }
@@ -135,5 +136,82 @@ public class VariableSearchUtils {
                     PsiForeachStatement.class);
         }
         return false;
+    }
+
+    public static boolean containsConflictingDeclarations(
+            PsiCodeBlock block, PsiCodeBlock parentBlock){
+        final PsiStatement[] statements = block.getStatements();
+        final Set<String> variableNames = new HashSet<String>();
+        for(final PsiStatement statement : statements){
+            if (!(statement instanceof PsiDeclarationStatement)) {
+                continue;
+            }
+            final PsiDeclarationStatement declaration =
+                    (PsiDeclarationStatement) statement;
+            final PsiElement[] declaredElements =
+                    declaration.getDeclaredElements();
+            for(PsiElement declaredElement : declaredElements){
+                if (!(declaredElement instanceof PsiLocalVariable)) {
+                    continue;
+                }
+                final PsiLocalVariable variable =
+                        (PsiLocalVariable)declaredElement;
+                final String variableName = variable.getName();
+                if (variableName == null) {
+                    continue;
+                }
+                variableNames.add(variableName);
+            }
+        }
+        final ConflictingDeclarationVisitor visitor =
+                new ConflictingDeclarationVisitor(variableNames, block);
+        parentBlock.accept(visitor);
+        return visitor.hasConflictingDeclaration();
+    }
+
+    private static class ConflictingDeclarationVisitor
+            extends PsiRecursiveElementVisitor{
+
+        private final Set<String> variableNames;
+        private final PsiCodeBlock exceptBlock;
+        private boolean hasConflictingDeclaration = false;
+
+        ConflictingDeclarationVisitor(@NotNull Set<String> variableNames,
+                                      PsiCodeBlock exceptBlock){
+            this.variableNames = variableNames;
+            this.exceptBlock = exceptBlock;
+        }
+
+        public void visitElement(@NotNull PsiElement element){
+            if (hasConflictingDeclaration) {
+                return;
+            }
+            super.visitElement(element);
+        }
+
+        public void visitCodeBlock(PsiCodeBlock block){
+            if(hasConflictingDeclaration){
+                return;
+            }
+            if(block.equals(exceptBlock)){
+                return;
+            }
+            super.visitCodeBlock(block);
+        }
+
+        public void visitVariable(@NotNull PsiVariable variable){
+            if(hasConflictingDeclaration){
+                return;
+            }
+            super.visitVariable(variable);
+            final String name = variable.getName();
+            if(variableNames.contains(name)){
+                hasConflictingDeclaration = true;
+            }
+        }
+
+        public boolean hasConflictingDeclaration(){
+            return hasConflictingDeclaration;
+        }
     }
 }

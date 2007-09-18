@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.VariableSearchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,9 @@ public class CaughtExceptionImmediatelyRethrownInspection
     protected InspectionGadgetsFix buildFix(PsiElement location) {
         final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(
                 location, PsiTryStatement.class);
+        if (tryStatement == null) {
+            return null;
+        }
         final boolean removeTryCatch =
                 tryStatement.getCatchSections().length == 1 &&
                         tryStatement.getFinallyBlock() == null;
@@ -93,6 +97,9 @@ public class CaughtExceptionImmediatelyRethrownInspection
             }
             final PsiCatchSection catchSection = (PsiCatchSection)grandParent;
             final PsiTryStatement tryStatement = catchSection.getTryStatement();
+            final boolean removeTryCatch =
+                    tryStatement.getCatchSections().length == 1 &&
+                    tryStatement.getFinallyBlock() == null;
             if (removeTryCatch) {
                 final PsiCodeBlock codeBlock = tryStatement.getTryBlock();
                 if (codeBlock == null) {
@@ -103,12 +110,35 @@ public class CaughtExceptionImmediatelyRethrownInspection
                     tryStatement.delete();
                 }
                 final PsiStatement firstStatement = statements[0];
-
-                final PsiElement target = tryStatement.getParent();
-                for (int i = 1; i < statements.length; i++) {
-                    target.addAfter(statements[i], tryStatement);
+                final PsiElement containingElement = tryStatement.getParent();
+                final boolean keepBlock;
+                if (containingElement instanceof PsiCodeBlock) {
+                    final PsiCodeBlock parentBlock =
+                            (PsiCodeBlock)containingElement;
+                    keepBlock =
+                            VariableSearchUtils.containsConflictingDeclarations(
+                                    codeBlock, parentBlock);
+                } else {
+                    keepBlock = true;
                 }
-                tryStatement.replace(firstStatement);
+                if (keepBlock) {
+                    final PsiManager manager = element.getManager();
+                    final PsiElementFactory factory =
+                            manager.getElementFactory();
+                    final PsiBlockStatement resultStatement = (PsiBlockStatement)
+                            factory.createStatementFromText("{}", element);
+                    final PsiCodeBlock resultBlock =
+                            resultStatement.getCodeBlock();
+                    for (PsiStatement statement : statements) {
+                        resultBlock.add(statement);
+                    }
+                    tryStatement.replace(resultStatement);
+                } else {
+                    for (int i = 1; i < statements.length; i++) {
+                        containingElement.addAfter(statements[i], tryStatement);
+                    }
+                    tryStatement.replace(firstStatement);
+                }
             } else {
                 catchSection.delete();
             }
