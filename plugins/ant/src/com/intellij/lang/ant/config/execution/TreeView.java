@@ -194,7 +194,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   private void handleExpansion() {
-    if (myActionsEnabled) {
+    if (myActionsEnabled && !myTree.hasBeenExpanded(myParentPath)) {
       myTree.expandPath(myParentPath);
     }
   }
