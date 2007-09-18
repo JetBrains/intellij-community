@@ -15,7 +15,6 @@
 
 package org.jetbrains.groovy.compiler.rt;
 
-import com.intellij.openapi.diagnostic.Logger;
 import groovy.lang.GroovyClassLoader;
 import org.codehaus.groovy.control.CompilationUnit;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -35,7 +34,6 @@ import java.util.*;
 
 public class GroovycRunner {
   static CompilationUnitsFactory myFactory = new CompilationUnitsFactory();
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.groovy.compiler.rt.GroovycRunner");
 
   public static final String CLASSPATH = "classpath";
   public static final String OUTPUTPATH = "outputpath";
@@ -117,14 +115,14 @@ public class GroovycRunner {
       }
 
     } catch (FileNotFoundException e) {
-      LOG.error(e);
+      e.printStackTrace();
     } catch (IOException e) {
-      LOG.error(e);
+      e.printStackTrace();
     } finally {
       try {
         reader.close();
       } catch (IOException e) {
-        LOG.error(e);
+        e.printStackTrace();
       } finally {
         argsFile.delete();
       }
