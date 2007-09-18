@@ -241,8 +241,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void projectOpened() {
-    myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
-
     registerCheckinHandlerFactory(new CheckinHandlerFactory() {
       public
       @NotNull
@@ -274,9 +272,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager != null) { // Can be null in tests
           ToolWindow toolWindow =
-            toolWindowManager.registerToolWindow(ToolWindowId.VCS, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
+            toolWindowManager.registerToolWindow(ToolWindowId.VCS, false, ToolWindowAnchor.BOTTOM);
+          myContentManager = toolWindow.getContentManager();
           toolWindow.setIcon(Icons.VCS_SMALL_TAB);
           toolWindow.installWatcher(myContentManager);
+        } else {
+          myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
         }
         if (myMessageBus != null) {
           myMessageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
