@@ -2,7 +2,7 @@
 <body><table> <tr> <td valign="top" height="150">
 <font face="verdana" size="-1">
 This inspection reports any instances of non-final fields which are accessed in both synchronized and
-unsynchronized contexts. Accesses in constructors an initializers are ignored for purposes of this
+unsynchronized contexts. Volatile fields and Accesses in constructors and initializers are ignored by this
 inspection.  Such "partially synchronized" access is often the result of a coding oversight, and may
 result in unexpectedly inconsistent data structures.
 <p>

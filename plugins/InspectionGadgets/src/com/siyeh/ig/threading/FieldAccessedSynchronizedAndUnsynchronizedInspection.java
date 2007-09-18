@@ -71,11 +71,13 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection
             final Set<PsiField> fields =
                     visitor.getInappropriatelyAccessedFields();
             for(final PsiField field  : fields){
-                if(!field.hasModifierProperty(PsiModifier.FINAL)){
-                    final PsiClass containingClass = field.getContainingClass();
-                    if(aClass.equals(containingClass)){
-                        registerFieldError(field);
-                    }
+                if (field.hasModifierProperty(PsiModifier.FINAL) ||
+                        field.hasModifierProperty(PsiModifier.VOLATILE)) {
+                    continue;
+                }
+                final PsiClass containingClass = field.getContainingClass();
+                if(aClass.equals(containingClass)){
+                    registerFieldError(field);
                 }
             }
         }
