@@ -493,8 +493,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
    * @return
    */
   private String computeAttributeValue(String value, final Set<Pair<PsiElement, String>> elementStack) {
-    final Pair<PsiElement, String> pair = new Pair<PsiElement, String>(this, value);
-    elementStack.add(pair);
+    elementStack.add(new Pair<PsiElement, String>(this, value));
     int startProp = 0;
     final AntFile antFile = getAntFile();
     while ((startProp = value.indexOf("${", startProp)) >= 0) {
@@ -515,7 +514,7 @@ public class AntStructuredElementImpl extends AntElementImpl implements AntStruc
         resolvedValue = propElement.getValue(prop);
         if (resolvedValue != null) {
           if (elementStack.contains(new Pair<PsiElement, String>(propElement, resolvedValue))) {
-            return value;
+            return value;  // prevent cycles
           }
           resolvedValue = ((AntStructuredElementImpl)propElement).computeAttributeValue(resolvedValue, elementStack);
         }
