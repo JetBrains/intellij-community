@@ -700,9 +700,28 @@ public class StringUtil {
   }
 
 
-  public static String getThrowableText(Throwable aThrowable) {
+  public static String getThrowableText(final Throwable aThrowable) {
     StringWriter stringWriter = new StringWriter();
     PrintWriter writer = new PrintWriter(stringWriter);
+    aThrowable.printStackTrace(writer);
+    return stringWriter.getBuffer().toString();
+  }
+
+  public static String getThrowableText(final Throwable aThrowable, @NonNls @NotNull final String stackFrameSkipPattern) {
+    @NonNls final String prefix = "\tat ";
+    final String skipPattern = prefix + stackFrameSkipPattern;
+    final StringWriter stringWriter = new StringWriter();
+    final PrintWriter writer = new PrintWriter(stringWriter) {
+      boolean skipping = false;
+      public void println(final String x) {
+        if (x != null) {
+          if (!skipping && x.startsWith(skipPattern)) skipping = true;
+          else if (skipping && !x.startsWith(prefix)) skipping = false;
+        }
+        if (skipping) return;
+        super.println(x);
+      }
+    };
     aThrowable.printStackTrace(writer);
     return stringWriter.getBuffer().toString();
   }
