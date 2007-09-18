@@ -248,7 +248,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }.invoke(getProject(), myEditor, myFile);
         final LookupItem[] items1 = myItems.get();
         UsefulTestCase.assertNotNull(items1);
-        checkResultByFile(fileBefore, myFile, false);
         UsefulTestCase.assertSameElements(ContainerUtil.map(items1, new Function<LookupItem, String>() {
           public String fun(final LookupItem lookupItem) {
             return lookupItem.getLookupString();
