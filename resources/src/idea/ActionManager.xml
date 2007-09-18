@@ -1369,6 +1369,10 @@
       <reference ref="Graph.Show.Edge.Labels"/>
     </group>
 
+    <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+
     <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
             class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
             text="Goto Element">

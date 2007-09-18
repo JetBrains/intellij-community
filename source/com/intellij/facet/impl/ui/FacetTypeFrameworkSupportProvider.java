@@ -7,6 +7,7 @@ package com.intellij.facet.impl.ui;
 import com.intellij.facet.*;
 import com.intellij.facet.impl.FacetUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,6 +46,14 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
     FacetType<?,?> type = FacetTypeRegistry.getInstance().findFacetType(typeId);
     return type != null ? getProviderId(type) : null;
 
+  }
+
+  public boolean isEnabledForModuleType(@NotNull final ModuleType moduleType) {
+    return myFacetType.isSuitableModuleType(moduleType);
+  }
+
+  public boolean isSupportAlreadyAdded(@NotNull final Module module) {
+    return !FacetManager.getInstance(module).getFacetsByType(myFacetType.getId()).isEmpty();
   }
 
   protected void addSupport(final Module module, final ModifiableRootModel rootModel, final String version, final @Nullable Library library) {

@@ -4,33 +4,27 @@
 
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
-import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.facet.impl.ui.FacetEditorContextBase;
+import com.intellij.facet.impl.ui.libraries.LibraryDownloader;
+import com.intellij.facet.impl.ui.libraries.RequiredLibrariesInfo;
+import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
+import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
-import com.intellij.facet.impl.ui.libraries.RequiredLibrariesInfo;
-import com.intellij.facet.impl.ui.libraries.LibraryDownloader;
-import com.intellij.facet.impl.ui.FacetEditorContextBase;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +36,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class AddSupportForFrameworksStep extends ModuleWizardStep {
+public class AddSupportForFrameworksPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksStep");
   private static final int INDENT = 20;
   private static final int SPACE_AFTER_TITLE = 5;
@@ -52,16 +46,17 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
   private JButton myChangeButton;
   private JPanel myDownloadingOptionsPanel;
   private List<FrameworkSupportSettings> myRoots;
-  private final ModuleBuilder myBuilder;
+  private final Computable<String> myBaseDirForLibrariesGetter;
+  private List<FrameworkSupportProvider> myProviders;
 
-  public AddSupportForFrameworksStep(final ModuleBuilder builder) {
-    myBuilder = builder;
+  public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, Computable<String> baseDirForLibrariesGetter) {
+    myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;
+    myProviders = providers;
     createNodes();
 
     final JPanel treePanel = new JPanel(new GridBagLayout());
     addSettingsComponents(myRoots, treePanel, 0);
     myFrameworksTreePanel.add(treePanel, BorderLayout.WEST);
-    myBuilder.addModuleConfigurationUpdater(new MyModuleConfigurationUpdater());
     myChangeButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         new LibraryDownloadingSettingsDialog(myMainPanel, getFrameworkWithLibraries()).show();
@@ -88,34 +83,28 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
     return frameworkLibrariesInfos;
   }
 
-  public void _commit(final boolean finishChosen) throws CommitStepException {
-    if (finishChosen) {
-      List<FrameworkSupportSettings> list = getFrameworkWithLibraries();
-      for (FrameworkSupportSettings settings : list) {
-        if (settings.isDownloadLibraries()) {
-          RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(settings.getConfigurable().getLibraries());
-          RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(settings.getAddedJars().toArray(new VirtualFile[settings.getAddedJars().size()]));
-          if (info != null) {
-            LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
-            if (downloadingInfos.length > 0) {
-              String libraryName = settings.getConfigurable().getLibraryName();
-              if (FrameworkSupportConfigurable.DEFAULT_LIBRARY_NAME.equals(libraryName)) {
-                libraryName = null;
-              }
-
-              LibraryDownloader downloader = new LibraryDownloader(downloadingInfos, null, myMainPanel,
-                                                                   settings.getDirectoryForDownloadedLibrariesPath(),
-                                                                   libraryName);
-              settings.myAddedJars.addAll(Arrays.asList(downloader.download()));
+  public void downloadLibraries() {
+    List<FrameworkSupportSettings> list = getFrameworkWithLibraries();
+    for (FrameworkSupportSettings settings : list) {
+      if (settings.isDownloadLibraries()) {
+        RequiredLibrariesInfo requiredLibraries = new RequiredLibrariesInfo(settings.getConfigurable().getLibraries());
+        RequiredLibrariesInfo.RequiredClassesNotFoundInfo info = requiredLibraries.checkLibraries(settings.getAddedJars().toArray(new VirtualFile[settings.getAddedJars().size()]));
+        if (info != null) {
+          LibraryDownloadInfo[] downloadingInfos = LibraryDownloader.getDownloadingInfos(info.getLibraryInfos());
+          if (downloadingInfos.length > 0) {
+            String libraryName = settings.getConfigurable().getLibraryName();
+            if (FrameworkSupportConfigurable.DEFAULT_LIBRARY_NAME.equals(libraryName)) {
+              libraryName = null;
             }
+
+            LibraryDownloader downloader = new LibraryDownloader(downloadingInfos, null, myMainPanel,
+                                                                 settings.getDirectoryForDownloadedLibrariesPath(),
+                                                                 libraryName);
+            settings.myAddedJars.addAll(Arrays.asList(downloader.download()));
           }
         }
       }
     }
-  }
-
-  public static boolean hasProviders(@NotNull ModuleType moduleType) {
-    return !getProviders(moduleType).isEmpty();
   }
 
   private JPanel addSettingsComponents(final List<FrameworkSupportSettings> list, JPanel treePanel, int level) {
@@ -152,9 +141,8 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
   }
 
   private void createNodes() {
-    final List<FrameworkSupportProvider> frameworkSupportProviders = getProviders(myBuilder.getModuleType());
     Map<String, FrameworkSupportSettings> nodes = new HashMap<String, FrameworkSupportSettings>();
-    for (FrameworkSupportProvider frameworkSupport : frameworkSupportProviders) {
+    for (FrameworkSupportProvider frameworkSupport : myProviders) {
       createNode(frameworkSupport, nodes);
     }
 
@@ -165,7 +153,7 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
       }
     }
 
-    DFSTBuilder<FrameworkSupportProvider> builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(frameworkSupportProviders))));
+    DFSTBuilder<FrameworkSupportProvider> builder = new DFSTBuilder<FrameworkSupportProvider>(GraphGenerator.create(CachingSemiGraph.create(new ProvidersGraph(myProviders))));
     if (!builder.isAcyclic()) {
       Pair<FrameworkSupportProvider,FrameworkSupportProvider> pair = builder.getCircularDependency();
       LOG.error("Circular dependency between providers '" + pair.getFirst().getId() + "' and '" + pair.getSecond().getId() + "' was found.");
@@ -184,17 +172,6 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
     for (FrameworkSupportSettings frameworkSupportSettings : list) {
       sortNodes(frameworkSupportSettings.myChildren, comparator);
     }
-  }
-
-  private static List<FrameworkSupportProvider> getProviders(@NotNull ModuleType moduleType) {
-    FrameworkSupportProvider[] providers = Extensions.getExtensions(FrameworkSupportProvider.EXTENSION_POINT);
-    ArrayList<FrameworkSupportProvider> result = new ArrayList<FrameworkSupportProvider>();
-    for (FrameworkSupportProvider provider : providers) {
-      if (provider.isEnabledForModuleType(moduleType)) {
-        result.add(provider);
-      }
-    }
-    return result;
   }
 
   @Nullable
@@ -217,35 +194,19 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
     return node;
   }
 
-  private String getBaseModuleDirectory() {
-    String path = null;
-    if (myBuilder instanceof JavaModuleBuilder) {
-      path = ((JavaModuleBuilder)myBuilder).getContentEntryPath();
-    }
-    if (path == null) {
-      path = myBuilder.getModuleFileDirectory();
-    }
-    return path != null ? FileUtil.toSystemIndependentName(path) : "";
+  private String getBaseModuleDirectoryPath() {
+    return myBaseDirForLibrariesGetter.compute();
   }
 
   @Nullable
   private FrameworkSupportProvider findProvider(@NotNull String id) {
-    for (FrameworkSupportProvider provider : getProviders(myBuilder.getModuleType())) {
+    for (FrameworkSupportProvider provider : myProviders) {
       if (id.equals(provider.getId())) {
         return provider;
       }
     }
     LOG.info("Cannot find framework support provider '" + id + "'");
     return null;
-  }
-
-  public Icon getIcon() {
-    return ICON;
-  }
-
-  @NonNls
-  public String getHelpId() {
-    return "reference.dialogs.new.project.technologies";
   }
 
   private static void setDescendantsEnabled(FrameworkSupportSettings frameworkSupport, final boolean enable) {
@@ -255,11 +216,8 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
     }
   }
 
-  public JComponent getComponent() {
+  public JComponent getMainPanel() {
     return myMainPanel;
-  }
-
-  public void updateDataModel() {
   }
 
   private List<FrameworkSupportSettings> getSelectedFrameworks() {
@@ -276,6 +234,20 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
         selected.add(settings);
         addSelectedFrameworks(settings.myChildren, selected);
       }
+    }
+  }
+
+  public void addSupport(final Module module, final ModifiableRootModel rootModel) {
+    for (FrameworkSupportSettings settings : getSelectedFrameworks()) {
+      Library library = null;
+      FrameworkSupportConfigurable configurable = settings.getConfigurable();
+      if (!settings.myAddedJars.isEmpty()) {
+        VirtualFile[] roots = settings.myAddedJars.toArray(new VirtualFile[settings.myAddedJars.size()]);
+        LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
+        library = FacetEditorContextBase.createLibraryInTable(configurable.getLibraryName(), roots, VirtualFile.EMPTY_ARRAY, table);
+        rootModel.addLibraryEntry(library);
+      }
+      configurable.addSupport(module, rootModel, library);
     }
   }
 
@@ -346,13 +318,13 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
 
     public String getDirectoryForDownloadedLibrariesPath() {
       if (myDirectoryForDownloadedLibrariesPath == null) {
-        myDirectoryForDownloadedLibrariesPath = getModuleDirectory() + "/lib";
+        myDirectoryForDownloadedLibrariesPath = getModuleDirectoryPath() + "/lib";
       }
       return myDirectoryForDownloadedLibrariesPath;
     }
 
-    public String getModuleDirectory() {
-      return getBaseModuleDirectory();
+    public String getModuleDirectoryPath() {
+      return getBaseModuleDirectoryPath();
     }
 
     public void setDirectoryForDownloadedLibrariesPath(final String directoryForDownloadedLibrariesPath) {
@@ -365,22 +337,6 @@ public class AddSupportForFrameworksStep extends ModuleWizardStep {
 
     public boolean isDownloadLibraries() {
       return myDownloadLibraries;
-    }
-  }
-
-  private class MyModuleConfigurationUpdater extends ModuleBuilder.ModuleConfigurationUpdater {
-    public void update(final Module module, final ModifiableRootModel rootModel) {
-      for (FrameworkSupportSettings settings : getSelectedFrameworks()) {
-        Library library = null;
-        FrameworkSupportConfigurable configurable = settings.getConfigurable();
-        if (!settings.myAddedJars.isEmpty()) {
-          VirtualFile[] roots = settings.myAddedJars.toArray(new VirtualFile[settings.myAddedJars.size()]);
-          LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
-          library = FacetEditorContextBase.createLibraryInTable(configurable.getLibraryName(), roots, VirtualFile.EMPTY_ARRAY, table);
-          rootModel.addLibraryEntry(library);
-        }
-        configurable.addSupport(module, rootModel, library);
-      }
     }
   }
 

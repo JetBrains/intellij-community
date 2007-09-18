@@ -6,10 +6,11 @@ package com.intellij.ide.util.newProjectWizard.modes;
 
 import com.intellij.ide.util.newProjectWizard.ProjectNameWithTypeStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
-import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksStep;
+import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
@@ -51,8 +52,8 @@ public class CreateFromScratchMode extends WizardMode {
         for (ModuleWizardStep step : steps) {
           sequence.addCommonStep(step);
         }
-        if (AddSupportForFrameworksStep.hasProviders(type)) {
-          sequence.addCommonStep(new AddSupportForFrameworksStep(builder));
+        if (FrameworkSupportUtil.hasProviders(type)) {
+          sequence.addCommonStep(new SupportForFrameworksStep(builder));
         }
       }
     return myStepSequence;
