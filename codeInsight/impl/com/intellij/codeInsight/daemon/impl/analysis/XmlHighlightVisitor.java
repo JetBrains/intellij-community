@@ -1047,7 +1047,14 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(tag.getLocalName(),url);
 
               if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
-                possibleUris.add(descriptor.getDefaultNamespace());
+                final String defaultNamespace = descriptor.getDefaultNamespace();
+
+                // Skip rare stuff
+                if (!XmlUtil.XML_SCHEMA_URI2.equals(defaultNamespace) &&
+                    !XmlUtil.XML_SCHEMA_URI3.equals(defaultNamespace)
+                    ) {
+                  possibleUris.add(defaultNamespace);
+                }
               }
             }
           }
