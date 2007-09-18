@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.io.IOException;
@@ -40,7 +42,7 @@ import java.util.Properties;
 public class GroovyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil");
 
-  public static void invokeOverrideImplement(final Project project, Editor editor, PsiFile file, boolean isImplement) {
+  public static void invokeOverrideImplement(final Project project, final Editor editor, final PsiFile file, boolean isImplement) {
     final int offset = editor.getCaretModel().getOffset();
 
     PsiElement parent = file.findElementAt(offset);
@@ -92,11 +94,44 @@ public class GroovyOverrideImplementUtil {
             setupOverridingMethodBody(project, method, result, template, substitutor);
 
             final GrTypeDefinitionBody classBody = ((GrTypeDefinition) aClass).getBody();
-            final ASTNode anchor = classBody.getLastChild().getNode();
+            final PsiMethod[] methods = aClass.getMethods();
+
+            ASTNode anchor = null;
+
+            final int caretPosition = editor.getCaretModel().getOffset();
+            final PsiElement thisCaretPsiElement = file.findElementAt(caretPosition);
+
+            final GrTopLevelDefintion previousTopLevelElement = PsiUtil.findPreviousTopLevelElementByThisElement(thisCaretPsiElement);
+
+            if (thisCaretPsiElement != null && thisCaretPsiElement.getParent() instanceof GrTypeDefinitionBody) {
+              anchor = thisCaretPsiElement.getNode();
+
+            } else if (previousTopLevelElement != null && previousTopLevelElement instanceof GrMethod) {
+              final PsiElement nextElement = previousTopLevelElement.getNextSibling();
+              if (nextElement != null) {
+                anchor = nextElement.getNode();
+              }
+            } else if (methods.length != 0) {
+              final PsiMethod lastMethod = methods[methods.length - 1];
+              if (lastMethod != null) {
+                final PsiElement nextSibling = lastMethod.getNextSibling();
+                if (nextSibling != null) {
+                  anchor = nextSibling.getNode();
+                }
+              }
+
+            } else {
+              anchor = classBody.getFirstChild().getNextSibling().getNode();
+            }
+
             final ASTNode lineTerminator = GroovyElementFactory.getInstance(project).createLineTerminator().getNode();
 
+            assert lineTerminator != null;
+            final ASTNode resultNode = result.getNode();
+            assert resultNode != null;
+            
             classBody.getNode().addChild(lineTerminator, anchor);
-            classBody.getNode().addChild(result.getNode(), lineTerminator);
+            classBody.getNode().addChild(resultNode, anchor);
 
             final TextRange range = result.getTextRange();
             CodeStyleManager.getInstance(project).reformatRange(result.getContainingFile(), range.getStartOffset(), range.getEndOffset());
@@ -161,7 +196,12 @@ public class GroovyOverrideImplementUtil {
       buffer.append(parameterType.getCanonicalText());
       buffer.append(" ");
       final String paramName = parameter.getName();
-      if (paramName != null) buffer.append(paramName);
+      if (paramName != null) {
+        buffer.append(paramName);
+      } else if (parameter instanceof ClsParameterImpl) {
+        final ClsParameterImpl clsParameter = (ClsParameterImpl) parameter;
+        buffer.append(((PsiParameter) clsParameter.getMirror()).getName());
+      }
     }
 
     buffer.append(")");

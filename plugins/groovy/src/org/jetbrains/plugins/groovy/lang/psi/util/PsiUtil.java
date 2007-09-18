@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -233,7 +234,7 @@ public class PsiUtil {
         return resolved.getManager().getElementFactory().createTypeByFQClassName("java.lang.Class", expression.getResolveScope());
       }
     }
-    
+
     return expression.getType();
   }
 
@@ -241,7 +242,7 @@ public class PsiUtil {
     return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       public SearchScope compute() {
         if (originalScope instanceof GlobalSearchScope) {
-          return GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)originalScope, GroovyFileType.GROOVY_FILE_TYPE);
+          return GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope) originalScope, GroovyFileType.GROOVY_FILE_TYPE);
         }
         return originalScope;
       }
@@ -261,7 +262,7 @@ public class PsiUtil {
   public static boolean isSimplePropertyAccessor(PsiMethod method) {
     return isSimplePropertyGetter(method) || isSimplePropertySetter(method);
   }
-  
+
   //do not check return type
   public static boolean isSimplePropertyGetter(PsiMethod method) {
     if (method == null) return false;
@@ -318,5 +319,17 @@ public class PsiUtil {
       doShorten(child);
       child = child.getNextSibling();
     }
+  }
+
+  @Nullable
+  public static GrTopLevelDefintion findPreviousTopLevelElementByThisElement(PsiElement element) {
+    PsiElement parent = element.getParent();
+
+    while (parent != null && !(parent instanceof GrTopLevelDefintion)) {
+      parent = parent.getParent();
+    }
+
+    if (parent == null) return null;
+    return ((GrTopLevelDefintion) parent);
   }
 }
