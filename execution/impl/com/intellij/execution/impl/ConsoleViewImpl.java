@@ -151,6 +151,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   public void clear() {
     assertIsDispatchThread();
 
+    final Document document;
     synchronized(LOCK){
       myContentSize = 0;
       if (USE_CYCLIC_BUFFER) {
@@ -160,20 +161,21 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         myDeferredOutput = new StringBuffer();
       }
       myDeferredUserInput = new StringBuffer();
-      if (myEditor != null){
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            myHyperlinks.clear();
-            myEditor.getMarkupModel().removeAllHighlighters();
-            myTokens.clear();
-            CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-              public void run() {
-                myEditor.getDocument().deleteString(0, myEditor.getDocument().getTextLength());
-              }
-            }, null, myEditor.getDocument());
-          }
-        });
-      }
+      myHyperlinks.clear();
+      myEditor.getMarkupModel().removeAllHighlighters();
+      myTokens.clear();
+      document = myEditor == null? null : myEditor.getDocument();
+    }
+    if (document != null){
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            public void run() {
+              document.deleteString(0, document.getTextLength());
+            }
+          }, null, document);
+        }
+      });
     }
   }
 
