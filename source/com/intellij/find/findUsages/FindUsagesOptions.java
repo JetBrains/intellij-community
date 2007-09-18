@@ -47,29 +47,6 @@ public class FindUsagesOptions implements Cloneable {
     }
   }
 
-  public void clear() {
-    isSearchForTextOccurences = false;
-    isUsages = false;
-    isClassesUsages = false;
-    isMethodsUsages = false;
-    isFieldsUsages = false;
-    isDerivedClasses = false;
-    isImplementingClasses = false;
-    isDerivedInterfaces = false;
-    isOverridingMethods = false;
-    isImplementingMethods = false;
-    isIncludeSubpackages = false;
-    isSkipImportStatements = false;
-    isSkipPackageStatements = false;
-    isCheckDeepInheritance = false;
-    isIncludeInherited = false;
-    isReadAccess = false;
-    isWriteAccess = false;
-    isIncludeOverloadUsages = false;
-    isThrowUsages = false;
-    myThrowRoot = null;
-  }
-
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

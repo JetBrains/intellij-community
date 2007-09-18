@@ -16,7 +16,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,22 +27,22 @@ import java.util.List;
  */
 public class DefaultFindUsagesHandler extends FindUsagesHandler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.DefaultFindUsagesHandler");
-  @NonNls static final String ACTION_STRING = FindBundle.message("find.super.method.warning.action.verb");
+  static final String ACTION_STRING = FindBundle.message("find.super.method.warning.action.verb");
 
   private final PsiElement[] myElementsToSearch;
   private final FindUsagesOptions myFindPackageOptions;
   private final FindUsagesOptions myFindClassOptions;
   private final FindUsagesOptions myFindMethodOptions;
   private final FindUsagesOptions myFindVariableOptions;
-  private final FindUsagesOptions myFindPointcutOptions;
+  private final FindUsagesOptions myFindThrowOptions;
 
   public DefaultFindUsagesHandler(@NotNull PsiElement psiElement,
                                 @NotNull FindUsagesOptions findClassOptions,
                                 @NotNull FindUsagesOptions findMethodOptions,
                                 @NotNull FindUsagesOptions findPackageOptions,
-                                @NotNull FindUsagesOptions findPointcutOptions,
+                                @NotNull FindUsagesOptions findThrowOptions,
                                 @NotNull FindUsagesOptions findVariableOptions) {
-    this(psiElement, PsiElement.EMPTY_ARRAY, findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions, findVariableOptions);
+    this(psiElement, PsiElement.EMPTY_ARRAY, findClassOptions, findMethodOptions, findPackageOptions, findThrowOptions, findVariableOptions);
   }
 
 
@@ -52,20 +51,19 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
                                   @NotNull FindUsagesOptions findClassOptions,
                                   @NotNull FindUsagesOptions findMethodOptions,
                                   @NotNull FindUsagesOptions findPackageOptions,
-                                  @NotNull FindUsagesOptions findPointcutOptions,
+                                  @NotNull FindUsagesOptions findThrowOptions,
                                   @NotNull FindUsagesOptions findVariableOptions) {
     super(psiElement);
     myElementsToSearch = elementsToSearch;
     myFindClassOptions = findClassOptions;
     myFindMethodOptions = findMethodOptions;
     myFindPackageOptions = findPackageOptions;
-    myFindPointcutOptions = findPointcutOptions;
+    myFindThrowOptions = findThrowOptions;
     myFindVariableOptions = findVariableOptions;
   }
 
   @NotNull
-  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab,
-                                     boolean mustOpenInNewTab) {
+  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
     PsiElement element = getPsiElement();
     if (element instanceof PsiPackage) {
       return new FindPackageUsagesDialog(element, getProject(), myFindPackageOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
@@ -80,7 +78,7 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
       return new FindVariableUsagesDialog(element, getProject(), myFindVariableOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
     }
     if (ThrowSearchUtil.isSearchable(element)) {
-      return new FindThrowUsagesDialog(element, getProject(), myFindPointcutOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
+      return new FindThrowUsagesDialog(element, getProject(), myFindThrowOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile);
     }
     return super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab);
   }
@@ -181,7 +179,7 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
       return myFindVariableOptions;
     }
     if (ThrowSearchUtil.isSearchable(element)) {
-      return myFindPointcutOptions;
+      return myFindThrowOptions;
     }
     return super.getFindUsagesOptions();
   }

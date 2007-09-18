@@ -99,7 +99,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     findMethodOptions.isIncludeSubpackages = false;
     findMethodOptions.isSearchForTextOccurences = false;
     final FindUsagesOptions findPackageOptions = FindUsagesHandler.createFindUsagesOptions(project);
-    final FindUsagesOptions findPointcutOptions = FindUsagesHandler.createFindUsagesOptions(project);
+    final FindUsagesOptions findThrowOptions = FindUsagesHandler.createFindUsagesOptions(project);
     final FindUsagesOptions findVariableOptions = FindUsagesHandler.createFindUsagesOptions(project);
     findVariableOptions.isCheckDeepInheritance = false;
     findVariableOptions.isIncludeSubpackages = false;
@@ -119,7 +119,7 @@ public class FindUsagesManager implements JDOMExternalizable {
           final PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
           return psiPackage == null ? null : new Factory<FindUsagesHandler>() {
             public FindUsagesHandler create() {
-              return new DefaultFindUsagesHandler(psiPackage, findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions,
+              return new DefaultFindUsagesHandler(psiPackage, findClassOptions, findMethodOptions, findPackageOptions, findThrowOptions,
                                                   findVariableOptions);
             }
           };
@@ -132,11 +132,11 @@ public class FindUsagesManager implements JDOMExternalizable {
               final PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, DefaultFindUsagesHandler.ACTION_STRING);
               if (methods.length > 1) {
                 return new DefaultFindUsagesHandler(element, methods, findClassOptions, findMethodOptions, findPackageOptions,
-                                                    findPointcutOptions, findVariableOptions);
+                                                    findThrowOptions, findVariableOptions);
               }
               if (methods.length == 1) {
                 return new DefaultFindUsagesHandler(methods[0], findClassOptions, findMethodOptions, findPackageOptions,
-                                                    findPointcutOptions, findVariableOptions);
+                                                    findThrowOptions, findVariableOptions);
               }
               return null;
             }
@@ -145,7 +145,7 @@ public class FindUsagesManager implements JDOMExternalizable {
 
         return new Factory<FindUsagesHandler>() {
           public FindUsagesHandler create() {
-            return new DefaultFindUsagesHandler(element, findClassOptions, findMethodOptions, findPackageOptions, findPointcutOptions,
+            return new DefaultFindUsagesHandler(element, findClassOptions, findMethodOptions, findPackageOptions, findThrowOptions,
                                                 findVariableOptions);
           }
         };
@@ -498,11 +498,12 @@ public class FindUsagesManager implements JDOMExternalizable {
 
     final FileSearchScope direction = dir;
 
-
+    final com.intellij.usages.UsageViewManager usageViewManager = com.intellij.usages.UsageViewManager.getInstance(project);
+    usageViewManager.setCurrentSearchCancelled(false);
     final Usage[] foundUsage = new Usage[]{null};
     usageSearcher.generate(new Processor<Usage>() {
       public boolean process(Usage usage) {
-        if (com.intellij.usages.UsageViewManager.getInstance(project).searchHasBeenCancelled()) return false;
+        if (usageViewManager.searchHasBeenCancelled()) return false;
 
         usagesWereFound[0] = true;
 

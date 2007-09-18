@@ -106,7 +106,7 @@ public class ThrowSearchUtil {
    * @return is type of exn exactly known
    */
 
-  public static boolean isExactExnType(final PsiExpression exn) {
+  private static boolean isExactExnType(final PsiExpression exn) {
     return exn instanceof PsiNewExpression;
   }
 
@@ -137,7 +137,7 @@ public class ThrowSearchUtil {
   }
 
   public static boolean isSearchable(final PsiElement element) {
-    return getSearchRoots (element) != null;
+    return getSearchRoots(element) != null;
   }
 
   public static String getSearchableTypeName(final PsiElement e) {

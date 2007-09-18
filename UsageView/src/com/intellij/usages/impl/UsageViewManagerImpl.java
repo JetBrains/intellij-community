@@ -51,7 +51,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author max
  */
 public class UsageViewManagerImpl extends UsageViewManager {
-  private Project myProject;
+  private final Project myProject;
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
   private volatile boolean mySearchHasBeenCancelled;
 
@@ -118,7 +118,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                   Factory<UsageSearcher> searcherFactory,
                                   FindUsagesProcessPresentation processPresentation,
                                   UsageViewPresentation presentation,
-                                  UsageViewManager.UsageViewStateListener listener
+                                  UsageViewStateListener listener
                                        ) {
     final AtomicReference<UsageViewImpl> usageView = new AtomicReference<UsageViewImpl>();
     final SearchForUsagesRunnable runnable = new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener);
@@ -197,7 +197,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                    @NotNull final UsageTarget[] searchFor,
                                    @NotNull final Factory<UsageSearcher> searcherFactory,
                                    @NotNull FindUsagesProcessPresentation processPresentation,
-                                   final UsageViewManager.UsageViewStateListener listener) {
+                                   final UsageViewStateListener listener) {
       myUsageViewRef = usageView;
       myPresentation = presentation;
       mySearchFor = searchFor;

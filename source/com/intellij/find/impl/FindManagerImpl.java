@@ -429,7 +429,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
         scrollType = isForward ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
       }
       else {
-        scrollType = !isForward ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
+        scrollType = isForward ? ScrollType.CENTER_UP : ScrollType.CENTER_DOWN;
       }
       editor.getScrollingModel().scrollToCaret(scrollType);
       editor.putUserData(HIGHLIGHTER_WAS_NOT_FOUND_KEY, null);
