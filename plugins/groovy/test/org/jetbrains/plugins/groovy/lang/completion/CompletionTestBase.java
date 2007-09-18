@@ -1,22 +1,23 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
-import org.jetbrains.plugins.groovy.util.TestUtils;
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompletionVariant;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.util.IncorrectOperationException;
+import junit.framework.Assert;
+import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -94,8 +95,8 @@ public abstract class CompletionTestBase extends ActionTestCase {
    * @return
    */
   protected LookupItem[] getAcceptableItemsImpl(CompletionData completionData,
-                                            boolean addKeywords,
-                                            boolean addReferenceVariants) {
+                                                boolean addKeywords,
+                                                boolean addReferenceVariants) throws IncorrectOperationException {
 
     final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     final PsiElement elem = myFile.findElementAt(myOffset);
@@ -105,45 +106,41 @@ public abstract class CompletionTestBase extends ActionTestCase {
      */
     String newFileText = myFile.getText().substring(0, myOffset + 1) + "IntellijIdeaRulezzz" +
         myFile.getText().substring(myOffset + 1);
-    try {
-      /**
-       * Hack for IDEA completion
-       */
-      PsiFile newFile = TestUtils.createPseudoPhysicalFile(myProject, newFileText);
-      PsiElement insertedElement = newFile.findElementAt(myOffset + 1);
-      final int offset1 =
-          myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
-      final int offset2 = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionEnd() : offset1;
-      final CompletionContext context = new CompletionContext(myProject, myEditor, myFile, offset1, offset2);
-      context.setPrefix(elem, context.startOffset, completionData);
+    /**
+     * Hack for IDEA completion
+     */
+    PsiFile newFile = TestUtils.createPseudoPhysicalFile(myProject, newFileText);
+    PsiElement insertedElement = newFile.findElementAt(myOffset + 1);
+    final int offset1 =
+        myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
+    final int offset2 = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionEnd() : offset1;
+    final CompletionContext context = new CompletionContext(myProject, myEditor, myFile, offset1, offset2);
+    context.setPrefix(elem, context.startOffset, completionData);
 
-      if (lookupSet.size() == 0) {
-        if (addKeywords) {
-          final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-          completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
-        }
-        if (addReferenceVariants) {
-          final PsiReference ref = newFile.findReferenceAt(myOffset + 1);
-          if (ref != null) {
-            completionData.completeReference(ref, lookupSet, context, insertedElement);
-          }
+    if (lookupSet.size() == 0) {
+      if (addKeywords) {
+        final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+        completionData.addKeywordVariants(keywordVariants, context, insertedElement);
+        CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
+      }
+      if (addReferenceVariants) {
+        final PsiReference ref = newFile.findReferenceAt(myOffset + 1);
+        if (ref != null) {
+          completionData.completeReference(ref, lookupSet, context, insertedElement);
         }
       }
-
-      ArrayList<LookupItem> lookupItems = new ArrayList<LookupItem>();
-      final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
-      for (LookupItem item : items) {
-        if (CompletionUtil.checkName(item, context, false)) {
-          lookupItems.add(item);
-        }
-      }
-
-      return lookupItems.toArray(new LookupItem[0]);
-    } catch (IncorrectOperationException e) {
-      e.printStackTrace();
-      return new LookupItem[0];
     }
+
+    ArrayList<LookupItem> lookupItems = new ArrayList<LookupItem>();
+    final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
+    for (LookupItem item : items) {
+      if (CompletionUtil.checkName(item, context, false)) {
+        lookupItems.add(item);
+      }
+    }
+
+    return lookupItems.toArray(new LookupItem[0]);
+
   }
 
   public String transform(String testName, String[] data) throws Exception {

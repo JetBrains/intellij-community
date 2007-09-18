@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -38,10 +39,12 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase {
   @NonNls
   private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/formatter/data/";
 
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.formatter.FormatterTest");
+
   public FormatterTest() {
     super(System.getProperty("path") != null ?
-            System.getProperty("path") :
-            DATA_PATH
+        System.getProperty("path") :
+        DATA_PATH
     );
   }
 
@@ -60,7 +63,7 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase {
             try {
               performFormatting(myProject, psiFile);
             } catch (IncorrectOperationException e) {
-              e.printStackTrace();
+              LOG.error(e);
             }
           }
         });
