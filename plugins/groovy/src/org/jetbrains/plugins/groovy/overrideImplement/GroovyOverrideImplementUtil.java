@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -105,7 +106,13 @@ public class GroovyOverrideImplementUtil {
             final GrTopLevelDefintion previousTopLevelElement = PsiUtil.findPreviousTopLevelElementByThisElement(thisCaretPsiElement);
 
             if (thisCaretPsiElement != null && thisCaretPsiElement.getParent() instanceof GrTypeDefinitionBody) {
-              anchor = thisCaretPsiElement.getNode();
+              if (GroovyTokenTypes.mLCURLY.equals(thisCaretPsiElement.getNode().getElementType())) {
+                anchor = thisCaretPsiElement.getNextSibling().getNode();
+              } else if (GroovyTokenTypes.mRCURLY.equals(thisCaretPsiElement.getNode().getElementType())) {
+                anchor = thisCaretPsiElement.getPrevSibling().getNode();
+              } else {
+                anchor = thisCaretPsiElement.getNode();
+              }
 
             } else if (previousTopLevelElement != null && previousTopLevelElement instanceof GrMethod) {
               final PsiElement nextElement = previousTopLevelElement.getNextSibling();
@@ -126,7 +133,7 @@ public class GroovyOverrideImplementUtil {
               assert firstChild != null;
               final PsiElement nextElement = firstChild.getNextSibling();
               assert nextElement != null;
-              
+
               anchor = nextElement.getNode();
             }
 
@@ -185,14 +192,15 @@ public class GroovyOverrideImplementUtil {
 
     final PsiType returnType = substitutor.substitute(method.getReturnType());
 
-    if (returnType != null) {
-      buffer.append(returnType.getCanonicalText());
-      buffer.append(" ");
-    }
-
     if (method.isConstructor()) {
       buffer.append(aClass.getName());
+
     } else {
+      if (returnType != null) {
+        buffer.append(returnType.getCanonicalText());
+        buffer.append(" ");
+      }
+
       buffer.append(method.getName());
     }
     buffer.append(" ");

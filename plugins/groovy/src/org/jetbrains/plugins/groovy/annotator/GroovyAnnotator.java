@@ -15,26 +15,29 @@
 
 package org.jetbrains.plugins.groovy.annotator;
 
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -44,17 +47,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.bodies.GrClassBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 
 import java.util.*;
 
@@ -117,58 +118,20 @@ public class GroovyAnnotator implements Annotator {
     if (typeDefinition.hasModifierProperty(PsiModifier.ABSTRACT)) return;
     if (typeDefinition.isInterface()) return;
 
-    List<MethodSignature> implementedClassesMethodsSignatures = new ArrayList<MethodSignature>();
-    //implements list
-    final PsiClassType[] implementsList = typeDefinition.getImplementsListTypes();
+    final Collection<CandidateInfo> methodsToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
 
-    for (PsiClassType implementedInterface : implementsList) {
-      final PsiClass resolvedImplementedInterface = implementedInterface.resolve();
-      if (resolvedImplementedInterface == null) return;
+    if (methodsToImplement.isEmpty()) return;
 
-      final PsiMethod[] interfaceMethods = resolvedImplementedInterface.getMethods();
-      for (PsiMethod interfaceMethod : interfaceMethods) {
-        if (interfaceMethod.isConstructor()) {
-          continue;
-        }
-        //todo: remove empty substiturtor
-        implementedClassesMethodsSignatures.add(interfaceMethod.getSignature(PsiSubstitutor.EMPTY));
-      }
-    }
-
-    List<MethodSignature> typeDefMethodsSignatures = new ArrayList<MethodSignature>();
-    final PsiMethod[] typeDefMethods = typeDefinition.getMethods();
-    for (PsiMethod typeDefMethod : typeDefMethods) {
-      //todo: remove empty substiturtor
-      if (typeDefMethod.isConstructor()) {
-        continue;
-      }
-      typeDefMethodsSignatures.add(typeDefMethod.getSignature(PsiSubstitutor.EMPTY));
-    }
-
-    String notImpledMethodName = null;
-    boolean isImplemented = false;
-    for (MethodSignature implementedClassesMethodsSignature : implementedClassesMethodsSignatures) {
-      for (MethodSignature typeDefMethodsSignature : typeDefMethodsSignatures) {
-        isImplemented = isImplemented | PsiImplUtil.isExtendsSignature(implementedClassesMethodsSignature, typeDefMethodsSignature);
-
-        //if one is super for this type definition methods breaks
-        if (isImplemented) break;
-      }
-      if (!isImplemented) {
-        notImpledMethodName = implementedClassesMethodsSignature.getName();
-        break;
-      }
-      isImplemented = false;
-    }
+    final PsiElement methodCandidateInfo = methodsToImplement.toArray(CandidateInfo.EMPTY_ARRAY)[0].getElement();
+    assert methodCandidateInfo instanceof PsiMethod;
+    
+    String notImpledMethodName = ((PsiMethod) methodCandidateInfo).getName();
     final PsiElement firstChild = typeDefinition.getFirstChild();
     final PsiElement lBrace = typeDefinition.getBody().getFirstChild();
     if (firstChild == null || lBrace == null) {
       return;
     }
 
-    if (notImpledMethodName == null) {
-      return;
-    }
     final Annotation annotation = holder.createErrorAnnotation(new TextRange(firstChild.getTextRange().getStartOffset(), lBrace.getTextRange().getStartOffset()), GroovyBundle.message("method.is.not.implemented", notImpledMethodName));
     registerImplementsMethodsFix(typeDefinition, annotation);
   }
@@ -557,25 +520,52 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
-    if (typeDefinition.getParent() instanceof GrClassBody) {
+    if (GroovyElementTypes.CLASS_BODY.equals(typeDefinition.getNode().getTreeParent().getElementType())) {
       holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), "Inner classes are not supported in Groovy");
     }
 
+    //TODO: add quickfix to change implements -> extends or class to interface 
     final GrImplementsClause implementsClause = typeDefinition.getImplementsClause();
-    if (implementsClause == null) return;
+    if (implementsClause != null) {
+      checkForImplementingInterface(holder, implementsClause);
+    }
 
+    final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();
+    if (extendsClause != null) {
+      checkForExtendingClass(holder, extendsClause);
+    }
+  }
+
+  private boolean checkForExtendingClass(AnnotationHolder holder, GrExtendsClause extendsClause) {
+    final GrCodeReferenceElement[] extendsList = extendsClause.getReferenceElements();
+    if (extendsList.length != 0) {
+      for (GrCodeReferenceElement extendsElement : extendsList) {
+        final PsiElement extClass = extendsElement.resolve();
+        if (extClass == null || !(extClass instanceof PsiClass)) return false;
+
+        if (((PsiClass) extClass).isInterface()) {
+          holder.createErrorAnnotation(extendsElement, GroovyBundle.message("interface.is.not.expected.here"));
+        }
+      }
+    }
+
+    return true;
+  }
+
+  private boolean checkForImplementingInterface(AnnotationHolder holder, GrImplementsClause implementsClause) {
     final GrCodeReferenceElement[] implementsList = implementsClause.getReferenceElements();
 
     if (implementsList.length != 0) {
       for (GrCodeReferenceElement implementElement : implementsList) {
         final PsiElement implClass = implementElement.resolve();
-        if (implClass == null || !(implClass instanceof PsiClass)) return;
+        if (implClass == null || !(implClass instanceof PsiClass)) return false;
 
         if (!((PsiClass) implClass).isInterface()) {
           holder.createErrorAnnotation(implementElement, GroovyBundle.message("interface.expected.here"));
         }
       }
     }
+    return true;
   }
 
   private void checkReferenceExpression(AnnotationHolder holder, final GrReferenceExpression refExpr) {
