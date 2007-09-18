@@ -9,8 +9,9 @@ a <b><font color="#000080">serialVersionUID</font></b> field, otherwise the defa
 may result in serialized versions being incompatible between compilers, due to differences in synthetic
 accessor methods.
 <p>
-Use the checkbox below to specify whether this inspection should report classes which are only serializable
-due to inheriting from serializable classes.  Such classes are often not intended for serialization, and so
-this inspection would report unnecessarily.
+Use the table below to specify what specific classes and inheritors should be excluded
+from being checked by this inspection. This is meant for those classes which, although they inherit
+Serializable from a superclass, are not intended for serialization. Such classes would lead this
+inspection to report unnecessarily.
 </font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
 </html>
