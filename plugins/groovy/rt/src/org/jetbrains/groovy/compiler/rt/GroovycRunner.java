@@ -15,22 +15,18 @@
 
 package org.jetbrains.groovy.compiler.rt;
 
+import com.intellij.openapi.diagnostic.Logger;
 import groovy.lang.GroovyClassLoader;
 import org.codehaus.groovy.control.CompilationUnit;
 import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.messages.WarningMessage;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -39,6 +35,7 @@ import java.util.Set;
 
 public class GroovycRunner {
   static CompilationUnitsFactory myFactory = new CompilationUnitsFactory();
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.groovy.compiler.rt.GroovycRunner");
 
   public static final String CLASSPATH = "classpath";
   public static final String OUTPUTPATH = "outputpath";
@@ -90,10 +87,9 @@ public class GroovycRunner {
 
       String line;
 
-      while((line = reader.readLine()) != null && !line.equals(CLASSPATH)) {
+      while ((line = reader.readLine()) != null && !line.equals(CLASSPATH)) {
         if (TEST_FILE.equals(line)) testFiles.add(new File(reader.readLine()));
-        else
-        if (SRC_FILE.equals(line)) srcFiles.add(new File(reader.readLine()));
+        else if (SRC_FILE.equals(line)) srcFiles.add(new File(reader.readLine()));
       }
 
       while (line != null) {
@@ -121,14 +117,14 @@ public class GroovycRunner {
       }
 
     } catch (FileNotFoundException e) {
-      e.printStackTrace();
+      LOG.error(e);
     } catch (IOException e) {
-      e.printStackTrace();
+      LOG.error(e);
     } finally {
       try {
         reader.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        LOG.error(e);
       } finally {
         argsFile.delete();
       }
@@ -185,7 +181,7 @@ public class GroovycRunner {
       System.out.println();
     }
 
-    for(CompilerMessage message : compilerMessages) {
+    for (CompilerMessage message : compilerMessages) {
       System.out.print(MESSAGES_START);
 
       System.out.print(message.getCathegory());

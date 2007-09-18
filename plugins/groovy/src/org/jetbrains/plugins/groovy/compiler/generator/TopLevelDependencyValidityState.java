@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.compiler.generator;
 
 import com.intellij.openapi.compiler.ValidityState;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ class TopLevelDependencyValidityState implements ValidityState {
   private long myTimestamp;
   private List<String> myMembers;  //fields
 
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.generator.TopLevelDependencyValidityState");
+  
   TopLevelDependencyValidityState(long timestamp, List<String> members) {
 //      use signature of method and access modifiers
     this.myMembers = members;
@@ -56,7 +59,7 @@ class TopLevelDependencyValidityState implements ValidityState {
           try {
             timestamp = (long) tokenizer.nval;
           } catch (NumberFormatException e) {
-            e.printStackTrace();
+            LOG.error(e);
           }
           break;
         }

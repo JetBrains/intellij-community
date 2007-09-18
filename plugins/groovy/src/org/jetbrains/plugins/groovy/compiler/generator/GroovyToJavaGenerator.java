@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.containers.HashSet;
@@ -46,6 +47,7 @@ import java.util.*;
  */
 public class GroovyToJavaGenerator implements SourceGeneratingCompiler, CompilationStatusListener {
   private static final Map<String, String> typesToInitialValues = new HashMap<String, String>();
+    private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator");
 
   static {
     typesToInitialValues.put("boolean", "false");
@@ -853,15 +855,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       writer = new BufferedWriter(fileWriter);
       writer.write(text.toString());
     } catch (IOException e) {
-      e.printStackTrace();
+      LOG.error(e);
     } finally {
       try {
         assert writer != null;
         writer.close();
       } catch (IOException e) {
-        e.printStackTrace();
+        LOG.error(e);
       }
-//      System.out.println("");
     }
   }
 

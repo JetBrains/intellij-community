@@ -114,7 +114,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
         commandLine.addParameter(fileWithParameters.getPath());
       } catch (IOException e) {
-        LOG.error(e);        
+        LOG.error(e);
       }
 
       GroovycOSProcessHandler processHandler;
@@ -155,10 +155,10 @@ public class GroovyCompiler implements TranslatingCompiler {
                 myPsiFile[0] = (GroovyFileBase) PsiManager.getInstance(project).findFile(myFile);
               }
             });
-
-            assert myPsiFile[0] != null;
           } catch (MalformedURLException e) {
-            e.printStackTrace();
+            LOG.error(e);
+          } finally {
+            assert myPsiFile[0] != null;
           }
 
           url = url.replace('\\', '/');
@@ -171,7 +171,7 @@ public class GroovyCompiler implements TranslatingCompiler {
 
         successfullyCompiled.addAll(processHandler.getSuccessfullyCompiled());
       } catch (ExecutionException e) {
-        e.printStackTrace();
+        LOG.error(e);
       }
     }
     return new GroovyCompileExitStatus(successfullyCompiled, toRecompile.toArray(new VirtualFile[toRecompile.size()]));
@@ -282,7 +282,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       printer.println(getNonExcludedModuleSourceFolders(module).getPathsString());
 
     } catch (IOException e) {
-      e.printStackTrace();
+      LOG.error(e);
     } finally {
 
       assert printer != null;

@@ -21,6 +21,7 @@ import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
@@ -38,6 +39,8 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   private List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
   private StringBuffer unparsedOutput = new StringBuffer();
   private CompileContext myContext;
+
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.GroovycOSProcessHandler");
 
   public GroovycOSProcessHandler(CompileContext context, Process process, String s) {
     super(process, s);
@@ -101,9 +104,9 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
             myContext.getProgressIndicator().setText(sourceFile);
             compiledFilesNames.add(getOutputItem(outputPath, sourceFile, outputRootDirectory));
           } catch (InvocationTargetException e) {
-            e.printStackTrace();
+            LOG.error(e);
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOG.error(e);
           }
         }
 
@@ -177,7 +180,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
           linenumInt = Integer.parseInt(linenum);
           colomnnumInt = Integer.parseInt(colomnnum);
         } catch (NumberFormatException e) {
-          e.printStackTrace();
+          LOG.error(e);
           linenumInt = 0;
           colomnnumInt = 0;
         }
