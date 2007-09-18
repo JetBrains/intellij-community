@@ -1892,28 +1892,34 @@ public class HighlightUtil {
   public static HighlightInfo checkElementInReferenceList(PsiJavaCodeReferenceElement ref,
                                                  PsiReferenceList referenceList,
                                                  JavaResolveResult resolveResult) {
-    PsiClass resolved = (PsiClass)resolveResult.getElement();
-    PsiElement refGrandParent = referenceList.getParent();
+    PsiElement resolved = resolveResult.getElement();
     HighlightInfo highlightInfo = null;
-    if (refGrandParent instanceof PsiClass) {
-      if (refGrandParent instanceof PsiTypeParameter) {
-        highlightInfo = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, resolveResult, ref);
+    PsiElement refGrandParent = referenceList.getParent();
+    if (resolved instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)resolved;
+      if (refGrandParent instanceof PsiClass) {
+        if (refGrandParent instanceof PsiTypeParameter) {
+          highlightInfo = GenericsHighlightUtil.checkElementInTypeParameterExtendsList(referenceList, resolveResult, ref);
+        }
+        else {
+          highlightInfo = HighlightClassUtil.checkExtendsClassAndImplementsInterface(referenceList, resolveResult, ref);
+          if (highlightInfo == null) {
+            highlightInfo = HighlightClassUtil.checkCannotInheritFromFinal(aClass, ref);
+          }
+          if (highlightInfo == null) {
+            highlightInfo = GenericsHighlightUtil.checkCannotInheritFromEnum(aClass, ref);
+          }
+          if (highlightInfo == null) {
+            highlightInfo = GenericsHighlightUtil.checkCannotInheritFromTypeParameter(aClass, ref);
+          }
+        }
       }
-      else {
-        highlightInfo = HighlightClassUtil.checkExtendsClassAndImplementsInterface(referenceList, resolveResult, ref);
-        if (highlightInfo == null) {
-          highlightInfo = HighlightClassUtil.checkCannotInheritFromFinal(resolved, ref);
-        }
-        if (highlightInfo == null) {
-          highlightInfo = GenericsHighlightUtil.checkCannotInheritFromEnum(resolved, ref);
-        }
-        if (highlightInfo == null) {
-          highlightInfo = GenericsHighlightUtil.checkCannotInheritFromTypeParameter(resolved, ref);
-        }
+      else if (refGrandParent instanceof PsiMethod && ((PsiMethod)refGrandParent).getThrowsList() == referenceList) {
+        highlightInfo = checkMustBeThrowable(aClass, ref);
       }
     }
-    else if (refGrandParent instanceof PsiMethod && ((PsiMethod)refGrandParent).getThrowsList() == referenceList) {
-      highlightInfo = checkMustBeThrowable(resolved, ref);
+    else if (refGrandParent instanceof PsiMethod && referenceList == ((PsiMethod)refGrandParent).getThrowsList()) {
+      highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, ref, JavaErrorMessages.message("class.name.expected"));
     }
     return highlightInfo;
   }
@@ -1945,20 +1951,18 @@ public class HighlightUtil {
     final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
     return settingForRoot != FileHighlighingSetting.SKIP_INSPECTION;
   }
-
-  public static void forceRootInspection(final PsiElement root, final boolean inspectionFlag) {
+                      
+  public static void forceRootHighlighting(final PsiElement root, FileHighlighingSetting level) {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
     if (component == null) return;
     final PsiFile file = root.getContainingFile();
-    final FileHighlighingSetting inspectionLevel =
-      inspectionFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING : FileHighlighingSetting.SKIP_INSPECTION;
     if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
       //highlight both java roots
       final JspClass jspClass = (JspClass)((JspFile)file).getJavaClass();
-      component.setHighlightingSettingForRoot(jspClass.getContainingFile(), inspectionLevel);
+      component.setHighlightingSettingForRoot(jspClass.getContainingFile(), level);
     }
     else {
-      component.setHighlightingSettingForRoot(root, inspectionLevel);
+      component.setHighlightingSettingForRoot(root, level);
     }
   }
 

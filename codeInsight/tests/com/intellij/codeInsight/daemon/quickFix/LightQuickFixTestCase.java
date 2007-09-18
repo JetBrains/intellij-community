@@ -6,12 +6,12 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlFile;
@@ -91,7 +91,13 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     IntentionAction action = findActionWithText(text);
     if (action == null) {
       if (actionShouldBeAvailable) {
-        fail("Action with text '" + text + "' is not available in test " + testFullPath);
+        List<IntentionAction> actions = getAvailableActions();
+        List<String> texts = new ArrayList<String>();
+        for (IntentionAction intentionAction : actions) {
+          texts.add(intentionAction.getText());
+        }
+        Collection<HighlightInfo> infos = doHighlighting();
+        fail("Action with text '" + text + "' is not available in test " + testFullPath+"\nAvailable actions: "+texts+"\n"+actions+"\nErrors:"+infos);
       }
     }
     else {

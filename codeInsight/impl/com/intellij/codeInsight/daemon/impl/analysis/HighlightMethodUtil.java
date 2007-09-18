@@ -444,8 +444,7 @@ public class HighlightMethodUtil {
       MethodCandidateInfo candidate = (MethodCandidateInfo)result;
       if (candidate.isAccessible()) candidateList.add(candidate);
     }
-    MethodCandidateInfo[] candidates = candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
-    return candidates;
+    return candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
   }
 
   private static void registerMethodCallIntentions(HighlightInfo highlightInfo,

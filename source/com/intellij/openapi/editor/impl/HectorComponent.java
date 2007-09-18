@@ -3,10 +3,8 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.HectorComponentPanel;
@@ -24,8 +22,6 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.DialogUtil;
@@ -46,10 +42,10 @@ public class HectorComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.editor.impl.HectorComponent");
 
   private WeakReference<JBPopup> myHectorRef;
-  private JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));
-  private ArrayList<HectorComponentPanel> myAdditionalPanels;
-  private Map<Language, JSlider> mySliders;
-  private PsiFile myFile;
+  private final JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));
+  private final ArrayList<HectorComponentPanel> myAdditionalPanels;
+  private final Map<Language, JSlider> mySliders;
+  private final PsiFile myFile;
 
   private boolean myImportPopupOn;
 
@@ -64,8 +60,8 @@ public class HectorComponent extends JPanel {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile virtualFile = myFile.getContainingFile().getVirtualFile();
     LOG.assertTrue(virtualFile != null);
-    final boolean notInLibrary = (!fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile)) ||
-                                 fileIndex.isInContent(virtualFile);
+    final boolean notInLibrary =
+      !fileIndex.isInLibrarySource(virtualFile) && !fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInContent(virtualFile);
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> languages = viewProvider.getPrimaryLanguages();
     for (Language language : languages) {
@@ -76,7 +72,7 @@ public class HectorComponent extends JPanel {
         sliderLabels.put(3, new JLabel(EditorBundle.message("hector.inspections.slider.label")));
       }
 
-      final JSlider slider = new JSlider(JSlider.VERTICAL, 1, notInLibrary ? 3 : 2, 1);
+      final JSlider slider = new JSlider(SwingConstants.VERTICAL, 1, notInLibrary ? 3 : 2, 1);
       slider.setLabelTable(sliderLabels);
       final boolean value = true;
       UIUtil.setSliderIsFilled(slider, value);
@@ -152,7 +148,7 @@ public class HectorComponent extends JPanel {
 
   private void layoutHorizontal(final JPanel panel) {
     for (JSlider slider : mySliders.values()) {
-      slider.setOrientation(JSlider.HORIZONTAL);
+      slider.setOrientation(SwingConstants.HORIZONTAL);
       slider.setPreferredSize(new Dimension(200, 40));
       panel.add(slider, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                new Insets(0, 0, 0, 0), 0, 0));
@@ -228,13 +224,13 @@ public class HectorComponent extends JPanel {
       PsiElement root = viewProvider.getPsi(language);
       int value = slider.getValue();
       if (value == 1) {
-        forceRootHighlighting(root, false);
+        HighlightUtil.forceRootHighlighting(root, FileHighlighingSetting.SKIP_HIGHLIGHTING);
       }
       else if (value == 2) {
-        HighlightUtil.forceRootInspection(root, false);
+        HighlightUtil.forceRootHighlighting(root, FileHighlighingSetting.SKIP_INSPECTION);
       }
       else {
-        HighlightUtil.forceRootInspection(root, true);
+        HighlightUtil.forceRootHighlighting(root, FileHighlighingSetting.FORCE_HIGHLIGHTING);
       }
     }
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
@@ -271,21 +267,5 @@ public class HectorComponent extends JPanel {
       return 2;
     }
     return 3;
-  }
-
-  private static void forceRootHighlighting(final PsiElement root, final boolean highlightFlag) {
-    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
-    if (component == null) return;
-    final PsiFile file = root.getContainingFile();
-    final FileHighlighingSetting highlightingLevel =
-      highlightFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING : FileHighlighingSetting.SKIP_HIGHLIGHTING;
-    if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
-      //highlight both java roots
-      final JspClass jspClass = (JspClass)((JspFile)file).getJavaClass();
-      component.setHighlightingSettingForRoot(jspClass.getContainingFile(), highlightingLevel);
-    }
-    else {
-      component.setHighlightingSettingForRoot(root, highlightingLevel);
-    }
   }
 }

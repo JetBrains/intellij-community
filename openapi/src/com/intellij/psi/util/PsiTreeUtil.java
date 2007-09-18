@@ -72,9 +72,10 @@ public class PsiTreeUtil {
   @Nullable
   public static PsiElement findCommonParent(@NotNull PsiElement... elements) {
     if (elements.length == 0)  return null;
-    PsiElement toReturn = elements[0];
-    for (int i = 1; i < elements.length; i++) {
-      toReturn = findCommonParent(toReturn, elements[i]);
+    PsiElement toReturn = null;
+    for (PsiElement element : elements) {
+      if (element == null) continue;
+      toReturn = toReturn == null ? element : findCommonParent(toReturn, element);
       if (toReturn == null) return null;
     }
 
