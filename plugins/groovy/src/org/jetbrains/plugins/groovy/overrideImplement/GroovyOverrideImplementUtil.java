@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -121,7 +122,12 @@ public class GroovyOverrideImplementUtil {
               }
 
             } else {
-              anchor = classBody.getFirstChild().getNextSibling().getNode();
+              final PsiElement firstChild = classBody.getFirstChild();
+              assert firstChild != null;
+              final PsiElement nextElement = firstChild.getNextSibling();
+              assert nextElement != null;
+              
+              anchor = nextElement.getNode();
             }
 
             final ASTNode lineTerminator = GroovyElementFactory.getInstance(project).createLineTerminator().getNode();
@@ -234,7 +240,13 @@ public class GroovyOverrideImplementUtil {
     try {
       String bodyText = template.getText(properties);
       final GrCodeBlock newBody = GroovyElementFactory.getInstance(project).createMetodBodyFormText("\n" + bodyText + "\n");
-      result.getNode().replaceChild(result.getBlock().getNode(), newBody.getNode());
+
+      final ASTNode resultNode = result.getNode();
+      assert resultNode != null;
+      final GrOpenBlock resultBlock = result.getBlock();
+      if (resultBlock == null) return;
+
+      resultNode.replaceChild(resultBlock.getNode(), newBody.getNode());
 
     } catch (IOException e) {
       LOG.error(e);
