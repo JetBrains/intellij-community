@@ -265,7 +265,7 @@ public class PsiImplUtil {
     for (int i = 0; i < subTypes.length - 1; i++) {
       PsiType superType = TypeConversionUtil.erasure(superTypes[i]);
       PsiType subType = TypeConversionUtil.erasure(subTypes[i]);
-      if (superType.isAssignableFrom(subType)) return false;
+      if (!superType.isAssignableFrom(subType)) return false;
     }
 
     if (superTypes.length > 0) {
