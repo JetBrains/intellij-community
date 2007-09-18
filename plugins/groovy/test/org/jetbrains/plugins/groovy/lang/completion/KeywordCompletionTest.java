@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 
@@ -37,7 +38,7 @@ public class KeywordCompletionTest extends CompletionTestBase {
     );
   }
 
-  protected LookupItem[] getAcceptableItems(CompletionData data) {
+  protected LookupItem[] getAcceptableItems(CompletionData data) throws IncorrectOperationException {
     return getAcceptableItemsImpl(data, true, false);
   }
 

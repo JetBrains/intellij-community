@@ -21,6 +21,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -42,7 +43,7 @@ public class ReferenceCompletionTest extends CompletionTestBase {
     );
   }
 
-  protected LookupItem[] getAcceptableItems(CompletionData data) {
+  protected LookupItem[] getAcceptableItems(CompletionData data) throws IncorrectOperationException {
     return getAcceptableItemsImpl(data, false, true);
   }
 

@@ -83,7 +83,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
     return result;
   }
 
-  protected abstract LookupItem[] getAcceptableItems(CompletionData data);
+  protected abstract LookupItem[] getAcceptableItems(CompletionData data) throws IncorrectOperationException;
 
 
   /**
