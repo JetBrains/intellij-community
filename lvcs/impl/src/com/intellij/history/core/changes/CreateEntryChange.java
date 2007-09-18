@@ -19,7 +19,7 @@ public abstract class CreateEntryChange extends StructuralChange {
   }
 
   protected IdPath addEntry(Entry r, String parentPath, Entry e) {
-    Entry parent = parentPath == null ? r : r.findEntry(parentPath);
+    Entry parent = parentPath == null ? r : r.getEntry(parentPath);
     parent.addChild(e);
     return e.getIdPath();
   }
