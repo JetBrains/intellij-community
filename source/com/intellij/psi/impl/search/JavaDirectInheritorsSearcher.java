@@ -76,7 +76,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           else {
             rootFilter = null;
           }
-          return repositoryIndex.getNameOccurrencesInExtendsLists(aClass.getName(), rootFilter);
+          final String qName = aClass.getQualifiedName();
+          return repositoryIndex.getNameOccurrencesInExtendsLists(qName != null ? qName : aClass.getName(), rootFilter);
         }
       });
 
