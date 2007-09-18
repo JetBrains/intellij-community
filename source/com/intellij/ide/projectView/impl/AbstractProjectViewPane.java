@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -49,6 +50,7 @@ import java.awt.dnd.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 
 public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider, ProjectComponent, Disposable {
@@ -171,17 +173,18 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public void addToolbarActions(DefaultActionGroup actionGroup) {
   }
 
-  private List<AbstractTreeNode> getSelectedNodes(){
+  @NotNull
+  protected <T extends NodeDescriptor> List<T> getSelectedNodes(final Class<T> nodeClass){
     TreePath[] paths = getSelectionPaths();
-    if (paths == null) return null;
-    final ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    if (paths == null) return Collections.emptyList();
+    final ArrayList<T> result = new ArrayList<T>();
     for (TreePath path : paths) {
       Object lastPathComponent = path.getLastPathComponent();
       if (lastPathComponent instanceof DefaultMutableTreeNode) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
         Object userObject = node.getUserObject();
-        if (userObject instanceof AbstractTreeNode) {
-          result.add((AbstractTreeNode)userObject);
+        if (userObject != null && ReflectionCache.isAssignable(nodeClass, userObject.getClass())) {
+          result.add((T)userObject);
         }
       }
     }
@@ -213,7 +216,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
       }
     }
     if (myTreeStructure instanceof AbstractTreeStructureBase) {
-      return ((AbstractTreeStructureBase) myTreeStructure).getDataFromProviders(getSelectedNodes(), dataId);
+      return ((AbstractTreeStructureBase) myTreeStructure).getDataFromProviders(getSelectedNodes(AbstractTreeNode.class), dataId);
     }
     return null;
   }
@@ -285,6 +288,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
     return null;
   }
 
+  @NotNull
   public final Object[] getSelectedElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
