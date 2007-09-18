@@ -212,7 +212,7 @@ public class PsiImplUtil {
           CodeStyleManager.getInstance(element.getProject()).reformatText(element.getContainingFile(),
               textRange.getStartOffset(), textRange.getEndOffset());
         } catch (IncorrectOperationException e) {
-          e.printStackTrace();
+          LOG.error(e);
         }
       }
     });
