@@ -113,6 +113,7 @@ public class ExpressionUtils {
 
     public static boolean isNegation(@Nullable PsiExpression condition,
                                      boolean ignoreNegatedNullComparison) {
+        condition = ParenthesesUtils.stripParentheses(condition);
         if (condition instanceof PsiPrefixExpression) {
             final PsiPrefixExpression prefixExpression =
                     (PsiPrefixExpression)condition;
@@ -141,10 +142,6 @@ public class ExpressionUtils {
             } else {
                 return false;
             }
-        } else if (condition instanceof PsiParenthesizedExpression) {
-            final PsiExpression expression =
-                    ((PsiParenthesizedExpression)condition).getExpression();
-            return isNegation(expression, ignoreNegatedNullComparison);
         } else {
             return false;
         }

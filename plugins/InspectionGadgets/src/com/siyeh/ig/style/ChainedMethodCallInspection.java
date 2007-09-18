@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -119,18 +120,9 @@ public class ChainedMethodCallInspection extends BaseInspection {
         }
 
         private boolean isCallExpression(PsiExpression expression) {
-            if (expression instanceof PsiMethodCallExpression ||
-                    expression instanceof PsiNewExpression) {
-                return true;
-            }
-            if (expression instanceof PsiParenthesizedExpression) {
-                final PsiParenthesizedExpression parenthesizedExpression =
-                        (PsiParenthesizedExpression)expression;
-                final PsiExpression containedExpression =
-                        parenthesizedExpression.getExpression();
-                return isCallExpression(containedExpression);
-            }
-            return false;
+            expression = ParenthesesUtils.stripParentheses(expression);
+            return expression instanceof PsiMethodCallExpression ||
+                   expression instanceof PsiNewExpression;
         }
     }
 }

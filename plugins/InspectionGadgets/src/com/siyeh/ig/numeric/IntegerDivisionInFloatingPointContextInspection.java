@@ -30,11 +30,9 @@ import java.util.Set;
 public class IntegerDivisionInFloatingPointContextInspection
         extends BaseInspection {
 
-    /**
-     * @noinspection StaticCollection
-     */
-    @NonNls private static final Set<String> s_integralTypes =
-            new HashSet<String>(10);
+    /** @noinspection StaticCollection */
+    @NonNls
+    private static final Set<String> s_integralTypes = new HashSet<String>(10);
 
     static {
         s_integralTypes.add("int");
@@ -71,9 +69,6 @@ public class IntegerDivisionInFloatingPointContextInspection
         public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if (!(expression.getROperand() != null)) {
-                return;
-            }
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.DIV)) {
@@ -102,7 +97,7 @@ public class IntegerDivisionInFloatingPointContextInspection
                 return;
             }
             if (!(contextType.equals(PsiType.FLOAT)
-                    || contextType.equals(PsiType.DOUBLE))) {
+                  || contextType.equals(PsiType.DOUBLE))) {
                 return;
             }
             registerError(expression);
@@ -113,22 +108,16 @@ public class IntegerDivisionInFloatingPointContextInspection
                 return false;
             }
             final String text = type.getCanonicalText();
-            if (text == null) {
-                return false;
-            }
-            return s_integralTypes.contains(text);
+            return text != null && s_integralTypes.contains(text);
         }
 
         private static PsiExpression getContainingExpression(
                 PsiExpression expression) {
             final PsiElement parent = expression.getParent();
-            if (parent == null) {
-                return expression;
-            }
-            if (parent instanceof PsiPrefixExpression ||
-                    parent instanceof PsiPostfixExpression ||
-                    parent instanceof PsiBinaryExpression ||
-                    parent instanceof PsiParenthesizedExpression) {
+            if (parent instanceof PsiBinaryExpression ||
+                parent instanceof PsiParenthesizedExpression ||
+                parent instanceof PsiPrefixExpression ||
+                parent instanceof PsiConditionalExpression) {
                 return getContainingExpression((PsiExpression)parent);
             }
             return expression;

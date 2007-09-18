@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,6 @@ public class RandomDoubleForRandomIntegerInspection
     public String getID() {
         return "UsingRandomNextDoubleForRandomInteger";
     }
-
 
     @NotNull
     public String getDisplayName() {
@@ -79,14 +79,21 @@ public class RandomDoubleForRandomIntegerInspection
             final String qualifierText = qualifier.getText();
             final PsiBinaryExpression multiplication =
                     (PsiBinaryExpression)getContainingExpression(call);
+            if (multiplication == null) {
+                return;
+            }
             final PsiExpression cast = getContainingExpression(multiplication);
-            assert multiplication != null;
+            if (cast == null) {
+                return;
+            }
             final PsiExpression multiplierExpression;
-            final PsiExpression lOperand = multiplication.getLOperand();
-            if (lOperand.equals(call)) {
+            final PsiExpression lhs = multiplication.getLOperand();
+            final PsiExpression strippedLhs =
+                    ParenthesesUtils.stripParentheses(lhs);
+            if (call.equals(strippedLhs)) {
                 multiplierExpression = multiplication.getROperand();
             } else {
-                multiplierExpression = lOperand;
+                multiplierExpression = lhs;
             }
             assert multiplierExpression != null;
             final String multiplierText = multiplierExpression.getText();
@@ -162,14 +169,13 @@ public class RandomDoubleForRandomIntegerInspection
             final PsiTypeCastExpression castExpression =
                     (PsiTypeCastExpression)expression;
             final PsiType type = castExpression.getType();
-
             return PsiType.INT.equals(type);
         }
     }
 
     @Nullable
-    static PsiExpression getContainingExpression(PsiExpression exp) {
-        PsiElement ancestor = exp.getParent();
+    static PsiExpression getContainingExpression(PsiExpression expression) {
+        PsiElement ancestor = expression.getParent();
         while (true) {
             if (ancestor == null) {
                 return null;

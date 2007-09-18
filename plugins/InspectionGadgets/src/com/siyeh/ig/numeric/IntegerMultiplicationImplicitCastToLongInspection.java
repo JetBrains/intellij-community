@@ -60,9 +60,6 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
         public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
-                return;
-            }
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.ASTERISK)
@@ -74,8 +71,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
-            if(rhs== null)
-            {
+            if(rhs== null) {
                 return;
             }
             final PsiType rhsType = rhs.getType();
@@ -100,11 +96,10 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends
         private static PsiExpression getContainingExpression(
                 PsiExpression expression) {
             final PsiElement parent = expression.getParent();
-            if (parent == null) {
-                return expression;
-            }
-            if ( parent instanceof PsiConditionalExpression ||
-                    parent instanceof PsiParenthesizedExpression) {
+            if (parent instanceof PsiBinaryExpression ||
+                parent instanceof PsiParenthesizedExpression ||
+                parent instanceof PsiPrefixExpression ||
+                parent instanceof PsiConditionalExpression) {
                 return getContainingExpression((PsiExpression) parent);
             }
             return expression;
