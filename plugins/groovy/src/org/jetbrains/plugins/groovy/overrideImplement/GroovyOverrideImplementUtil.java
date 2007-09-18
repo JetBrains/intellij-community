@@ -83,7 +83,7 @@ public class GroovyOverrideImplementUtil {
       String templName = isAbstract ? FileTemplateManager.TEMPLATE_IMPLEMENTED_METHOD_BODY : FileTemplateManager.TEMPLATE_OVERRIDDEN_METHOD_BODY;
 
       final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
-      final GrMethod result = createOverrideImplementMethodSignature(project, method, substitutor);
+      final GrMethod result = createOverrideImplementMethodSignature(project, method, substitutor, aClass);
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
@@ -129,7 +129,7 @@ public class GroovyOverrideImplementUtil {
             assert lineTerminator != null;
             final ASTNode resultNode = result.getNode();
             assert resultNode != null;
-            
+
             classBody.getNode().addChild(lineTerminator, anchor);
             classBody.getNode().addChild(resultNode, anchor);
 
@@ -173,7 +173,7 @@ public class GroovyOverrideImplementUtil {
   };
 
 
-  private static GrMethod createOverrideImplementMethodSignature(Project project, PsiMethod method, PsiSubstitutor substitutor) {
+  private static GrMethod createOverrideImplementMethodSignature(Project project, PsiMethod method, PsiSubstitutor substitutor, PsiClass aClass) {
     StringBuffer buffer = new StringBuffer();
     writeMethodModifiers(buffer, method.getModifierList(), GROOVY_MODIFIERS);
 
@@ -184,7 +184,11 @@ public class GroovyOverrideImplementUtil {
       buffer.append(" ");
     }
 
-    buffer.append(method.getName());
+    if (method.isConstructor()) {
+      buffer.append(aClass.getName());
+    } else {
+      buffer.append(method.getName());
+    }
     buffer.append(" ");
 
     buffer.append("(");
