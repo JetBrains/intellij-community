@@ -85,7 +85,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
     return getSurroundSelectionRange(newStmt);
   }
 
-  protected abstract String getElementsTemplateAsString(ASTNode... node);
+  protected abstract String getElementsTemplateAsString(ASTNode[] node);
 
   protected abstract TextRange getSurroundSelectionRange(GroovyPsiElement element);
 
