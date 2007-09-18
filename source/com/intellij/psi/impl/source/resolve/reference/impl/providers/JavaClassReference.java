@@ -111,10 +111,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   private boolean isStaticClassReference(final String s) {
-    final char separatorChar = JavaClassReferenceProvider.JVM_FORMAT.getBooleanValue(getOptions())
-                               ? JavaClassReferenceSet.SEPARATOR2
-                               : JavaClassReferenceSet.SEPARATOR;
-    return myIndex > 0 && s.charAt(getRangeInElement().getStartOffset() - 1) == separatorChar;
+    return myIndex > 0 && s.charAt(getRangeInElement().getStartOffset() - 1) == JavaClassReferenceSet.SEPARATOR2;
   }
 
   @Nullable
