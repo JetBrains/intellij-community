@@ -182,7 +182,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
           addCurrentTextToRecents();
         }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK), JComponent.WHEN_FOCUSED);
 
     final String initialText = myEditor.getSelectionModel().getSelectedText();
 
@@ -403,6 +403,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
       shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS).getShortcutSet().getShortcuts()));
       shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).getShortcutSet().getShortcuts()));
+      shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK), null));
 
       registerCustomShortcutSet(
         new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
@@ -424,6 +425,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
       shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT).getShortcutSet().getShortcuts()));
       shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).getShortcutSet().getShortcuts()));
+      shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null));
 
       registerCustomShortcutSet(
         new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
