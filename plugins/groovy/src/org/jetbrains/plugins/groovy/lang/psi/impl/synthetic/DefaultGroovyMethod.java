@@ -55,18 +55,19 @@ public class DefaultGroovyMethod extends LightMethod {
       String[] parmNames = new String[originalParameters.length - 1];
       for (int i = 1; i < originalParameters.length; i++) {
         PsiParameter originalParameter = originalParameters[i];
-        String name;
+        String baseName;
         final PsiType type = originalParameter.getType();
         String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,
             null, type).names;
-        name = "p";
         if (nameSuggestions.length > 0) {
-          name = nameSuggestions[0];
+          baseName = nameSuggestions[0];
+        } else {
+          baseName = "p";
         }
 
         int postfix = 1;
 
-        String baseName = name;
+        String name = baseName;
         NextName:
         do {
           for (int j = 1; j < i; j++) {
