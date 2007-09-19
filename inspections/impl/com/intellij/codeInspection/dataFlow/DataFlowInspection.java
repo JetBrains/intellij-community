@@ -77,7 +77,10 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     else if (rc == RunnerResult.TOO_COMPLEX) {
       if (body.getParent() instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)body.getParent();
-        holder.registerProblem(method.getNameIdentifier(), InspectionsBundle.message("dataflow.too.complex"), ProblemHighlightType.INFO);
+        final PsiIdentifier name = method.getNameIdentifier();
+        if (name != null) { // Might be null for synthetic methods like JSP page.
+          holder.registerProblem(name, InspectionsBundle.message("dataflow.too.complex"), ProblemHighlightType.INFO);
+        }
       }
     }
   }
