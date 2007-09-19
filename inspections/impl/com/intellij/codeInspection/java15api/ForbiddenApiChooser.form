@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.codeInspection.java15api.Java15APIUsageInspection">
+  <grid id="27dc6" binding="myWholePanel" layout-manager="FormLayout">
+    <rowspec value="center:max(d;4px):noGrow"/>
+    <rowspec value="top:4dlu:noGrow"/>
+    <rowspec value="center:max(d;4px):noGrow"/>
+    <colspec value="fill:max(d;4px):noGrow"/>
+    <constraints>
+      <xy x="20" y="20" width="130" height="50"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="6953c" class="javax.swing.JCheckBox" binding="my15ApiCb">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <forms/>
+        </constraints>
+        <properties>
+          <text value="Forbid 1.5 api usages"/>
+        </properties>
+      </component>
+      <component id="54d39" class="javax.swing.JCheckBox" binding="my16ApiCb">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <forms/>
+        </constraints>
+        <properties>
+          <text value="Forbid 1.6 api usages"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>
