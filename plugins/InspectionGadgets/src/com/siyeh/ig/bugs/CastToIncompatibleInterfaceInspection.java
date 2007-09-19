@@ -22,6 +22,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CastToIncompatibleInterfaceInspection extends BaseInspection {
 
     @NotNull
@@ -73,6 +76,9 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
             }
             final PsiClass operandClass = operandClassType.resolve();
             if(operandClass == null){
+                return;
+            }
+            if(operandClass.isInterface()){
                 return;
             }
             if(InheritanceUtil.existsMutualSubclass(operandClass, castClass)){

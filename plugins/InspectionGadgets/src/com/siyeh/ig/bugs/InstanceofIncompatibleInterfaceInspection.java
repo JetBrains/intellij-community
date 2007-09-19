@@ -73,6 +73,9 @@ public class InstanceofIncompatibleInterfaceInspection
             if(operandClass == null){
                 return;
             }
+            if(operandClass.isInterface()){
+                return;
+            }
             if(InheritanceUtil.existsMutualSubclass(operandClass, castClass)){
                 return;
             }
