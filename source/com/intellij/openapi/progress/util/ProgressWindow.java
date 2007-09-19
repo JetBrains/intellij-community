@@ -47,6 +47,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
   protected final FocusTrackback myFocusTrackback;
   private boolean myStarted = false;
   private boolean myBackgrounded = false;
+  private boolean myWasShown;
 
   public ProgressWindow(boolean shouldShowCancel, Project project) {
     this(shouldShowCancel, false, project);
@@ -162,6 +163,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
       myInstallFunAlarm.addRequest(installer, 3000, getModalityState());
     }
 
+    myWasShown = true;
     myDialog.show();
     if (myDialog != null) {
       myDialog.myRepaintRunnable.run();
@@ -179,9 +181,14 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
     super.stop();
     if (myDialog != null) {
-      myDialog.hide();
-      myFocusTrackback.restoreFocus();
+      if (myDialog.wasShown()) {
+        myDialog.hide();
+        myFocusTrackback.restoreFocus();
+      } else {
+        myFocusTrackback.kill();
+      }
     }
+
     myStoppedAlready = true;
 
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
@@ -462,6 +469,9 @@ public class ProgressWindow extends BlockingProgressIndicator {
       });
     }
 
+
+
+
     public void show() {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
       if (myParentWindow == null) return;
@@ -479,6 +489,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
       });
 
       myPopup.show();
+    }
+
+    public boolean wasShown() {
+      return myWasShown;
     }
 
     private class MyDialogWrapper extends DialogWrapper {
