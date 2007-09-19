@@ -6,9 +6,9 @@
  */
 package com.intellij.lang.injection;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public interface ConcatenationAwareInjector {
-  void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement... operands);
+  void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands);
 }

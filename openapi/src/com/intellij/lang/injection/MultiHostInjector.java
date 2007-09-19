@@ -6,9 +6,13 @@
  */
 package com.intellij.lang.injection;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public interface MultiHostInjector {
-  void getLanguagesToInject(@NotNull PsiElement context, @NotNull MultiHostRegistrar injectionPlacesRegistrar);
+  void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context);
+  @NotNull
+  List<? extends Class<? extends PsiElement>> elementsToInjectIn();
 }

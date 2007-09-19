@@ -29,7 +29,4 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
 
   public abstract boolean isOneLine();
 
-  public T getHost() {
-    return myHost;
-  }
 }

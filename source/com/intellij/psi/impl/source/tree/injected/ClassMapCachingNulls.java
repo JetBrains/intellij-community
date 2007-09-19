@@ -21,17 +21,19 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Arrays;
 
 public class ClassMapCachingNulls<T> {
   private static final Object[] NULL = ArrayUtil.EMPTY_OBJECT_ARRAY;
   private final Map<Class, T[]> myBackingMap;
+  private final T[] myEmptyArray;
   private final Map<Class, T[]> myMap = new ConcurrentHashMap<Class, T[]>();
 
-  public ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap) {
+  public ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap, T[] emptyArray) {
     myBackingMap = backingMap;
+    myEmptyArray = emptyArray;
   }
 
   public T[] get(Class aClass) {
@@ -63,8 +65,7 @@ public class ClassMapCachingNulls<T> {
       value = null;
     }
     else {
-      Class<T> type = (Class<T>)result.get(0).getClass();
-      value = ArrayUtil.toObjectArray(result, type);
+      value = result.toArray(myEmptyArray);
       myMap.put(aClass, value);
     }
     return value;

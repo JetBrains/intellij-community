@@ -17,8 +17,8 @@ import java.util.List;
 public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder");
 
-  private PsiFile myContextFile;
-  private HighlightInfoFilter[] myFilters;
+  private final PsiFile myContextFile;
+  private final HighlightInfoFilter[] myFilters;
   private int myErrorCount;
   private int myWarningCount;
   private int myInfoCount;

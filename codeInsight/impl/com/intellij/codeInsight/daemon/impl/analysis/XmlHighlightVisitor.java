@@ -81,10 +81,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   private static boolean ourDoJaxpTesting;
 
-  private static final @NonNls String AMP_ENTITY = "&amp;";
-  private static final @NonNls String TAGLIB_DIRECTIVE = "taglib";
-  private static final @NonNls String URI_ATT = "uri";
-  private static final @NonNls String TAGDIR_ATT = "tagdir";
+  @NonNls private static final String AMP_ENTITY = "&amp;";
+  @NonNls private static final String TAGLIB_DIRECTIVE = "taglib";
+  @NonNls private static final String URI_ATT = "uri";
+  @NonNls private static final String TAGDIR_ATT = "tagdir";
   @NonNls private static final String IMPORT_ATTR_NAME = "import";
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
@@ -264,7 +264,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           localizedMessage,
           new TextAttributes() {
             public boolean isEmpty() {
-              return false; 
+              return false;
             }
           }
         );
@@ -292,11 +292,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           return getText();
         }
 
-        public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
           return true;
         }
 
-        public void invoke(Project project, Editor editor, PsiFile file) {
+        public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
           if (!CodeInsightUtil.prepareFileForWrite(file)) return;
           final int textOffset = element.getTextOffset();
           editor.getDocument().replaceString(textOffset,textOffset + 1,AMP_ENTITY);
@@ -448,8 +448,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   private static boolean isAdditionallyDeclared(final String additional, String name) {
     name = name.toLowerCase();
-    if (additional.indexOf(name) == -1) return false;
-    
+    if (!additional.contains(name)) return false;
+
     StringTokenizer tokenizer = new StringTokenizer(additional, ", ");
     while (tokenizer.hasMoreTokens()) {
       if (name.equals(tokenizer.nextToken())) {
@@ -505,13 +505,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (attribute.isNamespaceDeclaration()) {
       checkReferences(attribute.getValueElement(), QuickFixProvider.NULL);
       return;
-    } else {
-      final String namespace = attribute.getNamespace();
+    }
+    final String namespace = attribute.getNamespace();
 
-      if (XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(namespace)) {
-        checkReferences(attribute.getValueElement(), QuickFixProvider.NULL);
-        return;
-      }
+    if (XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(namespace)) {
+      checkReferences(attribute.getValueElement(), QuickFixProvider.NULL);
+      return;
     }
 
     XmlElementDescriptor elementDescriptor = tag.getDescriptor();
@@ -553,8 +552,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                                final String localName,
                                                final XmlAttribute attribute,
                                                final String localizedMessage) {
-    final HighlightInfoType tagProblemInfoType;
-    IntentionAction[] quickFixes;
 
     final RemoveAttributeIntentionFix removeAttributeIntention = new RemoveAttributeIntentionFix(localName,attribute);
 
@@ -574,8 +571,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       //tagProblemInfoType = SeverityRegistrar.getHighlightInfoTypeBySeverity(inspectionProfile.getErrorLevel(key).getSeverity());
     }
     else {
-      tagProblemInfoType = HighlightInfoType.WRONG_REF;
-      quickFixes = new IntentionAction[]{removeAttributeIntention};
+      final HighlightInfoType tagProblemInfoType = HighlightInfoType.WRONG_REF;
+      IntentionAction[] quickFixes = new IntentionAction[]{removeAttributeIntention};
 
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
         tagProblemInfoType,
@@ -725,7 +722,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     return false;
   }
 
-  private static boolean isSoftContext(final @NotNull XmlAttribute attr) {
+  private static boolean isSoftContext(@NotNull final XmlAttribute attr) {
     if (attr.getDescriptor().hasIdType()) return false;
     PsiReference reference = attr.getValueElement().getReference();
     return reference != null && reference.isSoft();
@@ -895,11 +892,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return XmlErrorMessages.message("remove.attribute.quickfix.family");
     }
 
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return true;
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;
       PsiElement next = findNextAttribute(myAttribute);
       myAttribute.delete();
@@ -924,13 +921,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   public static class CreateNSDeclarationIntentionFix implements IntentionAction {
-    boolean myTaglibDeclaration;
+    final boolean myTaglibDeclaration;
     private final XmlElement myElement;
     private final String myNamespacePrefix;
     @NonNls private static final String MY_DEFAULT_XML_NS = "someuri";
     @NonNls private static final String URI_ATTR_NAME = "uri";
 
-    public CreateNSDeclarationIntentionFix(final @NotNull XmlElement element, final @NotNull String namespacePrefix, boolean taglibDeclaration) {
+    public CreateNSDeclarationIntentionFix(@NotNull final XmlElement element, @NotNull final String namespacePrefix, boolean taglibDeclaration) {
       myElement = element;
       myNamespacePrefix = namespacePrefix;
       myTaglibDeclaration = taglibDeclaration;
@@ -950,7 +947,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return getText();
     }
 
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return true;
     }
 
@@ -1017,7 +1014,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           }
         }
 
-        if (file.getFileType() == StdFileTypes.JSPX && possibleUris.size() == 0) {
+        if (file.getFileType() == StdFileTypes.JSPX && possibleUris.isEmpty()) {
           final XmlElementDescriptor descriptor = ((XmlNSDescriptorImpl)jspManager.getActionsLibrary()).getElementDescriptor(localName, XmlUtil.JSP_URI);
           if (descriptor != null) possibleUris.add(XmlUtil.JSP_URI);
         }
@@ -1095,7 +1092,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return wordsFoundCount[0] == words.length;
     }
 
-    public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;
       final boolean taglib = myTaglibDeclaration || file instanceof JspFile;
       final String[] namespaces = guessNamespace(
@@ -1145,7 +1142,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           createPopup().
           showInBestPositionFor(editor);
       } else {
-        String defaultNs = ApplicationManager.getApplication().isUnitTestMode() ? (taglib ? XmlUtil.JSTL_CORE_URIS[0]:MY_DEFAULT_XML_NS):"";
+        String defaultNs =
+          ApplicationManager.getApplication().isUnitTestMode() ? taglib ? XmlUtil.JSTL_CORE_URIS[0] : MY_DEFAULT_XML_NS : "";
         final XmlAttribute xmlAttribute = insertNsDeclaration(file, namespaces.length > 0 ? namespaces[0] : defaultNs, project);
 
         if (namespaces.length == 0) {

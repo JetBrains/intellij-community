@@ -118,6 +118,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
     myRefCountHolder = refCountHolder;
+    myXmlVisitor.setRefCountHolder(myRefCountHolder);
   }
 
   public void visitElement(PsiElement element) {
@@ -956,7 +957,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitXmlElement(XmlElement element) {
-    myXmlVisitor.setRefCountHolder(myRefCountHolder);
     element.accept(myXmlVisitor);
 
     List<HighlightInfo> result = myXmlVisitor.getResult();

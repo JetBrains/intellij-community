@@ -46,14 +46,16 @@ public interface PsiLanguageInjectionHost extends PsiElement {
   class Shred {
     public final PsiLanguageInjectionHost host;
     private final RangeMarker relevantRangeInHost;
+    public final TextRange range; // range in (decoded) PSI
     public final String prefix;
     public final String suffix;
 
-    public Shred(PsiLanguageInjectionHost host, RangeMarker relevantRangeInHost, String prefix, String suffix) {
+    public Shred(PsiLanguageInjectionHost host, RangeMarker relevantRangeInHost, String prefix, String suffix, TextRange range) {
       this.host = host;
       this.relevantRangeInHost = relevantRangeInHost;
       this.prefix = prefix;
       this.suffix = suffix;
+      this.range = range;
     }
 
     public TextRange getRangeInsideHost() {

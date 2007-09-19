@@ -43,6 +43,7 @@ import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -131,7 +132,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private LanguageLevel myLanguageLevel;
   private final PsiElementFinder[] myElementFinders;
 
-  private final List<LanguageInjector> myLanguageInjectors = new ArrayList<LanguageInjector>();
+  private final List<LanguageInjector> myLanguageInjectors = new CopyOnWriteArrayList<LanguageInjector>();
   private final ProgressManager myProgressManager;
 
   public PsiManagerImpl(Project project,
@@ -351,8 +352,14 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     }
   }
 
+  @NotNull
+  public List<? extends LanguageInjector> getLanguageInjectors() {
+    return myLanguageInjectors;
+  }
+
   public void registerLanguageInjector(@NotNull LanguageInjector injector) {
     myLanguageInjectors.add(injector);
+    InjectedLanguageManagerImpl.getInstanceImpl(myProject).psiManagerInjectorsChanged();
   }
 
   public void registerLanguageInjector(@NotNull final LanguageInjector injector, Disposable parentDisposable) {
@@ -366,6 +373,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void unregisterLanguageInjector(@NotNull LanguageInjector injector) {
     myLanguageInjectors.remove(injector);
+    InjectedLanguageManagerImpl.getInstanceImpl(myProject).psiManagerInjectorsChanged();
   }
 
   public ElementManipulatorsRegistry getElementManipulatorsRegistry() {
@@ -1137,11 +1145,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     }
 
     return result.toArray(new PsiPackage[result.size()]);
-  }
-
-  @NotNull
-  public List<? extends LanguageInjector> getLanguageInjectors() {
-    return myLanguageInjectors;
   }
 
   private class MyExternalResourceListener implements ExternalResourceListener {

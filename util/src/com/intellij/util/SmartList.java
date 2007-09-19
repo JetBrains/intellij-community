@@ -18,6 +18,8 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.containers.EmptyIterator;
+
 import java.util.*;
 
 @SuppressWarnings({"unchecked"})
@@ -34,7 +36,7 @@ public class SmartList<E> extends AbstractList<E> {
 
   public E get(int index) {
     if (index < 0 || index >= mySize) {
-      throw new IndexOutOfBoundsException("index= " + index + ". Must be index > 0 && index < " + mySize);
+      throw new IndexOutOfBoundsException("index= " + index + ". Must be index >= 0 && index < " + mySize);
     }
     if (mySize == 1) {
       return (E)myElem;
@@ -132,6 +134,15 @@ public class SmartList<E> extends AbstractList<E> {
     }
     mySize--;
     return oldValue;
+  }
+
+  private static final Iterator EMPTY = new EmptyIterator();
+  public Iterator<E> iterator() {
+    return mySize == 0 ? EMPTY : super.iterator();
+  }
+
+  public boolean isEmpty() {
+    return mySize == 0;
   }
 }
 
