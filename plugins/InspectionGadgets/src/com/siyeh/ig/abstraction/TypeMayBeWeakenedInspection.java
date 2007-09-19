@@ -192,6 +192,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         } else if (variableOrMethod instanceof PsiMethod) {
             final PsiMethod method = (PsiMethod) variableOrMethod;
             variableOrMethodType = method.getReturnType();
+	        if (variableOrMethodType == PsiType.VOID) {
+		        return Collections.EMPTY_LIST;
+	        }
         } else {
             throw new IllegalArgumentException(
                     "PsiMethod or PsiVariable expected: " +
@@ -431,7 +434,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                     return Collections.EMPTY_LIST;
                 }
             }
-            if (weakestTypeClasses.contains(variableOrMethodClass)) {
+            if (weakestTypeClasses.contains(variableOrMethodClass) ||
+                    weakestTypeClasses.isEmpty()) {
                 return Collections.EMPTY_LIST;
             }
         }
@@ -504,6 +508,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 if (aClass.isInheritor(weakestTypeClass, true)) {
                     iterator.remove();
                 } else if (weakestTypeClass.isInheritor(aClass, true)) {
+                    shouldAdd = false;
+                } else {
+                    iterator.remove();
                     shouldAdd = false;
                 }
             } else {
