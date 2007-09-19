@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
-import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -246,6 +246,17 @@ public class FocusTrackback {
 
   public void setMustBeShown(final boolean mustBeShown) {
     myMustBeShown = mustBeShown;
+  }
+
+  public static void release(@NotNull final JFrame frame) {
+    final Window[] all = ourRootWindowToParentsStack.keySet().toArray(new Window[ourRootWindowToParentsStack.size()]);
+    for (Window each : all) {
+      if (each == null) continue;
+
+      if (each == frame || SwingUtilities.isDescendingFrom(each, frame)) {
+        ourRootWindowToParentsStack.remove(each);
+      }
+    }
   }
 
   public static interface Provider {

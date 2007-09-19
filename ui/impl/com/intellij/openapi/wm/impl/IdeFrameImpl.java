@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.FocusTrackback;
 
 import javax.swing.*;
 import java.awt.*;
@@ -194,6 +195,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       if (myRootPane != null) { //already disposed
         myRootPane.deinstallNavigationBar();
       }
+    }
+
+    if (project == null) {
+      FocusTrackback.release(this);
     }
   }
 
