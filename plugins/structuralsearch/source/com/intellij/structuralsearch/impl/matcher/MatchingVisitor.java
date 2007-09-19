@@ -1672,9 +1672,9 @@ public class MatchingVisitor extends PsiElementVisitor {
     final String text = StringUtil.stripQuotesAroundValue( value.getText() );
     
     final boolean isTypedVar = matchContext.getPattern().isTypedVar(text);
+    Handler handler;
 
-    if (isTypedVar) {
-      Handler handler = matchContext.getPattern().getHandler( text );
+    if (isTypedVar && (handler = matchContext.getPattern().getHandler( text )) instanceof SubstitutionHandler) {
       String text2 = another.getText();
       int offset = (text2.length() > 0 && ( text2.charAt(0) == '"' || text2.charAt(0) == '\''))? 1:0;
       result = ((SubstitutionHandler)handler).handle(another,offset,text2.length()-offset,matchContext);
