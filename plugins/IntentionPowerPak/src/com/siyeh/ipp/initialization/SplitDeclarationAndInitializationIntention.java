@@ -20,7 +20,11 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.HighlightUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 
 public class SplitDeclarationAndInitializationIntention extends Intention {
 
@@ -38,33 +42,55 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
             return;
         }
         final String initializerText = initializer.getText();
-        final PsiManager manager = field.getManager();
-        final PsiElementFactory elementFactory = manager.getElementFactory();
-        PsiClassInitializer classInitializer =
-                elementFactory.createClassInitializer();
         final PsiClass containingClass = field.getContainingClass();
         if (containingClass == null) {
             return;
         }
-        classInitializer =
-                (PsiClassInitializer)containingClass.addAfter(classInitializer,
-                        field);
+        final boolean fieldIsStatic =
+                field.hasModifierProperty(PsiModifier.STATIC);
+        final PsiClassInitializer[] classInitializers =
+                containingClass.getInitializers();
+        PsiClassInitializer classInitializer = null;
+        final int fieldOffset = field.getTextOffset();
+        for (PsiClassInitializer existingClassInitializer : classInitializers) {
+            final int initializerOffset =
+                    existingClassInitializer.getTextOffset();
+            if (initializerOffset <= fieldOffset) {
+                continue;
+            }
+            final boolean initializerIsStatic =
+                    existingClassInitializer.hasModifierProperty(
+                            PsiModifier.STATIC);
+            if (initializerIsStatic == fieldIsStatic) {
+                classInitializer = existingClassInitializer;
+                break;
+            }
+        }
+        final PsiManager manager = field.getManager();
+        final PsiElementFactory elementFactory = manager.getElementFactory();
+        if (classInitializer == null) {
+            classInitializer = elementFactory.createClassInitializer();
+            classInitializer = (PsiClassInitializer)
+                    containingClass.addAfter(classInitializer, field);
+        }
         final PsiCodeBlock body = classInitializer.getBody();
-        final String initializationStatementText =
+        @NonNls final String initializationStatementText =
                 field.getName() + " = " + initializerText + ';';
         final PsiExpressionStatement statement =
                 (PsiExpressionStatement)elementFactory.createStatementFromText(
                         initializationStatementText, body);
-        body.add(statement);
-        if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiElement addedElement = body.add(statement);
+        if (fieldIsStatic) {
             final PsiModifierList modifierList =
                     classInitializer.getModifierList();
-            modifierList.setModifierProperty(PsiModifier.STATIC, true);
+            if (modifierList != null) {
+                modifierList.setModifierProperty(PsiModifier.STATIC, true);
+            }
         }
         initializer.delete();
-        final CodeStyleManager codeStyleManager =
-                manager.getCodeStyleManager();
+        final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
         codeStyleManager.reformat(field);
         codeStyleManager.reformat(classInitializer);
+        HighlightUtil.highlightElements(Collections.singleton(addedElement));
     }
 }
