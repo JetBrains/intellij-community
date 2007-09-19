@@ -180,7 +180,7 @@ public class MavenProjectModel {
     return Tree.visit(rootProjects, visitor);
   }
 
-  public class Node {
+  public static class Node {
 
     @NotNull private final VirtualFile pomFile;
     @NotNull private MavenProject mavenProject;
