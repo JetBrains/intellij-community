@@ -257,7 +257,6 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   }
 
   private void computeCachedValue(@NotNull final Object[] dependencyItems) {
-    assert !myCachedValue.hasUpToDateValue();
     getCachedValueProvider().dependencies = dependencyItems;
     myCachedValue.getValue();
   }
