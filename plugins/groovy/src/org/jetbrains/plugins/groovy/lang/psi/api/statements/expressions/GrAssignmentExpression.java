@@ -16,14 +16,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
  */
 public interface GrAssignmentExpression extends GrExpression {
 
+  @NotNull
   public GrExpression getLValue();
 
+  @Nullable
   public GrExpression getRValue();
 
   IElementType getOperationToken();
