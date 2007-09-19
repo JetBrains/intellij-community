@@ -69,7 +69,7 @@ public class GroovyOverrideImplementUtil {
 
 
     MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(classMembers.toArray(new PsiMethodMember[classMembers.size()]), false, true, project);
-    chooser.setTitle(isImplement ? GroovyBundle.message("select.methods.to.override") : GroovyBundle.message("select.methods.to.implement"));
+    chooser.setTitle(isImplement ? GroovyBundle.message("select.methods.to.implement") : GroovyBundle.message("select.methods.to.override"));
     chooser.show();
 
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
