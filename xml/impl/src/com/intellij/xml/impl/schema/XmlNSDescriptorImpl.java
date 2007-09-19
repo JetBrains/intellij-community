@@ -117,7 +117,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       else if (equalsToSchemaName(tag, INCLUDE_TAG_NAME) ||
                (reference &&
                 equalsToSchemaName(tag, IMPORT_TAG_NAME) &&
-                namespace.equals(tag.getAttributeValue("namespace"))
+                ( namespace.equals(tag.getAttributeValue("namespace")) ||
+                  namespace.length() == 0 && tag.getAttributeValue("namespace") == null
+                )
                )
         ) {
         final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", tag.getNamespace());

@@ -382,7 +382,8 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
 
     private static String getNamespace(final XmlTag tag, final String text) {
-      final String namespaceByPrefix = tag.getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(text));
+      final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(text);
+      final String namespaceByPrefix = tag.getNamespaceByPrefix(namespacePrefix);
       if (namespaceByPrefix.length() > 0) return namespaceByPrefix;
       final XmlTag rootTag = ((XmlFile)tag.getContainingFile()).getDocument().getRootTag();
 
@@ -390,7 +391,15 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
           "schema".equals(rootTag.getLocalName()) &&
           XmlUtil.ourSchemaUrisList.indexOf(rootTag.getNamespace()) != -1 ) {
         final String targetNS = rootTag.getAttributeValue(TARGET_NAMESPACE);
-        if (targetNS != null) return targetNS;
+        
+        if (targetNS != null) {
+          final String targetNsPrefix = rootTag.getPrefixByNamespace(targetNS);
+
+          if (namespacePrefix.equals(targetNsPrefix) ||
+              (namespaceByPrefix.length() == 0 && targetNsPrefix == null)) {
+            return targetNS;
+          }
+        }
       }
       return namespaceByPrefix;
     }
