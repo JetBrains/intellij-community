@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.lang.Language;
@@ -51,9 +52,36 @@ public class DefaultGroovyMethod extends LightMethod {
       myModifiedMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
       PsiParameter[] originalParameters = method.getParameterList().getParameters();
       PsiParameterList newParamList = myModifiedMethod.getParameterList();
+      String[] parmNames = new String[originalParameters.length - 1];
       for (int i = 1; i < originalParameters.length; i++) {
         PsiParameter originalParameter = originalParameters[i];
-        PsiParameter parameter = elementFactory.createParameter("p" + i, originalParameter.getType());
+        String name;
+        final PsiType type = originalParameter.getType();
+        String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,
+            null, type).names;
+        name = "p";
+        if (nameSuggestions.length > 0) {
+          name = nameSuggestions[0];
+        }
+
+        int postfix = 1;
+
+        String baseName = name;
+        NextName:
+        do {
+          for (int j = 1; j < i; j++) {
+            if (name.equals(parmNames[j - 1])) {
+              name = baseName + postfix;
+              postfix++;
+              continue NextName;
+            }
+          }
+
+          break;
+        } while (true);
+
+        parmNames[i - 1] = name;
+        PsiParameter parameter = elementFactory.createParameter(name, type);
         newParamList.add(parameter);
       }
     } catch (IncorrectOperationException e) {
