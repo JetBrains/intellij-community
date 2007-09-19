@@ -23,10 +23,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
@@ -242,7 +242,7 @@ public class PsiUtil {
     return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       public SearchScope compute() {
         if (originalScope instanceof GlobalSearchScope) {
-          return GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope) originalScope, GroovyFileType.GROOVY_FILE_TYPE);
+          return GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope) originalScope, GroovyFileType.GROOVY_FILE_TYPE, GspFileType.GSP_FILE_TYPE);
         }
         return originalScope;
       }

@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -38,13 +37,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private boolean myIsConstructor;
 
-  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor, PsiType[] argumentTypes) {
+  public MethodResolverProcessor(String name, PsiElement place, boolean forCompletion, boolean isConstructor, PsiType[] argumentTypes) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
     myArgumentTypes = argumentTypes;
   }
 
-  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor) {
+  public MethodResolverProcessor(String name, PsiElement place, boolean forCompletion, boolean isConstructor) {
     this(name, place, forCompletion, isConstructor, PsiUtil.getArgumentTypes(place, isConstructor));
   }
 

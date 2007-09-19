@@ -16,20 +16,15 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.EnumSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -37,7 +32,7 @@ import java.util.Set;
 public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
   protected String myName;
   private EnumSet<ResolveKind> myResolveTargetKinds;
-  protected GroovyPsiElement myPlace;
+  protected PsiElement myPlace;
   protected boolean myForCompletion;
   private @NotNull PsiType[] myTypeArguments;
 
@@ -54,7 +49,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   protected GrImportStatement myImportStatementContext;
 
   public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
-                           GroovyPsiElement place, boolean forCompletion,
+                           PsiElement place, boolean forCompletion,
                            @NotNull PsiType[] typeArguments) {
     myName = name;
     myResolveTargetKinds = resolveTargets;
