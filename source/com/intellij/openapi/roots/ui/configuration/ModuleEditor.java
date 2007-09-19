@@ -150,8 +150,8 @@ public class ModuleEditor implements Place.Navigator {
   }
 
   public ModuleConfigurationState createModuleConfigurationState() {
-    return new ModuleConfigurationStateImpl(myProject, myModulesProvider, getModifiableRootModelProxy()
-      ,/*myFacetsProvider */ null);
+    return new ModuleConfigurationStateImpl(myProject, myModulesProvider, getModifiableRootModelProxy(), 
+                                            myFacetsConfigurator);
   }
 
   private void processEditorsProvider(final ModuleConfigurationEditorProvider provider, final ModuleConfigurationState state) {
