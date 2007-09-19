@@ -114,9 +114,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkImplementedMethodsOfClass(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
-    //todo: Needs tests
     if (typeDefinition.hasModifierProperty(PsiModifier.ABSTRACT)) return;
-    if (typeDefinition.isInterface()) return;
 
     final Collection<CandidateInfo> methodsToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
 
@@ -125,14 +123,12 @@ public class GroovyAnnotator implements Annotator {
     final PsiElement methodCandidateInfo = methodsToImplement.toArray(CandidateInfo.EMPTY_ARRAY)[0].getElement();
     assert methodCandidateInfo instanceof PsiMethod;
     
-    String notImpledMethodName = ((PsiMethod) methodCandidateInfo).getName();
-    final PsiElement firstChild = typeDefinition.getFirstChild();
-    final PsiElement lBrace = typeDefinition.getBody().getFirstChild();
-    if (firstChild == null || lBrace == null) {
-      return;
-    }
+    String notImplementedMethodName = ((PsiMethod) methodCandidateInfo).getName();
 
-    final Annotation annotation = holder.createErrorAnnotation(new TextRange(firstChild.getTextRange().getStartOffset(), lBrace.getTextRange().getStartOffset()), GroovyBundle.message("method.is.not.implemented", notImpledMethodName));
+    final int startOffset = typeDefinition.getTextRange().getStartOffset();
+    final GrTypeDefinitionBody body = typeDefinition.getBody();
+    int endOffset = body != null ? body.getTextRange().getStartOffset() : typeDefinition.getTextRange().getEndOffset();
+    final Annotation annotation = holder.createErrorAnnotation(new TextRange(startOffset, endOffset), GroovyBundle.message("method.is.not.implemented", notImplementedMethodName));
     registerImplementsMethodsFix(typeDefinition, annotation);
   }
 

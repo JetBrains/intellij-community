@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 import java.util.*;
@@ -95,7 +96,10 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
     if (modifier.equals(PsiModifier.VOLATILE)) return findChildByType(GroovyElementTypes.kVOLATILE) != null;
 
     if (!(parent instanceof GrVariableDeclaration)) {
-      if (modifier.equals(PsiModifier.ABSTRACT)) return findChildByType(GroovyElementTypes.kABSTRACT) != null;
+      if (modifier.equals(PsiModifier.ABSTRACT)) {
+        return (parent instanceof GrTypeDefinition && ((GrTypeDefinition) parent).isInterface()) ||
+            findChildByType(GroovyElementTypes.kABSTRACT) != null;
+      }
       if (modifier.equals(PsiModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
     }
 
