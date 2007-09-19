@@ -158,13 +158,13 @@ public class JDOMUtil {
   }
 
   public static void internElement(final Element element, final StringInterner interner) {
-    element.setName(interner.intern(element.getName()));
+    element.setName(intern(interner, element.getName()));
 
     final List attributes = element.getAttributes();
     for (Object o : attributes) {
       Attribute attr = (Attribute)o;
-      attr.setName(interner.intern(attr.getName()));
-      attr.setValue(interner.intern(attr.getValue()));
+      attr.setName(intern(interner, attr.getName()));
+      attr.setValue(intern(interner, attr.getValue()));
     }
 
     final List content = element.getContent();
@@ -175,15 +175,21 @@ public class JDOMUtil {
       }
       else if (o instanceof Text) {
         Text text = (Text)o;
-        text.setText(interner.intern(text.getText()));
+        text.setText(intern(interner, text.getText()));
       }
       else if (o instanceof Comment) {
         Comment comment = (Comment)o;
-        comment.setText(interner.intern(comment.getText()));
+        comment.setText(intern(interner, comment.getText()));
       }
       else {
         throw new IllegalArgumentException("Wrong node: " + o);
       }
+    }
+  }
+
+  private static String intern(final StringInterner interner, final String s) {
+    synchronized (interner) {
+      return interner.intern(s);
     }
   }
 
