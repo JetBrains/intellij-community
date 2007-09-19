@@ -11,11 +11,8 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
 import java.util.Collections;
@@ -89,7 +86,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
 
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
-    return MethodSignatureUtil.createMethodSignature(getName(), getParameterList(), null, PsiSubstitutor.EMPTY);
+    return MethodSignatureBackedByPsiMethod.create(this, PsiSubstitutor.EMPTY);
   }
 
   @Nullable
