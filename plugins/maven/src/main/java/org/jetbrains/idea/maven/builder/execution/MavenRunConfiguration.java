@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -35,10 +36,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     public MavenBuilderState builderState;
 
     public MavenSettings() {
-      buildParameters = new MavenBuildParameters();
-      coreState = new MavenCoreState();
-      builderState = new MavenBuilderState();
-      builderState.setUseMavenEmbedder(false);
+      this(ProjectManager.getInstance().getDefaultProject());
     }
 
     public MavenSettings(final Project project) {

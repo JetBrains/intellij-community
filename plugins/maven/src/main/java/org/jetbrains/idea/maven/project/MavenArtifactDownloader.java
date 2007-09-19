@@ -17,6 +17,7 @@ import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderAdapter;
+import org.apache.maven.embedder.MavenEmbedderException;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
@@ -74,8 +75,8 @@ public class MavenArtifactDownloader {
       }
     }
 
-    final MavenEmbedder mavenEmbedder = MavenImportProcessor.createEmbedder(project);
-    if (mavenEmbedder != null) {
+    try {
+      final MavenEmbedder mavenEmbedder = project.getComponent(MavenCore.class).getState().createEmbedder();
 
       ProgressManager.getInstance().run(new Task.Modal(project, ProjectBundle.message("maven.title.downloading"), true) {
         public void run(ProgressIndicator indicator) {
@@ -87,7 +88,11 @@ public class MavenArtifactDownloader {
             .download(project, mavenProjects, moduleIds, true);
         }
       });
+
       MavenEnv.releaseEmbedder(mavenEmbedder);
+    }
+    catch (MavenEmbedderException e) {
+      LOG.info("Maven Embedder initialization failed: " + e.getMessage());
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

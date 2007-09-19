@@ -6,11 +6,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.MavenCore;
+import org.jetbrains.idea.maven.core.MavenCoreState;
 import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
@@ -29,6 +32,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   private Project projectToUpdate;
 
+  private MavenCoreState coreState;
   private MavenImporterPreferences importerPreferences;
   private MavenArtifactPreferences artifactPreferences;
 
@@ -83,9 +87,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
         }
       });
     }
-    final MavenWorkspacePreferencesComponent preferencesComponent = MavenWorkspacePreferencesComponent.getInstance(project);
-    preferencesComponent.getState().myImporterPreferences = getImporterPreferences();
-    preferencesComponent.getState().myArtifactPreferences = getArtifactPreferences();
+    project.getComponent(MavenWorkspacePreferencesComponent.class).getState().myImporterPreferences = getImporterPreferences();
+    project.getComponent(MavenWorkspacePreferencesComponent.class).getState().myArtifactPreferences = getArtifactPreferences();
+    project.getComponent(MavenCore.class).loadState(coreState);
   }
 
   public Project getUpdatedProject() {
@@ -108,7 +112,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
           indicator.setText(ProjectBundle.message("maven.locating.files"));
           myFiles = FileFinder.findFilesByName(getImportRoot().getChildren(), MavenEnv.POM_FILE, new ArrayList<VirtualFile>(), null, indicator,
                                                getImporterPreferences().isLookForNested());
-          myProfiles = collectProfiles(getProjectToUpdate(), myFiles);
+          myProfiles = collectProfiles(myFiles);
           if(myProfiles.isEmpty()){
             createImportProcessor();
           }
@@ -125,10 +129,10 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     return myFiles != null;
   }
 
-  private static List<String> collectProfiles(final Project project, final Collection<VirtualFile> files) {
+  private List<String> collectProfiles(final Collection<VirtualFile> files) {
     final SortedSet<String> profiles = new TreeSet<String>();
 
-    final MavenEmbedder embedder = MavenImportProcessor.createEmbedder(project);
+    final MavenEmbedder embedder = MavenImportProcessor.createEmbedder(getCoreState());
     final MavenProjectReader reader = new MavenProjectReader(embedder);
     for (VirtualFile file : files) {
       ProjectUtil.collectProfileIds(reader.readBare(file.getPath()), profiles);
@@ -159,7 +163,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   private void createImportProcessor() {
-    myImportProcessor = new MavenImportProcessor(getProjectToUpdate(), getImporterPreferences(), getArtifactPreferences());
+    myImportProcessor = new MavenImportProcessor(getProjectToUpdate(), getCoreState(), getImporterPreferences(), getArtifactPreferences());
     myImportProcessor.createMavenProjectModel(new HashMap<VirtualFile, Module>(), myFiles, myProfiles);
   }
 
@@ -198,28 +202,31 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     openModulesConfigurator = on;
   }
 
+  public MavenCoreState getCoreState() {
+    if (coreState == null) {
+      coreState = getProject().getComponent(MavenCore.class).getState().clone();
+    }
+    return coreState;
+  }
+
   public MavenImporterPreferences getImporterPreferences() {
     if (importerPreferences == null) {
-      if (isUpdate()) {
-        importerPreferences = MavenWorkspacePreferencesComponent.getInstance(getProjectToUpdate()).getState().myImporterPreferences.clone();
-      }
-      else {
-        importerPreferences = new MavenImporterPreferences();
-      }
+      importerPreferences = getProject().getComponent(MavenWorkspacePreferencesComponent.class).getState()
+        .myImporterPreferences.clone();
     }
     return importerPreferences;
   }
 
   private MavenArtifactPreferences getArtifactPreferences() {
     if (artifactPreferences == null) {
-      if (isUpdate()) {
-        artifactPreferences = MavenWorkspacePreferencesComponent.getInstance(getProjectToUpdate()).getState().myArtifactPreferences.clone();
-      }
-      else {
-        artifactPreferences = new MavenArtifactPreferences();
-      }
+      artifactPreferences = getProject().getComponent(MavenWorkspacePreferencesComponent.class).getState()
+        .myArtifactPreferences.clone();
     }
     return artifactPreferences;
+  }
+
+  private Project getProject() {
+    return isUpdate() ? getProjectToUpdate() : ProjectManager.getInstance().getDefaultProject();
   }
 
   public void setFiles(final Collection<VirtualFile> files) {
@@ -247,7 +254,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   public String getSuggestedProjectName() {
     final List<MavenProjectModel.Node> list = myImportProcessor.getMavenProjectModel().getRootProjects();
     if(list.size()==1){
-      return list.get(0).getMavenProject().getArtifactId();      
+      return list.get(0).getMavenProject().getArtifactId();
     }
     return null;
   }

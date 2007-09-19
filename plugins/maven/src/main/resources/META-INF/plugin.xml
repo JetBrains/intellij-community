@@ -77,15 +77,27 @@
   <actions>
     <group id="Maven.Core">
       <action id="Maven.ShowSettings"
-              class="org.jetbrains.idea.maven.core.action.ShowSettingsAction" text="Edit Maven settings"
-              description="Edit Maven integration settings"
+              class="org.jetbrains.idea.maven.core.action.ShowSettingsAction" text="Maven settings"
+              description="Edit Maven integration settings for the current project"
               icon="/images/mavenSettings.png">
+      </action>
+
+      <action id="Maven.ShowDefaultSettings"
+              class="org.jetbrains.idea.maven.core.action.ShowDefaultSettingsAction" text="Default Maven settings"
+              description="Edit default Maven integration settings"
+              icon="/general/applicationSettings.png">
       </action>
 
       <action id="Maven.ToggleOffline"
               class="org.jetbrains.idea.maven.core.action.ToggleOfflineAction" text="Toggle Offline mode"
-              description="Toggles Offline more for Maven"
+              description="Toggle Offline mode for Maven"
               icon="/images/offlineMode.png">
+      </action>
+
+      <action id="Maven.ToggleSkipTests"
+              class="org.jetbrains.idea.maven.builder.action.ToggleSkipTestsAction" text="Toggle 'Skip tests' mode"
+              description="Toggle 'Skip tests' mode for Maven"
+              icon="/nodes/exceptionClass.png">
       </action>
     </group>
 
@@ -199,7 +211,10 @@
       <reference id="Maven.DetachPlugin"/>
       <separator/>
       <reference id="Maven.ShowSettings"/>
+      <reference id="Maven.ShowDefaultSettings"/>
       <reference id="Maven.ToggleOffline"/>
+      <reference id="Maven.ToggleSkipTests"/>
+      <separator/>
       <reference id="Maven.Synchronize"/>
       <reference id="Maven.DownloadArtifacts"/>
     </group>

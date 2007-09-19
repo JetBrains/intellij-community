@@ -2,23 +2,33 @@ package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportWizardStep;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.MavenCoreState;
+import org.jetbrains.idea.maven.core.MavenPathsForm;
 import org.jetbrains.idea.maven.project.ImporterPreferencesForm;
 import org.jetbrains.idea.maven.project.MavenImportProcessorContext;
 import org.jetbrains.idea.maven.project.MavenImporterPreferences;
 import org.jetbrains.idea.maven.project.ProjectBundle;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Vladislav.Kaznacheev
  */
 class MavenImportRootStep extends ProjectImportWizardStep {
 
+  private MavenCoreState myCoreState;
   private MavenImportProcessorContext myImportContext;
   private MavenImporterPreferences myImporterPreferences;
 
@@ -48,6 +58,15 @@ class MavenImportRootStep extends ProjectImportWizardStep {
     myPanel.add(myImporterPreferencesForm.createComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
                                                                                     GridBagConstraints.HORIZONTAL, new Insets(15, 6, 0, 6),
                                                                                     0, 0));
+    JButton advancedButton = new JButton(ProjectBundle.message("maven.advanced.button.name"));
+    myPanel.add(advancedButton, new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHEAST, 0, new Insets(15, 6, 0, 6),
+                                                                                    0, 0));
+    advancedButton.addMouseListener(new MouseAdapter(){
+      public void mouseClicked(final MouseEvent event) {
+        super.mouseClicked(event);
+        ShowSettingsUtil.getInstance().editConfigurable(myPanel, new MavenPathsConfigurable());
+      }
+    });
   }
 
   public JComponent getComponent() {
@@ -86,6 +105,13 @@ class MavenImportRootStep extends ProjectImportWizardStep {
     return myRootPathComponent.getPathComponent();
   }
 
+  private MavenCoreState getCoreState() {
+    if(myCoreState == null){
+      myCoreState = ((MavenImportBuilder)getBuilder()).getCoreState();
+    }
+    return myCoreState;
+  }
+
   public MavenImportProcessorContext getImportContext() {
     if (myImportContext == null) {
       myImportContext = (MavenImportProcessorContext)getBuilder();
@@ -103,5 +129,45 @@ class MavenImportRootStep extends ProjectImportWizardStep {
   @NonNls
   public String getHelpId() {
     return "reference.dialogs.new.project.import.maven.page1";
+  }
+
+  class MavenPathsConfigurable implements Configurable {
+    MavenPathsForm myForm = new MavenPathsForm();
+
+    @Nls
+    public String getDisplayName() {
+      return ProjectBundle.message("maven.paths.configurable.name");
+    }
+
+    @Nullable
+    public Icon getIcon() {
+      return null;
+    }
+
+    @Nullable
+    @NonNls
+    public String getHelpTopic() {
+      return null;
+    }
+
+    public JComponent createComponent() {
+      return myForm.getPanel();
+    }
+
+    public boolean isModified() {
+      return myForm.isModified(getCoreState());
+    }
+
+    public void apply() throws ConfigurationException {
+      myForm.setData(getCoreState());
+    }
+
+    public void reset() {
+      myForm.getData(getCoreState());
+    }
+
+    public void disposeUIResources() {
+      myForm.disposeUIResources();
+    }
   }
 }
