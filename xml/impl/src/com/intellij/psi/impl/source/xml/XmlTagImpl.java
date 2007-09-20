@@ -6,17 +6,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlTagNameChangedImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -998,7 +994,23 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
         if (startTagEnd == null) startTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(XmlTagImpl.this);
 
         if (startTagEnd == null) {
-          myFirstInserted = XmlTagImpl.super.addInternal(myChild, myChild, null, null);
+          ASTNode anchor = getLastChildNode();
+
+          while (anchor instanceof PsiWhiteSpace) {
+            anchor = anchor.getTreePrev();
+          }
+
+          if (anchor instanceof PsiErrorElement) {
+            final LeafElement token = Factory
+              .createSingleLeafElement(XmlTokenType.XML_EMPTY_ELEMENT_END, "/>", 0, 2, SharedImplUtil.findCharTableByTree(anchor), getManager());
+            replaceChild(anchor, token);
+            startTagEnd = token;
+          }
+        }
+
+        if (startTagEnd == null) {
+          ASTNode anchor = XmlChildRole.START_TAG_NAME_FINDER.findChild(XmlTagImpl.this);
+          myFirstInserted = XmlTagImpl.super.addInternal(myChild, myChild, anchor, Boolean.FALSE);
         }
         else {
           myFirstInserted = XmlTagImpl.super.addInternal(myChild, myChild, startTagEnd, Boolean.TRUE);
