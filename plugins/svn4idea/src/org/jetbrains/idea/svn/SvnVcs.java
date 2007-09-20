@@ -90,9 +90,9 @@ public class SvnVcs extends AbstractVcs {
   private final Map<VirtualFile, SVNStatusHolder> myStatuses = new HashMap<VirtualFile, SVNStatusHolder>();
   private final Map<VirtualFile, SVNInfoHolder> myInfos = new HashMap<VirtualFile, SVNInfoHolder>();
 
-  private SvnConfiguration myConfiguration;
-  private SvnEntriesFileListener myEntriesFileListener;
-  private Project myProject;
+  private final SvnConfiguration myConfiguration;
+  private final SvnEntriesFileListener myEntriesFileListener;
+  private final Project myProject;
 
   private CheckinEnvironment myCheckinEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
@@ -101,11 +101,11 @@ public class SvnVcs extends AbstractVcs {
   private VcsHistoryProvider mySvnHistoryProvider;
   private AnnotationProvider myAnnotationProvider;
   private DiffProvider mySvnDiffProvider;
-  private VcsShowConfirmationOption myAddConfirmation;
-  private VcsShowConfirmationOption myDeleteConfirmation;
+  private final VcsShowConfirmationOption myAddConfirmation;
+  private final VcsShowConfirmationOption myDeleteConfirmation;
   private EditFileProvider myEditFilesProvider;
   private CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> myCommittedChangesProvider;
-  private VcsShowSettingOption myCheckoutOptions;
+  private final VcsShowSettingOption myCheckoutOptions;
 
   private ChangeProvider myChangeProvider;
   @NonNls public static final String LOG_PARAMETER_NAME = "javasvn.log";
