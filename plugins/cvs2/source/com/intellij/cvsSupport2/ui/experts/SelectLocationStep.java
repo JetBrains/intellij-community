@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -18,11 +19,12 @@ import java.awt.*;
 import java.io.File;
 
 /**
- * author: lesya
+ * @author lesya
  */
-public abstract class SelectLocationStep extends WizardStep{
+public abstract class SelectLocationStep extends WizardStep {
   protected final FileSystemTree myFileSystemTree;
   private ActionToolbar myFileSystemToolBar;
+  private VirtualFile mySelectedFile;
 
   private final TreeSelectionListener myTreeSelectionListener = new TreeSelectionListener() {
         public void valueChanged(TreeSelectionEvent e) {
@@ -68,6 +70,7 @@ public abstract class SelectLocationStep extends WizardStep{
   }
 
   protected void dispose() {
+    mySelectedFile = myFileSystemTree.getSelectedFile();   // remember the file - it will be requested after dispose
     myFileSystemTree.getTree().getSelectionModel().removeTreeSelectionListener(myTreeSelectionListener);
     Disposer.dispose(myFileSystemTree);
   }
@@ -99,6 +102,9 @@ public abstract class SelectLocationStep extends WizardStep{
   }
 
   public File getSelectedFile() {
+    if (mySelectedFile != null) {
+      return CvsVfsUtil.getFileFor(mySelectedFile);
+    }
     return CvsVfsUtil.getFileFor(myFileSystemTree.getSelectedFile());
   }
 
