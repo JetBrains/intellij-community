@@ -1,12 +1,13 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -37,14 +38,67 @@ public class InheritanceImplUtil {
     if(checkDeep && LOG.isDebugEnabled()){
       LOG.debug("Using uncached version for " + candidateClass.getQualifiedName() + " and " + baseClass);
     }
-    PsiClass objectClass = manager.findClass("java.lang.Object", candidateClass.getResolveScope());
-    if (manager.areElementsEquivalent(baseClass, objectClass)) {
-      if (manager.areElementsEquivalent(candidateClass, objectClass)) return false;
-      if (checkDeep || candidateClass.isInterface()) return true;
-      return manager.areElementsEquivalent(candidateClass.getSuperClass(), objectClass);
+
+    @NonNls final String baseName = baseClass.getName();
+    if ("Object".equals(baseName)) {
+      PsiClass objectClass = manager.findClass("java.lang.Object", candidateClass.getResolveScope());
+      if (manager.areElementsEquivalent(baseClass, objectClass)) {
+        if (manager.areElementsEquivalent(candidateClass, objectClass)) return false;
+        if (checkDeep || candidateClass.isInterface()) return true;
+        return manager.areElementsEquivalent(candidateClass.getSuperClass(), objectClass);
+      }
+    }
+
+    if (!checkDeep) {
+      final boolean cInt = candidateClass.isInterface();
+      final boolean bInt = baseClass.isInterface();
+
+      if (candidateClass instanceof PsiCompiledElement) {
+        String baseQName = baseClass.getQualifiedName();
+        if (baseQName == null) return false;
+
+        GlobalSearchScope scope = candidateClass.getResolveScope();
+        if (cInt == bInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getExtendsList(), manager, scope)) return true;
+        if (cInt != bInt && !cInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getImplementsList(), manager, scope)) return true;
+        return false;
+      }
+      else {
+        if (cInt == bInt) {
+          for (PsiClassType type : candidateClass.getExtendsListTypes()) {
+            if (Comparing.equal(type.getClassName(), baseName)) {
+              if (manager.areElementsEquivalent(baseClass, type.resolve())) {
+                return true;
+              }
+            }
+          }
+        }
+        else if (!cInt) {
+          for (PsiClassType type : candidateClass.getImplementsListTypes()) {
+            if (Comparing.equal(type.getClassName(), baseName)) {
+              if (manager.areElementsEquivalent(baseClass, type.resolve())) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+
+      return false;
     }
 
     return isInheritorWithoutCaching(candidateClass, baseClass, checkDeep, checkedClasses);
+  }
+
+  private static boolean checkReferenceListWithQualifiedNames(final String baseQName, final PsiReferenceList extList, final PsiManager manager,
+                                                              final GlobalSearchScope scope) {
+    if (extList != null) {
+      final PsiJavaCodeReferenceElement[] refs = extList.getReferenceElements();
+      for (PsiJavaCodeReferenceElement ref : refs) {
+        if (Comparing.equal(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), baseQName) && manager.findClass(baseQName, scope) != null)
+          return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isInheritorWithoutCaching(PsiClass aClass, PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {
