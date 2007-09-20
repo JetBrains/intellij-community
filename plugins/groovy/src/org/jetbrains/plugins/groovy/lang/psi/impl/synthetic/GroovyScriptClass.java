@@ -13,17 +13,15 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -260,7 +258,8 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
+    myFile.setName(name + "." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension());
+    return this;
   }
 
   public PsiModifierList getModifierList() {
