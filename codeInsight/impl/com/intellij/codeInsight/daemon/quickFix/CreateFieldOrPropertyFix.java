@@ -68,7 +68,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
     final PsiFile file = myClass.getContainingFile();
     final Editor editor = CodeInsightUtil.positionCursor(project, myClass.getContainingFile(), myClass.getLBrace());
     if (isAvailable(project, editor, file)) {
-      new WriteCommandAction(project) {
+      new WriteCommandAction(project, file) {
         protected void run(Result result) throws Throwable {
           invoke(project, editor, file);
         }
@@ -116,7 +116,7 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
   }
 
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
 }
