@@ -268,4 +268,8 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   @Override public boolean runInReadThread() {
     return false;
   }
+
+  protected boolean runInExclusiveLock() {
+    return false;
+  }
 }

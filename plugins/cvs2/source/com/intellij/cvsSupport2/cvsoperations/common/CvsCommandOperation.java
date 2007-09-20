@@ -84,7 +84,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
                                                                           IModuleExpansionListener,
                                                                           ProjectContentInfoProvider {
 
-  private static IAdminReader DEFAULT_ADMIN_READER = new AdminReaderOnCache();
+  private static final IAdminReader DEFAULT_ADMIN_READER = new AdminReaderOnCache();
 
   protected final IAdminReader myAdminReader;
   protected final IAdminWriter myAdminWriter;
@@ -94,22 +94,18 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   private String myLastProcessedCvsRoot;
   private final UpdatedFilesManager myUpdatedFilesManager = new UpdatedFilesManager();
 
-  public CvsCommandOperation() {
+  protected CvsCommandOperation() {
     this(DEFAULT_ADMIN_READER);
   }
 
-  public CvsCommandOperation(IAdminReader adminReader, IAdminWriter adminWriter) {
+  protected CvsCommandOperation(IAdminReader adminReader, IAdminWriter adminWriter) {
     myAdminReader = adminReader;
     myAdminWriter = adminWriter;
   }
 
-  public CvsCommandOperation(IAdminReader adminReader) {
+  protected CvsCommandOperation(IAdminReader adminReader) {
     myAdminReader = adminReader;
     myAdminWriter = new AdminWriterOnCache(myUpdatedFilesManager, this);
-  }
-
-  public CvsCommandOperation(IAdminWriter adminWriter) {
-    this(DEFAULT_ADMIN_READER, adminWriter);
   }
 
   abstract protected Command createCommand(CvsRootProvider root,
@@ -136,39 +132,47 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   public void execute(CvsExecutionEnvironment executionEnvironment) throws VcsException,
                                                                            CommandAbortedException {
     LOG.assertTrue(myLoggedIn);
-    ReadWriteStatistics statistics = executionEnvironment.getReadWriteStatistics();
     CvsEntriesManager.getInstance().lockSynchronizationActions();
     try {
-      synchronized (CvsOperation.class) {
-
-        Collection<CvsRootProvider> allCvsRoots;
-        try {
-          allCvsRoots = getAllCvsRoots();
+      if (runInExclusiveLock()) {
+        synchronized (CvsOperation.class) {
+          doExecute(executionEnvironment);
         }
-        catch (CannotFindCvsRootException e) {
-          throw createVcsExceptionOn(e, null);
-        }
-
-        for (CvsRootProvider cvsRootProvider : allCvsRoots) {
-          try {
-            myLastProcessedCvsRoot = cvsRootProvider.getCvsRootAsString();
-            execute(cvsRootProvider, executionEnvironment, statistics, executionEnvironment.getExecutor());
-          }
-          catch (IOCommandException e) {
-            LOG.info(e);
-            throw createVcsExceptionOn(e.getIOException(), cvsRootProvider.getCvsRootAsString());
-          }
-          catch (CommandException e) {
-            LOG.info(e);
-            Exception underlyingException = e.getUnderlyingException();
-            LOG.info(underlyingException);
-            throw createVcsExceptionOn(underlyingException == null ? e : underlyingException, cvsRootProvider.getCvsRootAsString());
-          }
-        }
+      }
+      else {
+        doExecute(executionEnvironment);
       }
     }
     finally {
       CvsEntriesManager.getInstance().unlockSynchronizationActions();
+    }
+  }
+
+  private void doExecute(final CvsExecutionEnvironment executionEnvironment) throws VcsException {
+    ReadWriteStatistics statistics = executionEnvironment.getReadWriteStatistics();
+    Collection<CvsRootProvider> allCvsRoots;
+    try {
+      allCvsRoots = getAllCvsRoots();
+    }
+    catch (CannotFindCvsRootException e) {
+      throw createVcsExceptionOn(e, null);
+    }
+
+    for (CvsRootProvider cvsRootProvider : allCvsRoots) {
+      try {
+        myLastProcessedCvsRoot = cvsRootProvider.getCvsRootAsString();
+        execute(cvsRootProvider, executionEnvironment, statistics, executionEnvironment.getExecutor());
+      }
+      catch (IOCommandException e) {
+        LOG.info(e);
+        throw createVcsExceptionOn(e.getIOException(), cvsRootProvider.getCvsRootAsString());
+      }
+      catch (CommandException e) {
+        LOG.info(e);
+        Exception underlyingException = e.getUnderlyingException();
+        LOG.info(underlyingException);
+        throw createVcsExceptionOn(underlyingException == null ? e : underlyingException, cvsRootProvider.getCvsRootAsString());
+      }
     }
   }
 
@@ -182,7 +186,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
   }
 
 
-  static String getMessageFrom(String initialMessage, Throwable e) {
+  private static String getMessageFrom(String initialMessage, Throwable e) {
     if (e == null) return initialMessage;
     String result = initialMessage;
     if (result != null && result.length() > 0) return result;
@@ -289,6 +293,10 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     return true;
   }
 
+  protected boolean runInExclusiveLock() {
+    return true;
+  }
+
   private static void setProgressText(String text) {
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) progressIndicator.setText(text);
@@ -319,17 +327,14 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
                                                    UpdatedFilesManager mergedFilesCollector,
                                                    CvsExecutionEnvironment cvsExecutionEnvironment) {
     return new StoringLineSeparatorsLocalFileWriter(new ReceiveTextFilePreprocessor(createReceivedFileProcessor(mergedFilesCollector,
-                                                                                                                cvsExecutionEnvironment.getPostCvsActivity(),
-                                                                                                                cvsExecutionEnvironment.getExecutor())),
+                                                                                                                cvsExecutionEnvironment.getPostCvsActivity())),
                                                     cvsExecutionEnvironment.getErrorProcessor(),
                                                     myUpdatedFilesManager,
                                                     cvsRoot,
                                                     this);
   }
 
-  protected ReceivedFileProcessor createReceivedFileProcessor(UpdatedFilesManager mergedFilesCollector,
-                                                              PostCvsActivity postCvsActivity,
-                                                              ModalityContext modalityContext) {
+  protected ReceivedFileProcessor createReceivedFileProcessor(UpdatedFilesManager mergedFilesCollector, PostCvsActivity postCvsActivity) {
     return ReceivedFileProcessor.DEFAULT;
   }
 

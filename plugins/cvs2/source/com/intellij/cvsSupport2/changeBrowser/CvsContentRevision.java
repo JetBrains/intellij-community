@@ -70,7 +70,7 @@ public class CvsContentRevision implements ContentRevision {
     return myContent;
   }
 
-  public byte[] loadContent() throws VcsException {
+  protected byte[] loadContent() throws VcsException {
     final GetFileContentOperation operation = new GetFileContentOperation(myFile, myEnvironment, myRevision);
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file"),

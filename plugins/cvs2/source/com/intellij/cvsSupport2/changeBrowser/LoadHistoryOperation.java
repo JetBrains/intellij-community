@@ -78,4 +78,8 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
   public boolean runInReadThread() {
     return false;
   }
+
+  protected boolean runInExclusiveLock() {
+    return false;
+  }
 }
