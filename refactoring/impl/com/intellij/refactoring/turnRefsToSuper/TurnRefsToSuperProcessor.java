@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -26,8 +27,8 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
 
   private PsiClass mySuper;
   public TurnRefsToSuperProcessor(Project project,
-                                  PsiClass aClass,
-                                  PsiClass aSuper,
+                                  @NotNull PsiClass aClass,
+                                  @NotNull PsiClass aSuper,
                                   boolean replaceInstanceOf) {
     super(project, replaceInstanceOf, aSuper.getName());
     myClass = aClass;
@@ -43,14 +44,14 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     return new RefsToSuperViewDescriptor(myClass, mySuper);
   }
 
-  private void setClasses(final PsiClass aClass, final PsiClass aSuper) {
+  private void setClasses(@NotNull final PsiClass aClass, @NotNull final PsiClass aSuper) {
     myClass = aClass;
     mySuper = aSuper;
   }
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    final PsiReference[] refs = mySearchHelper.findReferences(myClass, GlobalSearchScope.projectScope(myProject), false);
+    final PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
 
     final ArrayList<UsageInfo> result = detectTurnToSuperRefs(refs, new ArrayList<UsageInfo>());
 
@@ -63,7 +64,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     setClasses ((PsiClass) elements[0], (PsiClass) elements[1]);
   }
 
-  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && refUsages.get().length == 0) {
       String message = RefactoringBundle.message("no.usages.can.be.replaced", myClass.getQualifiedName(), mySuper.getQualifiedName());
       Messages.showInfoMessage(myProject, message, TurnRefsToSuperHandler.REFACTORING_NAME);

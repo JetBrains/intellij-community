@@ -18,19 +18,20 @@ import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 public class TurnRefsToSuperDialog extends RefactoringDialog {
-  private final PsiClass mySubClass;
+  @NotNull private final PsiClass mySubClass;
   private final List mySuperClasses;
 
   private JList mySuperClassesList = null;
   private final JCheckBox myCbReplaceInstanceOf = new JCheckBox();
 
-  TurnRefsToSuperDialog(Project project, PsiClass subClass, List superClasses) {
+  TurnRefsToSuperDialog(Project project, @NotNull PsiClass subClass, List superClasses) {
     super(project, true);
 
     mySubClass = subClass;
