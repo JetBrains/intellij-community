@@ -2983,6 +2983,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private MyScrollBar(int orientation) {
       super(orientation);
       setFocusable(false);
+      putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
     }
 
     /**
