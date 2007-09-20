@@ -18,38 +18,25 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -82,13 +69,6 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (GrExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }
 
-  public GrVariableDeclaration createSimpleVariableDeclaration(String[] modifiers, String identifier, String type) {
-    StringBuffer text = writeModifiers(modifiers);
-
-    PsiFile file = createGroovyFile(text.toString() + type + " " + identifier);
-    return ((GrVariableDeclaration) ((GroovyFileBase) file).getTopStatements()[0]);
-  }
-
   public GrVariableDeclaration createVariableDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type) {
     StringBuffer text = writeModifiers(modifiers);
 
@@ -117,6 +97,14 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
     PsiFile file = createGroovyFile(text.toString());
     return ((GrVariableDeclaration) ((GroovyFileBase) file).getTopStatements()[0]);
+  }
+
+  public GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type) {
+    final String varDeclaration = createVariableDeclaration(modifiers, identifier, initializer, type).getText();
+
+    final GroovyFileBase file = (GroovyFileBase) createGroovyFile("class A { " + varDeclaration + "}");
+    final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
+    return (GrVariableDeclaration) body.getMemberDeclarations()[0];
   }
 
   private StringBuffer writeModifiers(String[] modifiers) {
@@ -210,6 +198,12 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     final GroovyFileBase file = createDummyFile("def foo () {" + text + "}");
     final GrMethod method = (GrMethod) file.getTopLevelDefinitions()[0];
     return method.getBlock();
+  }
+
+  public GrVariableDeclaration createSimpleVariableDeclaration(String name, String typeText) {
+    GroovyFileBase file = (GroovyFileBase) createGroovyFile("class A { " + typeText + " " + name + "}");
+    final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
+    return (GrVariableDeclaration) body.getMemberDeclarations()[0];
   }
 
   private PsiFile createGroovyFile(String idText) {

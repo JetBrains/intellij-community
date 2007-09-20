@@ -68,7 +68,7 @@ public abstract class GroovyElementFactory {
 
   public abstract GrExpression createExpressionFromText(String exprText);
 
-  public abstract GrVariableDeclaration createSimpleVariableDeclaration (String[] modifiers, String identifier, String type);
+  public abstract GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
 
   public abstract GrVariableDeclaration createVariableDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
 
@@ -93,4 +93,6 @@ public abstract class GroovyElementFactory {
   public abstract PsiElement createModifierFormText(String name);
 
   public abstract GrCodeBlock createMetodBodyFormText(String text);
+
+  public abstract GrVariableDeclaration createSimpleVariableDeclaration(String name, String typeText);
 }
