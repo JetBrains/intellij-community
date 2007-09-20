@@ -27,7 +27,7 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   public abstract TextRange injectedToHost(@NotNull PsiElement element, @NotNull TextRange textRange);
 
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector);
-  public abstract boolean unregisterMultiPlaceInjector(@NotNull MultiHostInjector injector);
+  public abstract boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector);
 
   public abstract void registerConcatenationInjector(@NotNull ConcatenationAwareInjector injector);
   public abstract boolean unregisterConcatenationInjector(@NotNull ConcatenationAwareInjector injector);

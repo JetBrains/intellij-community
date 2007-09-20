@@ -550,10 +550,14 @@ public class InjectedLanguageUtil {
       }
 
       @NotNull
-        public MultiHostRegistrar addPlace(@NonNls @Nullable String prefix,
+      public MultiHostRegistrar addPlace(@NonNls @Nullable String prefix,
                                          @NonNls @Nullable String suffix,
                                          @NotNull PsiLanguageInjectionHost host,
                                          @NotNull TextRange rangeInsideHost) {
+        if (!host.getTextRange().contains(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()))) {
+          clear();
+          throw new IllegalArgumentException("rangeInsideHost must lie within host text range. rangeInsideHost:"+rangeInsideHost+"; host textRange:"+host.getTextRange());
+        }
         if (myLanguage == null) {
           clear();
           throw new IllegalStateException("Seems you haven't called startInjecting()");

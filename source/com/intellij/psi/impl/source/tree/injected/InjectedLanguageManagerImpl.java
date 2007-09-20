@@ -63,7 +63,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       }
 
       public void extensionRemoved(MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
-        unregisterMultiPlaceInjector(injector);
+        unregisterMultiHostInjector(injector);
       }
     });
     myListener = new ExtensionPointListener<LanguageInjector>() {
@@ -92,7 +92,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     if (injectors.isEmpty() && extensions.length == 0) {
       MultiHostInjector prev = myPsiManagerRegisteredInjectorsAdapter.getAndSet(null);
       if (prev != null) {
-        unregisterMultiPlaceInjector(prev);
+        unregisterMultiHostInjector(prev);
       }
     }
     else {
@@ -106,7 +106,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     if (myConcatenationInjectors.isEmpty()) {
       MultiHostInjector prev = myRegisteredConcatenationAdapter.getAndSet(null);
       if (prev != null) {
-        unregisterMultiPlaceInjector(prev);
+        unregisterMultiHostInjector(prev);
       }
     }
     else {
@@ -185,7 +185,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     cachedInjectors.clearCache();
   }
 
-  public boolean unregisterMultiPlaceInjector(@NotNull MultiHostInjector injector) {
+  public boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
     boolean removed = false;
     Iterator<Map.Entry<Class,MultiHostInjector[]>> iterator = injectors.entrySet().iterator();
     while (iterator.hasNext()) {
