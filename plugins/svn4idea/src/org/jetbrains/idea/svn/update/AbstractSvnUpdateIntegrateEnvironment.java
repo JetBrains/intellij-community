@@ -50,11 +50,13 @@ import java.util.*;
 
 public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnvironment {
   protected final SvnVcs myVcs;
+  private final ProjectLevelVcsManager myVcsManager;
   @NonNls public static final String REPLACED_ID = "replaced";
   @NonNls public static final String EXTERNAL_ID = "external";
 
   protected AbstractSvnUpdateIntegrateEnvironment(final SvnVcs vcs) {
     myVcs = vcs;
+    myVcsManager = ProjectLevelVcsManager.getInstance(vcs.getProject());
   }
 
   public void fillGroups(UpdatedFiles updatedFiles) {
@@ -122,7 +124,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
             FileGroup mergedGroup = updatedFiles.getGroupById(FileGroup.MERGED_ID);
             for(VirtualFile mergedFile: mergedFiles) {
               String path = FileUtil.toSystemDependentName(mergedFile.getPresentableUrl());
-              VcsRevisionNumber revision = conflictedGroup.getRevision(myVcs.getProject(), path); 
+              VcsRevisionNumber revision = conflictedGroup.getRevision(myVcsManager, path);
               conflictedGroup.remove(path);
               if (revision != null) {
                 mergedGroup.add(path, myVcs, revision);
@@ -149,7 +151,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
   @Nullable
   public abstract Configurable createConfigurable(Collection<FilePath> collection);
 
-  public static FileGroup createFileGroup(String name, String id) {
+  private static FileGroup createFileGroup(String name, String id) {
     return new FileGroup(name, name, false, id, true);
   }
 
@@ -157,7 +159,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     private final ProgressIndicator myProgressIndicator;
     private final UpdatedFiles myUpdatedFiles;
     private int myExternalsCount;
-    private SvnVcs myVCS;
+    private final SvnVcs myVCS;
     @NonNls public static final String SKIP_ID = "skip";
 
     public UpdateEventHandler(SvnVcs vcs, ProgressIndicator progressIndicator, UpdatedFiles updatedFiles) {
