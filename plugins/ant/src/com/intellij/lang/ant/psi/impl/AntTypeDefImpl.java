@@ -45,7 +45,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   @NonNls private static final String ADAPTER_ATTR = "adapter";
   @NonNls private static final String ADAPTTO_ATTR = "adaptto";
 
-  private static final ClassCache CLASS_CACHE = new ClassCache();
+  private static final ClassLoaderCache LOADERS_CACHE = new ClassLoaderCache();
 
   private AntTypeDefinition[] myNewDefinitions;
   private boolean myClassesLoaded;
@@ -344,28 +344,24 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     if (classname == null || name == null || name.length() == 0) {
       return null;
     }
-    boolean newlyLoaded = false;
     final List<URL> urls = getClassPathUrls();
-    Class clazz = CLASS_CACHE.getClass(urls, classname);
-    if (clazz == null) {
-      final ClassLoader loader = getClassLoader(urls);
-      if (loader != null) {
-        try {
-          clazz = loader.loadClass(classname);
-          newlyLoaded = true;
-        }
-        catch (ClassNotFoundException e) {
-          myLocalizedError = e.getLocalizedMessage();
-          clazz = null;
-        }
-        catch (NoClassDefFoundError e) {
-          myLocalizedError = e.getLocalizedMessage();
-          clazz = null;
-        }
-        catch (UnsupportedClassVersionError e) {
-          myLocalizedError = e.getLocalizedMessage();
-          clazz = null;
-        }
+    Class clazz = null;
+    final ClassLoader loader = getClassLoader(urls);
+    if (loader != null) {
+      try {
+        clazz = loader.loadClass(classname);
+      }
+      catch (ClassNotFoundException e) {
+        myLocalizedError = e.getLocalizedMessage();
+        clazz = null;
+      }
+      catch (NoClassDefFoundError e) {
+        myLocalizedError = e.getLocalizedMessage();
+        clazz = null;
+      }
+      catch (UnsupportedClassVersionError e) {
+        myLocalizedError = e.getLocalizedMessage();
+        clazz = null;
       }
     }
     final String nsPrefix = (uri == null) ? null : getSourceElement().getPrefixByNamespace(uri);
@@ -382,9 +378,6 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
         def = new AntTypeDefinitionImpl(id, classname, isTask, isAssignableFrom(TaskContainer.class.getName(), clazz));
       }
       def.setIsProperty(isAssignableFrom(org.apache.tools.ant.taskdefs.Property.class.getName(), clazz));
-      if (newlyLoaded) {
-        CLASS_CACHE.setClass(urls, classname, clazz);
-      }
     }
     if (def != null) {
       myNewDefinitions = ArrayUtil.append(myNewDefinitions, def);
@@ -532,13 +525,20 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   
   @Nullable
   private ClassLoader getClassLoader(final List<URL> urls) {
+    final ClassLoader cached = LOADERS_CACHE.getClassLoader(urls);
+    if (cached != null) {
+      return cached;
+    }
     ClassLoader loader = null;
     final AntFile file = getAntFile();
     if (file != null) {
       loader = file.getClassLoader();
       if (urls.size() > 0) {
-        loader = new UrlClassLoader(urls, loader);
+        loader = new UrlClassLoader(urls, loader, false, true);
       }
+    }
+    if (loader != null) {
+      LOADERS_CACHE.setClassLoader(urls, loader);
     }
     return loader;
   }
@@ -554,29 +554,24 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     return manager.getElementFactory().createFileFromText(name, type, str, LocalTimeCounter.currentTime(), false, false);
   }
 
-  private static class ClassEntry {
+  private static class CacheKey {
 
     public static final URL[] EMPTY_URL_ARRAY = new URL[0];
     private final List<URL> myUrls;
-    private final String myClassname;
 
-    public ClassEntry(@NotNull final List<URL> urls, @NotNull final String classname) {
+    public CacheKey(@NotNull final List<URL> urls) {
       myUrls = urls;
-      myClassname = classname;
     }
 
     public final int hashCode() {
-      return 31 * myClassname.hashCode() + myUrls.hashCode();
+      return myUrls.hashCode();
     }
 
     public final boolean equals(Object obj) {
-      if (!(obj instanceof ClassEntry)) {
+      if (!(obj instanceof CacheKey)) {
         return false;
       }
-      final ClassEntry entry = (ClassEntry)obj;
-      if (!myClassname.equals(entry.myClassname)) {
-        return false;
-      }
+      final CacheKey entry = (CacheKey)obj;
       if (!myUrls.equals(entry.myUrls)) {
         return false;
       }
@@ -584,25 +579,25 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     }
   }
 
-  private static class ClassCache extends ObjectCache<ClassEntry, SoftReference<Class>> {
+  private static class ClassLoaderCache extends ObjectCache<CacheKey, SoftReference<ClassLoader>> {
 
-    public ClassCache() {
+    public ClassLoaderCache() {
       super(256);
     }
 
     @Nullable
-    public final synchronized Class getClass(@NotNull final List<URL> urls, @NotNull final String classname) {
-      final ClassEntry key = new ClassEntry(urls, classname);
-      final SoftReference<Class> ref = tryKey(key);
-      final Class result = (ref == null) ? null : ref.get();
+    public final synchronized ClassLoader getClassLoader(@NotNull final List<URL> urls) {
+      final CacheKey key = new CacheKey(urls);
+      final SoftReference<ClassLoader> ref = tryKey(key);
+      final ClassLoader result = (ref == null) ? null : ref.get();
       if (result == null && ref != null) {
         remove(key);
       }
       return result;
     }
 
-    public final synchronized void setClass(@NotNull final List<URL> urls, @NotNull final String classname, @NotNull final Class clazz) {
-      cacheObject(new ClassEntry(urls, classname), new SoftReference<Class>(clazz));
+    public final synchronized void setClassLoader(@NotNull final List<URL> urls, @NotNull final ClassLoader loader) {
+      cacheObject(new CacheKey(urls), new SoftReference<ClassLoader>(loader));
     }
   }
 }

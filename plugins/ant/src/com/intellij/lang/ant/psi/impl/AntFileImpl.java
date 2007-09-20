@@ -337,11 +337,12 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
           final XmlTag tag = document.getRootTag();
           if (tag == null) return null;
           final String fileText = baseFile.getText();
-          final int projectStart = tag.getTextRange().getStartOffset();
+          final TextRange tagRange = tag.getTextRange();
+          final int projectStart = tagRange.getStartOffset();
           if (projectStart > 0) {
             myPrologElement = new AntOuterProjectElement(this, 0, fileText.substring(0, projectStart));
           }
-          final int projectEnd = tag.getTextRange().getEndOffset();
+          final int projectEnd = tagRange.getEndOffset();
           if (projectEnd < fileText.length()) {
             myEpilogueElement = new AntOuterProjectElement(this, projectEnd, fileText.substring(projectEnd));
           }
@@ -616,7 +617,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myProjectElements = new HashMap<AntTypeId, String>();
       final ReflectedProject reflectedProject = ReflectedProject.getProject(getClassLoader());
       if (reflectedProject.myProject != null) {
-        final AntInstrospector projectHelper = getHelperExceptionSafe(reflectedProject.myProject.getClass());
+        final AntIntrospector projectHelper = getHelperExceptionSafe(reflectedProject.myProject.getClass());
         try {
            //first, create task definitons
           updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
@@ -768,7 +769,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   private void registerNestedDefinitionsRecursively(final Class parentClass) {
-    final AntInstrospector helper = getHelperExceptionSafe(parentClass);
+    final AntIntrospector helper = getHelperExceptionSafe(parentClass);
     if (helper != null) {
       final Enumeration nestedEnum = helper.getNestedElements();
       while (nestedEnum.hasMoreElements()) {
@@ -800,7 +801,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @Nullable
   static AntTypeDefinition createTypeDefinition(final AntTypeId id, final Class typeClass, final boolean isTask) {
-    final AntInstrospector helper = getHelperExceptionSafe(typeClass);
+    final AntIntrospector helper = getHelperExceptionSafe(typeClass);
     if (helper == null) {
       return null;
     }
@@ -824,7 +825,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     boolean isAllTasksContainer = false;
     final ClassLoader loader = typeClass.getClassLoader();
     try {
-      final Class<?> containerClass = loader.loadClass(TaskContainer.class.getName());
+      final Class<?> containerClass = loader != null? loader.loadClass(TaskContainer.class.getName()) : TaskContainer.class;
       isAllTasksContainer = containerClass.isAssignableFrom(typeClass);
     }
     catch (ClassNotFoundException ignored) {
@@ -833,9 +834,9 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
   
   @Nullable
-  private static AntInstrospector getHelperExceptionSafe(Class c) {
+  private static AntIntrospector getHelperExceptionSafe(Class c) {
     try {
-      return AntInstrospector.getInstance(c);
+      return AntIntrospector.getInstance(c);
     }
     catch (Throwable ignored) {
     }

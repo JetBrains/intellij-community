@@ -5,11 +5,14 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ObjectCache;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.SoftReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -18,15 +21,14 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Mar 22, 2007
  */
-public final class AntInstrospector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.AntInstrospector");
+public final class AntIntrospector {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.AntIntrospector");
   private final Object myHelper;
-
-  public AntInstrospector(final Class aClass) throws ClassNotFoundException, NoSuchMethodException,
+  private static final ObjectCache<String, SoftReference<Object>> ourCache = new ObjectCache<String, SoftReference<Object>>(); 
+  
+  public AntIntrospector(final Class aClass) throws ClassNotFoundException, NoSuchMethodException,
                                                IllegalAccessException, InvocationTargetException {
-    final Class<?> helperClass = aClass.getClassLoader().loadClass(IntrospectionHelper.class.getName());
-    final Method getHelperMethod = helperClass.getMethod("getHelper", Class.class);
-    myHelper = getHelperMethod.invoke(null, aClass);
+    myHelper = getHelper(aClass);
   }
 
   public void clearCache() {
@@ -48,9 +50,9 @@ public final class AntInstrospector {
     
   }
   
-  public static AntInstrospector getInstance(Class c) {
+  public static AntIntrospector getInstance(Class c) {
     try {
-      return new AntInstrospector(c);
+      return new AntIntrospector(c);
     }
     catch (ClassNotFoundException ignored) {
     }
@@ -147,4 +149,57 @@ public final class AntInstrospector {
       return null;
     }
   }
+  
+  // for debug purposes
+  //private static int ourAttempts = 0;
+  //private static int ourHits = 0;
+  @Nullable
+  private static Object getHelper(Class aClass) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    final String key;
+    final ClassLoader loader = aClass.getClassLoader();
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      builder.append(aClass.getName());
+      if (loader != null) {
+        builder.append("_");
+        builder.append(loader.hashCode());
+      }
+      key = builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+    
+    Object result = null;
+    
+    synchronized (ourCache) {
+      //++ourAttempts;
+      final SoftReference<Object> ref = ourCache.tryKey(key);
+      result = (ref == null) ? null : ref.get();
+      if (result == null && ref != null) {
+        ourCache.remove(key);
+      }
+      // for debug purposes
+      //if (result != null) {
+      //  ++ourHits;
+      //  final double hitRate = (ourAttempts > 0) ? ((double)ourHits / (double)ourAttempts) : 0;
+      //  System.out.println("cache hit! (" + key + ") "  + hitRate);
+      //}
+    }
+    
+    if (result == null) {
+      final Class<?> helperClass = loader != null? loader.loadClass(IntrospectionHelper.class.getName()) : IntrospectionHelper.class;
+      final Method getHelperMethod = helperClass.getMethod("getHelper", Class.class);
+      result = getHelperMethod.invoke(null, aClass);
+    }
+    
+    if (result != null) {
+      synchronized (ourCache) {
+        ourCache.cacheObject(key, new SoftReference<Object>(result));
+      }
+    }
+    
+    return result;
+  }
+  
 }

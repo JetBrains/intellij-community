@@ -175,14 +175,15 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   public AntElement lightFindElementAt(int offset) {
     synchronized (PsiLock.LOCK) {
       if (myChildren == null) return this;
-      final int offsetInFile = offset + getTextRange().getStartOffset();
+      final TextRange ownRange = getTextRange();
+      final int offsetInFile = offset + ownRange.getStartOffset();
       for (final AntElement element : getChildren()) {
         final TextRange textRange = element.getTextRange();
         if (textRange.contains(offsetInFile)) {
           return element.lightFindElementAt(offsetInFile - textRange.getStartOffset());
         }
       }
-      return getTextRange().contains(offsetInFile) ? this : null;
+      return ownRange.contains(offsetInFile) ? this : null;
     }
   }
 
@@ -190,7 +191,9 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     if (!isValid()) {
       return null;
     }
-    final int offsetInFile = offset + getTextRange().getStartOffset();
+    final TextRange ownRange = getTextRange();
+    final int offsetInFile = offset + ownRange.getStartOffset();
+    
     for (final AntElement element : getChildren()) {
       final TextRange textRange = element.getTextRange();
       if (textRange.contains(offsetInFile)) {
@@ -199,7 +202,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
         return elementAt;
       }
     }
-    return getTextRange().contains(offsetInFile)? this : null;
+    return ownRange.contains(offsetInFile)? this : null;
   }
 
   public ASTNode getNode() {
