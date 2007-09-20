@@ -1,7 +1,6 @@
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,11 +25,14 @@ public final class GotoModuleDirectory extends FileChooserDialogImpl.FileChooser
     myModuleToGo = moduleToGo;
   }
 
-  protected void actionPerformed(FileSystemTree fileSystemTree, AnActionEvent e) {
+  protected void actionPerformed(final FileSystemTree fileSystemTree, AnActionEvent e) {
     final VirtualFile path = getModulePath(e);
     LOG.assertTrue(path != null);
-    fileSystemTree.select(path);
-    fileSystemTree.expand(path);
+    fileSystemTree.select(path, new Runnable() {
+      public void run() {
+        fileSystemTree.expand(path, null);
+      }
+    });
   }
 
   protected void update(FileSystemTree fileSystemTree, AnActionEvent e) {
@@ -42,10 +44,10 @@ public final class GotoModuleDirectory extends FileChooserDialogImpl.FileChooser
   private VirtualFile getModulePath(AnActionEvent e) {
     Module module = myModuleToGo;
     if (module == null) {
-      module = (Module)e.getDataContext().getData(DataConstants.MODULE_CONTEXT);
+      module = e.getData(DataKeys.MODULE_CONTEXT);
     }
     if (module == null) {
-      module = DataKeys.MODULE.getData(e.getDataContext());
+      module = e.getData(DataKeys.MODULE);
     }
     if (module == null) {
       return null;
@@ -54,7 +56,7 @@ public final class GotoModuleDirectory extends FileChooserDialogImpl.FileChooser
     return (moduleFile != null)? validated(moduleFile.getParent()) : null;
   }
 
-  private VirtualFile validated(final VirtualFile file) {
+  private static VirtualFile validated(final VirtualFile file) {
     if (file == null || !file.isValid()) {
       return null;
     }
