@@ -80,11 +80,11 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
   }
 
   public AntProject getAntProject() {
-    return (AntProject)(this instanceof AntProject ? this : PsiTreeUtil.getParentOfType(this, AntProject.class));
+    return (AntProject)(this instanceof AntProject ? this : PsiTreeUtil.getParentOfType(this, AntProject.class, true, true));
   }
 
   public AntFile getAntFile() {
-    return PsiTreeUtil.getParentOfType(this, AntFile.class);
+    return PsiTreeUtil.getParentOfType(this, AntFile.class, true, true);
   }
 
   public PsiElement getParent() {

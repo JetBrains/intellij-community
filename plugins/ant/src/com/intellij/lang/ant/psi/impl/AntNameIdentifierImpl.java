@@ -58,7 +58,7 @@ public class AntNameIdentifierImpl extends AntElementImpl implements AntNameIden
   }
 
   public void setIdentifierName(@NotNull String name) throws IncorrectOperationException {
-    final XmlAttribute attr = PsiTreeUtil.getParentOfType(getSourceElement(), XmlAttribute.class);
+    final XmlAttribute attr = PsiTreeUtil.getParentOfType(getSourceElement(), XmlAttribute.class, true, true);
     if (attr != null) {
       attr.setValue(name);
     }

@@ -25,11 +25,11 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
       return PsiReference.EMPTY_ARRAY;
     }
     final AntStructuredElement antElement = (AntStructuredElement)element;
-    final AntAllTasksContainer sequential = PsiTreeUtil.getParentOfType(antElement, AntAllTasksContainer.class);
+    final AntAllTasksContainer sequential = PsiTreeUtil.getParentOfType(antElement, AntAllTasksContainer.class, true, true);
     if (sequential == null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(sequential, AntMacroDef.class);
+    final AntMacroDef macrodef = PsiTreeUtil.getParentOfType(sequential, AntMacroDef.class, true, true);
     if (macrodef == null) {
       return PsiReference.EMPTY_ARRAY;
     }
