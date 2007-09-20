@@ -109,6 +109,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
           }
         }
       }
+      libraryCreated(library, module);
       libraryModel.commit();
     }
 
@@ -128,6 +129,8 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     }
     model.commit();
   }
+
+  protected void libraryCreated(Library library, Module module) {}
 
   private static class Lib {
     private String myName;
