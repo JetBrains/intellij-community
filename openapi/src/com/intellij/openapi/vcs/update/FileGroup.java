@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -112,10 +111,10 @@ public class FileGroup implements JDOMExternalizable {
     return files;
   }
 
-  public List<Pair<String, VcsRevisionNumber>> getFilesAndRevisions(Project project) {
+  public List<Pair<String, VcsRevisionNumber>> getFilesAndRevisions(ProjectLevelVcsManager vcsManager) {
     ArrayList<Pair<String, VcsRevisionNumber>> files = new ArrayList<Pair<String, VcsRevisionNumber>>();
     for(UpdatedFile file: myFiles) {
-      VcsRevisionNumber number = getRevision(project, file);
+      VcsRevisionNumber number = getRevision(vcsManager, file);
       files.add(new Pair<String, VcsRevisionNumber>(file.getPath(), number));
     }
     return files;
@@ -207,21 +206,21 @@ public class FileGroup implements JDOMExternalizable {
   }
 
   @Nullable
-  public VcsRevisionNumber getRevision(final Project project, final String path) {
+  public VcsRevisionNumber getRevision(final ProjectLevelVcsManager vcsManager, final String path) {
     for(UpdatedFile file: myFiles) {
       if (file.getPath().equals(path)) {
-        return getRevision(project, file);
+        return getRevision(vcsManager, file);
       }
     }
     return null;
   }
 
   @Nullable
-  private static VcsRevisionNumber getRevision(final Project project, final UpdatedFile file) {
+  private static VcsRevisionNumber getRevision(final ProjectLevelVcsManager vcsManager, final UpdatedFile file) {
     final String vcsName = file.getVcsName();
     final String revision = file.getRevision();
     if (vcsName != null && revision != null) {
-      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsName);
+      AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
       if (vcs != null) {
         return vcs.parseRevisionNumber(revision);
       }
@@ -242,7 +241,7 @@ public class FileGroup implements JDOMExternalizable {
   }
 
   private static class UpdatedFile {
-    private String myPath;
+    private final String myPath;
     private String myVcsName;
     private String myRevision;
 

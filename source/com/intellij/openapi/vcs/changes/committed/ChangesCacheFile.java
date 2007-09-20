@@ -28,16 +28,17 @@ public class ChangesCacheFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.ChangesCacheFile");
   private static final int VERSION = 6;
 
-  private File myPath;
-  private File myIndexPath;
+  private final File myPath;
+  private final File myIndexPath;
   private RandomAccessFile myStream;
   private RandomAccessFile myIndexStream;
   private boolean myStreamsOpen;
-  private Project myProject;
-  private AbstractVcs myVcs;
-  private CachingCommittedChangesProvider myChangesProvider;
-  private FilePath myRootPath;
-  private RepositoryLocation myLocation;
+  private final Project myProject;
+  private final AbstractVcs myVcs;
+  private final CachingCommittedChangesProvider myChangesProvider;
+  private ProjectLevelVcsManager myVcsManager;
+  private final FilePath myRootPath;
+  private final RepositoryLocation myLocation;
   private Date myFirstCachedDate;
   private Date myLastCachedDate;
   private long myFirstCachedChangelist = Long.MAX_VALUE;
@@ -60,6 +61,7 @@ public class ChangesCacheFile {
     myIndexPath = new File(myPath.toString() + INDEX_EXTENSION);
     myVcs = vcs;
     myChangesProvider = (CachingCommittedChangesProvider) vcs.getCommittedChangesProvider();
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myRootPath = new FilePathImpl(root);
     myLocation = location;
   }
@@ -407,7 +409,7 @@ public class ChangesCacheFile {
   private boolean processGroup(final FileGroup group, final List<IncomingChangeListData> incomingData,
                                final ReceivedChangeListTracker tracker) {
     boolean haveUnaccountedUpdatedFiles = false;
-    final List<Pair<String,VcsRevisionNumber>> list = group.getFilesAndRevisions(myProject);
+    final List<Pair<String,VcsRevisionNumber>> list = group.getFilesAndRevisions(myVcsManager);
     for(Pair<String, VcsRevisionNumber> pair: list) {
       final String file = pair.first;
       FilePath path = new FilePathImpl(new File(file), false);
@@ -713,7 +715,7 @@ public class ChangesCacheFile {
   }
 
   private static class ReceivedChangeListTracker {
-    private Map<CommittedChangeList, ReceivedChangeList> myMap = new HashMap<CommittedChangeList, ReceivedChangeList>();
+    private final Map<CommittedChangeList, ReceivedChangeList> myMap = new HashMap<CommittedChangeList, ReceivedChangeList>();
 
     public void addChange(CommittedChangeList changeList, Change change) {
       ReceivedChangeList list = myMap.get(changeList);
