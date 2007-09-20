@@ -6,18 +6,11 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Map;
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.text.Document;
-
 import com.intellij.execution.ExecutionUtil;
-import com.intellij.execution.junit2.configuration.*;
+import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.junit2.configuration.CommonJavaParameters;
+import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
+import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.ide.util.TreeClassChooser;
@@ -38,6 +31,16 @@ import com.theoryinpractice.testng.configuration.browser.*;
 import com.theoryinpractice.testng.model.*;
 import org.jetbrains.annotations.NotNull;
 import org.testng.TestNG;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.text.Document;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration>
 {
@@ -203,6 +206,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     alternateJDK.init(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
     envVariablesComponent.setEnvs(
         config.getPersistantData().ENV_VARIABLES != null ? FileUtil.toSystemDependentName(config.getPersistantData().ENV_VARIABLES) : "");
+    envVariablesComponent.setPassParentEnvs(config.getPersistantData().PASS_PARENT_ENVS);
     propertiesList = new ArrayList<Map.Entry>();
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
     propertiesTableModel.setParameterList(propertiesList);
@@ -244,6 +248,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
     data.ENV_VARIABLES =
         envVariablesComponent.getEnvs().trim().length() > 0 ? FileUtil.toSystemIndependentName(envVariablesComponent.getEnvs()) : null;
+    data.PASS_PARENT_ENVS = envVariablesComponent.isPassParentEnvs();
   }
 
   public ConfigurationModuleSelector getModuleSelector() {

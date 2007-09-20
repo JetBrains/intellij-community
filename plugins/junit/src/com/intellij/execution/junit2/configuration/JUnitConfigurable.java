@@ -80,6 +80,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
 
     configuration.getPersistentData().ENV_VARIABLES = myEnvVariablesComponent.getEnvs().trim().length() > 0 ? FileUtil.toSystemIndependentName(myEnvVariablesComponent.getEnvs()) : null;
+    configuration.getPersistentData().PASS_PARENT_ENVS = myEnvVariablesComponent.isPassParentEnvs();
   }
 
   public void resetEditorFrom(final JUnitConfiguration configuration) {
@@ -99,6 +100,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
 
     myEnvVariablesComponent.setEnvs(configuration.getPersistentData().ENV_VARIABLES != null ? FileUtil.toSystemDependentName(configuration.getPersistentData().ENV_VARIABLES) : "");
+    myEnvVariablesComponent.setPassParentEnvs(configuration.getPersistentData().PASS_PARENT_ENVS);
   }
 
   private void changePanel () {

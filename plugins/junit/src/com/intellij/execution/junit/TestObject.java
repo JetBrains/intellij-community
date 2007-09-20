@@ -153,7 +153,8 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   protected void initialize() throws ExecutionException {
-    EnvironmentVariablesComponent.setupEnvs(myJavaParameters, myConfiguration.getPersistentData().ENV_VARIABLES);
+    EnvironmentVariablesComponent.setupEnvs(myJavaParameters,
+                                            myConfiguration.getPersistentData().ENV_VARIABLES, myConfiguration.getPersistentData().PASS_PARENT_ENVS);
     JavaParametersUtil.configureConfiguration(myJavaParameters, myConfiguration);
     myJavaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
     final Module module = myConfiguration.getConfigurationModule().getModule();

@@ -274,6 +274,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     public String WORKING_DIRECTORY;
 
     public String ENV_VARIABLES;
+    public boolean PASS_PARENT_ENVS = true;
    
     public AdditionalClasspath ADDITIONAL_CLASS_PATH;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();

@@ -141,7 +141,7 @@ public class TestNGRunnableState extends JavaCommandLineState
   protected JavaParameters createJavaParameters() throws ExecutionException {
     Project project = config.getProject();
     JavaParameters javaParameters = new JavaParameters();
-    EnvironmentVariablesComponent.setupEnvs(javaParameters, config.getPersistantData().ENV_VARIABLES);
+    EnvironmentVariablesComponent.setupEnvs(javaParameters, config.getPersistantData().ENV_VARIABLES, config.getPersistantData().PASS_PARENT_ENVS);
     javaParameters.getVMParametersList().add("-ea");
     javaParameters.setMainClass("org.testng.remote.RemoteTestNG");
 
