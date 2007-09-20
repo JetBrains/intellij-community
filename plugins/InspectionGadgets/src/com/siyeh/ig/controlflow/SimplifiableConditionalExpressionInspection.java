@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -27,6 +28,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class SimplifiableConditionalExpressionInspection
@@ -55,6 +57,7 @@ public class SimplifiableConditionalExpressionInspection
         return new UnnecessaryConditionalExpressionVisitor();
     }
 
+    @NonNls
     static String calculateReplacementExpression(
             PsiConditionalExpression expression) {
         final PsiExpression thenExpression = expression.getThenExpression();
@@ -63,42 +66,45 @@ public class SimplifiableConditionalExpressionInspection
         assert thenExpression != null;
         assert elseExpression != null;
 
+        final String elseText = elseExpression.getText();
+        final String conditionText = condition.getText();
         if (BoolUtils.isTrue(thenExpression)) {
-            final String elseExpressionText;
+            @NonNls final String elseExpressionText;
             if (ParenthesesUtils.getPrecedence(elseExpression) >
                     ParenthesesUtils.OR_PRECEDENCE) {
-                elseExpressionText = '(' + elseExpression.getText() + ')';
+                elseExpressionText = '(' + elseText + ')';
             } else {
-                elseExpressionText = elseExpression.getText();
+                elseExpressionText = elseText;
             }
-            return condition.getText() + " || " + elseExpressionText;
+            return conditionText + " || " + elseExpressionText;
         } else if (BoolUtils.isFalse(thenExpression)) {
-            final String elseExpressionText;
+            @NonNls final String elseExpressionText;
             if (ParenthesesUtils.getPrecedence(elseExpression) >
                     ParenthesesUtils.AND_PRECEDENCE) {
-                elseExpressionText = '(' + elseExpression.getText() + ')';
+                elseExpressionText = '(' + elseText + ')';
             } else {
-                elseExpressionText = elseExpression.getText();
+                elseExpressionText = elseText;
             }
             return BoolUtils.getNegatedExpressionText(condition) + " && " +
                     elseExpressionText;
         }
+        final String thenText = thenExpression.getText();
         if (BoolUtils.isFalse(elseExpression)) {
-            final String thenExpressionText;
+            @NonNls final String thenExpressionText;
             if (ParenthesesUtils.getPrecedence(thenExpression) >
                     ParenthesesUtils.AND_PRECEDENCE) {
-                thenExpressionText = '(' + thenExpression.getText() + ')';
+                thenExpressionText = '(' + thenText + ')';
             } else {
-                thenExpressionText = thenExpression.getText();
+                thenExpressionText = thenText;
             }
-            return condition.getText() + " && " + thenExpressionText;
+            return conditionText + " && " + thenExpressionText;
         } else {
-            final String thenExpressionText;
+            @NonNls final String thenExpressionText;
             if (ParenthesesUtils.getPrecedence(thenExpression) >
                     ParenthesesUtils.OR_PRECEDENCE) {
-                thenExpressionText = '(' + thenExpression.getText() + ')';
+                thenExpressionText = '(' + thenText + ')';
             } else {
-                thenExpressionText = thenExpression.getText();
+                thenExpressionText = thenText;
             }
             return BoolUtils.getNegatedExpressionText(condition) + " || " +
                     thenExpressionText;
@@ -138,8 +144,16 @@ public class SimplifiableConditionalExpressionInspection
             if (thenExpression == null) {
                 return;
             }
+            final PsiType thenType = thenExpression.getType();
+            if (thenType != PsiType.BOOLEAN) {
+                return;
+            }
             final PsiExpression elseExpression = expression.getElseExpression();
             if (elseExpression == null) {
+                return;
+            }
+            final PsiType elseType = elseExpression.getType();
+            if (elseType != PsiType.BOOLEAN) {
                 return;
             }
             final boolean thenConstant = BoolUtils.isFalse(thenExpression) ||
