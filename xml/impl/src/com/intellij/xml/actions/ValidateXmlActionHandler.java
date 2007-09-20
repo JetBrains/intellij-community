@@ -88,6 +88,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       if (systemId != null) {
         final String path = myXmlResourceResolver.getPathByPublicId(systemId);
         if (path != null) return VfsUtil.findRelativeFile(path,null);
+        final PsiFile file = myXmlResourceResolver.resolve(null, systemId);
+        if (file != null) return file.getVirtualFile();
       }
       return myFile.getVirtualFile();
     }
