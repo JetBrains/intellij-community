@@ -156,17 +156,15 @@ public abstract class TestObject implements JavaCommandLine {
     EnvironmentVariablesComponent.setupEnvs(myJavaParameters, myConfiguration.getPersistentData().ENV_VARIABLES);
     JavaParametersUtil.configureConfiguration(myJavaParameters, myConfiguration);
     myJavaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
-    final Object[] patchers = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.JUNIT_PATCHER).getExtensions();
-    if (patchers != null){
-      final Module module = myConfiguration.getConfigurationModule().getModule();
-      if (myJavaParameters.getJdk() == null){
-        myJavaParameters.setJdk(module != null
-                                ? ModuleRootManager.getInstance(module).getJdk()
-                                : ProjectRootManager.getInstance(myProject).getProjectJdk());
-      }
-      for (Object patcher : patchers) {
-        ((JUnitPatcher)patcher).patchJavaParameters(module, myJavaParameters);
-      }
+    final Module module = myConfiguration.getConfigurationModule().getModule();
+    if (myJavaParameters.getJdk() == null){
+      myJavaParameters.setJdk(module != null
+                              ? ModuleRootManager.getInstance(module).getJdk()
+                              : ProjectRootManager.getInstance(myProject).getProjectJdk());
+    }
+    final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
+    for (Object patcher : patchers) {
+      ((JUnitPatcher)patcher).patchJavaParameters(module, myJavaParameters);
     }
     PathUtilEx.addRtJar(myJavaParameters.getClassPath());
     PathUtilEx.addJunit4RtJar(myJavaParameters.getClassPath());
