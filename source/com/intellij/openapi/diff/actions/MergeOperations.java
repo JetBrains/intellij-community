@@ -165,6 +165,7 @@ public class MergeOperations {
     private final Document myDocument;
     private final Runnable myModification;
     private final Icon myGutterIcon;
+    private boolean myPerformed = false;
 
     public Operation(String name, Icon icon, final Document document, Runnable modification) {
       myName = name;
@@ -182,6 +183,8 @@ public class MergeOperations {
     }
 
     public void perform(final Project project) {
+      if (myPerformed) return;
+      myPerformed = true;
       if (!myDocument.isWritable()) {
         final VirtualFile file = FileDocumentManager.getInstance().getFile(myDocument);
         final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file);
