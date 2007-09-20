@@ -1,19 +1,19 @@
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
-import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -41,9 +41,22 @@ public class IntentionSettingsPanel {
       protected List<IntentionActionMetaData> filterModel(String filter, final boolean force) {
         final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) return list;
+        List<Set<String>> keySetList = new ArrayList<Set<String>>();
+        final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+        final Set<String> words = optionsRegistrar.getProcessedWords(filter);
+        for (String word : words) {
+          final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(word);
+          Set<String> keySet = new HashSet<String>();
+          if (descriptions != null) {
+            for (OptionDescription description : descriptions) {
+              keySet.add(description.getPath());
+            }
+          }
+          keySetList.add(keySet);
+        }
         List<IntentionActionMetaData> result = new ArrayList<IntentionActionMetaData>();
         for (IntentionActionMetaData metaData : list) {
-          if (isIntentionAccepted(metaData, filter, force)){
+          if (isIntentionAccepted(metaData, filter, force, keySetList)){
             result.add(metaData);
           }
         }
@@ -109,7 +122,8 @@ public class IntentionSettingsPanel {
     myIntentionDescriptionPanel.dispose();
   }
 
-  private static boolean isIntentionAccepted(IntentionActionMetaData metaData, @NonNls String filter, boolean force) {
+  private static boolean isIntentionAccepted(IntentionActionMetaData metaData, @NonNls String filter, boolean forceInclude,
+                                             final List<Set<String>> keySetList) {
     if (StringUtil.containsIgnoreCase(metaData.myFamily, filter)) {
       return true;
     }
@@ -119,26 +133,19 @@ public class IntentionSettingsPanel {
       }
     }
 
-    boolean highlight = false;
-
-    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final Set<String> filters = optionsRegistrar.getProcessedWords(filter.toLowerCase());
-    for (String filtString : filters) {
-      final Set<OptionDescription> descriptors = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(filtString);
-      if (descriptors != null) {
-        for (OptionDescription description : descriptors) {
-          if (Comparing.strEqual(description.getPath(), metaData.myFamily)) {
-            highlight = true;
-            break;
-          }
+    for (Set<String> keySet : keySetList) {
+      if (keySet.contains(metaData.myFamily)) {
+        if (!forceInclude) {
+          return true;
         }
-        if (!highlight && force) return false;
       }
       else {
-        if (!highlight && force) return false;
+        if (forceInclude) {
+          return false;
+        }
       }
     }
-    return highlight;
+    return forceInclude;
   }
 
   public Runnable showOption(final SearchableConfigurable configurable, final String option) {

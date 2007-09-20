@@ -13,8 +13,8 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.TreeExpander;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -558,30 +558,27 @@ public class SingleInspectionProfilePanel extends JPanel {
     return false;
   }
 
-  private static boolean isDescriptorAccepted(Descriptor descriptor, @NonNls String filter, final boolean forceInclude) {
+  private static boolean isDescriptorAccepted(Descriptor descriptor,
+                                              @NonNls String filter,
+                                              final boolean forceInclude,
+                                              final List<Set<String>> keySetList) {
     filter = filter.toLowerCase();
     if (descriptor.getText().toLowerCase().contains(filter)) {
       return true;
     }
-    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    final Set<String> filters = optionsRegistrar.getProcessedWords(filter);
-    boolean highlight = false;
-    for (String filtString : filters) {
-      final Set<OptionDescription> descriptors = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(filtString);
-      if (descriptors != null) {
-        for (OptionDescription description : descriptors) {
-          if (Comparing.strEqual(description.getPath(), descriptor.getKey().toString())) {
-            highlight = true;
-            break;
-          }
+    for (Set<String> keySet : keySetList) {
+      if (keySet.contains(descriptor.getKey().toString())) {
+        if (!forceInclude) {
+          return true;
         }
-        if (!highlight && forceInclude) return false;
       }
       else {
-        if (!highlight && forceInclude) return false;
+        if (forceInclude) {
+          return false;
+        }
       }
     }
-    return highlight;
+    return forceInclude;
   }
 
   private void fillTreeData(String filter, boolean forceInclude) {
@@ -589,9 +586,24 @@ public class SingleInspectionProfilePanel extends JPanel {
     myRoot.removeAllChildren();
     myRoot.isEnabled = false;
     myRoot.isProperSetting = false;
+    List<Set<String>> keySetList = new ArrayList<Set<String>>();
+    if (filter != null && filter.length() > 0) {
+      final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+      final Set<String> words = optionsRegistrar.getProcessedWords(filter);
+      for (String word : words) {
+        final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(word);
+        Set<String> keySet = new HashSet<String>();
+        if (descriptions != null) {
+          for (OptionDescription description : descriptions) {
+            keySet.add(description.getPath());
+          }
+        }
+        keySetList.add(keySet);
+      }
+    }
     for (Descriptor descriptor : myDescriptors) {
       if (descriptor.getTool() != null && !(descriptor.getTool()instanceof LocalInspectionToolWrapper) && !myShowInspections) continue;
-      if (filter != null && filter.length() > 0 && !isDescriptorAccepted(descriptor, filter, forceInclude)) {
+      if (filter != null && filter.length() > 0 && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList)) {
         continue;
       }
       final HighlightDisplayKey key = descriptor.getKey();
