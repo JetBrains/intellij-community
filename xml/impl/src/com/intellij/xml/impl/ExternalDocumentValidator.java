@@ -143,7 +143,10 @@ public class ExternalDocumentValidator {
               String localizedMessage = e.getLocalizedMessage();
 
               // Ideally would be to switch one messageIds
-              final int endIndex = localizedMessage.indexOf(':');
+              int endIndex = localizedMessage.indexOf(':');
+              if (endIndex < localizedMessage.length() - 1 && localizedMessage.charAt(endIndex + 1) == '/') {
+                endIndex = -1;  // ignore : in http://
+              }
               String messageId = endIndex != -1 ? localizedMessage.substring(0, endIndex ):"";
               localizedMessage = localizedMessage.substring(endIndex + 1).trim();
 
