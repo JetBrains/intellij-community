@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -634,14 +633,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (psiElement == null || !psiElement.isValid()) return null;
     final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
     if (virtualFile != null) {
-      int startOffset = 0;
+      int startOffset = psiElement.getTextOffset();
       if (descriptor instanceof ProblemDescriptorImpl) {
-        TextRange range = ((ProblemDescriptorImpl)descriptor).getTextRange();
-        if (range != null) {
-          startOffset = range.getStartOffset();
-        }
+        startOffset = ((ProblemDescriptorImpl)descriptor).getTextRange().getStartOffset();
       }
-      return new OpenFileDescriptor(myProject, virtualFile, psiElement.getTextOffset() + startOffset);
+      return new OpenFileDescriptor(myProject, virtualFile, startOffset);
     }
     return null;
   }
