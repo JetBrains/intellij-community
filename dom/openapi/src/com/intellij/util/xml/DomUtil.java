@@ -5,6 +5,7 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -272,4 +273,29 @@ public class DomUtil {
     }
     return null;
   }
+
+  @NotNull
+  public static <T extends DomElement> T getOriginalElement(@NotNull final T domElement) {
+    final XmlElement psiElement = domElement.getXmlElement();
+    if (psiElement == null) return domElement;
+
+    final PsiFile psiFile = psiElement.getContainingFile();
+    final PsiFile originalFile = psiFile.getOriginalFile();
+    if (originalFile == null) return domElement;
+    final TextRange range = psiElement.getTextRange();
+    final PsiElement element = originalFile.findElementAt(range.getStartOffset());
+    final int maxLength = range.getLength();
+    final boolean isAttribute = psiElement instanceof XmlAttribute;
+    final Class<? extends XmlElement> clazz = isAttribute ? XmlAttribute.class : XmlTag.class;
+    final DomManager domManager = domElement.getManager();
+    DomElement current = null;
+    for (XmlElement next = PsiTreeUtil.getParentOfType(element, clazz, false);
+         next != null && next.getTextLength() <= maxLength;
+         next = PsiTreeUtil.getParentOfType(next, clazz, true)) {
+      current = isAttribute? domManager.getDomElement((XmlAttribute)next) : domManager.getDomElement((XmlTag)next);
+      if (current != null && domElement.getClass() != current.getClass()) current = null;
+    }
+    return (T)current;
+  }
+
 }
