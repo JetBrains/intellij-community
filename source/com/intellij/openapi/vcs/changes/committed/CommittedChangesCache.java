@@ -311,7 +311,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     });
     for(VirtualFile file: files) {
       final AbstractVcs vcs = myVcsManager.getVcsFor(file);
-      assert vcs != null;
+      assert vcs != null: "VCS not found for versioned root " + file.getPath();
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       if (provider instanceof CachingCommittedChangesProvider) {
         final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(file));
