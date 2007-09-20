@@ -293,7 +293,7 @@ public class InspectionApplication {
     return prefix;
   }
 
-  private void patchProject(final Map<Pattern, Pattern> excludePatterns, final Map<Pattern, Pattern> includePatterns) {
+  private void patchProject(final Map<Pattern, Set<Pattern>> excludePatterns, final Map<Pattern, Set<Pattern>> includePatterns) {
     if (excludePatterns.isEmpty() && includePatterns.isEmpty()) return;
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final ModifiableModuleModel modulesModel = ModuleManager.getInstance(myProject).getModifiableModel();
@@ -312,18 +312,24 @@ public class InspectionApplication {
             String relativeName = VfsUtil.getRelativePath(fileOrDir, contentRoot, '/');
             for (Pattern module : excludePatterns.keySet()) {
               if (module == null || module.matcher(modules[idx].getName()).matches()) {
-                if (excludePatterns.get(module).matcher(relativeName).matches()) {
-                  contentEntry.addExcludeFolder(fileOrDir);
-                  return false;
+                final Set<Pattern> dirPatterns = excludePatterns.get(module);
+                for (Pattern pattern : dirPatterns) {
+                  if (pattern.matcher(relativeName).matches()) {
+                    contentEntry.addExcludeFolder(fileOrDir);
+                    return false;
+                  }
                 }
               }
             }
             if (includePatterns.isEmpty()) return true;
             for (Pattern module : includePatterns.keySet()) {
               if (module == null || module.matcher(modules[idx].getName()).matches()) {
-                if (includePatterns.get(module).matcher(relativeName).matches()) {
-                  included.add(fileOrDir);
-                  return true;
+                final Set<Pattern> dirPatterns = includePatterns.get(module);
+                for (Pattern pattern : dirPatterns) {
+                  if (pattern.matcher(relativeName).matches()) {
+                    included.add(fileOrDir);
+                    return true;
+                  }
                 }
               }
             }
@@ -367,8 +373,8 @@ public class InspectionApplication {
     }
   }
 
-  private static Map<Pattern, Pattern> loadPatterns(@NonNls String propertyKey) {
-    final Map<Pattern, Pattern> result = new HashMap<Pattern, Pattern>();
+  private static Map<Pattern, Set<Pattern>> loadPatterns(@NonNls String propertyKey) {
+    final Map<Pattern, Set<Pattern>> result = new HashMap<Pattern, Set<Pattern>>();
     final String patterns = System.getProperty(propertyKey);
     if (patterns != null) {
       final String[] pathPatterns = patterns.split(";");
@@ -379,7 +385,14 @@ public class InspectionApplication {
           idx = excludedPattern.indexOf("]") + 1;
           module = excludedPattern.substring(1, idx - 1);
         }
-        result.put(module != null ? Pattern.compile(module) : null, Pattern.compile(FileUtil.convertAntToRegexp(excludedPattern.substring(idx))));
+        final Pattern modulePattern = module != null ? Pattern.compile(module) : null;
+        final Pattern pattern = Pattern.compile(FileUtil.convertAntToRegexp(excludedPattern.substring(idx)));
+        Set<Pattern> dirPatterns = result.get(modulePattern);
+        if (dirPatterns == null) {
+          dirPatterns = new HashSet<Pattern>();
+          result.put(modulePattern, dirPatterns);
+        }
+        dirPatterns.add(pattern);
       }
     }
     return result;
