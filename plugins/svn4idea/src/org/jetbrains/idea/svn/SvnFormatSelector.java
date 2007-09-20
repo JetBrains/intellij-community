@@ -3,8 +3,11 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.peer.PeerFactory;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNAdminAreaFactorySelector;
@@ -36,7 +39,7 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return getFactories(upgradeMode, path, factories, project, configuration);
   }
 
-  private Collection getFactories(String upgradeMode, final File path, Collection factories, final Project project, SvnConfiguration config) {
+  private static Collection getFactories(String upgradeMode, final File path, Collection factories, final Project project, SvnConfiguration config) {
     if (SvnConfiguration.UPGRADE_NONE.equals(upgradeMode)) {
       // return all factories only if path or its wc root is already in 1.4 format,
       // otherwise return 1.3 factory
@@ -102,7 +105,7 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return format;
   }
 
-  private void displayUpgradeDialog(Project project, File path, String[] newMode) {
+  private static void displayUpgradeDialog(Project project, File path, String[] newMode) {
     UpgradeFormatDialog dialog = new UpgradeFormatDialog(project, path, false);
     dialog.show();
     if (dialog.isOK()) {
@@ -111,41 +114,17 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
   }
 
   private static Project findProject(final File path) {
-    final Project[] p = new Project[1];
-    if (SwingUtilities.isEventDispatchThread() || ApplicationManager.getApplication().isUnitTestMode()) {
-      doFindProject(path, p);
-    } else {
-      try {
-        SwingUtilities.invokeAndWait(new Runnable() {
-          public void run() {
-            doFindProject(path, p);
-          }
-        });
-      } catch (InterruptedException e) {
-        //
-      } catch (InvocationTargetException e) {
-        //
-      }
-    }
-    return p[0];
-  }
-
-  private static void doFindProject(final File path, final Project[] p) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+      public Project compute() {
+        final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path);
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        String filePath = path.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
         for (Project project : projects) {
-          VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
-          for (VirtualFile root : roots) {
-            String rootPath = root.getPath();
-            if (rootPath != null && (filePath.equals(rootPath) || filePath.startsWith(rootPath + '/'))) {
-              p[0] = project;
-              return;
-            }
+          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(filePath);
+          if (vcs instanceof SvnVcs) {
+            return project;
           }
         }
-        p[0] = ProjectManager.getInstance().getDefaultProject();
+        return null;
       }
     });
   }
