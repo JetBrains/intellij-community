@@ -14,13 +14,13 @@ import java.util.Set;
 
 public class ConstantExpressionEvaluator extends PsiElementVisitor {
   private Set<PsiVariable> myVisitedVars;
-  private boolean myThrowExceptionOnOverflow;
-  private Project myProject;
+  private final boolean myThrowExceptionOnOverflow;
+  private final Project myProject;
 
   private Object myValue;
   
   private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY");
-  private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_WO_OVERFLOW_MAP_KEY");
+  private static final Key<CachedValue<Map<PsiElement,Object>>> CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY = new Key<CachedValue<Map<PsiElement, Object>>>("CONSTANT_VALUE_WITH_OVERFLOW_MAP_KEY");
   private static final Object NO_VALUE = new Object();
 
   private ConstantExpressionEvaluator(Set<PsiVariable> visitedVars, boolean throwExceptionOnOverflow, final Project project) {
@@ -290,7 +290,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
         }
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
-        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() & ((Boolean)rOperandValue).booleanValue());
+        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() && ((Boolean)rOperandValue).booleanValue());
       }
     }
     else if (tokenType == JavaTokenType.OR) {
@@ -305,7 +305,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
         }
       }
       else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
-        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() | ((Boolean)rOperandValue).booleanValue());
+        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() || ((Boolean)rOperandValue).booleanValue());
       }
     }
     else if (tokenType == JavaTokenType.XOR) {
