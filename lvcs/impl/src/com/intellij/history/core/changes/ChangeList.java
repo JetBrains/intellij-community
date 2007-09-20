@@ -53,13 +53,16 @@ public class ChangeList {
   }
 
   public void endChangeSet(String name) {
+    assert myChangeSetDepth > 0;
+    
     myChangeSetDepth--;
     if (myChangeSetDepth == 0) {
       if (myCurrentChangeSet.getChanges().isEmpty()) {
         myChanges.remove(myChanges.size() - 1);
-        return;
       }
-      myCurrentChangeSet.setName(name);
+      else {
+        myCurrentChangeSet.setName(name);
+      }
       myCurrentChangeSet = null;
     }
   }

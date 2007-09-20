@@ -1,6 +1,8 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryActionListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
@@ -79,6 +81,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private final StartupManager myStartupManager;
   private final ProjectRootManager myRootManager;
   private ModuleRootListener myRootsChangesListener;
+  private LocalHistoryActionListener myLocalHistoryActionListsner;
 
 
   public UndoManagerImpl(Project project,
@@ -168,6 +171,19 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     };
     myCommandProcessor.addCommandListener(myCommandListener);
 
+    if (myProject  != null) {
+      myLocalHistoryActionListsner = new LocalHistoryActionListener() {
+        public void onActionStart() {
+          onCommandStarted(myProject, UndoConfirmationPolicy.DEFAULT);
+        }
+
+        public void onActionFinish(String name) {
+          onCommandFinished(myProject, name, null);
+        }
+      };
+      LocalHistory.addActionListener(myProject, myLocalHistoryActionListsner);
+    }
+
     myDocumentEditingUndoProvider = new DocumentEditingUndoProvider(myProject, myEditorFactory);
     myMerger = new CommandMerger(this, myEditorFactory);
 
@@ -244,6 +260,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   public void disposeComponent() {
     unregisterRootChangesListener();
+
+    if(myLocalHistoryActionListsner != null) {
+      LocalHistory.removeActionListener(myProject, myLocalHistoryActionListsner);
+    }
 
     if (myCommandListener != null) {
       myCommandProcessor.removeCommandListener(myCommandListener);

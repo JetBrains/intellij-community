@@ -22,7 +22,7 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
   @Test
   public void testCreatingFiles() {
-    VirtualFile f = new TestVirtualFile("file", "content", 123L);
+    VirtualFile f = testFile("file", "content", 123L, true);
     fireCreated(f);
 
     Entry e = vcs.findEntry("file");
@@ -32,11 +32,12 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
     assertEquals(c("content"), e.getContent());
     assertEquals(123L, e.getTimestamp());
+    assertTrue(e.isReadOnly());
   }
 
   @Test
   public void testCreatingDirectories() {
-    VirtualFile f = new TestVirtualFile("dir");
+    VirtualFile f = testDir("dir");
     fireCreated(f);
 
     Entry e = vcs.findEntry("dir");
@@ -46,9 +47,9 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
   @Test
   public void testCreatingDirectoriesWithChildren() {
-    TestVirtualFile dir1 = new TestVirtualFile("dir1");
-    TestVirtualFile dir2 = new TestVirtualFile("dir2");
-    TestVirtualFile file = new TestVirtualFile("file", "", -1);
+    TestVirtualFile dir1 = testDir("dir1");
+    TestVirtualFile dir2 = testDir("dir2");
+    TestVirtualFile file = testFile("file");
 
     dir1.addChild(dir2);
     dir2.addChild(file);
@@ -61,9 +62,9 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
   @Test
   public void testCreationOfDirectoryWithChildrenIsThreatedAsOneChange() {
-    TestVirtualFile dir = new TestVirtualFile("dir");
-    dir.addChild(new TestVirtualFile("one", null, -1));
-    dir.addChild(new TestVirtualFile("two", null, -1));
+    TestVirtualFile dir = testDir("dir");
+    dir.addChild(testFile("one"));
+    dir.addChild(testFile("two"));
     fireCreated(dir);
 
     assertTrue(vcs.hasEntry("dir"));
@@ -75,17 +76,19 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
   @Test
   public void testIgnoringCreationOfAlreadyExistedFiles() {
-    vcs.createFile("f", null, -1);
-    fireCreated(new TestVirtualFile("f"));
+    long timestamp = -1;
+    vcs.createFile("f", null, timestamp, false);
+    fireCreated(testFile("f"));
 
     assertEquals(1, vcs.getChangeList().getChanges().size());
   }
 
   @Test
   public void testChangingFileContent() {
-    vcs.createFile("file", cf("old content"), -1);
+    long timestamp = -1;
+    vcs.createFile("file", cf("old content"), timestamp, false);
 
-    VirtualFile f = new TestVirtualFile("file", "new content", 505L);
+    VirtualFile f = testFile("file", "new content", 505L);
     fireContentChanged(f);
 
     Entry e = vcs.getEntry("file");
@@ -95,9 +98,10 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
   @Test
   public void testRenaming() {
-    vcs.createFile("old name", cf("old content"), -1);
+    long timestamp = -1;
+    vcs.createFile("old name", cf("old content"), timestamp, false);
 
-    VirtualFile f = new TestVirtualFile("new name", null, -1);
+    VirtualFile f = testFile("new name");
     fireRenamed(f, "old name");
 
     Entry e = vcs.findEntry("new name");
@@ -106,15 +110,44 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
     assertFalse(vcs.hasEntry("old name"));
   }
+  
+  @Test
+  public void testDoNothingOnAnotherPropertyChanges() throws Exception {
+    // shouldn't throw any exception here to make test pass
+    firePropertyChanged(testFile(""), "another property", null);
+  }
+
+  @Test
+  public void testChangingROStatus() {
+    vcs.createFile("f", null, -1, false);
+    assertFalse(vcs.getEntry("f").isReadOnly());
+
+    fireROStatusChanged(testFile("f", null, -1, true));
+    assertTrue(vcs.getEntry("f").isReadOnly());
+  }
+
+  @Test
+  public void testIgnoringChangeOfROStatusOfDirectories() {
+    vcs.createDirectory("dir");
+    fireROStatusChanged(testDir("dir")); // shouldn't throw
+  }
+  
+  @Test
+  public void testIgnoringChangeOfROStatusOfUnversionedFiles() {
+    TestVirtualFile f = testFile("f", null, -1, true);
+    filter.setNotAllowedFiles(f);
+
+    fireROStatusChanged(f); // shouldn't throw
+  }
 
   @Test
   public void testRestoringFileAfterDeletion() {
-    vcs.createFile("f", cf("one"), -1);
+    vcs.createFile("f", cf("one"), -1, false);
     vcs.changeFileContent("f", cf("two"), -1);
     Entry e = vcs.getEntry("f");
     vcs.delete("f");
 
-    fireCreated(new TestVirtualFile("f", "two_restored", -1), e);
+    fireCreated(testFile("f", "two_restored"), e);
 
     List<Revision> rr = vcs.getRevisionsFor("f");
     assertEquals(3, rr.size());
@@ -122,18 +155,31 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
     assertEquals(c("two"), rr.get(1).getEntry().getContent());
     assertEquals(c("one"), rr.get(2).getEntry().getContent());
   }
+  
+  @Test
+  public void testRestoringFileROStatus() {
+    vcs.createFile("f", cf(""), -1, true);
+
+    Entry e = vcs.getEntry("f");
+    vcs.delete("f");
+
+    fireCreated(testFile("f", ""), e);
+
+    assertTrue(vcs.getEntry("f").isReadOnly());
+  }
 
   @Test
   public void testRestoringDirectoryAfterDeletion() {
     vcs.createDirectory("dir");
-    vcs.createFile("dir/f", cf("one"), -1);
+    long timestamp = -1;
+    vcs.createFile("dir/f", cf("one"), timestamp, false);
     vcs.changeFileContent("dir/f", cf("two"), -1);
     Entry dir = vcs.getEntry("dir");
     Entry f = vcs.getEntry("dir/f");
     vcs.delete("dir");
 
-    fireCreated(new TestVirtualFile("dir"), dir);
-    fireCreated(new TestVirtualFile("dir/f", "two_restored", -1), f);
+    fireCreated(testDir("dir"), dir);
+    fireCreated(testFile("dir/f", "two_restored"), f);
 
     vcs.changeFileContent("dir/f", cf("three"), -1);
 
@@ -149,26 +195,20 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
   @Test
   public void testDoesNotRestoreIfEventNotWithEntryRequestor() {
-    fireCreated(new TestVirtualFile("f", "", -1), new Object());
+    fireCreated(testFile("f"), new Object());
     assertTrue(vcs.hasEntry("f"));
-  }
-
-  @Test
-  public void testDoNothingOnAnotherPropertyChanges() throws Exception {
-    // shouldn't throw any exception here to make test pass
-    VirtualFile f = new TestVirtualFile("", null, -1);
-    firePropertyChanged(f, "another property", null);
   }
 
   @Test
   public void testMoving() {
     vcs.createDirectory("dir1");
     vcs.createDirectory("dir2");
-    vcs.createFile("dir1/file", cf("content"), -1);
+    long timestamp = -1;
+    vcs.createFile("dir1/file", cf("content"), timestamp, false);
 
-    TestVirtualFile oldParent = new TestVirtualFile("dir1");
-    TestVirtualFile newParent = new TestVirtualFile("dir2");
-    TestVirtualFile f = new TestVirtualFile("file", null, -1);
+    TestVirtualFile oldParent = testDir("dir1");
+    TestVirtualFile newParent = testDir("dir2");
+    TestVirtualFile f = testFile("file");
     newParent.addChild(f);
     fireMoved(f, oldParent, newParent);
 
@@ -185,9 +225,9 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
     vcs.createDirectory("dir1");
     vcs.createDirectory("dir2");
 
-    TestVirtualFile oldParent = new TestVirtualFile("dir1");
-    TestVirtualFile newParent = new TestVirtualFile("dir2");
-    TestVirtualFile f = new TestVirtualFile("file", null, -1);
+    TestVirtualFile oldParent = testDir("dir1");
+    TestVirtualFile newParent = testDir("dir2");
+    TestVirtualFile f = testFile("file");
     newParent.addChild(f);
 
     filter.setNotAllowedFiles(f);
@@ -200,9 +240,9 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   public void testMovingFromOutsideOfTheContentRoots() {
     vcs.createDirectory("myRoot");
 
-    TestVirtualFile f = new TestVirtualFile("file", "content", -1);
-    TestVirtualFile oldParent = new TestVirtualFile("anotherRoot");
-    TestVirtualFile newParent = new TestVirtualFile("myRoot");
+    TestVirtualFile f = testFile("file", "content");
+    TestVirtualFile oldParent = testDir("anotherRoot");
+    TestVirtualFile newParent = testDir("myRoot");
     newParent.addChild(f);
 
     filter.setFilesNotUnderContentRoot(oldParent);
@@ -218,9 +258,9 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   public void testMovingFilteredFileFromOutsideOfTheContentRoots() {
     vcs.createDirectory("myRoot");
 
-    TestVirtualFile f = new TestVirtualFile("file", "content", -1);
-    TestVirtualFile oldParent = new TestVirtualFile("anotherRoot");
-    TestVirtualFile newParent = new TestVirtualFile("myRoot");
+    TestVirtualFile f = testFile("file", "content");
+    TestVirtualFile oldParent = testDir("anotherRoot");
+    TestVirtualFile newParent = testDir("myRoot");
     newParent.addChild(f);
 
     filter.setFilesNotUnderContentRoot(oldParent);
@@ -234,11 +274,12 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   @Test
   public void testMovingToOutsideOfTheContentRoots() {
     vcs.createDirectory("myRoot");
-    vcs.createFile("myRoot/file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("myRoot/file", null, timestamp, false);
 
-    TestVirtualFile f = new TestVirtualFile("file", "content", -1);
-    TestVirtualFile oldParent = new TestVirtualFile("myRoot");
-    TestVirtualFile newParent = new TestVirtualFile("anotherRoot");
+    TestVirtualFile f = testFile("file", "content");
+    TestVirtualFile oldParent = testDir("myRoot");
+    TestVirtualFile newParent = testDir("anotherRoot");
     newParent.addChild(f);
 
     filter.setFilesNotUnderContentRoot(newParent);
@@ -253,9 +294,9 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   public void testMovingFilteredFileToOutsideOfTheContentRoots() {
     vcs.createDirectory("myRoot");
 
-    TestVirtualFile f = new TestVirtualFile("file", "content", -1);
-    TestVirtualFile oldParent = new TestVirtualFile("myRoot");
-    TestVirtualFile newParent = new TestVirtualFile("anotherRoot");
+    TestVirtualFile f = testFile("file", "content");
+    TestVirtualFile oldParent = testDir("myRoot");
+    TestVirtualFile newParent = testDir("anotherRoot");
     newParent.addChild(f);
 
     filter.setFilesNotUnderContentRoot(newParent);
@@ -267,9 +308,9 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
   @Test
   public void testMovingAroundOutsideContentRoots() {
-    TestVirtualFile f = new TestVirtualFile("file", "content", -1);
-    TestVirtualFile oldParent = new TestVirtualFile("root1");
-    TestVirtualFile newParent = new TestVirtualFile("root2");
+    TestVirtualFile f = testFile("file", "content");
+    TestVirtualFile oldParent = testDir("root1");
+    TestVirtualFile newParent = testDir("root2");
     newParent.addChild(f);
 
     filter.setFilesNotUnderContentRoot(oldParent, newParent);
@@ -283,10 +324,12 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   @Test
   public void testDeletionFromDirectory() {
     vcs.createDirectory("dir");
-    vcs.createFile("file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("file", null, timestamp, false);
 
-    TestVirtualFile dir = new TestVirtualFile("dir", null, -1);
-    TestVirtualFile f = new TestVirtualFile("file", null, -1);
+    TestVirtualFile dir = testDir("dir");
+    TestVirtualFile f = testFile("file");
+    dir.addChild(f);
     fireDeletion(f, dir);
 
     assertTrue(vcs.hasEntry("dir"));
@@ -295,17 +338,17 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
   @Test
   public void testDeletionWithoutParent() {
-    vcs.createFile("file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("file", null, timestamp, false);
 
-    fireDeletion(new TestVirtualFile("file", null, -1));
+    fireDeletion(testFile("file"));
 
     assertFalse(vcs.hasEntry("file"));
   }
 
   @Test
   public void testDeletionOfFileThanIsNotUnderVcsDoesNotThrowException() {
-    VirtualFile f = new TestVirtualFile("non-existent", null, -1);
-    fireDeletion(f); // should'n throw
+    fireDeletion(testFile("non-existent")); // should'n throw
   }
 
   @Test
@@ -315,7 +358,7 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
 
     setUp();
 
-    VirtualFile f = new TestVirtualFile("file", null, -1);
+    VirtualFile f = testFile("file");
     filter.setFilesNotUnderContentRoot(f);
 
     fireCreated(f);

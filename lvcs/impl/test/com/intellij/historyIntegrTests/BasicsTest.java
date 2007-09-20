@@ -100,12 +100,14 @@ public class BasicsTest extends IntegrationTestCase {
     assertTrue(LocalHistory.hasUnavailableContent(myProject, f));
   }
 
-  public void testHasUnavailableContentForDirectory() throws Exception {
-    VirtualFile f = root.createChildData(null, "file.java");
-    assertFalse(LocalHistory.hasUnavailableContent(myProject, root));
+  public void testHasUnavailableContentForUnversionedFile() throws Exception {
+    VirtualFile f = root.createChildData(null, "f");
+    assertFalse(LocalHistory.hasUnavailableContent(myProject, f));
+  }
 
-    f.setBinaryContent(new byte[2 * 1024 * 1024]);
-    assertTrue(LocalHistory.hasUnavailableContent(myProject, root));
+  public void testHasUnavailableContentForDirectory() throws Exception {
+    VirtualFile dir = root.createChildDirectory(null, "dir");
+    assertFalse(LocalHistory.hasUnavailableContent(myProject, dir));
   }
 
   public void testContentAtDate() throws Exception {

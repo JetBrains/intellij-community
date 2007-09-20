@@ -12,11 +12,13 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   @Test
   public void testRecentChanges() {
     vcs.beginChangeSet();
-    vcs.createFile("f1", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f1", null, timestamp, false);
     vcs.endChangeSet("a");
 
     vcs.beginChangeSet();
-    vcs.createFile("f2", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("f2", null, timestamp1, false);
     vcs.endChangeSet("b");
 
     List<RecentChange> cc = vcs.getRecentChanges();
@@ -39,13 +41,16 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotIncludeUnnamedChanges() {
     vcs.beginChangeSet();
-    vcs.createFile("f1", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("f1", null, timestamp1, false);
     vcs.endChangeSet("a");
 
-    vcs.createFile("f2", null, -1);
+    long timestamp2 = -1;
+    vcs.createFile("f2", null, timestamp2, false);
 
     vcs.beginChangeSet();
-    vcs.createFile("f3", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f3", null, timestamp, false);
     vcs.endChangeSet("b");
 
     List<RecentChange> cc = vcs.getRecentChanges();
@@ -72,11 +77,13 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotIncludeLocalFileChanges() {
     vcs.beginChangeSet();
-    vcs.createFile("f1", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f1", null, timestamp, false);
     vcs.endChangeSet("a");
 
     vcs.beginChangeSet();
-    vcs.createFile("f2", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("f2", null, timestamp1, false);
     vcs.changeFileContent("f1", null, -1);
     vcs.endChangeSet("b");
 
@@ -93,8 +100,10 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   @Test
   public void testIncludeChangeSetsWithFileContentChangesOnly() {
     vcs.beginChangeSet();
-    vcs.createFile("f1", null, -1);
-    vcs.createFile("f2", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("f1", null, timestamp1, false);
+    long timestamp = -1;
+    vcs.createFile("f2", null, timestamp, false);
     vcs.endChangeSet("a");
 
     vcs.beginChangeSet();
@@ -111,7 +120,8 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotIncludeLabels() {
     vcs.beginChangeSet();
-    vcs.createFile("f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f", null, timestamp, false);
     vcs.endChangeSet("change");
     vcs.putUserLabel("label");
 
@@ -128,11 +138,13 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
     vcs.endChangeSet("a");
 
     vcs.beginChangeSet();
-    vcs.createFile("root/dir/f1", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("root/dir/f1", null, timestamp1, false);
     vcs.endChangeSet("b");
 
     vcs.beginChangeSet();
-    vcs.createFile("anotherRoot/anotherDir/f2", null, -1);
+    long timestamp = -1;
+    vcs.createFile("anotherRoot/anotherDir/f2", null, timestamp, false);
     vcs.endChangeSet("c");
 
     List<RecentChange> cc = vcs.getRecentChanges();
@@ -156,7 +168,8 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   public void testIncludeOnlyLastValuable20Changes() {
     for (int i = 0; i < 40; i++) {
       vcs.beginChangeSet();
-      vcs.createFile("f" + String.valueOf(i), null, -1);
+      long timestamp = -1;
+      vcs.createFile("f" + String.valueOf(i), null, timestamp, false);
       vcs.endChangeSet(String.valueOf(i));
 
       vcs.beginChangeSet();

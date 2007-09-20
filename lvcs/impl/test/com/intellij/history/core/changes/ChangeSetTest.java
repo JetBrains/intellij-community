@@ -35,7 +35,7 @@ public class ChangeSetTest extends LocalVcsTestCase {
 
   @Test
   public void testIsCreational() {
-    ChangeSet cs1 = cs(new CreateFileChange(1, "file", null, -1));
+    ChangeSet cs1 = cs(new CreateFileChange(1, "file", null, -1, false));
     ChangeSet cs2 = cs(new CreateDirectoryChange(2, "dir"));
     cs1.applyTo(r);
     cs2.applyTo(r);
@@ -51,7 +51,7 @@ public class ChangeSetTest extends LocalVcsTestCase {
     createFile(r, 1, "file", null, -1);
     Entry e = r.getEntry("file");
 
-    cs = cs(new ChangeFileContentChange("file", null, -1));
+    cs = cs(new ContentChange("file", null, -1));
     cs.applyTo(r);
 
     assertFalse(cs.isCreationalFor(e));
@@ -59,7 +59,7 @@ public class ChangeSetTest extends LocalVcsTestCase {
 
   @Test
   public void testCreationalAndNonCreationalInOneChangeSet() {
-    cs = cs(new CreateFileChange(1, "file", null, -1), new ChangeFileContentChange("file", null, -1));
+    cs = cs(new CreateFileChange(1, "file", null, -1, false), new ContentChange("file", null, -1));
     cs.applyTo(r);
 
     assertTrue(cs.isCreationalFor(r.getEntry("file")));
@@ -67,7 +67,7 @@ public class ChangeSetTest extends LocalVcsTestCase {
 
   @Test
   public void testToCreationalChangesInOneChangeSet() {
-    cs = cs(new CreateFileChange(1, "file", null, -1), new CreateDirectoryChange(2, "dir"));
+    cs = cs(new CreateFileChange(1, "file", null, -1, false), new CreateDirectoryChange(2, "dir"));
     cs.applyTo(r);
 
     assertTrue(cs.isCreationalFor(r.getEntry("file")));
@@ -76,17 +76,17 @@ public class ChangeSetTest extends LocalVcsTestCase {
 
   @Test
   public void testIsFileContentChange() {
-    assertFalse(cs(new CreateFileChange(1, "f", null, -1)).isFileContentChange());
-    assertTrue(cs(new ChangeFileContentChange("f", null, -1)).isFileContentChange());
-    assertFalse(cs(new ChangeFileContentChange("f1", null, -1), new ChangeFileContentChange("f2", null, -1)).isFileContentChange());
-    assertFalse(cs(new CreateFileChange(1, "f1", null, -1), new ChangeFileContentChange("f2", null, -1)).isFileContentChange());
+    assertFalse(cs(new CreateFileChange(1, "f", null, -1, false)).isFileContentChange());
+    assertTrue(cs(new ContentChange("f", null, -1)).isFileContentChange());
+    assertFalse(cs(new ContentChange("f1", null, -1), new ContentChange("f2", null, -1)).isFileContentChange());
+    assertFalse(cs(new CreateFileChange(1, "f1", null, -1, false), new ContentChange("f2", null, -1)).isFileContentChange());
   }
 
   private class LoggingChange extends CreateFileChange {
     private int myId;
 
     public LoggingChange(int id) {
-      super(-1, null, null, -1);
+      super(-1, null, null, -1, false);
       myId = id;
     }
 

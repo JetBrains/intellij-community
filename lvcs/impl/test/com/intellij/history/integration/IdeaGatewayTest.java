@@ -16,8 +16,10 @@ public class IdeaGatewayTest extends LocalVcsTestCase {
   @Test
   public void testRegisteringUnsavedDocuments() throws Exception {
     vcs.createDirectory("root");
-    vcs.createFile("root/f1", null, -1);
-    vcs.createFile("root/f2", null, -1);
+    long timestamp = -1;
+    vcs.createFile("root/f1", null, timestamp, false);
+    long timestamp1 = -1;
+    vcs.createFile("root/f2", null, timestamp1, false);
 
     gw.addUnsavedDocument("root/f1", "one");
     gw.addUnsavedDocument("root/f2", "two");
@@ -45,7 +47,8 @@ public class IdeaGatewayTest extends LocalVcsTestCase {
 
   @Test
   public void testFilteringDocumentsWithoutFiles() {
-    vcs.createFile("f", cf("file"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("file"), timestamp, false);
     gw.addUnsavedDocumentWithoutFile("f", "doc");
     gw.registerUnsavedDocuments(vcs);
 
@@ -54,7 +57,8 @@ public class IdeaGatewayTest extends LocalVcsTestCase {
 
   @Test
   public void testFilteringDocumentsForDeletedFiles() {
-    vcs.createFile("f", cf("file"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("file"), timestamp, false);
     gw.addUnsavedDocumentForDeletedFile("f", "doc");
 
     gw.registerUnsavedDocuments(vcs);
@@ -63,7 +67,8 @@ public class IdeaGatewayTest extends LocalVcsTestCase {
 
   @Test
   public void testFilteringNotAllowedDocuments() {
-    vcs.createFile("f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f", null, timestamp, false);
     gw.addUnsavedDocument("f", "content");
 
     ((TestFileFilter)gw.getFileFilter()).setNotAllowedFiles(gw.getUnsavedDocumentFiles());
@@ -76,7 +81,8 @@ public class IdeaGatewayTest extends LocalVcsTestCase {
 
   @Test
   public void testFilteringDocumentsNotUnderContentRoot() {
-    vcs.createFile("f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f", null, timestamp, false);
     gw.addUnsavedDocument("f", "content");
 
     ((TestFileFilter)gw.getFileFilter()).setFilesNotUnderContentRoot(gw.getUnsavedDocumentFiles());

@@ -62,6 +62,14 @@ public abstract class Entry {
     throw new UnsupportedOperationException(formatPath());
   }
 
+  public boolean isReadOnly() {
+    throw new UnsupportedOperationException(formatPath());
+  }
+
+  public void setReadOnly(boolean isReadOnly) {
+    throw new UnsupportedOperationException(formatPath());
+  }
+
   public boolean isOutdated(long timestamp) {
     return getTimestamp() != timestamp;
   }

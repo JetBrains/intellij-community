@@ -20,7 +20,8 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
   @Test
   public void testRevisionsAfterPurgeContainsCurrentVersion() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", cf(""), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf(""), timestamp, false);
     vcs.purgeObsolete(0);
 
     initModelFor("f");
@@ -35,7 +36,8 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCanNotShowDifferenceIfOneOfEntriesHasUnavailableContent() {
-    vcs.createFile("f", cf("abc"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("abc"), timestamp, false);
     vcs.changeFileContent("f", bigContentFactory(), -1);
     vcs.changeFileContent("f", cf("def"), -1);
 
@@ -53,7 +55,8 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCanShowDifferenceProgress() {
-    vcs.createFile("f", cf("abc"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("abc"), timestamp, false);
     vcs.changeFileContent("f", cf(("def")), -1);
 
     initModelFor("f");
@@ -68,7 +71,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceModelTitles() {
-    vcs.createFile("old", cf(""), 123);
+    vcs.createFile("old", cf(""), (long)123, false);
     vcs.rename("old", "new");
     vcs.rename("new", "current");
 
@@ -82,7 +85,7 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testTitleForCurrentRevision() {
-    vcs.createFile("f", cf("content"), 123);
+    vcs.createFile("f", cf("content"), (long)123, false);
     initModelFor("f");
 
     FileDifferenceModel dm = m.getDifferenceModel();
@@ -92,7 +95,8 @@ public class FileHistoryDialogModelTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceModelContents() {
-    vcs.createFile("f", cf("old"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("old"), timestamp, false);
     vcs.changeFileContent("f", cf("new"), -1);
     vcs.changeFileContent("f", cf("current"), -1);
 

@@ -129,6 +129,11 @@ public class Updater implements CacheUpdater {
           updateRecursively(e, f);
         }
         else {
+          boolean isFileRO = !f.isWritable();
+          if (e.isReadOnly() != isFileRO) {
+            myVcs.changeROStatus(f.getPath(), isFileRO);
+          }
+          
           if (e.isOutdated(f.getTimeStamp())) {
             myProcessor.addFileToUpdate(f);
           }

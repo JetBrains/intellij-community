@@ -41,6 +41,7 @@ public class LocalHistoryFacade {
     registerUnsavedDocumentChanges();
     myVcs.endChangeSet(null);
     if (myChangeSetDepth > 0) myVcs.beginChangeSet();
+
     beginChangeSet();
   }
 
@@ -92,7 +93,7 @@ public class LocalHistoryFacade {
     }
     else {
       if (filesToCollect == null) {
-        myVcs.createFile(f.getPath(), contentFactoryFor(f), f.getTimeStamp());
+        myVcs.createFile(f.getPath(), contentFactoryFor(f), f.getTimeStamp(), !f.isWritable());
       }
       else {
         filesToCollect.add(f);
@@ -105,7 +106,7 @@ public class LocalHistoryFacade {
       myVcs.restoreDirectory(e.getId(), f.getPath());
     }
     else {
-      myVcs.restoreFile(e.getId(), f.getPath(), contentFactoryFor(f), f.getTimeStamp());
+      myVcs.restoreFile(e.getId(), f.getPath(), contentFactoryFor(f), f.getTimeStamp(), e.isReadOnly());
     }
   }
 
@@ -129,6 +130,10 @@ public class LocalHistoryFacade {
 
   public void rename(VirtualFile f, String newName) {
     myVcs.rename(f.getPath(), newName);
+  }
+
+  public void changeROStatus(VirtualFile f) {
+    myVcs.changeROStatus(f.getPath(), !f.isWritable());
   }
 
   public void move(VirtualFile file, VirtualFile newParent) {

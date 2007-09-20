@@ -21,7 +21,8 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     vcs.beginChangeSet();
-    vcs.createFile("f", cf("1"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("1"), timestamp, false);
     vcs.endChangeSet("1");
 
     vcs.beginChangeSet();

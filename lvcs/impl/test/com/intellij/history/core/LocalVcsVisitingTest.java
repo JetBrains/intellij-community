@@ -4,14 +4,13 @@ import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.Entry;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class LocalVcsVisitingTest extends LocalVcsTestCase {
   LocalVcs vcs = new InMemoryLocalVcs();
 
   @Test
   public void testSimpleVisit() throws Exception {
-    vcs.createFile("f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f", null, timestamp, false);
     vcs.createDirectory("dir");
 
     assertVisitorLog("started begin create end begin create end finished ");
@@ -20,7 +19,8 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
   @Test
   public void testVisitChangeSet() throws Exception {
     vcs.beginChangeSet();
-    vcs.createFile("f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f", null, timestamp, false);
     vcs.createDirectory("dir");
     vcs.endChangeSet(null);
 
@@ -30,7 +30,8 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
   @Test
   public void testVisitingChangesInNotFinishedChangeSet() throws Exception {
     vcs.beginChangeSet();
-    vcs.createFile("f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f", null, timestamp, false);
     vcs.createDirectory("dir");
 
     assertVisitorLog("started begin create create end finished ");
@@ -38,7 +39,8 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
 
   @Test
   public void testVisitingAllChanges() throws Exception {
-    vcs.createFile("f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f", null, timestamp, false);
     vcs.beginChangeSet();
     vcs.createDirectory("dir");
     vcs.endChangeSet(null);
@@ -50,7 +52,8 @@ public class LocalVcsVisitingTest extends LocalVcsTestCase {
 
   @Test
   public void testStop() throws Exception {
-    vcs.createFile("f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f", null, timestamp, false);
     vcs.createDirectory("dir");
 
     TestVisitor visitor = new TestVisitor() {

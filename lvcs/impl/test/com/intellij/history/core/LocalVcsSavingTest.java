@@ -26,7 +26,7 @@ public class LocalVcsSavingTest extends TempDirTestCase {
 
   @Test
   public void testSavingEntries() {
-    vcs.createFile("file", cf("content"), 123L);
+    vcs.createFile("file", cf("content"), 123L, false);
 
     vcs.save();
     initVcs();
@@ -39,7 +39,8 @@ public class LocalVcsSavingTest extends TempDirTestCase {
 
   @Test
   public void testSavingChangeList() {
-    vcs.createFile("file", cf("content"), -1);
+    long timestamp = -1;
+    vcs.createFile("file", cf("content"), timestamp, false);
     vcs.changeFileContent("file", cf("new content"), -1);
 
     vcs.save();
@@ -50,13 +51,16 @@ public class LocalVcsSavingTest extends TempDirTestCase {
 
   @Test
   public void testSavingObjectsCounter() {
-    vcs.createFile("file1", cf("content1"), -1);
-    vcs.createFile("file2", cf("content2"), -1);
+    long timestamp1 = -1;
+    vcs.createFile("file1", cf("content1"), timestamp1, false);
+    long timestamp2 = -1;
+    vcs.createFile("file2", cf("content2"), timestamp2, false);
 
     vcs.save();
     initVcs();
 
-    vcs.createFile("file3", cf("content3"), -1);
+    long timestamp = -1;
+    vcs.createFile("file3", cf("content3"), timestamp, false);
 
     int id2 = vcs.getEntry("file2").getId();
     int id3 = vcs.getEntry("file3").getId();
@@ -67,7 +71,8 @@ public class LocalVcsSavingTest extends TempDirTestCase {
   @Test
   public void testSavingDuringChangeSet() {
     vcs.beginChangeSet();
-    vcs.createFile("file", cf(""), -1);
+    long timestamp = -1;
+    vcs.createFile("file", cf(""), timestamp, false);
 
     vcs.save();
     initVcs();
@@ -77,7 +82,8 @@ public class LocalVcsSavingTest extends TempDirTestCase {
   
   @Test
   public void testDoesNotSaveIfNoChangesWereMade() {
-    vcs.createFile("f1", cf(""), -1);
+    long timestamp = -1;
+    vcs.createFile("f1", cf(""), timestamp, false);
     vcs.save();
     File f = new File(tempDir, "storage");
     f.setLastModified(123);
@@ -85,7 +91,8 @@ public class LocalVcsSavingTest extends TempDirTestCase {
     vcs.save();
     assertTrue(123 == f.lastModified());
 
-    vcs.createFile("f2", cf(""), -1);
+    long timestamp1 = -1;
+    vcs.createFile("f2", cf(""), timestamp1, false);
     vcs.save();
 
     assertTrue(123 != f.lastModified());

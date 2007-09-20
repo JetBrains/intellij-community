@@ -9,7 +9,8 @@ public class LocalVcsDatedContentTest extends LocalVcsTestCase {
   @Test
   public void testGettingContent() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", cf("one"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("one"), timestamp, false);
     setCurrentTimestamp(20);
     vcs.changeFileContent("f", cf("two"), -1);
 
@@ -24,7 +25,8 @@ public class LocalVcsDatedContentTest extends LocalVcsTestCase {
   @Test
   public void testGettingMostRecentRevisionContent() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", cf("one"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("one"), timestamp, false);
     setCurrentTimestamp(20);
     vcs.changeFileContent("f", cf("two"), -1);
 
@@ -39,7 +41,8 @@ public class LocalVcsDatedContentTest extends LocalVcsTestCase {
   @Test
   public void testGettingContentForUnavailableContentIsNull() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", bigContentFactory(), -1);
+    long timestamp = -1;
+    vcs.createFile("f", bigContentFactory(), timestamp, false);
 
     assertNull(vcs.getByteContent("f", comparator(10)));
   }
@@ -47,7 +50,8 @@ public class LocalVcsDatedContentTest extends LocalVcsTestCase {
   @Test
   public void testGettingContentIfPurgedIsNull() {
     setCurrentTimestamp(10);
-    vcs.createFile("f", cf("one"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("one"), timestamp, false);
     setCurrentTimestamp(20);
     vcs.changeFileContent("f", cf("two"), -1);
 

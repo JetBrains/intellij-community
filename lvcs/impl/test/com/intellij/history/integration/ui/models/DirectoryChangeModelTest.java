@@ -33,8 +33,8 @@ public class DirectoryChangeModelTest extends LocalVcsTestCase {
 
   @Test
   public void testFileDifferenceModel() {
-    Entry left = new FileEntry(-1, "left", null, 123L);
-    Entry right = new FileEntry(-1, "right", null, 123L);
+    Entry left = new FileEntry(-1, "left", null, 123L, false);
+    Entry right = new FileEntry(-1, "right", null, 123L, false);
 
     Difference d = new Difference(false, left, right);
     DirectoryChangeModel dm = new DirectoryChangeModel(d);
@@ -46,8 +46,8 @@ public class DirectoryChangeModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCanShowFileDifference() {
-    Entry left = new FileEntry(-1, "left", c(""), -1);
-    Entry right = new FileEntry(-1, "right", c(""), -1);
+    Entry left = new FileEntry(-1, "left", c(""), -1, false);
+    Entry right = new FileEntry(-1, "right", c(""), -1, false);
 
     Difference d1 = new Difference(true, left, right);
     Difference d2 = new Difference(true, null, right);
@@ -69,8 +69,8 @@ public class DirectoryChangeModelTest extends LocalVcsTestCase {
 
   @Test
   public void testCantShowDifferenceIfOneOfFileHasUnavailableContent() {
-    Entry e1 = new FileEntry(-1, "one", c("abc"), -1);
-    Entry e2 = new FileEntry(-1, "two", new UnavailableContent(), -1);
+    Entry e1 = new FileEntry(-1, "one", c("abc"), -1, false);
+    Entry e2 = new FileEntry(-1, "two", new UnavailableContent(), -1, false);
 
     Difference d1 = new Difference(true, e1, e2);
     Difference d2 = new Difference(true, e2, e1);

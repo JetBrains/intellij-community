@@ -53,6 +53,16 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return getComponentInstance(p).getLocalVcsImpl();
   }
 
+  @Override
+  protected void addActionListener(LocalHistoryActionListener l) {
+    myService.addActionListener(l);
+  }
+
+  @Override
+  protected void removeActionListener(LocalHistoryActionListener l) {
+    myService.removeActionListener(l);
+  }
+
   public LocalHistoryComponent(Project p,
                                StartupManager sm,
                                ProjectRootManagerEx rm,
@@ -182,6 +192,11 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   @Override
   protected boolean hasUnavailableContent(VirtualFile f) {
     if (!isInitialized) return false;
+    if (!isUnderControl(f)) return false;
+
+    // TODO IDEADEV-21269 bug hook
+    assert f.isValid();
+
     return myVcs.getEntry(f.getPath()).hasUnavailableContent();
   }
 

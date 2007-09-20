@@ -3,7 +3,7 @@ package com.intellij.history.integration;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.changes.Change;
-import com.intellij.history.core.changes.ChangeFileContentChange;
+import com.intellij.history.core.changes.ContentChange;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.integration.revertion.ChangeRevertionVisitor;
@@ -54,7 +54,7 @@ public class CheckpointImpl implements Checkpoint {
     }
 
     private void doVisit(StructuralChange c) throws IOException, StopVisitingException {
-      if (c instanceof ChangeFileContentChange) return;
+      if (c instanceof ContentChange) return;
       c.accept(myVisitor);
     }
 

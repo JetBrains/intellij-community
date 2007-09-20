@@ -17,22 +17,28 @@ import java.util.List;
 public class TestVirtualFile extends DeprecatedVirtualFile {
   private String myName;
   private String myContent;
+  private boolean isReadOnly;
   private long myTimestamp;
 
-  private boolean myIsDirectory;
+  private boolean IsDirectory;
   private VirtualFile myParent;
   private List<TestVirtualFile> myChildren = new ArrayList<TestVirtualFile>();
 
   public TestVirtualFile(@NotNull String name, String content, long timestamp) {
+    this(name, content,  timestamp, false);
+  }
+
+  public TestVirtualFile(@NotNull String name, String content, long timestamp, boolean isReadOnly) {
     myName = name;
     myContent = content;
+    this.isReadOnly = isReadOnly;
     myTimestamp = timestamp;
-    myIsDirectory = false;
+    IsDirectory = false;
   }
 
   public TestVirtualFile(String name) {
     myName = name;
-    myIsDirectory = true;
+    IsDirectory = true;
   }
 
   @NotNull
@@ -46,7 +52,7 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
   }
 
   public boolean isDirectory() {
-    return myIsDirectory;
+    return IsDirectory;
   }
 
   public String getPath() {
@@ -86,7 +92,7 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
   }
 
   public boolean isWritable() {
-    throw new UnsupportedOperationException();
+    return !isReadOnly;
   }
 
   public boolean isValid() {

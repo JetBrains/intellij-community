@@ -40,7 +40,7 @@ public class LocalVcsPerformanceTestCase extends PerformanceTestCase {
     for (int i = 0; i < 10; i++) {
       String filePath = parent + "/file" + i;
       long timestamp = VCS_ENTRIES_TIMESTAMP;
-      vcs.createFile(filePath, cf(String.valueOf(timestamp + i)), timestamp);
+      vcs.createFile(filePath, cf(String.valueOf(timestamp + i)), timestamp, false);
 
       String dirPath = parent + "/dir" + i;
       vcs.createDirectory(dirPath);

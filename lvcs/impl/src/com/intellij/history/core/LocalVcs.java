@@ -80,8 +80,8 @@ public class LocalVcs implements ILocalVcs {
     myChangeList.endChangeSet(name);
   }
 
-  public void createFile(String path, ContentFactory f, long timestamp) {
-    doCreateFile(getNextId(), path, f, timestamp);
+  public void createFile(String path, ContentFactory f, long timestamp, boolean isReadOnly) {
+    doCreateFile(getNextId(), path, f, timestamp, isReadOnly);
   }
 
   protected Content createContentFrom(ContentFactory f) {
@@ -96,13 +96,13 @@ public class LocalVcs implements ILocalVcs {
     return myEntryCounter++;
   }
 
-  public void restoreFile(int id, String path, ContentFactory f, long timestamp) {
-    doCreateFile(id, path, f, timestamp);
+  public void restoreFile(int id, String path, ContentFactory f, long timestamp, boolean isReadOnly) {
+    doCreateFile(id, path, f, timestamp, isReadOnly);
   }
 
-  private void doCreateFile(int id, String path, ContentFactory f, long timestamp) {
+  private void doCreateFile(int id, String path, ContentFactory f, long timestamp, boolean isReadOnly) {
     Content c = createContentFrom(f);
-    applyChange(new CreateFileChange(id, path, c, timestamp));
+    applyChange(new CreateFileChange(id, path, c, timestamp, isReadOnly));
   }
 
   public void restoreDirectory(int id, String path) {
@@ -116,7 +116,7 @@ public class LocalVcs implements ILocalVcs {
   public void changeFileContent(String path, ContentFactory f, long timestamp) {
     if (contentWasNotChanged(path, f)) return;
     Content c = createContentFrom(f);
-    applyChange(new ChangeFileContentChange(path, c, timestamp));
+    applyChange(new ContentChange(path, c, timestamp));
   }
 
   protected boolean contentWasNotChanged(String path, ContentFactory f) {
@@ -125,6 +125,10 @@ public class LocalVcs implements ILocalVcs {
 
   public void rename(String path, String newName) {
     applyChange(new RenameChange(path, newName));
+  }
+
+  public void changeROStatus(String path, boolean isReadOnly) {
+    applyChange(new ROStatusChange(path, isReadOnly));
   }
 
   public void move(String path, String newParentPath) {

@@ -13,7 +13,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   @Test
   public void testIncrementingIdOnEntryCreation() {
     vcs.createDirectory("dir");
-    vcs.createFile("file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("file", null, timestamp, false);
 
     int id1 = vcs.getEntry("dir").getId();
     int id2 = vcs.getEntry("file").getId();
@@ -23,18 +24,19 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
   @Test
   public void testCreatingFile() {
-    vcs.createFile("file", cf("content"), 123L);
+    vcs.createFile("file", cf("content"), 123L, true);
 
     Entry e = vcs.findEntry("file");
 
     assertNotNull(e);
     assertEquals(c("content"), e.getContent());
     assertEquals(123L, e.getTimestamp());
+    assertTrue(e.isReadOnly());
   }
 
   @Test
   public void testCreatingLongFiles() {
-    vcs.createFile("file", bigContentFactory(), 777L);
+    vcs.createFile("file", bigContentFactory(), 777L, false);
 
     Entry e = vcs.findEntry("file");
 
@@ -55,14 +57,16 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   @Test
   public void testCreatingFileUnderDirectory() {
     vcs.createDirectory("dir");
-    vcs.createFile("dir/file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("dir/file", null, timestamp, false);
 
     assertTrue(vcs.hasEntry("dir/file"));
   }
 
   @Test
   public void testChangingFileContent() {
-    vcs.createFile("file", cf("content"), -1);
+    long timestamp = -1;
+    vcs.createFile("file", cf("content"), timestamp, false);
     assertEquals(c("content"), vcs.getEntry("file").getContent());
 
     vcs.changeFileContent("file", cf("new content"), -1);
@@ -71,7 +75,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
   @Test
   public void testChangingFileContentToEqualOneDoesNothing() {
-    vcs.createFile("f", cf("content"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("content"), timestamp, false);
     assertEquals(1, vcs.getRevisionsFor("f").size());
 
     vcs.changeFileContent("f", cf("content"), -1);
@@ -80,7 +85,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
   @Test
   public void testRenamingFile() {
-    vcs.createFile("file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("file", null, timestamp, false);
     assertTrue(vcs.hasEntry("file"));
 
     vcs.rename("file", "new file");
@@ -93,7 +99,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   public void testRenamingDirectoryWithContent() {
     vcs.createDirectory("dir1");
     vcs.createDirectory("dir1/dir2");
-    vcs.createFile("dir1/dir2/file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("dir1/dir2/file", null, timestamp, false);
 
     vcs.rename("dir1/dir2", "new dir");
 
@@ -102,12 +109,25 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
     assertFalse(vcs.hasEntry("dir1/dir2"));
   }
+  
+  @Test
+  public void testChangingROStatus() {
+    vcs.createFile("f", null, -1, false);
+
+    vcs.changeROStatus("f", true);
+    assertTrue(vcs.getEntry("f").isReadOnly());
+
+    vcs.changeROStatus("f", false);
+    assertFalse(vcs.getEntry("f").isReadOnly());
+  }
 
   @Test
   public void testTreatingRenamedAndCreatedFilesWithSameNameDifferently() {
-    vcs.createFile("file1", null, -1);
+    long timestamp = -1;
+    vcs.createFile("file1", null, timestamp, false);
     vcs.rename("file1", "file2");
-    vcs.createFile("file1", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("file1", null, timestamp1, false);
 
     Entry one = vcs.getEntry("file1");
     Entry two = vcs.getEntry("file2");
@@ -119,7 +139,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   public void testMovingFileFromOneDirectoryToAnother() {
     vcs.createDirectory("dir1");
     vcs.createDirectory("dir2");
-    vcs.createFile("dir1/file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("dir1/file", null, timestamp, false);
 
     vcs.move("dir1/file", "dir2");
 
@@ -132,7 +153,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
     vcs.createDirectory("root1");
     vcs.createDirectory("root2");
     vcs.createDirectory("root1/dir");
-    vcs.createFile("root1/dir/file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("root1/dir/file", null, timestamp, false);
 
     vcs.move("root1/dir", "root2");
 
@@ -143,7 +165,8 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingFile() {
-    vcs.createFile("file", cf("content"), -1);
+    long timestamp = -1;
+    vcs.createFile("file", cf("content"), timestamp, false);
     assertTrue(vcs.hasEntry("file"));
 
     vcs.delete("file");
@@ -154,8 +177,10 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   public void testDeletingDirectoryWithContent() {
     vcs.createDirectory("dir1");
     vcs.createDirectory("dir1/dir2");
-    vcs.createFile("dir1/file1", cf("content1"), -1);
-    vcs.createFile("dir1/dir2/file2", cf("content2"), -1);
+    long timestamp1 = -1;
+    vcs.createFile("dir1/file1", cf("content1"), timestamp1, false);
+    long timestamp = -1;
+    vcs.createFile("dir1/dir2/file2", cf("content2"), timestamp, false);
 
     vcs.delete("dir1");
     assertFalse(vcs.hasEntry("dir1"));
@@ -165,21 +190,25 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   }
 
   public void testDeletingAndAddingSameFile() {
-    vcs.createFile("file", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("file", null, timestamp1, false);
     vcs.delete("file");
-    vcs.createFile("file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("file", null, timestamp, false);
 
     assertTrue(vcs.hasEntry("file"));
   }
 
   @Test
   public void testTreatingDeletedAndCreatedFilesWithSameNameDifferently() {
-    vcs.createFile("file", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("file", null, timestamp1, false);
 
     Entry one = vcs.getEntry("file");
 
     vcs.delete("file");
-    vcs.createFile("file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("file", null, timestamp, false);
 
     Entry two = vcs.getEntry("file");
 
@@ -189,17 +218,19 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   @Test
   public void testRestoringDeletedFile() {
     vcs.createDirectory("dir");
-    vcs.createFile("dir/f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("dir/f", null, timestamp, false);
     Entry e = vcs.getEntry("dir/f");
 
     vcs.delete("dir/f");
-    vcs.restoreFile(e.getId(), "dir/f", cf("content"), 123);
+    vcs.restoreFile(e.getId(), "dir/f", cf("content"), 123, true);
 
     Entry restored = vcs.findEntry("dir/f");
     assertNotNull(restored);
     assertEquals(e.getId(), restored.getId());
     assertEquals(c("content"), restored.getContent());
     assertEquals(123, restored.getTimestamp());
+    assertTrue(restored.isReadOnly());
   }
 
   @Test
@@ -230,14 +261,16 @@ public class LocalVcsBasicsTest extends LocalVcsTestCase {
   @Test
   public void testCreatingFilesUnderRoots() {
     vcs.createDirectory("c:/dir/root");
-    vcs.createFile("c:/dir/root/file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("c:/dir/root/file", null, timestamp, false);
 
     assertTrue(vcs.hasEntry("c:/dir/root/file"));
   }
 
   @Test
   public void testLastChange() {
-    vcs.createFile("f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("f", null, timestamp, false);
     assertEquals(CreateFileChange.class, vcs.getLastChange().getClass());
 
     vcs.beginChangeSet();

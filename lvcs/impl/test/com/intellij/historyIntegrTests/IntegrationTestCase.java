@@ -3,6 +3,7 @@ package com.intellij.historyIntegrTests;
 import com.intellij.history.Clock;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.Paths;
+import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryComponent;
@@ -160,8 +161,12 @@ public abstract class IntegrationTestCase extends IdeaTestCase {
     return getVcs().hasEntry(path);
   }
 
+  protected Entry getVcsEntry(VirtualFile f) {
+    return getVcs().getEntry(f.getPath());
+  }
+
   protected byte[] getVcsContentOf(VirtualFile f) {
-    return getVcs().getEntry(f.getPath()).getContent().getBytes();
+    return getVcsEntry(f).getContent().getBytes();
   }
 
   protected List<Revision> getVcsRevisionsFor(VirtualFile f) {

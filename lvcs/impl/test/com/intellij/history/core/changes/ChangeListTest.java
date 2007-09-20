@@ -8,8 +8,8 @@ import java.util.List;
 public class ChangeListTest extends ChangeListTestCase {
   @Test
   public void testRevertionUpToInclusively() {
-    applyAndAdd(cs("1", new CreateFileChange(1, "file1", null, -1)));
-    applyAndAdd(cs("2", new CreateFileChange(2, "file2", null, -1)));
+    applyAndAdd(cs("1", new CreateFileChange(1, "file1", null, -1, false)));
+    applyAndAdd(cs("2", new CreateFileChange(2, "file2", null, -1, false)));
 
     Entry copy = r.copy();
     cl.revertUpTo(copy, cl.getChanges().get(0), true);
@@ -24,8 +24,8 @@ public class ChangeListTest extends ChangeListTestCase {
 
   @Test
   public void testRevertionUpToExclusively() {
-    applyAndAdd(cs("1", new CreateFileChange(1, "file1", null, -1)));
-    applyAndAdd(cs("2", new CreateFileChange(2, "file2", null, -1)));
+    applyAndAdd(cs("1", new CreateFileChange(1, "file1", null, -1, false)));
+    applyAndAdd(cs("2", new CreateFileChange(2, "file2", null, -1, false)));
 
     Entry copy = r.copy();
     cl.revertUpTo(copy, cl.getChanges().get(0), false);
@@ -40,8 +40,8 @@ public class ChangeListTest extends ChangeListTestCase {
 
   @Test
   public void testChangeSet() {
-    Change c1 = new CreateFileChange(1, "f1", null, -1);
-    Change c2 = new CreateFileChange(2, "f2", null, -1);
+    Change c1 = new CreateFileChange(1, "f1", null, -1, false);
+    Change c2 = new CreateFileChange(2, "f2", null, -1, false);
 
     cl.beginChangeSet();
     cl.addChange(c1);
@@ -59,7 +59,7 @@ public class ChangeListTest extends ChangeListTestCase {
   public void testChangeSetTimestamp() {
     setCurrentTimestamp(123);
     cl.beginChangeSet();
-    cl.addChange(new CreateFileChange(1, "f", null, -1));
+    cl.addChange(new CreateFileChange(1, "f", null, -1, false));
     setCurrentTimestamp(456);
     cl.endChangeSet(null);
 
@@ -75,8 +75,8 @@ public class ChangeListTest extends ChangeListTestCase {
 
   @Test
   public void testSkippingInnerChangeSets() {
-    Change c1 = new CreateFileChange(1, "f1", null, -1);
-    Change c2 = new CreateFileChange(2, "f2", null, -1);
+    Change c1 = new CreateFileChange(1, "f1", null, -1, false);
+    Change c2 = new CreateFileChange(2, "f2", null, -1, false);
 
     cl.beginChangeSet();
     cl.addChange(c1);

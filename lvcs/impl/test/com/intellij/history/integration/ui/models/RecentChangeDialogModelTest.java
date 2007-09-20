@@ -21,7 +21,7 @@ public class RecentChangeDialogModelTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     vcs.beginChangeSet();
-    vcs.createFile("f", null, -1);
+    vcs.createFile("f", null, -1, false);
     vcs.endChangeSet("change");
 
     c = vcs.getRecentChanges().get(0);

@@ -12,11 +12,13 @@ import java.io.IOException;
 public class CreateFileChange extends CreateEntryChange {
   private Content myContent; // transient
   private long myTimestamp; // transient
+  private boolean isReadOnly; // transient
 
-  public CreateFileChange(int id, String path, Content content, long timestamp) {
+  public CreateFileChange(int id, String path, Content content, long timestamp, boolean isReadOnly) {
     super(id, path);
     myContent = content;
     myTimestamp = timestamp;
+    this.isReadOnly = isReadOnly;
   }
 
   public CreateFileChange(Stream s) throws IOException {
@@ -28,7 +30,7 @@ public class CreateFileChange extends CreateEntryChange {
     String name = Paths.getNameOf(myPath);
     String parentPath = Paths.getParentOf(myPath);
 
-    Entry e = new FileEntry(myId, name, myContent, myTimestamp);
+    Entry e = new FileEntry(myId, name, myContent, myTimestamp, isReadOnly);
 
     return addEntry(r, parentPath, e);
   }

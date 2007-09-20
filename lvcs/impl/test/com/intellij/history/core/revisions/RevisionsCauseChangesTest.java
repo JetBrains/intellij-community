@@ -6,7 +6,7 @@ import com.intellij.history.core.changes.CreateFileChange;
 import org.junit.Test;
 
 public class RevisionsCauseChangesTest extends LocalVcsTestCase {
-  ChangeSet cs = cs("Action", new CreateFileChange(1, "f", null, -1));
+  ChangeSet cs = cs("Action", new CreateFileChange(1, "f", null, -1, false));
 
   @Test
   public void testCurrentRevisionIsBefore() {

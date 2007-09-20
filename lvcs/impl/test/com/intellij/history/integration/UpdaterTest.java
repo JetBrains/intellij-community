@@ -1,9 +1,6 @@
 package com.intellij.history.integration;
 
-import com.intellij.history.core.InMemoryLocalVcs;
-import com.intellij.history.core.LocalVcs;
-import com.intellij.history.core.LocalVcsTestCase;
-import com.intellij.history.core.Paths;
+import com.intellij.history.core.*;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
@@ -159,6 +156,23 @@ public class UpdaterTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testAddingNewFiles() {
+    TestVirtualFile root = new TestVirtualFile("root");
+    TestVirtualFile file = new TestVirtualFile("file", "content", 123, true);
+
+    root.addChild(file);
+    updateWith(root);
+
+    assertTrue(vcs.hasEntry("root"));
+    assertTrue(vcs.hasEntry("root/file"));
+
+    Entry e = vcs.getEntry("root/file");
+    assertEquals(c("content"), e.getContent());
+    assertEquals(123, e.getTimestamp());
+    assertTrue(e.isReadOnly());
+  }
+
+  @Test
   public void testAddingNewFilesRecursively() {
     TestVirtualFile root = new TestVirtualFile("root");
     TestVirtualFile dir = new TestVirtualFile("dir");
@@ -187,7 +201,8 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root");
     vcs.createDirectory("root/dir");
-    vcs.createFile("root/dir/file1", null, -1L);
+    long timestamp = -1L;
+    vcs.createFile("root/dir/file1", null, timestamp, false);
 
     updateWith(root);
 
@@ -259,9 +274,12 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root");
     vcs.createDirectory("root/dir");
-    vcs.createFile("root/dir/fileToLeave", null, -1L);
-    vcs.createFile("root/dir/fileToDelete", null, -1L);
-    vcs.createFile("root/dir/subdirToDelete", null, -1L);
+    long timestamp = -1L;
+    vcs.createFile("root/dir/fileToLeave", null, timestamp, false);
+    long timestamp1 = -1L;
+    vcs.createFile("root/dir/fileToDelete", null, timestamp1, false);
+    long timestamp2 = -1L;
+    vcs.createFile("root/dir/subdirToDelete", null, timestamp2, false);
 
     updateWith(root);
 
@@ -279,7 +297,8 @@ public class UpdaterTest extends LocalVcsTestCase {
     root.addChild(new TestVirtualFile("name2", null, -1));
 
     vcs.createDirectory("root");
-    vcs.createFile("root/name1", null, -1);
+    long timestamp = -1;
+    vcs.createFile("root/name1", null, timestamp, false);
     vcs.createDirectory("root/name2");
 
     updateWith(root);
@@ -320,9 +339,9 @@ public class UpdaterTest extends LocalVcsTestCase {
     dir.addChild(dirFile);
 
     vcs.createDirectory("root");
-    vcs.createFile("root/file", null, 111L);
+    vcs.createFile("root/file", null, 111L, false);
     vcs.createDirectory("root/dir");
-    vcs.createFile("root/dir/dirFile", null, 222L);
+    vcs.createFile("root/dir/dirFile", null, 222L, false);
 
     filter.setFilesNotUnderContentRoot(file, dir);
     updateWith(root);
@@ -364,7 +383,7 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root");
     vcs.createDirectory("root/dir");
-    vcs.createFile("root/dir/file", cf("old content"), 111L);
+    vcs.createFile("root/dir/file", cf("old content"), 111L, false);
 
     updateWith(root);
 
@@ -381,7 +400,7 @@ public class UpdaterTest extends LocalVcsTestCase {
     root.addChild(file);
 
     vcs.createDirectory("root");
-    vcs.createFile("root/file", cf("old content"), 111L);
+    vcs.createFile("root/file", cf("old content"), 111L, false);
 
     updateWith(root);
 
@@ -398,7 +417,7 @@ public class UpdaterTest extends LocalVcsTestCase {
     root.addChild(new TestVirtualFile("FILE", null, 2L));
 
     vcs.createDirectory("root");
-    vcs.createFile("root/file", null, 1L);
+    vcs.createFile("root/file", null, 1L, false);
 
     updateWith(root);
 
@@ -418,7 +437,7 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     vcs.createDirectory("root");
     vcs.createDirectory("root/dir");
-    vcs.createFile("root/dir/file", null, 1L);
+    vcs.createFile("root/dir/file", null, 1L, false);
 
     updateWith(root);
 
@@ -434,7 +453,7 @@ public class UpdaterTest extends LocalVcsTestCase {
     root.addChild(new TestVirtualFile("FILE", null, 2L));
 
     vcs.createDirectory("root");
-    vcs.createFile("root/file", null, 1L);
+    vcs.createFile("root/file", null, 1L, false);
 
     updateWith(root);
 
@@ -442,6 +461,19 @@ public class UpdaterTest extends LocalVcsTestCase {
 
     assertTrue(vcs.hasEntry("root/FILE"));
     assertEquals(2L, vcs.getEntry("root/FILE").getTimestamp());
+  }
+
+  @Test
+  public void testUpdatingROStatus() {
+    TestVirtualFile root = new TestVirtualFile("root");
+    root.addChild(new TestVirtualFile("file", null, -1, true));
+
+    vcs.createDirectory("root");
+    vcs.createFile("root/file", null, -1, false);
+
+    updateWith(root);
+
+    assertTrue(vcs.getEntry("root/file").isReadOnly());
   }
 
   @Test

@@ -5,6 +5,7 @@ import com.intellij.history.core.changes.*;
 import com.intellij.history.core.storage.ByteContent;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.integration.TestVirtualFile;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -91,8 +92,12 @@ public abstract class LocalVcsTestCase extends Assert {
     return new ChangeSet(timestamp, name, Arrays.asList(changes));
   }
 
+  protected static void createFile(Entry r, int id, String path, Content c, long timestamp, boolean isReadOnly) {
+    new CreateFileChange(id, path, c, timestamp, isReadOnly).applyTo(r);
+  }
+
   protected static void createFile(Entry r, int id, String path, Content c, long timestamp) {
-    new CreateFileChange(id, path, c, timestamp).applyTo(r);
+    createFile(r, id, path, c, timestamp, false);
   }
 
   protected void createFile(Entry r, String path, Content c, long timestamp) {
@@ -108,7 +113,7 @@ public abstract class LocalVcsTestCase extends Assert {
   }
 
   protected static void changeFileContent(Entry r, String path, Content c, long timestamp) {
-    new ChangeFileContentChange(path, c, timestamp).applyTo(r);
+    new ContentChange(path, c, timestamp).applyTo(r);
   }
 
   protected static void rename(Entry r, String path, String newName) {
@@ -129,5 +134,25 @@ public abstract class LocalVcsTestCase extends Assert {
 
   protected static void assertEquals(Object[] expected, Collection actual) {
     assertArrayEquals(expected, actual.toArray());
+  }
+
+  protected static TestVirtualFile testDir(String name) {
+    return new TestVirtualFile(name);
+  }
+
+  protected static TestVirtualFile testFile(String name) {
+    return testFile(name, "");
+  }
+
+  protected static TestVirtualFile testFile(String name, String content) {
+    return testFile(name, content, -1);
+  }
+
+  protected static TestVirtualFile testFile(String name, String content, long timestamp) {
+    return testFile(name, content, timestamp, false);
+  }
+
+  protected static TestVirtualFile testFile(String name, String content, long timestamp, boolean isReadOnly) {
+    return new TestVirtualFile(name, content, timestamp, isReadOnly);
   }
 }

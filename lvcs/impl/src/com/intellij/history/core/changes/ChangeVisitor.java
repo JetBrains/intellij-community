@@ -18,7 +18,6 @@ public abstract class ChangeVisitor {
   }
 
   public void end(ChangeSet c) throws IOException, StopVisitingException {
-
   }
 
   public void visit(PutLabelChange c) throws IOException, StopVisitingException {
@@ -31,11 +30,15 @@ public abstract class ChangeVisitor {
     visit((StructuralChange)c);
   }
 
-  public void visit(ChangeFileContentChange c) throws IOException, StopVisitingException {
+  public void visit(ContentChange c) throws IOException, StopVisitingException {
     visit((StructuralChange)c);
   }
 
   public void visit(RenameChange c) throws IOException, StopVisitingException {
+    visit((StructuralChange)c);
+  }
+
+  public void visit(ROStatusChange c) throws IOException, StopVisitingException {
     visit((StructuralChange)c);
   }
 

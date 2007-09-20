@@ -89,18 +89,20 @@ public class Stream {
       case 2:
         return new CreateDirectoryChange(this);
       case 3:
-        return new ChangeFileContentChange(this);
+        return new ContentChange(this);
       case 4:
         return new RenameChange(this);
       case 5:
-        return new MoveChange(this);
+        return new ROStatusChange(this);
       case 6:
-        return new DeleteChange(this);
+        return new MoveChange(this);
       case 7:
-        return new PutLabelChange(this);
+        return new DeleteChange(this);
       case 8:
-        return new PutEntryLabelChange(this);
+        return new PutLabelChange(this);
       case 9:
+        return new PutEntryLabelChange(this);
+      case 10:
         return new PutSystemLabelChange(this);
     }
     throw new IOException();
@@ -113,14 +115,17 @@ public class Stream {
     if (c.equals(ChangeSet.class)) id = 0;
     if (c.equals(CreateFileChange.class)) id = 1;
     if (c.equals(CreateDirectoryChange.class)) id = 2;
-    if (c.equals(ChangeFileContentChange.class)) id = 3;
+    if (c.equals(ContentChange.class)) id = 3;
     if (c.equals(RenameChange.class)) id = 4;
-    if (c.equals(MoveChange.class)) id = 5;
-    if (c.equals(DeleteChange.class)) id = 6;
-    if (c.equals(PutLabelChange.class)) id = 7;
-    if (c.equals(PutEntryLabelChange.class)) id = 8;
-    if (c.equals(PutSystemLabelChange.class)) id = 9;
+    if (c.equals(ROStatusChange.class)) id = 5;
+    if (c.equals(MoveChange.class)) id = 6;
+    if (c.equals(DeleteChange.class)) id = 7;
+    if (c.equals(PutLabelChange.class)) id = 8;
+    if (c.equals(PutEntryLabelChange.class)) id = 9;
+    if (c.equals(PutSystemLabelChange.class)) id = 10;
 
+    assert id != -1;
+    
     myOs.writeInt(id);
     change.write(this);
   }

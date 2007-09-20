@@ -1,7 +1,8 @@
 package com.intellij.historyIntegrTests;
 
 
-import com.intellij.history.core.Paths;import static com.intellij.history.core.LocalVcsTestCase.list;
+import static com.intellij.history.core.LocalVcsTestCase.list;
+import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
@@ -11,8 +12,6 @@ import com.intellij.openapi.vfs.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 
 public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
@@ -44,14 +43,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     assertFalse(hasVcsEntry(path1));
     assertFalse(hasVcsEntry(path2));
 
-    final Semaphore s = new Semaphore(1);
-    s.acquire();
-    refreshVFS(async, new Runnable() {
-      public void run() {
-        s.release();
-      }
-    });
-    s.acquire();
+    refreshVFS(async);
 
     assertTrue(hasVcsEntry(path1));
     assertTrue(hasVcsEntry(path2));
@@ -60,7 +52,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   public void testChangeSetName() throws Exception {
-    String path = createFileExternally("f.java");
+    createFileExternally("f.java");
     refreshVFS();
     Revision r = getVcsRevisionsFor(root).get(0);
     assertEquals("External change", r.getCauseChangeName());
@@ -195,10 +187,22 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   private void refreshVFS() {
-    refreshVFS(false, null);
+    refreshVFS(false);
   }
 
-  private void refreshVFS(boolean async, Runnable after) {
-    VirtualFileManager.getInstance().refresh(async, after);
+  private void refreshVFS(boolean async) {
+    try {
+      final Semaphore s = new Semaphore(1);
+      s.acquire();
+      VirtualFileManager.getInstance().refresh(async, new Runnable() {
+        public void run() {
+          s.release();
+        }
+      });
+      s.acquire();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

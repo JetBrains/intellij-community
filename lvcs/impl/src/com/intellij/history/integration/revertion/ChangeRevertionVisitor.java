@@ -1,6 +1,5 @@
 package com.intellij.history.integration.revertion;
 
-import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.storage.Content;
@@ -8,16 +7,17 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.io.ReadOnlyAttributeUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 public class ChangeRevertionVisitor extends ChangeVisitor {
   private IdeaGateway myGateway;
-  private Map<VirtualFile, ContentToApply> myContentsToApply = new HashMap<VirtualFile, ContentToApply>();
+  private Set<DelayedApply> myDelayedApplies = new HashSet<DelayedApply>();
 
   public ChangeRevertionVisitor(IdeaGateway gw) {
     myGateway = gw;
@@ -28,19 +28,19 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
 
-    unregisterContentToApply(f);
+    unregisterDelayedApplies(f);
     f.delete(this);
 
     c.revertOn(myRoot);
   }
 
   @Override
-  public void visit(ChangeFileContentChange c) {
+  public void visit(ContentChange c) {
     c.revertOn(myRoot);
 
     Entry e = getAffectedEntry(c);
     VirtualFile f = myGateway.findVirtualFile(e.getPath());
-    registerContentToApply(f, e);
+    registerDelayedContentApply(f, e);
   }
 
   @Override
@@ -51,6 +51,16 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     c.revertOn(myRoot);
 
     f.rename(this, getName(e));
+  }
+
+  @Override
+  public void visit(ROStatusChange c) throws IOException, StopVisitingException {
+    Entry e = getAffectedEntry(c);
+    VirtualFile f = myGateway.findVirtualFile(e.getPath());
+
+    c.revertOn(myRoot);
+
+    registerDelayedROStatusApply(f, e);
   }
 
   @Override
@@ -81,30 +91,41 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     }
     else {
       VirtualFile f = parent.createChildData(e, getName(e));
-      registerContentToApply(f, e);
+      registerDelayedContentApply(f, e);
+      registerDelayedROStatusApply(f, e);
     }
   }
 
-  private void registerContentToApply(VirtualFile f, Entry e) {
-    myContentsToApply.put(f, new ContentToApply(e));
+  private void registerDelayedContentApply(VirtualFile f, Entry e) {
+    registerDelayedApply(new DelayedContentApply(f, e));
   }
 
-  private void unregisterContentToApply(VirtualFile fileOrDir) {
-    List<VirtualFile> registered = new ArrayList<VirtualFile>(myContentsToApply.keySet());
-    for (VirtualFile f : registered) {
-      if (VfsUtil.isAncestor(fileOrDir, f, false)) {
-        myContentsToApply.remove(f);
+  private void registerDelayedROStatusApply(VirtualFile f, Entry e) {
+    registerDelayedApply(new DelayedROStatusApply(f, e));
+  }
+
+  private void registerDelayedApply(DelayedApply a) {
+    myDelayedApplies.remove(a);
+    myDelayedApplies.add(a);
+  }
+
+  private void unregisterDelayedApplies(VirtualFile fileOrDir) {
+    List<DelayedApply> toRemove = new ArrayList<DelayedApply>();
+
+    for (DelayedApply a : myDelayedApplies) {
+      if (VfsUtil.isAncestor(fileOrDir, a.getFile(), false)) {
+        toRemove.add(a);
       }
+    }
+
+    for (DelayedApply a : toRemove) {
+      myDelayedApplies.remove(a);
     }
   }
 
   @Override
   public void finished() throws IOException {
-    for (Map.Entry<VirtualFile, ContentToApply> e : myContentsToApply.entrySet()) {
-      VirtualFile f = e.getKey();
-      ContentToApply c = e.getValue();
-      c.applyTo(f);
-    }
+    for (DelayedApply a : myDelayedApplies) a.apply();
   }
 
   protected Entry getAffectedEntry(StructuralChange c) {
@@ -123,17 +144,62 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
     return Paths.getNameOf(e.getPath());
   }
 
-  private static class ContentToApply {
+  private static abstract class DelayedApply {
+    protected VirtualFile myFile;
+
+    protected DelayedApply(VirtualFile f) {
+      myFile = f;
+    }
+
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
+    public abstract void apply() throws IOException;
+
+    @Override
+    public boolean equals(Object o) {
+      if (!getClass().equals(o.getClass())) return false;
+      return myFile.equals(((DelayedApply)o).myFile);
+    }
+
+    @Override
+    public int hashCode() {
+      return getClass().hashCode() + 32 * myFile.hashCode();
+    }
+  }
+
+  private static class DelayedContentApply extends DelayedApply {
     private Content myContent;
     private long myTimestamp;
 
-    public ContentToApply(Entry e) {
+    public DelayedContentApply(VirtualFile f, Entry e) {
+      super(f);
       myContent = e.getContent();
       myTimestamp = e.getTimestamp();
     }
 
-    public void applyTo(VirtualFile f) throws IOException {
-      f.setBinaryContent(myContent.getBytes(), -1, myTimestamp);
+    @Override
+    public void apply() throws IOException {
+      boolean isReadOnly = !myFile.isWritable();
+      ReadOnlyAttributeUtil.setReadOnlyAttribute(myFile, false);
+
+      myFile.setBinaryContent(myContent.getBytes(), -1, myTimestamp);
+      
+      ReadOnlyAttributeUtil.setReadOnlyAttribute(myFile, isReadOnly);
+    }
+  }
+
+  private static class DelayedROStatusApply extends DelayedApply {
+    private boolean isReadOnly;
+
+    private DelayedROStatusApply(VirtualFile f, Entry e) {
+      super(f);
+      isReadOnly = e.isReadOnly();
+    }
+
+    public void apply() throws IOException {
+      ReadOnlyAttributeUtil.setReadOnlyAttribute(myFile, isReadOnly);
     }
   }
 }

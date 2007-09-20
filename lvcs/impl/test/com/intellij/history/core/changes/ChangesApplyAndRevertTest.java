@@ -10,7 +10,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testCreatingFile() {
-    Change c = new CreateFileChange(1, "file", c("content"), 123L);
+    Change c = new CreateFileChange(1, "file", c("content"), 123L, false);
     c.applyTo(root);
 
     assertTrue(root.hasEntry("file"));
@@ -21,6 +21,15 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
     c.revertOn(root);
     assertFalse(root.hasEntry("file"));
+  }
+
+  @Test
+  public void testCreatingReadOnlyFile() {
+    new CreateFileChange(1, "f1", null, -1, false).applyTo(root);
+    new CreateFileChange(2, "f2", null, -1, true).applyTo(root);
+
+    assertFalse(root.getEntry("f1").isReadOnly());
+    assertTrue(root.getEntry("f2").isReadOnly());
   }
 
   @Test
@@ -38,7 +47,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
   public void testCreatingFileUnderDirectory() {
     createDirectory(root, 1, "dir");
 
-    Change c = new CreateFileChange(2, "dir/file", null, -1);
+    Change c = new CreateFileChange(2, "dir/file", null, -1, false);
     c.applyTo(root);
 
     assertTrue(root.hasEntry("dir/file"));
@@ -52,7 +61,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
   public void testChangingFileContent() {
     createFile(root, 1, "file", c("old content"), 11L);
 
-    Change c = new ChangeFileContentChange("file", c("new content"), 22L);
+    Change c = new ContentChange("file", c("new content"), 22L);
     c.applyTo(root);
 
     Entry e = root.getEntry("file");
@@ -121,6 +130,23 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
   }
 
   @Test
+  public void testChangingFileROStatus() {
+    createFile(root, 1, "f", null, -1, true);
+    Entry e = root.getEntry("f");
+
+    assertTrue(e.isReadOnly());
+
+    Change c = new ROStatusChange("f", false);
+    c.applyTo(root);
+
+    assertFalse(e.isReadOnly());
+
+    c.revertOn(root);
+
+    assertTrue(e.isReadOnly());
+  }
+
+  @Test
   public void testMovingFileFromOneDirectoryToAnother() {
     createDirectory(root, 1, "dir1");
     createDirectory(root, 2, "dir2");
@@ -161,7 +187,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
   @Test
   public void testDeletingFile() {
-    createFile(root, 1, "file", c("content"), 18L);
+    createFile(root, 1, "file", c("content"), 18L, true);
 
     Change c = new DeleteChange("file");
     c.applyTo(root);
@@ -175,6 +201,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
 
     assertEquals(c("content"), e.getContent());
     assertEquals(18L, e.getTimestamp());
+    assertTrue(e.isReadOnly());
   }
 
   @Test
@@ -272,7 +299,7 @@ public class ChangesApplyAndRevertTest extends LocalVcsTestCase {
   public void testKeepingIdOnChangingFileContent() {
     createFile(root, 14, "file", null, -1);
 
-    Change c = new ChangeFileContentChange("file", null, -1);
+    Change c = new ContentChange("file", null, -1);
     c.applyTo(root);
     c.revertOn(root);
 

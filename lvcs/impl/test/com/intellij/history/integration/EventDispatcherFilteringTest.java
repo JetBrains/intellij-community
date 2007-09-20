@@ -15,7 +15,8 @@ public class EventDispatcherFilteringTest extends EventDispatcherTestCase {
 
   @Test
   public void testRenamingFileToFilteredOne() {
-    vcs.createFile("allowed", null, -1);
+    long timestamp = -1;
+    vcs.createFile("allowed", null, timestamp, false);
 
     VirtualFile renamed = new TestVirtualFile("filtered", null, -1);
     fireRenamed(renamed, "allowed");

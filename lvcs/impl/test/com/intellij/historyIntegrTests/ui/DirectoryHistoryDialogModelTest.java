@@ -38,7 +38,8 @@ public class DirectoryHistoryDialogModelTest extends IntegrationTestCase {
 
   public void testDifference() {
     vcs.createDirectory("dir");
-    vcs.createFile("dir/file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("dir/file", null, timestamp, false);
 
     initModelFor("dir");
 

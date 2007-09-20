@@ -45,7 +45,8 @@ public class LocalHistoryServiceRootsOnUpdateTest extends LocalHistoryServiceTes
   @Test
   public void testRenamingContentRoot() {
     vcs.createDirectory("c:/dir/root");
-    vcs.createFile("c:/dir/root/file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("c:/dir/root/file", null, timestamp, false);
 
     TestVirtualFile dir = new TestVirtualFile("c:/dir");
     root = new TestVirtualFile("newName");

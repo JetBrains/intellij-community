@@ -9,7 +9,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
 
   @Test
   public void testFindingEntry() {
-    FileEntry e = new FileEntry(-1, "file", null, -1);
+    FileEntry e = new FileEntry(-1, "file", null, -1, false);
     root.addChild(e);
     assertSame(e, root.findEntry("file"));
   }
@@ -23,7 +23,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
   @Test
   public void testFindingEntryUnderDirectory() {
     DirectoryEntry dir = new DirectoryEntry(-1, "dir");
-    FileEntry file = new FileEntry(-1, "file", null, -1);
+    FileEntry file = new FileEntry(-1, "file", null, -1, false);
 
     dir.addChild(file);
     root.addChild(dir);
@@ -37,8 +37,8 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
   public void testFindingEntriesInTree() {
     root = new RootEntry();
     Entry dir = new DirectoryEntry(-1, "dir");
-    Entry file1 = new FileEntry(-1, "file1", null, -1);
-    Entry file2 = new FileEntry(-1, "file2", null, -1);
+    Entry file1 = new FileEntry(-1, "file1", null, -1, false);
+    Entry file2 = new FileEntry(-1, "file2", null, -1, false);
 
     root.addChild(dir);
     root.addChild(file1);
@@ -53,8 +53,8 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
   public void testFindingUnderRoots() {
     Entry dir1 = new DirectoryEntry(-1, "c:/dir1");
     Entry dir2 = new DirectoryEntry(-1, "c:/dir2");
-    Entry file1 = new FileEntry(-1, "file1", null, -1);
-    Entry file2 = new FileEntry(-1, "file2", null, -1);
+    Entry file1 = new FileEntry(-1, "file1", null, -1, false);
+    Entry file2 = new FileEntry(-1, "file2", null, -1, false);
     dir1.addChild(file1);
     dir2.addChild(file2);
     root.addChild(dir1);
@@ -70,7 +70,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
   public void testNamesOfDirectoriesBeginningWithTheSameString() {
     Entry d1 = new DirectoryEntry(-1, "dir");
     Entry d2 = new DirectoryEntry(-1, "dir2");
-    Entry f = new FileEntry(-1, "file", null, -1);
+    Entry f = new FileEntry(-1, "file", null, -1, false);
 
     root.addChild(d1);
     root.addChild(d2);
@@ -82,8 +82,8 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
 
   @Test
   public void testNamesOfEntriesBeginningWithSameStringAndLongerOneIsTheFirst() {
-    Entry f1 = new FileEntry(-1, "file1", null, -1);
-    Entry f2 = new FileEntry(-1, "file", null, -1);
+    Entry f1 = new FileEntry(-1, "file1", null, -1, false);
+    Entry f2 = new FileEntry(-1, "file", null, -1, false);
 
     root.addChild(f1);
     root.addChild(f2);
@@ -95,7 +95,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
   @Test
   public void testCompositeNames() {
     Entry dir = new DirectoryEntry(-1, "c:/root/dir");
-    Entry f = new FileEntry(-1, "file", null, -1);
+    Entry f = new FileEntry(-1, "file", null, -1, false);
 
     root.addChild(dir);
     dir.addChild(f);
@@ -109,7 +109,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
 
   @Test
   public void testFindingIsRelativeToFileSystemCaseSensivity() {
-    root.addChild(new FileEntry(-1, "file", null, -1));
+    root.addChild(new FileEntry(-1, "file", null, -1, false));
 
     Paths.setCaseSensitive(true);
     assertNull(root.findEntry("FiLe"));
@@ -141,7 +141,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
 
   @Test
   public void testFindingByIdPath() {
-    Entry e = new FileEntry(1, null, null, -1);
+    Entry e = new FileEntry(1, null, null, -1, false);
     root.addChild(e);
 
     assertSame(e, root.findEntry(idp(-1, 1)));
@@ -151,7 +151,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
   @Test
   public void testFindingByIdPathUnderDirectory() {
     Entry dir = new DirectoryEntry(1, null);
-    Entry file = new FileEntry(2, null, null, -1);
+    Entry file = new FileEntry(2, null, null, -1, false);
 
     dir.addChild(file);
     root.addChild(dir);
@@ -163,7 +163,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotFindByShortIdPathUnderDirectory() {
     Entry dir = new DirectoryEntry(1, null);
-    Entry file = new FileEntry(2, null, null, -1);
+    Entry file = new FileEntry(2, null, null, -1, false);
 
     dir.addChild(file);
     root.addChild(dir);
@@ -175,7 +175,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
   public void testDoesNotFindByWrongShorterIdPath() {
     Entry dir1 = new DirectoryEntry(1, null);
     Entry dir2 = new DirectoryEntry(2, null);
-    Entry file = new FileEntry(3, null, null, -1);
+    Entry file = new FileEntry(3, null, null, -1, false);
 
     root.addChild(dir1);
     dir1.addChild(dir2);
@@ -188,7 +188,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotFindByWrongLongerIdPath() {
     Entry dir = new DirectoryEntry(1, null);
-    Entry file = new FileEntry(3, null, null, -1);
+    Entry file = new FileEntry(3, null, null, -1, false);
 
     root.addChild(dir);
     dir.addChild(file);
@@ -200,7 +200,7 @@ public class RootEntryFindingTest extends LocalVcsTestCase {
   public void testFindingByIdPathUnderSecondDirectory() {
     Entry dir1 = new DirectoryEntry(1, "1");
     Entry dir2 = new DirectoryEntry(2, "2");
-    Entry file = new FileEntry(3, "3", null, -1);
+    Entry file = new FileEntry(3, "3", null, -1, false);
 
     root.addChild(dir1);
     root.addChild(dir2);

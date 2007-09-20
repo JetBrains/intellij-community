@@ -86,11 +86,12 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   
   @Test
   public void testAddingAndChangingFilesOnlyOnProcessing() {
-    vcs.createFile("f1", cf("old"), -1);
+    long timestamp = -1;
+    vcs.createFile("f1", cf("old"), timestamp, false);
 
     fireRefreshStarted();
-    fireContentChanged(new TestVirtualFile("f1", "new", -1));
-    fireCreated(new TestVirtualFile("f2", "", -1));
+    fireContentChanged(testFile("f1", "new"));
+    fireCreated(testFile("f2", ""));
     d.afterRefreshFinish(false);
 
     assertEquals(c("old"), vcs.getEntry("f1").getContent());
@@ -168,19 +169,22 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
   @Test
   public void testChangeSetsDuringSeveralUpdatersInsideOneRefresh() {
     vcs.createDirectory("dir");
-    vcs.createFile("dir/f", null, -1);
+    long timestamp = -1;
+    vcs.createFile("dir/f", null, timestamp, false);
 
     assertEquals(2, vcs.getRevisionsFor("dir").size());
 
     d.beforeRefreshStart(false);
 
     vcs.createDirectory("dir/dir1");
-    vcs.createFile("dir/f1", null, -1);
+    long timestamp3 = -1;
+    vcs.createFile("dir/f1", null, timestamp3, false);
 
     CacheUpdaterHelper.performUpdate(d);
 
     vcs.createDirectory("dir/dir2");
-    vcs.createFile("dir/f2", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("dir/f2", null, timestamp1, false);
 
     CacheUpdaterHelper.performUpdate(d);
 
@@ -188,7 +192,8 @@ public class EventDispatcherRefreshingTest extends EventDispatcherTestCase {
 
     assertEquals(3, vcs.getRevisionsFor("dir").size());
 
-    vcs.createFile("dir/f3", null, -1);
+    long timestamp2 = -1;
+    vcs.createFile("dir/f3", null, timestamp2, false);
     assertEquals(4, vcs.getRevisionsFor("dir").size());
   }
 

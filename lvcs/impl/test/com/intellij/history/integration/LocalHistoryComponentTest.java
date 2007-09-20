@@ -39,7 +39,8 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
 
     Storage s = new Storage(c.getStorageDir());
     LocalVcs vcs = new LocalVcs(s);
-    vcs.createFile("file", cf(""), -1);
+    long timestamp = -1;
+    vcs.createFile("file", cf(""), timestamp, false);
     vcs.save();
     s.close();
 
@@ -60,7 +61,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     initComponent();
     startUp();
 
-    c.getLocalVcs().createFile("file", cf(""), -1);
+    c.getLocalVcs().createFile("file", cf(""), -1, false);
     c.save();
     c.closeVcs();
 
@@ -72,7 +73,7 @@ public class LocalHistoryComponentTest extends TempDirTestCase {
     initComponent();
     startUp();
 
-    c.getLocalVcs().createFile("file", cf(""), -1);
+    c.getLocalVcs().createFile("file", cf(""), -1, false);
     c.disposeComponent();
 
     assertHasSavedEntry("file");

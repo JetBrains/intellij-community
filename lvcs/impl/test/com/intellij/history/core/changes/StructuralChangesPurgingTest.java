@@ -15,7 +15,7 @@ public class StructuralChangesPurgingTest extends LocalVcsTestCase {
   public void testChangeFileContentChange() {
     createFile(root, 1, "f", c("old"), -1);
 
-    Change c = new ChangeFileContentChange("f", c("new"), -1);
+    Change c = new ContentChange("f", c("new"), -1);
     c.applyTo(root);
 
     List<Content> cc = c.getContentsToPurge();
@@ -58,7 +58,7 @@ public class StructuralChangesPurgingTest extends LocalVcsTestCase {
 
   @Test
   public void testOtherChanges() {
-    Change c1 = new CreateFileChange(1, "file", c("content"), -1);
+    Change c1 = new CreateFileChange(1, "file", c("content"), -1, false);
     Change c2 = new CreateDirectoryChange(2, "dir");
     Change c3 = new MoveChange("file", "dir");
     Change c4 = new RenameChange("dir/file", "newFile");

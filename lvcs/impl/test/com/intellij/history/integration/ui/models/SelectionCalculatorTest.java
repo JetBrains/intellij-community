@@ -116,7 +116,8 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
   }
 
   private List<Revision> createRevisions(ContentFactory... ff) {
-    vcs.createFile("f", ff[0], -1);
+    long timestamp = -1;
+    vcs.createFile("f", ff[0], timestamp, false);
     for (int i = 1; i < ff.length; i++) {
       vcs.changeFileContent("f", ff[i], -1);
     }

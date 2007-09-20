@@ -6,6 +6,7 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.io.ReadOnlyAttributeUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,6 +28,20 @@ public class FileListeningTest extends IntegrationTestCase {
     Entry e = getVcs().findEntry(f.getPath());
     assertNotNull(e);
     assertTrue(e.isDirectory());
+  }
+
+  public void testCreationOfROFile() throws Exception {
+    File newFile1 = new File(createFileExternally("f1.java"));
+    File newFile2 = new File(createFileExternally("f2.java"));
+    newFile1.setReadOnly();
+
+    VirtualFile f1 = getFS().refreshAndFindFileByIoFile(newFile1);
+    VirtualFile f2 = getFS().refreshAndFindFileByIoFile(newFile2);
+
+    assertTrue(hasVcsEntry(f1));
+    assertTrue(hasVcsEntry(f2));
+    assertTrue(getVcsEntry(f1).isReadOnly());
+    assertFalse(getVcsEntry(f2).isReadOnly());
   }
 
   public void testIgnoringFilteredFileTypes() throws Exception {
@@ -177,7 +192,31 @@ public class FileListeningTest extends IntegrationTestCase {
     assertFalse(hasVcsEntry(notFiltered));
     assertFalse(hasVcsEntry(filtered));
   }
+
+  public void testChangingROStatusForFile() throws Exception {
+    VirtualFile f = root.createChildData(null, "f.java");
+    assertFalse(getVcsEntry(f).isReadOnly());
+
+    ReadOnlyAttributeUtil.setReadOnlyAttribute(f, true);
+    assertTrue(getVcsEntry(f).isReadOnly());
+
+    ReadOnlyAttributeUtil.setReadOnlyAttribute(f, false);
+    assertFalse(getVcsEntry(f).isReadOnly());
+  }
   
+  public void testIgnoringROStstusChangeForUnversionedFiles() throws Exception {
+    VirtualFile f = root.createChildData(null, "f");
+    ReadOnlyAttributeUtil.setReadOnlyAttribute(f, true); // shouldn't throw
+  }
+  
+  public void testIgnoringChangeOfROStatusForDirectory() throws Exception {
+    VirtualFile dir = root.createChildDirectory(null, "dir");
+    assertEquals(1, getVcsRevisionsFor(dir).size());
+
+    ReadOnlyAttributeUtil.setReadOnlyAttribute(dir, true);
+    assertEquals(1, getVcsRevisionsFor(dir).size());
+  }
+
   public void testDeletion() throws Exception {
     VirtualFile f = root.createChildDirectory(null, "f.java");
 

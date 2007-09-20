@@ -13,8 +13,8 @@ public class RevisionsAfterChangeTest extends LocalVcsTestCase {
   public void testForRootEntry() {
     Entry root = new RootEntry();
     ChangeList list = new ChangeList();
-    Change c1 = new CreateFileChange(1, "f1", null, -1);
-    Change c2 = new CreateFileChange(2, "f2", null, -1);
+    Change c1 = new CreateFileChange(1, "f1", null, -1, false);
+    Change c2 = new CreateFileChange(2, "f2", null, -1, false);
 
     c1.applyTo(root);
     c2.applyTo(root);

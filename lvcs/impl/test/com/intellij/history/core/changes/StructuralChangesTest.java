@@ -17,7 +17,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
   @Test
   public void testAffectedEntryForCreateFileChange() {
     createDirectory(root, 99, "dir");
-    StructuralChange c = new CreateFileChange(1, "dir/name", null, -1);
+    StructuralChange c = new CreateFileChange(1, "dir/name", null, -1, false);
     c.applyTo(root);
 
     assertEquals(array(idp(-1, 99, 1)), c.getAffectedIdPaths());
@@ -36,7 +36,7 @@ public class StructuralChangesTest extends LocalVcsTestCase {
   public void testAffectedEntryForChangeFileContentChange() {
     createFile(root, 16, "file", c("content"), -1);
 
-    StructuralChange c = new ChangeFileContentChange("file", c("new content"), -1);
+    StructuralChange c = new ContentChange("file", c("new content"), -1);
     c.applyTo(root);
 
     assertEquals(array(idp(-1, 16)), c.getAffectedIdPaths());

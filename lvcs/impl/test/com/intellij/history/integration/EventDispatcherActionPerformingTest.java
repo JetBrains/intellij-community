@@ -10,7 +10,7 @@ import java.util.List;
 public class EventDispatcherActionPerformingTest extends EventDispatcherTestCase {
   @Test
   public void testRegisteringUnsavedDocumentsBeforeEnteringState() {
-    vcs.createFile("file", cf("old"), 123L);
+    vcs.createFile("file", cf("old"), 123L, false);
 
     Clock.setCurrentTimestamp(456);
     gateway.addUnsavedDocument("file", "new");
@@ -27,8 +27,10 @@ public class EventDispatcherActionPerformingTest extends EventDispatcherTestCase
   public void testRegisteringUnsavedDocumentsAsOneChangeSetBeforeEntering() {
     vcs.beginChangeSet();
     vcs.createDirectory("dir");
-    vcs.createFile("dir/one", null, -1);
-    vcs.createFile("dir/two", null, -1);
+    long timestamp = -1;
+    vcs.createFile("dir/one", null, timestamp, false);
+    long timestamp1 = -1;
+    vcs.createFile("dir/two", null, timestamp1, false);
     vcs.endChangeSet(null);
 
     gateway.addUnsavedDocument("dir/one", "one");
@@ -40,7 +42,8 @@ public class EventDispatcherActionPerformingTest extends EventDispatcherTestCase
 
   @Test
   public void testRegisteringUnsavedDocumentsBeforeEnteringSeparately() {
-    vcs.createFile("f", cf("one"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("one"), timestamp, false);
 
     gateway.addUnsavedDocument("f", "two");
     d.startAction();
@@ -52,7 +55,7 @@ public class EventDispatcherActionPerformingTest extends EventDispatcherTestCase
 
   @Test
   public void testRegisteringUnsavedDocumentsBeforeExitingState() {
-    vcs.createFile("file", cf("old"), 123L);
+    vcs.createFile("file", cf("old"), 123L, false);
     d.startAction();
 
     Clock.setCurrentTimestamp(789);
@@ -70,12 +73,15 @@ public class EventDispatcherActionPerformingTest extends EventDispatcherTestCase
   public void testRegisteringUnsavedDocumentsBeforeExitingStateWithinInnerChangeset() {
     vcs.beginChangeSet();
     vcs.createDirectory("dir");
-    vcs.createFile("dir/one", null, -1);
-    vcs.createFile("dir/two", null, -1);
+    long timestamp2 = -1;
+    vcs.createFile("dir/one", null, timestamp2, false);
+    long timestamp = -1;
+    vcs.createFile("dir/two", null, timestamp, false);
     vcs.endChangeSet(null);
 
     d.startAction();
-    vcs.createFile("dir/three", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("dir/three", null, timestamp1, false);
 
     gateway.addUnsavedDocument("dir/one", "one");
     gateway.addUnsavedDocument("dir/two", "two");
@@ -95,7 +101,8 @@ public class EventDispatcherActionPerformingTest extends EventDispatcherTestCase
 
   @Test
   public void testActionInsideCommand() {
-    vcs.createFile("f", cf("1"), -1);
+    long timestamp = -1;
+    vcs.createFile("f", cf("1"), timestamp, false);
 
     CommandEvent e = createCommandEvent("command");
     d.commandStarted(e);

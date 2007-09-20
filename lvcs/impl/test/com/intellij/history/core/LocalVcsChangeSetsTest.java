@@ -12,7 +12,8 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
 
   @Test
   public void testApplyingChangesRightAfterChange() {
-    vcs.createFile("file", cf("content"), -1);
+    long timestamp = -1;
+    vcs.createFile("file", cf("content"), timestamp, false);
     assertEquals(c("content"), vcs.getEntry("file").getContent());
 
     vcs.changeFileContent("file", cf("new content"), -1);
@@ -45,7 +46,8 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
   @Test
   public void testAskingForNewFileContentDuringChangeSet() {
     vcs.beginChangeSet();
-    vcs.createFile("file", cf("content"), -1);
+    long timestamp = -1;
+    vcs.createFile("file", cf("content"), timestamp, false);
 
     Entry e = vcs.findEntry("file");
 
@@ -57,8 +59,10 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
   public void testTreatingSeveralChangesDuringChangeSetAsOne() {
     vcs.beginChangeSet();
     vcs.createDirectory("dir");
-    vcs.createFile("dir/one", null, -1);
-    vcs.createFile("dir/two", null, -1);
+    long timestamp = -1;
+    vcs.createFile("dir/one", null, timestamp, false);
+    long timestamp1 = -1;
+    vcs.createFile("dir/two", null, timestamp1, false);
     vcs.endChangeSet(null);
 
     assertEquals(1, vcs.getRevisionsFor("dir").size());
@@ -67,14 +71,18 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
   @Test
   public void testTreatingSeveralChangesOutsideOfChangeSetAsSeparate() {
     vcs.createDirectory("dir");
-    vcs.createFile("dir/one", null, -1);
-    vcs.createFile("dir/two", null, -1);
+    long timestamp3 = -1;
+    vcs.createFile("dir/one", null, timestamp3, false);
+    long timestamp = -1;
+    vcs.createFile("dir/two", null, timestamp, false);
 
     vcs.beginChangeSet();
     vcs.endChangeSet(null);
 
-    vcs.createFile("dir/three", null, -1);
-    vcs.createFile("dir/four", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("dir/three", null, timestamp1, false);
+    long timestamp2 = -1;
+    vcs.createFile("dir/four", null, timestamp2, false);
 
     assertEquals(5, vcs.getRevisionsFor("dir").size());
   }
@@ -84,9 +92,11 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
     vcs.beginChangeSet();
     vcs.createDirectory("dir");
     vcs.beginChangeSet();
-    vcs.createFile("dir/one", null, -1);
+    long timestamp1 = -1;
+    vcs.createFile("dir/one", null, timestamp1, false);
     vcs.endChangeSet("inner");
-    vcs.createFile("dir/two", null, -1);
+    long timestamp = -1;
+    vcs.createFile("dir/two", null, timestamp, false);
     vcs.endChangeSet("outer");
 
     List<Revision> rr = vcs.getRevisionsFor("dir");

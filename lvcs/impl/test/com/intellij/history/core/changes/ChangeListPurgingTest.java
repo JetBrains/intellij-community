@@ -77,9 +77,9 @@ public class ChangeListPurgingTest extends ChangeListTestCase {
 
   @Test
   public void testChangesAfterPurge() {
-    applyAndAdd(cs(1, new CreateFileChange(1, "file", null, -1)));
-    applyAndAdd(cs(2, new ChangeFileContentChange("file", null, -1)));
-    applyAndAdd(cs(3, new ChangeFileContentChange("file", null, -1)));
+    applyAndAdd(cs(1, new CreateFileChange(1, "file", null, -1, false)));
+    applyAndAdd(cs(2, new ContentChange("file", null, -1)));
+    applyAndAdd(cs(3, new ContentChange("file", null, -1)));
 
     assertEquals(3, cl.getChangesFor(r, "file").size());
 
@@ -92,14 +92,14 @@ public class ChangeListPurgingTest extends ChangeListTestCase {
   public void testReturningContentsToPurge() {
     createFile(r, 1, "f", c("one"), -1);
 
-    applyAndAdd(cs(1, new ChangeFileContentChange("f", c("two"), -1)));
-    applyAndAdd(cs(2, new ChangeFileContentChange("f", c("three"), -1)));
+    applyAndAdd(cs(1, new ContentChange("f", c("two"), -1)));
+    applyAndAdd(cs(2, new ContentChange("f", c("three"), -1)));
 
-    ChangeFileContentChange c1 = new ChangeFileContentChange("f", c("four"), -1);
-    ChangeFileContentChange c2 = new ChangeFileContentChange("f", c("five"), -1);
+    ContentChange c1 = new ContentChange("f", c("four"), -1);
+    ContentChange c2 = new ContentChange("f", c("five"), -1);
     applyAndAdd(cs(3, c1, c2));
 
-    applyAndAdd(cs(4, new ChangeFileContentChange("f", c("six"), -1)));
+    applyAndAdd(cs(4, new ContentChange("f", c("six"), -1)));
 
     List<Content> contents = cl.purgeObsolete(1);
 

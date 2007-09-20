@@ -9,19 +9,19 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-public class ChangeFileContentChange extends StructuralChange {
+public class ContentChange extends StructuralChange {
   private Content myNewContent; // transient
   private long myNewTimestamp; // transient
   private Content myOldContent;
   private long myOldTimestamp;
 
-  public ChangeFileContentChange(String path, Content newContent, long timestamp) {
+  public ContentChange(String path, Content newContent, long timestamp) {
     super(path);
     myNewContent = newContent;
     myNewTimestamp = timestamp;
   }
 
-  public ChangeFileContentChange(Stream s) throws IOException {
+  public ContentChange(Stream s) throws IOException {
     super(s);
     myOldContent = s.readContent();
     myOldTimestamp = s.readLong();

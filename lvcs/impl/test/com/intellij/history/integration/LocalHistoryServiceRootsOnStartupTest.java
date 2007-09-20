@@ -60,7 +60,7 @@ public class LocalHistoryServiceRootsOnStartupTest extends LocalHistoryServiceTe
   @Test
   public void testUpdatingOutdatedFiles() {
     vcs.createDirectory("c:/root");
-    vcs.createFile("c:/root/file", cf("old"), 111L);
+    vcs.createFile("c:/root/file", cf("old"), 111L, false);
 
     TestVirtualFile root = new TestVirtualFile("c:/root");
     root.addChild(new TestVirtualFile("file", "new", 222L));
@@ -74,7 +74,8 @@ public class LocalHistoryServiceRootsOnStartupTest extends LocalHistoryServiceTe
   @Test
   public void testDeleteObsoleteFiles() {
     vcs.createDirectory("c:/root");
-    vcs.createFile("c:/root/file", null, -1);
+    long timestamp = -1;
+    vcs.createFile("c:/root/file", null, timestamp, false);
 
     roots.add(new TestVirtualFile("c:/root"));
     startupService();

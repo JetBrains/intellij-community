@@ -59,6 +59,10 @@ public class EventDispatcherTestCase extends LocalVcsTestCase {
     firePropertyChanged(newFile, VirtualFile.PROP_NAME, oldName);
   }
 
+  protected void fireROStatusChanged(VirtualFile path) {
+    firePropertyChanged(path, VirtualFile.PROP_WRITABLE, null);
+  }
+
   protected void firePropertyChanged(VirtualFile f, String prop, String oldValue) {
     d.propertyChanged(new VirtualFilePropertyEvent(null, f, prop, oldValue, null));
   }

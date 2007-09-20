@@ -41,7 +41,7 @@ public class CacheUpdaterProcessor {
   public void processFile(FileContent c) {
     VirtualFile f = c.getVirtualFile();
     if (myFilesToCreate.contains(f)) {
-      myVcs.createFile(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
+      myVcs.createFile(f.getPath(), contentFactoryFor(c), f.getTimeStamp(), !f.isWritable());
     }
     else {
       myVcs.changeFileContent(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
