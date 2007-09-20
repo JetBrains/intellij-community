@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import gnu.trove.THashSet;
@@ -202,13 +201,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       }
     });
     for(FilePath path: pathsToRefresh) {
-      VirtualFile vFile = path.getVirtualFile();
-      if (vFile == null) {
-        vFile = path.getVirtualFileParent();
-      }
-      if (vFile != null) {
-        session.addFile(vFile);
-      }
+      session.addFile(ChangesUtil.findValidParent(path));
     }
     session.launch();
   }
