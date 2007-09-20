@@ -114,8 +114,8 @@ public class MakeStaticHandler implements RefactoringActionHandler {
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.make.abstract.method.static"));
     }
 
-    if(containingClass.getContainingClass() != null
-       && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+    if(containingClass instanceof PsiAnonymousClass || 
+       (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC))) {
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("inner.classes.cannot.have.static.members"));
     }
     return null;
