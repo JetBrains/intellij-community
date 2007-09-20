@@ -3,14 +3,12 @@ package com.intellij.openapi.editor.actions.moveUpDown;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 
 class XmlMover extends LineMover {
   //private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.XmlMover");
@@ -39,6 +37,20 @@ class XmlMover extends LineMover {
     if (movedEndElement == null || movedStartElement == null) return false;
     final PsiNamedElement namedParentAtEnd = PsiTreeUtil.getParentOfType(movedEndElement, PsiNamedElement.class);
     final PsiNamedElement namedParentAtStart = PsiTreeUtil.getParentOfType(movedStartElement, PsiNamedElement.class);
+
+    final XmlText text = PsiTreeUtil.getParentOfType(movedStartElement, XmlText.class);
+    final XmlText text2 = PsiTreeUtil.getParentOfType(movedEndElement, XmlText.class);
+
+    // Let's do not care about injections for this mover
+    if ( ( text != null &&
+           ((PsiLanguageInjectionHost)text).getInjectedPsi() != null
+         ) ||
+         ( text2 != null &&
+           ((PsiLanguageInjectionHost)text2).getInjectedPsi() != null
+         )
+       ) {
+      return false;
+    }
 
     PsiNamedElement movedParent = null;
 
