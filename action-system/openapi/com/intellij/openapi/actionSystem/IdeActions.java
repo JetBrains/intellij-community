@@ -212,6 +212,7 @@ public interface IdeActions {
   @NonNls String ACTION_ANALYZE_DEPENDENCIES = "ShowPackageDeps";
   @NonNls String GROUP_MOVE_MODULE_TO_GROUP = "MoveModuleToGroup";
   @NonNls String ACTION_CLEAR_TEXT = "TextComponent.ClearAction";
+  @NonNls String ACTION_HIGHLIGHT_USAGES_IN_FILE = "HighlightUsagesInFile";
 
   @NonNls String GROUP_ANALYZE = "AnalyzeMenu";
 }

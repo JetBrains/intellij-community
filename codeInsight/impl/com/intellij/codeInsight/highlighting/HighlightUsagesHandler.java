@@ -7,16 +7,20 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.impl.injected.EditorWindow;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.impl.injected.EditorWindow;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
@@ -147,7 +151,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       doHighlightElements(highlightManager, myEditor, myExitStatements, attributes, myClearHighlights);
 
       setupFindModel(myProject);
-      String message = CodeInsightBundle.message("status.bar.exit.points.highlighted.message", myExitStatements.length);
+      String message = CodeInsightBundle.message("status.bar.exit.points.highlighted.message", myExitStatements.length, getShortcutText());
       WindowManager.getInstance().getStatusBar(myProject).setInfo(message);
     }
   }
@@ -158,7 +162,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     private final PsiElement myTarget;
     private final Editor myEditor;
     private final PsiFile myFile;
-    private boolean myClearHighlights;
+    private final boolean myClearHighlights;
 
     public DoHighlightRunnable(@NotNull List<PsiReference> refs, @NotNull Project project, @NotNull PsiElement target, Editor editor,
                                PsiFile file, boolean clearHighlights) {
@@ -342,7 +346,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         ControlFlow flow = ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
 
         List<PsiStatement> exitStatements = new ArrayList<PsiStatement>();
-        ControlFlowUtil.findExitPointsAndStatements(flow, flow.getStartOffset(body), flow.getEndOffset(body), new IntArrayList(),
+        ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize(), new IntArrayList(),
                                                     exitStatements,
                                                     new Class[]{PsiReturnStatement.class, PsiBreakStatement.class,
                                                                 PsiContinueStatement.class, PsiThrowStatement.class,
@@ -401,7 +405,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           Project project = target.getProject();
           highlightOtherOccurrences(toHighlight, project, editor, clearHighlights);
           setupFindModel(project);
-          String message = CodeInsightBundle.message("status.bar.overridden.methods.highlighted.message", toHighlight.size());
+          String message = CodeInsightBundle.message("status.bar.overridden.methods.highlighted.message", toHighlight.size(), getShortcutText());
           WindowManager.getInstance().getStatusBar(project).setInfo(message);
         }
       }
@@ -588,7 +592,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return false;
   }
 
-  private static boolean clearHighlights(Editor editor, HighlightManager highlightManager, List<TextRange> rangesToHighlight, TextAttributes attributes) {
+  private static void clearHighlights(Editor editor, HighlightManager highlightManager, List<TextRange> rangesToHighlight, TextAttributes attributes) {
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
     Arrays.sort(highlighters, new Comparator<RangeHighlighter>(){
       public int compare(RangeHighlighter o1, RangeHighlighter o2) {
@@ -622,7 +626,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         j++;
       }
     }
-    return true;
   }
 
   private static void doHighlightRefs(HighlightManager highlightManager, @NotNull Editor editor, @NotNull List<PsiReference> refs,
@@ -717,7 +720,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (refCount > 0) {
       message = CodeInsightBundle.message(elementName != null ?
                                         "status.bar.highlighted.usages.message" :
-                                        "status.bar.highlighted.usages.no.target.message", refCount, elementName);
+                                        "status.bar.highlighted.usages.no.target.message", refCount, elementName, getShortcutText());
     }
     else {
       message = CodeInsightBundle.message(elementName != null ?
@@ -726,5 +729,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     WindowManager.getInstance().getStatusBar(project).setInfo(message);
+  }
+
+  private static String getShortcutText() {
+    Shortcut shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_HIGHLIGHT_USAGES_IN_FILE).getShortcutSet().getShortcuts()[0];
+    return KeymapUtil.getShortcutText(shortcut);
   }
 }
