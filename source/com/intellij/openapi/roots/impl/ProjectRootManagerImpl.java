@@ -624,7 +624,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     final String projectFile = myProject.getStateStore().getProjectFilePath();
     rootPaths.add(projectFile);
-    rootPaths.add(myProject.getBaseDir().getPath());
+    final VirtualFile baseDir = myProject.getBaseDir();
+    if (baseDir != null) {
+      rootPaths.add(baseDir.getPath());
+    }
     // No need to add workspace file separately since they're definetely on same directory with ipr.
 
     for (Module module : modules) {
