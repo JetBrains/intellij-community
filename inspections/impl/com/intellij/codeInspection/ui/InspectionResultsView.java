@@ -656,13 +656,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void popupInvoked(Component component, int x, int y) {
-    final TreePath path;
-    if (myTree.hasFocus()) {
-      path = myTree.getLeadSelectionPath();
-    }
-    else {
-      path = null;
-    }
+    final TreePath path = myTree.getLeadSelectionPath();
 
     if (path == null) return;
 
