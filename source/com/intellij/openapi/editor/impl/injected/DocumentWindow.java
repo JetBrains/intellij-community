@@ -133,36 +133,12 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
     return lineNumber < 0 ? 0 : lineNumber;
   }
 
-  public int getHostNumber(int injectedOffset) {
-    if (injectedOffset < myPrefixes[0].length()) return -1;
-    for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
-      injectedOffset -= myPrefixes[i].length();
-      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
-      int length = currentRange.getEndOffset() - currentRange.getStartOffset();
-      if (injectedOffset < length) {
-        return i;
-      }
-      injectedOffset -= length;
-      injectedOffset -= mySuffixes[i].length();
-    }
-    return -1;
-  }
   public TextRange getHostRange(int hostOffset) {
     for (RangeMarker currentRange : myRelevantRangesInHostDocument) {
       TextRange textRange = InjectedLanguageUtil.toTextRange(currentRange);
       if (textRange.grown(1).contains(hostOffset)) return textRange;
     }
     return null;
-  }
-
-  public int getPrevHostsCombinedLength(int hostNumber) {
-    int res = 0;
-    for (int i = 0; i < hostNumber; i++) {
-      RangeMarker currentRange = myRelevantRangesInHostDocument[i];
-      int length = currentRange.getEndOffset() - currentRange.getStartOffset();
-      res += length;
-    }
-    return res;
   }
 
   public void insertString(final int offset, CharSequence s) {
@@ -224,6 +200,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
   }
 
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
+    assert startOffset <= endOffset;
     TextRange hostRange = injectedToHost(new TextRange(startOffset, endOffset));
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
     return new RangeMarkerWindow(this, hostMarker);
@@ -448,12 +425,6 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
 
   public RangeMarker getFirstTextRange() {
     return myRelevantRangesInHostDocument[0];
-  }
-
-  public int hostToInjectedLine(int hostLine) {
-    int hostOffset = myDelegate.getLineStartOffset(hostLine);
-    int offset = hostToInjected(hostOffset);
-    return getLineNumber(offset);
   }
 
   @Nullable
