@@ -30,6 +30,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author peter
  */
 public class ReflectionCache {
+  private static final boolean CACHE_DISABLED = System.getProperty("java.version", "1.5").indexOf("1.5") < 0;
+
   private static final ConcurrentFactoryMap<Class,Class> ourSuperClasses = new ConcurrentFactoryMap<Class, Class>() {
     protected Class create(final Class key) {
       return key.getSuperclass();
@@ -96,6 +98,9 @@ public class ReflectionCache {
 
   public static boolean isAssignable(Class ancestor, Class descendant) {
     if (ancestor == descendant) return true;
+    if (CACHE_DISABLED) {
+      return ancestor.isAssignableFrom(descendant);
+    }
     r.lock();
     try {
       Map<Class, Boolean> map = ourAssignables.get(ancestor);
