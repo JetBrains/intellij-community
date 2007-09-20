@@ -7,12 +7,12 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ObjectCache;
-import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.IntrospectionHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -31,25 +31,6 @@ public final class AntIntrospector {
     myHelper = getHelper(aClass);
   }
 
-  public void clearCache() {
-    final Class helperClass = myHelper.getClass();
-    // for ant 1.7, there is a dedicated method for cache clearing
-    try {
-      final Method method = helperClass.getDeclaredMethod("clearCache");
-      method.invoke(null);
-    }
-    catch (Throwable e) {
-      try {
-        final Method method = helperClass.getDeclaredMethod("buildFinished", helperClass.getClassLoader().loadClass(BuildEvent.class.getName()));
-        method.invoke(myHelper, new Object[] {null});
-      }
-      catch (Throwable _e) {
-        // ignore. Method is not there since Ant 1.7
-      }
-    }
-    
-  }
-  
   public static AntIntrospector getInstance(Class c) {
     try {
       return new AntIntrospector(c);
@@ -191,15 +172,44 @@ public final class AntIntrospector {
       final Class<?> helperClass = loader != null? loader.loadClass(IntrospectionHelper.class.getName()) : IntrospectionHelper.class;
       final Method getHelperMethod = helperClass.getMethod("getHelper", Class.class);
       result = getHelperMethod.invoke(null, aClass);
-    }
-    
-    if (result != null) {
-      synchronized (ourCache) {
-        ourCache.cacheObject(key, new SoftReference<Object>(result));
+
+      if (result != null) {
+        synchronized (ourCache) {
+          clearAntStaticCache(helperClass);
+          ourCache.cacheObject(key, new SoftReference<Object>(result));
+        }
       }
     }
     
     return result;
   }
   
+  private static int ourClearAttemptCount = 0;
+  
+  private static void clearAntStaticCache(final Class helperClass) {
+    if (++ourClearAttemptCount > 1000) { // allow not more than 1000 helpers cached inside ant
+      ourClearAttemptCount = 0;
+    }
+    else {
+      return;
+    }
+    
+    // for ant 1.7, there is a dedicated method for cache clearing
+    try {
+      final Method method = helperClass.getDeclaredMethod("clearCache");
+      method.invoke(null);
+    }
+    catch (Throwable e) {
+      try {
+        // assume it is older version of ant
+        final Field helpersField = helperClass.getDeclaredField("helpers");
+        final Map helpersCollection = (Map)helpersField.get(null);
+        helpersCollection.clear();
+      }
+      catch (Throwable _e) {
+        // ignore.
+      }
+    }
+  }
+
 }

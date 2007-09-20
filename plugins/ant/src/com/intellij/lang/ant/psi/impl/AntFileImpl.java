@@ -617,19 +617,11 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myProjectElements = new HashMap<AntTypeId, String>();
       final ReflectedProject reflectedProject = ReflectedProject.getProject(getClassLoader());
       if (reflectedProject.myProject != null) {
-        final AntIntrospector projectHelper = getHelperExceptionSafe(reflectedProject.myProject.getClass());
-        try {
-           //first, create task definitons
-          updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
-          // second, create definitions of data types
-          updateTypeDefinitions(reflectedProject.myDataTypeDefinitions, false);
-          myProjectProperties = reflectedProject.myProperties;
-        }
-        finally {
-          if (projectHelper != null) {
-            projectHelper.clearCache();
-          }
-        }
+        //first, create task definitons
+       updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
+       // second, create definitions of data types
+       updateTypeDefinitions(reflectedProject.myDataTypeDefinitions, false);
+       myProjectProperties = reflectedProject.myProperties;
       }
     }
   }
