@@ -125,15 +125,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
     loadJdomDefaults(component, componentName);
 
     Element element = null;
-    try {
-      StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.READ);
+    StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.READ);
 
-      if (stateStorage == null) return;
-      element = getJdomState(component, componentName, stateStorage);
-    }
-    catch (StateStorage.StateStorageException e) {
-      LOG.error(e);
-    }
+    if (stateStorage == null) return;
+    element = getJdomState(component, componentName, stateStorage);
 
     if (element == null) return;
 

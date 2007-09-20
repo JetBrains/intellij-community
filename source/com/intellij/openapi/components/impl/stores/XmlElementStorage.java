@@ -308,7 +308,8 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
       for (String componentName : myComponentStates.keySet()) {
         assert componentName != null;
         final Element element = myComponentStates.get(componentName);
-        assert element.getAttribute(NAME) != null : "Null component name attr in: " + componentName;
+
+        if (element.getAttribute(NAME) == null) element.setAttribute(NAME, componentName);
 
         rootElement.addContent((Element)element.clone());
       }

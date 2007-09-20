@@ -44,7 +44,7 @@ public interface StateStorage {
     List<IFile> getAllStorageFiles();
   }
 
-  class StateStorageException extends Exception {
+  class StateStorageException extends RuntimeException {
     public StateStorageException() {
     }
 

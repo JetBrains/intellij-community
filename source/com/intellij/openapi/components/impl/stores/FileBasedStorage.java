@@ -167,7 +167,7 @@ public class FileBasedStorage extends XmlElementStorage {
     }
     catch (JDOMException e) {
       throw new StateStorage.StateStorageException(
-        "Error while parsing " + myFile.getAbsolutePath() + ". File is probably corrupted: " + e.getMessage(), e);
+        "Error while parsing " + myFile.getAbsolutePath() + ".\nFile is probably corrupted:\n" + e.getMessage(), e);
     }
     catch (IOException e) {
       throw new StateStorage.StateStorageException("Error while loading " + myFile.getAbsolutePath() + ": " + e.getMessage(), e);

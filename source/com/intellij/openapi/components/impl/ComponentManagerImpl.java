@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,6 +98,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       for (Class componentInterface : componentInterfaces) {
         try {
           createComponent(componentInterface);
+        }
+        catch (StateStorage.StateStorageException e) {
+          throw e;
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -199,6 +203,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       if (component instanceof BaseComponent) {
         ((BaseComponent)component).initComponent();
       }
+    }
+    catch (StateStorage.StateStorageException e) {
+      throw e;
     }
     catch (Throwable ex) {
       handleInitComponentError(ex, false, component.getClass().getName());
@@ -590,6 +597,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
                 }
               }
               catch (ProcessCanceledException e) {
+                throw e;
+              }
+              catch (StateStorage.StateStorageException e) {
                 throw e;
               }
               catch (Throwable t) {

@@ -430,6 +430,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         updateLastProjectToReopen();
       }
 
+      if (io[0] != null) throw io[0];
+      if (jdom[0] != null) throw jdom[0];
+      if (invalidData[0] != null) throw invalidData[0];
+      if (stateStorage[0] != null) throw stateStorage[0];
+
       if (project[0] == null || !ok) {
         return null;
       }
@@ -438,11 +443,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         Disposer.dispose(project[0]);
         return null;
       }
-
-      if (io[0] != null) throw io[0];
-      if (jdom[0] != null) throw jdom[0];
-      if (invalidData[0] != null) throw invalidData[0];
-      if (stateStorage[0] != null) throw stateStorage[0];
 
       return project[0];
     }
