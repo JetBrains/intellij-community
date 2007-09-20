@@ -49,7 +49,9 @@ class StatisticsUnit {
   }
 
   private MyDataKey createKey(final String key1, final String key2) {
-    return new MyDataKey(myKeys.intern(key1), myKeys.intern(key2));
+    synchronized (myKeys) {
+      return new MyDataKey(myKeys.intern(key1), myKeys.intern(key2));
+    }
   }
 
   public void putData(String key1, String key2, int data) {
