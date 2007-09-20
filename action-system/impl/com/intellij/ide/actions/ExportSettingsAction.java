@@ -9,6 +9,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ExportableBean;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
@@ -22,6 +26,8 @@ import java.util.*;
 import java.util.jar.JarOutputStream;
 
 public class ExportSettingsAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ExportSettingsAction");
+
   @NonNls static final String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
 
   public void actionPerformed(AnActionEvent e) {
@@ -83,7 +89,35 @@ public class ExportSettingsAction extends AnAction {
   public static Map<File, Set<ExportableApplicationComponent>> getRegisteredComponentsAndFiles(List<ExportableApplicationComponent> exportableComponents) {
     Map<File,Set<ExportableApplicationComponent>> fileToComponents = new HashMap<File, Set<ExportableApplicationComponent>>();
 
-    final ExportableApplicationComponent[] components = ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class);
+    final List<ExportableApplicationComponent> components = new ArrayList<ExportableApplicationComponent>(Arrays.asList(ApplicationManager.getApplication().getComponents(ExportableApplicationComponent.class)));
+
+    final ExportableBean[] exportableBeans = Extensions.getExtensions(ExportableApplicationComponent.EXTENSION_POINT);
+    for (ExportableBean exportableBean : exportableBeans) {
+      final String serviceClass = exportableBean.serviceInterface;
+      if (serviceClass == null) {
+        LOG.error("Service interface not specified in " + ExportableApplicationComponent.EXTENSION_POINT);
+        continue;
+      }
+      try {
+        final Class<?> aClass = Class.forName(serviceClass);
+        final Object service = ServiceManager.getService(aClass);
+        if (service == null) {
+          LOG.error("Can't find service: " + serviceClass);
+          continue;
+        }
+        if (!(service instanceof ExportableApplicationComponent)) {
+          LOG.error("Service " + serviceClass + " is registered in exportable EP, but doesn't implement ExportableApplicationComponent");
+          continue;
+        }
+
+        components.add((ExportableApplicationComponent)service);
+      }
+      catch (ClassNotFoundException e) {
+        LOG.error(e);
+      }
+    }
+
+
     for (ExportableApplicationComponent component : components) {
       exportableComponents.add(component);
       final File[] exportFiles = component.getExportFiles();
