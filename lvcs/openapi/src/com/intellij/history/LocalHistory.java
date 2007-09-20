@@ -37,14 +37,6 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     return p.getComponent(LocalHistory.class);
   }
 
-  public static void addActionListener(Project p, LocalHistoryActionListener l) {
-    getInstance(p).addActionListener(l);
-  }
-
-  public static void removeActionListener(Project p, LocalHistoryActionListener l) {
-    getInstance(p).removeActionListener(l);
-  }
-
   protected abstract LocalHistoryAction startAction(String name);
 
   protected abstract void putSystemLabel(String name, int color);
@@ -56,8 +48,4 @@ public abstract class LocalHistory implements SettingsSavingComponent {
   protected abstract boolean isUnderControl(VirtualFile f);
 
   protected abstract boolean hasUnavailableContent(VirtualFile f);
-
-  protected abstract void addActionListener(LocalHistoryActionListener l);
-
-  protected abstract void removeActionListener(LocalHistoryActionListener l);
 }

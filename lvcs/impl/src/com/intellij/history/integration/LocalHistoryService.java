@@ -2,7 +2,6 @@ package com.intellij.history.integration;
 
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistoryConfiguration;
-import com.intellij.history.LocalHistoryActionListener;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
@@ -75,14 +74,6 @@ public class LocalHistoryService {
     LocalHistoryActionImpl a = new LocalHistoryActionImpl(myEventDispatcher, name);
     a.start();
     return a;
-  }
-
-  public void addActionListener(LocalHistoryActionListener l) {
-    myEventDispatcher.addActionListener(l);
-  }
-
-  public void removeActionListener(LocalHistoryActionListener l) {
-    myEventDispatcher.removeActionListener(l);
   }
 
   public class StartupChangeUpdater extends CacheUpdaterAdaptor {

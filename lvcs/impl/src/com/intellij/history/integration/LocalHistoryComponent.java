@@ -53,16 +53,6 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     return getComponentInstance(p).getLocalVcsImpl();
   }
 
-  @Override
-  protected void addActionListener(LocalHistoryActionListener l) {
-    myService.addActionListener(l);
-  }
-
-  @Override
-  protected void removeActionListener(LocalHistoryActionListener l) {
-    myService.removeActionListener(l);
-  }
-
   public LocalHistoryComponent(Project p,
                                StartupManager sm,
                                ProjectRootManagerEx rm,

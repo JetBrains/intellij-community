@@ -1,6 +1,5 @@
 package com.intellij.history.integration;
 
-import com.intellij.history.LocalHistoryActionListener;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.tree.Entry;
@@ -16,15 +15,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 public class EventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener, CacheUpdater {
   private ILocalVcs myVcs;
   private IdeaGateway myGateway;
   private LocalHistoryFacade myFacade;
-
-  private List<LocalHistoryActionListener> myListeners = new ArrayList<LocalHistoryActionListener>();
 
   private boolean isRefreshing;
   private CacheUpdaterProcessor myProcessor;
@@ -77,32 +73,10 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
   public void startAction() {
     myFacade.startAction();
-    fireActionStarted();
   }
 
   public void finishAction(String name) {
     myFacade.finishAction(name);
-    fireActionFinished(name);
-  }
-
-  public void addActionListener(LocalHistoryActionListener l) {
-    myListeners.add(l);
-  }
-
-  public void removeActionListener(LocalHistoryActionListener l) {
-    myListeners.remove(l);
-  }
-
-  private void fireActionStarted() {
-    for (LocalHistoryActionListener l : myListeners) {
-      l.onActionStart();
-    }
-  }
-
-  private void fireActionFinished(String name) {
-    for (LocalHistoryActionListener l : myListeners) {
-      l.onActionFinish(name);
-    }
   }
 
   @Override
