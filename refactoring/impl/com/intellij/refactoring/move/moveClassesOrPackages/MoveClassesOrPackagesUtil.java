@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
@@ -23,8 +23,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -33,12 +33,14 @@ public class MoveClassesOrPackagesUtil {
   private static final Logger LOG = Logger.getInstance(
     "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil");
 
+  private MoveClassesOrPackagesUtil() {
+  }
+
   public static UsageInfo[] findUsages(final PsiElement element,
                                        boolean searchInStringsAndComments,
                                        boolean searchInNonJavaFiles,
                                        final String newQName) {
     PsiManager manager = element.getManager();
-    PsiSearchHelper helper = manager.getSearchHelper();
 
     if (Comparing.equal(getQualfiedName(element), newQName)) return new UsageInfo[0];
 
@@ -46,7 +48,7 @@ public class MoveClassesOrPackagesUtil {
     Set<PsiReference> foundReferences = new HashSet<PsiReference>();
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    PsiReference[] references = helper.findReferences(element, projectScope, false);
+    PsiReference[] references = ReferencesSearch.search(element, projectScope, false).toArray(new PsiReference[0]);
     for (PsiReference reference : references) {
       TextRange range = reference.getRangeInElement();
       if (foundReferences.contains(reference)) continue;
@@ -111,7 +113,7 @@ public class MoveClassesOrPackagesUtil {
     };
   }
 
-  public static String getStringToSearch(PsiElement element) {
+  private static String getStringToSearch(PsiElement element) {
     if (element instanceof PsiPackage) {
       return ((PsiPackage)element).getQualifiedName();
     }
@@ -222,10 +224,11 @@ public class MoveClassesOrPackagesUtil {
   public static PsiClass doMoveClass(PsiClass aClass, MoveDestination moveDestination) throws IncorrectOperationException {
     PsiFile file = aClass.getContainingFile();
     PsiDirectory newDirectory = moveDestination.getTargetDirectory(file);
+    final PsiPackage newPackage = newDirectory.getPackage();
 
     PsiClass newClass;
     if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1) {
-      correctSelfReferences(aClass, newDirectory.getPackage());
+      correctSelfReferences(aClass, newPackage);
       final PsiClass created = newDirectory.createClass(aClass.getName());
       if (aClass.getDocComment() == null) {
         final PsiDocComment createdDocComment = created.getDocComment();
@@ -238,7 +241,7 @@ public class MoveClassesOrPackagesUtil {
     }
     else if (!newDirectory.equals(file.getContainingDirectory()) && newDirectory.findFile(file.getName()) != null) {
       // moving second of two classes which were in the same file to a different directory (IDEADEV-3089)
-      correctSelfReferences(aClass, newDirectory.getPackage());
+      correctSelfReferences(aClass, newPackage);
       PsiFile newFile = newDirectory.findFile(file.getName());
       newClass = (PsiClass) newFile.add(aClass);
       aClass.delete();
@@ -247,8 +250,8 @@ public class MoveClassesOrPackagesUtil {
       newClass = aClass;
       if (!newDirectory.equals(file.getContainingDirectory())) {
         aClass.getManager().moveFile(file, newDirectory);
-        if (file instanceof PsiJavaFile) {
-          setPackageStatement((PsiJavaFile)file, newDirectory.getPackage());
+        if (file instanceof PsiJavaFile && newPackage != null) {
+          setPackageStatement((PsiJavaFile)file, newPackage);
         }
       }
     }
@@ -278,7 +281,7 @@ public class MoveClassesOrPackagesUtil {
     }
   }
 
-  private static void setPackageStatement(final PsiJavaFile javaFile, final PsiPackage newPackage) throws IncorrectOperationException {
+  private static void setPackageStatement(final PsiJavaFile javaFile, @NotNull final PsiPackage newPackage) throws IncorrectOperationException {
     PsiManager manager = javaFile.getManager();
     PsiPackageStatement packageStatement = javaFile.getPackageStatement();
     String packageName = newPackage.getQualifiedName();
