@@ -99,8 +99,8 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   }
 
   private static class StatementStack {
-    private List<PsiElement> myStatements = new ArrayList<PsiElement>();
-    private TIntArrayList myAtStart = new TIntArrayList();
+    private final List<PsiElement> myStatements = new ArrayList<PsiElement>();
+    private final TIntArrayList myAtStart = new TIntArrayList();
 
     void popStatement() {
       myAtStart.remove(myAtStart.size() - 1);
@@ -288,7 +288,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
   }
 
-  private Map<PsiElement, List<PsiElement>> finallyBlockToUnhandledExceptions = new HashMap<PsiElement, List<PsiElement>>();
+  private final Map<PsiElement, List<PsiElement>> finallyBlockToUnhandledExceptions = new HashMap<PsiElement, List<PsiElement>>();
 
   private boolean patchCheckedThrowInstructionIfInsideFinally(ConditionalThrowToInstruction instruction,
                                                               PsiElement throwingElement,
@@ -364,7 +364,9 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
 
     finishElement(block);
-    registerSubRange(block, prevOffset);
+    if (prevOffset != 0) {
+      registerSubRange(block, prevOffset);
+    }
   }
 
   private void emitEmptyInstruction() {
@@ -984,8 +986,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
       final PsiType type = catchBlockParameters[i].getType();
       // todo cast param
-      if (type instanceof PsiClassType &&
-          ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type)) {
+      if (type instanceof PsiClassType && ExceptionUtil.isUncheckedExceptionOrSuperclass((PsiClassType)type)) {
         myUnhandledExceptionCatchBlocks.add(catchBlocks[i]);
       }
     }
@@ -1023,7 +1024,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
         generateWriteInstruction(catchBlockParameters[i]);
       }
       PsiCodeBlock catchBlock = catchBlocks[i];
-      assert catchBlock != null : statement.getText();
+      assert catchBlock != null : i+statement.getText();
       catchBlock.accept(this);
 
       myCurrentFlow.addInstruction(new GoToInstruction(finallyBlock == null ? 0 : -6));
@@ -1400,10 +1401,10 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitPostfixExpression(PsiPostfixExpression expression) {
     startElement(expression);
 
-    String op = expression.getOperationSign().getText();
+    IElementType op = expression.getOperationSign().getTokenType();
     PsiExpression operand = expression.getOperand();
     operand.accept(this);
-    if (op.equals("++") || op.equals("--")) {
+    if (op == JavaTokenType.PLUSPLUS || op == JavaTokenType.MINUSMINUS) {
       if (operand instanceof PsiReferenceExpression) {
         PsiVariable variable = getUsedVariable((PsiReferenceExpression)operand);
         if (variable != null) {

@@ -13,13 +13,13 @@ import java.util.Stack;
 class ControlFlowImpl implements ControlFlow {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowImpl");
 
-  private List<Instruction> myInstructions = new ArrayList<Instruction>();
-  private TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<PsiElement>();
-  private TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<PsiElement>();
-  private List<PsiElement> myElementsForInstructions = new ArrayList<PsiElement>();
+  private final List<Instruction> myInstructions = new ArrayList<Instruction>();
+  private final TObjectIntHashMap<PsiElement> myElementToStartOffsetMap = new TObjectIntHashMap<PsiElement>();
+  private final TObjectIntHashMap<PsiElement> myElementToEndOffsetMap = new TObjectIntHashMap<PsiElement>();
+  private final List<PsiElement> myElementsForInstructions = new ArrayList<PsiElement>();
   private boolean myConstantConditionOccurred;
 
-  private Stack<PsiElement> myElementStack = new Stack<PsiElement>();
+  private final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
 
   public void addInstruction(Instruction instruction) {
     myInstructions.add(instruction);

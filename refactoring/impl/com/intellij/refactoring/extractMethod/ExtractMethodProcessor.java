@@ -238,6 +238,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     else {
       myHasReturnStatement = myExpression == null && ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
+      //myHasReturnStatement = myExpression == null &&
+      //                       (ControlFlowUtil.getCompletionReasons(myControlFlow, myFlowStart, myFlowEnd) & ControlFlowUtil.RETURN_COMPLETION_REASON) != 0;
+
     }
 
     myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, exitPoints.toArray());
@@ -1129,8 +1132,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void showMultipleOutputMessage(PsiType expressionType) {
     if (myShowErrorDialogs) {
       StringBuilder buffer = new StringBuilder();
-      buffer.append(RefactoringBundle.getCannotRefactorMessage(
-        RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
+      buffer.append(RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
       buffer.append("\n");
       if (myHasExpressionOutput) {
         buffer.append("    ").append(RefactoringBundle.message("expression.result")).append(": ");

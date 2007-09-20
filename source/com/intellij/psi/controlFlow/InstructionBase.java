@@ -15,6 +15,7 @@ public abstract class InstructionBase implements Instruction, Cloneable{
     }
   }
 
-  public abstract @NonNls String toString();
+  @NonNls
+  public abstract String toString();
 
 }

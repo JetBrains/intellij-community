@@ -78,7 +78,7 @@ public class ControlFlowSubRange implements ControlFlow {
   }
 
   public String toString() {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.
       append("CF range:[").
       append(myStart).
