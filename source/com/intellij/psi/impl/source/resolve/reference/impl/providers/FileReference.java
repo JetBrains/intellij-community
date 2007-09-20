@@ -30,10 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -82,7 +79,8 @@ public class FileReference
   protected ResolveResult[] innerResolve() {
     final String referenceText = getText();
     final Collection<PsiFileSystemItem> contexts = getContexts();
-    final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
+//    final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
+    final Collection<ResolveResult> result = new HashSet<ResolveResult>(contexts.size());
     for (final PsiFileSystemItem context : contexts) {
       innerResolveInContext(referenceText, context, result);
     }
