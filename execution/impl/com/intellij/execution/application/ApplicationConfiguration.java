@@ -48,6 +48,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
   public boolean ENABLE_SWING_INSPECTOR;
 
   public String ENV_VARIABLES;
+  public boolean PASS_PARENT_ENVS = true;
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
     super(name, new RunConfigurationModule(project, true), applicationConfigurationType.getConfigurationFactories()[0]);
@@ -199,7 +200,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
 
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
-      EnvironmentVariablesComponent.setupEnvs(params, ENV_VARIABLES);
+      EnvironmentVariablesComponent.setupEnvs(params, ENV_VARIABLES, PASS_PARENT_ENVS);
       final int classPathType = JavaParametersUtil.getClasspathType(getConfigurationModule(), MAIN_CLASS_NAME, false);
       JavaParametersUtil.configureModule(getConfigurationModule(), params, classPathType, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
       JavaParametersUtil.configureConfiguration(params, ApplicationConfiguration.this);

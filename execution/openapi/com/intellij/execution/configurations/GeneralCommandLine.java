@@ -38,6 +38,7 @@ import java.util.Map;
 public class GeneralCommandLine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
   private Map<String, String> myEnvParams;
+  private boolean myPassParentEnvs;
   private String myExePath = null;
   private File myWorkDirectory = null;
   private ParametersList myProgramParams = new ParametersList();
@@ -140,10 +141,14 @@ public class GeneralCommandLine {
     if (myEnvParams == null) {
       return null;
     }
-    final String[] result = new String[myEnvParams.size()];
+    final Map<String, String> envParams = new HashMap<String, String>(myEnvParams);
+    if (myPassParentEnvs) {
+      envParams.putAll(System.getenv());
+    }
+    final String[] result = new String[envParams.size()];
     int i=0;
-    for (final String key : myEnvParams.keySet()) {
-      result[i++] = key + "=" + myEnvParams.get(key).trim();
+    for (final String key : envParams.keySet()) {
+      result[i++] = key + "=" + envParams.get(key).trim();
     }
     return result;
   }
@@ -222,6 +227,7 @@ public class GeneralCommandLine {
             final Map<String, String> env = javaParameters.getEnv();
             if (env != null) {
               commandLine.setEnvParams(env);
+              commandLine.setPassParentEnvs(javaParameters.isPassParentEnvs());
             }
 
             return commandLine;
@@ -238,6 +244,10 @@ public class GeneralCommandLine {
       else
         throw e;
     }
+  }
+
+  private void setPassParentEnvs(final boolean passParentEnvs) {
+    myPassParentEnvs = passParentEnvs;
   }
 
 }

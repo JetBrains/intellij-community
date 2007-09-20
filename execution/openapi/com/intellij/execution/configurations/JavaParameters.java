@@ -41,6 +41,7 @@ public class JavaParameters {
   private String myWorkingDirectory;
   private Charset myCharset = CharsetToolkit.getIDEOptionsCharset();
   private Map<String, String> myEnv;
+  private boolean myPassParentEnvs = true;
 
   public String getWorkingDirectory() {
     return myWorkingDirectory;
@@ -166,5 +167,13 @@ public class JavaParameters {
 
   public void setEnv(final Map<String, String> env) {
     myEnv = env;
+  }
+
+  public boolean isPassParentEnvs() {
+    return myPassParentEnvs;
+  }
+
+  public void setPassParentEnvs(final boolean passDefaultEnvs) {
+    myPassParentEnvs = passDefaultEnvs;
   }
 }

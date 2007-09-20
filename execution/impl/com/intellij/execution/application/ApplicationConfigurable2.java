@@ -50,6 +50,7 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     configuration.ENABLE_SWING_INSPECTOR = myVersionDetector.isJre50Configured(configuration) && myShowSwingInspectorCheckbox.isSelected();
 
     configuration.ENV_VARIABLES = myEnvVariablesComponent.getEnvs().trim().length() > 0 ?  FileUtil.toSystemIndependentName(myEnvVariablesComponent.getEnvs()) : null;
+    configuration.PASS_PARENT_ENVS = myEnvVariablesComponent.isPassParentEnvs();
 
     updateShowSwingInspector(configuration);
   }
@@ -61,6 +62,7 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
 
     myEnvVariablesComponent.setEnvs(configuration.ENV_VARIABLES != null ? FileUtil.toSystemDependentName(configuration.ENV_VARIABLES) : "");
+    myEnvVariablesComponent.setPassParentEnvs(configuration.PASS_PARENT_ENVS);
 
     updateShowSwingInspector(configuration);
   }
