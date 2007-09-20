@@ -10,18 +10,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-
-import org.jetbrains.annotations.NonNls;
 
 public class RunDialog extends DialogWrapper {
   private final RunnerInfo myRunnerInfo;
   private final Project myProject;
   private RunConfigurable myConfigurable;
   private JComponent myCenterPanel;
-  @NonNls public static String HELP_ID = "project.propRunDebug";
+  @NonNls public static String HELP_ID = "reference.dialogs.rundebug";
 
   public RunDialog(final Project project, final RunnerInfo runnerInfo) {
     super(project, true);

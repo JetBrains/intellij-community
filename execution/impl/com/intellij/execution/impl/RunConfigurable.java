@@ -562,7 +562,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public String getHelpTopic() {
-    return "project.propRunDebug";
+    return "reference.dialogs.rundebug";
   }
 
   private void clickDefaultButton() {

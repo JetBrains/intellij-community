@@ -17,7 +17,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("project.propRunDebug");
+    HelpManager.getInstance().invokeHelp("reference.dialogs.rundebug");
   }
 
   protected String getDimensionServiceKey() {
