@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -596,7 +597,9 @@ public class GroovyAnnotator implements Annotator {
       Annotation annotation = holder.createInformationAnnotation(elt,
           GroovyBundle.message("untyped.access", refExpr.getReferenceName()));
       if (resolved == null && refExpr.getQualifierExpression() == null) {
-        registerCreateClassByTypeFix(refExpr, annotation, false);
+        if (!(refExpr.getParent() instanceof GrCallExpression)) {
+          registerCreateClassByTypeFix(refExpr, annotation, false);
+        }
         registerAddImportFixes(refExpr, annotation);
       }
 
