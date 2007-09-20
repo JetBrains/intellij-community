@@ -18,15 +18,17 @@ package org.jetbrains.idea.devkit.run;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.application.PathManager;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -89,31 +91,45 @@ public class PluginConfigurationType implements ConfigurationType {
   public String getVmParameters() {
     if (myVmParameters == null) {
       myVmParameters = "";
-      final File file = new File(PathManager.getBinPath(), "idea.exe.vmoptions");
-      if (file.exists()) {
-        BufferedReader reader = null;
-        try {
-          reader = new BufferedReader(new FileReader(file));
-          String line;
-          while ((line = reader.readLine()) != null) {
-            myVmParameters += " " + line;
-          }
-        }
-        catch (IOException e) {
-          //skip
-        }
-        finally {
-          if (reader != null) {
-            try {
-              reader.close();
-            }
-            catch (IOException e) {
-              //skip
-            }
-          }
-        }
+
+      String vmParameters = readFile("idea.plugins.vmoptions");
+      if (vmParameters != null) {
+        myVmParameters = vmParameters;
+      } else if ((vmParameters = readFile("idea.exe.vmoptions")) != null) {
+        myVmParameters = vmParameters;
       }
     }
     return myVmParameters;
+  }
+
+  @Nullable
+  private static String readFile(@NonNls String fileName) {
+    final File file = new File(PathManager.getBinPath(), fileName);
+    if (file.exists()) {
+      final StringBuffer lines = new StringBuffer();
+      BufferedReader reader = null;
+      try {
+        reader = new BufferedReader(new FileReader(file));
+        String line;
+        while ((line = reader.readLine()) != null) {
+          lines.append(" ").append(line);
+        }
+      }
+      catch (IOException e) {
+        //skip
+      }
+      finally {
+        if (reader != null) {
+          try {
+            reader.close();
+          }
+          catch (IOException e) {
+            //skip
+          }
+        }
+      }
+      return lines.toString();
+    }
+    return null;
   }
 }
