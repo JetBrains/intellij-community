@@ -652,26 +652,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         return;
       }
       e.getPresentation().setText("_Open", true);
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      if (node != null) {
-        SVNDirEntry entry = node.getSVNDirEntry();
-        if (entry != null && entry.getKind() == SVNNodeKind.FILE) {
-          String name = entry.getName();
-          FileTypeManager manager = FileTypeManager.getInstance();
-          e.getPresentation().setEnabled(entry.getName().lastIndexOf('.') > 0 && !manager.getFileTypeByFileName(name).isBinary());
-        }
-      }
+      e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedVcsFile() != null);
     }
     public void actionPerformed(AnActionEvent e) {
-      RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
-      SVNDirEntry entry = node.getSVNDirEntry();
-      SVNURL url = node.getURL();
-      Project p = e.getData(DataKeys.PROJECT);
-      SVNRevision rev = SVNRevision.create(entry.getRevision());
-      final SvnFileRevision revision = new SvnFileRevision(myVCS, SVNRevision.UNDEFINED, rev, url.toString(),
-              entry.getAuthor(), entry.getDate(), null, null);
-      VirtualFile vcsVF = new VcsVirtualFile(node.getSVNDirEntry().getName(), revision, VcsFileSystem.getInstance());
-      FileEditorManager.getInstance(p).openFile(vcsVF, true);
+      VirtualFile vcsVF = getRepositoryBrowser().getSelectedVcsFile();
+      if (vcsVF != null) {
+        FileEditorManager.getInstance(myVCS.getProject()).openFile(vcsVF, true);
+      }
     }
   }
 

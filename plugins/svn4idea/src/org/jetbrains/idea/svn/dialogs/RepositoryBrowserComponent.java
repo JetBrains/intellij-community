@@ -16,13 +16,27 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.vfs.VcsFileSystem;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.peer.PeerFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.history.SvnFileRevision;
+
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
@@ -37,7 +51,7 @@ import java.awt.*;
  * Time: 19:13:10
  * To change this template use File | Settings | File Templates.
  */
-public class RepositoryBrowserComponent extends JPanel implements Disposable {
+public class RepositoryBrowserComponent extends JPanel implements Disposable, DataProvider {
 
   private JTree myRepositoryTree;
   private SvnVcs myVCS;
@@ -146,6 +160,8 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable {
                                              JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
     add(scrollPane, BorderLayout.CENTER);
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
+
+    PeerFactory.getInstance().getUIHelper().installEditSourceOnDoubleClick(myRepositoryTree);
   }
 
   @Nullable
@@ -153,6 +169,46 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable {
     TreePath selection = myRepositoryTree.getSelectionPath();
     if (selection != null && selection.getLastPathComponent() instanceof RepositoryTreeNode) {
       return (RepositoryTreeNode) selection.getLastPathComponent();
+    }
+    return null;
+  }
+
+  @Nullable
+  public VirtualFile getSelectedVcsFile() {
+    final RepositoryTreeNode node = getSelectedNode();
+    if (node == null) return null;
+
+    SVNDirEntry entry = node.getSVNDirEntry();
+    if (entry == null || entry.getKind() != SVNNodeKind.FILE) {
+      return null;
+    }
+
+    String name = entry.getName();
+    FileTypeManager manager = FileTypeManager.getInstance();
+
+    if (entry.getName().lastIndexOf('.') > 0 && !manager.getFileTypeByFileName(name).isBinary()) {
+      SVNURL url = node.getURL();
+      SVNRevision rev = SVNRevision.create(entry.getRevision());
+      final SvnFileRevision revision = new SvnFileRevision(myVCS, SVNRevision.UNDEFINED, rev, url.toString(),
+              entry.getAuthor(), entry.getDate(), null, null);
+
+      return new VcsVirtualFile(node.getSVNDirEntry().getName(), revision, VcsFileSystem.getInstance());
+    } else {
+      return null;
+    }
+  }
+
+  @Nullable
+  public Object getData(@NonNls String dataId) {
+    if (DataKeys.NAVIGATABLE.getName().equals(dataId)) {
+      final Project project = myVCS.getProject();
+      if (project == null || project.isDefault()) {
+        return null;
+      }
+      final VirtualFile vcsFile = getSelectedVcsFile();
+      return vcsFile != null ? new OpenFileDescriptor(project, vcsFile) : null;
+    } else if (DataKeys.PROJECT.getName().equals(dataId)) {
+      return myVCS.getProject();
     }
     return null;
   }
