@@ -279,6 +279,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   public synchronized MutablePicoContainer getPicoContainer() {
+    assert !myDisposeCompleted : "Already disposed";
     return myPicoContainer;
   }
 
