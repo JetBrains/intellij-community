@@ -234,10 +234,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     PsiExpression[] args = myArgumentsList.getExpressions();
 
-    //check again, now that applicability check has been performed
-    if (params1.length == args.length && params2.length != args.length) return Specifics.TRUE;
-    if (params2.length == args.length && params1.length != args.length) return Specifics.FALSE;
-
     final PsiTypeParameter[] typeParameters1 = method1.getTypeParameters();
     final PsiTypeParameter[] typeParameters2 = method2.getTypeParameters();
     final PsiSubstitutor classSubstitutor1 = info1.getSubstitutor(); //substitutions for method type parameters will be ignored

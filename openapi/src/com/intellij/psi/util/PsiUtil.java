@@ -803,7 +803,7 @@ public final class PsiUtil {
     }
 
     if (method.isVarArgs() && languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0) {
-      if (args.length < parms.length) return ApplicabilityLevel.FIXED_ARITY;
+      if (args.length < parms.length) return ApplicabilityLevel.VARARGS;
       PsiParameter lastParameter = parms[parms.length - 1];
       if (!lastParameter.isVarArgs()) return ApplicabilityLevel.NOT_APPLICABLE;
       PsiType lastParmType = getParameterType(lastParameter, languageLevel, substitutorForMethod);
