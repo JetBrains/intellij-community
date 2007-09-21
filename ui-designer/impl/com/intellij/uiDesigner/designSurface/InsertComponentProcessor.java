@@ -47,15 +47,15 @@ import java.util.Map;
 public final class InsertComponentProcessor extends EventProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.InsertComponentProcessor");
 
-  private PaletteManager myPaletteManager;
+  private final PaletteManager myPaletteManager;
   private final GuiEditor myEditor;
   private boolean mySticky;
   private RadComponent myInsertedComponent;
-  private GridInsertProcessor myGridInsertProcessor;
+  private final GridInsertProcessor myGridInsertProcessor;
   private ComponentItem myComponentToInsert;
   private ComponentDropLocation myLastLocation;
 
-  private static Map<String, RadComponentFactory> myComponentClassMap = new HashMap<String, RadComponentFactory>();
+  private static final Map<String, RadComponentFactory> myComponentClassMap = new HashMap<String, RadComponentFactory>();
   static {
     myComponentClassMap.put(JScrollPane.class.getName(), new RadScrollPane.Factory());
     myComponentClassMap.put(JPanel.class.getName(), new RadContainer.Factory());
@@ -247,6 +247,11 @@ public final class InsertComponentProcessor extends EventProcessor {
     myEditor.getActiveDecorationLayer().removeFeedback();
     myEditor.setDesignTimeInsets(2);
 
+    item = replaceAnyComponentItem(myEditor, item);
+    if (item == null) {
+      return;
+    }
+
     if (!validateNestedFormInsert(item)) {
       return;
     }
@@ -259,10 +264,6 @@ public final class InsertComponentProcessor extends EventProcessor {
       return;
     }
 
-    item = replaceAnyComponentItem(myEditor, item);
-    if (item == null) {
-      return;
-    }
     final boolean forceBinding = item.isAutoCreateBinding();
     myInsertedComponent = createInsertedComponent(myEditor, item);
     setCursor(Cursor.getDefaultCursor());
@@ -397,7 +398,9 @@ public final class InsertComponentProcessor extends EventProcessor {
     PsiFile boundForm = item.getBoundForm();
     if (boundForm != null) {
       try {
-        Utils.validateNestedFormLoop(FormEditingUtil.buildResourceName(boundForm), new PsiNestedFormLoader(myEditor.getModule()));
+        final String formName = FormEditingUtil.buildResourceName(boundForm);
+        final String targetForm = FormEditingUtil.buildResourceName(myEditor.getPsiFile());
+        Utils.validateNestedFormLoop(formName, new PsiNestedFormLoader(myEditor.getModule()), targetForm);
       }
       catch(Exception ex) {
         Messages.showErrorDialog(myEditor, ex.getMessage(), CommonBundle.getErrorTitle());

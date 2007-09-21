@@ -172,7 +172,15 @@ public final class Utils {
 
   public static void validateNestedFormLoop(final String formName, final NestedFormLoader nestedFormLoader)
     throws CodeGenerationException, RecursiveFormNestingException {
+    validateNestedFormLoop(formName, nestedFormLoader, null);
+  }
+
+  public static void validateNestedFormLoop(final String formName, final NestedFormLoader nestedFormLoader, final String targetForm)
+    throws CodeGenerationException, RecursiveFormNestingException {
     HashSet usedFormNames = new HashSet();
+    if (targetForm != null) {
+      usedFormNames.add(targetForm);
+    }
     validateNestedFormLoop(usedFormNames, formName, nestedFormLoader);
   }
 
