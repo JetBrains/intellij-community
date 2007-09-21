@@ -1874,5 +1874,22 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       expected,
       actualResult
     );
+
+    String s1_2 = "try {\n" +
+                  "    if (args == null) return ;\n" +
+                  "    while(true) return ;\n" +
+                  "    System.out.println(\"blah2\");\n" +
+                  "} finally {\n" +
+                  "}";
+    String expected_2 = "if (args == null) return ;\n" +
+                  "    while(true) return ;\n" +
+                  "System.out.println(\"blah2\");";
+    
+    actualResult = replacer.testReplace(s1_2,s2,replacement,options);
+
+    assertEquals(
+      expected_2,
+      actualResult
+    );
   }
 }
