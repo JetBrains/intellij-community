@@ -27,7 +27,7 @@ import java.awt.*;
 public class RadNestedForm extends RadComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadNestedForm");
 
-  private String myFormFileName;
+  private final String myFormFileName;
   private RadRootContainer myRootContainer;
 
   public RadNestedForm(final Module module, final String formFileName, final String id) throws Exception {
@@ -95,7 +95,6 @@ public class RadNestedForm extends RadComponent {
 
   private static boolean isNonStaticInnerClass(final PsiClass boundClass) {
     if (boundClass == null) return false;
-    if (PsiUtil.isInnerClass(boundClass)) return true;
-    return isNonStaticInnerClass(boundClass.getContainingClass());
+    return PsiUtil.isInnerClass(boundClass) || isNonStaticInnerClass(boundClass.getContainingClass());
   }
 }

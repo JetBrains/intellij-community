@@ -213,7 +213,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       final ComponentItem componentItem = getComponentToInsert();
       if (componentItem != null) {
-        processComponentInsert(e.getPoint(), null, componentItem);
+        processComponentInsert(e.getPoint(), componentItem);
       }
     }
     else if (e.getID() == MouseEvent.MOUSE_MOVED) {
@@ -238,17 +238,8 @@ public final class InsertComponentProcessor extends EventProcessor {
            : myPaletteManager.getActiveItem(ComponentItem.class);
   }
 
-  // either point or targetContainer is null
-  public void processComponentInsert(@Nullable final Point point, @Nullable final RadContainer targetContainer, final ComponentItem item) {
-    final ComponentDropLocation location;
-    if (point != null) {
-      location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), point);
-    }
-    else {
-      LOG.assertTrue(targetContainer != null);
-      location = new GridDropLocation(targetContainer, 0, 0);
-    }
-
+  public void processComponentInsert(@NotNull final Point point, final ComponentItem item) {
+    final ComponentDropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), point);
     processComponentInsert(item, location);
   }
 
