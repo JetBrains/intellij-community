@@ -32,7 +32,7 @@ import java.util.HashMap;
  * @author mike
  */
 abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends ModuleFixtureBuilderImpl<T> implements JavaModuleFixtureBuilder<T> {
-  private List<Lib> myLibraries = new ArrayList<Lib>();
+  private final List<Lib> myLibraries = new ArrayList<Lib>();
   private String myJdk;
   private MockJdkLevel myMockJdkLevel = MockJdkLevel.jdk14;
 
@@ -61,6 +61,9 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   }
 
   public JavaModuleFixtureBuilder addLibraryJars(String libraryName, String basePath, String... jars) {
+    if (!basePath.endsWith("/")) {
+      basePath += "/";
+    }
     String[] classPath = new String[jars.length];
     for (int i = 0; i < jars.length; i++) {
       classPath[i] = basePath + jars[i];
@@ -109,8 +112,8 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
           }
         }
       }
-      libraryCreated(library, module);
       libraryModel.commit();
+      libraryCreated(library, module);
     }
 
     if (myJdk != null) {
@@ -133,8 +136,8 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   protected void libraryCreated(Library library, Module module) {}
 
   private static class Lib {
-    private String myName;
-    private Map<OrderRootType, String []> myRoots;
+    private final String myName;
+    private final Map<OrderRootType, String []> myRoots;
 
     public Lib(final String name, final Map<OrderRootType, String[]> roots) {
       myName = name;
