@@ -161,10 +161,10 @@ public class Updater implements CacheUpdater {
   private void createRecursively(VirtualFile fileOrDir) {
     if (notAllowed(fileOrDir)) return;
 
-    if (fileOrDir.isDirectory()) {
-      // todo catching IDEADEV-18728 bug
-      assertNotExists(fileOrDir);
+    // todo catching IDEADEV-18728 and IDEADEV-20412 bugs
+    assertNotExists(fileOrDir);
 
+    if (fileOrDir.isDirectory()) {
       myVcs.createDirectory(fileOrDir.getPath());
       for (VirtualFile f : fileOrDir.getChildren()) {
         createRecursively(f);
