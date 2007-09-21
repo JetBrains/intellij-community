@@ -13,6 +13,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -322,6 +323,11 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
 
   public PsiElement getOriginalElement() {
     return PsiImplUtil.getOriginalElement(this, myFile);
+  }
+
+  @Nullable
+  public Icon getIcon(int flags) {
+    return myFile.getIcon(flags);
   }
 }
 
