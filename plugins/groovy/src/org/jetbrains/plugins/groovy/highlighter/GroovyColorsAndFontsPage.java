@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -50,19 +51,26 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
 
   static {
     ATTRS = new AttributesDescriptor[]{
-      new AttributesDescriptor(DefaultHighlighter.LINE_COMMENT_ID, DefaultHighlighter.LINE_COMMENT),
-      new AttributesDescriptor(DefaultHighlighter.BLOCK_COMMENT_ID, DefaultHighlighter.BLOCK_COMMENT),
-      new AttributesDescriptor(DefaultHighlighter.KEYWORD_ID, DefaultHighlighter.KEYWORD),
-      new AttributesDescriptor(DefaultHighlighter.NUMBER_ID, DefaultHighlighter.NUMBER),
-      new AttributesDescriptor(DefaultHighlighter.STRING_ID, DefaultHighlighter.STRING),
-      new AttributesDescriptor(DefaultHighlighter.REGEXP_ID, DefaultHighlighter.REGEXP),
-      new AttributesDescriptor(DefaultHighlighter.BRACES_ID, DefaultHighlighter.BRACES),
-      new AttributesDescriptor(DefaultHighlighter.OPERATION_SIGN_ID, DefaultHighlighter.OPERATION_SIGN),
-      new AttributesDescriptor(DefaultHighlighter.BAD_CHARACTER_ID, DefaultHighlighter.BAD_CHARACTER),
-      new AttributesDescriptor(DefaultHighlighter.WRONG_STRING_ID, DefaultHighlighter.WRONG_STRING),
-      new AttributesDescriptor(DefaultHighlighter.UNTYPED_ACCESS_ID, DefaultHighlighter.UNTYPED_ACCESS),
+        new AttributesDescriptor(DefaultHighlighter.LINE_COMMENT_ID, DefaultHighlighter.LINE_COMMENT),
+        new AttributesDescriptor(DefaultHighlighter.BLOCK_COMMENT_ID, DefaultHighlighter.BLOCK_COMMENT),
+        new AttributesDescriptor(DefaultHighlighter.KEYWORD_ID, DefaultHighlighter.KEYWORD),
+        new AttributesDescriptor(DefaultHighlighter.NUMBER_ID, DefaultHighlighter.NUMBER),
+        new AttributesDescriptor(DefaultHighlighter.GSTRING_ID, DefaultHighlighter.GSTRING),
+        new AttributesDescriptor(DefaultHighlighter.STRING_ID, DefaultHighlighter.STRING),
+        new AttributesDescriptor(DefaultHighlighter.REGEXP_ID, DefaultHighlighter.REGEXP),
+        new AttributesDescriptor(DefaultHighlighter.BRACES_ID, DefaultHighlighter.BRACES),
+        new AttributesDescriptor(DefaultHighlighter.OPERATION_SIGN_ID, DefaultHighlighter.OPERATION_SIGN),
+        new AttributesDescriptor(DefaultHighlighter.BAD_CHARACTER_ID, DefaultHighlighter.BAD_CHARACTER),
+        new AttributesDescriptor(DefaultHighlighter.WRONG_STRING_ID, DefaultHighlighter.WRONG_STRING),
+        new AttributesDescriptor(DefaultHighlighter.UNTYPED_ACCESS_ID, DefaultHighlighter.UNTYPED_ACCESS),
+        new AttributesDescriptor(DefaultHighlighter.ANNOTATION_ID, DefaultHighlighter.ANNOTATION),
+        new AttributesDescriptor(DefaultHighlighter.INSTANCE_FIELD_ID, DefaultHighlighter.INSTANCE_FIELD),
+        new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.STATIC_FIELD),
+        new AttributesDescriptor(DefaultHighlighter.METHOD_CALL_ID, DefaultHighlighter.METHOD_CALL),
+        new AttributesDescriptor(DefaultHighlighter.STATIC_METHOD_ACCESS_ID, DefaultHighlighter.STATIC_METHOD_ACCESS),
     };
   }
+
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
     return new ColorDescriptor[0];
@@ -77,16 +85,31 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
   @NotNull
   public String getDemoText() {
     return "import javax.swing.JPanel\n" +
+        "  ### \n" +
+        "<annotation>@SpecialBean</annotation> \n" +
         "class Demo {\n" +
         "//This is a line comment\n" +
-        "/*This is a block comment*/\n" +
-        "  JPanel panel = new JPanel()\n" +
-        "  panel.size = [10, 10]\n" +
-        "}";
+        "/* This is a block comment */\n" +
+        "  static def foo(int i) { return [i, i] }\n" +
+        "  JPanel <field>panel</field> = new JPanel()\n" +
+        "}\n" +
+        "\n" +
+        "new Demo().<field>panel</field>.<mc>size</mc> = " +
+        "Demo.<statmet>foo</statmet>(\"2${3}9\".toInteger()) \n" +
+        "'JetBrains'.matches(/Jw+/) \n" +
+        "<untyped>untyped</untyped>.<untyped>doSomething</untyped>()";
   }
 
   @Nullable
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
-    return null;
+    Map<String, TextAttributesKey> map = new HashMap<String, TextAttributesKey>();
+    map.put("annotation", DefaultHighlighter.ANNOTATION);
+    map.put("statmet", DefaultHighlighter.STATIC_METHOD_ACCESS);
+    map.put("statfield", DefaultHighlighter.STATIC_FIELD);
+    map.put("field", DefaultHighlighter.INSTANCE_FIELD);
+    map.put("mc", DefaultHighlighter.METHOD_CALL);
+    map.put("untyped", DefaultHighlighter.UNTYPED_ACCESS);
+
+    return map;
   }
 }

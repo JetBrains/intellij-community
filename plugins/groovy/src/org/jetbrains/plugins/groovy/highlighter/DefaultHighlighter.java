@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.highlighter;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -30,32 +31,61 @@ import java.awt.*;
 public class DefaultHighlighter {
 
   @NonNls
-  static final String LINE_COMMENT_ID = "line comments";
+  static final String LINE_COMMENT_ID = "Line comment";
   @NonNls
-  static final String BLOCK_COMMENT_ID = "block comments";
+  static final String BLOCK_COMMENT_ID = "Block comment";
   @NonNls
-  static final String KEYWORD_ID = "keywords";
+  static final String KEYWORD_ID = "Keyword";
   @NonNls
-  static final String NUMBER_ID = "numbers";
+  static final String NUMBER_ID = "Number";
   @NonNls
-  static final String STRING_ID = "strings";
+  static final String GSTRING_ID = "String";
   @NonNls
-  static final String REGEXP_ID = "regular expressions";
+  static final String STRING_ID = "GString";
   @NonNls
-  static final String BRACES_ID = "braces";
+  static final String REGEXP_ID = "Regular expression";
+  @NonNls
+  static final String BRACES_ID = "Braces";
 
   @NonNls
-  static final String OPERATION_SIGN_ID = "operation signs";
+  static final String OPERATION_SIGN_ID = "Operation sign";
   @NonNls
-  static final String BAD_CHARACTER_ID = "bad character";
+  static final String BAD_CHARACTER_ID = "Bad character";
   @NonNls
-  static final String WRONG_STRING_ID = "wrong construction";
+  static final String WRONG_STRING_ID = "Wrong string literal";
 
   @NonNls
-  static final String UNTYPED_ACCESS_ID = "untyped access";
+  static final String ANNOTATION_ID = "Annotation";
+  @NonNls
+  static final String INSTANCE_FIELD_ID = "Instance field";
+  @NonNls
+  static final String STATIC_FIELD_ID = "Static field";
+  @NonNls
+  static final String METHOD_CALL_ID = "Method call";
+  @NonNls
+  static final String STATIC_METHOD_ACCESS_ID = "Static method access";
+
+
+  @NonNls
+  static final String UNTYPED_ACCESS_ID = "Untyped member access";
 
   public static TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID,
       HighlighterColors.JAVA_LINE_COMMENT.getDefaultAttributes());
+
+  public static TextAttributesKey ANNOTATION = TextAttributesKey.createTextAttributesKey(ANNOTATION_ID,
+      HighlightInfoType.ANNOTATION_NAME.getAttributesKey().getDefaultAttributes());
+
+  public static TextAttributesKey INSTANCE_FIELD = TextAttributesKey.createTextAttributesKey(INSTANCE_FIELD_ID,
+      HighlightInfoType.INSTANCE_FIELD.getAttributesKey().getDefaultAttributes());
+
+  public static TextAttributesKey METHOD_CALL = TextAttributesKey.createTextAttributesKey(METHOD_CALL_ID,
+      HighlightInfoType.METHOD_CALL.getAttributesKey().getDefaultAttributes());
+
+  public static TextAttributesKey STATIC_FIELD = TextAttributesKey.createTextAttributesKey(STATIC_FIELD_ID,
+      HighlightInfoType.STATIC_FIELD.getAttributesKey().getDefaultAttributes());
+
+  public static TextAttributesKey STATIC_METHOD_ACCESS = TextAttributesKey.createTextAttributesKey(STATIC_METHOD_ACCESS_ID,
+      HighlightInfoType.STATIC_METHOD.getAttributesKey().getDefaultAttributes());
 
   public static TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey(BLOCK_COMMENT_ID,
       HighlighterColors.JAVA_BLOCK_COMMENT.getDefaultAttributes());
@@ -65,6 +95,9 @@ public class DefaultHighlighter {
 
   public static TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey(NUMBER_ID,
       HighlighterColors.JAVA_NUMBER.getDefaultAttributes());
+
+  public static TextAttributesKey GSTRING = TextAttributesKey.createTextAttributesKey(GSTRING_ID,
+      HighlighterColors.JAVA_STRING.getDefaultAttributes());
 
   public static TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey(STRING_ID,
       HighlighterColors.JAVA_STRING.getDefaultAttributes());

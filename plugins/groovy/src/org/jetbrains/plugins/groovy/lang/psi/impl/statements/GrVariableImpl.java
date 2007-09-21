@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -38,8 +37,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -181,7 +181,9 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
 
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
-    return findChildByType(GroovyTokenTypes.mIDENT);
+    PsiElement ident = findChildByType(GroovyTokenTypes.mIDENT);
+    assert ident != null;
+    return ident;
   }
 
   @Nullable
@@ -216,8 +218,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   //todo: see GrModifierListImpl.hasModifierProperty()
   public boolean hasModifierProperty(@NonNls @NotNull String property) {
     PsiModifierList modifierList = getModifierList();
-    if (modifierList != null) return modifierList.hasModifierProperty(property);
-    return false;
+    return modifierList != null && modifierList.hasModifierProperty(property);
   }
 
   @Nullable

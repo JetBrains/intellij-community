@@ -18,7 +18,9 @@ package org.jetbrains.plugins.groovy.annotator;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -42,13 +44,22 @@ import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -88,6 +99,7 @@ public class GroovyAnnotator implements Annotator {
     } else if (element instanceof GrVariableDeclaration) {
       checkVariableDeclaration(holder, (GrVariableDeclaration) element);
     } else if (element instanceof GrVariable) {
+      if (element instanceof GrMember) highlightMember(holder, ((GrMember) element));
       checkVariable(holder, (GrVariable) element);
     } else if (element instanceof GrAssignmentExpression) {
       checkAssignmentExpression((GrAssignmentExpression) element, holder);
@@ -123,7 +135,7 @@ public class GroovyAnnotator implements Annotator {
 
     final PsiElement methodCandidateInfo = methodsToImplement.toArray(CandidateInfo.EMPTY_ARRAY)[0].getElement();
     assert methodCandidateInfo instanceof PsiMethod;
-    
+
     String notImplementedMethodName = ((PsiMethod) methodCandidateInfo).getName();
 
     final int startOffset = typeDefinition.getTextRange().getStartOffset();
@@ -479,7 +491,7 @@ public class GroovyAnnotator implements Annotator {
     if (opToken == GroovyTokenTypes.mASSIGN) {
       GrExpression lValue = assignment.getLValue();
       GrExpression rValue = assignment.getRValue();
-      if (lValue != null && rValue != null) {
+      if (rValue != null) {
         PsiType lType = lValue.getType();
         PsiType rType = rValue.getType();
         if (lType != null && rType != null) {
@@ -517,6 +529,12 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
+    if (typeDefinition != null &&
+        typeDefinition.isAnnotationType()) {
+      Annotation annotation = holder.createInfoAnnotation(typeDefinition.getNameIdentifierGroovy(), null);
+      annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
+    }
+
     if (GroovyElementTypes.CLASS_BODY.equals(typeDefinition.getNode().getTreeParent().getElementType())) {
       holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), "Inner classes are not supported in Groovy");
     }
@@ -570,6 +588,9 @@ public class GroovyAnnotator implements Annotator {
     registerUsedImport(refExpr, resolveResult);
     PsiElement resolved = resolveResult.getElement();
     if (resolved != null) {
+      if (resolved instanceof PsiMember) {
+        highlightMemberResolved(holder, refExpr, ((PsiMember) resolved));
+      }
       if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
@@ -607,6 +628,25 @@ public class GroovyAnnotator implements Annotator {
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
     }
   }
+
+  private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
+    boolean isStatic = member.hasModifierProperty(GroovyPsiModifier.STATIC);
+    Annotation annotation = holder.createInfoAnnotation(refExpr.getReferenceNameElement(), null);
+    if (member instanceof PsiField) {
+      annotation.setTextAttributes(!isStatic ?
+          DefaultHighlighter.INSTANCE_FIELD :
+          DefaultHighlighter.STATIC_FIELD
+      );
+      return;
+    }
+    if (member instanceof PsiMethod) {
+      annotation.setTextAttributes(!isStatic ?
+          DefaultHighlighter.METHOD_CALL :
+          DefaultHighlighter.STATIC_METHOD_ACCESS
+      );
+    }
+  }
+
 
   private void registerUsedImport(GrReferenceElement referenceElement, GroovyResolveResult resolveResult) {
     GrImportStatement importStatement = resolveResult.getImportStatementContext();
@@ -650,7 +690,9 @@ public class GroovyAnnotator implements Annotator {
   private void checkReferenceElement(AnnotationHolder holder, final GrCodeReferenceElement refElement) {
     final PsiElement parent = refElement.getParent();
     GroovyResolveResult resolveResult = refElement.advancedResolve();
+    highlightAnnotation(holder, refElement, resolveResult);
     registerUsedImport(refElement, resolveResult);
+    highlightAnnotation(holder, refElement, resolveResult);
     if (refElement.getReferenceName() != null) {
 
       if (parent instanceof GrImportStatement &&
@@ -720,6 +762,34 @@ public class GroovyAnnotator implements Annotator {
 
   private void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation, boolean createConstructor) {
     annotation.registerFix(CreateClassFix.createClassFixAction(refElement, createConstructor));
+  }
+
+  private void highlightMember(AnnotationHolder holder, GrMember member) {
+    if (member instanceof PsiField) {
+      GrField field = (GrField) member;
+      PsiElement identifier = field.getNameIdentifierGroovy();
+      boolean isStatic = field.hasModifierProperty(GroovyPsiModifier.STATIC);
+      Annotation annotation = holder.createInfoAnnotation(identifier, null);
+      annotation.setTextAttributes(!isStatic ? DefaultHighlighter.INSTANCE_FIELD :
+          DefaultHighlighter.STATIC_FIELD);
+    }
+  }
+
+  private void highlightAnnotation(AnnotationHolder holder, PsiElement refElement, GroovyResolveResult result) {
+    PsiElement element = result.getElement();
+    PsiElement parent = refElement.getParent();
+    if (element instanceof PsiClass &&
+        ((PsiClass) element).isAnnotationType() &&
+        !(parent instanceof GrImportStatement)) {
+      Annotation annotation = holder.createInfoAnnotation(parent, null);
+      annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
+      GrImportStatement importStatement = result.getImportStatementContext();
+      if (importStatement != null) {
+        annotation = holder.createInfoAnnotation(importStatement.getImportReference(), null);
+        annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
+      }
+    }
+
   }
 
 

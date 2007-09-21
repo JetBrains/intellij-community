@@ -35,10 +35,13 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
 
 
-  static final TokenSet tCOMMENTS = TokenSet.create(
+  static final TokenSet tLINE_COMMENTS = TokenSet.create(
       GroovyTokenTypes.mSL_COMMENT,
-      GroovyTokenTypes.mML_COMMENT,
       GroovyTokenTypes.mSH_COMMENT
+  );
+
+  static final TokenSet tBLOCK_COMMENTS = TokenSet.create(
+      GroovyTokenTypes.mML_COMMENT
   );
 
   static final TokenSet tNUMBERS = TokenSet.create(
@@ -64,13 +67,15 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
       GroovyTokenTypes.mWRONG_REGEX_LITERAL
   );
 
-  static final TokenSet tSTRINGS = TokenSet.create(
-      GroovyTokenTypes.mSTRING_LITERAL,
-
+  static final TokenSet tGSTRINGS = TokenSet.create(
       GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
       GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
       GroovyTokenTypes.mGSTRING_SINGLE_END,
       GroovyTokenTypes.mGSTRING_LITERAL
+  );
+
+  static final TokenSet tSTRINGS = TokenSet.create(
+      GroovyTokenTypes.mSTRING_LITERAL
   );
 
   static final TokenSet tREGEXP = TokenSet.create(
@@ -196,11 +201,13 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
   );
 
   static {
-    fillMap(ATTRIBUTES, tCOMMENTS, DefaultHighlighter.LINE_COMMENT);
+    fillMap(ATTRIBUTES, tLINE_COMMENTS, DefaultHighlighter.LINE_COMMENT);
+    fillMap(ATTRIBUTES, tBLOCK_COMMENTS, DefaultHighlighter.BLOCK_COMMENT);
     fillMap(ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
     fillMap(ATTRIBUTES, tWRONG_STRING, DefaultHighlighter.WRONG_STRING);
     fillMap(ATTRIBUTES, tKEYWORDS, DefaultHighlighter.KEYWORD);
     fillMap(ATTRIBUTES, tNUMBERS, DefaultHighlighter.NUMBER);
+    fillMap(ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
     fillMap(ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
     fillMap(ATTRIBUTES, tREGEXP, DefaultHighlighter.REGEXP);
     fillMap(ATTRIBUTES, tWRONG_REGEX, DefaultHighlighter.REGEXP);

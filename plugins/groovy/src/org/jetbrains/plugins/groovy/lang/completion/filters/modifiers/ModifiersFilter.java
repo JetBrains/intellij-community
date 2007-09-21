@@ -17,9 +17,11 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.modifiers;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
@@ -31,11 +33,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public class ModifiersFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (GroovyCompletionUtil.asSimpleVariable(context) ||
+
         GroovyCompletionUtil.asTypedMethod(context)) {
       return true;
     }
     if (context.getParent() instanceof GrExpression &&
         context.getParent().getParent() instanceof GroovyFile &&
+        GroovyCompletionUtil.isNewStatement(context, false)) {
+      return true;
+    }
+    if (context.getParent() instanceof PsiErrorElement &&
+        context.getParent().getParent() instanceof GrGspDeclarationHolder &&
         GroovyCompletionUtil.isNewStatement(context, false)) {
       return true;
     }

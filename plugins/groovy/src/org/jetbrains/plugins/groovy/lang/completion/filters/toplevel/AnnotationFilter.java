@@ -16,13 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.completion.filters.toplevel;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * @author ilyas
@@ -31,12 +32,14 @@ public class AnnotationFilter implements ElementFilter, GroovyElementTypes {
 
 
   public boolean isAcceptable(Object element, PsiElement context) {
-    PsiElement previous = PsiImplUtil.realPrevious(context.getParent().getPrevSibling());
-    if (previous == null ||
-        !GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
-      return false;
+    PsiElement previous = PsiImplUtil.realPrevious(context.getPrevSibling());
+    if (previous != null &&
+        GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()) &&
+        context.getParent() != null &&
+        context.getParent().getParent() instanceof GroovyFile) {
+      return true;
     }
-    if (context.getParent() instanceof GrReferenceElement &&
+    if (context.getParent() instanceof PsiErrorElement &&
         context.getParent().getParent() instanceof GrAnnotation) {
       return true;
     }

@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.completion.filters.types;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -42,6 +44,11 @@ public class BuiltInTypeFilter implements ElementFilter {
     if (GroovyCompletionUtil.asSimpleVariable(context) ||
         GroovyCompletionUtil.asTypedMethod(context) ||
         GroovyCompletionUtil.asVariableInBlock(context)) {
+      return true;
+    }
+    if (context.getParent() instanceof PsiErrorElement &&
+        context.getParent().getParent() instanceof GrGspDeclarationHolder &&
+        GroovyCompletionUtil.isNewStatement(context, false)) {
       return true;
     }
     if ((context.getParent() instanceof GrParameter &&
