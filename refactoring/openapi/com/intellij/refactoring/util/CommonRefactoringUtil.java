@@ -135,9 +135,10 @@ public class CommonRefactoringUtil {
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(readonly.toArray(new VirtualFile[readonly.size()]));
     failed.addAll(Arrays.asList(status.getReadonlyFiles()));
-    if (notifyOnFail && (!failed.isEmpty() || (seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty()))) {
+    if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
       StringBuilder message = new StringBuilder(messagePrefix);
       message.append('\n');
+      int i = 0;
       for (VirtualFile virtualFile : failed) {
         final String presentableUrl = virtualFile.getPresentableUrl();
         final String subj = virtualFile.isDirectory()
@@ -148,6 +149,10 @@ public class CommonRefactoringUtil {
         }
         else {
           message.append(RefactoringBundle.message("0.is.read.only", subj));
+        }
+        if (i++ > 20) {
+          message.append("...\n");
+          break;
         }
       }
       showErrorMessage(RefactoringBundle.message("error.title"), message.toString(), null, project);

@@ -112,16 +112,6 @@ public abstract class BaseRefactoringProcessor {
    */
   protected abstract void performRefactoring(UsageInfo[] usages);
 
-  /**
-   * If this method returns <code>true</code>, it means that element to rename is variable, and in the findUsages tree it
-   * will be shown with read-access or write-access icons.
-   *
-   * @return true if element to rename is variable(local, field, or parameter).
-   */
-  protected boolean isVariable() {
-    return false;
-  }
-
   protected abstract String getCommandName();
 
   protected void doRun() {
@@ -265,7 +255,9 @@ public abstract class BaseRefactoringProcessor {
         final Set<Usage> excludedUsageInfos = getExcludedUsages(usageView);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            doRefactoring(usageView.getUsages(), excludedUsageInfos);
+            if (ensureElementsWritable(usageInfos, viewDescriptor)) {
+              doRefactoring(usageView.getUsages(), excludedUsageInfos);
+            }
           }
         });
       }

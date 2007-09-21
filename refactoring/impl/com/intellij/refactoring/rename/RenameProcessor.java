@@ -13,9 +13,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
@@ -88,10 +88,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myShouldRenameForms = shouldRenameForms;
   }
 
-  public boolean isVariable() {
-    return myPrimaryElement instanceof PsiVariable;
-  }
-
   public void doRun() {
     prepareRenaming();
 
@@ -154,6 +150,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private void addExistingNameConflicts(final Collection<String> conflicts) {
+    if (myPrimaryElement instanceof PsiCompiledElement) return;
     if (myPrimaryElement instanceof PsiMethod) {
       PsiMethod refactoredMethod = (PsiMethod)myPrimaryElement;
       if (myNewName.equals(refactoredMethod.getName())) return;
