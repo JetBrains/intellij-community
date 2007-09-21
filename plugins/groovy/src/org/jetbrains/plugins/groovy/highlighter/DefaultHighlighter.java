@@ -39,9 +39,9 @@ public class DefaultHighlighter {
   @NonNls
   static final String NUMBER_ID = "Number";
   @NonNls
-  static final String GSTRING_ID = "String";
+  static final String GSTRING_ID = "GString";
   @NonNls
-  static final String STRING_ID = "GString";
+  static final String STRING_ID = "String";
   @NonNls
   static final String REGEXP_ID = "Regular expression";
   @NonNls
