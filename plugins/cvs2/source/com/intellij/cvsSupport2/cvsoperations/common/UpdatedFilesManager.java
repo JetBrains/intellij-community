@@ -27,14 +27,14 @@ public class UpdatedFilesManager implements IMessageListener {
   private final Set<File> myCreatedBySecondParty = new HashSet<File>();
 
   private ICvsFileSystem myCvsFileSystem;
-  @NonNls public static final String CREATED_BY_SECOND_PARTY_PREFIX = "cvs server: conflict: ";
-  @NonNls public static final String CREATED_BY_SECOND_PARTY_POSTFIX1 = " created independently by second party";
-  @NonNls public static final String CREATED_BY_SECOND_PARTY_POSTFIX2 = " has been added, but already exists";
+  @NonNls private static final String CREATED_BY_SECOND_PARTY_PREFIX = "cvs server: conflict: ";
+  @NonNls private static final String CREATED_BY_SECOND_PARTY_POSTFIX1 = " created independently by second party";
+  @NonNls private static final String CREATED_BY_SECOND_PARTY_POSTFIX2 = " has been added, but already exists";
 
 
   private CurrentMergedFileInfo myCurrentMergedFile;
   private final Collection<Entry> myNewlyCreatedEntries = new HashSet<Entry>();
-  private Collection<File> myNonUpdatedFiles = new HashSet<File>();
+  private final Collection<File> myNonUpdatedFiles = new HashSet<File>();
 
   public static class CurrentMergedFileInfo {
     private final List<String> myRevisions = new ArrayList<String>();

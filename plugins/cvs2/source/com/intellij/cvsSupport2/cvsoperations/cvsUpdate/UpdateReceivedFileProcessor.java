@@ -42,12 +42,12 @@ public class UpdateReceivedFileProcessor implements ReceivedFileProcessor {
     }
   }
 
-  private File getCopyFor(VirtualFile virtualFile, File targetFile) {
+  private static File getCopyFor(VirtualFile virtualFile, File targetFile) {
     return new File(targetFile.getParentFile(),
                     ".#" + targetFile.getName() + "." + CvsEntriesManager.getInstance().getEntryFor(virtualFile).getRevision());
   }
 
-  public static boolean isProjectOrModuleFile(VirtualFile virtualFile) {
+  private static boolean isProjectOrModuleFile(VirtualFile virtualFile) {
     if (virtualFile == null) return false;
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
     return
