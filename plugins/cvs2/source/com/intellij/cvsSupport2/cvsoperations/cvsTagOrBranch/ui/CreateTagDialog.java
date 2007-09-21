@@ -34,7 +34,7 @@ public class CreateTagDialog extends CvsTagDialog {
     myTagName.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         String branchName = TagsHelper.chooseBranch(CvsUtil.getCvsConnectionSettings(files.iterator().next()),
-                                                    project, false);
+                                                    project);
         if (branchName != null)
           myTagName.setText(branchName);        
       }

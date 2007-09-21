@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.BooleanValueHolder;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,6 +57,7 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
   public Cvs2SettingsEditPanel(Project project) {
     myDateOrRevisionOrTagSettings =
     new DateOrRevisionOrTagSettings(new TagsProviderOnEnvironment() {
+      @NotNull
       protected CvsEnvironment getEnv() {
         return createConfigurationWithCurrentSettings();
       }

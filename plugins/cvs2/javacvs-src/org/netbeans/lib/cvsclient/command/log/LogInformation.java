@@ -200,7 +200,7 @@ public final class LogInformation {
 	/** return the all revisions attached to this log
 	 * (if more sophisticated method are supplied, this might get obsolete)
 	 */
-	public List getRevisionList() {
+	public List<Revision> getRevisionList() {
 		return revisions;
 	}
 

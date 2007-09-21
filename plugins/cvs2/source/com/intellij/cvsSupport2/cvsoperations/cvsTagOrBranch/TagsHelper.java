@@ -22,6 +22,7 @@ import com.intellij.util.containers.HashSet;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 import org.netbeans.lib.cvsclient.command.log.SymbolicName;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,6 +34,10 @@ import java.util.*;
 public class TagsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper");
 
+  private TagsHelper() {
+  }
+
+  @Nullable
   public static String chooseBranch(TagsProvider tagsProvider, Project project, boolean forTemporaryConfiguration) {
     try {
       BranchesProvider branchesProvider = getBranchesProvider(tagsProvider.getOperation(), project, forTemporaryConfiguration);
@@ -42,12 +47,12 @@ public class TagsHelper {
       showErrorMessage(e1);
       return null;
     }
-
   }
 
-  public static String chooseBranch(CvsEnvironment env, Project project, boolean forTemporaryConfiguration) {
+  @Nullable
+  public static String chooseBranch(CvsEnvironment env, Project project) {
     try {
-      BranchesProvider provider = getBranchesProvider(new GetAllBranchesOperation(env), project, forTemporaryConfiguration);
+      BranchesProvider provider = getBranchesProvider(new GetAllBranchesOperation(env), project, false);
       return chooseFrom(provider.getAllBranches(), new ArrayList<CvsRevisionNumber>());
     }
     catch (VcsException e1) {
@@ -56,9 +61,10 @@ public class TagsHelper {
     }
   }
 
-  public static String chooseBranch(Collection<FilePath> files, Project project, boolean forTemporaryConfiguration) {
+  @Nullable
+  private static String chooseBranch(Collection<FilePath> files, Project project, boolean forTemporaryConfiguration) {
     try {
-      return chooseFrom(TagsHelper.collectAllBranches(files, project, forTemporaryConfiguration), new ArrayList<CvsRevisionNumber>());
+      return chooseFrom(collectAllBranches(files, project, forTemporaryConfiguration), new ArrayList<CvsRevisionNumber>());
     }
     catch (VcsException e1) {
       showErrorMessage(e1);
@@ -66,13 +72,10 @@ public class TagsHelper {
     }
   }
 
-  public static void addChooseBranchAction(final TextFieldWithBrowseButton field,
-                                           final Collection<FilePath> files,
-                                           final Project project,
-                                           final boolean forTemporaryConfiguration) {
+  public static void addChooseBranchAction(final TextFieldWithBrowseButton field, final Collection<FilePath> files, final Project project) {
     field.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        String branchName = TagsHelper.chooseBranch(files, project, forTemporaryConfiguration);
+        String branchName = TagsHelper.chooseBranch(files, project, false);
         if (branchName != null) field.setText(branchName);
       }
     });
@@ -81,8 +84,7 @@ public class TagsHelper {
   public static Collection<String> getAllBranches(List<LogInformation> log) {
     HashSet<String> branches = new HashSet<String>();
 
-    for (Iterator iterator = log.iterator(); iterator.hasNext();) {
-      LogInformation logInformation = (LogInformation)iterator.next();
+    for (final LogInformation logInformation : log) {
       collectBranches(logInformation, branches);
     }
 
@@ -92,16 +94,14 @@ public class TagsHelper {
 
   private static void collectBranches(LogInformation logInformation,
                                       HashSet<String> branches) {
-    List allSymbolicNames = logInformation.getAllSymbolicNames();
-    for (Iterator symName = allSymbolicNames.iterator(); symName.hasNext();) {
-      SymbolicName symbolicName = (SymbolicName)symName.next();
+    List<SymbolicName> allSymbolicNames = logInformation.getAllSymbolicNames();
+    for (final SymbolicName symbolicName : allSymbolicNames) {
       branches.add(symbolicName.getName());
     }
   }
 
   private static void collectRevisions(LogInformation logInformation, ArrayList<CvsRevisionNumber> result) {
-    for (Iterator eachRevision = logInformation.getRevisionList().iterator(); eachRevision.hasNext();) {
-      Revision revision = (Revision)eachRevision.next();
+    for (final Revision revision : logInformation.getRevisionList()) {
       result.add(new CvsRevisionNumber(revision.getNumber()));
     }
   }
@@ -113,7 +113,7 @@ public class TagsHelper {
                                                                                      forTemporaryConfiguration));
     CommandCvsHandler handler = new CommandCvsHandler(CvsBundle.message("load.tags.operation.name"), operation, true) {
       public String getCancelButtonText() {
-        return com.intellij.CvsBundle.message("button.text.stop");
+        return CvsBundle.message("button.text.stop");
       }
     };
     executor.performActionSync(handler,
@@ -125,8 +125,7 @@ public class TagsHelper {
 
   private static Collection<String> collectAllBranches(Collection<FilePath> files,
                                                        Project project,
-                                                       boolean forTemporaryConfiguration)
-    throws VcsException {
+                                                       boolean forTemporaryConfiguration) throws VcsException {
     ArrayList<String> result = new ArrayList<String>();
     if (files.isEmpty()) {
       return result;
@@ -135,15 +134,17 @@ public class TagsHelper {
   }
 
   private static void showErrorMessage(VcsException e1) {
-    Messages.showErrorDialog(com.intellij.CvsBundle.message("error.message.cannot.load.tags", e1.getLocalizedMessage()), com.intellij.CvsBundle.message("operation.name.select.tag"));
+    Messages.showErrorDialog(CvsBundle.message("error.message.cannot.load.tags", e1.getLocalizedMessage()),
+                             CvsBundle.message("operation.name.select.tag"));
   }
 
+  @Nullable
   private static String chooseFrom(Collection<String> tags, Collection<CvsRevisionNumber> revisions) {
     if (tags == null) return null;
     Collection<String> revisionsNames = collectSortedRevisionsNames(revisions);
 
     if (tags.isEmpty() && revisionsNames.isEmpty()) {
-      Messages.showMessageDialog(com.intellij.CvsBundle.message("message.no.tags.found"), com.intellij.CvsBundle.message("operation.name.select.tag"),
+      Messages.showMessageDialog(CvsBundle.message("message.no.tags.found"), CvsBundle.message("operation.name.select.tag"),
                                  Messages.getInformationIcon());
       return null;
     }
@@ -172,16 +173,16 @@ public class TagsHelper {
 
     });
     ArrayList<String> result = new ArrayList<String>();
-    for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-      result.add((iterator.next()).toString());
+    for (final CvsRevisionNumber aList : list) {
+      result.add(aList.toString());
     }
     return result;
   }
 
   public static Collection<CvsRevisionNumber> getAllRevisions(List<LogInformation> logs) {
     ArrayList<CvsRevisionNumber> result = new ArrayList<CvsRevisionNumber>();
-    for (Iterator iterator = logs.iterator(); iterator.hasNext();) {
-      collectRevisions((LogInformation)iterator.next(), result);
+    for (final LogInformation log : logs) {
+      collectRevisions(log, result);
     }
 
     return result;

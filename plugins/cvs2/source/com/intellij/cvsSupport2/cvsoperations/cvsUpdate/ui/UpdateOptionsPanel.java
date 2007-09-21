@@ -62,9 +62,9 @@ public class UpdateOptionsPanel {
     myDateOrRevisionPanel.add(myDateOrRevisionOrTagSettings.getPanel(), BorderLayout.CENTER);
 
 
-    TagsHelper.addChooseBranchAction(myBranch, files, project, false);
+    TagsHelper.addChooseBranchAction(myBranch, files, project);
 
-    TagsHelper.addChooseBranchAction(myBranch2, files, project, false);
+    TagsHelper.addChooseBranchAction(myBranch2, files, project);
 
   }
 

@@ -39,7 +39,7 @@ public class DeleteTagDialog extends CvsTagDialog {
 
   private void selectTag() {
     String branchName = TagsHelper.chooseBranch(CvsUtil.getCvsConnectionSettings(myFiles.iterator().next()),
-                                                    myProject, false);
+                                                    myProject);
     if (branchName != null)
       myTagName.setText(branchName);            
   }
