@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
@@ -577,7 +578,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiIdentifier getNameIdentifier() {
-    return null;
+    return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy().getTextRange());
   }
 
   public PsiElement getScope() {
