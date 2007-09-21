@@ -88,4 +88,9 @@ public class ProjectJdkStep extends ModuleWizardStep {
     myProjectJdksConfigurable.apply();
     return true;
   }
+
+  public void disposeUIResources() {
+    super.disposeUIResources();
+    myProjectJdksConfigurable.disposeUIResources();
+  }
 }
