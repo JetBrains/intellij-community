@@ -5,9 +5,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,7 +15,7 @@ import javax.swing.*;
  * @author max
  */
 public class EditChangelistDialog extends DialogWrapper {
-  private EditChangelistPanel myPanel;
+  private final EditChangelistPanel myPanel;
   private final Project myProject;
   private final LocalChangeList myList;
 
@@ -47,7 +46,7 @@ public class EditChangelistDialog extends DialogWrapper {
       return;
     }
 
-    if (!Comparing.equal(oldName, myPanel.getName()) || !Comparing.equal(oldComment, myPanel.getDescription())) {
+    if (!Comparing.equal(oldName, myPanel.getName(), true) || !Comparing.equal(oldComment, myPanel.getDescription(), true)) {
       myList.setName(myPanel.getName());
       myList.setComment(myPanel.getDescription());
     }
