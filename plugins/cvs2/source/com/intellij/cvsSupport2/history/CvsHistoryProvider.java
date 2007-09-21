@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.history;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
@@ -149,6 +150,14 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
           return false;
         }
         return super.refresh();
+      }
+
+      public boolean isContentAvailable(final VcsFileRevision revision) {
+        if (revision instanceof CvsFileRevision) {
+          final CvsFileRevision cvsFileRevision = (CvsFileRevision)revision;
+          return !cvsFileRevision.getState().equals(CvsChangeList.DEAD_STATE);
+        }
+        return super.isContentAvailable(revision);
       }
     };
   }
