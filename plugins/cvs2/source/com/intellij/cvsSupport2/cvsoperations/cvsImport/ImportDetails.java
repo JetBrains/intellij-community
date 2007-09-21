@@ -6,7 +6,6 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.ui.experts.importToCvs.FileExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 import org.netbeans.lib.cvsclient.command.importcmd.ImportCommand;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 
@@ -50,9 +49,6 @@ public class ImportDetails {
     for (final FileExtension fileExtension : myWrappers) {
       result.addWrapper("*." + fileExtension.getExtension(), fileExtension.getKeywordSubstitution().getSubstitution());
     }
-
-
-    result.setKeywordSubstitutionOption(KeywordSubstitution.BINARY);
   }
 
   public int getTotalFilesInSourceDirectory() {
