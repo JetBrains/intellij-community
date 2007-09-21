@@ -1856,4 +1856,23 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       actualResult
     );
   }
+
+  public void testReplaceExtraSemicolon() {
+    String s1 = "try {\n" +
+                "      String[] a = {\"a\"};\n" +
+                "      System.out.println(\"blah\");\n" +
+                "} finally {\n" +
+                "}\n";
+    String s2 = "try {\n" + " 'statement*;\n" + "} finally {\n" + "  \n" + "}";
+    String replacement = "$statement$;";
+    String expected = "String[] a = {\"a\"};\n" +
+                "System.out.println(\"blah\");\n";
+
+    actualResult = replacer.testReplace(s1,s2,replacement,options);
+
+    assertEquals(
+      expected,
+      actualResult
+    );
+  }
 }

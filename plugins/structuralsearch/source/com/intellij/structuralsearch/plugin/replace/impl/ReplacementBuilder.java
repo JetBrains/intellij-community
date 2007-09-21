@@ -203,8 +203,12 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
 
           if (buf.length() > 0) {
             if (info.statementContext) {
-              if (!(previous.getMatchRef().getElement() instanceof PsiComment) &&
-                  buf.charAt(buf.length() - 1) != '}'
+              final PsiElement element = previous.getMatchRef().getElement();
+
+              if (!(element instanceof PsiComment) &&
+                  ( buf.charAt(buf.length() - 1) != '}' ||
+                    element instanceof PsiDeclarationStatement
+                  )
                 ) {
                 buf.append(';');
               }
