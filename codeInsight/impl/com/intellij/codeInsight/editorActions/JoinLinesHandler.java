@@ -13,7 +13,6 @@ import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -35,7 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 
 public class JoinLinesHandler extends EditorWriteActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.JoinLinesHandler");
-  private EditorActionHandler myOriginalHandler;
+  private final EditorActionHandler myOriginalHandler;
 
   public JoinLinesHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
@@ -46,184 +45,178 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       myOriginalHandler.execute(editor, dataContext);
       return;
     }
-    final DocumentEx doc = (DocumentEx) editor.getDocument();
+    final DocumentEx doc = (DocumentEx)editor.getDocument();
     final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
+    LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
 
-        final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
-        PsiFile psiFile = docManager.getPsiFile(doc);
+    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
+    PsiFile psiFile = docManager.getPsiFile(doc);
 
-        if (psiFile == null) {
-          myOriginalHandler.execute(editor, dataContext);
-          return;
+    if (psiFile == null) {
+      myOriginalHandler.execute(editor, dataContext);
+      return;
+    }
+
+    int startLine = caretPosition.line;
+    int endLine = startLine + 1;
+    if (editor.getSelectionModel().hasSelection()) {
+      startLine = doc.getLineNumber(editor.getSelectionModel().getSelectionStart());
+      endLine = doc.getLineNumber(editor.getSelectionModel().getSelectionEnd());
+      if (doc.getLineStartOffset(endLine) == editor.getSelectionModel().getSelectionEnd()) endLine--;
+    }
+
+    int caretRestoreOffset = -1;
+    for (int i = startLine; i < endLine; i++) {
+      if (i >= doc.getLineCount() - 1) break;
+      int lineEndOffset = doc.getLineEndOffset(startLine);
+
+      docManager.commitDocument(doc);
+      CharSequence text = doc.getCharsSequence();
+      int firstNonSpaceOffsetInNextLine = doc.getLineStartOffset(startLine + 1);
+      while (text.charAt(firstNonSpaceOffsetInNextLine) == ' ' || text.charAt(firstNonSpaceOffsetInNextLine) == '\t') {
+        firstNonSpaceOffsetInNextLine++;
+      }
+      PsiElement elementAtNextLineStart = psiFile.findElementAt(firstNonSpaceOffsetInNextLine);
+      boolean isNextLineStartsWithComment = elementAtNextLineStart instanceof PsiComment ||
+                                            elementAtNextLineStart != null &&
+                                            PsiTreeUtil.getParentOfType(elementAtNextLineStart, PsiDocComment.class) != null;
+
+      int lastNonSpaceOffsetInStartLine = lineEndOffset;
+      while (lastNonSpaceOffsetInStartLine > 0 &&
+             (text.charAt(lastNonSpaceOffsetInStartLine - 1) == ' ' || text.charAt(lastNonSpaceOffsetInStartLine - 1) == '\t')) {
+        lastNonSpaceOffsetInStartLine--;
+      }
+      int elemOffset = lastNonSpaceOffsetInStartLine > doc.getLineStartOffset(startLine) ? lastNonSpaceOffsetInStartLine - 1 : -1;
+      PsiElement elementAtStartLineEnd = elemOffset == -1 ? null : psiFile.findElementAt(elemOffset);
+      boolean isStartLineEndsWithComment = elementAtStartLineEnd instanceof PsiComment ||
+                                           elementAtStartLineEnd != null &&
+                                           PsiTreeUtil.getParentOfType(elementAtStartLineEnd, PsiDocComment.class) != null;
+
+      if (lastNonSpaceOffsetInStartLine == doc.getLineStartOffset(startLine)) {
+        doc.deleteString(doc.getLineStartOffset(startLine), firstNonSpaceOffsetInNextLine);
+
+        int indent = -1;
+        try {
+          docManager.commitDocument(doc);
+          indent = CodeStyleManager.getInstance(project).adjustLineIndent(psiFile, startLine == 0 ? 0 : doc.getLineStartOffset(startLine));
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
 
-        int startLine = caretPosition.line;
-        int endLine = startLine + 1;
-        if (editor.getSelectionModel().hasSelection()) {
-          startLine = doc.getLineNumber(editor.getSelectionModel().getSelectionStart());
-          endLine = doc.getLineNumber(editor.getSelectionModel().getSelectionEnd());
-          if (doc.getLineStartOffset(endLine) == editor.getSelectionModel().getSelectionEnd()) endLine--;
+        if (caretRestoreOffset == -1) {
+          caretRestoreOffset = indent;
         }
 
-        int caretRestoreOffset = -1;
-        for (int i = startLine; i < endLine; i++) {
-          if (i >= doc.getLineCount() - 1) break;
-          int lineEndOffset = doc.getLineEndOffset(startLine);
+        continue;
+      }
 
-          docManager.commitDocument(doc);
-          CharSequence text = doc.getCharsSequence();
-          int firstNonSpaceOffsetInNextLine = doc.getLineStartOffset(startLine + 1);
-          while (text.charAt(firstNonSpaceOffsetInNextLine) == ' ' || text.charAt(firstNonSpaceOffsetInNextLine) == '\t') firstNonSpaceOffsetInNextLine++;
-          PsiElement elementAtNextLineStart = psiFile.findElementAt(firstNonSpaceOffsetInNextLine);
-          boolean isNextLineStartsWithComment = elementAtNextLineStart instanceof PsiComment ||
-                                                elementAtNextLineStart != null &&
-                                                PsiTreeUtil.getParentOfType(
-                                                    elementAtNextLineStart,
-                                                    PsiDocComment.class
-                                                ) != null;
+      doc.deleteString(lineEndOffset, lineEndOffset + doc.getLineSeparatorLength(startLine));
 
-          int lastNonSpaceOffsetInStartLine = lineEndOffset;
-          while (lastNonSpaceOffsetInStartLine > 0 &&
-                 (text.charAt(lastNonSpaceOffsetInStartLine - 1) == ' ' || text.charAt(lastNonSpaceOffsetInStartLine - 1) == '\t')) {
-            lastNonSpaceOffsetInStartLine--;
-          }
-          int elemOffset = lastNonSpaceOffsetInStartLine > doc.getLineStartOffset(startLine)
-                           ? lastNonSpaceOffsetInStartLine - 1
-                           : -1;
-          PsiElement elementAtStartLineEnd = elemOffset == -1 ? null : psiFile.findElementAt(elemOffset);
-          boolean isStartLineEndsWithComment = elementAtStartLineEnd instanceof PsiComment ||
-                                               elementAtStartLineEnd != null &&
-                                               PsiTreeUtil.getParentOfType(elementAtStartLineEnd, PsiDocComment.class) != null;
+      text = doc.getCharsSequence();
+      int start = lineEndOffset - 1;
+      int end = lineEndOffset;
+      while (start > 0 && (text.charAt(start) == ' ' || text.charAt(start) == '\t')) start--;
+      while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
 
-          if (lastNonSpaceOffsetInStartLine == doc.getLineStartOffset(startLine)) {
-            doc.deleteString(doc.getLineStartOffset(startLine), firstNonSpaceOffsetInNextLine);
-
-            int indent = -1;
-            try {
-              docManager.commitDocument(doc);
-              indent = CodeStyleManager.getInstance(project).adjustLineIndent(
-                  psiFile,
-                  startLine == 0 ? 0 : doc.getLineStartOffset(startLine)
-              );
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-
-            if (caretRestoreOffset == -1) {
-              caretRestoreOffset = indent;
-            }
-
-            continue;
-          }
-
-          doc.deleteString(lineEndOffset, lineEndOffset + doc.getLineSeparatorLength(startLine));
-
-          text = doc.getCharsSequence();
-          int start = lineEndOffset-1;
-          int end = lineEndOffset;
-          while (start > 0 && (text.charAt(start) == ' ' || text.charAt(start) == '\t')) start--;
-          while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
+      // Check if we're joining splitted string literal.
+      docManager.commitDocument(doc);
 
 
-          // Check if we're joining splitted string literal.
-          docManager.commitDocument(doc);
+      int rc = tryJoinStringLiteral(doc, psiFile, start);
 
-
-          int rc = tryJoinStringLiteral(doc, psiFile, start);
-
+      if (rc == -1) {
+        PsiElement psiAtStartLineEnd = psiFile.findElementAt(start);
+        PsiElement psiAtNextLineStart = psiFile.findElementAt(end);
+        rc = tryJoinDeclaration(psiAtStartLineEnd, psiAtNextLineStart);
+        if (rc == -1) {
+          rc = tryUnwrapBlockStatement(psiAtStartLineEnd, psiAtNextLineStart);
           if (rc == -1) {
-            PsiElement psiAtStartLineEnd = psiFile.findElementAt(start);
-            PsiElement psiAtNextLineStart = psiFile.findElementAt(end);
-            rc = tryJoinDeclaration(psiAtStartLineEnd, psiAtNextLineStart);
-            if (rc == -1) {
-              rc = tryUnwrapBlockStatement(psiAtStartLineEnd, psiAtNextLineStart);
-              if (rc == -1) {
-                rc = tryJoinProperties(doc, psiFile, start);
-              }
-            }
+            rc = tryJoinProperties(doc, psiFile, start);
           }
-
-          if (rc != -1) {
-            if (caretRestoreOffset == -1) caretRestoreOffset = rc;
-            continue;
-          }
-
-          if (caretRestoreOffset == -1) caretRestoreOffset = start == lineEndOffset ? start : start + 1;
-
-
-          if (isStartLineEndsWithComment && isNextLineStartsWithComment) {
-            if (text.charAt(end) == '*' && end < text.length() && text.charAt(end + 1) != '/') {
-              end++;
-              while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
-            } else if (text.charAt(end) == '/') {
-              end += 2;
-              while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
-            }
-
-            doc.replaceString(start == lineEndOffset ? start : start + 1, end, " ");
-            continue;
-          }
-
-          while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
-          doc.replaceString(start == lineEndOffset ? start : start + 1, end, " ");
-
-          if (start <= doc.getLineStartOffset(startLine)) {
-            try {
-              docManager.commitDocument(doc);
-              CodeStyleManager.getInstance(project).adjustLineIndent(psiFile, doc.getLineStartOffset(startLine));
-            } catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-
-          int prevLineCount = doc.getLineCount();
-
-          docManager.commitDocument(doc);
-          try {
-            CodeStyleManager.getInstance(project).reformatText(psiFile, start+1, end);
-          } catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-
-          if (prevLineCount < doc.getLineCount()) {
-            end = doc.getLineEndOffset(startLine) + doc.getLineSeparatorLength(startLine);
-            start = end - doc.getLineSeparatorLength(startLine);
-            int addedLinesCount = doc.getLineCount() - prevLineCount - 1;
-            while (end < doc.getTextLength() &&
-                   (text.charAt(end) == ' ' || text.charAt(end) == '\t' || text.charAt(end) == '\n' && addedLinesCount > 0)) {
-              if (text.charAt(end) == '\n') addedLinesCount--;
-              end++;
-            }
-            doc.replaceString(start, end, " ");
-          }
-
-          docManager.commitDocument(doc);
-        }
-
-        if (editor.getSelectionModel().hasSelection()) {
-          editor.getCaretModel().moveToOffset(editor.getSelectionModel().getSelectionEnd());
-        } else if (caretRestoreOffset != -1) {
-          editor.getCaretModel().moveToOffset(caretRestoreOffset);
-          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          editor.getSelectionModel().removeSelection();
         }
       }
-    });
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
+
+      if (rc != -1) {
+        if (caretRestoreOffset == -1) caretRestoreOffset = rc;
+        continue;
+      }
+
+      if (caretRestoreOffset == -1) caretRestoreOffset = start == lineEndOffset ? start : start + 1;
+
+
+      if (isStartLineEndsWithComment && isNextLineStartsWithComment) {
+        if (text.charAt(end) == '*' && end < text.length() && text.charAt(end + 1) != '/') {
+          end++;
+          while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
+        }
+        else if (text.charAt(end) == '/') {
+          end += 2;
+          while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
+        }
+
+        doc.replaceString(start == lineEndOffset ? start : start + 1, end, " ");
+        continue;
+      }
+
+      while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
+      doc.replaceString(start == lineEndOffset ? start : start + 1, end, " ");
+
+      if (start <= doc.getLineStartOffset(startLine)) {
+        try {
+          docManager.commitDocument(doc);
+          CodeStyleManager.getInstance(project).adjustLineIndent(psiFile, doc.getLineStartOffset(startLine));
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+
+      int prevLineCount = doc.getLineCount();
+
+      docManager.commitDocument(doc);
+      try {
+        CodeStyleManager.getInstance(project).reformatText(psiFile, start + 1, end);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+
+      if (prevLineCount < doc.getLineCount()) {
+        end = doc.getLineEndOffset(startLine) + doc.getLineSeparatorLength(startLine);
+        start = end - doc.getLineSeparatorLength(startLine);
+        int addedLinesCount = doc.getLineCount() - prevLineCount - 1;
+        while (end < doc.getTextLength() &&
+               (text.charAt(end) == ' ' || text.charAt(end) == '\t' || text.charAt(end) == '\n' && addedLinesCount > 0)) {
+          if (text.charAt(end) == '\n') addedLinesCount--;
+          end++;
+        }
+        doc.replaceString(start, end, " ");
+      }
+
+      docManager.commitDocument(doc);
+    }
+
+    if (editor.getSelectionModel().hasSelection()) {
+      editor.getCaretModel().moveToOffset(editor.getSelectionModel().getSelectionEnd());
+    }
+    else if (caretRestoreOffset != -1) {
+      editor.getCaretModel().moveToOffset(caretRestoreOffset);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      editor.getSelectionModel().removeSelection();
+    }
   }
 
   private static int tryJoinProperties(final DocumentEx doc, final PsiFile psiFile, int start) {
     if (!(psiFile instanceof PropertiesFile)) return -1;
     // strip continuation char
-    if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(doc.getText().substring(0,start+1))) {
+    if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(doc.getText().substring(0, start + 1))) {
       doc.deleteString(start, start + 1);
       start--;
     }
-    return start+1;
+    return start + 1;
   }
 
   private static int tryUnwrapBlockStatement(PsiElement elementAtStartLineEnd, PsiElement elementAtNextLineStart) {
@@ -238,17 +231,22 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(elementAtStartLineEnd.getProject());
     if (!(parentStatement instanceof PsiIfStatement && codeStyleSettings.IF_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
-             parentStatement instanceof PsiWhileStatement && codeStyleSettings.WHILE_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
-           (parentStatement instanceof PsiForStatement || parentStatement instanceof PsiForeachStatement) &&
-           codeStyleSettings.FOR_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
-             parentStatement instanceof PsiDoWhileStatement &&
-           codeStyleSettings.DOWHILE_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS)) {
+          parentStatement instanceof PsiWhileStatement && codeStyleSettings.WHILE_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
+          (parentStatement instanceof PsiForStatement || parentStatement instanceof PsiForeachStatement) &&
+          codeStyleSettings.FOR_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
+                                                                                     parentStatement instanceof PsiDoWhileStatement &&
+                                                                                     codeStyleSettings
+                                                                                       .DOWHILE_BRACE_FORCE !=
+                                                                                                            CodeStyleSettings
+                                                                                                              .FORCE_BRACES_ALWAYS)) {
       return -1;
     }
     PsiElement foundStatement = null;
     for (PsiElement element = elementAtStartLineEnd.getNextSibling(); element != null; element = element.getNextSibling()) {
       if (element instanceof PsiWhiteSpace) continue;
-      if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE && element.getParent() == codeBlock) {
+      if (element instanceof PsiJavaToken &&
+          ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE &&
+          element.getParent() == codeBlock) {
         if (foundStatement == null) return -1;
         break;
       }
@@ -257,6 +255,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     }
     try {
       final PsiElement newStatement = codeBlock.getParent().replace(foundStatement);
+
       return newStatement.getTextRange().getStartOffset();
     }
     catch (IncorrectOperationException e) {
@@ -264,32 +263,33 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     }
     return -1;
   }
+
   private static int tryJoinDeclaration(PsiElement elementAtStartLineEnd, PsiElement elementAtNextLineStart) {
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
 
     // first line.
     if (!(elementAtStartLineEnd instanceof PsiJavaToken)) return -1;
-    PsiJavaToken lastFirstLineToken = (PsiJavaToken) elementAtStartLineEnd;
+    PsiJavaToken lastFirstLineToken = (PsiJavaToken)elementAtStartLineEnd;
     if (lastFirstLineToken.getTokenType() != JavaTokenType.SEMICOLON) return -1;
     if (!(lastFirstLineToken.getParent() instanceof PsiLocalVariable)) return -1;
-    PsiLocalVariable var = (PsiLocalVariable) lastFirstLineToken.getParent();
+    PsiLocalVariable var = (PsiLocalVariable)lastFirstLineToken.getParent();
 
     if (!(var.getParent() instanceof PsiDeclarationStatement)) return -1;
-    PsiDeclarationStatement decl = (PsiDeclarationStatement) var.getParent();
+    PsiDeclarationStatement decl = (PsiDeclarationStatement)var.getParent();
     if (decl.getDeclaredElements().length > 1) return -1;
 
     //second line.
     if (!(elementAtNextLineStart instanceof PsiJavaToken)) return -1;
-    PsiJavaToken firstNextLineToken = (PsiJavaToken) elementAtNextLineStart;
+    PsiJavaToken firstNextLineToken = (PsiJavaToken)elementAtNextLineStart;
     if (firstNextLineToken.getTokenType() != JavaTokenType.IDENTIFIER) return -1;
     if (!(firstNextLineToken.getParent() instanceof PsiReferenceExpression)) return -1;
-    PsiReferenceExpression ref = (PsiReferenceExpression) firstNextLineToken.getParent();
+    PsiReferenceExpression ref = (PsiReferenceExpression)firstNextLineToken.getParent();
     PsiElement refResolved = ref.resolve();
 
     PsiManager psiManager = ref.getManager();
     if (!psiManager.areElementsEquivalent(refResolved, var)) return -1;
     if (!(ref.getParent() instanceof PsiAssignmentExpression)) return -1;
-    PsiAssignmentExpression assignment = (PsiAssignmentExpression) ref.getParent();
+    PsiAssignmentExpression assignment = (PsiAssignmentExpression)ref.getParent();
     if (!(assignment.getParent() instanceof PsiExpressionStatement)) return -1;
 
     if (psiManager.getSearchHelper().findReferences(var, new LocalSearchScope(assignment.getRExpression()), false).length > 0) {
@@ -340,7 +340,8 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       }
 
       try {
-        initializerExpression = factory.createExpressionFromText(var.getInitializer().getText() + opSign + assignment.getRExpression().getText(), var);
+        initializerExpression =
+          factory.createExpressionFromText(var.getInitializer().getText() + opSign + assignment.getRExpression().getText(), var);
         initializerExpression = (PsiExpression)CodeStyleManager.getInstance(psiManager).reformat(initializerExpression);
       }
       catch (IncorrectOperationException e) {
@@ -349,14 +350,11 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       }
     }
 
-    PsiExpressionStatement statement = (PsiExpressionStatement) assignment.getParent();
+    PsiExpressionStatement statement = (PsiExpressionStatement)assignment.getParent();
 
     int startOffset = decl.getTextRange().getStartOffset();
     try {
-      PsiDeclarationStatement newDecl = factory.createVariableDeclarationStatement(
-          var.getName(), var.getType(),
-          initializerExpression
-      );
+      PsiDeclarationStatement newDecl = factory.createVariableDeclarationStatement(var.getName(), var.getType(), initializerExpression);
       PsiVariable newVar = (PsiVariable)newDecl.getDeclaredElements()[0];
       if (var.getModifierList().getText().length() > 0) {
         newVar.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
@@ -365,15 +363,14 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       PsiVariable variable = (PsiVariable)newDecl.getDeclaredElements()[0];
       final int offsetBeforeEQ = variable.getNameIdentifier().getTextRange().getEndOffset();
       final int offsetAfterEQ = variable.getInitializer().getTextRange().getStartOffset() + 1;
-      newDecl = (PsiDeclarationStatement)CodeStyleManager.getInstance(psiManager).reformatRange(newDecl,
-                                                                                                              offsetBeforeEQ, 
-                                                                                                              offsetAfterEQ);     
-      
-      
+      newDecl = (PsiDeclarationStatement)CodeStyleManager.getInstance(psiManager).reformatRange(newDecl, offsetBeforeEQ, offsetAfterEQ);
+
+
       decl.replace(newDecl);
       statement.delete();
       return startOffset + newDecl.getTextRange().getEndOffset() - newDecl.getTextRange().getStartOffset();
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       LOG.error(e);
       return -1;
     }
@@ -417,7 +414,8 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
           state = 2;
           break;
 
-        default: break state_loop;
+        default:
+          break state_loop;
       }
     }
 
