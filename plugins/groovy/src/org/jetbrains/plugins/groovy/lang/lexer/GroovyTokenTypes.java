@@ -104,6 +104,7 @@ public interface GroovyTokenTypes {
   IElementType mCOMPARE_TO = new GroovyElementType("<=>");
   IElementType mEQUAL = new GroovyElementType("==");
   IElementType mLNOT = new GroovyElementType("!");
+  IElementType mELVIS = new GroovyElementType("?:");
   IElementType mBNOT = new GroovyElementType("~");
   IElementType mNOT_EQUAL = new GroovyElementType("!=");
   IElementType mPLUS = new GroovyElementType("+");

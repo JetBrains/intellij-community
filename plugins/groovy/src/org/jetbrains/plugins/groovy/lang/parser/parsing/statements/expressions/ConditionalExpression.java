@@ -44,6 +44,14 @@ public class ConditionalExpression implements GroovyElementTypes {
           parse(builder);
         }
         marker.done(CONDITIONAL_EXPRESSION);
+      } else if (ParserUtils.getToken(builder, mELVIS)) {
+        result = ELVIS_EXPRESSION;
+        ParserUtils.getToken(builder, mNLS);
+        GroovyElementType res = parse(builder);
+        if (res.equals(WRONGWAY)) {
+          builder.error(GroovyBundle.message("expression.expected"));
+        }
+        marker.done(ELVIS_EXPRESSION);
       } else {
         marker.drop();
       }

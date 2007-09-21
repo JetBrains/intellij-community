@@ -605,6 +605,8 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              return(mSL_ASSIGN);  }
 "<="                                      {  yybegin(WAIT_FOR_REGEX);
                                              return(mLE);  }
+"?:"                                      {  yybegin(WAIT_FOR_REGEX);
+                                             return(mELVIS);  }
 "<"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mLT);  }
 "^"                                       {  yybegin(WAIT_FOR_REGEX);

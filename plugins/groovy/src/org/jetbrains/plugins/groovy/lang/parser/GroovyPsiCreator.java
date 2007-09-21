@@ -42,9 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSecti
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrTypeCastExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrSafeCastExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrInstanceofExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
@@ -57,6 +54,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.Gr
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrInstanceofExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrSafeCastExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrTypeCastExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
@@ -184,6 +184,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(COMMAND_ARGUMENTS)) return new GrCommandArgumentListImpl(node);
     if (elem.equals(COMMAND_ARGUMENT)) return new GrCommandArgumentImpl(node);
     if (elem.equals(CONDITIONAL_EXPRESSION)) return new GrConditionalExprImpl(node);
+    if (elem.equals(ELVIS_EXPRESSION)) return new GrElvisExprImpl(node);
     if (elem.equals(ASSIGNMENT_EXPRESSION)) return new GrAssignmentExpressionImpl(node);
     if (elem.equals(LOGICAL_OR_EXPRESSION)) return new GrLogicalOrExprImpl(node);
     if (elem.equals(LOGICAL_AND_EXPRESSION)) return new GrLogicalAndExprImpl(node);
