@@ -41,6 +41,7 @@ public class CommitHelper {
   private final boolean myForceSyncCommit;
   private final List<Document> myCommittingDocuments = new ArrayList<Document>();
   private final VcsConfiguration myConfiguration;
+  private final VcsDirtyScopeManager myDirtyScopeManager;
 
   public CommitHelper(final Project project,
                       final ChangeList changeList,
@@ -59,6 +60,7 @@ public class CommitHelper {
     myAllOfDefaultChangeListChangesIncluded = allOfDefaultChangeListChangesIncluded;
     myForceSyncCommit = synchronously;
     myConfiguration = VcsConfiguration.getInstance(myProject);
+    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
   public boolean doCommit() {
@@ -146,7 +148,7 @@ public class CommitHelper {
         public void run() {
           action.finish();
           for (FilePath path : pathsToRefresh) {
-            VcsDirtyScopeManager.getInstance(myProject).fileDirty(path);
+            myDirtyScopeManager.fileDirty(path);
           }
           LocalHistory.putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
         }
