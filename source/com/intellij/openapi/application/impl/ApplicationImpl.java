@@ -75,15 +75,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private final ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
   private final Stack<Runnable> myWriteActionsStack = new Stack<Runnable>();
 
-  private Thread myExceptionalThreadWithReadAccess = null;
-  private Runnable myExceptionalThreadWithReadAccessRunnable;
+  private volatile Thread myExceptionalThreadWithReadAccess = null;
+  private volatile Runnable myExceptionalThreadWithReadAccessRunnable;
 
   private int myInEditorPaintCounter = 0;
   private long myStartTime = 0;
   private boolean myDoNotSave = false;
-  private boolean myIsWaitingForWriteAction = false;
-  @NonNls private static final String NULL_STR = "null";
-  private boolean myDisposeInProgress = false;
+  private volatile boolean myIsWaitingForWriteAction = false;
+  private volatile boolean myDisposeInProgress = false;
 
   private final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
     3,
@@ -311,7 +310,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myInvokator;
   }
 
-  
+
   public void invokeLater(final Runnable runnable) {
     myInvokator.invokeLater(runnable);
   }
@@ -722,8 +721,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  @NonNls
   private static String describe(Thread o) {
-    if (o == null) return NULL_STR;
+    if (o == null) return "null";
     return o.toString() + " " + System.identityHashCode(o);
   }
 

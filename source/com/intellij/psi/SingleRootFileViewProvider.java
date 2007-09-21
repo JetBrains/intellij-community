@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
@@ -168,7 +169,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void rootChanged(PsiFile psiFile) {
-    if (((PsiFileImpl)psiFile).isContentsLoaded()) {
+    if (((PsiFileEx)psiFile).isContentsLoaded()) {
       setContent(new PsiFileContent((PsiFileImpl)psiFile, LocalTimeCounter.currentTime()));
     }
   }
@@ -479,7 +480,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     public CharSequence getText() {
       final Document document = getDocument();
       assert document != null;
-      return document.getCharsSequence().subSequence(0, document.getTextLength());
+      return document.getCharsSequence();
     }
 
     public long getModificationStamp() {

@@ -94,10 +94,6 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myStringRef = null;
   }
 
-  public int getLength() {
-    return myCount;
-  }
-
   public CharSequence getCharArray() {
     if (myOriginalSequence != null) return myOriginalSequence;
     return this;

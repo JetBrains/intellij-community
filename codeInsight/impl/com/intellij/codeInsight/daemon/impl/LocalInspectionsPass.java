@@ -224,7 +224,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
     };
     for (PsiElement element : elements) {
-      InjectedLanguageUtil.enumerate(element, injectedPsiVisitor, false);
+      InjectedLanguageUtil.enumerate(element, myFile, injectedPsiVisitor, false);
     }
     for (PsiFile injectedPsi : injected) {
       InjectedPsiInspectionUtil.inspectInjectedPsi(injectedPsi, myInjectedPsiInspectionResults);

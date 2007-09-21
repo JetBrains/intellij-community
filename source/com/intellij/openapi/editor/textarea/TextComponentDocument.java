@@ -19,7 +19,7 @@ import java.beans.PropertyChangeListener;
  * @author yole
  */
 public class TextComponentDocument extends UserDataHolderBase implements Document {
-  private JTextComponent myTextComponent;
+  private final JTextComponent myTextComponent;
 
   public TextComponentDocument(final JTextComponent textComponent) {
     myTextComponent = textComponent;

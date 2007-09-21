@@ -483,7 +483,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public int getTextLength() {
     assertReadAccessToDocumentsAllowed();
-    return myText.getLength();
+    return myText.length();
   }
 
   private static void assertReadAccessToDocumentsAllowed() {

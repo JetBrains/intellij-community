@@ -65,7 +65,7 @@ public class ModalityStateEx extends ModalityState {
   @NonNls
   public String toString() {
     if (myModalEntities.length == 0) return "ModalityState.NON_MODAL";
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append("ModalityState:");
     for (int i = 0; i < myModalEntities.length; i++) {
       Object entity = myModalEntities[i].get();
