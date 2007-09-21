@@ -30,20 +30,25 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
     
     @Nls @NotNull
     public String getDisplayName() {
-        return InspectionGadgetsBundle.message("throwable.instance.never.thrown.display.name");
+        return InspectionGadgetsBundle.message(
+                "throwable.instance.never.thrown.display.name");
     }
 
     @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiExpression expression = (PsiExpression)infos[0];
         if (TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.RuntimeException")) {
-            return InspectionGadgetsBundle.message("throwable.instance.never.thrown.runtime.exception.problem.descriptor");
+            return InspectionGadgetsBundle.message(
+                    "throwable.instance.never.thrown.runtime.exception.problem.descriptor");
         } else if (TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.Exception")) {
-            return InspectionGadgetsBundle.message("throwable.instance.never.thrown.checked.exception.problem.descriptor");
+            return InspectionGadgetsBundle.message(
+                    "throwable.instance.never.thrown.checked.exception.problem.descriptor");
         } else if (TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.Error")) {
-            return InspectionGadgetsBundle.message("throwable.instance.never.thrown.error.problem.descriptor");
+            return InspectionGadgetsBundle.message(
+                    "throwable.instance.never.thrown.error.problem.descriptor");
         } else {
-            return InspectionGadgetsBundle.message("throwable.instance.never.thrown.problem.descriptor");
+            return InspectionGadgetsBundle.message(
+                    "throwable.instance.never.thrown.problem.descriptor");
         }
     }
 
