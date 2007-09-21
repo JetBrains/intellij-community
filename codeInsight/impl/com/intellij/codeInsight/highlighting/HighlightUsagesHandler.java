@@ -151,7 +151,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       doHighlightElements(highlightManager, myEditor, myExitStatements, attributes, myClearHighlights);
 
       setupFindModel(myProject);
-      String message = CodeInsightBundle.message("status.bar.exit.points.highlighted.message", myExitStatements.length, getShortcutText());
+      String message = myClearHighlights ? "" : CodeInsightBundle.message("status.bar.exit.points.highlighted.message", myExitStatements.length, getShortcutText());
       WindowManager.getInstance().getStatusBar(myProject).setInfo(message);
     }
   }
@@ -176,7 +176,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     public void run() {
       highlightReferences(myProject, myTarget, myRefs, myEditor, myFile, myClearHighlights);
-      setStatusText(myTarget, myRefs.size(), myProject);
+      setStatusText(myTarget, myRefs.size(), myProject, myClearHighlights);
     }
   }
 
@@ -351,9 +351,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                                     new Class[]{PsiReturnStatement.class, PsiBreakStatement.class,
                                                                 PsiContinueStatement.class, PsiThrowStatement.class,
                                                                 PsiExpressionStatement.class});
-
         if (!exitStatements.contains(parent)) return EMPTY_HIGHLIGHT_RUNNABLE;
-
         return new DoHighlightExitPointsRunnable(project, editor, exitStatements.toArray(new PsiElement[exitStatements.size()]), clearHighlights);
       }
       catch (AnalysisCanceledException e) {
@@ -405,7 +403,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           Project project = target.getProject();
           highlightOtherOccurrences(toHighlight, project, editor, clearHighlights);
           setupFindModel(project);
-          String message = CodeInsightBundle.message("status.bar.overridden.methods.highlighted.message", toHighlight.size(), getShortcutText());
+          String message = clearHighlights ? "" : CodeInsightBundle.message("status.bar.overridden.methods.highlighted.message", toHighlight.size(), getShortcutText());
           WindowManager.getInstance().getStatusBar(project).setInfo(message);
         }
       }
@@ -532,12 +530,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         
         if (refElement instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)refElement) ||
             ( refElement instanceof XmlAttributeValue &&
-              (!(element instanceof XmlTag) ||
-               refElement.getParent().getParent() == element)
+              (!(element instanceof XmlTag) || refElement.getParent().getParent() == element)
             ) ||
-            refElement instanceof XmlElementDecl
-            )
-        {
+            refElement instanceof XmlElementDecl) {
           writeRefs.add(ref);
         }
         else {
@@ -674,60 +669,64 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return null;
   }
 
-  private static void setStatusText(PsiElement element, int refCount, Project project) {
-    String elementName = null;
-    if (element instanceof PsiClass) {
-      elementName = ((PsiClass)element).getQualifiedName();
-      if (elementName == null) {
-        elementName = ((PsiClass)element).getName();
-      }
-      elementName = (((PsiClass)element).isInterface() ?
-                     LangBundle.message("java.terms.interface") :
-                     LangBundle.message("java.terms.class")) + " " + elementName;
-    }
-    else if (element instanceof PsiMethod) {
-      elementName = PsiFormatUtil.formatMethod((PsiMethod)element,
-                                               PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS |
-                                                                     PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                               PsiFormatUtil.SHOW_TYPE);
-      elementName = LangBundle.message("java.terms.method") + " " + elementName;
-    }
-    else if (element instanceof PsiVariable) {
-      elementName = PsiFormatUtil.formatVariable((PsiVariable)element,
-                                                 PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                                 PsiSubstitutor.EMPTY);
-      if (element instanceof PsiField) {
-        elementName = LangBundle.message("java.terms.field") + " " + elementName;
-      }
-      else if (element instanceof PsiParameter) {
-        elementName = LangBundle.message("java.terms.parameter") + " " + elementName;
-      }
-      else {
-        elementName = LangBundle.message("java.terms.variable") + " " + elementName;
-      }
-    }
-    else if (element instanceof PsiPackage) {
-      elementName = ((PsiPackage)element).getQualifiedName();
-      elementName = LangBundle.message("java.terms.package") + " " + elementName;
-    }
-    if (element instanceof PsiKeyword &&
-        (PsiKeyword.TRY.equals(element.getText()) || PsiKeyword.CATCH.equals(element.getText()) ||
-         PsiKeyword.THROWS.equals(element.getText()))) {
-      elementName = LangBundle.message("java.terms.exception");
-    }
-
+  private static void setStatusText(PsiElement element, int refCount, Project project, boolean clearHighlights) {
     String message;
-    if (refCount > 0) {
-      message = CodeInsightBundle.message(elementName != null ?
-                                        "status.bar.highlighted.usages.message" :
-                                        "status.bar.highlighted.usages.no.target.message", refCount, elementName, getShortcutText());
+    if (clearHighlights) {
+      message = "";
     }
     else {
-      message = CodeInsightBundle.message(elementName != null ?
-                                          "status.bar.highlighted.usages.not.found.message" :
-                                          "status.bar.highlighted.usages.not.found.no.target.message", elementName);
-    }
+      String elementName = null;
+      if (element instanceof PsiClass) {
+        elementName = ((PsiClass)element).getQualifiedName();
+        if (elementName == null) {
+          elementName = ((PsiClass)element).getName();
+        }
+        elementName = (((PsiClass)element).isInterface() ?
+                       LangBundle.message("java.terms.interface") :
+                       LangBundle.message("java.terms.class")) + " " + elementName;
+      }
+      else if (element instanceof PsiMethod) {
+        elementName = PsiFormatUtil.formatMethod((PsiMethod)element,
+                                                 PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS |
+                                                                       PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                                 PsiFormatUtil.SHOW_TYPE);
+        elementName = LangBundle.message("java.terms.method") + " " + elementName;
+      }
+      else if (element instanceof PsiVariable) {
+        elementName = PsiFormatUtil.formatVariable((PsiVariable)element,
+                                                   PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                                   PsiSubstitutor.EMPTY);
+        if (element instanceof PsiField) {
+          elementName = LangBundle.message("java.terms.field") + " " + elementName;
+        }
+        else if (element instanceof PsiParameter) {
+          elementName = LangBundle.message("java.terms.parameter") + " " + elementName;
+        }
+        else {
+          elementName = LangBundle.message("java.terms.variable") + " " + elementName;
+        }
+      }
+      else if (element instanceof PsiPackage) {
+        elementName = ((PsiPackage)element).getQualifiedName();
+        elementName = LangBundle.message("java.terms.package") + " " + elementName;
+      }
+      if (element instanceof PsiKeyword &&
+          (PsiKeyword.TRY.equals(element.getText()) || PsiKeyword.CATCH.equals(element.getText()) ||
+           PsiKeyword.THROWS.equals(element.getText()))) {
+        elementName = LangBundle.message("java.terms.exception");
+      }
 
+      if (refCount > 0) {
+        message = CodeInsightBundle.message(elementName != null ?
+                                          "status.bar.highlighted.usages.message" :
+                                          "status.bar.highlighted.usages.no.target.message", refCount, elementName, getShortcutText());
+      }
+      else {
+        message = CodeInsightBundle.message(elementName != null ?
+                                            "status.bar.highlighted.usages.not.found.message" :
+                                            "status.bar.highlighted.usages.not.found.no.target.message", elementName);
+      }
+    }
     WindowManager.getInstance().getStatusBar(project).setInfo(message);
   }
 
