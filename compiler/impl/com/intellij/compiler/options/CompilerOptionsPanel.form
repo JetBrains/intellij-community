@@ -1,36 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.compiler.options.CompilerUIConfigurable">
-  <grid id="1663f" binding="myPanel" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="1663f" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="28" y="24" width="552" height="379"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="d5f42" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="d5f42" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="2" y="2" width="548" height="140"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="2dbd6" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="5" vgap="-1">
+          <grid id="2dbd6" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="5" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="2" y="2" width="544" height="24"/>
-              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
               <component id="559dd" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="2" y="5" width="93" height="14"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/CompilerBundle" key="label.option.resource.patterns.text"/>
@@ -38,8 +34,7 @@
               </component>
               <component id="263f1" class="javax.swing.JTextField" binding="myResourcePatternsField">
                 <constraints>
-                  <xy x="100" y="2" width="442" height="20"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                     <preferred-size width="150" height="-1"/>
                   </grid>
                 </constraints>
@@ -53,27 +48,24 @@
           </grid>
           <component id="889a8" class="javax.swing.JCheckBox" binding="myCbClearOutputDirectory">
             <constraints>
-              <xy x="2" y="31" width="183" height="22"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <margin top="2" left="3" bottom="2" right="3"/>
               <text resource-bundle="messages/CompilerBundle" key="label.option.clear.output.directory.on.rebuild"/>
             </properties>
           </component>
-          <grid id="2aa28" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="2aa28" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="2" y="112" width="544" height="26"/>
-              <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
               <component id="9e3fc" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="2" y="6" width="249" height="14"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/CompilerBundle" key="label.option.deploy.text"/>
@@ -81,8 +73,7 @@
               </component>
               <component id="42c2e" class="javax.swing.JRadioButton" binding="myDeploy">
                 <constraints>
-                  <xy x="261" y="2" width="59" height="22"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <selected value="false"/>
@@ -91,8 +82,7 @@
               </component>
               <component id="d789a" class="javax.swing.JRadioButton" binding="myDoNotDeploy">
                 <constraints>
-                  <xy x="366" y="2" width="54" height="22"/>
-                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/CompilerBundle" key="label.option.deploy.never"/>
@@ -100,8 +90,7 @@
               </component>
               <component id="7298a" class="javax.swing.JRadioButton" binding="myShowDialog">
                 <constraints>
-                  <xy x="465" y="2" width="42" height="22"/>
-                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/CompilerBundle" key="label.option.deploy.ask"/>
@@ -109,19 +98,9 @@
               </component>
             </children>
           </grid>
-          <component id="62fec" class="javax.swing.JCheckBox" binding="myCbCloseMessageViewOnSuccess">
-            <constraints>
-              <xy x="254" y="58" width="217" height="22"/>
-              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/CompilerBundle" key="label.option.close.view"/>
-            </properties>
-          </component>
           <component id="97c22" class="javax.swing.JCheckBox" binding="myCbCompileDependent">
             <constraints>
-              <xy x="254" y="31" width="234" height="22"/>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/CompilerBundle" key="label.option.honor.dependencies"/>
@@ -129,8 +108,7 @@
           </component>
           <component id="366e" class="javax.swing.JCheckBox" binding="myCbAssertNotNull">
             <constraints>
-              <xy x="2" y="58" width="143" height="22"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/CompilerBundle" key="add.notnull.assertions"/>
@@ -138,8 +116,7 @@
           </component>
           <component id="660fd" class="javax.swing.JCheckBox" binding="myCbCompileInBackground">
             <constraints>
-              <xy x="67" y="106" width="134" height="22"/>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <margin top="2" left="3" bottom="2" right="3"/>
@@ -148,21 +125,19 @@
           </component>
         </children>
       </grid>
-      <xy id="b10b9" binding="myExcludeTablePanel" hgap="-1" vgap="-1">
+      <xy id="b10b9" binding="myExcludeTablePanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="2" y="147" width="548" height="113"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children/>
       </xy>
-      <xy id="84d2f" binding="myTabbedPanePanel" hgap="-1" vgap="-1">
+      <xy id="84d2f" binding="myTabbedPanePanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="2" y="265" width="548" height="112"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>

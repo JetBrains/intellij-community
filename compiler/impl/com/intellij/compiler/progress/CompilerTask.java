@@ -7,7 +7,6 @@ package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerMessageImpl;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -414,11 +413,9 @@ public class CompilerTask extends Task.Backgroundable {
     application.invokeLater(new Runnable() {
       public void run() {
         closeProgressDialog();
-        final boolean closeViewOnSuccess = CompilerWorkspaceConfiguration.getInstance(myProject).CLOSE_MESSAGE_VIEW_IF_SUCCESS;
         synchronized (myMessageViewLock) {
           if (myErrorTreeView != null) {
-            final boolean hasMessagesToRead = myErrorCount > 0 || (myWarningCount > 0 && !myErrorTreeView.isHideWarnings());
-            final boolean shouldRetainView = hasMessagesToRead || !closeViewOnSuccess;
+            final boolean shouldRetainView = myErrorCount > 0 || (myWarningCount > 0 && !myErrorTreeView.isHideWarnings());
             if (shouldRetainView) {
               addMessage(null, new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
                                         CompilerBundle.message("statistics.error.count", myErrorCount), null, -1, -1, null));
