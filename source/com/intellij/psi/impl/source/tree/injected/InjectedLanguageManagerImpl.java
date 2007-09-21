@@ -17,6 +17,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.WeakList;
@@ -132,19 +133,22 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   private void clearInvalidFiles(Project project) {
+    FileManager fileManager = ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager();
     synchronized (cachedFiles) {
       Iterator<VirtualFileWindow> iterator = cachedFiles.iterator();
       while (iterator.hasNext()) {
         VirtualFileWindow cachedFile = iterator.next();
-        PsiFile cached = ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().getCachedPsiFile(cachedFile);
+        PsiFile cached = fileManager.getCachedPsiFile(cachedFile);
         PsiElement context;
         if (cached == null || (context = cached.getContext()) == null || !context.isValid()) {
           iterator.remove();
+          fileManager.setViewProvider(cachedFile, null);
           continue;
         }
 
         Document cachedDocument = PsiDocumentManager.getInstance(project).getCachedDocument(cached);
         if (!(cachedDocument instanceof DocumentWindow)) {
+          fileManager.setViewProvider(cachedFile, null);
           iterator.remove();
         }
       }

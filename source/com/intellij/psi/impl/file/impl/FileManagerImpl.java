@@ -47,7 +47,7 @@ import java.util.concurrent.ConcurrentMap;
 public class FileManagerImpl implements FileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.FileManagerImpl");
 
-  public static int MAX_INTELLISENSE_FILESIZE = maxIntellisenseFileSize();
+  public static final int MAX_INTELLISENSE_FILESIZE = maxIntellisenseFileSize();
 
   private final PsiManagerImpl myManager;
 
@@ -71,7 +71,7 @@ public class FileManagerImpl implements FileManager {
   private Set<String> myNontrivialPackagePrefixes = null;
   private final VirtualFileManager myVirtualFileManager;
   private final FileDocumentManager myFileDocumentManager;
-  private MessageBusConnection myConnection;
+  private final MessageBusConnection myConnection;
 
   @NonNls private static final String JAVA_EXTENSION = ".java";
   @NonNls private static final String CLASS_EXTENSION = ".class";

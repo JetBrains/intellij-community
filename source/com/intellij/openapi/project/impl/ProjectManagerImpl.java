@@ -1,6 +1,5 @@
 package com.intellij.openapi.project.impl;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.convert.ProjectConversionHelper;
@@ -26,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ProjectReloadState;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -74,11 +74,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   private Project myCurrentTestProject = null;
 
-  private Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
-  private TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
-  private HashMap<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles = new HashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
-  //todo[mike] make private again
-  public PathMacrosImpl myPathMacros;
+  private final Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
+  private final TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
+  private final HashMap<Project, List<Pair<VirtualFile, StateStorage>>> myChangedProjectFiles = new HashMap<Project, List<Pair<VirtualFile, StateStorage>>>();
   private volatile int myReloadBlockCount = 0;
 
   private static ProjectManagerListener[] getListeners(Project project) {
@@ -169,11 +167,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     if (isDummy) {
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
     }
-    else {
-      project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed);
-      if (conversionHelper != null) {
-        project.getPicoContainer().registerComponentInstance(ProjectConversionHelper.class, conversionHelper);
-      }
+    project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed);
+    if (conversionHelper != null) {
+      project.getPicoContainer().registerComponentInstance(ProjectConversionHelper.class, conversionHelper);
     }
 
     try {
@@ -295,7 +291,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @NotNull
   public Project[] getOpenProjects() {
-    if (ApplicationManager.getApplication().isUnitTestMode() && myOpenProjects.size() == 0 && myCurrentTestProject != null) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && myOpenProjects.isEmpty() && myCurrentTestProject != null) {
       return new Project[] { myCurrentTestProject };
     }
     return myOpenProjects.toArray(new Project[myOpenProjects.size()]);
@@ -307,37 +303,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   public boolean openProject(final Project project) {
     if (myOpenProjects.contains(project)) return false;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectImpl)project).getStateStore().checkVersion()) return false;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectEx)project).getStateStore().checkVersion()) return false;
 
 
     myOpenProjects.add(project);
     fireProjectOpened(project);
-
-    final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
-
-    final boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        startupManager.runStartupActivities();
-      }
-    }, ProjectBundle.message("project.load.progress"), true, project);
-
-    if (!ok) {
-      closeProject(project, false);
-      updateLastProjectToReopen();
-      return false;
-    }
-
-    startupManager.runPostStartupActivities();
-
-    return true;
-  }
-  public boolean openProjectNoFire(final Project project) {
-    if (myOpenProjects.contains(project)) return false;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !((ProjectImpl)project).getStateStore().checkVersion()) return false;
-
-
-    myOpenProjects.add(project);
-    //fireProjectOpened(project);
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
 
@@ -498,7 +468,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          reloadOk[0] = ((ProjectImpl)project).getStateStore().reload(causes);
+          reloadOk[0] = ((ProjectEx)project).getStateStore().reload(causes);
         }
         catch (StateStorage.StateStorageException e) {
           Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()),
@@ -527,14 +497,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       message = ProjectBundle.message("project.reload.external.change.multiple", filesBuilder.toString());
     }
 
-    if (Messages.showYesNoDialog(project,
-                                 message,
-                                 ProjectBundle.message("project.reload.external.change.title"),
-                                 Messages.getQuestionIcon()) != 0) {
-      return false;
-    }
-
-    return true;
+    return Messages.showYesNoDialog(project, message, ProjectBundle.message("project.reload.external.change.title"), Messages.getQuestionIcon()) == 0;
   }
 
   public boolean isFileSavedToBeReloaded(VirtualFile candidate) {
@@ -568,7 +531,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     registerProjectToReload(project, file, null);
   }
 
-  public void saveChangedProjectFile(final VirtualFile file, final Project project, final StateStorage storage) {
+  private void saveChangedProjectFile(final VirtualFile file, final Project project, final StateStorage storage) {
     if (file.exists()) {
       copyToTemp(file);
     }
