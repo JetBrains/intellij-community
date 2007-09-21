@@ -102,7 +102,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     }
 
 
-    return CommandCvsHandler.createAddFilesHandler(roots);
+    return CommandCvsHandler.createAddFilesHandler(project, roots);
   }
 
   @Override

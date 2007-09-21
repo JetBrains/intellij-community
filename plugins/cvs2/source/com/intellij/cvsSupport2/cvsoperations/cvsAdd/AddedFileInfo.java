@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ListWithSelection;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import javax.swing.*;
@@ -58,12 +59,12 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
   private boolean myIncluded = true;
   private AddedFileInfo myParent;
   private final MyComparator myComparator = new MyComparator();
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private final MyObservable myExcludedObservable = new MyObservable();
   private static final Icon OPEN_ICON = IconLoader.getIcon("/nodes/folderOpen.png");
   private static final Icon COLLAPSED_ICON = IconLoader.getIcon("/nodes/folder.png");
 
-  public AddedFileInfo(VirtualFile addedFile, Project project, CvsConfiguration config) {
+  public AddedFileInfo(VirtualFile addedFile, @NotNull Project project, CvsConfiguration config) {
     myAddedFile = addedFile;
     mySubstitution = KeywordSubstitutionListWithSelection.createOnFileName(myAddedFile.getName(), config);
     myProject = project;
@@ -86,6 +87,7 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
     return myIncluded;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }

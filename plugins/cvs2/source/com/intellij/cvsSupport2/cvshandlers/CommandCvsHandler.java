@@ -14,7 +14,6 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
-import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.CheckoutFileByRevisionOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.CheckoutFileOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.CheckoutProjectOperation;
@@ -56,11 +55,10 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * author: lesya
+ * @author lesya
  */
 public class CommandCvsHandler extends AbstractCvsHandler {
-
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler");
 
   protected final CvsOperation myCvsOperation;
 
@@ -191,7 +189,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     return result;
   }
 
-  public static CvsHandler createAddFilesHandler(Collection<AddedFileInfo> addedRoots) {
+  public static CvsHandler createAddFilesHandler(final Project project, Collection<AddedFileInfo> addedRoots) {
     AddFilesOperation operation = new AddFilesOperation();
     ArrayList<AddedFileInfo> addedFileInfo = new ArrayList<AddedFileInfo>();
     for (final AddedFileInfo info : addedRoots) {
@@ -200,12 +198,10 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     }
 
     ArrayList<VirtualFile> addedFiles = new ArrayList<VirtualFile>();
-    Project project = null;
 
     for (AddedFileInfo info : addedFileInfo) {
       addedFiles.add(info.getFile());
       operation.addFile(info.getFile(), info.getKeywordSubstitution());
-      project = info.getProject();
     }
     return new CommandCvsHandler(CvsBundle.message("action.name.add"), operation,
                                  FileSetToBeUpdated.selectedFiles(addedFiles.toArray(new VirtualFile[addedFiles.size()])),
@@ -276,10 +272,6 @@ public class CommandCvsHandler extends AbstractCvsHandler {
     UneditOperation operation = new UneditOperation(makeNewFilesReadOnly);
     operation.addFiles(selectedFiles);
     return new CommandCvsHandler(CvsBundle.message("operation.name.unedit"), operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
-  }
-
-  public static CvsHandler createAnnotateHandler(AnnotateOperation operation) {
-    return new CommandCvsHandler(CvsBundle.message("operation.name.annotate"), operation, FileSetToBeUpdated.EMPTY);
   }
 
   public static CvsHandler createRemoveTagAction(VirtualFile[] selectedFiles, String tagName) {
