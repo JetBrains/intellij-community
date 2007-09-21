@@ -1,13 +1,11 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsLog;
 
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
+import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchesProvider;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
-import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
+import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.vcs.FilePath;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.log.LogCommand;
@@ -15,18 +13,17 @@ import org.netbeans.lib.cvsclient.command.log.LogInformation;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * author: lesya
  */
 public class LogOperation extends CvsOperationOnFiles implements BranchesProvider{
-  private List<LogInformation> myLogInformationList = new ArrayList<LogInformation>();
+  private final List<LogInformation> myLogInformationList = new ArrayList<LogInformation>();
 
   public LogOperation(Collection<FilePath> files){
-    for (Iterator iterator = files.iterator(); iterator.hasNext();) {
-      addFile(((FilePath)iterator.next()).getIOFile());
+    for (final FilePath file : files) {
+      addFile(file.getIOFile());
     }
   }
 
