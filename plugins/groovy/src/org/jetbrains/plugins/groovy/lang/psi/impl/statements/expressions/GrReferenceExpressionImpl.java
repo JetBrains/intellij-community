@@ -156,7 +156,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return results.length == 1 ? results[0].getElement() : null;
   }
 
-  private static final MyResolver RESOLVER = new MyResolver();
+  private static final OurResolver RESOLVER = new OurResolver();
 
   private static final MyTypesCalculator TYPES_CALCULATOR = new MyTypesCalculator();
 
@@ -265,7 +265,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return this;
   }
 
-  private static class MyResolver implements ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> {
+  private static class OurResolver implements ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> {
     public GroovyResolveResult[] resolve(GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
       String name = refExpr.getReferenceName();
       if (name == null) return null;

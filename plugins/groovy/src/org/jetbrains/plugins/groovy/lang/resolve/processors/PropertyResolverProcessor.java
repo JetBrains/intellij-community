@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -39,14 +38,14 @@ public class PropertyResolverProcessor extends ResolverProcessor {
       PsiMethod method = (PsiMethod) element;
       boolean lValue = myPlace instanceof GroovyPsiElement && PsiUtil.isLValue((GroovyPsiElement)myPlace);
       if (!lValue && PsiUtil.isSimplePropertyGetter(method)) {
-        String propName = PropertyUtil.getPropertyNameByGetter(method);
+        String propName = PsiUtil.getPropertyNameByGetter(method);
         if (myName.equals(propName)) {
           myCandidates.clear();
           super.execute(element, substitutor);
           return false;
         }
       } else if (lValue && PsiUtil.isSimplePropertySetter(method)) {
-        String propName = PropertyUtil.getPropertyNameBySetter(method);
+        String propName = PsiUtil.getPropertyNameBySetter(method);
         if (myName.equals(propName)) {
           myCandidates.clear();
           super.execute(element, substitutor);

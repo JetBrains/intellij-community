@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -331,5 +332,25 @@ public class PsiUtil {
 
     if (parent == null) return null;
     return ((GrTopLevelDefintion) parent);
+  }
+
+  public static String getPropertyNameByGetter(PsiMethod getterMethod) {
+    @NonNls String methodName = getterMethod.getName();
+    return methodName.startsWith("get") ?
+           decapitalize(methodName.substring(3)) :
+           methodName;
+  }
+
+  public static String getPropertyNameBySetter(PsiMethod setterMethod) {
+    @NonNls String methodName = setterMethod.getName();
+    return methodName.startsWith("set") ?
+           decapitalize(methodName.substring(3)) :
+           methodName;
+  }
+
+  private static String decapitalize(String s) {
+    final char[] chars = s.toCharArray();
+    chars[0] = Character.toLowerCase(chars[0]);
+    return new String(chars);
   }
 }
