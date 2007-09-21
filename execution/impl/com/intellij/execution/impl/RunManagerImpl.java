@@ -239,7 +239,13 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       final HashMap<String, RunnerAndConfigurationSettingsImpl> settings =
         new HashMap<String, RunnerAndConfigurationSettingsImpl>(myConfigurations); //sort shared and local configurations
       myConfigurations.clear();
-      for (String configName : myOrder) {
+      final List<String> order = new ArrayList<String>(settings.keySet());
+      Collections.sort(order, new Comparator<String>() {
+        public int compare(final String o1, final String o2) {
+          return myOrder.indexOf(o1) - myOrder.indexOf(o2);
+        }
+      });
+      for (String configName : order) {
         myConfigurations.put(configName, settings.get(configName));
       }
       myOrder = null;
