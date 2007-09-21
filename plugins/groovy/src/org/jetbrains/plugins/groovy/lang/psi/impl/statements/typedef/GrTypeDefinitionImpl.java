@@ -670,11 +670,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   private Icon getIconInner() {
-    if (isInterface())
-      return Icons.INTERFACE;
-
     if (isAnnotationType())
       return Icons.ANNOTAION;
+
+    if (isInterface())
+      return Icons.INTERFACE;
 
     if (isEnum())
       return Icons.ENUM;
