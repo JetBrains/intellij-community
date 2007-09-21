@@ -1,5 +1,6 @@
 package com.intellij.cvsSupport2.cvsBrowser;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
@@ -11,19 +12,16 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.DirectoryContentProvide
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUpdateOperation;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.CvsBundle;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvider {
-
   protected final CvsEnvironment myEnvironment;
   protected final boolean myShowFiles;
   protected final boolean myShowModules;
 
-  public AbstractVcsDataProvider(CvsEnvironment environment,
+  protected AbstractVcsDataProvider(CvsEnvironment environment,
                                  boolean showFiles,
                                  boolean showModules) {
     myEnvironment = environment;
@@ -35,14 +33,14 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     collectTreeElementsTo(element, project, callback);
   }
 
-  protected void collectTreeElementsTo(CvsElement parent,
+  private void collectTreeElementsTo(CvsElement parent,
                                        Project project,
                                        GetContentCallback callback) {
     fillDirectoryContent(parent, parent.getElementPath(), callback, project);
   }
 
 
-  public void fillDirectoryContent(final CvsElement parent,
+  private void fillDirectoryContent(final CvsElement parent,
                                    String path,
                                    final GetContentCallback callback,
                                    final Project project) {
@@ -55,7 +53,7 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
     return new GetDirectoriesListViaUpdateOperation(myEnvironment, path);
   }
 
-  protected void executeCommand(final DirectoryContentProvider command,
+  private void executeCommand(final DirectoryContentProvider command,
                                 final GetContentCallback callback,
                                 final CvsElement parent,
                                 final Project project) {
@@ -77,7 +75,7 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
             callback.loginAborted();
           }
           else {
-            ArrayList children = new ArrayList();
+            ArrayList<CvsElement> children = new ArrayList<CvsElement>();
             DirectoryContent directoryContent = command.getDirectoryContent();
             if (myShowModules) {
               children.addAll(addModules(directoryContent, parent, project));
@@ -98,45 +96,42 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
       });
   }
 
-  private ArrayList addFiles(DirectoryContent children, CvsElement element, Project project) {
+  private ArrayList<CvsElement> addFiles(DirectoryContent children, CvsElement element, Project project) {
     return createCvsNodesOn(children.getFiles(), element,
                             CvsElementFactory.FILE_ELEMENT_FACTORY,
                             RemoteResourceDataProvider.NOT_EXPANDABLE, project);
   }
 
-  private ArrayList addSubDirectories(DirectoryContent children,
-                                      CvsElement element,
-                                      Project project) {
+  private ArrayList<CvsElement> addSubDirectories(DirectoryContent children,
+                                                  CvsElement element,
+                                                  Project project) {
     return createCvsNodesOn(children.getSubDirectories(), element,
                             CvsElementFactory.FOLDER_ELEMENT_FACTORY, getChildrenDataProvider(),
                             project);
   }
 
-  private ArrayList addModules(DirectoryContent children, CvsElement element, Project project) {
-    Collection modules = children.getSubModules();
+  private ArrayList<CvsElement> addModules(DirectoryContent children, CvsElement element, Project project) {
+    Collection<String> modules = children.getSubModules();
     return createCvsNodesOn(modules, element,
                             CvsElementFactory.MODULE_ELEMENT_FACTORY,
                             new ModuleDataProvider(myEnvironment, myShowFiles),
                             project);
   }
 
-  protected ArrayList createCvsNodesOn(Collection children,
-                                       CvsElement element,
-                                       CvsElementFactory elementFactory,
-                                       RemoteResourceDataProvider dataProvider,
-                                       Project project) {
-    ArrayList result = new ArrayList();
-    for (Iterator each = children.iterator(); each.hasNext();) {
-      String name = (String)each.next();
-      result.add(
-        setElementDetails(elementFactory.createElement(name, myEnvironment, project), name,
-                          element, dataProvider));
+  protected ArrayList<CvsElement> createCvsNodesOn(Collection<String> children,
+                                                   CvsElement element,
+                                                   CvsElementFactory elementFactory,
+                                                   RemoteResourceDataProvider dataProvider,
+                                                   Project project) {
+    ArrayList<CvsElement> result = new ArrayList<CvsElement>();
+    for (final String name: children) {
+      result.add(setElementDetails(elementFactory.createElement(name, myEnvironment, project), name, element, dataProvider));
     }
     return result;
   }
 
-  private CvsElement setElementDetails(CvsElement result, String name,
-                                       CvsElement parent, RemoteResourceDataProvider dataProvider) {
+  private static CvsElement setElementDetails(CvsElement result, String name,
+                                              CvsElement parent, RemoteResourceDataProvider dataProvider) {
     result.setDataProvider(dataProvider);
     result.setName(name);
     result.setPath(getPathForName(name, parent));
@@ -146,7 +141,7 @@ public abstract class AbstractVcsDataProvider implements RemoteResourceDataProvi
 
   protected abstract AbstractVcsDataProvider getChildrenDataProvider();
 
-  protected String getPathForName(String name, CvsElement parent) {
+  private static String getPathForName(String name, CvsElement parent) {
     return parent.createPathForChild(name);
   }
 }

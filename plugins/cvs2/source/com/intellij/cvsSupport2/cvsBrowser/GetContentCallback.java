@@ -6,7 +6,7 @@ import java.util.List;
  * author: lesya
  */
 public interface GetContentCallback {
-  void fillDirectoryContent(List directoryContent);
+  void fillDirectoryContent(List<CvsElement> directoryContent);
 
   void loginAborted();
 

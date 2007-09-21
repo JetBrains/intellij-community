@@ -7,9 +7,8 @@ import com.intellij.util.Alarm;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.io.File;
 import java.util.Enumeration;
@@ -22,8 +21,8 @@ public class CvsElement extends DefaultMutableTreeNode {
   protected RemoteResourceDataProvider myDataProvider;
   protected String myName;
   protected String myPath;
-  private Icon myIcon;
-  private Icon myExpandedIcon;
+  private final Icon myIcon;
+  private final Icon myExpandedIcon;
   private boolean myCanBecheckedOut = true;
   private CvsTreeModel myModel;
   private final Project myProject;
@@ -173,11 +172,11 @@ public class CvsElement extends DefaultMutableTreeNode {
       myLoadingNode = loadingNode;
     }
 
-    public void fillDirectoryContent(final List content) {
+    public void fillDirectoryContent(final List<CvsElement> content) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             for (int i = 0; i < content.size(); i++) {
-              insert((MutableTreeNode)content.get(i), i);
+              insert(content.get(i), i);
             }
             getModel().nodeStructureChanged(CvsElement.this);
             if (getParent() == null) {
