@@ -164,7 +164,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     loadApplicationComponents();
 
-    if (SystemInfo.isMac || myTestModeFlag) {
+    if (!isHeadless) {
       registerShutdownHook();
     }
 
@@ -181,6 +181,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     ShutDownTracker.getInstance().registerShutdownThread(new Thread(new Runnable() {
       public void run() {
+        if (isDisposed()) return;
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
@@ -532,6 +533,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         if (!showConfirmation()) return;
       }
       if (!canExit()) return;
+
+      // We do not invoke System.exit directly since it causes runtime hooks to invoke and they want to work on EDT
       new Thread(new Runnable() {
         public void run() {
           System.exit(0);
