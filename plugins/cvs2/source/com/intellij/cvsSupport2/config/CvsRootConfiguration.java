@@ -92,7 +92,9 @@ public class CvsRootConfiguration extends AbstractConfiguration implements CvsEn
       result.append(SEPARATOR);
       result.append(port);
     }
-    result.append(SEPARATOR);
+    else {
+      result.append(SEPARATOR);
+    }
     result.append(repository);
     return result.toString();
   }
