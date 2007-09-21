@@ -203,8 +203,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String str7 = "try { a.doSomething(); b.doSomething(); } catch(IOException ex) {  ex.printStackTrace(); throw new RuntimeException(ex); }";
     String str8 = "try { 'Statements+; } catch('_ '_) { 'HandlerStatements+; }";
     String str9 = "$Statements$;";
-    String expectedResult4 = "a.doSomething();\n" +
-                             "b.doSomething();";
+    String expectedResult4 = "a.doSomething(); b.doSomething();";
 
     actualResult = replacer.testReplace(str7,str8,str9,options);
     assertEquals( "Multi line match in replacement", expectedResult4,actualResult );
@@ -328,9 +327,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "} catch(Exception ex) {}";
     String s39 = "$Statement$;";
 
-    String expectedResult14 = "ParamChecker.isTrue(1==1, \"!!!\");\n" +
-                              "// comment we want to leave\n" +
-                              "ParamChecker.isTrue(2==2, \"!!!\");";
+    String expectedResult14 = "ParamChecker.isTrue(1==1, \"!!!\");\n  \n" +
+                              "  // comment we want to leave\n  \n" +
+                              "  ParamChecker.isTrue(2==2, \"!!!\");";
     actualResult = replacer.testReplace(s37,s38,s39,options);
     assertEquals(
       "remove try with comments inside",
@@ -636,7 +635,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "    }";
     String s6 = "$statement$;";
     String expectedResult2 = "read(id, READ_PARENT);\n" +
-                             "return myViewport.parent;";
+                             "      return myViewport.parent;";
     actualResult = replacer.testReplace(s4,s5,s6,options);
     assertEquals(
       "extra ;",
@@ -1739,8 +1738,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                             "    { in = aFileNameWithOutExtention.getClass().getResourceAsStream(s); }\n" +
                             "    else\n" +
                             "    { data = ResourceHelper.readResource(s); }\n" +
-                            "mime = MIMEHelper.MIME_MAP[i][1][0];\n" +
-                            "break; }\n" +
+                            "    mime = MIMEHelper.MIME_MAP[i][1][0];\n" +
+                            "    break; }\n" +
                             "catch(final  Throwable e) { continue; }\n" +
                             "}";
 
@@ -1866,7 +1865,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s2 = "try {\n" + " 'statement*;\n" + "} finally {\n" + "  \n" + "}";
     String replacement = "$statement$;";
     String expected = "String[] a = {\"a\"};\n" +
-                "System.out.println(\"blah\");\n";
+                "      System.out.println(\"blah\");\n";
 
     actualResult = replacer.testReplace(s1,s2,replacement,options);
 
@@ -1883,12 +1882,52 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                   "}";
     String expected_2 = "if (args == null) return ;\n" +
                   "    while(true) return ;\n" +
-                  "System.out.println(\"blah2\");";
+                  "    System.out.println(\"blah2\");";
     
     actualResult = replacer.testReplace(s1_2,s2,replacement,options);
 
     assertEquals(
       expected_2,
+      actualResult
+    );
+
+    String s1_3 = "{\n" +
+                  "    try {\n" +
+                  "        System.out.println(\"blah1\");\n" +
+                  "\n" +
+                  "        System.out.println(\"blah2\");\n" +
+                  "    } finally {\n" +
+                  "    }\n" +
+                  "}";
+    String expected_3 = "{\n" +
+                  "    System.out.println(\"blah1\");\n" +
+                  "\n" +
+                  "        System.out.println(\"blah2\");\n" +
+                  "}";
+    actualResult = replacer.testReplace(s1_3,s2,replacement,options);
+
+    assertEquals(
+      expected_3,
+      actualResult
+    );
+
+    String s1_4 = "{\n" +
+                  "    try {\n" +
+                  "        System.out.println(\"blah1\");\n" +
+                  "        // indented comment\n" +
+                  "        System.out.println(\"blah2\");\n" +
+                  "    } finally {\n" +
+                  "    }\n" +
+                  "}";
+    String expected_4 = "{\n" +
+                  "    System.out.println(\"blah1\");\n" +
+                  "        // indented comment\n" +
+                  "        System.out.println(\"blah2\");\n" +
+                  "}";
+    actualResult = replacer.testReplace(s1_4,s2,replacement,options);
+
+    assertEquals(
+      expected_4,
       actualResult
     );
   }

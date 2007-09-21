@@ -201,19 +201,21 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
           previous = r;
           r = matchResult;
 
+          final PsiElement currentElement = r.getMatch();
+
           if (buf.length() > 0) {
             if (info.statementContext) {
-              final PsiElement element = previous.getMatchRef().getElement();
+              final PsiElement previousElement = previous.getMatchRef().getElement();
 
-              if (!(element instanceof PsiComment) &&
+              if (!(previousElement instanceof PsiComment) &&
                   ( buf.charAt(buf.length() - 1) != '}' ||
-                    element instanceof PsiDeclarationStatement
+                    previousElement instanceof PsiDeclarationStatement
                   )
                 ) {
                 buf.append(';');
               }
 
-              final PsiElement prevSibling = r.getMatch().getPrevSibling();
+              final PsiElement prevSibling = currentElement.getPrevSibling();
 
               if (prevSibling instanceof PsiWhiteSpace &&
                   prevSibling.getPrevSibling() == previous.getMatch()
@@ -238,7 +240,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
 
           buf.append(r.getMatchImage());
           removeExtraSemicolonForSingleVarInstanceInMultipleMatch(info, r, buf);
-          forceAddingNewLine = r.getMatch() instanceof PsiComment;
+          forceAddingNewLine = currentElement instanceof PsiComment;
         }
 
         replacementString = buf.toString();
@@ -296,6 +298,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
           r.getMatchImage().charAt(r.getMatchImage().length()-1)==';' &&
           ( element instanceof PsiReturnStatement ||
             element instanceof PsiDeclarationStatement ||
+            element instanceof PsiExpressionStatement ||
             element instanceof PsiAssertStatement ||
             element instanceof PsiBreakStatement ||
             element instanceof PsiContinueStatement ||
