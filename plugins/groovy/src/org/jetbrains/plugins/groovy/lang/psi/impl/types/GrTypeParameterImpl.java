@@ -13,16 +13,24 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
+package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
+import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @author ilyas
  */
-public interface GrInterfaceDefinition extends GrTypeDefinition, GrTypeParameterListOwner {
-  @Nullable
-  public GrImplementsClause getImplementsClause();
+public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeParameter {
+
+  public GrTypeParameterImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  public String toString() {
+    return "Type parameter";
+  }
+
 }

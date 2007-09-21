@@ -27,12 +27,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 26.03.2007
  */
-public interface GrMethod extends GrMember, GrMembersDeclaration, GrNamedElement, PsiMethod, GrParametersOwner, GrTopLevelDefintion {
+public interface GrMethod extends GrMember, GrMembersDeclaration, GrNamedElement, PsiMethod,
+    GrParametersOwner, GrTopLevelDefintion, GrTypeParameterListOwner {
   public static final GrMethod[] EMPTY_ARRAY = new GrMethod[0];
   Key<Boolean> BUILDER_METHOD = Key.create("BUILDER_METHOD");
 

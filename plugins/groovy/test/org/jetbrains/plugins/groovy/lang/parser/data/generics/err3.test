@@ -1,0 +1,49 @@
+class A {
+  def <T> t = 5
+  def foo = 42
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      PsiErrorElement:Method definition expected
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Type parameter list
+          PsiElement(<)('<')
+          Type parameter
+            PsiElement(identifier)('T')
+            Type extends bounds list
+              <empty list>
+          PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('t')
+      PsiErrorElement:'}' expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      PsiElement(Integer)('5')
+      PsiElement(new line)('\n  ')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Field
+          PsiElement(identifier)('foo')
+          PsiWhiteSpace(' ')
+          PsiElement(=)('=')
+          PsiWhiteSpace(' ')
+          Literal
+            PsiElement(Integer)('42')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

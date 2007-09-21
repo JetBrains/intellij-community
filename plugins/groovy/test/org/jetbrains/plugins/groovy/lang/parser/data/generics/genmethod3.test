@@ -1,0 +1,59 @@
+interface A<T> {
+def <T, S extends T> T getT();
+}
+-----
+Groovy script
+  Interface definition
+    Modifiers
+      <empty list>
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    Type parameter list
+      PsiElement(<)('<')
+      Type parameter
+        PsiElement(identifier)('T')
+        Type extends bounds list
+          <empty list>
+      PsiElement(>)('>')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n')
+      Method
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Type parameter list
+          PsiElement(<)('<')
+          Type parameter
+            PsiElement(identifier)('T')
+            Type extends bounds list
+              <empty list>
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Type parameter
+            PsiElement(identifier)('S')
+            PsiWhiteSpace(' ')
+            Type extends bounds list
+              PsiElement(extends)('extends')
+              PsiWhiteSpace(' ')
+              Type element
+                Reference element
+                  PsiElement(identifier)('T')
+          PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        Type element
+          Reference element
+            PsiElement(identifier)('T')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('getT')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        Throw clause
+          <empty list>
+      PsiElement(;)(';')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')

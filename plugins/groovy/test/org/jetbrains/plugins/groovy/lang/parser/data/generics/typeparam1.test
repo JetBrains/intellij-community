@@ -1,0 +1,21 @@
+class A <T> {}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    PsiWhiteSpace(' ')
+    Type parameter list
+      PsiElement(<)('<')
+      Type parameter
+        PsiElement(identifier)('T')
+        Type extends bounds list
+          <empty list>
+      PsiElement(>)('>')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiElement(})('}')

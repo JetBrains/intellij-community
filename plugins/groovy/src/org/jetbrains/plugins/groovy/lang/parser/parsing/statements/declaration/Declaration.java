@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -45,7 +46,25 @@ public class Declaration implements GroovyElementTypes {
     //allows error messages
     IElementType modifiers = Modifiers.parse(builder);
 
-    if (!WRONGWAY.equals(modifiers)) {
+    if (WRONGWAY != modifiers && mLT == builder.getTokenType()) {
+      TypeParameters.parse(builder);
+      PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
+
+      if (WRONGWAY.equals(TypeSpec.parse(builder, true))) { //if type wasn't recognized trying parse VaribleDeclaration
+        checkMarker.rollbackTo();
+      } else {
+        checkMarker.drop();
+      }
+      GroovyElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, true);
+
+      if (WRONGWAY.equals(decl)) {
+        declMarker.error(GroovyBundle.message("method.definitions.expected"));
+      } else {
+        declMarker.done(METHOD_DEFINITION);
+      }
+      return METHOD_DEFINITION;
+
+    } else if (!WRONGWAY.equals(modifiers)) {
 
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
@@ -97,10 +116,11 @@ public class Declaration implements GroovyElementTypes {
 
       //if definition starts with lower case letter than it can be just call expression
 
+      String text = builder.getTokenText();
       if (!builder.eof()
           && !TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())
-          && builder.getTokenText() != null
-          && Character.isLowerCase(builder.getTokenText().charAt(0)) &&
+          && text != null
+          && Character.isLowerCase(text.charAt(0)) &&
           (ParserUtils.lookAhead(builder, mIDENT, mIDENT) || ParserUtils.lookAhead(builder, mIDENT, mLPAREN))) {
         //call expression
         declMarker.rollbackTo();

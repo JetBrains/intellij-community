@@ -1,0 +1,30 @@
+class A<T,S extends U>  {}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    Type parameter list
+      PsiElement(<)('<')
+      Type parameter
+        PsiElement(identifier)('T')
+        Type extends bounds list
+          <empty list>
+      PsiElement(,)(',')
+      Type parameter
+        PsiElement(identifier)('S')
+        PsiWhiteSpace(' ')
+        Type extends bounds list
+          PsiElement(extends)('extends')
+          PsiWhiteSpace(' ')
+          Type element
+            Reference element
+              PsiElement(identifier)('U')
+      PsiElement(>)('>')
+    PsiWhiteSpace('  ')
+    Type definition body
+      PsiElement({)('{')
+      PsiElement(})('}')

@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.impl.source.parsing.ParseUtil;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -78,8 +77,9 @@ public class TypeSpec implements GroovyElementTypes {
     }
   }
 
-  /*
+  /**
    * Class or interface type
+   *
    * @param builder
    */
 
@@ -98,9 +98,19 @@ public class TypeSpec implements GroovyElementTypes {
     if (ParserUtils.lookAhead(builder, mLBRACK, mRBRACK)) {
       declarationBracketsParse(builder, arrMarker);
     } else {
-//      arrMarker.done(CLASS_TYPE_ELEMENT);      
       arrMarker.drop();
     }
+    return CLASS_TYPE_ELEMENT;
+  }
+
+  public static GroovyElementType parseClassOrInterfaceType(PsiBuilder builder) {
+    PsiBuilder.Marker typeElementMarker = builder.mark();
+
+    if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder, true))) {
+      typeElementMarker.drop();
+      return WRONGWAY;
+    }
+    typeElementMarker.done(CLASS_TYPE_ELEMENT);
     return CLASS_TYPE_ELEMENT;
   }
 

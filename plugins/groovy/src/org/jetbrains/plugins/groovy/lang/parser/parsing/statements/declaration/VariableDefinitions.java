@@ -43,10 +43,14 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 public class VariableDefinitions implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder, boolean isInClass) {
-    return parseDefinitions(builder, isInClass, false, false);
+    return parseDefinitions(builder, isInClass, false, false, false);
   }
 
-  public static GroovyElementType parseDefinitions(PsiBuilder builder, boolean isInClass, boolean isEnumConstantMember, boolean isAnnotationMember) {
+  public static GroovyElementType parseDefinitions(PsiBuilder builder,
+                                                   boolean isInClass,
+                                                   boolean isEnumConstantMember,
+                                                   boolean isAnnotationMember,
+                                                   boolean mustBeMethod) {
     if (!(builder.getTokenType() == mIDENT || builder.getTokenType() == mSTRING_LITERAL || builder.getTokenType() == mGSTRING_LITERAL)) {
       builder.error(GroovyBundle.message("indentifier.or.string.literal.expected"));
       return WRONGWAY;
@@ -63,6 +67,11 @@ public class VariableDefinitions implements GroovyElementTypes {
     boolean eaten = ParserUtils.getToken(builder, mIDENT) || ParserUtils.getToken(builder, mSTRING_LITERAL) || ParserUtils.getToken(builder, mGSTRING_LITERAL);
 
     if (!eaten) return WRONGWAY;
+
+    if (mustBeMethod && mLPAREN != builder.getTokenType()) {
+      varMarker.drop();
+      return WRONGWAY;
+    }
 
     if (ParserUtils.getToken(builder, mLPAREN)) {
       GroovyElementType paramDeclList = ParameterDeclarationList.parse(builder, mRPAREN);
@@ -97,8 +106,7 @@ public class VariableDefinitions implements GroovyElementTypes {
         if (b) {
           varMarker.done(DEFAULT_ANNOTATION_VALUE);
           return DEFAULT_ANNOTATION_MEMBER;
-        }
-        else {
+        } else {
           varMarker.rollbackTo();
           return WRONGWAY;
         }
@@ -118,9 +126,7 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       varMarker.drop();
       return METHOD_DEFINITION;
-    } else
-
-    {
+    } else {
       varMarker.rollbackTo();
 
       // a = b, c = d

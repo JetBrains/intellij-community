@@ -1,0 +1,38 @@
+class A<A, B, ,, ,D> {}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    Type parameter list
+      PsiElement(<)('<')
+      Type parameter
+        PsiElement(identifier)('A')
+        Type extends bounds list
+          <empty list>
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Type parameter
+        PsiElement(identifier)('B')
+        Type extends bounds list
+          <empty list>
+      PsiElement(,)(',')
+      PsiErrorElement:Type parameter expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(,)(',')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      PsiElement(,)(',')
+      Type parameter
+        PsiElement(identifier)('D')
+        Type extends bounds list
+          <empty list>
+      PsiElement(>)('>')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiElement(})('}')

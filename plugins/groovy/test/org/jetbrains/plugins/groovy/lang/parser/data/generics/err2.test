@@ -1,0 +1,36 @@
+class A<T extends B & , C> {}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    Type parameter list
+      PsiElement(<)('<')
+      Type parameter
+        PsiElement(identifier)('T')
+        PsiWhiteSpace(' ')
+        Type extends bounds list
+          PsiElement(extends)('extends')
+          PsiWhiteSpace(' ')
+          Type element
+            Reference element
+              PsiElement(identifier)('B')
+          PsiWhiteSpace(' ')
+          PsiElement(&)('&')
+          PsiErrorElement:Type argument expected
+            <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Type parameter
+        PsiElement(identifier)('C')
+        Type extends bounds list
+          <empty list>
+      PsiElement(>)('>')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiElement(})('}')
