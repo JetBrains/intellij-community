@@ -56,10 +56,6 @@ public class TailRecursionInspection extends BaseInspection {
 
     private static boolean mayBeReplacedByIterativeMethod(
             PsiMethod containingMethod) {
-        if (!containingMethod.hasModifierProperty(PsiModifier.STATIC) &&
-                !containingMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
-            return false;
-        }
         final PsiParameterList parameterList =
                 containingMethod.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
