@@ -1,14 +1,15 @@
 package com.intellij.cvsSupport2.cvshandlers;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.update.UpdateSettings;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
+import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvsoperations.common.FindAllRoots;
 import com.intellij.cvsSupport2.cvsoperations.common.PostCvsActivity;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.MergedWithConflictProjectOrModuleFile;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.UpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui.CorruptedProjectFilesDialog;
-import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -20,9 +21,9 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Options;
 import com.intellij.util.containers.HashSet;
-import com.intellij.CvsBundle;
-import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
   private final UpdatedFiles myUpdatedFiles;
   private final UpdateSettings myUpdateSettings;
 
-  public UpdateHandler(FilePath[] files, UpdateSettings updateSettings, Project project, UpdatedFiles updatedFiles) {
+  public UpdateHandler(FilePath[] files, UpdateSettings updateSettings, Project project, @NotNull UpdatedFiles updatedFiles) {
     super(CvsBundle.message("operation.name.update"), new UpdateOperation(new FilePath[0], updateSettings, project),
           FileSetToBeUpdated.selectedFiles(files));
     myFiles = files;

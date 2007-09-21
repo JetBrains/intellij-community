@@ -137,7 +137,8 @@ public class CommandCvsHandler extends AbstractCvsHandler {
 
   public static UpdateHandler createUpdateHandler(final FilePath[] files,
                                                   UpdateSettings updateSettings,
-                                                  Project project, UpdatedFiles updatedFiles) {
+                                                  Project project,
+                                                  @NotNull UpdatedFiles updatedFiles) {
     return new UpdateHandler(files, updateSettings, project, updatedFiles);
   }
 
