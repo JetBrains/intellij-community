@@ -108,5 +108,9 @@ public class BasePathMacroManager extends PathMacroManager {
       getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, myUsedMacros);
     }
 
+
+    public int hashCode() {
+      return getExpandMacroMap().hashCode();
+    }
   }
 }

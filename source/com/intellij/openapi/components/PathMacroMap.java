@@ -105,4 +105,7 @@ public abstract class PathMacroMap {
     return path;
   }
 
+  public int hashCode() {
+    return myMacroMap.hashCode();
+  }
 }

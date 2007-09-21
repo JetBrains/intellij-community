@@ -74,7 +74,11 @@ public class FileBasedStorage extends XmlElementStorage {
     }
 
     protected boolean _needsSave() throws StateStorageException {
-      final int hash = myStorageData.getHash();
+      int hash = myStorageData.getHash();
+
+      if (myPathMacroSubstitutor != null) {
+        hash = 31*hash + myPathMacroSubstitutor.hashCode();
+      }
 
       if (myUpToDateHash != null && hash == myUpToDateHash.intValue()) return false;
 

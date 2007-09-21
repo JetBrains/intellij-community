@@ -33,7 +33,6 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   private @NotNull final String myRootElementName;
-  private Set<String> myUsedMacros;
   private Object mySession;
   private StorageData myLoadedData;
   private static StringInterner ourInterner = new StringInterner();
@@ -124,10 +123,6 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     }
   }
 
-  public Set<String> getUsedMacros() {
-    return myUsedMacros;
-  }
-
   @NotNull
   public ExternalizationSession startExternalization() {
     try {
@@ -185,6 +180,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
   protected abstract class MySaveSession implements SaveSession {
     StorageData myStorageData;
     private Document myDocumentToSave;
+    private Set<String> myUsedMacros;
 
     public MySaveSession(MyExternalizationSession externalizationSession) {
       myStorageData = externalizationSession.myStorageData;
