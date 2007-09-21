@@ -1,14 +1,8 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.lexer.JavaLexer;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
@@ -23,9 +17,6 @@ import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.*;
-import com.intellij.util.Processor;
-import com.intellij.pom.java.LanguageLevel;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 17.11.2004
- * Time: 19:25:08
- * To change this template use File | Settings | File Templates.
+ * @author maxim
  */
 class CompilingVisitor extends PsiRecursiveElementVisitor {
   private static NodeFilter filter = LexicalNodesFilter.getInstance();
@@ -47,39 +34,6 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   private ArrayList<PsiElement> lexicalNodes = new ArrayList<PsiElement>();
 
   private CompilingVisitor() {
-  }
-
-  private List<PsiElement> buildDescendants(String className, boolean includeSelf) {
-    if (!context.findMatchingFiles) return Collections.emptyList();
-    PsiShortNamesCache cache = PsiManager.getInstance(context.project).getShortNamesCache();
-    SearchScope scope = context.options.getScope();
-    PsiClass[] classes = cache.getClassesByName(className,(GlobalSearchScope)scope);
-    final List<PsiElement> results = new ArrayList<PsiElement>();
-
-    PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass element) {
-        results.add(element);
-        return true;
-      }
-
-    };
-
-    for (PsiClass aClass : classes) {
-      context.helper.processInheritors(
-        processor,
-        aClass,
-        scope,
-        true
-      );
-    }
-
-    if (includeSelf) {
-      for (PsiClass aClass : classes) {
-        results.add(aClass);
-      }
-    }
-
-    return results;
   }
 
   private void setHandler(PsiElement element, Handler handler) {
@@ -418,10 +372,11 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
         !(handler instanceof SubstitutionHandler)) {
       final PsiElement resolve = reference.resolve();
 
+      PsiElement referenceQualifier = reference.getQualifier();
       if (resolve instanceof PsiClass ||
           ( resolve == null &&
             ( (referencedName != null && Character.isUpperCase(referencedName.charAt(0))) ||
-              reference.getQualifier() == null
+              referenceQualifier == null
             )
           )
         ) {
@@ -438,7 +393,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
           }
           currentReference = (PsiReferenceExpression)qualifier;
         }
-        if (!hasNoNestedSubstitutionHandlers) createAndSetSubstitutionHandlerFromReference(reference, reference);
+        if (!hasNoNestedSubstitutionHandlers) createAndSetSubstitutionHandlerFromReference(reference, reference.getText());
       }
     }
   }
@@ -465,99 +420,40 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       refname = predicate.getRegExp();
 
       if(handler.isStrictSubtype() || handler.isSubtype()) {
-        List classes = buildDescendants(refname,handler.isSubtype());
-
-        for (final Object aClass : classes) {
-          final PsiClass clazz = (PsiClass)aClass;
-          String text;
-
-          if (clazz instanceof PsiAnonymousClass) {
-            text = ((PsiAnonymousClass)clazz).getBaseClassReference().getReferenceName();
-          }
-          else {
-            text = clazz.getName();
-          }
-
-          addFilesToSearchForGivenWord(
-            text,
-            false
-          );
+        if (context.searchHelper.addDescendantsOf(refname,handler.isSubtype())) {
+          context.searchHelper.endTransaction();
         }
 
-        if (classes.size()>0) {
-          endTransaction();
-        }
         return;
       }
     }
 
-    addFilesToSearchForGivenWord(refname,true);
-  }
-
-  private void addFilesToSearchForGivenWord(String refname, boolean endTransaction) {
-    addFilesToSearchForGivenWord(refname,endTransaction, OccurenceKind.CODE);
+    addFilesToSearchForGivenWord(refname, true, OccurenceKind.CODE);
   }
 
   private static Set<String> ourReservedWords = new HashSet<String>(
     Arrays.asList(MODIFIER_ANNOTATION_NAME,INSTANCE_MODIFIER_NAME,PACKAGE_LOCAL_MODIFIER_NAME)
   );
 
-
   private void addFilesToSearchForGivenWord(String refname, boolean endTransaction,OccurenceKind kind) {
-    if (!context.findMatchingFiles) {
+    if (!context.searchHelper.doOptimizing()) {
       return;
     }
     if(ourReservedWords.contains(refname)) return; // skip our special annotations !!!
 
     boolean addedSomething = false;
 
-    if (kind == OccurenceKind.CODE && context.scanned.get(refname)==null) {
-      boolean isJavaReservedWord = false;
-
-      if (context.options.getFileType() == StdFileTypes.JAVA) {
-        if (context.javaLexer == null) context.javaLexer = new JavaLexer(LanguageLevel.HIGHEST);
-        context.javaLexer.start(refname,0,refname.length(),0);
-        isJavaReservedWord = JavaTokenType.KEYWORD_BIT_SET.contains(context.javaLexer.getTokenType());
-      }
-
-      final GlobalSearchScope searchScope = (GlobalSearchScope)context.options.getScope();
-      final MyFileProcessor fileProcessor = new MyFileProcessor();
-      if (isJavaReservedWord) {
-        context.helper.processAllFilesWithWordInText(refname, searchScope, fileProcessor, true);
-      } else {
-        context.helper.processAllFilesWithWord(refname, searchScope, fileProcessor, true);
-      }
-
-      context.scanned.put( refname, refname );
-      addedSomething  = true;
-    } else if (kind == OccurenceKind.COMMENT && context.scannedComments.get(refname)==null) {
-      context.helper.processAllFilesWithWordInComments(refname,
-                                                       (GlobalSearchScope)context.options.getScope(),
-                                                       new MyFileProcessor()
-      );
-
-      context.scannedComments.put( refname, refname );
-      addedSomething  = true;
-    } else if (kind == OccurenceKind.LITERAL && context.scannedLiterals.get(refname)==null) {
-      context.helper.processAllFilesWithWordInLiterals(refname,
-                                                       (GlobalSearchScope)context.options.getScope(),
-                                                       new MyFileProcessor());
-
-      context.scannedLiterals.put( refname, refname );
-      addedSomething  = true;
+    if (kind == OccurenceKind.CODE) {
+      addedSomething = context.searchHelper.addWordToSearchInCode(refname);
+    } else if (kind == OccurenceKind.COMMENT) {
+      addedSomething = context.searchHelper.addWordToSearchInComments(refname);
+    } else if (kind == OccurenceKind.LITERAL) {
+      addedSomething = context.searchHelper.addWordToSearchInLiterals(refname);
     }
 
     if (addedSomething && endTransaction) {
-      endTransaction();
+      context.searchHelper.endTransaction();
     }
-  }
-
-  private void endTransaction() {
-    THashMap<PsiFile,PsiFile> map = context.filesToScan;
-    if (map.size() > 0) map.clear();
-    context.filesToScan = context.filesToScan2;
-    context.filesToScan2 = map;
-    context.scanRequest++;
   }
 
   private static void setFilter(Handler handler, NodeFilter filter) {
@@ -728,8 +624,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
   }
 
-  private SubstitutionHandler createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final PsiElement reference) {
-    final String referenceText = reference.getText();
+  private SubstitutionHandler createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText) {
     final SubstitutionHandler substitutionHandler = new SubstitutionHandler("__"+ referenceText.replace('.','_'), false, 1, 1, false);
     substitutionHandler.setPredicate(new RegExpPredicate(referenceText.replaceAll("\\.","\\\\."),true, null, false,false));
     context.pattern.setHandler(expr,substitutionHandler);
@@ -836,21 +731,11 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     return instance;
   }
 
-  void compile(PsiElement element, CompileContext context) {
+  synchronized void compile(PsiElement element, CompileContext context) {
     codeBlockLevel = 0;
     this.context = context;
     element.accept(this);
   }
 
   private static CompilingVisitor instance;
-
-  private class MyFileProcessor implements Processor<PsiFile> {
-    public boolean process(PsiFile file) {
-      if (context.scanRequest == 0 ||
-          context.filesToScan.get(file)!=null) {
-        context.filesToScan2.put(file,file);
-      }
-      return true;
-    }
-  }
 }

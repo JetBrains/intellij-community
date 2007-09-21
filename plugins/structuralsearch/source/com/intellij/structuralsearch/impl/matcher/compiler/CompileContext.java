@@ -1,16 +1,9 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
-import com.intellij.lexer.JavaLexer;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
-
-import java.util.HashMap;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,33 +13,14 @@ import java.util.HashMap;
  * To change this template use File | Settings | File Templates.
  */
 class CompileContext {
-  PsiSearchHelper helper;
-  THashMap<PsiFile,PsiFile> filesToScan;
-  THashMap<PsiFile,PsiFile> filesToScan2;
-  HashMap<String,String> scanned;
-  HashMap<String,String> scannedComments;
-  HashMap<String,String> scannedLiterals;
-  int scanRequest;
-
-  boolean findMatchingFiles;
+  OptimizingSearchHelper searchHelper;
+  
   CompiledPattern pattern;
   MatchOptions options;
   Project project;
-  JavaLexer javaLexer;
-
-  public boolean isScannedSomething() {
-    return scanned.size() > 0 || scannedComments.size() > 0 || scannedLiterals.size() > 0;
-  }
 
   public void clear() {
-    if (filesToScan != null) {
-      filesToScan.clear();
-      filesToScan2.clear();
-      scanned.clear();
-      scannedComments.clear();
-      scannedLiterals.clear();
-      helper = null;
-    }
+    searchHelper.clear();
 
     project = null;
     pattern = null;
@@ -58,19 +32,8 @@ class CompileContext {
     project = _project;
     pattern = _result;
 
-    findMatchingFiles = _findMatchingFiles;
-
-    if (findMatchingFiles) {
-      helper = PsiManager.getInstance(project).getSearchHelper();
-      scanRequest = 0;
-
-      if (filesToScan == null) {
-        filesToScan = new THashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);
-        filesToScan2 = new THashMap<PsiFile,PsiFile>(TObjectHashingStrategy.CANONICAL);
-        scanned = new HashMap<String,String>();
-        scannedComments = new HashMap<String,String>();
-        scannedLiterals = new HashMap<String,String>();
-      }
-    }
+    searchHelper = ApplicationManager.getApplication().isUnitTestMode() ?
+                   new TestModeOptimizingSearchHelper(this) :
+                   new FindInFilesOptimizingSearchHelper(this, _findMatchingFiles, _project);
   }
 }

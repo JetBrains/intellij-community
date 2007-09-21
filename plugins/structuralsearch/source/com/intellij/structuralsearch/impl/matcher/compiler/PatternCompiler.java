@@ -69,6 +69,10 @@ public class PatternCompiler {
     return result[0];
   }
 
+  public static String getLastFindPlan() {
+    return ((TestModeOptimizingSearchHelper)context.searchHelper).getSearchPlan();
+  }
+
   private static CompiledPattern compilePatternImpl(Project project,MatchOptions options) {
 
     CompiledPattern result = options.getFileType() == StdFileTypes.JAVA ?
@@ -232,8 +236,8 @@ public class PatternCompiler {
         new DeleteNodesAction(compilingVisitor.getLexicalNodes())
       );
 
-      if (context.findMatchingFiles && context.isScannedSomething()) {
-        final Set<PsiFile> set = context.filesToScan.keySet();
+      if (context.searchHelper.doOptimizing() && context.searchHelper.isScannedSomething()) {
+        final Set<PsiFile> set = context.searchHelper.getFilesSetToScan();
         final List<PsiFile> filesToScan = new ArrayList<PsiFile>(set.size());
         final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
 
