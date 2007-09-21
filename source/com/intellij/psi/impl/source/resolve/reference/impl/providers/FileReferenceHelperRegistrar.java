@@ -62,7 +62,7 @@ public class FileReferenceHelperRegistrar {
   }
 
   public static boolean areElementsEquivalent(@NotNull final PsiFileSystemItem element1, @NotNull final PsiFileSystemItem element2) {
-    return element2.getManager().areElementsEquivalent(normalizeItem(element1), normalizeItem(element2));
+    return element2.getManager().areElementsEquivalent(element1, element2);
   }
 
   @Nullable

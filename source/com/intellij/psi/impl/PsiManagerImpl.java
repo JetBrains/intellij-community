@@ -296,8 +296,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     VirtualFile virtualFile = null;
     if (file != null) {
       virtualFile = file.getViewProvider().getVirtualFile();
-    } else if (element instanceof PsiDirectory) {
-      virtualFile = ((PsiDirectory)element).getVirtualFile();
+    } else if (element instanceof PsiFileSystemItem) {
+      virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
     }
 
     if (virtualFile != null) {
