@@ -8,8 +8,8 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetDirectoriesListViaUp
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.*;
 
 class RootDirectoryContentProvider extends CompositeOperaton implements DirectoryContentProvider{
-  private GetDirectoriesListViaUpdateOperation myDirectoryListOperation;
-  private GetModulesListOperation myModuleListOperation;
+  private final GetDirectoriesListViaUpdateOperation myDirectoryListOperation;
+  private final GetModulesListOperation myModuleListOperation;
 
   public RootDirectoryContentProvider(CvsEnvironment env){
     myDirectoryListOperation = new GetDirectoriesListViaUpdateOperation(env, ".");
@@ -18,6 +18,7 @@ class RootDirectoryContentProvider extends CompositeOperaton implements Director
     addOperation(myDirectoryListOperation);
     addOperation(myModuleListOperation);
   }
+
   public DirectoryContent getDirectoryContent() {
     DirectoryContent result = new DirectoryContent();
     result.copyDataFrom(myDirectoryListOperation.getDirectoryContent());

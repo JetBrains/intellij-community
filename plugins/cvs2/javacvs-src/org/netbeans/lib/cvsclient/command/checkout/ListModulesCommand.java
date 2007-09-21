@@ -13,6 +13,7 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,7 +25,7 @@ public class ListModulesCommand extends Command {
 
   // Fields =================================================================
 
-  private final Set modules = new HashSet();
+  private final Set<Module> modules = new HashSet<Module>();
   private Module lastModule;
 
   // Setup ==================================================================
@@ -62,12 +63,13 @@ public class ListModulesCommand extends Command {
 
   // Accessing ==============================================================
 
-  public Set getModules() {
+  public Set<Module> getModules() {
     return modules;
   }
 
   // Utils ==================================================================
 
+  @Nullable
   private static String trimMaybeNull(String string) {
     if (string == null) {
       return null;
