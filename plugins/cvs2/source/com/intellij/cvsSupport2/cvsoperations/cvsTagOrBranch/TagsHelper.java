@@ -1,7 +1,6 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch;
 
 import com.intellij.CvsBundle;
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
@@ -19,10 +18,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
 import org.netbeans.lib.cvsclient.command.log.SymbolicName;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -50,19 +49,7 @@ public class TagsHelper {
   }
 
   @Nullable
-  public static String chooseBranch(CvsEnvironment env, Project project) {
-    try {
-      BranchesProvider provider = getBranchesProvider(new GetAllBranchesOperation(env), project, false);
-      return chooseFrom(provider.getAllBranches(), new ArrayList<CvsRevisionNumber>());
-    }
-    catch (VcsException e1) {
-      showErrorMessage(e1);
-      return null;
-    }
-  }
-
-  @Nullable
-  private static String chooseBranch(Collection<FilePath> files, Project project, boolean forTemporaryConfiguration) {
+  public static String chooseBranch(Collection<FilePath> files, Project project, boolean forTemporaryConfiguration) {
     try {
       return chooseFrom(collectAllBranches(files, project, forTemporaryConfiguration), new ArrayList<CvsRevisionNumber>());
     }

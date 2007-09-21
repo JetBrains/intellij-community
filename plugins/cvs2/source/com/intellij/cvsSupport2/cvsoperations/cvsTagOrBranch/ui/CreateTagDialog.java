@@ -1,17 +1,20 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui;
 
+import com.intellij.CvsBundle;
+import com.intellij.peer.PeerFactory;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.ui.experts.importToCvs.CvsFieldValidator;
-import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.CvsBundle;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * author: lesya
@@ -33,8 +36,7 @@ public class CreateTagDialog extends CvsTagDialog {
 
     myTagName.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        String branchName = TagsHelper.chooseBranch(CvsUtil.getCvsConnectionSettings(files.iterator().next()),
-                                                    project);
+        String branchName = TagsHelper.chooseBranch(collectVcsRoots(project, files), project, false);
         if (branchName != null)
           myTagName.setText(branchName);        
       }
@@ -44,6 +46,17 @@ public class CreateTagDialog extends CvsTagDialog {
 
     CvsFieldValidator.installOn(this, myTagName.getTextField(), myErrorLabel);
     init();
+  }
+
+  public static Collection<FilePath> collectVcsRoots(final Project project, final Collection<FilePath> files) {
+    Collection<FilePath> result = new HashSet<FilePath>();
+    for(FilePath filePath: files) {
+      final VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(filePath);
+      if (root != null) {
+        result.add(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(root));
+      }
+    }
+    return result;
   }
 
   public String getTagName() {

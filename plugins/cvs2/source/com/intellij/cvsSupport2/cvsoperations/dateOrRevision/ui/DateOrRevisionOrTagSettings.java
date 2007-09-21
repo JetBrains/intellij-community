@@ -36,7 +36,7 @@ public class DateOrRevisionOrTagSettings {
   private DatePicker myDatePicker;
   private final Project myProject;
 
-  private TagsProvider myTagsProvider;
+  private final TagsProvider myTagsProvider;
   private static final String EMPTY_DATE = "";
 
   public DateOrRevisionOrTagSettings(TagsProvider tagsProvider, Project project, final boolean forTemporaryConfiguration) {
