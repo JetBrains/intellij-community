@@ -85,15 +85,20 @@ public class IconUtil {
         }
         else {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-          if (psiFile instanceof PsiJavaFile) {
-            PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-            if (classes.length != 0) {
+          if (psiFile instanceof PsiClassOwner) {
+            PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
+            if (classes.length > 0) {
               // prefer icon of the class named after file
               final String fileName = file.getNameWithoutExtension();
+              Icon classIcon = null;
               for (PsiClass aClass : classes) {
-                icon = aClass.getIcon(flags);
-                if (Comparing.strEqual(aClass.getName(), fileName)) break;
+                if (Comparing.strEqual(aClass.getName(), fileName)) {
+                  classIcon = aClass.getIcon(flags);
+                  break;
+                }
               }
+              if (classIcon == null) classIcon = classes[classes.length - 1].getIcon(flags);
+              icon = classIcon;
             }
           }
         }
