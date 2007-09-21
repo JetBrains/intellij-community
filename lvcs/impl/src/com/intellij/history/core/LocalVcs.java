@@ -1,7 +1,7 @@
 package com.intellij.history.core;
 
 import com.intellij.history.Clock;
-import com.intellij.history.RevisionTimestampComparator;
+import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.revisions.*;
 import com.intellij.history.core.storage.Content;
@@ -238,9 +238,11 @@ public class LocalVcs implements ILocalVcs {
     return result;
   }
 
-  public byte[] getByteContent(String path, RevisionTimestampComparator c) {
+  public byte[] getByteContent(String path, FileRevisionTimestampComparator c) {
     for (Revision r : getRevisionsFor(path)) {
-      if (c.isSuitable(r.getTimestamp())) return getByteContentOf(r);
+      if (c.isSuitable(r.getEntry().getTimestamp(), r.getTimestamp())){
+        return getByteContentOf(r);
+      }
     }
     return null;
   }

@@ -3,7 +3,7 @@ package com.intellij.historyIntegrTests;
 
 import com.intellij.history.Clock;
 import com.intellij.history.LocalHistory;
-import com.intellij.history.RevisionTimestampComparator;
+import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.TestTimestampComparator;
 import com.intellij.history.core.revisions.Revision;
@@ -117,10 +117,10 @@ public class BasicsTest extends IntegrationTestCase {
     Clock.setCurrentTimestamp(20);
     f.setBinaryContent(new byte[]{2});
 
-    assertEquals(1, LocalHistory.getByteContent(myProject, f, comparator(10))[0]);
-    assertNull(LocalHistory.getByteContent(myProject, f, comparator(15)));
-    assertEquals(2, LocalHistory.getByteContent(myProject, f, comparator(20))[0]);
-    assertNull(LocalHistory.getByteContent(myProject, f, comparator(30)));
+    assertEquals(1, LocalHistory.getByteContent(myProject, f, revisionComparator(10))[0]);
+    assertNull(LocalHistory.getByteContent(myProject, f, revisionComparator(15)));
+    assertEquals(2, LocalHistory.getByteContent(myProject, f, revisionComparator(20))[0]);
+    assertNull(LocalHistory.getByteContent(myProject, f, revisionComparator(30)));
   }
 
   public void testContentAtDateForFilteredFilesIsNull() throws Exception {
@@ -128,7 +128,7 @@ public class BasicsTest extends IntegrationTestCase {
     Clock.setCurrentTimestamp(10);
     f.setBinaryContent(new byte[]{1});
 
-    assertNull(LocalHistory.getByteContent(myProject, f, comparator(10)));
+    assertNull(LocalHistory.getByteContent(myProject, f, revisionComparator(10)));
   }
 
   public void testRevisionsIfThereWasFileThatBecameUnversioned() throws IOException {
@@ -145,7 +145,7 @@ public class BasicsTest extends IntegrationTestCase {
   }
 
 
-  private RevisionTimestampComparator comparator(long timestamp) {
-    return new TestTimestampComparator(timestamp);
+  private FileRevisionTimestampComparator revisionComparator(long timestamp) {
+    return new TestTimestampComparator(-1, timestamp);
   }
 }

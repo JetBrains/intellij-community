@@ -21,7 +21,7 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     return getInstance(p).putCheckpoint();
   }
 
-  public static byte[] getByteContent(Project p, VirtualFile f, RevisionTimestampComparator c) {
+  public static byte[] getByteContent(Project p, VirtualFile f, FileRevisionTimestampComparator c) {
     return getInstance(p).getByteContent(f, c);
   }
 
@@ -43,7 +43,7 @@ public abstract class LocalHistory implements SettingsSavingComponent {
 
   protected abstract Checkpoint putCheckpoint();
 
-  protected abstract byte[] getByteContent(VirtualFile f, RevisionTimestampComparator c);
+  protected abstract byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
 
   protected abstract boolean isUnderControl(VirtualFile f);
 

@@ -13,7 +13,7 @@ import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.history.LocalHistory;
-import com.intellij.history.RevisionTimestampComparator;
+import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -271,9 +271,9 @@ public class CvsChangeProvider implements ChangeProvider {
   @Nullable
   public byte[] getLastUpToDateContentFor(@NotNull final VirtualFile f) {
     final long upToDateTimestamp = getUpToDateTimeForFile(f);
-    RevisionTimestampComparator c = new RevisionTimestampComparator() {
-      public boolean isSuitable(long revisionTimestamp) {
-        return CvsStatusProvider.timeStampsAreEqual(upToDateTimestamp, revisionTimestamp);
+    FileRevisionTimestampComparator c = new FileRevisionTimestampComparator() {
+      public boolean isSuitable(long fileTimestamp, long revisionTimestamp) {
+        return CvsStatusProvider.timeStampsAreEqual(upToDateTimestamp, fileTimestamp);
       }
     };
     return LocalHistory.getByteContent(myVcs.getProject(), f, c);

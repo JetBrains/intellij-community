@@ -167,7 +167,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   @Override
-  protected byte[] getByteContent(VirtualFile f, RevisionTimestampComparator c) {
+  protected byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c) {
     if (!isInitialized) return null;
     if (!isUnderControl(f)) return null;
     return myVcs.getByteContent(f.getPath(), c);
