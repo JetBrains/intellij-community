@@ -34,23 +34,23 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class ParameterizedCachedValueImpl<T> implements ParameterizedCachedValue<T> {
+public class ParameterizedCachedValueImpl<T,P> implements ParameterizedCachedValue<T,P> {
   private static final Object NULL = new Object();
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
 
   private final PsiManager myManager;
-  private final ParameterizedCachedValueProvider<T> myProvider;
+  private final ParameterizedCachedValueProvider<T,P> myProvider;
   private final boolean myTrackValue;
 
   private final MyTimedReference<T> myData = new MyTimedReference<T>();
 
 
   private long myLastPsiTimeStamp = -1;
-  private ReentrantReadWriteLock rw = new ReentrantReadWriteLock();
-  private Lock r = rw.readLock();
-  private Lock w = rw.writeLock();
+  private final ReentrantReadWriteLock rw = new ReentrantReadWriteLock();
+  private final Lock r = rw.readLock();
+  private final Lock w = rw.writeLock();
 
-  public ParameterizedCachedValueImpl(PsiManager manager, ParameterizedCachedValueProvider<T> provider, boolean trackValue) {
+  public ParameterizedCachedValueImpl(PsiManager manager, ParameterizedCachedValueProvider<T,P> provider, boolean trackValue) {
     myManager = manager;
     myProvider = provider;
     myTrackValue = trackValue;
@@ -76,7 +76,7 @@ public class ParameterizedCachedValueImpl<T> implements ParameterizedCachedValue
 
 
   @Nullable
-  public T getValue(Object param) {
+  public T getValue(P param) {
     r.lock();
 
     T value;
@@ -246,7 +246,7 @@ public class ParameterizedCachedValueImpl<T> implements ParameterizedCachedValue
     }
   }
 
-  public ParameterizedCachedValueProvider<T> getValueProvider() {
+  public ParameterizedCachedValueProvider<T,P> getValueProvider() {
     return myProvider;
   }
 

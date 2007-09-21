@@ -53,7 +53,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author cdr
  */
 public class InjectedLanguageUtil {
-  private static final Key<ParameterizedCachedValue<Places>> INJECTED_PSI_KEY = Key.create("INJECTED_PSI");
+  private static final Key<ParameterizedCachedValue<Places, PsiElement>> INJECTED_PSI_KEY = Key.create("INJECTED_PSI");
   private static final Key<List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
   @Deprecated
@@ -377,7 +377,7 @@ public class InjectedLanguageUtil {
 
     for (PsiElement current = element; current != null && current != hostPsiFile; current = current.getParent()) {
       if ("EL".equals(current.getLanguage().getID())) break;
-      ParameterizedCachedValue<Places> data = current.getUserData(INJECTED_PSI_KEY);
+      ParameterizedCachedValue<Places,PsiElement> data = current.getUserData(INJECTED_PSI_KEY);
       if (data != null) {
         Places value = data.getValue(current);
         if (value != null) {
@@ -386,10 +386,10 @@ public class InjectedLanguageUtil {
       }
       Places places = InjectedPsiProvider.doCompute(current, injectedManager, project, hostPsiFile);
       if (places != null) {
-        ParameterizedCachedValue<Places> cachedValue = psiManager.getCachedValuesManager().createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
+        ParameterizedCachedValue<Places,PsiElement> cachedValue = psiManager.getCachedValuesManager().createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
         Document hostDocument = hostPsiFile.getViewProvider().getDocument();
         CachedValueProvider.Result<Places> result = new CachedValueProvider.Result<Places>(places, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
-        ((ParameterizedCachedValueImpl<Places>)cachedValue).setValue(result);
+        ((ParameterizedCachedValueImpl<Places,PsiElement>)cachedValue).setValue(result);
         for (Place place : places) {
           for (PsiLanguageInjectionHost.Shred pair : place.myShreds) {
             pair.host.putUserData(INJECTED_PSI_KEY, cachedValue);
@@ -437,9 +437,8 @@ public class InjectedLanguageUtil {
     return out.get();
   }
 
-  private static class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places> {
-    public CachedValueProvider.Result<Places> compute(Object param) {
-      final PsiElement element = (PsiElement)param;
+  private static class InjectedPsiProvider implements ParameterizedCachedValueProvider<Places, PsiElement> {
+    public CachedValueProvider.Result<Places> compute(PsiElement element) {
       PsiFile hostPsiFile = element.getContainingFile();
       if (hostPsiFile == null) return null;
       FileViewProvider viewProvider = hostPsiFile.getViewProvider();

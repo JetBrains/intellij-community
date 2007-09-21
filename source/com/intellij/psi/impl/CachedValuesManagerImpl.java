@@ -17,7 +17,7 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
     return new CachedValueImpl<T>(myManager, provider, trackValue);
   }
 
-  public <T> ParameterizedCachedValue<T> createParameterizedCachedValue(ParameterizedCachedValueProvider<T> provider, boolean trackValue) {
-    return new ParameterizedCachedValueImpl<T>(myManager, provider, trackValue);
+  public <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(ParameterizedCachedValueProvider<T,P> provider, boolean trackValue) {
+    return new ParameterizedCachedValueImpl<T,P>(myManager, provider, trackValue);
   }
 }
