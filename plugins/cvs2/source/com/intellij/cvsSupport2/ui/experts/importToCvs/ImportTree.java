@@ -13,13 +13,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
@@ -31,14 +36,16 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * author: lesya
+ * @author lesya
  */
 public class ImportTree extends NodeRenderer {
-  private Collection<VirtualFile> myExcludedFiles = new HashSet<VirtualFile>();
+  private final Collection<VirtualFile> myExcludedFiles = new HashSet<VirtualFile>();
+  private final Project myProject;
   private final FileSystemTree myFileSystemTree;
   private final CvsWizard myWizard;
 
-  public ImportTree(FileSystemTree fileSystemTree, CvsWizard wizard) {
+  public ImportTree(@Nullable Project project, FileSystemTree fileSystemTree, CvsWizard wizard) {
+    myProject = project;
     myFileSystemTree = fileSystemTree;
     myWizard = wizard;
   }
@@ -143,8 +150,7 @@ public class ImportTree extends NodeRenderer {
 
   private boolean isExcluded(FileElement fileElement) {
     VirtualFile file = fileElement.getFile();
-    if (file == null) return false;
-    return isExcluded(file);
+    return file != null && isExcluded(file);
   }
 
   public boolean isExcluded(VirtualFile file) {
@@ -157,7 +163,7 @@ public class ImportTree extends NodeRenderer {
   public IIgnoreFileFilter getIgnoreFileFilter() {
     final Collection<File> ignoredFiles = new HashSet<File>();
     for (final VirtualFile myExcludedFile : myExcludedFiles) {
-      ignoredFiles.add(CvsVfsUtil.getFileFor((VirtualFile)myExcludedFile));
+      ignoredFiles.add(CvsVfsUtil.getFileFor(myExcludedFile));
 
     }
     return new IIgnoreFileFilter() {
@@ -166,6 +172,15 @@ public class ImportTree extends NodeRenderer {
       public boolean shouldBeIgnored(AbstractFileObject abstractFileObject, ICvsFileSystem cvsFileSystem) {
         File file = cvsFileSystem.getLocalFileSystem().getFile(abstractFileObject);
         if (file.isDirectory() && file.getName().equals(CvsUtil.CVS)) return true;
+
+        if (FileTypeManager.getInstance().isFileIgnored(abstractFileObject.getName())) return true;
+        if (myProject != null) {
+          final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+          if (vFile != null && ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(vFile)) {
+            return true;
+          }
+        }
+
         if (ignoredFiles.contains(file)) return true;
         File parentFile = file.getParentFile();
         if (parentFile == null) return false;

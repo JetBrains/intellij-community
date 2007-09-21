@@ -10,21 +10,22 @@ import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
 import javax.swing.*;
 
 /**
- * author: lesya
+ * @author lesya
  */
-public class SelectImportLocationStep extends SelectLocationStep{
+public class SelectImportLocationStep extends SelectLocationStep {
   private final ImportTree myImportTree;
+
   public SelectImportLocationStep(String description, 
                                   CvsWizard wizard, 
                                   Project project,
                                   VirtualFile selectedFile) {
     super(description, wizard, project);
-    myImportTree = new ImportTree(myFileSystemTree, wizard);
+    myImportTree = new ImportTree(project, myFileSystemTree, wizard);
     init();
     JTree tree = myFileSystemTree.getTree();
     tree.setCellRenderer(myImportTree);
     if (selectedFile != null)
-      myFileSystemTree.select(selectedFile);
+      myFileSystemTree.select(selectedFile, null);
   }
 
   protected AnAction[] getActions() {
@@ -39,7 +40,6 @@ public class SelectImportLocationStep extends SelectLocationStep{
   }
 
   public boolean nextIsEnabled() {
-    if (!super.nextIsEnabled()) return false;
-    return !myImportTree.isExcluded(myFileSystemTree.getSelectedFile());
+    return super.nextIsEnabled() && !myImportTree.isExcluded(myFileSystemTree.getSelectedFile());
   }
 }

@@ -52,15 +52,15 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final ArrayList<Runnable> myOkActions = new ArrayList<Runnable>(2);
   private final FileChooserDescriptor myDescriptor;
 
-  private List<Listener> myListeners = new ArrayList<Listener>();
+  private final List<Listener> myListeners = new ArrayList<Listener>();
 
-  public FileSystemTreeImpl(Project project, FileChooserDescriptor descriptor) {
+  public FileSystemTreeImpl(@Nullable Project project, FileChooserDescriptor descriptor) {
     this(project, descriptor, new Tree(), null, null);
     myTree.setRootVisible(descriptor.isTreeRootVisible());
     myTree.setShowsRootHandles(true);
   }
 
-  public FileSystemTreeImpl(Project project, FileChooserDescriptor descriptor, Tree tree, TreeCellRenderer renderer,
+  public FileSystemTreeImpl(@Nullable Project project, FileChooserDescriptor descriptor, Tree tree, TreeCellRenderer renderer,
                             final Runnable onInitialized) {
     myProject = project;
     myTreeStructure = new FileTreeStructure(project, descriptor);
@@ -84,7 +84,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
-        processSelectionChange(e);
+        processSelectionChange();
       }
     });
 
@@ -248,7 +248,8 @@ public class FileSystemTreeImpl implements FileSystemTree {
     myTreeBuilder.expand(getFileElementFor(file), onDone);
   }
 
-  private FileElement getFileElementFor(VirtualFile file) {
+  @Nullable
+  private static FileElement getFileElementFor(VirtualFile file) {
     VirtualFile selectFile;
 
     if ((file.getFileSystem() instanceof JarFileSystem) && file.getParent() == null) {
@@ -425,7 +426,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     }
   }
 
-  private void processSelectionChange(final TreeSelectionEvent e) {
+  private void processSelectionChange() {
     if (myListeners.size() == 0) return;
     List<VirtualFile> selection = new ArrayList<VirtualFile>();
 
@@ -437,9 +438,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
           final Object object = ((DefaultMutableTreeNode)last).getUserObject();
           if (object instanceof FileNodeDescriptor) {
             final FileElement element = ((FileNodeDescriptor)object).getElement();
-            if (element != null) {
-              selection.add(element.getFile());
-            }
+            selection.add(element.getFile());
           }
         }
       }

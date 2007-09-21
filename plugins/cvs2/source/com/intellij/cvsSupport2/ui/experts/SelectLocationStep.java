@@ -8,9 +8,11 @@ import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -32,10 +34,18 @@ public abstract class SelectLocationStep extends WizardStep {
         }
       };
 
-  public SelectLocationStep(String description, CvsWizard wizard, Project project) {
+  public SelectLocationStep(String description, CvsWizard wizard, @Nullable final Project project) {
     super(description, wizard);
-    myFileSystemTree = PeerFactory.getInstance().getFileSystemTreeFactory().createFileSystemTree(project,
-                                          new FileChooserDescriptor(false, true, false, false, false, false));
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+      public boolean isFileVisible(final VirtualFile file, final boolean showHiddenFiles) {
+        if (!super.isFileVisible(file, showHiddenFiles)) return false;
+        if (!showHiddenFiles && project != null && ProjectRootManager.getInstance(project).getFileIndex().isIgnored(file)) {
+          return false;
+        }
+        return true;
+      }
+    };
+    myFileSystemTree = PeerFactory.getInstance().getFileSystemTreeFactory().createFileSystemTree(project, descriptor);
     myFileSystemTree.updateTree();
 
     JTree tree = myFileSystemTree.getTree();
