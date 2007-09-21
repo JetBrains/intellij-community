@@ -1,13 +1,12 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.Patches;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
@@ -76,7 +75,13 @@ public class HotSwapProgressImpl extends HotSwapProgress{
               if (msg.length() > 0) {
                 msg.append(" \n");
               }
-              msg.append(buildMessage(getMessages(category)));
+              final List<String> categoryMessages = getMessages(category);
+              for (Iterator<String> it = categoryMessages.iterator(); it.hasNext();) {
+                msg.append(it.next());
+                if (it.hasNext()) {
+                  msg.append(" \n");
+                }
+              }
             }
             WindowManager.getInstance().getStatusBar(getProject()).setInfo(msg.toString());
           }
@@ -93,15 +98,14 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     return messages == null? Collections.<String>emptyList() : messages;
   }
     
-  private String buildMessage(List<String> messages) {
+  private static String buildMessage(List<String> messages) {
     final StringBuilder msg = StringBuilderSpinAllocator.alloc();
     try {
       for (Iterator<String> it = messages.iterator(); it.hasNext();) {
-        final String message = it.next();
-        if (msg.length() > 0) {
+        msg.append(it.next());
+        if (it.hasNext()) {
           msg.append(" \n");
         }
-        msg.append(message);
       }
       return msg.toString();
     }
