@@ -17,11 +17,19 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NonNls;
 
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "UnusedDeclaration"})
 public class Key<T> {
-  private String myName; // for debug purposes only
+  private static int ourKeysCounter = 0;
+  private final int myIndex = ourKeysCounter++;
+
+  private final String myName; // for debug purposes only
 
   public Key(@NonNls String name) {
     myName = name;
+  }
+
+  public int hashCode() {
+    return myIndex;
   }
 
   public String toString() {

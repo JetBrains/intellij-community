@@ -16,22 +16,17 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.LockPoolSynchronizedMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.UserDataHolderBase");
 
   private volatile Map<Key, Object> myUserMap = null;
-
-  private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-  private static final Lock r = rwl.readLock();
-  private static final Lock w = rwl.writeLock();
+  private static final Object WRITE_LOCK = new Object();
 
   protected static final Key<Map<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
@@ -49,44 +44,31 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   public String getUserDataString() {
-    r.lock();
-    try {
-      if (myUserMap != null) {
-        final Map copyableMap = (Map)myUserMap.get(COPYABLE_USER_MAP_KEY);
-        if (copyableMap == null) {
-          return myUserMap.toString();
-        }
-        else {
-          return myUserMap.toString() + copyableMap.toString();
-        }
+    final Map<Key, Object> userMap = myUserMap;
+    if (userMap != null) {
+      final Map copyableMap = (Map)userMap.get(COPYABLE_USER_MAP_KEY);
+      if (copyableMap == null) {
+        return userMap.toString();
       }
       else {
-        return "";
+        return userMap.toString() + copyableMap.toString();
       }
     }
-    finally {
-      r.unlock();
+    else {
+      return "";
     }
   }
 
   public <T> T getUserData(Key<T> key) {
-    if (myUserMap == null) return null;
-
-    r.lock();
-    try {
-      return myUserMap == null ? null : (T)myUserMap.get(key);
-    }
-    finally {
-      r.unlock();
-    }
+    final Map<Key, Object> map = myUserMap;
+    return map != null ? (T)myUserMap.get(key) : null;
   }
 
   public <T> void putUserData(Key<T> key, T value) {
-    w.lock();
-    try {
+    synchronized (WRITE_LOCK) {
       if (myUserMap == null) {
         if (value == null) return;
-        myUserMap = new THashMap<Key, Object>(2, 0.9f);
+        myUserMap = createMap();
       }
       if (value != null) {
         myUserMap.put(key, value);
@@ -98,9 +80,10 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
         }
       }
     }
-    finally {
-      w.unlock();
-    }
+  }
+
+  private static <T> LockPoolSynchronizedMap<Key, Object> createMap() {
+    return new LockPoolSynchronizedMap<Key, Object>(2, 0.9f);
   }
 
   public <T> T getCopyableUserData(Key<T> key) {
@@ -108,15 +91,8 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   protected <T> T getCopyableUserDataImpl(Key<T> key) {
-    r.lock();
-    try {
-      Map map = getUserData(COPYABLE_USER_MAP_KEY);
-      if (map == null) return null;
-      return (T)map.get(key);
-    }
-    finally {
-      r.unlock();
-    }
+    Map map = getUserData(COPYABLE_USER_MAP_KEY);
+    return map != null ? (T)map.get(key) : null;
   }
 
   public <T> void putCopyableUserData(Key<T> key, T value) {
@@ -124,12 +100,11 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   protected <T> void putCopyableUserDataImpl(Key<T> key, T value) {
-    w.lock();
-    try {
+    synchronized (WRITE_LOCK) {
       Map<Key, Object> map = getUserData(COPYABLE_USER_MAP_KEY);
       if (map == null) {
         if (value == null) return;
-        map = new THashMap<Key, Object>(1, 0.9f);
+        map = new LockPoolSynchronizedMap<Key, Object>(1, 0.9f);
         putUserData(COPYABLE_USER_MAP_KEY, map);
       }
 
@@ -143,17 +118,13 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
         }
       }
     }
-    finally {
-      w.unlock();
-    }
   }
 
   @NotNull
   public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
-    w.lock();
-    try {
+    synchronized (WRITE_LOCK) {
       if (myUserMap == null) {
-        myUserMap = new THashMap<Key, Object>(2, 0.9f);
+        myUserMap = createMap();
         myUserMap.put(key, value);
         return value;
       }
@@ -166,17 +137,13 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
         return prev;
       }
     }
-    finally {
-      w.unlock();
-    }
   }
 
   public <T> boolean replace(@NotNull Key<T> key, @NotNull T oldValue, @Nullable T newValue) {
-    w.lock();
-    try {
+    synchronized (WRITE_LOCK) {
       if (myUserMap == null) {
         if (newValue != null) {
-          myUserMap = new THashMap<Key, Object>(2, 0.9f);
+          myUserMap = createMap();
           myUserMap.put(key, newValue);
         }
         return true;
@@ -196,33 +163,20 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
       }
       return false;
     }
-    finally {
-      w.unlock();
-    }
   }
 
   protected void copyCopyableDataTo(UserDataHolderBase clone) {
-    r.lock();
     Map<Key, Object> copyableMap;
-    try {
-      copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
-      if (copyableMap != null) {
-        copyableMap = ((THashMap)copyableMap).clone();
-      }
-    }
-    finally {
-      r.unlock();
+    copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
+    if (copyableMap != null) {
+      copyableMap = ((LockPoolSynchronizedMap)copyableMap).clone();
     }
     clone.putUserData(COPYABLE_USER_MAP_KEY, copyableMap);
   }
 
   protected void clearUserData() {
-    w.lock();
-    try {
-       myUserMap = null;
-    }
-    finally{
-      w.unlock();
+    synchronized (WRITE_LOCK) {
+      myUserMap = null;
     }
   }
 }
