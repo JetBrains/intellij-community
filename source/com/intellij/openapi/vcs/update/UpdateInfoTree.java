@@ -136,10 +136,6 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     }
   }
 
-  public boolean isCanGroupByChangeList() {
-    return myCanGroupByChangeList;
-  }
-
   public void setCanGroupByChangeList(final boolean canGroupByChangeList) {
     myCanGroupByChangeList = canGroupByChangeList;
     if (myCanGroupByChangeList) {

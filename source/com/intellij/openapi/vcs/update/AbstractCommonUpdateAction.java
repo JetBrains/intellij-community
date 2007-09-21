@@ -190,7 +190,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                     messageBusConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
                       public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
                         if (receivedChanges != null) {
-                          updateInfoTree.setChangeLists(receivedChanges);
+                          ApplicationManager.getApplication().invokeLater(new Runnable() {
+                            public void run() {
+                              updateInfoTree.setChangeLists(receivedChanges);
+                            }
+                          }, myProject.getDisposed());
                           messageBusConnection.disconnect();
                         }
                       }
