@@ -24,7 +24,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author peter
@@ -51,9 +50,7 @@ public class ReflectionCache {
   };
 
   private static final Map<Class, Map<Class,Boolean>> ourAssignables = new THashMap<Class, Map<Class, Boolean>>();
-  private static final ReentrantReadWriteLock ourLock = new ReentrantReadWriteLock();
-  private static final ReentrantReadWriteLock.ReadLock r = ourLock.readLock();
-  private static final ReentrantReadWriteLock.WriteLock w = ourLock.writeLock();
+  private static final Object cacheLock = new Object();
 
 
   private static final ConcurrentFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentFactoryMap<Class, Boolean>() {
@@ -101,29 +98,22 @@ public class ReflectionCache {
     if (CACHE_DISABLED) {
       return ancestor.isAssignableFrom(descendant);
     }
-    r.lock();
-    try {
-      Map<Class, Boolean> map = ourAssignables.get(ancestor);
-      if (map != null) {
-        final Boolean aBoolean = map.get(descendant);
-        if (aBoolean != null) {
-          return aBoolean;
-        }
-      }
-    } finally{
-      r.unlock();
-    }
-    w.lock();
-    try {
+
+    synchronized (cacheLock) {
       Map<Class, Boolean> map = ourAssignables.get(ancestor);
       if (map == null) {
-        ourAssignables.put(ancestor, map = new THashMap<Class, Boolean>());
+        map = new THashMap<Class, Boolean>();
+        ourAssignables.put(ancestor, map);
       }
-      final boolean result = ancestor.isAssignableFrom(descendant);
+
+      Boolean result = map.get(descendant);
+      if (result != null) {
+        return result;
+      }
+
+      result = ancestor.isAssignableFrom(descendant);
       map.put(descendant, result);
       return result;
-    } finally{
-      w.unlock();
     }
   }
 
