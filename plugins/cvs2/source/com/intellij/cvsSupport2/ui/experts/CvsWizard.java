@@ -4,13 +4,12 @@ import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
-import java.util.Iterator;
 
 /**
  * author: lesya
  */
-public class CvsWizard extends AbstractWizard {
-  public CvsWizard(String title, Project project) {
+public class CvsWizard extends AbstractWizard<WizardStep> {
+  protected CvsWizard(String title, Project project) {
     super(title, project);
   }
 
@@ -30,7 +29,7 @@ public class CvsWizard extends AbstractWizard {
   public void updateStep() {
     super.updateStep();
     if (getNumberOfSteps() == 0) return;
-    WizardStep currentStep = (WizardStep)getCurrentStepObject();
+    WizardStep currentStep = getCurrentStepObject();
     if (!currentStep.setActive()){
       doPreviousAction();
       return;
@@ -59,16 +58,16 @@ public class CvsWizard extends AbstractWizard {
   }
 
   protected void doOKAction() {
-    for (Iterator each = mySteps.iterator(); each.hasNext();) {
-      ((WizardStep)each.next()).saveState();
+    for (final WizardStep step : mySteps) {
+      step.saveState();
     }
     super.doOKAction();
   }
 
   public void dispose() {
     try {
-      for (Iterator each = mySteps.iterator(); each.hasNext();) {
-        ((WizardStep)each.next()).dispose();
+      for (final WizardStep step : mySteps) {
+        step.dispose();
       }
     }
     finally {

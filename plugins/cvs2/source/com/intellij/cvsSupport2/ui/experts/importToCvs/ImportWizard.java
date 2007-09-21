@@ -8,35 +8,36 @@ import com.intellij.cvsSupport2.ui.experts.SelectCVSConfigurationStep;
 import com.intellij.cvsSupport2.ui.experts.SelectCvsElementStep;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 
 import javax.swing.tree.TreeSelectionModel;
 
 /**
  * author: lesya
  */
-public class ImportWizard extends CvsWizard{
+public class ImportWizard extends CvsWizard {
   private final SelectCVSConfigurationStep mySelectCVSConfigurationStep;
   private final SelectCvsElementStep mySelectCvsElementStep;
-  private SelectImportLocationStep mySelectImportLocationStep;
-  private CustomizeKeywordSubstitutionStep myKeywordSubstitutionStep;
-  private ImportSettingsStep mySettingsStep;
+  private final SelectImportLocationStep mySelectImportLocationStep;
+  private final CustomizeKeywordSubstitutionStep myKeywordSubstitutionStep;
+  private final ImportSettingsStep mySettingsStep;
 
   public ImportWizard(Project project, VirtualFile selectedFile) {
-    super(com.intellij.CvsBundle.message("dialog.title.import.into.cvs"), project);
+    super(CvsBundle.message("dialog.title.import.into.cvs"), project);
     ImportConfiguration importConfig = ImportConfiguration.getInstance();
     mySelectCVSConfigurationStep = new SelectCVSConfigurationStep(project, this);
-    mySelectCvsElementStep = new SelectCvsElementStep(com.intellij.CvsBundle.message("dialog.title.select.directory.to.import.into"),this,
+    mySelectCvsElementStep = new SelectCvsElementStep(CvsBundle.message("dialog.title.select.directory.to.import.into"),this,
                                                       project,
                                                       mySelectCVSConfigurationStep,
                                                       false,TreeSelectionModel.SINGLE_TREE_SELECTION, true, false);
 
     mySelectImportLocationStep = new SelectImportLocationStep(
-                                            com.intellij.CvsBundle.message("dialog.title.select.import.directory"),
+                                            CvsBundle.message("dialog.title.select.import.directory"),
                                              this,
                                             project,
                                             selectedFile);
 
-    myKeywordSubstitutionStep = new CustomizeKeywordSubstitutionStep(com.intellij.CvsBundle.message("dialog.title.customize.keyword.substitutions"),
+    myKeywordSubstitutionStep = new CustomizeKeywordSubstitutionStep(CvsBundle.message("dialog.title.customize.keyword.substitutions"),
                 this, importConfig);
 
     mySettingsStep = new ImportSettingsStep(this, mySelectImportLocationStep, importConfig);
