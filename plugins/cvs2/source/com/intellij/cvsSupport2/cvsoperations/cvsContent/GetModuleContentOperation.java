@@ -14,6 +14,9 @@ import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.file.ILocalFileReader;
 import org.netbeans.lib.cvsclient.file.ILocalFileWriter;
 
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 /**
  * author: lesya
  */
@@ -21,7 +24,7 @@ public class GetModuleContentOperation extends CompositeOperaton implements Dire
   private final DirectoryContentListener myDirectoryContentListener = new DirectoryContentListener();
   private final AdminWriterStoringRepositoryPath myAdminWriterStoringRepositoryPath;
   private String myModuleLocation;
-  @NonNls private static final String UPDATING_PREFIX = "cvs server: Updating ";
+  @NonNls private static final Pattern UPDATING_PATTERN = Pattern.compile("cvs .*: Updating (.+)");
 
   public GetModuleContentOperation(CvsEnvironment environment, final String moduleName) {
     myAdminWriterStoringRepositoryPath = new AdminWriterStoringRepositoryPath(moduleName, environment.getCvsRootAsString());
@@ -59,8 +62,9 @@ public class GetModuleContentOperation extends CompositeOperaton implements Dire
       public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
         super.messageSent(message, byteMessage, error, tagged);
         myDirectoryContentListener.setModulePath(myAdminWriterStoringRepositoryPath.getModulePath());
-        if (message.startsWith(UPDATING_PREFIX)) {
-          if ((myModuleLocation != null) && message.equals(UPDATING_PREFIX + myModuleLocation)) {
+        final Matcher matcher = UPDATING_PATTERN.matcher(message);
+        if (matcher.matches()) {
+          if (myModuleLocation != null && myModuleLocation.equals(matcher.group(1))) {
             myIsInModule = true;
           }
           else {
