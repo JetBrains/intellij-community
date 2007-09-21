@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 public class DefaultPatchBaseVersionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider");
 
-  private Project myProject;
+  private final Project myProject;
 
   @NonNls private static final Pattern ourRevisionPattern = Pattern.compile("\\(revision (\\d+)\\)");
 
@@ -41,7 +41,8 @@ public class DefaultPatchBaseVersionProvider {
     myProject = project;
   }
 
-  public void getBaseVersionContent(VirtualFile virtualFile, FilePath filePath, String versionId, Processor<CharSequence> processor) {
+  public void getBaseVersionContent(VirtualFile virtualFile, FilePath filePath, String versionId,
+                                    Processor<CharSequence> processor) throws VcsException {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(filePath);
     if (vcs == null) {
       return;
@@ -84,9 +85,6 @@ public class DefaultPatchBaseVersionProvider {
       }
     }
     catch(IOException e) {
-      LOG.error(e);
-    }
-    catch (VcsException e) {
       LOG.error(e);
     }
   }

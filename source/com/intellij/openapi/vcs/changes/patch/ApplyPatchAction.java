@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -67,20 +68,19 @@ public class ApplyPatchAction extends AnAction {
     applyPatch(project, dialog.getPatches(), dialog.getApplyPatchContext(), dialog.getSelectedChangeList());
   }
 
-  private static ApplyPatchStatus applyPatch(final Project project, final List<FilePatch> patches,
-                                            final ApplyPatchContext context, final LocalChangeList targetChangeList) {
+  private static void applyPatch(final Project project, final List<FilePatch> patches,
+                                 final ApplyPatchContext context, final LocalChangeList targetChangeList) {
     List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
     if (!prepareFiles(project, patches, context, filesToMakeWritable)) {
-      return ApplyPatchStatus.FAILURE;
+      return;
     }
     final VirtualFile[] fileArray = filesToMakeWritable.toArray(new VirtualFile[filesToMakeWritable.size()]);
     final ReadonlyStatusHandler.OperationStatus readonlyStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(fileArray);
     if (readonlyStatus.hasReadonlyFiles()) {
-      return ApplyPatchStatus.FAILURE;
+      return;
     }
-    final ApplyPatchStatus patchStatus = applyFilePatches(project, patches, context);
+    applyFilePatches(project, patches, context);
     moveChangesToList(project, context.getAffectedFiles(), targetChangeList);
-    return patchStatus;
   }
 
   public static ApplyPatchStatus applyFilePatches(final Project project, final List<FilePatch> patches,
@@ -128,14 +128,14 @@ public class ApplyPatchAction extends AnAction {
       }
       catch (IOException e) {
         Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(),
-                                 "Apply Patch");
+                                 VcsBundle.message("patch.apply.dialog.title"));
         return false;
       }
       // security check to avoid overwriting system files with a patch
       if (fileToPatch != null && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(fileToPatch) && 
           ProjectLevelVcsManager.getInstance(project).getVcsRootFor(fileToPatch) == null) {
         Messages.showErrorDialog(project, "File to patch found outside content root: " + patch.getBeforeName(),
-                                 "Apply Patch");
+                                 VcsBundle.message("patch.apply.dialog.title"));
         return false;
       }
       if (fileToPatch != null && !fileToPatch.isDirectory()) {
@@ -168,11 +168,13 @@ public class ApplyPatchAction extends AnAction {
       file = patch.findFileToPatch(context);
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(), "Apply Patch");
+      Messages.showErrorDialog(project, "Error when searching for file to patch: " + patch.getBeforeName() + ": " + e.getMessage(),
+                               VcsBundle.message("patch.apply.dialog.title"));
       return ApplyPatchStatus.FAILURE;
     }
     if (file == null) {
-      Messages.showErrorDialog(project, "Cannot find file to patch: " + patch.getBeforeName(), "Apply Patch");
+      Messages.showErrorDialog(project, "Cannot find file to patch: " + patch.getBeforeName(),
+                               VcsBundle.message("patch.apply.dialog.title"));
       return ApplyPatchStatus.FAILURE;
     }
 
@@ -187,19 +189,26 @@ public class ApplyPatchAction extends AnAction {
           final StringBuilder newText = new StringBuilder();
           final Ref<CharSequence> contentRef = new Ref<CharSequence>();
           final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
-          provider.getBaseVersionContent(file, pathBeforeRename, patch.getBeforeVersionId(), new Processor<CharSequence>() {
-            public boolean process(final CharSequence text) {
-              newText.setLength(0);
-              try {
-                statusRef.set(patch.applyModifications(text, newText));
+          try {
+            provider.getBaseVersionContent(file, pathBeforeRename, patch.getBeforeVersionId(), new Processor<CharSequence>() {
+              public boolean process(final CharSequence text) {
+                newText.setLength(0);
+                try {
+                  statusRef.set(patch.applyModifications(text, newText));
+                }
+                catch(ApplyPatchException ex) {
+                  return true;  // continue to older versions
+                }
+                contentRef.set(text);
+                return false;
               }
-              catch(ApplyPatchException ex) {
-                return true;  // continue to older versions
-              }
-              contentRef.set(text);
-              return false;
-            }
-          });
+            });
+          }
+          catch (VcsException vcsEx) {
+            Messages.showErrorDialog(project, VcsBundle.message("patch.load.base.revision.error", patch.getBeforeName(), vcsEx.getMessage()),
+                                     VcsBundle.message("patch.apply.dialog.title"));
+            return ApplyPatchStatus.FAILURE;
+          }
           ApplyPatchStatus status = statusRef.get();
           if (status != null) {
             if (status != ApplyPatchStatus.ALREADY_APPLIED) {
