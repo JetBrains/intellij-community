@@ -16,7 +16,7 @@ Groovy script
     PsiElement(()('(')
     Parameter list
       Parameter
-        Parameter modifiers
+        Modifiers
           <empty list>
         Type element
           Reference element

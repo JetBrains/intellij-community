@@ -171,7 +171,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   //parameters
   GroovyElementType PARAMETERS_LIST = new GroovyElementType("parameters list");
   GroovyElementType PARAMETER = new GroovyElementType("parameter");
-  GroovyElementType PARAMETER_MODIFIERS = new GroovyElementType("parameter modifiers");
 
   GroovyElementType CLASS_BODY = new GroovyElementType("class block");
 

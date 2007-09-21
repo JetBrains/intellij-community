@@ -15,7 +15,7 @@ Groovy script
     PsiElement(()('(')
     Parameter list
       Parameter
-        Parameter modifiers
+        Modifiers
           <empty list>
         Built in type
           PsiElement(int)('int')
@@ -24,7 +24,7 @@ Groovy script
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
       Parameter
-        Parameter modifiers
+        Modifiers
           <empty list>
         Built in type
           PsiElement(int)('int')

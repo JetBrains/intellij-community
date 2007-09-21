@@ -29,7 +29,7 @@ Groovy script
         PsiElement(()('(')
         Parameter list
           Parameter
-            Parameter modifiers
+            Modifiers
               <empty list>
             Built in type
               PsiElement(int)('int')

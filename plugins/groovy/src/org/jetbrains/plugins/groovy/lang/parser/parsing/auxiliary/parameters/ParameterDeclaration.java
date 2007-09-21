@@ -116,7 +116,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
         ParserUtils.getToken(builder, mNLS);
       }
     }
-    marker.done(PARAMETER_MODIFIERS);
+    marker.done(MODIFIERS);
   }
 
 }

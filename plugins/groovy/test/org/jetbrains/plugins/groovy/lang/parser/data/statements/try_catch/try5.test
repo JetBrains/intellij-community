@@ -48,7 +48,7 @@ Groovy script
           PsiWhiteSpace(' ')
           PsiElement(()('(')
           Parameter
-            Parameter modifiers
+            Modifiers
               <empty list>
             Type element
               Reference element

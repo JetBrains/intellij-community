@@ -30,7 +30,7 @@ Groovy script
         PsiElement(()('(')
         Parameter list
           Parameter
-            Parameter modifiers
+            Modifiers
               PsiElement(def)('def')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('a')
@@ -42,7 +42,7 @@ Groovy script
           PsiElement(,)(',')
           PsiWhiteSpace(' ')
           Parameter
-            Parameter modifiers
+            Modifiers
               <empty list>
             Array type
               Array type

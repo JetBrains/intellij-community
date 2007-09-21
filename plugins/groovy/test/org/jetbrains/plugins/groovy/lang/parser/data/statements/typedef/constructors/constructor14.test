@@ -38,7 +38,7 @@ Groovy script
         PsiElement(()('(')
         Parameter list
           Parameter
-            Parameter modifiers
+            Modifiers
               <empty list>
             Built in type
               PsiElement(long)('long')
@@ -73,7 +73,7 @@ Groovy script
         PsiElement(()('(')
         Parameter list
           Parameter
-            Parameter modifiers
+            Modifiers
               <empty list>
             PsiElement(identifier)('anotherFoo')
         PsiElement())(')')

@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotat
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationNameValuePairImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationNameValuePairsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrParameterModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments.GrArgumentListImpl;
@@ -166,7 +165,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     //parameters
     if (elem.equals(PARAMETERS_LIST)) return new GrParameterListImpl(node);
     if (elem.equals(PARAMETER)) return new GrParameterImpl(node);
-    if (elem.equals(PARAMETER_MODIFIERS)) return new GrParameterModifierListImpl(node);
 
     //type parameters
     if (elem.equals(TYPE_ARGUMENT)) return new GrWildcardTypeArgumentImpl(node);

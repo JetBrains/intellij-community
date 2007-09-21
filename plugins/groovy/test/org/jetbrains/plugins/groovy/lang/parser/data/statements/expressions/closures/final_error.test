@@ -14,7 +14,7 @@ Groovy script
       PsiWhiteSpace('\n')
       Parameter list
         Parameter
-          Parameter modifiers
+          Modifiers
             PsiElement(def)('def')
             PsiWhiteSpace(' ')
             PsiElement(final)('final')

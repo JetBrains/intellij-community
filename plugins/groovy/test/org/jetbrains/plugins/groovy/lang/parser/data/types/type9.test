@@ -15,7 +15,7 @@ Groovy script
     PsiElement(()('(')
     Parameter list
       Parameter
-        Parameter modifiers
+        Modifiers
           <empty list>
         Array type
           Type element

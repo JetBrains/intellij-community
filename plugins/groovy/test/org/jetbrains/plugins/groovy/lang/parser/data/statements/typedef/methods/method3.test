@@ -24,14 +24,14 @@ Groovy script
         PsiElement(()('(')
         Parameter list
           Parameter
-            Parameter modifiers
+            Modifiers
               PsiElement(def)('def')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('x')
           PsiElement(,)(',')
           PsiWhiteSpace(' ')
           Parameter
-            Parameter modifiers
+            Modifiers
               PsiElement(final)('final')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('y')
