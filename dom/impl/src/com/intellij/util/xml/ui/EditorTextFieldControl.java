@@ -7,16 +7,17 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableFactory;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -24,7 +25,6 @@ import com.intellij.util.xml.highlighting.DomElementsProblemsHolder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,13 +51,9 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
       }
     }
   };
-  private final EditorTextFieldControlHighlighter myHighlighter;
-  private final PsiDocumentManager myPsiDocumentManager;
 
   protected EditorTextFieldControl(final DomWrapper<String> domWrapper, final boolean commitOnEveryChange) {
     super(domWrapper);
-    myHighlighter = EditorTextFieldControlHighlighter.getEditorTextFieldControlHighlighter(getProject());
-    myPsiDocumentManager = PsiDocumentManager.getInstance(getProject());
     myCommitOnEveryChange = commitOnEveryChange;
   }
 
@@ -67,17 +63,6 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
   }
 
   protected abstract EditorTextField getEditorTextField(@NotNull T component);
-
-  public void setEditorTextFieldBorder(Border border) {
-    T component = getComponent();
-    component.setBorder(null);
-    EditorTextField field = getEditorTextField(component);
-    Editor editor = field.getEditor();
-    if (editor != null) {
-      editor.getComponent().setBorder(border);
-      editor.getContentComponent().setBorder(border);
-    }
-  }
 
   protected void doReset() {
     final EditorTextField textField = getEditorTextField(getComponent());
@@ -100,22 +85,8 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
 
     final EditorTextField editorTextField = getEditorTextField(boundedComponent);
     editorTextField.setSupplementary(true);
-    final PsiCodeFragment file = getPsiFile(boundedComponent);
-    myHighlighter.addFile(file, new NullableFactory<DomElement>() {
-      public DomElement create() {
-        return isValid() ? getDomElement() : null;
-      }
-    }, this);
-
     editorTextField.getDocument().addDocumentListener(myListener);
     return boundedComponent;
-  }
-
-  @NotNull
-  private PsiCodeFragment getPsiFile(@NotNull final T boundedComponent) {
-    final PsiCodeFragment fragment = (PsiCodeFragment)myPsiDocumentManager.getPsiFile(getEditorTextField(boundedComponent).getDocument());
-    assert fragment != null;
-    return fragment;
   }
 
   protected abstract T createMainComponent(T boundedComponent, Project project);
@@ -165,6 +136,20 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
         else if (warningProblems.size() > 0) {
           background = getWarningBackground();
         }
+
+        final Editor editor = textField.getEditor();
+        if (editor != null) {
+          final MarkupModel markupModel = editor.getMarkupModel();
+          markupModel.removeAllHighlighters();
+          if (!errorProblems.isEmpty()) {
+            final TextAttributes attributes = SimpleTextAttributes.ERROR_ATTRIBUTES.toTextAttributes();
+            attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
+            attributes.setEffectColor(attributes.getForegroundColor());
+            markupModel.addLineHighlighter(0, 0, attributes);
+            editor.getContentComponent().setToolTipText(errorProblems.get(0).getDescriptionTemplate());
+          }
+        }
+
         textField.setBackground(background);
       }
     });
