@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class ViewWatchersAction extends AsbtractActionFromEditGroup {
+public class ViewWatchersAction extends AbstractActionFromEditGroup {
   private WatchersOperation myWatchersOperation;
 
   protected String getTitle(VcsContext context) {

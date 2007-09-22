@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.Watch;
 import org.netbeans.lib.cvsclient.command.watch.WatchMode;
 
-public abstract class AbstractWatchAction extends AsbtractActionFromEditGroup {
+public abstract class AbstractWatchAction extends AbstractActionFromEditGroup {
   protected CvsHandler getCvsHandler(CvsContext context) {
     CvsConfiguration configuration = CvsConfiguration.getInstance(context.getProject());
     WatcherDialog dialog = createDialog(configuration, context);

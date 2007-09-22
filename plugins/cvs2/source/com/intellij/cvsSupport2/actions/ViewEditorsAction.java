@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class ViewEditorsAction extends AsbtractActionFromEditGroup {
+public class ViewEditorsAction extends AbstractActionFromEditGroup {
   private EditorsOperation myEditorsOperation;
 
   protected String getTitle(VcsContext context) {

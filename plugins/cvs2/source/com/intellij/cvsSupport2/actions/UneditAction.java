@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * @author lesya
  */
-public class UneditAction extends AsbtractActionFromEditGroup {
+public class UneditAction extends AbstractActionFromEditGroup {
   @Override
   public void actionPerformed(final CvsContext context) {
     VirtualFile[] selectedFiles = context.getSelectedFiles();

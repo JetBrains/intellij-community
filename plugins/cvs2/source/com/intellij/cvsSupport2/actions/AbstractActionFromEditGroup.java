@@ -2,8 +2,8 @@ package com.intellij.cvsSupport2.actions;
 
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 
-public abstract class AsbtractActionFromEditGroup extends ActionOnSelectedElement {
-  public AsbtractActionFromEditGroup() {
+public abstract class AbstractActionFromEditGroup extends ActionOnSelectedElement {
+  public AbstractActionFromEditGroup() {
     super(false);
 
     CvsActionVisibility visibility = getVisibility();

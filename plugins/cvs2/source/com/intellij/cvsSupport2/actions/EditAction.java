@@ -15,7 +15,7 @@ import com.intellij.util.ui.OptionsDialog;
 /**
  * author: lesya
  */
-public class EditAction extends AsbtractActionFromEditGroup {
+public class EditAction extends AbstractActionFromEditGroup {
   public EditAction() {
   }
 
