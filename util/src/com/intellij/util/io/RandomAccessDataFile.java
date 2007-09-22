@@ -3,6 +3,8 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.Forceable;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -10,10 +12,11 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
-public class RandomAccessDataFile {
+public class RandomAccessDataFile implements Forceable {
   private final static PagePool ourPool = new PagePool();
   private static int ourFilesCount = 0;
   private final int myCount = ourFilesCount++;
+  private boolean myIsDirty = false;
 
   private final byte[] myTypedIOBuffer = new byte[8];
 
@@ -31,6 +34,7 @@ public class RandomAccessDataFile {
   }
 
   public void put(long addr, byte[] bytes, int off, int len) {
+    myIsDirty = true;
     mySize = Math.max(mySize, addr + len);
 
     if (len > Page.PAGE_SIZE) {
@@ -183,6 +187,25 @@ public class RandomAccessDataFile {
   public void dispose() {
     ourPool.flushPages(this);
     ourCache.closeChannel(myFile);
+  }
+
+  public void force() {
+    if (isDirty()) {
+      ourPool.flushPages(this);
+      try {
+        FileChannel channel = getChannel();
+        channel.force(false);
+        releaseChannel();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      myIsDirty = false;
+    }
+  }
+
+  public boolean isDirty() {
+    return myIsDirty;
   }
 
   public void loadPage(final Page page) {

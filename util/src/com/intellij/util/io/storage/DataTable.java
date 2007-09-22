@@ -4,13 +4,14 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.Forceable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.RandomAccessDataFile;
 
 import java.io.File;
 import java.io.IOException;
 
-class DataTable implements Disposable{
+class DataTable implements Disposable, Forceable {
   private static final int HEADER_SIZE = 32;
   private static final int CONNECTED_MAGIC = 0x12ad34e4;
   private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f;
@@ -20,6 +21,7 @@ class DataTable implements Disposable{
 
   private static final int HEADER_MAGIC_OFFSET = 0;
   private static final int HEADER_WASTE_SIZE_OFFSET = 4;
+  private boolean myIsDirty = false;
 
   public DataTable(final File filePath) throws IOException {
     myFile = new RandomAccessDataFile(filePath);
@@ -43,7 +45,7 @@ class DataTable implements Disposable{
     myWasteSize = myFile.getInt(HEADER_WASTE_SIZE_OFFSET);
   }
 
-  private void fillInHeader(int magic, int wasteSize) throws IOException {
+  private void fillInHeader(int magic, int wasteSize) {
     myFile.putInt(HEADER_MAGIC_OFFSET, magic);
     myFile.putInt(HEADER_WASTE_SIZE_OFFSET, wasteSize);
   }
@@ -53,6 +55,7 @@ class DataTable implements Disposable{
   }
 
   public void writeBytes(long address, byte[] bytes) {
+    markDirty();
     myFile.put(address, bytes, 0, bytes.length);
   }
 
@@ -69,12 +72,28 @@ class DataTable implements Disposable{
   }
 
   public void dispose() {
-    try {
-      fillInHeader(SAFELY_CLOSED_MAGIC, myWasteSize);
-      myFile.dispose();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    markClean();
+    myFile.dispose();
+  }
+
+  public void force() {
+    markClean();
+    myFile.force();
+  }
+
+  public boolean isDirty() {
+    return myIsDirty || myFile.isDirty();
+  }
+
+  private void markClean() {
+    myIsDirty = false;
+    fillInHeader(SAFELY_CLOSED_MAGIC, myWasteSize);
+  }
+
+  private void markDirty() {
+    if (!myIsDirty) {
+      myIsDirty = true;
+      fillInHeader(CONNECTED_MAGIC, 0);
     }
   }
 

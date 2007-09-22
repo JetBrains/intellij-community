@@ -4,6 +4,7 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class Storage implements Disposable {
+public class Storage implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.Storage");
 
   private final ReentrantLock lock = new ReentrantLock();
@@ -136,6 +137,27 @@ public class Storage implements Disposable {
     lock.lock();
     try {
       myRecordsTable.setVersion(expectedVersion);
+    }
+    finally {
+      lock.unlock();
+    }
+  }
+
+  public void force() {
+    lock.lock();
+    try {
+      myDataTable.force();
+      myRecordsTable.force();
+    }
+    finally {
+      lock.unlock();
+    }
+  }
+
+  public boolean isDirty() {
+    lock.lock();
+    try {
+      return myDataTable.isDirty() || myRecordsTable.isDirty();
     }
     finally {
       lock.unlock();

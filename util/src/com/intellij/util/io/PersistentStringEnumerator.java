@@ -3,13 +3,15 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.Forceable;
+
 import java.io.File;
 import java.io.IOException;
 
 /**
  * @author max
  */
-public class PersistentStringEnumerator {
+public class PersistentStringEnumerator implements Forceable {
   private MappedFile myStorage;
   private static final int FIRST_VECTOR_OFFSET = 4;
   private static final int DIRTY_MAGIC = 0xbabe0589;
@@ -241,6 +243,15 @@ public class PersistentStringEnumerator {
     if (myStorage.isMapped() || isDirty()) {
       markDirty(false);
       myStorage.flush();
+    }
+  }
+
+  public void force() {
+    try {
+      flush();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 

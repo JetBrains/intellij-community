@@ -3,6 +3,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 
@@ -13,7 +14,7 @@ import java.nio.MappedByteBuffer;
 /**
  * @author max
  */
-public class MappedFile {
+public class MappedFile implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.MappedFile");
 
   private MappedBufferWrapper myHolder;
@@ -22,6 +23,7 @@ public class MappedFile {
   private long myRealSize;
   private long mySize;
   private long myPosition;
+  private boolean myIsDirty = false;
 
   @NonNls private static final String UTF_8_CHARSET_NAME = "UTF-8";
   @NonNls private static final String RW = "rw";
@@ -29,12 +31,68 @@ public class MappedFile {
 
   public MappedFile(File file, int initialSize) throws IOException {
     myFile = file;
+    if (!file.exists()) {
+      writeLength(0);
+    }
+
     myPosition = 0;
     map();
 
-    mySize = myRealSize;
+    mySize = readLength();
     if (mySize == 0) {
       resize(initialSize);
+    }
+  }
+
+  private long readLength() {
+    File lengthFile = getLengthFile();
+    DataInputStream stream = null;
+    try {
+      stream = new DataInputStream(new FileInputStream(lengthFile));
+      return stream.readLong();
+    }
+    catch (IOException e) {
+      writeLength(myRealSize);
+      return myRealSize;
+    }
+    finally {
+      if (stream != null) {
+        try {
+          stream.close();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    }
+  }
+
+  private File getLengthFile() {
+    return new File(myFile.getPath() + ".len");
+  }
+
+  private void writeLength(final long len) {
+    File lengthFile = getLengthFile();
+    DataOutputStream stream = null;
+    try {
+      stream = new DataOutputStream(new FileOutputStream(lengthFile));
+      stream.writeLong(len);
+    }
+    catch (FileNotFoundException e) {
+      LOG.error(e);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    finally {
+      if (stream != null) {
+        try {
+          stream.close();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
     }
   }
 
@@ -154,7 +212,7 @@ public class MappedFile {
 
   public void put(final byte[] src, final int offset, final int length) throws IOException {
     ensureSize(myPosition + length);
-
+    myIsDirty = true;
     buf().put(src, offset, length);
     myPosition += length;
     if (myPosition > mySize) {
@@ -163,26 +221,27 @@ public class MappedFile {
   }
 
   public void flush() {
-    final ByteBuffer buf = buf();
-    if (buf instanceof MappedByteBuffer) {
-      ((MappedByteBuffer)buf).force();
+    if (myIsDirty) {
+      writeLength(mySize);
+      final ByteBuffer buf = buf();
+      if (buf instanceof MappedByteBuffer) {
+        ((MappedByteBuffer)buf).force();
+      }
+      myIsDirty = false;
     }
   }
 
+  public void force() {
+    flush();
+  }
+
+  public boolean isDirty() {
+    return myIsDirty;
+  }
+
   public void close() {
+    writeLength(mySize);
     unmap();
-    try {
-      RandomAccessFile raf = new RandomAccessFile(myFile, RW);
-      try {
-        raf.setLength(mySize);
-      }
-      finally {
-        raf.close();
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public void resize(int size) throws IOException {

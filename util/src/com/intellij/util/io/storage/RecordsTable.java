@@ -4,13 +4,14 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.Forceable;
 import com.intellij.util.io.RandomAccessDataFile;
 import gnu.trove.TIntArrayList;
 
 import java.io.File;
 import java.io.IOException;
 
-class RecordsTable implements Disposable {
+class RecordsTable implements Disposable, Forceable {
   private static final int FIRST_RECORD = 1;
   private static final int HEADER_MAGIC_OFFSET = 0;
   private static final int HEADER_VERSION_OFFSET = 4;
@@ -25,6 +26,7 @@ class RecordsTable implements Disposable {
   private final RandomAccessDataFile myStorage;
 
   private TIntArrayList myFreeRecordsList = null;
+  private boolean myIsDirty = false;
 
   public RecordsTable(final File storageFilePath) throws IOException {
     myStorage = new RandomAccessDataFile(storageFilePath);
@@ -37,11 +39,16 @@ class RecordsTable implements Disposable {
         throw new IOException("Records table for '" + storageFilePath + "' haven't been closed correctly. Rebuild required.");
       }
     }
+  }
 
-    myStorage.putInt(HEADER_MAGIC_OFFSET, CONNECTED_MAGIC);
+  private void markDirty() {
+    if (!myIsDirty) {
+      myStorage.putInt(HEADER_MAGIC_OFFSET, CONNECTED_MAGIC);
+    }
   }
 
   public int createNewRecord() {
+    markDirty();
     ensureFreeRecordsScanned();
 
     if (myFreeRecordsList.isEmpty()) {
@@ -93,10 +100,12 @@ class RecordsTable implements Disposable {
   }
 
   public void setAddress(int record, long address) {
+    markDirty();
     myStorage.putLong(record * RECORD_SIZE + ADDRESS_OFFSET, address);
   }
 
   public void setSize(int record, int size) {
+    markDirty();
     myStorage.putInt(record * RECORD_SIZE + SIZE_OFFSET, size);
   }
 
@@ -112,12 +121,27 @@ class RecordsTable implements Disposable {
   }
 
   public void setVersion(final int expectedVersion) {
+    markDirty();
     myStorage.putInt(HEADER_VERSION_OFFSET, expectedVersion);
   }
 
   public void dispose() {
-    myStorage.putInt(HEADER_MAGIC_OFFSET, SAFELY_CLOSED_MAGIC);
+    markClean();
     myStorage.dispose();
+  }
+
+  public void force() {
+    markClean();
+    myStorage.force();
+  }
+
+  public boolean isDirty() {
+    return myIsDirty;
+  }
+
+  private void markClean() {
+    myIsDirty = true;
+    myStorage.putInt(HEADER_MAGIC_OFFSET, SAFELY_CLOSED_MAGIC);
   }
 
   public int getRecordsCount() {
