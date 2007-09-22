@@ -17,12 +17,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -93,6 +92,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return getManager().getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
   }
 
+  @Nullable
+  public PsiType getNominalType() {
+    return getType();
+  }
 
   public void subtreeChanged() {
     super.subtreeChanged();

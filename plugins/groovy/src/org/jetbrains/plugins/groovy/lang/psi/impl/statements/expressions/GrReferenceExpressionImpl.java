@@ -169,7 +169,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     else return getText().compareTo(grReferenceExpression.getText());
   }
 
-  private PsiType getNominalType() {
+  public PsiType getNominalType() {
     IElementType dotType = getDotTokenType();
     final GroovyResolveResult resolveResult = advancedResolve();
     PsiElement resolved = resolveResult.getElement();

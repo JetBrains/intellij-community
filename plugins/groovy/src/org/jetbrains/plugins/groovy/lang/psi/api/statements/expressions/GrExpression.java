@@ -25,8 +25,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
  */
 public interface GrExpression extends GrStatement {
   GrExpression[] EMPTY_ARRAY = new GrExpression[0];
+
   @Nullable
   PsiType getType();
+
+  @Nullable
+  PsiType getNominalType();
 
   GrExpression replaceWithExpression(GrExpression expression) throws IncorrectOperationException;
 }

@@ -171,7 +171,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       exception.accept(this);
       final InstructionImpl throwInstruction = startNode(throwStatement);
       flowAbrupted();
-      final PsiType type = exception.getType();
+      final PsiType type = exception.getNominalType();
       if (type != null) {
         ExceptionInfo info = findCatch(type);
         if (info != null) {
