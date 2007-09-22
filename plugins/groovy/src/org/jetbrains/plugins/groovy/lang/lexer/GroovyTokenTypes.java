@@ -44,6 +44,7 @@ public interface GroovyTokenTypes {
   IElementType mSH_COMMENT = new GroovyElementType("shell comment");
   IElementType mSL_COMMENT = new GroovyElementType("line comment");
   IElementType mML_COMMENT = new GroovyElementType("block comment");
+  TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT);
 
   /* **************************************************************************************************
  *  Identifiers
@@ -68,6 +69,7 @@ public interface GroovyTokenTypes {
 
   IElementType mSTRING_LITERAL = new GroovyElementType("string");
   IElementType mGSTRING_LITERAL = new GroovyElementType("Gstring");
+  TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL);
 
   IElementType mGSTRING_SINGLE_BEGIN = new GroovyElementType("Gstring begin");
   IElementType mGSTRING_SINGLE_CONTENT = new GroovyElementType("Gstring content");

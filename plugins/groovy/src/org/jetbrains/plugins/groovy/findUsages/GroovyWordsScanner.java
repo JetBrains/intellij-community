@@ -4,7 +4,6 @@ import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -15,9 +14,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 */
 class GroovyWordsScanner implements WordsScanner
 {
-  TokenSet COMMENT_SET = TokenSet.create(GroovyTokenTypes.mML_COMMENT, GroovyTokenTypes.mSH_COMMENT, GroovyTokenTypes.mSL_COMMENT);
-  TokenSet STRING_LITERAL_SET = TokenSet.create(GroovyTokenTypes.mSTRING_LITERAL, GroovyTokenTypes.mGSTRING_LITERAL);
-
   private Lexer myLexer;
   public GroovyWordsScanner()
   {
@@ -35,10 +31,10 @@ class GroovyWordsScanner implements WordsScanner
         else occurrence.init(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         if (!processor.process(occurrence)) return;
       }
-      else if (COMMENT_SET.contains(type)) {
+      else if (GroovyTokenTypes.COMMENT_SET.contains(type)) {
         if (!stripWords(processor, fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.COMMENTS, occurrence)) return;
       }
-      else if (STRING_LITERAL_SET.contains(type)) {
+      else if (GroovyTokenTypes.STRING_LITERAL_SET.contains(type)) {
         if (!stripWords(processor, fileText, myLexer.getTokenStart(),myLexer.getTokenEnd(),WordOccurrence.Kind.LITERALS, occurrence)) return;
 
         if (type == GroovyTokenTypes.mSTRING_LITERAL) {

@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -121,8 +122,12 @@ public class GroovyAnnotator implements Annotator {
       if (DomainClassUtils.isDomainClass(element.getContainingFile().getVirtualFile())) {
         checkDomainClass((GroovyFile) element, holder);
       }
-    } else if (!(element instanceof PsiWhiteSpace) && element.getContainingFile() instanceof GroovyFile) {
-      GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
+    } else {
+      final ASTNode node = element.getNode();
+      if (node != null && !(element instanceof PsiWhiteSpace) && !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
+                 element.getContainingFile() instanceof GroovyFile) {
+        GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
+      }
     }
   }
 
