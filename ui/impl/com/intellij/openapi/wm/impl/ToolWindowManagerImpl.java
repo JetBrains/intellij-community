@@ -254,12 +254,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (!getToolWindow(id).isAvailable()) {
       return;
     }
-    // show
-    showToolWindowImpl(id, dirtyMode, commandsList);
-    // activate
+    // show activated
     final WindowInfoImpl info = getInfo(id);
+    boolean toApplyInfo = false;
     if (!info.isActive()) {
       info.setActive(true);
+      toApplyInfo = true;
+    }
+    showToolWindowImpl(id, dirtyMode, commandsList);
+
+    // activate
+    if (toApplyInfo) {
       appendApplyWindowInfoCmd(info, commandsList);
       myActiveStack.push(id);
       myEditorComponentActive = false;

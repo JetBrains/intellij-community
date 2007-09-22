@@ -15,12 +15,12 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
+import com.sun.jna.examples.WindowUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +62,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   private static void initialize() {
     try {
       System.loadLibrary("jawt");
-      System.loadLibrary("transparency");
       ourAlphaModeLibraryLoaded = true;
     }
     catch (Throwable exc) {
@@ -188,7 +187,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   public final boolean isAlphaModeSupported() {
-    return ourAlphaModeLibraryLoaded && (SystemInfo.isWindows2000 || SystemInfo.isWindowsXP);
+    return WindowUtils.isWindowAlphaSupported();
   }
 
   public final void setAlphaModeRatio(final Window window, final float ratio) {
@@ -201,26 +200,25 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     if (!isAlphaModeSupported() || !isAlphaModeEnabled(window)) {
       return;
     }
-    setAlphaModeRatioWin32Impl(window, 255 - (int)(255.0f * ratio));
+
+
+    setAlphaMode(window, ratio);
   }
 
-  private static native void setAlphaModeRatioWin32Impl(Window window, int ratio);
+  private void setAlphaMode(Window window, float ratio) {
+    WindowUtils.setWindowAlpha(window, 1.0f - ratio);
+  }
 
   public final boolean isAlphaModeEnabled(final Window window) {
     if (!window.isDisplayable() || !window.isShowing()) {
       throw new IllegalArgumentException("window must be displayable and showing. window=" + window);
     }
-    return isAlphaModeSupported() && isAlphaModeEnabledWin32Impl(window);
+    return isAlphaModeSupported();
   }
-
-  private static native boolean isAlphaModeEnabledWin32Impl(Window window);
 
   public final void setAlphaModeEnabled(final Window window, final boolean state) {
     if (!window.isDisplayable() || !window.isShowing()) {
       throw new IllegalArgumentException("window must be displayable and showing. window=" + window);
-    }
-    if (isAlphaModeSupported()) {
-      setAlphaModeEnabledWin32Impl(window, state);
     }
   }
 
@@ -239,8 +237,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       }
     }
   }
-
-  private static native void setAlphaModeEnabledWin32Impl(Window window, boolean state);
 
   public final void disposeComponent() {}
 
