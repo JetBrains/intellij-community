@@ -205,7 +205,7 @@ public class VariableInplaceRenamer {
 
   public static boolean mayRenameInplace(PsiVariable elementToRename, final Editor editor, final PsiElement nameSuggestionContext) {
     if (!editor.getSettings().isVariableInplaceRenameEnabled()) return false;
-    if (PsiTreeUtil.getParentOfType(nameSuggestionContext, PsiLiteralExpression.class) != null) return false;
+    if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
     if (!(elementToRename instanceof PsiLocalVariable) && !(elementToRename instanceof PsiParameter)) return false;
     SearchScope useScope = elementToRename.getUseScope();
     if (!(useScope instanceof LocalSearchScope)) return false;
