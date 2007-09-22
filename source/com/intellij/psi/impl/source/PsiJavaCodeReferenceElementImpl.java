@@ -714,7 +714,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         superParent = superParent.getParent();
       }
     }
-    if (!smartCompletion) {
+    if (!smartCompletion && getTreeParent().getElementType() != CODE_FRAGMENT) {
       /*filter.addFilter(new ClassFilter(PsiClass.class));
       filter.addFilter(new ClassFilter(PsiPackage.class));*/
       filter.addFilter(new AndFilter(new ClassFilter(PsiMethod.class), new NotFilter(new ConstructorFilter())));

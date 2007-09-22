@@ -482,6 +482,7 @@ public class JavaCompletionData extends CompletionData{
                     new TextFilter("]"))))));
       variant.includeScopeClass(PsiAnnotationParameterList.class);
       variant.includeScopeClass(PsiVariable.class);
+      variant.excludeScopeClass(PsiJavaCodeReferenceCodeFragment.class);
       variant.addCompletion(PsiKeyword.CLASS, TailType.NONE);
       registerVariant(variant);
     }
