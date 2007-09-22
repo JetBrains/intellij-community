@@ -326,16 +326,32 @@ class InlineToAnonymousConstructorProcessor {
         if (psiElement instanceof PsiParameter) {
           parameterReferences.add(new Pair<PsiReferenceExpression, PsiParameter>(expression, (PsiParameter) psiElement));
         }
+        else if ((psiElement instanceof PsiField || psiElement instanceof PsiMethod) &&
+                 ((PsiMember) psiElement).getContainingClass() == myClass.getSuperClass()) {
+          PsiMember member = (PsiMember) psiElement;
+          if (member.hasModifierProperty(PsiModifier.STATIC) &&
+              expression.getQualifierExpression() == null) {
+            final String qualifiedText = myClass.getSuperClass().getQualifiedName() + "." + member.getName();
+            try {
+              final PsiExpression replacement = myElementFactory.createExpressionFromText(qualifiedText, myClass);
+              elementsToReplace.put(expression, replacement); 
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+        }
         else if (psiElement instanceof PsiVariable) {
           if (localVarRefs != null) {
             localVarRefs.add(expression);
           }
           if (replaceFieldsWithInitializers && psiElement instanceof PsiField && ((PsiField) psiElement).getContainingClass() == myClass) {
-          final PsiExpression initializer = ((PsiField)psiElement).getInitializer();
-          if (isConstant(initializer)) {
-            elementsToReplace.put(expression, initializer);
+            final PsiExpression initializer = ((PsiField)psiElement).getInitializer();
+            if (isConstant(initializer)) {
+              elementsToReplace.put(expression, initializer);
+            }
           }
-        }        }
+        }
       }
     });
     for (Pair<PsiReferenceExpression, PsiParameter> pair: parameterReferences) {
