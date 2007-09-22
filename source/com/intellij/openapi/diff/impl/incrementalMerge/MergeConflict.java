@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange;
 
 class MergeConflict extends ChangeType.ChangeSide implements DiffRangeMarker.RangeInvalidListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeConflict");
-  private final Change.HightlighterHolder myCommonHightlighterHolder = new Change.HightlighterHolder();
+  private final Change.HighlighterHolder myCommonHighlighterHolder = new Change.HighlighterHolder();
   private final MergeList myMergeList;
   private final DiffRangeMarker myCommonRange;
   private ConflictChange[] myChanges;
@@ -17,8 +17,8 @@ class MergeConflict extends ChangeType.ChangeSide implements DiffRangeMarker.Ran
     myMergeList = mergeList;
   }
 
-  public Change.HightlighterHolder getHighlighterHolder() {
-    return myCommonHightlighterHolder;
+  public Change.HighlighterHolder getHighlighterHolder() {
+    return myCommonHighlighterHolder;
   }
 
   public DiffRangeMarker getRange() {
@@ -38,11 +38,10 @@ class MergeConflict extends ChangeType.ChangeSide implements DiffRangeMarker.Ran
   }
 
   public void conflictRemoved() {
-    for (int i = 0; i < myChanges.length; i++) {
-      ConflictChange change = myChanges[i];
+    for (ConflictChange change : myChanges) {
       change.getOriginalSide().getHighlighterHolder().removeHighlighters();
     }
-    myCommonHightlighterHolder.removeHighlighters();
+    myCommonHighlighterHolder.removeHighlighters();
     myMergeList.removeChanges(myChanges);
     myCommonRange.removeListener(this);
   }

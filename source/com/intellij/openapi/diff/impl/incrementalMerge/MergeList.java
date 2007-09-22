@@ -4,9 +4,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
@@ -19,12 +19,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.SequenceIterator;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.NonNls;
 
 public class MergeList implements ChangeList.Parent, UserDataHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeList");
@@ -56,18 +56,17 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
 
     ArrayList<Change> leftChanges = new ArrayList<Change>();
     ArrayList<Change> rightChanges = new ArrayList<Change>();
-    for (Iterator<MergeBuilder.MergeFragment> iterator = fragmentList.iterator(); iterator.hasNext();) {
-      MergeBuilder.MergeFragment mergeFragment = iterator.next();
+    for (MergeBuilder.MergeFragment mergeFragment : fragmentList) {
       final TextRange[] ranges = mergeFragment.getRanges();
       logger.assertTrue(ranges[1] != null);
       if (ranges[0] == null) {
-        if (ranges[2] == null){
+        if (ranges[2] == null) {
           LOG.assertTrue(false, "Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
         }
         rightChanges.add(SimpleChange.fromRanges(ranges[1], ranges[2], mergeList.myChanges[1]));
       }
       else if (ranges[2] == null) {
-        if (ranges[0] == null){
+        if (ranges[0] == null) {
           LOG.assertTrue(false, "Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
         }
         leftChanges.add(SimpleChange.fromRanges(ranges[1], ranges[0], mergeList.myChanges[0]));
@@ -150,15 +149,13 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
   }
 
   public void addListener(ChangeList.Listener listener) {
-    for (int i = 0; i < myChanges.length; i++) {
-      ChangeList changeList = myChanges[i];
+    for (ChangeList changeList : myChanges) {
       changeList.addListener(listener);
     }
   }
 
   public void removeListener(ChangeList.Listener listener) {
-    for (int i = 0; i < myChanges.length; i++) {
-      ChangeList changeList = myChanges[i];
+    for (ChangeList changeList : myChanges) {
       changeList.removeListener(listener);
     }
   }
@@ -183,7 +180,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     }
   }
 
-  private void apply(final Change change) {
+  private static void apply(final Change change) {
     Change.apply(change, BRANCH_SIDE);
   }
 
@@ -204,6 +201,7 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     return document;
   }
 
+  @Nullable
   public static MergeList fromDataContext(DataContext dataContext) {
     MergeList mergeList = (MergeList)dataContext.getData(MERGE_LIST);
     if (mergeList != null) return mergeList;

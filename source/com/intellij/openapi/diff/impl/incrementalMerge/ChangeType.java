@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -69,7 +70,7 @@ public class ChangeType {
     return CHANGE;
   }
 
-  public static ChangeType fromRanges(TextRange left, TextRange right) {
+  public static ChangeType fromRanges(@NotNull TextRange left, @NotNull TextRange right) {
     if (left.getLength() == 0) return INSERT;
     if (right.getLength() == 0) return DELETED;
     return CHANGE;
@@ -118,7 +119,7 @@ public class ChangeType {
 
     public abstract DiffRangeMarker getRange();
 
-    public abstract Change.HightlighterHolder getHighlighterHolder();
+    public abstract Change.HighlighterHolder getHighlighterHolder();
 
     public boolean contains(int offset) {
       return getStart() <= offset && offset < getEnd();

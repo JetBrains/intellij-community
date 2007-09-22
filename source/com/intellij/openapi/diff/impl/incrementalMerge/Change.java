@@ -42,11 +42,11 @@ public abstract class Change {
 
   public void addMarkup(Editor[] editors) {
     LOG.assertTrue(editors.length == 2);
-    highligth(editors, FragmentSide.SIDE1);
-    highligth(editors, FragmentSide.SIDE2);
+    highlight(editors, FragmentSide.SIDE1);
+    highlight(editors, FragmentSide.SIDE2);
   }
 
-  private void highligth(Editor[] editors, FragmentSide side) {
+  private void highlight(Editor[] editors, FragmentSide side) {
     getHighlighterHolder(side).highlight(getChangeSide(side), editors[side.getIndex()], this.getType());
   }
 
@@ -62,7 +62,7 @@ public abstract class Change {
 
   public abstract ChangeList getChangeList();
 
-  private HightlighterHolder getHighlighterHolder(FragmentSide side) {
+  private HighlighterHolder getHighlighterHolder(FragmentSide side) {
     return getChangeSide(side).getHighlighterHolder();
   }
 
@@ -115,12 +115,12 @@ public abstract class Change {
       return compareSide(change, change1, myMainSide.otherSide());
     }
 
-    private int compareSide(Change change, Change change1, FragmentSide side) {
+    private static int compareSide(Change change, Change change1, FragmentSide side) {
       return DocumentUtil.RANGE_ORDER.compare(change.getRangeMarker(side), change1.getRangeMarker(side));
     }
   }
 
-  protected static class HightlighterHolder implements ChangeType.MarkupHolder {
+  protected static class HighlighterHolder implements ChangeType.MarkupHolder {
     private static final RangeHighlighter[] NO_HIGHLIGHTERS = new RangeHighlighter[0];
     private Editor myEditor;
     private final ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>(3);
@@ -230,7 +230,7 @@ public abstract class Change {
   protected static class Side extends ChangeType.ChangeSide {
     private final FragmentSide mySide;
     private final DiffRangeMarker myRange;
-    private final HightlighterHolder myHighlighterHolder = new HightlighterHolder();
+    private final HighlighterHolder myHighlighterHolder = new HighlighterHolder();
 
     public Side(FragmentSide side, DiffRangeMarker rangeMarker) {
       mySide = side;
@@ -245,7 +245,7 @@ public abstract class Change {
       return myRange;
     }
 
-    public HightlighterHolder getHighlighterHolder() {
+    public HighlighterHolder getHighlighterHolder() {
       return myHighlighterHolder;
     }
   }
