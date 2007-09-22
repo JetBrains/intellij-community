@@ -320,6 +320,11 @@ public class ShowDiffAction extends AnAction {
     SimpleContent content = revisionContent == null
                             ? new SimpleContent("")
                             : new SimpleContent(revisionContent, revision.getFile().getFileType());
+    VirtualFile vFile = revision.getFile().getVirtualFile();
+    if (vFile != null) {
+      content.setCharset(vFile.getCharset());
+      content.setBOM(vFile.getBOM());
+    }
     content.setReadOnly(true);
     return content;
   }

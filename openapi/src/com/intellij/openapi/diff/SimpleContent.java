@@ -27,6 +27,8 @@ import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.ByteBuffer;
 
 /**
  * Allows to compare some text not associated with file or document.
@@ -41,6 +43,8 @@ public class SimpleContent extends DiffContent {
   private final LineSeparators myLineSeparators = new LineSeparators();
   private final Document myDocument;
   private final FileType myType;
+  private Charset myCharset;
+  private byte[] myBOM;
 
   /**
    * Constructs content with given text and null type
@@ -100,16 +104,35 @@ public class SimpleContent extends DiffContent {
 
   /**
    * @return Encodes using default encoding
-   * @throws IOException
    */
-  public byte[] getBytes() throws IOException {
+  public byte[] getBytes() {
     String currentText = getText();
-    if (myOriginalText.equals(myDocument.getText())) {
+    if (myOriginalText.equals(myDocument.getText()) && myCharset == null) {
       return myOriginalBytes;
+    }
+    else if (myCharset != null) {
+      final ByteBuffer buffer = myCharset.encode(currentText).compact();
+      int bomLength = myBOM != null ? myBOM.length : 0;
+      final int encodedLength = buffer.position();
+      byte[] result = new byte[encodedLength + bomLength];
+      if (bomLength > 0) {
+        System.arraycopy(myBOM, 0, result, 0, bomLength);
+      }
+      buffer.position(0);
+      buffer.get(result, bomLength, encodedLength);
+      return result;
     }
     else {
       return currentText.getBytes();
     }
+  }
+
+  public Charset getCharset() {
+    return myCharset;
+  }
+
+  public void setCharset(final Charset charset) {
+    myCharset = charset;
   }
 
   /**
@@ -160,6 +183,10 @@ public class SimpleContent extends DiffContent {
     finally {
       stream.close();
     }
+  }
+
+  public void setBOM(final byte[] BOM) {
+    myBOM = BOM;
   }
 
   private static class LineSeparators {
