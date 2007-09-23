@@ -237,7 +237,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
         final PsiMethod positionMethod = myPositionMethod.getValue();
         if (positionMethod != null) {
           for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
-            if (expectedInfo.getType().isAssignableFrom(itemType) && expectedInfo.getCalledMethod() == positionMethod) {
+            if (expectedInfo.getCalledMethod() == positionMethod && expectedInfo.getType().isAssignableFrom(itemType)) {
               return 0;
             }
           }
