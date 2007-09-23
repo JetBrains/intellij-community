@@ -28,6 +28,7 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   public static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
   private final JComponent myToolbarComponent;
   private final com.intellij.openapi.editor.event.DocumentAdapter myDocumentListener;
+  private final MessageBusConnection myConnection;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -202,6 +204,19 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     };
 
     myEditor.getDocument().addDocumentListener(myDocumentListener);
+
+    myConnection = project.getMessageBus().connect();
+    myConnection.subscribe(FindManager.FIND_MODEL_TOPIC, new FindModelListener() {
+      public void findNextModelChanged() {
+        final FindModel model = FindManager.getInstance(project).getFindNextModel();
+        if (model != null) {
+          final String text = model.getStringToFind();
+          if (!Comparing.equal(text, mySearchField.getText())) {
+            mySearchField.setText(text);
+          }
+        }
+      }
+    });
   }
 
   private void searchBackward() {
@@ -263,6 +278,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
     myEditor.setHeaderComponent(null);
     myEditor.getDocument().removeDocumentListener(myDocumentListener);
+    myConnection.disconnect();
     addCurrentTextToRecents();
   }
 

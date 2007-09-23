@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.UsageViewManager;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.StringSearcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -57,11 +58,13 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
   private FindModel myFindNextModel = null;
   private static final FindResultImpl NOT_FOUND_RESULT = new FindResultImpl();
   private final Project myProject;
+  private final MessageBus myBus;
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
   @NonNls private static final String FIND_USAGES_MANAGER_ELEMENT = "FindUsagesManager";
 
-  public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager) {
+  public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
+    myBus = bus;
     findSettings.initModelBySetings(myFindInFileModel);
     findSettings.initModelBySetings(myFindInProjectModel);
 
@@ -177,6 +180,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
 
   public void setFindNextModel(FindModel findNextModel) {
     myFindNextModel = findNextModel;
+    myBus.syncPublisher(FIND_MODEL_TOPIC).findNextModelChanged();
   }
 
   @NotNull

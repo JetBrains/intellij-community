@@ -18,12 +18,15 @@ package com.intellij.find;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to invoke and control Find, Replace and Find Usages operations.
  */
 public abstract class FindManager {
+  public static final Topic<FindModelListener> FIND_MODEL_TOPIC = new Topic<FindModelListener>("FindManager's model changes",
+                                                                                               FindModelListener.class);
   /**
    * Returns the find manager instance for the specified project.
    *
