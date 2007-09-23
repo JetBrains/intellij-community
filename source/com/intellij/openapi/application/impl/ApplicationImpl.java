@@ -527,42 +527,33 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void exit(final boolean force) {
-    if (SystemInfo.isMac) {
-      if (!force) {
-        if (!showConfirmation()) return;
-      }
-      if (!canExit()) return;
-
-      // We do not invoke System.exit directly since it causes runtime hooks to invoke and they want to work on EDT
-      new Thread(new Runnable() {
-        public void run() {
-          System.exit(0);
+    Runnable runnable = new Runnable() {
+      public void run() {
+        if (!force) {
+          if (!showConfirmation()) {
+            saveAll();
+            return;
+          }
         }
-      }).start();
+        saveAll();
+        if (!canExit()) return;
+
+        disposeSelf();
+
+        // We do not invoke System.exit directly since it causes runtime hooks to invoke and they want to work on EDT
+        new Thread(new Runnable() {
+          public void run() {
+            System.exit(0);
+          }
+        }).start();
+      }
+    };
+    
+    if (!isDispatchThread()) {
+      invokeLater(runnable, ModalityState.NON_MODAL);
     }
     else {
-      Runnable runnable = new Runnable() {
-        public void run() {
-          if (!force) {
-            if (!showConfirmation()) {
-              saveAll();
-              return;
-            }
-          }
-          saveAll();
-          if (!canExit()) return;
-
-          disposeSelf();
-
-          System.exit(0);
-        }
-      };
-      if (!isDispatchThread()) {
-        invokeLater(runnable, ModalityState.NON_MODAL);
-      }
-      else {
-        runnable.run();
-      }
+      runnable.run();
     }
   }
 
