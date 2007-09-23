@@ -209,6 +209,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     WindowUtils.setWindowAlpha(window, 1.0f - ratio);
   }
 
+  public void setWindowMask(final Window window, final Shape mask) {
+    WindowUtils.setWindowMask(window, mask);
+  }
+
+  public void resetWindow(final Window window) {
+    WindowUtils.setWindowMask(window, (Shape)null);
+    setAlphaMode(window, 0f);
+  }
+
   public final boolean isAlphaModeEnabled(final Window window) {
     if (!window.isDisplayable() || !window.isShowing()) {
       throw new IllegalArgumentException("window must be displayable and showing. window=" + window);

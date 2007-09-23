@@ -64,6 +64,7 @@ public class NotificationPopup {
       .setResizable(false)
       .setMovable(true)
       .setLocateWithinScreenBounds(false)
+      .setAlpha(0.2f)
       .createPopup();
     final Point p = RelativePoint.getSouthEastOf(owner).getScreenPoint();
     Rectangle screen = ScreenUtil.getScreenRectangle(p.x, p.y);

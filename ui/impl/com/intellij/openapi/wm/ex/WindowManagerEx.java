@@ -93,6 +93,10 @@ public abstract class WindowManagerEx extends WindowManager {
    */
   public abstract void setAlphaModeRatio(Window window,float ratio);
 
+  public abstract void setWindowMask(Window window, Shape mask);
+
+  public abstract void resetWindow(final Window window);
+
   /**
    * @return <code>true</code> if specified <code>window</code> is currently is alpha mode.
    */
@@ -112,4 +116,5 @@ public abstract class WindowManagerEx extends WindowManager {
    * @param project the dialog has been shown for
    */
   public abstract void hideDialog(JDialog dialog, Project project);
+
 }

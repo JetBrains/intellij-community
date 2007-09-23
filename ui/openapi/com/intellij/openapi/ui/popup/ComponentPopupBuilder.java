@@ -91,4 +91,6 @@ public interface ComponentPopupBuilder {
 
   @NotNull ComponentPopupBuilder setMinSize(Dimension minSize);
 
+  @NotNull ComponentPopupBuilder setAlpha(float alpha);
+
 }

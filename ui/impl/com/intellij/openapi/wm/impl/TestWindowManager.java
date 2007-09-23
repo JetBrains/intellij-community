@@ -37,6 +37,12 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     return null;
   }
 
+  public void setWindowMask(final Window window, final Shape mask) {
+  }
+
+  public void resetWindow(final Window window) {
+  }
+
   private static final class DummyStatusBar implements StatusBarEx {
     public final void setInfo(final String s) {}
 
