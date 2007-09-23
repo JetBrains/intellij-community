@@ -54,6 +54,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private final JComponent myToolbarComponent;
   private final com.intellij.openapi.editor.event.DocumentAdapter myDocumentListener;
   private final MessageBusConnection myConnection;
+  private ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -394,8 +395,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private void removeCurrentHighlights() {
-    ((HighlightManagerImpl)HighlightManager.getInstance(myProject))
-          .hideHighlights(myEditor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY);
+    final HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(myProject);
+    for (RangeHighlighter highlighter : myHighlighters) {
+      highlightManager.removeSegmentHighlighter(myEditor, highlighter);
+    }
   }
 
   private boolean findAndSelectFirstUsage(final FindManager findManager, final FindModel model, final int offset) {
@@ -416,12 +419,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     EditorColorsManager colorManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
 
-    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    myHighlighters = new ArrayList<RangeHighlighter>();
     for (FindResult result : results) {
-      highlightManager.addRangeHighlight(myEditor, result.getStartOffset(), result.getEndOffset(), attributes, false, highlighters);
+      highlightManager.addRangeHighlight(myEditor, result.getStartOffset(), result.getEndOffset(), attributes, false, myHighlighters);
     }
 
-    for (RangeHighlighter highlighter : highlighters) {
+    for (RangeHighlighter highlighter : myHighlighters) {
       highlighter.setErrorStripeTooltip(text);
     }
   }
