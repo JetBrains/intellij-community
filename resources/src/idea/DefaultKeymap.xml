@@ -422,6 +422,7 @@
     </action>
     <action id="Find">
       <keyboard-shortcut first-keystroke="control F"/>
+      <keyboard-shortcut first-keystroke="alt F3"/>
     </action>
     <action id="EditorCodeBlockStart">
       <keyboard-shortcut first-keystroke="control OPEN_BRACKET"/>
@@ -772,9 +773,6 @@
     </action>
     <action id="EditorIndentSelection">
       <keyboard-shortcut first-keystroke="TAB"/>
-    </action>
-    <action id="IncrementalSearch">
-      <keyboard-shortcut first-keystroke="alt F3"/>
     </action>
     <action id="CommentByLineComment">
       <keyboard-shortcut first-keystroke="control SLASH"/>
@@ -1384,10 +1382,6 @@
       <keyboard-shortcut first-keystroke="LEFT"/>
       <keyboard-shortcut first-keystroke="control B"/>
     </action>
-    <action id="IncrementalSearch">
-      <keyboard-shortcut first-keystroke="alt F3"/>
-      <keyboard-shortcut first-keystroke="control S"/>
-    </action>
     <action id="EditorDelete">
       <keyboard-shortcut first-keystroke="DELETE"/>
       <keyboard-shortcut first-keystroke="control D"/>
@@ -1398,6 +1392,8 @@
     <action id="RecentFiles"/>
     <action id="Find">
       <keyboard-shortcut first-keystroke="control alt S"/>
+      <keyboard-shortcut first-keystroke="alt F3"/>
+      <keyboard-shortcut first-keystroke="control S"/>
     </action>
     <action id="EditorPreviousWord">
       <keyboard-shortcut first-keystroke="control LEFT"/>
@@ -1633,9 +1629,6 @@
     </action>
     <action id="Stop">
       <keyboard-shortcut first-keystroke="shift F5"/>
-    </action>
-    <action id="IncrementalSearch">
-      <keyboard-shortcut first-keystroke="control I"/>
     </action>
     <action id="CommentByLineComment">
       <keyboard-shortcut first-keystroke="control SLASH"/>
@@ -1970,6 +1963,7 @@
     </action>
     <action id="Find">
       <keyboard-shortcut first-keystroke="control H" />
+      <keyboard-shortcut first-keystroke="control I"/>
     </action>
     <action id="FindInPath">
       <keyboard-shortcut first-keystroke="control alt G" />
