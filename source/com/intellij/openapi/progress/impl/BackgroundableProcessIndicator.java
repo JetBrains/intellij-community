@@ -90,7 +90,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
 
   private void doBackground() {
     myStatusBar.add(this, myInfo);
-    myFocusTrackback.kill();
+    myFocusTrackback.consume();
   }
 
   public synchronized void stop() {

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -101,17 +102,24 @@ public class ProgressWindow extends BlockingProgressIndicator {
         myShowWindowAlarm.addRequest(new Runnable() {
           public void run() {
             if (isRunning()) {
-              showDialog();
-              if (myDialog != null) {
-                final DialogWrapper popup = myDialog.myPopup;
-                if (popup != null) {
-                  myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
-                    public Component getComponent() {
-                      return popup.getPreferredFocusedComponent();
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  if (myDialog != null) {
+                    final DialogWrapper popup = myDialog.myPopup;
+                    if (popup != null) {
+                      myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
+                        public Component getComponent() {
+                          return popup.getPreferredFocusedComponent();
+                        }
+                      });
+                      if (popup.isShowing()) {
+                        myWasShown = true;
+                      }
                     }
-                  });
+                  }
                 }
-              }
+              });
+              showDialog();
             }
           }
         }, 300, getModalityState());
@@ -181,11 +189,12 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
     super.stop();
     if (myDialog != null) {
+
+      myDialog.hide();
       if (myDialog.wasShown()) {
-        myDialog.hide();
         myFocusTrackback.restoreFocus();
       } else {
-        myFocusTrackback.kill();
+        myFocusTrackback.consume();
       }
     }
 
@@ -382,6 +391,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
           wnd.setLocation(draggedTo);
         }
       });
+
     }
 
     private void dispose() {
@@ -469,9 +479,6 @@ public class ProgressWindow extends BlockingProgressIndicator {
       });
     }
 
-
-
-
     public void show() {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
       if (myParentWindow == null) return;
@@ -484,7 +491,15 @@ public class ProgressWindow extends BlockingProgressIndicator {
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          myCancelButton.requestFocus();
+          if (myPopup != null) {
+            if (myPopup.getPeer() instanceof DialogWrapperPeerImpl) {
+              final FocusTrackback focusTrackback = ((DialogWrapperPeerImpl)myPopup.getPeer()).getFocusTrackback();
+              if (focusTrackback != null) {
+                focusTrackback.consume();
+              }
+            }
+            myCancelButton.requestFocus();
+          }
         }
       });
 

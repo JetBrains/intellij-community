@@ -317,6 +317,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
   }
 
+  public FocusTrackback getFocusTrackback() {
+    return myDialog.getFocusTrackback();
+  }
+
   private class AnCancelAction extends AnAction {
     public void update(AnActionEvent e) {
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();

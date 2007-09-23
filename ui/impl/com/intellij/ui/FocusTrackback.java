@@ -35,7 +35,7 @@ public class FocusTrackback {
   private ComponentQuery myFocusedComponentQuery;
   private boolean myMustBeShown;
 
-  private boolean myForcedDead;
+  private boolean myConsumed;
 
   public FocusTrackback(@NotNull Object requestor, Component parent, boolean mustBeShown) {
     this(requestor, SwingUtilities.getWindowAncestor(parent), mustBeShown);
@@ -98,7 +98,7 @@ public class FocusTrackback {
 
     final FocusTrackback[] stackArray = stack.toArray(new FocusTrackback[stack.size()]);
     for (FocusTrackback eachExisting : stackArray) {
-      if (eachExisting != null && eachExisting.isDead()) {
+      if (eachExisting != null && eachExisting.isConsumed()) {
         eachExisting.dispose();
       }
       else if (eachExisting == null) {
@@ -110,6 +110,8 @@ public class FocusTrackback {
 
   public void restoreFocus() {
     if (wrongOS()) return;
+
+    consume();
 
     final DataContext context = myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
     final Project project = (Project)context.getData(DataConstants.PROJECT);
@@ -149,7 +151,7 @@ public class FocusTrackback {
     }
 
     for (int i = index + 1; i < stack.size(); i++) {
-      if (!stack.get(i).isDead()) {
+      if (!stack.get(i).isConsumed()) {
         toFocus = null;
         break;
       }
@@ -176,7 +178,7 @@ public class FocusTrackback {
 
     final FocusTrackback[] all = stack.toArray(new FocusTrackback[stack.size()]);
     for (FocusTrackback each : all) {
-      if (each != this && each.isDead()) {
+      if (each != this && each.isConsumed()) {
         stack.remove(each);
       }
     }
@@ -226,8 +228,8 @@ public class FocusTrackback {
     myFocusOwner = null;
   }
 
-  private boolean isDead() {
-    if (myForcedDead) return true;
+  private boolean isConsumed() {
+    if (myConsumed) return true;
 
     if (myMustBeShown) {
       return myFocusedComponentQuery != null && myFocusedComponentQuery.getComponent() != null && !myFocusedComponentQuery.getComponent().isShowing();
@@ -236,8 +238,8 @@ public class FocusTrackback {
     }
   }
 
-  public void kill() {
-    myForcedDead = true;
+  public void consume() {
+    myConsumed = true;
   }
 
   private void setFocusOwner(final Component focusOwner) {

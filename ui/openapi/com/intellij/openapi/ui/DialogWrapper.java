@@ -960,4 +960,7 @@ public abstract class DialogWrapper {
     }
   }
 
+  public final DialogWrapperPeer getPeer() {
+    return myPeer;
+  }
 }
