@@ -51,6 +51,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
   public static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
   private final JComponent myToolbarComponent;
+  private final com.intellij.openapi.editor.event.DocumentAdapter myDocumentListener;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -118,7 +119,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         final boolean b = cbMatchCase.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setCaseSensitive(b);
         FindSettings.getInstance().setLocalCaseSensitive(b);
-        updateResults();
+        updateResults(true);
       }
     });
 
@@ -127,7 +128,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         final boolean b = cbWholeWords.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setWholeWordsOnly(b);
         FindSettings.getInstance().setLocalWholeWordsOnly(b);
-        updateResults();
+        updateResults(true);
       }
     });
 
@@ -136,7 +137,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         final boolean b = cbRegexp.isSelected();
         cbWholeWords.setEnabled(!b);
         FindManager.getInstance(myProject).getFindInFileModel().setRegularExpressions(b);
-        updateResults();
+        updateResults(true);
       }
     });
 
@@ -162,7 +163,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
-        updateResults();
+        updateResults(true);
       }
     });
 
@@ -193,6 +194,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     });
 
     new VariantsCompletionAction(); // It registers a shortcut set automatically on construction
+
+    myDocumentListener = new com.intellij.openapi.editor.event.DocumentAdapter() {
+      public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
+        updateResults(false);
+      }
+    };
+
+    myEditor.getDocument().addDocumentListener(myDocumentListener);
   }
 
   private void searchBackward() {
@@ -253,10 +262,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       myEditor.getSelectionModel().removeSelection();
     }
     myEditor.setHeaderComponent(null);
+    myEditor.getDocument().removeDocumentListener(myDocumentListener);
     addCurrentTextToRecents();
   }
 
-  private void updateResults() {
+  private void updateResults(boolean allowedToChangedEditorSelection) {
     removeCurrentHighlights();
     myMatchInfoLabel.setFont(myMatchInfoLabel.getFont().deriveFont(Font.PLAIN));
     String text = mySearchField.getText();
@@ -301,13 +311,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         if (results.size() > 100) break;
       }
 
-      int currentOffset = myEditor.getCaretModel().getOffset();
-      if (myEditor.getSelectionModel().hasSelection()) {
-        currentOffset = Math.min(currentOffset, myEditor.getSelectionModel().getSelectionStart());
-      }
+      if (allowedToChangedEditorSelection) {
+        int currentOffset = myEditor.getCaretModel().getOffset();
+        if (myEditor.getSelectionModel().hasSelection()) {
+          currentOffset = Math.min(currentOffset, myEditor.getSelectionModel().getSelectionStart());
+        }
 
-      if (!findAndSelectFirstUsage(findManager, model, currentOffset)) {
-        findAndSelectFirstUsage(findManager, model, 0);
+        if (!findAndSelectFirstUsage(findManager, model, currentOffset)) {
+          findAndSelectFirstUsage(findManager, model, 0);
+        }
       }
 
       final int count = results.size();
@@ -334,8 +346,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         boldMatchInfo();
       }
 
-      findManager.setFindWasPerformed();
-      findManager.setFindNextModel(model);
+      if (allowedToChangedEditorSelection) {
+        findManager.setFindWasPerformed();
+        findManager.setFindNextModel(model);
+      }
     }
   }
 
