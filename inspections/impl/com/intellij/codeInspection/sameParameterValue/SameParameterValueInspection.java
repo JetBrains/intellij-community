@@ -4,7 +4,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,7 +55,7 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
       }
     }
 
-    return problems == null ? null : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
+    return problems == null ? null : problems.toArray(new CommonProblemDescriptor[problems.size()]);
   }
 
 
@@ -101,7 +100,7 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     if (hint == null) return null;
-    final int spaceIdx = hint.indexOf(" ");
+    final int spaceIdx = hint.indexOf(' ');
     if (spaceIdx == -1 || spaceIdx >= hint.length() - 1) return null; //invalid hint
     final String paramName = hint.substring(0, spaceIdx);
     final String value = hint.substring(spaceIdx + 1);
@@ -115,8 +114,8 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
   }
 
   public static class InlineParameterValueFix implements LocalQuickFix {
-    private String myValue;
-    private String myParameterName;
+    private final String myValue;
+    private final String myParameterName;
 
     public InlineParameterValueFix(final String parameterName, final String value) {
       myValue = value;
@@ -138,8 +137,8 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       LOG.assertTrue(method != null);
       PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameter == null) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
         for (PsiParameter psiParameter : parameters) {
           if (Comparing.strEqual(psiParameter.getName(), myParameterName)) {
             parameter = psiParameter;
@@ -162,7 +161,6 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
     }
 
     public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
-      final Project project = method.getProject();
       final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
 
       final Runnable runnable = new Runnable() {
