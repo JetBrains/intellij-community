@@ -72,7 +72,7 @@ import java.util.regex.Pattern;
 
 public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   private RefManager myRefManager;
-  private ContentManager myContentManager;
+  private final ContentManager myContentManager;
   private AnalysisScope myCurrentScope;
 
   private final Project myProject;
@@ -104,9 +104,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   @NonNls public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN =
     Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(s*,\\w+)*)");
 
-  private Map<String, Set<Pair<InspectionTool, InspectionProfile>>> myTools = new THashMap<String, Set<Pair<InspectionTool, InspectionProfile>>>();
+  private final Map<String, Set<Pair<InspectionTool, InspectionProfile>>> myTools = new THashMap<String, Set<Pair<InspectionTool, InspectionProfile>>>();
 
-  private AnalysisUIOptions myUIOptions;
+  private final AnalysisUIOptions myUIOptions;
 
   public GlobalInspectionContextImpl(Project project, ContentManager contentManager) {
     myProject = project;
@@ -709,7 +709,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private static class ProgressWrapper extends ProgressIndicatorBase {
-    private ProgressIndicator myOriginal;
+    private final ProgressIndicator myOriginal;
 
     public ProgressWrapper(final ProgressIndicator original) {
       myOriginal = original;

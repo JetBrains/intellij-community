@@ -94,7 +94,8 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     }
   }
 
-  public @NotNull InspectionProfile getInspectionProfile(@NotNull final PsiElement psiElement){
+  @NotNull
+  public InspectionProfile getInspectionProfile(@NotNull final PsiElement psiElement){
     final PsiFile psiFile = psiElement.getContainingFile();
     LOG.assertTrue(psiFile != null);
 

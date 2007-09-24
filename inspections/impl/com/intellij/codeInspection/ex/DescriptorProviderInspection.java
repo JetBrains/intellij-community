@@ -289,23 +289,22 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
 
   public boolean hasReportedProblems() {
     final GlobalInspectionContextImpl context = getContext();
-    if (context != null && context.getUIOptions().SHOW_ONLY_DIFF){
+    if (context != null && context.getUIOptions().SHOW_ONLY_DIFF) {
       for (CommonProblemDescriptor descriptor : getProblemToElements().keySet()) {
-        if (getProblemStatus(descriptor) != FileStatus.NOT_CHANGED){
+        if (getProblemStatus(descriptor) != FileStatus.NOT_CHANGED) {
           return true;
         }
       }
-      if (myOldProblemElements != null){
+      if (myOldProblemElements != null) {
         for (RefEntity entity : myOldProblemElements.keySet()) {
-          if (getElementStatus(entity) != FileStatus.NOT_CHANGED){
+          if (getElementStatus(entity) != FileStatus.NOT_CHANGED) {
             return true;
           }
         }
       }
       return false;
-    } else {
-      if (!getProblemElements().isEmpty()) return true;
     }
+    if (!getProblemElements().isEmpty()) return true;
     return context != null &&
            context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN &&
            myOldProblemElements != null && !myOldProblemElements.isEmpty();

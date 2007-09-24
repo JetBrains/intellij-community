@@ -4,7 +4,7 @@ package com.intellij.codeInspection.ex;
  * @author max
  */
 public class JobDescriptor {
-  private String myDisplayName;
+  private final String myDisplayName;
   private int myTotalAmount;
   private int myDoneAmount;
   public static final JobDescriptor[] EMPTY_ARRAY = new JobDescriptor[0];

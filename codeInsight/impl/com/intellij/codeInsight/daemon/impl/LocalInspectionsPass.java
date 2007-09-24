@@ -149,7 +149,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  public void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly) {
+  private void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly) {
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
     final Job<?> job = JobScheduler.getInstance().createJob("Inspection tools", Job.DEFAULT_PRIORITY); // TODO: Better name, handle priority
@@ -208,14 +208,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       LOG.error(e);
     }
 
-    inspectInjectedPsi(elements);
+    inspectInjectedPsi(elements, tools);
 
     myInfos = new ArrayList<HighlightInfo>(myDescriptors.size());
     addHighlightsFromDescriptors(myInfos);
     addHighlightsFromInjectedPsiProblems(myInfos);
   }
 
-  private void inspectInjectedPsi(final PsiElement[] elements) {
+  private void inspectInjectedPsi(final PsiElement[] elements, LocalInspectionTool[] tools) {
     myInjectedPsiInspectionResults = new SmartList<InjectedPsiInspectionUtil.InjectedPsiInspectionResult>();
     final Set<PsiFile> injected = new THashSet<PsiFile>();
     PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
@@ -227,7 +227,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       InjectedLanguageUtil.enumerate(element, myFile, injectedPsiVisitor, false);
     }
     for (PsiFile injectedPsi : injected) {
-      InjectedPsiInspectionUtil.inspectInjectedPsi(injectedPsi, myInjectedPsiInspectionResults);
+      InjectedPsiInspectionUtil.inspectInjectedPsi(injectedPsi, myInjectedPsiInspectionResults, tools);
     }
   }
 
