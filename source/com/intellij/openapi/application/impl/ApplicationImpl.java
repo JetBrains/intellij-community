@@ -179,7 +179,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     ShutDownTracker.getInstance().registerShutdownThread(new Thread(new Runnable() {
       public void run() {
-        if (isDisposed()) return;
+        if (isDisposed() || isDisposeInProgress()) return;
         try {
           SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
@@ -535,13 +535,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         if (!canExit()) return;
 
         disposeSelf();
-
-        // We do not invoke System.exit directly since it causes runtime hooks to invoke and they want to work on EDT
-        new Thread(new Runnable() {
-          public void run() {
-            System.exit(0);
-          }
-        }).start();
+        System.exit(0);
       }
     };
     
