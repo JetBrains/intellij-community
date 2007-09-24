@@ -5,10 +5,10 @@
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
-import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
  * Time: 7:45:12 PM
  * To change this template use File | Settings | File Templates.
  */
-public class JavaDocumentationProvider extends QuickDocumentationProvider implements CodeDocumentationProvider {
+public class JavaDocumentationProvider extends ExtensibleDocumentationProvider implements CodeDocumentationProvider {
   private static final String LINE_SEPARATOR = "\n";
 
   @NonNls private static final String PARAM_TAG = "@param";
@@ -43,7 +43,7 @@ public class JavaDocumentationProvider extends QuickDocumentationProvider implem
     } else if (element instanceof PsiPackage) {
       return generatePackageInfo((PsiPackage) element);
     }
-    return null;
+    return super.getQuickNavigateInfo(element);
   }
 
   private static void newLine(StringBuffer buffer) {

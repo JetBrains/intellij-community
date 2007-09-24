@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.XmlCompletionData;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.MetaDataDocumentationProvider;
+import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 0:00:05
  * To change this template use File | Settings | File Templates.
  */
-public class XmlDocumentationProvider implements DocumentationProvider {
+public class XmlDocumentationProvider extends ExtensibleDocumentationProvider implements DocumentationProvider {
   private static final Key<XmlElementDescriptor> DESCRIPTOR_KEY = Key.create("Original element");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.documentation.XmlDocumentationProvider");
@@ -43,7 +44,8 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
   @Nullable
   public String getQuickNavigateInfo(PsiElement element) {
-    return myDocumentationProvider.getQuickNavigateInfo(element);
+    final String navigateInfo = myDocumentationProvider.getQuickNavigateInfo(element);
+    return navigateInfo != null? navigateInfo : super.getQuickNavigateInfo(element);
   }
 
   public String getUrlFor(PsiElement element, PsiElement originalElement) {
@@ -63,8 +65,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
       return processor.url;
     }
-
-    return null;
+    return super.getUrlFor(element, originalElement);
   }
 
   public String generateDoc(PsiElement element, PsiElement originalElement) {
@@ -118,7 +119,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       return findDocRightAfterElement(element, entityDecl.getName());
     }
 
-    return null;
+    return super.generateDoc(element, originalElement);
   }
 
   public static String findDocRightAfterElement(final PsiElement parent, final String referenceName) {
@@ -274,7 +275,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     if (object instanceof String && element != null) {
       return findEntityDeclWithName((String)object, element);
     }
-    return null;
+    return super.getDocumentationElementForLookupItem(psiManager, object, element);
   }
 
   public static PsiElement findEntityDeclWithName(final String name, final @NotNull PsiElement element) {
@@ -308,7 +309,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   public PsiElement getDocumentationElementForLink(final PsiManager psiManager, String link, PsiElement context) {
-    return null;
+    return super.getDocumentationElementForLink(psiManager, link, context);
   }
 
   private static class MyPsiElementProcessor implements PsiElementProcessor {

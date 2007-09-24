@@ -19,9 +19,12 @@ package com.intellij.lang.documentation;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.Nullable;
 
 public interface DocumentationProvider {
+
+  ExtensionPointName<DocumentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.documentationProvider");
 
   @Nullable
   String getQuickNavigateInfo(PsiElement element);
