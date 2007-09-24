@@ -43,6 +43,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 public final class ActionManagerImpl extends ActionManagerEx implements JDOMExternalizable, ApplicationComponent {
@@ -205,7 +206,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
     Object obj;
     String className = stub.getClassName();
     try {
-      obj = Class.forName(className, true, stub.getLoader()).newInstance();
+      Constructor<?> constructor = Class.forName(className, true, stub.getLoader()).getDeclaredConstructor();
+      constructor.setAccessible(true);
+      obj = constructor.newInstance();
     }
     catch (ClassNotFoundException e) {
       PluginId pluginId = stub.getPluginId();
