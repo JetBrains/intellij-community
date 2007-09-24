@@ -138,7 +138,7 @@ public class LookupItemUtil{
         final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
         final String text = type.getCanonicalText();
         String typeString = text;
-        if (text.indexOf('<') > 0) {
+        if (text.indexOf('<') > 0 && text.endsWith(">")) {
           typeString = text.substring(0, text.indexOf('<'));
         }
         s = text.substring(typeString.lastIndexOf('.') + 1);
