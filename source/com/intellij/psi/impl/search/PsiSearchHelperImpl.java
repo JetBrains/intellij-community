@@ -530,6 +530,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final Job<?> processFilesJob =
         JobScheduler.getInstance().createJob("Process usages in files", Job.DEFAULT_PRIORITY); // TODO: Better name
       for (final PsiFile file : files) {
+        if (file instanceof PsiBinaryFile) continue;
+
         processFilesJob.addTask(new Runnable() {
           public void run() {
             ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
