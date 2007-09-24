@@ -6,6 +6,7 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
@@ -25,20 +26,25 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author spleaner
  */
-public class HtmlWrongClosingTagNameInspection extends HtmlExtraClosingTagInspection {
+public class XmlWrongClosingTagNameInspection extends HtmlExtraClosingTagInspection {
 
   @Nls
   @NotNull
   public String getDisplayName() {
-    return XmlBundle.message("html.inspection.wrong.closing.tag");
+    return XmlBundle.message("xml.inspection.wrong.closing.tag");
   }
 
   @NonNls
   @NotNull
   public String getShortName() {
-    return "HtmlWrongClosingTagName";
+    return "XmlWrongClosingTagName";
   }
 
+  @Nls
+  @NotNull
+  public String getGroupDisplayName() {
+    return GroupNames.XML_INSPECTIONS;
+  }
 
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
