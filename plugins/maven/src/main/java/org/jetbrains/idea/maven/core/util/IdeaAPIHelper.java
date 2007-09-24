@@ -134,10 +134,12 @@ public class IdeaAPIHelper {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
           TreePath[] treePaths = tree.getSelectionPaths();
-          for (TreePath treePath : treePaths) {
-            handler.toggle(treePath, e);
+          if (treePaths != null) {
+            for (TreePath treePath : treePaths) {
+              handler.toggle(treePath, e);
+            }
+            e.consume();
           }
-          e.consume();
         }
       }
     });
