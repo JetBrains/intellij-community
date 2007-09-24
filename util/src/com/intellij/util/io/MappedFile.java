@@ -31,7 +31,7 @@ public class MappedFile implements Forceable {
 
   public MappedFile(File file, int initialSize) throws IOException {
     myFile = file;
-    if (!file.exists()) {
+    if (!file.exists() || file.length() == 0) {
       writeLength(0);
     }
 
