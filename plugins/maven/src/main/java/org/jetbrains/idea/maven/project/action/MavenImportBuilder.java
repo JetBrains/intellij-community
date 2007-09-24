@@ -163,7 +163,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   private void createImportProcessor() {
-    myImportProcessor = new MavenImportProcessor(getProjectToUpdate(), getCoreState(), getImporterPreferences(), getArtifactPreferences());
+    myImportProcessor = new MavenImportProcessor(getProject(), getCoreState(), getImporterPreferences(), getArtifactPreferences());
     myImportProcessor.createMavenProjectModel(new HashMap<VirtualFile, Module>(), myFiles, myProfiles);
   }
 
