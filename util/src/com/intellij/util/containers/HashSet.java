@@ -15,10 +15,12 @@
  */
 package com.intellij.util.containers;
 
+import java.util.Collection;
+
 public class HashSet<E> extends java.util.HashSet<E>{
   public HashSet() { }
 
-  public <T extends E> HashSet(java.util.Collection<T> collection) {
+  public HashSet(Collection<? extends E> collection) {
     super(collection);
   }
 
