@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ImportClassFix implements IntentionAction {
-  private PsiJavaCodeReferenceElement myRef;
+  private final PsiJavaCodeReferenceElement myRef;
 
   public ImportClassFix(PsiJavaCodeReferenceElement element) {
     myRef = element;
@@ -62,15 +62,14 @@ public class ImportClassFix implements IntentionAction {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       if (CompletionUtil.isInExcludedPackage(aClass)) continue;
       PsiFile file = aClass.getContainingFile();
-      if (file instanceof PsiJavaFile) {
-        if (((PsiJavaFile)file).getPackageName().length() != 0) { //do not show classes from default package
-          String qName = aClass.getQualifiedName();
-          if (qName != null) { //filter local classes
-            if (qName.endsWith(name)) {
-              if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-                classList.add(aClass);
-              }
-            }
+      if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getPackageName().length() == 0) { //do not show classes from default package
+        continue;
+      }
+      String qName = aClass.getQualifiedName();
+      if (qName != null) { //filter local classes
+        if (qName.endsWith(name)) {
+          if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+            classList.add(aClass);
           }
         }
       }
