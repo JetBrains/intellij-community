@@ -165,6 +165,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return result;
   }
 
+  public void checkDelete() throws IncorrectOperationException {}
+
   public void delete() throws IncorrectOperationException {
     PsiElement parent = getParent();
     if (parent instanceof GroovyFileImpl) {
