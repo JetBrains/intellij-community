@@ -298,14 +298,20 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
       try {
-        PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocCommentOwner.class);
+        final PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocCommentOwner.class);
         if (owner != null) {
-          PsiDocComment docComment = owner.getDocComment();
-          PsiDocTag tag = factory.createDocTagFromText("@" + myTag+" "+myValue, docComment);
+          final PsiDocComment docComment = owner.getDocComment();
+          final PsiDocTag tag = factory.createDocTagFromText("@" + myTag+" "+myValue, docComment);
           if (docComment != null) {
-            PsiElement addedTag = docComment.add(tag);
+            PsiElement addedTag;
+            final PsiElement anchor = getAnchor();
+            if (anchor != null) {
+              addedTag = docComment.addBefore(tag, anchor);
+            } else {
+              addedTag = docComment.add(tag);
+            }
             moveCaretTo(addedTag);
           }
         }
@@ -313,6 +319,11 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
+    }
+
+    @Nullable
+    protected PsiElement getAnchor() {
+      return null;
     }
 
     private static void moveCaretTo(final PsiElement newCaretPosition) {
@@ -522,7 +533,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       for (PsiParameter psiParameter : absentParameters) {
         final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
         if (nameIdentifier != null) {
-          problems.add(createMissingParamTagDescriptor(nameIdentifier, psiParameter.getName(), manager));
+          problems.add(createMissingParamTagDescriptor(nameIdentifier, psiParameter, manager));
         }
       }
     }
@@ -659,23 +670,63 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return createDescriptor(elementToHighlight, message,new AddMissingTagFix(tag), manager);
   }
   private static ProblemDescriptor createMissingParamTagDescriptor(PsiElement elementToHighlight,
-                                                                   String param,
+                                                                   PsiParameter param,
                                                                    final InspectionManager manager) {
     String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.param.tag", "<code>@param</code>", "<code>" + param + "</code>");
     return createDescriptor(elementToHighlight, message, new AddMissingParamTagFix(param), manager);
   }
 
   private static class AddMissingParamTagFix extends AddMissingTagFix {
-    private final String myParamName;
+    private final PsiParameter myParam;
 
-    public AddMissingParamTagFix(final String paramName) {
-      super("param", paramName);
-      myParamName = paramName;
+    public AddMissingParamTagFix(final PsiParameter param) {
+      super("param", param.getName());
+      myParam = param;
     }
 
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.javadoc.problem.add.param.tag", myParamName);
+      return InspectionsBundle.message("inspection.javadoc.problem.add.param.tag", myParam.getName());
+    }
+
+    @Nullable
+    protected PsiElement getAnchor() {
+      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(myParam, PsiMethod.class);
+      LOG.assertTrue(psiMethod != null);
+      final PsiDocComment docComment = psiMethod.getDocComment();
+      LOG.assertTrue(docComment != null);
+      PsiDocTag[] tags = docComment.findTagsByName("param");
+      if (tags.length == 0) { //insert as first tag or append to description
+        tags = docComment.getTags();
+        if (tags.length == 0) return null;
+        return tags[0];
+      }
+
+      PsiParameter nextParam = PsiTreeUtil.getNextSiblingOfType(myParam, PsiParameter.class);
+      while (nextParam != null) {
+        for (PsiDocTag tag : tags) {
+          if (matches(nextParam, tag)) {
+            return tag;
+          }
+        }
+        nextParam = PsiTreeUtil.getNextSiblingOfType(nextParam, PsiParameter.class);
+      }
+
+      PsiParameter prevParam = PsiTreeUtil.getPrevSiblingOfType(myParam, PsiParameter.class);
+      while (prevParam != null) {
+        for (PsiDocTag tag : tags) {
+          if (matches(prevParam, tag)) {
+            return PsiTreeUtil.getNextSiblingOfType(tag, PsiDocTag.class);
+          }
+        }
+        prevParam = PsiTreeUtil.getPrevSiblingOfType(prevParam, PsiParameter.class);
+      }
+
+      return null;
+    }
+
+    private static boolean matches(final PsiParameter param, final PsiDocTag tag) {
+      return tag.getValueElement().getText().trim().startsWith(param.getName());
     }
   }
 
