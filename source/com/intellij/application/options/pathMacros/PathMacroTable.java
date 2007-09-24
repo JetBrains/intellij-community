@@ -1,7 +1,7 @@
 package com.intellij.application.options.pathMacros;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -22,7 +22,7 @@ import java.util.List;
  */
 public class PathMacroTable extends Table {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.pathMacros.PathMacroTable");
-  private PathMacrosImpl myPathMacros = PathMacrosImpl.getInstanceEx();
+  private PathMacros myPathMacros = PathMacros.getInstance();
   private MyTableModel myTableModel = new MyTableModel();
   private static final int NAME_COLUMN = 0;
   private static final int VALUE_COLUMN = 1;

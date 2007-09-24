@@ -12,6 +12,10 @@ public class ModalityStateEx extends ModalityState {
 
   private final WeakReference[] myModalEntities;
 
+  public ModalityStateEx() {
+    this(EMPTY_REFS_ARRAY);
+  }
+
   public ModalityStateEx(Object[] modalEntities) {
     if (modalEntities.length > 0) {
       myModalEntities = new WeakReference[modalEntities.length];

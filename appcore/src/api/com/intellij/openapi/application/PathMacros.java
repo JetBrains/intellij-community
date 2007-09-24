@@ -34,4 +34,6 @@ public abstract class PathMacros {
   public abstract Set<String> getUserMacroNames();
 
   public abstract Set<String> getSystemMacroNames();
+
+  public abstract void removeAllMacros();
 }

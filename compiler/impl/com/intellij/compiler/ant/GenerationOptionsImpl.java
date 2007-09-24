@@ -1,8 +1,8 @@
 package com.intellij.compiler.ant;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.compiler.ModuleCompilerUtil;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -54,7 +54,7 @@ public class GenerationOptionsImpl extends GenerationOptions {
   }
 
   private static ReplacePathToMacroMap createReplacementMap() {
-    final PathMacrosImpl pathMacros = PathMacrosImpl.getInstanceEx();
+    final PathMacros pathMacros = PathMacros.getInstance();
     final Set<String> macroNames = pathMacros.getUserMacroNames();
     final ReplacePathToMacroMap map = new ReplacePathToMacroMap();
     for (final String macroName : macroNames) {

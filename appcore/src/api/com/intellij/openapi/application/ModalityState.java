@@ -23,8 +23,27 @@ import java.awt.*;
  * Represents the stack of active modal dialogs.
  */
 public abstract class ModalityState {
-  @NotNull @Deprecated public static final ModalityState NON_MMODAL = ApplicationManager.getApplication().getNoneModalityState();
-  @NotNull public static final ModalityState NON_MODAL = ApplicationManager.getApplication().getNoneModalityState();
+  @NotNull public static final ModalityState NON_MODAL;
+  @NotNull @Deprecated public static final ModalityState NON_MMODAL;
+
+  static {
+    try {
+      final Class<? extends ModalityState> ex = (Class<? extends ModalityState>)Class.forName("com.intellij.openapi.application.impl.ModalityStateEx");
+      NON_MODAL = ex.newInstance();
+      NON_MMODAL = NON_MODAL;
+
+      assert NON_MODAL != null;
+    }
+    catch (ClassNotFoundException e) {
+      throw new IllegalStateException(e);
+    }
+    catch (IllegalAccessException e) {
+      throw new IllegalStateException(e);
+    }
+    catch (InstantiationException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   public static ModalityState current() {
     return ApplicationManager.getApplication().getCurrentModalityState();

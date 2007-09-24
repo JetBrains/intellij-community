@@ -17,9 +17,22 @@ import java.util.*;
 public class ReplacePathToMacroMap extends PathMacroMap {
   private List<String> myPathsIndex = null;
 
-  private static final Comparator<String> PATHS_COMPARATOR = new Comparator<String>() {
-    public int compare(final String o1, final String o2) {
-      return o2.length() - o1.length();
+  private static final Comparator<Map.Entry<String, String>> PATHS_COMPARATOR = new Comparator<Map.Entry<String, String>>() {
+    public int compare(final Map.Entry<String, String> o1, final Map.Entry<String, String> o2) {
+      int idx1 = getIndex(o1);
+      int idx2 = getIndex(o2);
+
+      if (idx1 != idx2) return idx1 - idx2;
+
+      return o2.getKey().length() - o1.getKey().length();
+    }
+
+    private int getIndex(final Map.Entry<String, String> s) {
+      if (s.getValue().indexOf("..") >= 0) return 3;
+
+      if (s.getValue().indexOf("$MODULE_DIR$") >= 0) return 1;
+      if (s.getValue().indexOf("$PROJECT_DIR$") >= 0) return 1;
+      return 2;
     }
   };
 
@@ -86,12 +99,17 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     usedMacros.add(macroReplacement);
   }
 
-  private List<String> getPathIndex() {
+  public List<String> getPathIndex() {
     if (myPathsIndex == null || myPathsIndex.size() != size()) {
-      myPathsIndex = new ArrayList<String>(keySet());
-      // sort so that lenthy paths are traversed first
-      // so from the 2 strings such that one is a substring of another the one that dominates is substituted first
-      Collections.sort(myPathsIndex, PATHS_COMPARATOR);
+
+      final Set<Map.Entry<String, String>> entrySet = entries();
+      Map.Entry<String, String>[] entries = entrySet.toArray(new Map.Entry[entrySet.size()]);
+      Arrays.sort(entries, PATHS_COMPARATOR);
+      myPathsIndex = new ArrayList<String>(entries.length);
+
+      for (Map.Entry<String, String> entry : entries) {
+        myPathsIndex.add(entry.getKey());
+      }
     }
     return myPathsIndex;
   }

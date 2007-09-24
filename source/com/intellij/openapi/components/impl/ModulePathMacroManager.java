@@ -5,7 +5,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.impl.ModuleImpl;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -15,10 +15,10 @@ import java.io.File;
 public class ModulePathMacroManager extends BasePathMacroManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.ModulePathMacroManager");
 
-  private ModuleImpl myModule;
+  private Module myModule;
 
 
-  public ModulePathMacroManager(final ModuleImpl module) {
+  public ModulePathMacroManager(final Module module) {
     myModule = module;
   }
 
@@ -33,7 +33,7 @@ public class ModulePathMacroManager extends BasePathMacroManager {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
     getModuleHomeReplacements(result, false);
     result.putAll(super.getReplacePathMap());
-    getModuleHomeReplacements(result, myModule.getStateStore().isSavePathsRelative());
+    getModuleHomeReplacements(result, myModule.isSavePathsRelative());
     return result;
   }
 
@@ -82,7 +82,7 @@ public class ModulePathMacroManager extends BasePathMacroManager {
       result.put("jar://" + path, "jar://" + s);
       result.put("jar:/" + path, "jar:/" + s);
       result.put("jar:" + path, "jar:" + s);
-      if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/")) {
+      if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/") && !path.equalsIgnoreCase("p:/")) {
         result.put(path, s);
       }
 

@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
@@ -58,7 +57,7 @@ import java.util.concurrent.*;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
-  private ModalityState MODALITY_STATE_NONE;
+  private ModalityState MODALITY_STATE_NONE = ModalityState.NON_MODAL;
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
   private final List<ApplicationListener> myListeners = new CopyOnWriteArrayList<ApplicationListener>();
@@ -508,9 +507,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public ModalityState getNoneModalityState() {
-    if (MODALITY_STATE_NONE == null) {
-      MODALITY_STATE_NONE = new ModalityStateEx(ArrayUtil.EMPTY_OBJECT_ARRAY);
-    }
     return MODALITY_STATE_NONE;
   }
 

@@ -1,7 +1,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.CommonBundle;
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -323,7 +322,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       if (value != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            PathMacrosImpl.getInstanceEx().setMacro(macro, value);
+            PathMacros.getInstance().setMacro(macro, value);
           }
         });
         it.remove();
