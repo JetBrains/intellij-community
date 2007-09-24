@@ -164,9 +164,6 @@ public class CopyReferenceAction extends AnAction {
         });
       }
     }, IdeBundle.message("command.pasting.reference"), null);
-
-    final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
-    statusBar.setInfo(IdeBundle.message("message.reference.to.fqn.has.been.pasted", fqn));
   }
 
   private static void doInsert(String fqn,
