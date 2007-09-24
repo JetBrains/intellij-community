@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -577,6 +578,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   private static boolean isClearHighlights(Editor editor, Object highlightManager) {
+    if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
+    
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
     int caretOffset = editor.getCaretModel().getOffset();
     for (RangeHighlighter highlighter : highlighters) {
@@ -588,6 +591,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   private static void clearHighlights(Editor editor, HighlightManager highlightManager, List<TextRange> rangesToHighlight, TextAttributes attributes) {
+    if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
     Arrays.sort(highlighters, new Comparator<RangeHighlighter>(){
       public int compare(RangeHighlighter o1, RangeHighlighter o2) {
@@ -608,7 +612,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       if (refRange.equals(highlighterRange) && attributes.equals(highlighter.getTextAttributes()) && highlighter.getLayer() == HighlighterLayer.SELECTION - 1) {
         highlightManager.removeSegmentHighlighter(editor, highlighter);
         i++;
-        j++;
       }
       else if (refRange.getStartOffset() > highlighterRange.getEndOffset()) {
         i++;
@@ -630,6 +633,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       PsiElement element = ref.getElement();
       TextRange rangeInElement = ref.getRangeInElement();
       TextRange range = element.getTextRange().cutOut(rangeInElement);
+      // injection occurs
+      range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
       textRanges.add(range);
     }
     if (clearHighlights) {
