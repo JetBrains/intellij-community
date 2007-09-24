@@ -23,7 +23,6 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   private int myFrameIndex = -1;
   private StackFrame myStackFrame;
   private ObjectReference myThisReference;
-  private Location myLocation;
   private ClassLoaderReference myClassLoader;
   private Boolean myIsObsolete = null;
   private Map<LocalVariable,Value> myAllValues;
@@ -62,7 +61,6 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     myFrameIndex = -1;
     myStackFrame = null;
     myIsObsolete = null;
-    myLocation      = null;
     myThisReference = null;
     myClassLoader = null;
     myAllValues = null;
@@ -125,17 +123,12 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   }
 
   public Location location() throws EvaluateException {
-    checkValid();
-    if(myLocation == null) {
-      try {
-        myLocation = getStackFrame().location();
-      }
-      catch (InvalidStackFrameException e) {
-        clearCaches();
-        return location();
-      }
+    try {
+      return getStackFrame().location();
     }
-    return myLocation;
+    catch (InvalidStackFrameException e) {
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.thread.resumed"), e);
+    }
   }
 
   public ThreadReferenceProxyImpl threadProxy() {

@@ -400,18 +400,14 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       try {
         final StackFrameDescriptorImpl stackDescriptor = (StackFrameDescriptorImpl)getNode().getDescriptor();
         final StackFrameProxyImpl frame = stackDescriptor.getFrameProxy();
-        final DebuggerContextImpl debuggerContext = getDebuggerContext();
-        try {
-          if(!debuggerContext.getDebugProcess().getSuspendManager().isSuspended(frame.threadProxy())) {
-            return;
-          }
-        }
-        catch (ObjectCollectedException e) {
+        if (frame == null) {
           return;
         }
+        final Location location = frame.location();
 
         final ObjectReference thisObjectReference = frame.thisObject();
 
+        final DebuggerContextImpl debuggerContext = getDebuggerContext();
         final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
 
         if (!debuggerContext.isEvaluationPossible()) {
@@ -423,7 +419,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
           descriptor = myNodeManager.getThisDescriptor(stackDescriptor, thisObjectReference);
         }
         else {
-          final ReferenceType type = frame.location().method().declaringType();
+          final ReferenceType type = location.method().declaringType();
           descriptor = myNodeManager.getStaticDescriptor(stackDescriptor, type);
         }
         myChildren.add(myNodeManager.createNode(descriptor, evaluationContext));
