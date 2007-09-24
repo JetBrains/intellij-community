@@ -75,11 +75,11 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public boolean hasUnavailableContent() {
+  public boolean hasUnavailableContent(List<Entry> entriesWithUnavailableContent) {
     for (Entry e : myChildren) {
-      if (e.hasUnavailableContent()) return true;
+      e.hasUnavailableContent(entriesWithUnavailableContent);
     }
-    return false;
+    return !entriesWithUnavailableContent.isEmpty();
   }
 
   @Override

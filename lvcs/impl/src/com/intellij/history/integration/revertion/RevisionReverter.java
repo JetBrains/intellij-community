@@ -8,6 +8,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class RevisionReverter extends Reverter {
@@ -23,11 +24,19 @@ public abstract class RevisionReverter extends Reverter {
   }
 
   @Override
-  protected void doCheckCanRevert(List<String> errors) throws IOException {
-    super.doCheckCanRevert(errors);
-    if (myLeftEntry != null && myLeftEntry.hasUnavailableContent()) {
-      errors.add(LocalHistoryBundle.message("revert.error.files.have.big.content"));
+  public String askUserForProceed() throws IOException {
+    if (myLeftEntry == null) return null;
+
+    List<Entry> myEntriesWithBigContent = new ArrayList<Entry>();
+    if (!myLeftEntry.hasUnavailableContent(myEntriesWithBigContent)) return null;
+
+    String filesList = "";
+    for (Entry e : myEntriesWithBigContent) {
+      if (filesList.length() > 0) filesList += "\n";
+      filesList += e.getPath();
     }
+
+    return LocalHistoryBundle.message("revert.message.should.revert.with.big.content", filesList);
   }
 
   @Override

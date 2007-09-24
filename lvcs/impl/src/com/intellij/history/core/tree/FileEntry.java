@@ -55,8 +55,10 @@ public class FileEntry extends Entry {
   }
 
   @Override
-  public boolean hasUnavailableContent() {
-    return !myContent.isAvailable();
+  public boolean hasUnavailableContent(List<Entry> entriesWithUnavailableContent) {
+    if (myContent.isAvailable()) return false;
+    entriesWithUnavailableContent.add(this);
+    return true;
   }
 
   @Override

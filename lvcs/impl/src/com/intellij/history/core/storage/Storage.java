@@ -1,6 +1,7 @@
 package com.intellij.history.core.storage;
 
 import com.intellij.history.core.LocalVcs;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
@@ -77,6 +78,7 @@ public class Storage {
       myContentStorage = createContentStorage();
     }
     catch (IOException e) {
+      ProjectManager.getInstance().getOpenProjects();
       throw new RuntimeException(e);
     }
   }

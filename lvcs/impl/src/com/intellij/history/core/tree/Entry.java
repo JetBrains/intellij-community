@@ -79,6 +79,10 @@ public abstract class Entry {
   }
 
   public boolean hasUnavailableContent() {
+    return hasUnavailableContent(new ArrayList<Entry>());
+  }
+
+  public boolean hasUnavailableContent(List<Entry> entriesWithUnavailableContent) {
     return false;
   }
 

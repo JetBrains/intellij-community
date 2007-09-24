@@ -181,6 +181,8 @@ public class ChangeRevertionVisitor extends ChangeVisitor {
 
     @Override
     public void apply() throws IOException {
+      if (!myContent.isAvailable()) return;
+
       boolean isReadOnly = !myFile.isWritable();
       ReadOnlyAttributeUtil.setReadOnlyAttribute(myFile, false);
 

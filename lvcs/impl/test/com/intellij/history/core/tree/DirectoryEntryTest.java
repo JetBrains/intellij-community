@@ -7,6 +7,7 @@ import com.intellij.history.core.storage.UnavailableContent;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class DirectoryEntryTest extends LocalVcsTestCase {
   @Test
@@ -233,17 +234,35 @@ public class DirectoryEntryTest extends LocalVcsTestCase {
   @Test
   public void testHasUnavailableContent() {
     Entry dir = new DirectoryEntry(-1, "dir");
-    assertFalse(dir.hasUnavailableContent());
+
+    assertHasNoUnavailableContent(dir);
 
     dir.addChild(new FileEntry(1, "f", c("abc"), -1, false));
-    assertFalse(dir.hasUnavailableContent());
+    assertHasNoUnavailableContent(dir);
+
+    FileEntry f1 = new FileEntry(2, "f1", new UnavailableContent(), -1, false);
+    FileEntry f2 = new FileEntry(3, "f2", new UnavailableContent(), -1, false);
 
     DirectoryEntry subDir = new DirectoryEntry(-1, "subDir");
-    subDir.addChild(new FileEntry(1, "f", new UnavailableContent(), -1, false));
     dir.addChild(subDir);
+    dir.addChild(f1);
+    subDir.addChild(f2);
 
-    assertTrue(dir.hasUnavailableContent());
-    assertTrue(subDir.hasUnavailableContent());
+    assertHasUnavailableContent(dir, f2, f1);
+    assertHasUnavailableContent(subDir, f2);
+  }
+
+  private void assertHasNoUnavailableContent(Entry dir) {
+    List<Entry> ee = new ArrayList<Entry>();
+    assertFalse(dir.hasUnavailableContent(ee));
+    assertTrue(ee.isEmpty());
+  }
+
+  private void assertHasUnavailableContent(Entry dir, Entry... entries) {
+    List<Entry> ee = new ArrayList<Entry>();
+
+    assertTrue(dir.hasUnavailableContent(ee));
+    assertEquals(entries, ee);
   }
 
   @Test
