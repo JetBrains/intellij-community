@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper {
   private String mySubId;
 
-  public ProjectViewSelectInTarget(Project project) {
+  protected ProjectViewSelectInTarget(Project project) {
     super(project);
   }
 
@@ -51,23 +51,27 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
   public void select(PsiElement element, final boolean requestFocus) {
-    while (true) {
-      if (element instanceof PsiFileSystemItem) {
+    PsiElement current = element;
+    while (current != null) {
+      if (current instanceof PsiFileSystemItem) {
         break;
       }
-      if (isTopLevelClass(element)) {
+      if (isTopLevelClass(current)) {
         break;
       }
-      element = element.getParent();
+      current = current.getParent();
     }
 
-    if (element instanceof PsiJavaFile) {
-      PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+    if (current instanceof PsiJavaFile) {
+      PsiClass[] classes = ((PsiJavaFile)current).getClasses();
       if (classes.length > 0 && isTopLevelClass(classes[0])) {
-        element = classes[0];
+        current = classes[0];
       }
     }
-    PsiElement originalElement = element.getOriginalElement();
+    if (current == null) {
+      current = element;
+    }
+    PsiElement originalElement = current.getOriginalElement();
     JspFile jspFile = PsiUtil.getJspFile(originalElement);
     final VirtualFile virtualFile = PsiUtil.getVirtualFile(originalElement);
     select(jspFile == null ? originalElement : jspFile, virtualFile, requestFocus);
