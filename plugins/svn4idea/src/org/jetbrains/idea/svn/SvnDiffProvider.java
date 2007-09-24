@@ -31,7 +31,7 @@ import java.io.File;
 
 public class SvnDiffProvider implements DiffProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnDiffProvider");
-  private SvnVcs myVcs;
+  private final SvnVcs myVcs;
 
   public SvnDiffProvider(final SvnVcs vcs) {
     myVcs = vcs;
@@ -71,6 +71,16 @@ public class SvnDiffProvider implements DiffProvider {
   public ContentRevision createFileContent(final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile) {
     final SVNRevision svnRevision = ((SvnRevisionNumber)revisionNumber).getRevision();
     FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(selectedFile);
+    final SVNStatusClient client = myVcs.createStatusClient();
+    try {
+      final SVNStatus svnStatus = client.doStatus(new File(selectedFile.getPresentableUrl()), false, false);
+      if (svnRevision.equals(svnStatus.getRevision())) {
+        return SvnContentRevision.create(myVcs, filePath, svnRevision);
+      }
+    }
+    catch (SVNException e) {
+      LOG.debug(e);    // most likely the file is unversioned
+    }
     return SvnContentRevision.createRemote(myVcs, filePath, svnRevision);
   }
 }
