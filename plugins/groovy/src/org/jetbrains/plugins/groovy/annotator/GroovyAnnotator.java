@@ -18,10 +18,10 @@ package org.jetbrains.plugins.groovy.annotator;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -125,7 +125,7 @@ public class GroovyAnnotator implements Annotator {
     } else {
       final ASTNode node = element.getNode();
       if (node != null && !(element instanceof PsiWhiteSpace) && !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
-                 element.getContainingFile() instanceof GroovyFile) {
+          element.getContainingFile() instanceof GroovyFile) {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
       }
     }
@@ -637,11 +637,8 @@ public class GroovyAnnotator implements Annotator {
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
     boolean isStatic = member.hasModifierProperty(GroovyPsiModifier.STATIC);
     Annotation annotation = holder.createInfoAnnotation(refExpr.getReferenceNameElement(), null);
-    if (member instanceof PsiField) {
-      annotation.setTextAttributes(!isStatic ?
-          DefaultHighlighter.INSTANCE_FIELD :
-          DefaultHighlighter.STATIC_FIELD
-      );
+    if (member instanceof PsiField && isStatic) {
+      annotation.setTextAttributes(DefaultHighlighter.STATIC_FIELD);
       return;
     }
     if (member instanceof PsiMethod) {
@@ -773,10 +770,10 @@ public class GroovyAnnotator implements Annotator {
     if (member instanceof PsiField) {
       GrField field = (GrField) member;
       PsiElement identifier = field.getNameIdentifierGroovy();
-      boolean isStatic = field.hasModifierProperty(GroovyPsiModifier.STATIC);
-      Annotation annotation = holder.createInfoAnnotation(identifier, null);
-      annotation.setTextAttributes(!isStatic ? DefaultHighlighter.INSTANCE_FIELD :
-          DefaultHighlighter.STATIC_FIELD);
+      if (field.hasModifierProperty(GroovyPsiModifier.STATIC)) {
+        Annotation annotation = holder.createInfoAnnotation(identifier, null);
+        annotation.setTextAttributes(DefaultHighlighter.STATIC_FIELD);
+      }
     }
   }
 

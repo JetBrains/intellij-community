@@ -64,9 +64,9 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
         new AttributesDescriptor(DefaultHighlighter.WRONG_STRING_ID, DefaultHighlighter.WRONG_STRING),
         new AttributesDescriptor(DefaultHighlighter.UNTYPED_ACCESS_ID, DefaultHighlighter.UNTYPED_ACCESS),
         new AttributesDescriptor(DefaultHighlighter.ANNOTATION_ID, DefaultHighlighter.ANNOTATION),
-        new AttributesDescriptor(DefaultHighlighter.INSTANCE_FIELD_ID, DefaultHighlighter.INSTANCE_FIELD),
+//        new AttributesDescriptor(DefaultHighlighter.INSTANCE_FIELD_ID, DefaultHighlighter.INSTANCE_FIELD),
         new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.STATIC_FIELD),
-        new AttributesDescriptor(DefaultHighlighter.METHOD_CALL_ID, DefaultHighlighter.METHOD_CALL),
+//        new AttributesDescriptor(DefaultHighlighter.METHOD_CALL_ID, DefaultHighlighter.METHOD_CALL),
         new AttributesDescriptor(DefaultHighlighter.STATIC_METHOD_ACCESS_ID, DefaultHighlighter.STATIC_METHOD_ACCESS),
     };
   }
@@ -91,12 +91,12 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
         "//This is a line comment\n" +
         "/* This is a block comment */\n" +
         "  static def foo(int i) { return [i, i] }\n" +
-        "  JPanel <field>panel</field> = new JPanel()\n" +
+        "  static def <statfield>panel</statfield> = new JPanel()\n" +
         "}\n" +
         "\n" +
-        "new Demo().<field>panel</field>.<mc>size</mc> = " +
-        "Demo.<statmet>foo</statmet>(\"2${3}9\".toInteger()) \n" +
-        "'JetBrains'.matches(/Jw+/) \n" +
+        "Demo.<statfield>panel</statfield>.size = " +
+        "Demo.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
+        "'JetBrains'.matches(/Jw+Bw+/) \n" +
         "<untyped>untyped</untyped>.<untyped>doSomething</untyped>()";
   }
 
@@ -106,8 +106,8 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("annotation", DefaultHighlighter.ANNOTATION);
     map.put("statmet", DefaultHighlighter.STATIC_METHOD_ACCESS);
     map.put("statfield", DefaultHighlighter.STATIC_FIELD);
-    map.put("field", DefaultHighlighter.INSTANCE_FIELD);
-    map.put("mc", DefaultHighlighter.METHOD_CALL);
+//    map.put("field", DefaultHighlighter.INSTANCE_FIELD);
+//    map.put("mc", DefaultHighlighter.METHOD_CALL);
     map.put("untyped", DefaultHighlighter.UNTYPED_ACCESS);
 
     return map;
