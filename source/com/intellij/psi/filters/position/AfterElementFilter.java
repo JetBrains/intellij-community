@@ -1,7 +1,6 @@
 package com.intellij.psi.filters.position;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.position.PositionElementFilter;
 import com.intellij.psi.filters.ElementFilter;
 
 /**
@@ -15,8 +14,6 @@ public class AfterElementFilter extends PositionElementFilter{
   public AfterElementFilter(ElementFilter filter){
     setFilter(filter);
   }
-
-  public AfterElementFilter(){}
 
   public boolean isAcceptable(Object element, PsiElement scope){
     if (!(element instanceof PsiElement)) return false;
