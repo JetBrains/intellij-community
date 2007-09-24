@@ -50,6 +50,11 @@ public class FileBasedStorage extends XmlElementStorage {
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
 
 
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
+    if (virtualFile != null) {
+      virtualFile.refresh(false, true);
+    }
+
     if (virtualFileTracker != null && messageBus != null) {
       final String path = myFile.getAbsolutePath();
       final String fileUrl = LocalFileSystem.PROTOCOL + "://" + path.replace(File.separatorChar, '/');
