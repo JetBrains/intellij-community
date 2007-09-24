@@ -11,9 +11,11 @@ import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.jsp.JspContextManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -255,8 +257,25 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       if (getTreeParent().getElementType() == JavaElementType.DECLARATION_STATEMENT &&
           getTreeParent().getTreeParent() instanceof JspCodeBlock &&
           getTreeParent().getTreeParent().getTreeParent().getElementType() == JspElementType.HOLDER_METHOD) { //?
-        final PsiFile[] includingFiles = JspSpiUtil.getReferencingFiles(PsiUtil.getJspFile(this));
-        return new LocalSearchScope(includingFiles);
+        final JspFile jspFile = PsiUtil.getJspFile(this);
+        final JspContextManager contextManager = JspContextManager.getInstance(getProject());
+        if (contextManager == null) {
+          return super.getUseScope();
+        }
+
+        final Set<PsiFile> allIncluded = new THashSet<PsiFile>(10);
+        final JspFile rootContext = contextManager.getRootContextFile(jspFile);
+        allIncluded.add(rootContext);
+        JspSpiUtil.visitAllIncludedFilesRecursively(rootContext, new PsiElementVisitor() {
+          public void visitReferenceExpression(final PsiReferenceExpression expression) {
+          }
+
+          public void visitFile(final PsiFile file) {
+            allIncluded.add(file);
+          }
+        });
+
+        return new LocalSearchScope(allIncluded.toArray(new PsiFile[allIncluded.size()]));
       }
     }
 
