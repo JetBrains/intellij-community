@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -211,7 +210,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       gc.weighty = 0;
       add(createAdditionalJavadocTagsPanel(), gc);
       JTabbedPane tabs = new JTabbedPane(JTabbedPane.BOTTOM);
-      @NonNls String[] tags = new String[]{"@author", "@version", "@since"};
+      @NonNls String[] tags = new String[]{"@author", "@version", "@since", "@param"};
       tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title"), createOptionsPanel(new String[]{JavaDocLocalInspection.NONE, JavaDocLocalInspection.PUBLIC, JavaDocLocalInspection.PACKAGE_LOCAL},
                                                                                                     tags,
                                                                                                     TOP_LEVEL_CLASS_OPTIONS));
@@ -409,9 +408,32 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     checkDuplicateTags(tags, problems, manager);
 
+    if (isTagRequired(psiClass, "param") && psiClass.hasTypeParameters() && nameIdentifier != null) {
+      ArrayList<PsiTypeParameter> absentParameters = null;
+      final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+      for (PsiTypeParameter typeParameter : typeParameters) {
+        if (!isFound(tags, typeParameter)) {
+          if (absentParameters == null) absentParameters = new ArrayList<PsiTypeParameter>(1);
+          absentParameters.add(typeParameter);
+        }
+      }
+      if (absentParameters != null) {
+        for (PsiTypeParameter psiTypeParameter : absentParameters) {
+          problems.add(createMissingParamTagDescriptor(nameIdentifier, psiTypeParameter, manager));
+        }
+      }
+    }
+
     return problems.isEmpty()
            ? null
-           : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
+           : problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
+  private static ProblemDescriptor createMissingParamTagDescriptor(final PsiIdentifier nameIdentifier,
+                                                                   final PsiTypeParameter psiTypeParameter,
+                                                                   final InspectionManager manager) {
+    String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@param</code>");
+    return createDescriptor(nameIdentifier, message, new AddMissingTagFix("param", "<" + psiTypeParameter.getText() + ">"), manager);
   }
 
   @Nullable
@@ -499,21 +521,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (superMethods.length == 0 && isTagRequired(psiMethod, "param") ) {
       PsiParameter[] params = psiMethod.getParameterList().getParameters();
       for (PsiParameter param : params) {
-        boolean found = false;
-        for (PsiDocTag tag : tags) {
-          if ("param".equals(tag.getName())) {
-            PsiDocTagValue value = tag.getValueElement();
-            if (value instanceof PsiDocParamRef) {
-              PsiDocParamRef paramRef = (PsiDocParamRef)value;
-              if (paramRef.getReference().isReferenceTo(param)) {
-                found = true;
-                break;
-              }
-            }
-          }
-        }
-
-        if (!found) {
+        if (!isFound(tags, param)) {
           if (absentParameters == null) absentParameters = new ArrayList<PsiParameter>(2);
           absentParameters.add(param);
         }
@@ -618,7 +626,23 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     return problems.isEmpty()
            ? null
-           : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
+           : problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
+  private static boolean isFound(final PsiDocTag[] tags, final PsiElement param) {
+    for (PsiDocTag tag : tags) {
+      if ("param".equals(tag.getName())) {
+        PsiDocTagValue value = tag.getValueElement();
+        if (value instanceof PsiDocParamRef) {
+          PsiDocParamRef paramRef = (PsiDocParamRef)value;
+          final PsiReference psiReference = paramRef.getReference();
+          if (psiReference != null && psiReference.isReferenceTo(param)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private static void processThrowsTags(final PsiDocTag[] tags,
