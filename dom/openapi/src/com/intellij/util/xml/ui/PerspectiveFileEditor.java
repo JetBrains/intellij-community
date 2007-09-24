@@ -191,6 +191,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public void selectNotify() {
+    if (!checkIsValid() || myInvalidated) return;
     ensureInitialized();
     setShowing(true);
     reset();
@@ -208,7 +209,7 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   }
 
   public void deselectNotify() {
-    if (myInvalidated) return;
+    if (!checkIsValid() || myInvalidated) return;
     setShowing(false);
     commit();
   }
