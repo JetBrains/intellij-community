@@ -6,6 +6,7 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.facet.FacetInfo;
 import com.intellij.facet.impl.ui.FacetDetectionProcessor;
+import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsTreeComponent;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.openapi.module.Module;

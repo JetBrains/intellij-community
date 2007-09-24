@@ -37,13 +37,16 @@ public class CheckboxTreeBase extends Tree {
           Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
           checkBounds.setLocation(rowBounds.getLocation());
 
+          final CheckedTreeNode node = (CheckedTreeNode) getPathForRow(row).getLastPathComponent();
           if (checkBounds.contains(e.getPoint())) {
-            final CheckedTreeNode node = (CheckedTreeNode) getPathForRow(row).getLastPathComponent();
             if (node.isEnabled()) {
               toggleNode(node);
               setSelectionRow(row);
             }
             e.consume();
+          }
+          else if (e.getClickCount() > 1) {
+            onDoubleClick(node);
           }
         }
       }
@@ -72,6 +75,9 @@ public class CheckboxTreeBase extends Tree {
 
     setSelectionRow(0);
     setModel(new DefaultTreeModel(root));
+  }
+
+  protected void onDoubleClick(final CheckedTreeNode node) {
   }
 
   protected boolean isToggleEvent(KeyEvent e) {

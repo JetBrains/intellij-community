@@ -6,6 +6,7 @@ package com.intellij.facet.impl.autodetecting;
 
 import com.intellij.facet.*;
 import com.intellij.facet.impl.FacetUtil;
+import com.intellij.facet.impl.autodetecting.facetsTree.ImplicitFacetsDialog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -144,14 +145,19 @@ public class ImplicitFacetManager implements Disposable {
   }
 
   private ImplicitFacetsComponent createImplicitFacetsComponent(final Collection<Facet> newFacets) {
-    ImplicitFacetsComponent implicitFacetsComponent = new ImplicitFacetsComponent(this);
+    List<ImplicitFacetInfo> implicitFacets = getImplicitFacetInfos(newFacets);
+    return new ImplicitFacetsComponent(this, implicitFacets);
+  }
+
+  private List<ImplicitFacetInfo> getImplicitFacetInfos(final Collection<Facet> newFacets) {
+    List<ImplicitFacetInfo> implicitFacets = new ArrayList<ImplicitFacetInfo>();
     for (Facet newFacet : newFacets) {
       Set<String> urls = myAutodetectingManager.getFiles(newFacet);
       if (urls != null) {
-        implicitFacetsComponent.addFacetInfo(newFacet, urls);
+        implicitFacets.add(new ImplicitFacetInfo(newFacet, urls));
       }
     }
-    return implicitFacetsComponent;
+    return implicitFacets;
   }
 
   private List<Facet> getImplicitFacets() {
@@ -202,9 +208,20 @@ public class ImplicitFacetManager implements Disposable {
     onImplicitFacetChanged();
   }
 
+  public void disableDetectionInFile(final ImplicitFacetInfo implicitFacet) {
+    Facet facet = implicitFacet.getFacet();
+    Collection<String> urls = implicitFacet.getUrls();
+    myAutodetectingManager.disableAutodetectionInFiles(facet.getType(), facet.getModule(), urls.toArray(new String[urls.size()]));
+    FacetUtil.deleteFacet(facet);
+  }
+
   public void disableDetectionInModule(final Facet facet) {
-    myAutodetectingManager.disableAutodetectionInModule(facet.getType(), facet.getModule());
-    FacetUtil.deleteImplicitFacets(facet.getModule(), facet.getTypeId());
+    disableDetectionInModule(facet.getType(), facet.getModule());
+  }
+
+  public void disableDetectionInModule(final FacetType type, final Module module) {
+    myAutodetectingManager.disableAutodetectionInModule(type, module);
+    FacetUtil.deleteImplicitFacets(module, type.getId());
   }
 
   public void disableDetectionInProject(final Facet facet) {
@@ -212,19 +229,16 @@ public class ImplicitFacetManager implements Disposable {
     FacetUtil.deleteImplicitFacets(facet.getModule().getProject(), facet.getTypeId());
   }
 
-  private void showPopup(final Component component) {
-    ImplicitFacetsComponent facetsComponent = createImplicitFacetsComponent(myImplicitFacets);
-    facetsComponent.showPopups(component);
-  }
-
   public void skipImplicitFacet(final Facet facet) {
     facet.setImplicit(false);
     onImplicitFacetChanged();
   }
 
-  public void showImplicitFacetsPopup() {
+  public void showImplicitFacetsDialog() {
     if (!myImplicitFacets.isEmpty()) {
-      showPopup(myAttentionComponent);
+      List<ImplicitFacetInfo> facets = getImplicitFacetInfos(myImplicitFacets);
+      ImplicitFacetsDialog dialog = new ImplicitFacetsDialog(myProject, this, facets);
+      dialog.show();
     }
   }
 
@@ -261,7 +275,7 @@ public class ImplicitFacetManager implements Disposable {
       addMouseListener(new MouseAdapter() {
         public void mouseClicked(final MouseEvent e) {
           if (myActive && !e.isPopupTrigger() && myManager != null) {
-            myManager.showPopup(e.getComponent());
+            myManager.showImplicitFacetsDialog();
           }
         }
       });
