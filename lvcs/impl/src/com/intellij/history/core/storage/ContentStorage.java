@@ -21,6 +21,12 @@ public class ContentStorage implements IContentStorage {
     return s;
   }
 
+  public void save() {
+    // make storage flush all data to prevent
+    // its corruption when idea process is killed by force
+    myStore.force();
+  }
+
   public void close() {
     myStore.dispose();
   }

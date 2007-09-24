@@ -113,6 +113,10 @@ public class Storage {
     return VERSION;
   }
 
+  public void save() {
+    myContentStorage.save();
+  }
+
   public void close() {
     myContentStorage.close();
   }

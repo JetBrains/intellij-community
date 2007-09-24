@@ -9,6 +9,10 @@ public class ThreadSafeContentStorage implements IContentStorage {
     mySubject = s;
   }
 
+  public synchronized void save() {
+    mySubject.save();
+  }
+
   public synchronized void close() {
     mySubject.close();
   }

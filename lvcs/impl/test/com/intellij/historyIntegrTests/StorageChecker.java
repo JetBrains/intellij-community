@@ -57,6 +57,9 @@ public class StorageChecker {
   }
 
   private static class NullContentStorage implements IContentStorage {
+    public void save() {
+    }
+
     public void close() {
     }
 

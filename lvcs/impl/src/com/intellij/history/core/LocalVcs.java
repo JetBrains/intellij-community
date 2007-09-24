@@ -47,6 +47,7 @@ public class LocalVcs implements ILocalVcs {
     m.myChangeList = myChangeList;
 
     myStorage.store(m);
+    myStorage.save();
 
     wasModifiedAfterLastSave = false;
   }

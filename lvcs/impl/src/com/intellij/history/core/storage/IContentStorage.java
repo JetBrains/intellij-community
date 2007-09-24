@@ -3,6 +3,8 @@ package com.intellij.history.core.storage;
 import java.io.IOException;
 
 public interface IContentStorage {
+  void save();
+
   void close();
 
   int store(byte[] content) throws IOException;

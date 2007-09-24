@@ -81,6 +81,10 @@ public class CompressingContentStorageTest extends PerformanceTestCase {
       return myContent;
     }
 
+    public void save() {
+      throw new UnsupportedOperationException();
+    }
+
     public void close() {
       throw new UnsupportedOperationException();
     }

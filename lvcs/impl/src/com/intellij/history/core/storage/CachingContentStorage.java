@@ -14,6 +14,10 @@ public class CachingContentStorage implements IContentStorage {
     mySubject = s;
   }
 
+  public void save() {
+    mySubject.save();
+  }
+
   public void close() {
     mySubject.close();
   }

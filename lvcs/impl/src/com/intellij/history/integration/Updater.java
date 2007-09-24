@@ -162,7 +162,7 @@ public class Updater implements CacheUpdater {
     if (notAllowed(fileOrDir)) return;
 
     // todo catching IDEADEV-18728 and IDEADEV-20412 bugs
-    assertNotExists(fileOrDir);
+    assert doesNotExist(fileOrDir);
 
     if (fileOrDir.isDirectory()) {
       myVcs.createDirectory(fileOrDir.getPath());
@@ -179,9 +179,9 @@ public class Updater implements CacheUpdater {
     return !myGateway.getFileFilter().isAllowedAndUnderContentRoot(f);
   }
 
-  private void assertNotExists(VirtualFile f) {
+  private boolean doesNotExist(VirtualFile f) {
     Entry e = myVcs.findEntry(f.getPath());
-    if (e == null) return;
+    if (e == null) return true;
 
     StringBuilder b = new StringBuilder();
 
@@ -199,7 +199,8 @@ public class Updater implements CacheUpdater {
     if (f.getParent() != null) b.append("is file parent allowed: " + !notAllowed(f.getParent()) + "\n");
     log(b, myVfsRoots);
     log(b, myVcs.getRoots());
-    throw new RuntimeException(b.toString());
+
+    return false;
   }
 
   private void log(StringBuilder b, VirtualFile[] roots) {
