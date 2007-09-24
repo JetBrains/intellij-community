@@ -250,7 +250,6 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
   }
 
   public PomMemberOwner getPom() {
-    //TODO:
     return null;
   }
 
@@ -328,6 +327,12 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
   @Nullable
   public Icon getIcon(int flags) {
     return myFile.getIcon(flags);
+  }
+
+  public void checkDelete() throws IncorrectOperationException {}
+
+  public void delete() throws IncorrectOperationException {
+    myFile.delete();
   }
 }
 
