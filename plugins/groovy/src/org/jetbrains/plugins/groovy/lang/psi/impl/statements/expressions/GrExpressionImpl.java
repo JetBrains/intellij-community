@@ -5,6 +5,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 
 import java.util.Collections;
-import java.util.Map;
 
 /**
  * @author ilyas
@@ -32,13 +32,11 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
   public PsiType getNominalType() {
     final TypeInferenceHelper helper = GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper();
 
-    try {
-      final Map<String, PsiType> map = Collections.emptyMap();
-      helper.setCurrentEnvironment(map);
-      return getType();
-    } finally {
-      helper.setCurrentEnvironment(null);
-    }
+    return helper.doInference(new Computable<PsiType>() {
+      public PsiType compute() {
+        return getType();
+      }
+    }, Collections.<String, PsiType>emptyMap());
   }
 
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr) throws IncorrectOperationException {

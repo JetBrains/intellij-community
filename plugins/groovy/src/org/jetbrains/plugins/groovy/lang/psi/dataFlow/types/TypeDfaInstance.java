@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -41,13 +42,11 @@ public class TypeDfaInstance implements DfaInstance<Map<String, PsiType>> {
       if (initializer != null) {
         final TypeInferenceHelper helper = GroovyPsiManager.getInstance(initializer.getProject()).getTypeInferenceHelper();
 
-        final PsiType type;
-        try {
-          helper.setCurrentEnvironment(map);
-          type = initializer.getType();
-        } finally {
-          helper.setCurrentEnvironment(null);
-        }
+        final PsiType type = helper.doInference(new Computable<PsiType>() {
+          public PsiType compute() {
+            return initializer.getType();
+          }
+        }, map);
 
         if (type != null) {
           map.put(((ReadWriteVariableInstruction) instruction).getVariableName(), type);

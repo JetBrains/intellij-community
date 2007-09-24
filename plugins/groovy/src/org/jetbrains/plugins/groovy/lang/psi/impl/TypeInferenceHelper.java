@@ -15,13 +15,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.util.Computable;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -78,8 +78,14 @@ public class TypeInferenceHelper {
 
   private ThreadLocal<Map<String, PsiType>> myCurrentEnvironment = new ThreadLocal<Map<String, PsiType>>();
 
-  public void setCurrentEnvironment(Map<String, PsiType> env) {
-    myCurrentEnvironment.set(env);
+  public PsiType doInference(Computable<PsiType> computable, @NotNull Map<String, PsiType> bindings) {
+    final Map<String, PsiType> oldBindings = myCurrentEnvironment.get();
+    try {
+      myCurrentEnvironment.set(bindings);
+      return computable.compute();
+    } finally {
+      myCurrentEnvironment.set(oldBindings);
+    }
   }
 
   public boolean isInferenceInProgress() {
