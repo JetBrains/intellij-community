@@ -40,6 +40,7 @@ class DataTable implements Disposable, Forceable {
   private void readInHeader(File filePath) throws IOException {
     int magic = myFile.getInt(HEADER_MAGIC_OFFSET);
     if (magic != SAFELY_CLOSED_MAGIC) {
+      myFile.dispose();
       throw new IOException("Records table for '" + filePath + "' haven't been closed correctly. Rebuild required.");
     }
     myWasteSize = myFile.getInt(HEADER_WASTE_SIZE_OFFSET);
