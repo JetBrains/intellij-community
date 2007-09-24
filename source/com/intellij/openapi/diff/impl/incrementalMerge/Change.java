@@ -4,11 +4,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.DocumentUtil;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -31,7 +32,7 @@ public abstract class Change {
     RangeMarker rangeMarker = getRangeMarker(targetSide);
 
     if (originalRangeMarker != null && rangeMarker != null) {
-      getType().apply(originalRangeMarker, rangeMarker);
+      ChangeType.apply(originalRangeMarker, rangeMarker);
       if (isValid()) {
         removeFromList();
       }
@@ -47,11 +48,11 @@ public abstract class Change {
   }
 
   private void highlight(Editor[] editors, FragmentSide side) {
-    getHighlighterHolder(side).highlight(getChangeSide(side), editors[side.getIndex()], this.getType());
+    getHighlighterHolder(side).highlight(getChangeSide(side), editors[side.getIndex()], getType());
   }
 
   private void updateHighlighter(FragmentSide side) {
-    getHighlighterHolder(side).updateHighlighter(getChangeSide(side), this.getType());
+    getHighlighterHolder(side).updateHighlighter(getChangeSide(side), getType());
   }
 
   private Project getProject() { return getChangeList().getProject(); }
@@ -146,14 +147,16 @@ public abstract class Change {
       myHighlighters.add(highlighter);
     }
 
+    @Nullable
     public RangeHighlighter addLineHighlighter(int line, int layer, TextDiffType diffType) {
+      if (myEditor.getDocument().getTextLength() == 0) return null;
       RangeHighlighter highlighter = getMarkupModel().addLineHighlighter(line, layer, null);
-      if (highlighter == null) return null;
       highlighter.setLineSeparatorColor(diffType.getTextBackground(myEditor));
       highlighterCreated(highlighter, diffType.getTextAttributes(myEditor));
       return highlighter;
     }
 
+    @Nullable
     public RangeHighlighter addRangeHighlighter(int start, int end, int layer, TextDiffType type, HighlighterTargetArea targetArea) {
       if (getMarkupModel().getDocument().getTextLength() == 0) return null;
       TextAttributes attributes = type.getTextAttributes(myEditor);
@@ -189,8 +192,8 @@ public abstract class Change {
 
     private void removeActionHighlighters() {
       MarkupModel markupModel = myEditor.getMarkupModel();
-      for (int i = 0; i < myActionHighlighters.length; i++) {
-        markupModel.removeHighlighter(myActionHighlighters[i]);
+      for (RangeHighlighter actionHighlighter : myActionHighlighters) {
+        markupModel.removeHighlighter(actionHighlighter);
       }
       myActionHighlighters = NO_HIGHLIGHTERS;
     }

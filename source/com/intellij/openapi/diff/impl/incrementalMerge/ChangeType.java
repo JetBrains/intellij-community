@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -96,7 +97,9 @@ public class ChangeType {
   }
 
   public interface MarkupHolder {
+    @Nullable
     RangeHighlighter addLineHighlighter(int line, int layer, TextDiffType diffType);
+    @Nullable
     RangeHighlighter addRangeHighlighter(int start, int end, int layer, TextDiffType type, HighlighterTargetArea targetArea);
   }
 
