@@ -57,7 +57,7 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
       result.put("jar:/" + path, "jar:/" + s);
       result.put("jar:" + path, "jar:" + s);
       //noinspection HardCodedStringLiteral
-      if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/")) {
+      if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/") && !path.equalsIgnoreCase("p:/")) {
         result.put(path, s);
       }
 
