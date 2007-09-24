@@ -227,18 +227,19 @@ public class ProjectUtil {
    *         installed importers (regardless of opening/import result)
    */
   public static boolean openOrImport(@NotNull final String path, final Project projectToClose, boolean forceOpenInNewFrame) {
-    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+
+    if (virtualFile == null) return false;
+
+    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) || virtualFile.isDirectory()) {
       openProject(path, projectToClose, forceOpenInNewFrame);
       return true;
     }
     else {
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      if (virtualFile != null) {
-        ProjectOpenProcessor provider = getImportProvider(virtualFile);
-        if (provider != null) {
-          provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
-          return true;
-        }
+      ProjectOpenProcessor provider = getImportProvider(virtualFile);
+      if (provider != null) {
+        provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
+        return true;
       }
       return false;
     }

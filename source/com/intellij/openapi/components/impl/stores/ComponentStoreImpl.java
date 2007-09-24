@@ -406,6 +406,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
       final Object component = myComponents.get(componentName);
 
       if (component != null && !(component instanceof PersistentStateComponent)) return false;
+
+      final State stateSpec = getStateSpec((PersistentStateComponent<? extends Object>)component);
+      if (stateSpec == null || !stateSpec.reloadable()) return false;
     }
 
     return true;

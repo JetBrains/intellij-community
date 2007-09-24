@@ -57,7 +57,8 @@ import java.util.*;
   storages = {
     @Storage(id = "default", file = "$PROJECT_FILE$")
    ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/modules.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    },
+  reloadable = false
 )
 public class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
