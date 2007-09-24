@@ -44,6 +44,8 @@ public class IdeaApplication {
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
     if (Main.isHeadless(args)) {
       System.setProperty("java.awt.headless", Boolean.TRUE.toString());
+    }
+    if (Main.isCommandLine(args)) {
       new CommandLineApplication(isInternal, false, "componentSets/IdeaComponents");
     }
     else {
