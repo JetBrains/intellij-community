@@ -100,7 +100,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
   private final ConverterManagerImpl myConverterManager = new ConverterManagerImpl();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache();
-  private final Map<DomFileDescription,Set<WeakReference<DomFileElementImpl>>> myFileDescriptions = new THashMap<DomFileDescription,Set<WeakReference<DomFileElementImpl>>>();
+  private final Map<DomFileDescription<?>,Set<WeakReference<DomFileElementImpl>>> myFileDescriptions = new THashMap<DomFileDescription<?>,Set<WeakReference<DomFileElementImpl>>>();
   private final FactoryMap<String,Set<DomFileDescription>> myRootTagName2FileDescription = new FactoryMap<String, Set<DomFileDescription>>() {
     protected Set<DomFileDescription> create(final String key) {
       return new THashSet<DomFileDescription>();
@@ -367,7 +367,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     return myAcceptingOtherRootTagNamesDescriptions.toArray(new DomFileDescription[myAcceptingOtherRootTagNamesDescriptions.size()]);
   }
 
-  public final Map<DomFileDescription, Set<WeakReference<DomFileElementImpl>>> getFileDescriptions() {
+  public final Map<DomFileDescription<?>, Set<WeakReference<DomFileElementImpl>>> getFileDescriptions() {
     return myFileDescriptions;
   }
 

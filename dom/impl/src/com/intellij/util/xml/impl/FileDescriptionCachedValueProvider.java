@@ -266,7 +266,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     final Set<Object> deps = new LinkedHashSet<Object>();
     deps.add(this);
     deps.add(myXmlFile);
-    for (final DomFileDescription<?> fileDescription : new HashSet<DomFileDescription<?>>(myDomManager.getFileDescriptions().keySet())) {
+    Set<DomFileDescription<?>> domFileDescriptions = myDomManager.getFileDescriptions().keySet();
+    for (final DomFileDescription<?> fileDescription : new HashSet<DomFileDescription<?>>(domFileDescriptions)) {
       deps.addAll(fileDescription.getDependencyItems(myXmlFile));
     }
     return deps.toArray();
