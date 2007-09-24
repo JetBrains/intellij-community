@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
 
@@ -26,7 +27,7 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
       }
     }
 
-    if (isEnumerated() && XmlUtil.isSimpleXmlAttributeValue(value)) {
+    if (isEnumerated() && XmlUtil.isSimpleXmlAttributeValue(value, (XmlAttributeValue)context)) {
       String[] values = getEnumeratedValues();
       boolean valueWasFound = false;
 

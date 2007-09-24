@@ -96,7 +96,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     if (tag != null &&
         tag.getAttributeValue("schemaLocation", com.intellij.xml.util.XmlUtil.XML_SCHEMA_INSTANCE_URI) == null
        ) {
-      final PsiFile file = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, containingFile, null);
+      final PsiFile file = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, containingFile, tag.getAttributeValue("version"));
       if (file != null) return file;
     }
 

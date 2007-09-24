@@ -688,7 +688,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                        final RefCountHolder refCountHolder, boolean soft) {
     final String unquotedValue = getUnquotedValue(value, tag);
 
-    if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
+    if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue, value)) {
       final XmlAttribute attributeById = refCountHolder.getAttributeById(unquotedValue);
 
       if (attributeById == null ||
@@ -743,7 +743,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null
        ) {
       String unquotedValue = getUnquotedValue(value, tag);
-      if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
+      if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue, value)) {
         XmlAttribute xmlAttribute = holder.getAttributeById(unquotedValue);
         if (xmlAttribute == null && tag instanceof HtmlTag) {
           xmlAttribute = holder.getAttributeById(StringUtil.stripQuotesAroundValue(value.getText()));

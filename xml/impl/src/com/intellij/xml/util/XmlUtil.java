@@ -980,10 +980,12 @@ public class XmlUtil {
     return new Pair<XmlTagChild, XmlTagChild>(first, last);
   }
 
-  public static boolean isSimpleXmlAttributeValue(final String unquotedValue) {
+  public static boolean isSimpleXmlAttributeValue(final String unquotedValue, final XmlAttributeValue context) {
     for (int i = 0; i < unquotedValue.length(); ++i) {
       final char ch = unquotedValue.charAt(i);
       if (!Character.isJavaIdentifierPart(ch) && ch != ':' && ch != '-') {
+        final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class);
+        if (file != null) return !tagFromTemplateFramework(file.getDocument().getRootTag());
         return false;
       }
     }
