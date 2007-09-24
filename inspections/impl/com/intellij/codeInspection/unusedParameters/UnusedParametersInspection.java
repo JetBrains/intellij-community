@@ -159,15 +159,15 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
     return res;
   }
 
-  private static void clearUsedParameters(RefMethod refMethods, RefParameter[] params, boolean checkDeep) {
-    RefParameter[] methodParms = refMethods.getParameters();
+  private static void clearUsedParameters(@NotNull RefMethod refMethod, RefParameter[] params, boolean checkDeep) {
+    RefParameter[] methodParms = refMethod.getParameters();
 
     for (int i = 0; i < methodParms.length; i++) {
       if (methodParms[i].isUsedForReading()) params[i] = null;
     }
 
     if (checkDeep) {
-      for (RefMethod refOverride : refMethods.getDerivedMethods()) {
+      for (RefMethod refOverride : refMethod.getDerivedMethods()) {
         clearUsedParameters(refOverride, params, checkDeep);
       }
     }
