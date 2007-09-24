@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 
 import java.util.Arrays;
 
@@ -97,6 +98,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     return !(parent instanceof GrExpression) && //todo make psi method for this
         !(parent instanceof GrArgumentList) &&
         !(parent instanceof GrNamedArgument) &&
+        !(parent instanceof GrThrowStatement) &&
         !(parent instanceof GrCommandArgumentList);
   }
 
