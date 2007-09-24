@@ -213,15 +213,19 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
           final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
           if (ideaPluginDescriptor.isDeleted()) {
             setForeground(FileStatus.COLOR_MISSING);
+            setToolTipText(IdeBundle.message("plugin.deleted.status.tooltip"));
           } else if (InstalledPluginsTableModel.hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
             setForeground(FileStatus.COLOR_MODIFIED);
+            setToolTipText(IdeBundle.message("plugin.outdated.version.status.tooltip"));
           }
         } else if (descriptor instanceof PluginNode) {
           final PluginNode pluginNode = (PluginNode)descriptor;
           if (pluginNode.getStatus() == PluginNode.STATUS_DOWNLOADED){
             setForeground(FileStatus.COLOR_ADDED);
+            setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
           } else if (pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
             setForeground(FileStatus.COLOR_MODIFIED);
+            setToolTipText(IdeBundle.message("plugin.is.already.installed.status.tooltip"));
           }
         }
       }
