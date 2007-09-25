@@ -122,6 +122,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   public void addTimerListener(int delay, final TimerListener listener) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (myTimer == null) {
       myTimer = new MyTimer();
       myTimer.start();
@@ -131,6 +132,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
   }
 
   public void removeTimerListener(TimerListener listener) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     LOG.assertTrue(myTimer != null);
 
     myTimer.removeTimerListener(listener);
