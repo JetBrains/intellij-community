@@ -105,8 +105,9 @@ public class BraceHighlighter implements ProjectComponent {
   private void updateBraces(final Editor editor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (!myIsDisposed && !myProject.isDisposed() && editor.getComponent().isShowing() && !editor.isViewer()) {
-            new BraceHighlightingHandler(myProject, editor, myAlarm).updateBraces();
+          Project project = editor.getProject();
+          if (project != null && !project.isDisposed() && !myIsDisposed && !myProject.isDisposed() && editor.getComponent().isShowing() && !editor.isViewer()) {
+            new BraceHighlightingHandler(project, editor, myAlarm).updateBraces();
           }
         }
       }, ModalityState.stateForComponent(editor.getComponent()));
@@ -115,8 +116,9 @@ public class BraceHighlighter implements ProjectComponent {
   private void clearBraces(final Editor editor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (!myIsDisposed && editor.getComponent().isShowing()) {
-            new BraceHighlightingHandler(myProject, editor, myAlarm).clearBraceHighlighters();
+          Project project = editor.getProject();
+          if (project != null && !project.isDisposed() && !myIsDisposed && editor.getComponent().isShowing()) {
+            new BraceHighlightingHandler(project, editor, myAlarm).clearBraceHighlighters();
           }
         }
       }, ModalityState.stateForComponent(editor.getComponent()));
@@ -129,5 +131,4 @@ public class BraceHighlighter implements ProjectComponent {
     eventMulticaster.removeDocumentListener(myDocumentListener);
     ((EditorEventMulticasterEx)eventMulticaster).removeFocusChangeListner(myFocusChangeListener);
   }
-
 }
