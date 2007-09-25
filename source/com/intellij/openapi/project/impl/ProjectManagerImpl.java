@@ -340,7 +340,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       final String fp = canonicalize(filePath);
 
       final File f = new File(fp);
-      if (convert && f.exists() && f.isFile()) {
+      if (convert && f.exists() && f.isFile() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
         final ProjectConversionUtil.ProjectConversionResult result = ProjectConversionUtil.convertProject(fp);
         if (result.isOpeningCancelled()) {
           return null;

@@ -223,26 +223,26 @@ public class ProjectUtil {
    * @param path                project file path
    * @param projectToClose      currently active project
    * @param forceOpenInNewFrame forces opening in new frame
-   * @return true if the path was recognized as IDEA project file or one of the project formats supported by
+   * @return project by path if the path was recognized as IDEA project file or one of the project formats supported by
    *         installed importers (regardless of opening/import result)
+   *         null otherwise
    */
-  public static boolean openOrImport(@NotNull final String path, final Project projectToClose, boolean forceOpenInNewFrame) {
+  @Nullable
+  public static Project openOrImport(@NotNull final String path, final Project projectToClose, boolean forceOpenInNewFrame) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
 
-    if (virtualFile == null) return false;
+    if (virtualFile == null) return null;
 
     if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) || virtualFile.isDirectory()) {
-      openProject(path, projectToClose, forceOpenInNewFrame);
-      return true;
+      return openProject(path, projectToClose, forceOpenInNewFrame);
     }
     else {
       ProjectOpenProcessor provider = getImportProvider(virtualFile);
       if (provider != null) {
-        provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
-        return true;
+        return provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
       }
-      return false;
     }
+    return null;
   }
 
   @Nullable
@@ -255,6 +255,7 @@ public class ProjectUtil {
     return null;
   }
 
+  @Nullable
   public static Project openProject(final String path, Project projectToClose, boolean forceOpenInNewFrame) {
     File file = new File(path);
     if (!file.exists()) {

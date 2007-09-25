@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -14,7 +15,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -105,7 +105,7 @@ public class InspectionApplication {
       if (!ProjectConversionUtil.convertSilently(myProjectPath, createConversionListener())) {
         System.exit(1);
       }
-      myProject = ProjectManagerEx.getInstanceEx().loadAndOpenProject(myProjectPath, false);
+      myProject = ProjectUtil.openOrImport(myProjectPath, null, false);
 
       VirtualFileManager.getInstance().refresh(false);
 
