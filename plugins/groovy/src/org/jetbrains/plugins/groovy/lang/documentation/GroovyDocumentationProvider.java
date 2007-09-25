@@ -75,7 +75,7 @@ public class GroovyDocumentationProvider implements DocumentationProvider {
     if (type != null) {
       buffer.append(type.getCanonicalText());
     } else {
-      buffer.append("untyped");
+      buffer.append("def");
     }
   }
 
