@@ -23,7 +23,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="bootstrap" />
-    <orderEntry type="module" module-name="ExtendedApi" />
     <orderEntry type="module" module-name="idea" />
     <orderEntryProperties />
   </component>
