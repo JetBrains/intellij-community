@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -36,8 +35,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.vcsUtil.VcsUtil;
@@ -51,7 +48,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.browser.*;
-import org.jetbrains.idea.svn.history.SvnFileRevision;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
@@ -71,13 +67,14 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
 public class RepositoryBrowserDialog extends DialogWrapper {
 
-  private Project myProject;
-  private SvnVcs myVCS;
+  private final Project myProject;
+  private final SvnVcs myVCS;
   private RepositoryBrowserComponent myRepositoryBrowser;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.browseSVN";
@@ -227,17 +224,16 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     panel.add(new JLabel(), gc);
 
     Collection<String> urls = SvnApplicationSettings.getInstance().getCheckoutURLs();
-    SVNURL[] svnURLs = new SVNURL[urls.size()];
-    int i = 0;
+    ArrayList<SVNURL> svnURLs = new ArrayList<SVNURL>();
     for (final String url : urls) {
       try {
-        svnURLs[i++] = SVNURL.parseURIEncoded(url);
+        svnURLs.add(SVNURL.parseURIEncoded(url));
       }
       catch (SVNException e) {
         //
       }
     }
-    getRepositoryBrowser().setRepositoryURLs(svnURLs, true);
+    getRepositoryBrowser().setRepositoryURLs(svnURLs.toArray(new SVNURL[svnURLs.size()]));
     getRepositoryBrowser().getRepositoryTree().addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         showPopup(e);
@@ -513,7 +509,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         node = (RepositoryTreeNode) node.getParent();
       }
       root = node.getURL();
-      CopyOptionsDialog dialog = new CopyOptionsDialog("Branch or Tag", myProject, root, getNotNullSelectedNode().getURL());
+      CopyOptionsDialog dialog = new CopyOptionsDialog(SvnBundle.message("copy.dialog.title"),
+                                                       myProject, root, getNotNullSelectedNode().getURL());
       dialog.show();
       if (dialog.isOK()) {
         SVNURL dst = dialog.getTargetURL();
@@ -539,7 +536,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         node = (RepositoryTreeNode) node.getParent();
       }
       root = node.getURL();
-      CopyOptionsDialog dialog = new CopyOptionsDialog("Move or Rename", myProject, root, getRepositoryBrowser().getSelectedNode().getURL());
+      CopyOptionsDialog dialog = new CopyOptionsDialog(SvnBundle.message("move.dialog.title"),
+                                                       myProject, root, getRepositoryBrowser().getSelectedNode().getURL());
       dialog.show();
       if (dialog.isOK()) {
         SVNURL dst = dialog.getTargetURL();

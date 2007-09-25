@@ -54,7 +54,7 @@ import java.awt.*;
 public class RepositoryBrowserComponent extends JPanel implements Disposable, DataProvider {
 
   private JTree myRepositoryTree;
-  private SvnVcs myVCS;
+  private final SvnVcs myVCS;
 
   public RepositoryBrowserComponent(@NotNull SvnVcs vcs) {
     myVCS = vcs;
@@ -65,7 +65,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     return myRepositoryTree;
   }
 
-  public void setRepositoryURLs(SVNURL[] urls, boolean showFiles) {
+  public void setRepositoryURLs(SVNURL[] urls) {
     RepositoryTreeModel model = new RepositoryTreeModel(myVCS, true);
     model.setRoots(urls);
     Disposer.register(this, model);

@@ -9,11 +9,10 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 
 public class RepositoryTreeModel extends DefaultTreeModel implements Disposable {
 
-  private SvnVcs myVCS;
+  private final SvnVcs myVCS;
   private boolean myIsShowFiles;
 
   public RepositoryTreeModel(@NotNull SvnVcs vcs, boolean showFiles) {
@@ -43,7 +42,7 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
     setRoot(rootNode);
   }
 
-  public boolean hasRoot(SVNURL url) {
+  private boolean hasRoot(SVNURL url) {
     if (getRoot()instanceof RepositoryTreeNode) {
       return ((RepositoryTreeNode) getRoot()).getUserObject().equals(url);
     }
@@ -73,19 +72,7 @@ public class RepositoryTreeModel extends DefaultTreeModel implements Disposable 
     }
   }
 
-  public SVNURL[] getRoots() {
-    TreeNode root = (TreeNode) getRoot();
-    if (root instanceof RepositoryTreeNode) {
-      return new SVNURL[]{(SVNURL) ((RepositoryTreeNode) root).getUserObject()};
-    }
-    SVNURL[] roots = new SVNURL[root.getChildCount()];
-    for (int i = 0; i < roots.length; i++) {
-      roots[i] = (SVNURL) ((RepositoryTreeNode) root.getChildAt(i)).getUserObject();
-    }
-    return roots;
-  }
-
-  protected SVNRepository createRepository(SVNURL url) {
+  protected SVNRepository createRepository(@NotNull SVNURL url) {
     try {
       return myVCS.createRepository(url.toString());
     } catch (SVNException e) {

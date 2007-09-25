@@ -10,8 +10,8 @@ import java.text.Collator;
 import java.util.*;
 
 public class RepositoryTreeRootNode implements TreeNode, Disposable {
-  private List<TreeNode> myChildren;
-  private RepositoryTreeModel myModel;
+  private final List<TreeNode> myChildren;
+  private final RepositoryTreeModel myModel;
 
   public RepositoryTreeRootNode(RepositoryTreeModel model, SVNURL[] urls) {
     myChildren = new ArrayList<TreeNode>();
