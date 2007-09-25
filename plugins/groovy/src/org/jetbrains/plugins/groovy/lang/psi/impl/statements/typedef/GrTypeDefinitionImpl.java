@@ -541,6 +541,13 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
         if (name.equals(method.getName())) result.add(method);
       }
 
+      for (GrField field : getFields()) {
+        final PsiMethod setter = field.getSetter();
+        if (setter != null && name.equals(setter.getName())) result.add(setter);
+        final PsiMethod getter = field.getGetter();
+        if (getter != null && name.equals(getter.getName())) result.add(getter);
+      }
+
       return result.toArray(new PsiMethod[result.size()]);
     }
 
