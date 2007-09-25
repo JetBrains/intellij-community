@@ -549,17 +549,20 @@ public class GroovyAnnotator implements Annotator {
     Annotation annotation = null;
 
     final GrImplementsClause implementsClause = typeDefinition.getImplementsClause();
+    final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();
+
     if (implementsClause != null) {
       annotation = checkForImplementingInterface(holder, implementsClause);
+      if (annotation != null) {
+        annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
+      }
     }
 
-    final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();
     if (extendsClause != null) {
       annotation = checkForExtendingClass(holder, extendsClause);
-    }
-
-    if (annotation != null) {
-      annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
+      if (annotation != null) {
+        annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
+      }
     }
   }
 
@@ -588,7 +591,7 @@ public class GroovyAnnotator implements Annotator {
         if (implClass == null || !(implClass instanceof PsiClass)) return null;
 
         if (!((PsiClass) implClass).isInterface()) {
-          return holder.createErrorAnnotation(implementElement, GroovyBundle.message("interface.expected.here"));
+          return holder.createErrorAnnotation(implementsClause, GroovyBundle.message("interface.expected.here"));
         }
       }
     }

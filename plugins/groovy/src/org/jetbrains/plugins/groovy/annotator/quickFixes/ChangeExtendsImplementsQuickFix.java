@@ -1,17 +1,21 @@
 package org.jetbrains.plugins.groovy.annotator.quickFixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -23,11 +27,17 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
 
   final GrTypeDefinition myClass;
 
-  public ChangeExtendsImplementsQuickFix(GrExtendsClause extendsClause, GrImplementsClause implementsClause) {
+  public ChangeExtendsImplementsQuickFix(@Nullable GrExtendsClause extendsClause, @Nullable GrImplementsClause implementsClause) {
     myExtendsClause = extendsClause;
     myImplementsClause = implementsClause;
 
-    PsiElement myClassElement = myImplementsClause.getParent();
+    PsiElement myClassElement = null;
+    if (myImplementsClause != null) {
+      myClassElement = myImplementsClause.getParent();
+    } else if (myExtendsClause != null) {
+      myClassElement = myExtendsClause.getParent();
+    }
+
     assert myClassElement != null;
     myClass = (GrTypeDefinition) myClassElement;
   }
@@ -82,11 +92,26 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
       }
     }
 
-    myExtendsClause.delete();
-    myImplementsClause.delete();
+    if (myExtendsClause != null) {
+      final ASTNode extendsClauseNode = myExtendsClause.getNode();
+      extendsClauseNode.getTreeParent().removeChild(extendsClauseNode);
+    }
 
-    addNewExtendsClause(classes, project);
-    addNewimplementsClause(interfaces, project);
+    if (myImplementsClause != null) {
+      final ASTNode implClauseNode = myImplementsClause.getNode();
+      implClauseNode.getTreeParent().removeChild(implClauseNode);
+    }
+
+    if (!classes.isEmpty()) {
+      addNewExtendsClause(classes, project);
+    }
+
+    if (!interfaces.isEmpty()) {
+      addNewImplementsClause(interfaces, project);
+    }
+
+    CodeStyleManager.getInstance(project).reformatText(myClass.getContainingFile(),
+        myClass.getTextRange().getStartOffset(), myClass.getBody().getTextRange().getStartOffset());
   }
 
   private void addNewExtendsClause(List<GrCodeReferenceElement> elements, Project project) throws IncorrectOperationException {
@@ -103,10 +128,10 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
     GrExtendsClause newExtendsClause = GroovyElementFactory.getInstance(project).createTypeDefinition(classText).getExtendsClause();
 
     assert newExtendsClause != null;
-    myClass.addAfter(newExtendsClause, myClass.getNameIdentifierGroovy());
+    myClass.getNode().addChild(newExtendsClause.getNode(), myClass.getBody().getNode());
   }
 
-  private void addNewimplementsClause(List<GrCodeReferenceElement> elements, Project project) throws IncorrectOperationException {
+  private void addNewImplementsClause(List<GrCodeReferenceElement> elements, Project project) throws IncorrectOperationException {
     String classText = "class A implements ";
 
     for (int i = 0; i < elements.size(); i++) {
@@ -120,7 +145,7 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
     GrImplementsClause newImplementsClause = GroovyElementFactory.getInstance(project).createTypeDefinition(classText).getImplementsClause();
 
     assert newImplementsClause != null;
-    myClass.addAfter(newImplementsClause, myClass.getNameIdentifierGroovy());
+    myClass.getNode().addChild(newImplementsClause.getNode(), myClass.getBody().getNode());
   }
 
   public boolean startInWriteAction() {
