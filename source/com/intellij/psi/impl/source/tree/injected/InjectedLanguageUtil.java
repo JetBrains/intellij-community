@@ -157,10 +157,12 @@ public class InjectedLanguageUtil {
 
   private static class MyFileViewProvider extends SingleRootFileViewProvider {
     private PsiLanguageInjectionHost[] myHosts;
+    private Project myProject;
 
     private MyFileViewProvider(@NotNull Project project, @NotNull VirtualFileWindow virtualFile, List<PsiLanguageInjectionHost> hosts) {
       super(PsiManager.getInstance(project), virtualFile);
       myHosts = hosts.toArray(new PsiLanguageInjectionHost[hosts.size()]);
+      myProject = myHosts[0].getProject();
     }
 
     public void rootChanged(PsiFile psiFile) {
@@ -220,6 +222,11 @@ public class InjectedLanguageUtil {
         PsiLanguageInjectionHost.Shred shred = shreds.get(i);
         myHosts[i] = shred.host;
       }
+      myProject = myHosts[0].getProject();
+    }
+
+    private boolean isValid() {
+      return !myProject.isDisposed();
     }
   }
 
@@ -632,7 +639,7 @@ public class InjectedLanguageUtil {
           List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens =
             obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, shreds, virtualFile, documentWindow, myProject);
           psiFile.putUserData(HIGHLIGHT_TOKENS, tokens);
-
+          Project project = psiFile.getProject();
           PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
 
           Place place = new Place(psiFile, new ArrayList<PsiLanguageInjectionHost.Shred>(shreds));
@@ -710,7 +717,7 @@ public class InjectedLanguageUtil {
       PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
       FileViewProvider oldViewProvider;
 
-      if (oldFile == null || !((oldViewProvider = oldFile.getViewProvider()) instanceof MyFileViewProvider)) {
+      if (oldFile == null || !oldFile.isValid() || !((oldViewProvider = oldFile.getViewProvider()) instanceof MyFileViewProvider) || !((MyFileViewProvider)oldViewProvider).isValid()) {
         injected.remove(i);
         oldDocument.dispose();
         continue;
