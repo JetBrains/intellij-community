@@ -2,6 +2,8 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -13,19 +15,22 @@ import java.util.*;
 
 public class RepositoryTreeNode implements TreeNode, Disposable {
 
-  private TreeNode myParentNode;
-  private SVNRepository myRepository;
+  private final TreeNode myParentNode;
+  private final SVNRepository myRepository;
   private List<TreeNode> myChildren;
-  private RepositoryTreeModel myModel;
+  private final RepositoryTreeModel myModel;
   private String myPath;
-  private SVNURL myURL;
-  private Object myUserObject;
+  private final SVNURL myURL;
+  private final Object myUserObject;
 
-  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, SVNRepository repository, SVNURL url, Object userObject) {
+  public RepositoryTreeNode(RepositoryTreeModel model, TreeNode parentNode, @NotNull SVNRepository repository,
+                            @NotNull SVNURL url, Object userObject) {
     myParentNode = parentNode;
     myRepository = repository;
     myURL = url;
-    myPath = url.getPath().substring(myRepository.getLocation().getPath().length());
+    final SVNURL location = myRepository.getLocation();
+    assert location != null;
+    myPath = url.getPath().substring(location.getPath().length());
     if (myPath.startsWith("/")) {
       myPath = myPath.substring(1);
     }
@@ -81,7 +86,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return SVNPathUtil.tail(myURL.getPath());
   }
 
-  protected List getChildren() {
+  private List getChildren() {
     if (myChildren == null) {
       myChildren = new ArrayList<TreeNode>();
       myChildren.add(new DefaultMutableTreeNode("Loading"));
@@ -90,7 +95,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myChildren;
   }
 
-  protected void loadChildren() {
+  private void loadChildren() {
     Runnable loader = new Runnable() {
       public void run() {
         final Collection<SVNDirEntry> entries = new TreeSet<SVNDirEntry>();
@@ -141,15 +146,12 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return myURL;
   }
 
+  @Nullable
   public SVNDirEntry getSVNDirEntry() {
     if (myUserObject instanceof SVNDirEntry) {
       return (SVNDirEntry) myUserObject;
     }
     return null;
-  }
-
-  public SVNRepository getRepository() {
-    return myRepository;
   }
 
   public void dispose() {
