@@ -133,7 +133,7 @@ public class Updater implements CacheUpdater {
           if (e.isReadOnly() != isFileRO) {
             myVcs.changeROStatus(f.getPath(), isFileRO);
           }
-          
+
           if (e.isOutdated(f.getTimeStamp())) {
             myProcessor.addFileToUpdate(f);
           }

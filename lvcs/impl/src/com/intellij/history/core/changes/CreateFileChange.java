@@ -1,7 +1,6 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.IdPath;
-import com.intellij.history.core.Paths;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.Stream;
 import com.intellij.history.core.tree.Entry;
@@ -27,8 +26,8 @@ public class CreateFileChange extends CreateEntryChange {
 
   @Override
   protected IdPath doApplyTo(Entry r) {
-    String name = Paths.getNameOf(myPath);
-    String parentPath = Paths.getParentOf(myPath);
+    String name = getEntryName();
+    String parentPath = getEntryParentPath();
 
     Entry e = new FileEntry(myId, name, myContent, myTimestamp, isReadOnly);
 

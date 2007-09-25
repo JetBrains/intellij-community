@@ -1,6 +1,7 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.IdPath;
+import com.intellij.history.core.Paths;
 import com.intellij.history.core.storage.Stream;
 import com.intellij.history.core.tree.Entry;
 
@@ -16,6 +17,16 @@ public abstract class CreateEntryChange extends StructuralChange {
 
   public CreateEntryChange(Stream s) throws IOException {
     super(s);
+  }
+
+  protected String getEntryParentPath() {
+    return Paths.getParentOf(myPath);
+  }
+
+  protected String getEntryName() {
+    // new String() is for trimming rest part of path to
+    // minimaze memory usage after bulk updates and refreshes.
+    return new String(Paths.getNameOf(myPath));
   }
 
   protected IdPath addEntry(Entry r, String parentPath, Entry e) {

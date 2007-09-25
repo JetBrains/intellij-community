@@ -1,7 +1,6 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.IdPath;
-import com.intellij.history.core.Paths;
 import com.intellij.history.core.storage.Stream;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
@@ -24,8 +23,8 @@ public class CreateDirectoryChange extends CreateEntryChange {
   protected IdPath doApplyTo(Entry r) {
     // todo messsssss!!!! should introduce createRoot method instead?
     // todo and simplify addEntry method too?
-    String name = Paths.getNameOf(myPath);
-    String parentPath = Paths.getParentOf(myPath);
+    String name = getEntryName();
+    String parentPath = getEntryParentPath();
 
     if (parentPath == null || !r.hasEntry(parentPath)) { // is it supposed to be a root?
       parentPath = null;

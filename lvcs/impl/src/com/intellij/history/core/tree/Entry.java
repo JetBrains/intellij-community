@@ -150,7 +150,6 @@ public abstract class Entry {
     return null;
   }
 
-  // todo generalize findEntry(*) methods
   public Entry findEntry(IdPath p) {
     if (!p.rootEquals(myId)) return null;
     if (p.getId() == myId) return this;
@@ -174,8 +173,6 @@ public abstract class Entry {
   }
 
   public Entry getEntry(int id) {
-    // todo it's very slow
-    // todo get rid of this method
     Entry result = findEntry(id);
     if (result == null) {
       throw new RuntimeException(format("entry #%d not found", id));
