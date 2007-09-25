@@ -535,7 +535,14 @@ public final class FormEditingUtil {
 
   @Nullable public static GuiEditor getActiveEditor(final DataContext context){
     Project project = DataKeys.PROJECT.getData(context);
-    return project == null ? null : UIDesignerToolWindowManager.getInstance(project).getActiveFormEditor();
+    if (project == null) {
+      return null;
+    }
+    final UIDesignerToolWindowManager toolWindowManager = UIDesignerToolWindowManager.getInstance(project);
+    if (toolWindowManager == null) {
+      return null;
+    }
+    return toolWindowManager.getActiveFormEditor();
   }
 
   /**
