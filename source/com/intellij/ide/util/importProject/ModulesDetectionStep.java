@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,7 +55,8 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   }
 
   private int calcStateHashCode() {
-    int hash = myBuilder.getContentEntryPath().hashCode();
+    final String contentEntryPath = myBuilder.getContentEntryPath();
+    int hash = contentEntryPath != null? contentEntryPath.hashCode() : 1;
     for (Pair<String, String> pair : myBuilder.getSourcePaths()) {
       hash = 31 * hash + pair.getFirst().hashCode();
       hash = 31 * hash + pair.getSecond().hashCode();
@@ -71,7 +73,8 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
 
   protected List<ModuleDescriptor> calculate() {
     myInsight.scanModules();
-    return myInsight.getSuggestedModules();
+    final List<ModuleDescriptor> suggestedModules = myInsight.getSuggestedModules();
+    return suggestedModules != null? suggestedModules : Collections.<ModuleDescriptor>emptyList();
   }
 
   protected void onFinished(final List<ModuleDescriptor> moduleDescriptors, final boolean canceled) {
