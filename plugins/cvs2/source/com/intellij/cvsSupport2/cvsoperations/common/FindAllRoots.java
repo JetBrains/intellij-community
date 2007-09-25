@@ -25,7 +25,7 @@ public class FindAllRoots {
   private final CvsEntriesManager myManager = CvsEntriesManager.getInstance();
   private int myProcessedFiles;
   private int mySuitableFiles;
-  private Collection<File> myRepositories = new HashSet<File>();
+  private final Collection<File> myRepositories = new HashSet<File>();
 
   private final Collection<VirtualFile> myResult = new ArrayList<VirtualFile>();
   private final ProgressIndicator myProgress;
@@ -82,9 +82,9 @@ public class FindAllRoots {
   }
 
   private int calcVirtualFilesUnderCvsIn(VirtualFile file) {
+    if (file == null || !file.isDirectory()) return 0;
     if (!myProjectRootManager.getFileIndex().isInContent(file)) return 0;
     int result = 0;
-    if (file == null || !file.isDirectory()) return result;
     if (file.findChild(CvsUtil.CVS) == null) return result;
     result += 1;
     VirtualFile[] children = file.getChildren();
@@ -148,7 +148,7 @@ public class FindAllRoots {
       if (!child.isDirectory()) continue;
       if (!myProjectRootManager.getFileIndex().isInContent(child)) continue;
       CvsEnvironment childEnv = myManager.getCvsConnectionSettingsFor(child);
-      if (!childEnv.isValid()) continue;
+      if (childEnv == null || !childEnv.isValid()) continue;
       if (!childEnv.equals(parentEnv)) {
         myResult.add(child);
       }
