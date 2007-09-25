@@ -64,8 +64,8 @@ public class PsiFileSystemItemUtil {
 
     if (commonAncestor != null) {
       StringBuilder buffer = new StringBuilder();
-      if (src != commonAncestor) {
-        while (src.getParent() != commonAncestor) {
+      if (!src.equals(commonAncestor)) {
+        while (!commonAncestor.equals(src.getParent())) {
           buffer.append("..").append('/');
           src = src.getParent();
           assert src != null;
