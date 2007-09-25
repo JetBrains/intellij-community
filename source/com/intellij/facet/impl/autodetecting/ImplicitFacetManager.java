@@ -118,6 +118,10 @@ public class ImplicitFacetManager implements Disposable {
     }, NOTIFICATION_DELAY);
   }
 
+  public boolean isDisposed() {
+    return myProject.isDisposed() || !myUIInitialized;
+  }
+
   private void firePendingNotifications() {
     if (myPendingNewFacets.isEmpty()) return;
 
