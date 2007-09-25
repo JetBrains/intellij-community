@@ -44,8 +44,14 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   public void setSelection(final int startOffset, final int endOffset) {
-    myTextComponent.setCaretPosition(startOffset);
-    myTextComponent.moveCaretPosition(endOffset);
+    if (myTextComponent.getCaretPosition() == startOffset) {   // avoid moving caret (required for correct Ctrl-W operation)
+      myTextComponent.setCaretPosition(endOffset);
+      myTextComponent.moveCaretPosition(startOffset);
+    }
+    else {
+      myTextComponent.setCaretPosition(startOffset);
+      myTextComponent.moveCaretPosition(endOffset);
+    }
   }
 
   public void removeSelection() {
