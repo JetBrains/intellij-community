@@ -25,9 +25,9 @@ import java.util.Collections;
 
 public class CopyOptionsDialog extends DialogWrapper {
 
-  private SVNURL myURL;
+  private final SVNURL myURL;
   private JTextArea myCommitMessage;
-  private Project myProject;
+  private final Project myProject;
   private JTextField myNameField;
   private JLabel myURLLabel;
   private RepositoryBrowserComponent myBrowser;
@@ -69,8 +69,11 @@ public class CopyOptionsDialog extends DialogWrapper {
     }
     myMessagesBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myCommitMessage.setText(myMessagesBox.getSelectedItem().toString());
-        myCommitMessage.selectAll();
+        final Object item = myMessagesBox.getSelectedItem();
+        if (item != null) {
+          myCommitMessage.setText(item.toString());
+          myCommitMessage.selectAll();
+        }
       }
     });
 
@@ -98,6 +101,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     return myURL;
   }
 
+  @Nullable
   public SVNURL getTargetURL() {
     if (getOKAction().isEnabled()) {
       try {
