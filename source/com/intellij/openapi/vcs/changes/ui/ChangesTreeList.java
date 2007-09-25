@@ -558,7 +558,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
         }
       }
       else {
-        final int count = myTree.getRowCount() - 1;
+        final int count = myTree.getRowCount();
         if (count > 0) {
           myTree.setSelectionInterval(0, count-1);
         }
