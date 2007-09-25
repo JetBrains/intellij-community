@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,11 +16,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.Profile;
@@ -42,7 +38,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author max
@@ -122,7 +117,7 @@ public class InspectionApplication {
         InspectionMain.printHelp();
       }
 
-      patchProject(loadPatterns("idea.exclude.patterns"), loadPatterns("idea.include.patterns"));
+      ProjectUtil.patchProject(myProject);
 
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));
@@ -291,111 +286,6 @@ public class InspectionApplication {
       prefix = text.substring(0, idx);
     }
     return prefix;
-  }
-
-  private void patchProject(final Map<Pattern, Set<Pattern>> excludePatterns, final Map<Pattern, Set<Pattern>> includePatterns) {
-    if (excludePatterns.isEmpty() && includePatterns.isEmpty()) return;
-    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    final ModifiableModuleModel modulesModel = ModuleManager.getInstance(myProject).getModifiableModel();
-    final Module[] modules = modulesModel.getModules();
-    final ModifiableRootModel[] models = new ModifiableRootModel[modules.length];
-    for (int i = 0; i < modules.length; i++) {
-      models[i] = ModuleRootManager.getInstance(modules[i]).getModifiableModel();
-      final int idx = i;
-      final ContentEntry[] contentEntries = models[i].getContentEntries();
-      for (final ContentEntry contentEntry : contentEntries) {
-        final VirtualFile contentRoot = contentEntry.getFile();
-        if (contentRoot == null) continue;
-        final Set<VirtualFile> included = new HashSet<VirtualFile>();
-        iterate(contentRoot, new ContentIterator() {
-          public boolean processFile(final VirtualFile fileOrDir) {
-            String relativeName = VfsUtil.getRelativePath(fileOrDir, contentRoot, '/');
-            for (Pattern module : excludePatterns.keySet()) {
-              if (module == null || module.matcher(modules[idx].getName()).matches()) {
-                final Set<Pattern> dirPatterns = excludePatterns.get(module);
-                for (Pattern pattern : dirPatterns) {
-                  if (pattern.matcher(relativeName).matches()) {
-                    contentEntry.addExcludeFolder(fileOrDir);
-                    return false;
-                  }
-                }
-              }
-            }
-            if (includePatterns.isEmpty()) return true;
-            for (Pattern module : includePatterns.keySet()) {
-              if (module == null || module.matcher(modules[idx].getName()).matches()) {
-                final Set<Pattern> dirPatterns = includePatterns.get(module);
-                for (Pattern pattern : dirPatterns) {
-                  if (pattern.matcher(relativeName).matches()) {
-                    included.add(fileOrDir);
-                    return true;
-                  }
-                }
-              }
-            }
-            return true;
-          }
-        }, index);
-        processIncluded(contentEntry, included);
-      }
-    }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ProjectRootManagerEx.getInstanceEx(myProject).multiCommit(modulesModel, models);
-      }
-    });
-  }
-
-  private static void processIncluded(final ContentEntry contentEntry, final Set<VirtualFile> included) {
-    if (included.isEmpty()) return;
-    final Set<VirtualFile> parents = new HashSet<VirtualFile>();
-    for (VirtualFile file : included) {
-      if (file == contentEntry.getFile()) return;
-      final VirtualFile parent = file.getParent();
-      if (parent == null || parents.contains(parent)) continue;
-      parents.add(parent);
-      for (VirtualFile toExclude : parent.getChildren()) {
-        if (!included.contains(toExclude)) {
-          contentEntry.addExcludeFolder(toExclude);
-        }
-      }
-    }
-    processIncluded(contentEntry, parents);
-  }
-
-  private static void iterate(VirtualFile contentRoot, ContentIterator iterator, ProjectFileIndex idx) {
-    if (!iterator.processFile(contentRoot)) return;
-    if (idx.getModuleForFile(contentRoot) == null) return; //already excluded
-    final VirtualFile[] files = contentRoot.getChildren();
-    for (VirtualFile file : files) {
-      iterate(file, iterator, idx);
-    }
-  }
-
-  private static Map<Pattern, Set<Pattern>> loadPatterns(@NonNls String propertyKey) {
-    final Map<Pattern, Set<Pattern>> result = new HashMap<Pattern, Set<Pattern>>();
-    final String patterns = System.getProperty(propertyKey);
-    if (patterns != null) {
-      final String[] pathPatterns = patterns.split(";");
-      for (String excludedPattern : pathPatterns) {
-        String module = null;
-        int idx = 0;
-        if (excludedPattern.startsWith("[")) {
-          idx = excludedPattern.indexOf("]") + 1;
-          module = excludedPattern.substring(1, idx - 1);
-        }
-        final Pattern modulePattern = module != null ? Pattern.compile(module) : null;
-        final Pattern pattern = Pattern.compile(FileUtil.convertAntToRegexp(excludedPattern.substring(idx)));
-        Set<Pattern> dirPatterns = result.get(modulePattern);
-        if (dirPatterns == null) {
-          dirPatterns = new HashSet<Pattern>();
-          result.put(modulePattern, dirPatterns);
-        }
-        dirPatterns.add(pattern);
-      }
-    }
-    return result;
   }
 
   public void setVerboseLevel(int verboseLevel) {
