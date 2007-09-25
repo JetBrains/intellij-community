@@ -10,8 +10,8 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
@@ -19,17 +19,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -52,9 +53,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return project.getComponent(ShelveChangesManager.class);
   }
 
-  private Project myProject;
-  private MessageBus myBus;
-  private List<ShelvedChangeList> myShelvedChangeLists = new ArrayList<ShelvedChangeList>();
+  private final Project myProject;
+  private final MessageBus myBus;
+  private final List<ShelvedChangeList> myShelvedChangeLists = new ArrayList<ShelvedChangeList>();
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
   @NonNls private String myShelfPath;
 
@@ -181,7 +182,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     myBus.syncPublisher(SHELF_TOPIC).stateChanged(new ChangeEvent(this));
   }
 
-  private File getPatchPath(final String commitMessage) {
+  private File getPatchPath(@NonNls final String commitMessage) {
     File file = new File(myShelfPath);
     if (!file.exists()) {
       file.mkdirs();
@@ -314,7 +315,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
     else {
       Messages.showErrorDialog(myProject, "Failed to unshelve binary file " + (afterPath != null ? afterPath : beforePath),
-        "Unshelve Changes");
+                               VcsBundle.message("unshelve.changes.dialog.title"));
       return null;
     }
   }
@@ -349,7 +350,10 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   public void deleteChangeList(final ShelvedChangeList changeList) {
     FileUtil.delete(new File(changeList.PATH));
     for(ShelvedBinaryFile binaryFile: changeList.getBinaryFiles()) {
-      FileUtil.delete(new File(binaryFile.SHELVED_PATH));
+      final String path = binaryFile.SHELVED_PATH;
+      if (path != null) {
+        FileUtil.delete(new File(path));
+      }
     }
     myShelvedChangeLists.remove(changeList);
     notifyStateChanged();
