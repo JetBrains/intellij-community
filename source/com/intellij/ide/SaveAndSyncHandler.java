@@ -117,6 +117,7 @@ public class SaveAndSyncHandler implements ApplicationComponent {
   }
 
   private static void refreshFiles() {
+    if (ApplicationManager.getApplication().isDisposed()) return;
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: synchronize()");
     }
