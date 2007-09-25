@@ -42,7 +42,6 @@ public class ModulePathMacroManager extends BasePathMacroManager {
     if (moduleDir == null) return;
 
     File f = new File(moduleDir.replace('/', File.separatorChar));
-    LOG.assertTrue(f.exists());
 
     getExpandModuleHomeReplacements(result, f, "$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
   }
