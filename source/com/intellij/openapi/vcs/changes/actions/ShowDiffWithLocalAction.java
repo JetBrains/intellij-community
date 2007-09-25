@@ -3,21 +3,23 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.project.Project;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class ShowDiffWithLocalAction extends AnAction {
   public ShowDiffWithLocalAction() {
-    super("Show Diff with Local", "Compare selected revision with the local version of the file",
+    super(VcsBundle.message("show.diff.with.local.action.text"),
+          VcsBundle.message("show.diff.with.local.action.description"),
           IconLoader.getIcon("/actions/diffWithCurrent.png"));
   }
 
@@ -28,7 +30,7 @@ public class ShowDiffWithLocalAction extends AnAction {
     List<Change> changesToLocal = new ArrayList<Change>();
     for(Change change: changes) {
       ContentRevision afterRevision = change.getAfterRevision();
-      if (afterRevision != null && !afterRevision.getFile().isNonLocal() && !afterRevision.getFile().isDirectory()) {
+      if (isValidAfterRevision(afterRevision)) {
         changesToLocal.add(new Change(afterRevision, CurrentContentRevision.create(afterRevision.getFile())));
       }
     }
@@ -41,6 +43,19 @@ public class ShowDiffWithLocalAction extends AnAction {
   public void update(final AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);
-    e.getPresentation().setEnabled(project != null && changes != null);
+    e.getPresentation().setEnabled(project != null && changes != null && anyHasAfterRevision(changes));
+  }
+
+  private static boolean isValidAfterRevision(final ContentRevision afterRevision) {
+    return afterRevision != null && !afterRevision.getFile().isNonLocal() && !afterRevision.getFile().isDirectory();
+  }
+
+  private static boolean anyHasAfterRevision(final Change[] changes) {
+    for(Change c: changes) {
+      if (isValidAfterRevision(c.getAfterRevision())) {
+        return true;
+      }
+    }
+    return false;
   }
 }
