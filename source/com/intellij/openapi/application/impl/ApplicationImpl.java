@@ -64,6 +64,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private boolean myTestModeFlag = false;
   private boolean myHeadlessMode = false;
+  private boolean myCommandLineMode = false;
 
   private final String myComponentsDescriptor;
 
@@ -127,7 +128,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return (IApplicationStore)super.getStateStore();
   }
 
-  public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, String appName) {
+  public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, String appName) {
     super(null);
 
     if (isInternal || isUnitTestMode) {
@@ -272,6 +273,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public boolean isHeadlessEnvironment() {
     return myHeadlessMode;
+  }
+
+  public boolean isCommandLine() {
+    return myCommandLineMode;
   }
 
   public IdeaPluginDescriptor getPlugin(PluginId id) {

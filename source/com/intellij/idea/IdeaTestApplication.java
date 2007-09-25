@@ -14,7 +14,7 @@ public class IdeaTestApplication extends CommandLineApplication {
   private DataProvider myDataContext;
 
   private IdeaTestApplication() {
-    super(false, true, "componentSets/IdeaComponents");
+    super(false, true, true, "componentSets/IdeaComponents");
 
     PluginsFacade.INSTANCE = new PluginsFacade() {
       public IdeaPluginDescriptor getPlugin(PluginId id) {

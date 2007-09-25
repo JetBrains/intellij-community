@@ -18,8 +18,8 @@ public class ApplicationManagerEx extends ApplicationManager {
     return (ApplicationEx) ourApplication;
   }
 
-  public static void createApplication(@NonNls String componentsDescriptor, boolean internal, boolean isUnitTestMode, boolean isHeadlessMode, @NonNls String appName) {
-    new ApplicationImpl(componentsDescriptor, internal, isUnitTestMode, isHeadlessMode, appName);
+  public static void createApplication(@NonNls String componentsDescriptor, boolean internal, boolean isUnitTestMode, boolean isHeadlessMode, boolean isCommandline, @NonNls String appName) {
+    new ApplicationImpl(componentsDescriptor, internal, isUnitTestMode, isHeadlessMode, isCommandline, appName);
   }
 
   public static void setApplication(Application instance) {

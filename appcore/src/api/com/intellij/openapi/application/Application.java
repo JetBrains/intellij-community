@@ -254,6 +254,14 @@ public interface Application extends ComponentManager {
    */
   boolean isHeadlessEnvironment();
 
+  /**
+   * Checks if IDEA is running as a command line applet or in unit test mode.
+   * UI can be shown (e.g. diff frame)
+   *
+   * @return true if IDEA is running in command line  mode, false otherwise
+   */
+  boolean isCommandLine();
+
   IdeaPluginDescriptor getPlugin(PluginId id);
 
   IdeaPluginDescriptor[] getPlugins();

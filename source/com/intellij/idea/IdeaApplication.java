@@ -46,10 +46,10 @@ public class IdeaApplication {
       System.setProperty("java.awt.headless", Boolean.TRUE.toString());
     }
     if (Main.isCommandLine(args)) {
-      new CommandLineApplication(isInternal, false, "componentSets/IdeaComponents");
+      new CommandLineApplication(isInternal, false, Main.isHeadless(args), "componentSets/IdeaComponents");
     }
     else {
-      ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, false, "idea");
+      ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, false, false, "idea");
     }
 
     myStarter = getStarter();

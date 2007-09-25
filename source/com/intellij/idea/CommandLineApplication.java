@@ -32,14 +32,14 @@ public class CommandLineApplication {
 
   protected CommandLineApplication() {}
 
-  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, @NonNls String componentsDescriptor) {
-    this(isInternal, isUnitTestMode, componentsDescriptor, "idea");
+  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, @NonNls String componentsDescriptor) {
+    this(isInternal, isUnitTestMode, isHeadless, componentsDescriptor, "idea");
   }
 
-  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, String componentsDescriptor, @NonNls String appName) {
+  protected CommandLineApplication(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, String componentsDescriptor, @NonNls String appName) {
     LOG.assertTrue(ourInstance == null, "Only one instance allowed.");
     ourInstance = this;
-    ApplicationManagerEx.createApplication(componentsDescriptor, isInternal, isUnitTestMode, true, appName);
+    ApplicationManagerEx.createApplication(componentsDescriptor, isInternal, isUnitTestMode, isHeadless, true, appName);
   }
 
   public Object getData(String dataId) {

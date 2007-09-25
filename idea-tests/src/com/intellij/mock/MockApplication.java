@@ -88,6 +88,10 @@ public class MockApplication extends MockComponentManager implements Application
     return true;
   }
 
+  public boolean isCommandLine() {
+    return true;
+  }
+
   public IdeaPluginDescriptor getPlugin(PluginId id) {
     return null;
   }
