@@ -66,7 +66,9 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       converter = ((ConverterManagerImpl)domManager.getConverterManager()).getInstance(clazz);
     }
     PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, converter);
-
+    for (PsiReference reference : references) {
+      assert reference.isSoft() : "dom reference should be soft: " + reference;
+    }
     // creating "declaration" reference
     if (references.length == 0) {
       final NameValue nameValue = domElement.getAnnotation(NameValue.class);

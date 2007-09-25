@@ -12,7 +12,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiPackageReference extends PsiReferenceBase<PsiElement>  implements EmptyResolveMessageProvider {
@@ -27,8 +26,12 @@ public class PsiPackageReference extends PsiReferenceBase<PsiElement>  implement
   }
 
   @Nullable
-  protected PsiPackage getPsiPackage() {
-    return myIndex == 0 ? getElement().getManager().findPackage("") : getReferenceSet().getReference(myIndex - 1).resolve();
+  private PsiPackage getPsiPackage() {
+    return myIndex == 0 ? getElement().getManager().findPackage("") : myReferenceSet.getReference(myIndex - 1).resolve();
+  }
+
+  public boolean isSoft() {
+    return true;
   }
 
   @Nullable
@@ -49,20 +52,10 @@ public class PsiPackageReference extends PsiReferenceBase<PsiElement>  implement
     if (psiPackage == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     final PsiPackage[] psiPackages = psiPackage.getSubPackages();
     final Object[] variants = new Object[psiPackages.length];
-    for (int i = 0; i < variants.length; i++) {
-      variants[i] = psiPackages[i];
-    }
+    System.arraycopy(psiPackages, 0, variants, 0, variants.length);
     return variants;
   }
 
-  public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
-    return super.handleElementRename(newElementName);
-  }
-
-
-  public PackageReferenceSet getReferenceSet() {
-    return myReferenceSet;
-  }
 
   public String getUnresolvedMessagePattern() {
     return JpaMessages.message("cannot.resolve.package.0");
