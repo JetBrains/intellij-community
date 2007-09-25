@@ -14,12 +14,12 @@ import java.io.File;
 import java.util.*;
 
 /**
- * author: lesya
+ * @author lesya
  */
 public class LocalPathIndifferentOperationHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper");
   private final Map<File, Entry> myFileToEntryMap = new com.intellij.util.containers.HashMap<File, Entry>();
-  private IAdminReader myAdminReader = new AdminReaderForLightFiles(myFileToEntryMap);
+  private final IAdminReader myAdminReader = new AdminReaderForLightFiles(myFileToEntryMap);
   private final String myRevision;
 
   public LocalPathIndifferentOperationHelper(String revision) {
@@ -41,37 +41,32 @@ public class LocalPathIndifferentOperationHelper {
 
   public void addFilesTo(AbstractCommand command){
     AbstractFileObject[] fileObjects = createFileObjects();
-    for (int i = 0; i < fileObjects.length; i++) {
-      command.getFileObjects().addFileObject(fileObjects[i]);
+    for (AbstractFileObject fileObject : fileObjects) {
+      command.getFileObjects().addFileObject(fileObject);
     }
   }
 
-  public AbstractFileObject[] createFileObjects() {
-    ArrayList result = new ArrayList();
+  private AbstractFileObject[] createFileObjects() {
+    ArrayList<AbstractFileObject> result = new ArrayList<AbstractFileObject>();
     Collection<File> parents = collectAllParents();
     Map<File, DirectoryObject> parentsMap = new com.intellij.util.containers.HashMap<File, DirectoryObject>();
 
-    for (Iterator iterator = parents.iterator(); iterator.hasNext();) {
-      File file = (File) iterator.next();
+    for (final File file : parents) {
       String relativeFileName = file.getPath().replace(File.separatorChar, '/');
       if (!StringUtil.startsWithChar(relativeFileName, '/')) relativeFileName = "/" + relativeFileName;
       parentsMap.put(file, DirectoryObject.createInstance(relativeFileName));
     }
 
-    for (Iterator iterator = myFileToEntryMap.keySet().iterator(); iterator.hasNext();) {
-      File file = (File) iterator.next();
-      result.add(FileObject.createInstance(parentsMap.get(file.getParentFile()),
-          "/" + file.getName()));
+    for (final File file: myFileToEntryMap.keySet()) {
+      result.add(FileObject.createInstance(parentsMap.get(file.getParentFile()), "/" + file.getName()));
     }
 
-    return (AbstractFileObject[])result.toArray(new AbstractFileObject[result.size()]);
-
+    return result.toArray(new AbstractFileObject[result.size()]);
   }
 
   private Collection<File> collectAllParents() {
     HashSet<File> result = new HashSet<File>();
-    for (Iterator iterator = myFileToEntryMap.keySet().iterator(); iterator.hasNext();) {
-      File file = (File) iterator.next();
+    for (final File file : myFileToEntryMap.keySet()) {
       File parentFile = file.getParentFile();
       LOG.assertTrue(parentFile != null, file.getPath());
       result.add(parentFile);
