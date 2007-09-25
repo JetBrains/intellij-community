@@ -107,7 +107,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
     ProgressManager.getInstance().run(new Task.Modal(getCurrentProject(), EclipseBundle.message("eclipse.import.scanning"), true) {
       public void run(ProgressIndicator indicator) {
         getParameters().workspace = EclipseWorkspace.load(path, new EclipseProjectReader.Options());
-        if (indicator.isCanceled()) {
+        if (indicator != null && indicator.isCanceled()) {
           return;
         }
         Collections.sort(getParameters().workspace.getProjects(), new Comparator<EclipseProjectModel>() {

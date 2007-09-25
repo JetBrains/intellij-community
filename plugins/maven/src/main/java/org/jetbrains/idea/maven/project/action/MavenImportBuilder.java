@@ -152,7 +152,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     ProgressManager.getInstance().run(new Task.Modal(null, ProjectBundle.message("maven.scanning.projects"), true) {
       public void run(ProgressIndicator indicator) {
         createImportProcessor();
-        indicator.setText2("");
+        if (indicator != null) {
+          indicator.setText2("");
+        }
       }
 
       public void onCancel() {

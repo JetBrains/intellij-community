@@ -113,19 +113,19 @@ public class MavenArtifactDownloader {
     final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
     final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(projectsState, mavenProjects.keySet(), mappedToModules);
 
-    if (myProgressIndicator.isCanceled()) return;
+    if (myProgressIndicator != null && myProgressIndicator.isCanceled()) return;
 
     if (isEnabled(myPreferences.getDownloadSources(), demand)) {
       download(libraryArtifacts, MavenToIdeaConverter.SOURCES_CLASSIFIER);
     }
 
-    if (myProgressIndicator.isCanceled()) return;
+    if (myProgressIndicator != null && myProgressIndicator.isCanceled()) return;
 
     if (isEnabled(myPreferences.getDownloadJavadoc(), demand)) {
       download(libraryArtifacts, MavenToIdeaConverter.JAVADOC_CLASSIFIER);
     }
 
-    if (myProgressIndicator.isCanceled()) return;
+    if (myProgressIndicator != null && myProgressIndicator.isCanceled()) return;
 
     if (isEnabled(myPreferences.getDownloadPlugins(), demand)) {
       final Map<Plugin, MavenProject> plugins = ProjectUtil.collectPlugins(mavenProjects);
@@ -134,7 +134,7 @@ public class MavenArtifactDownloader {
       projectsState.updateAllFiles();
     }
 
-    if (myProgressIndicator.isCanceled()) return;
+    if (myProgressIndicator != null && myProgressIndicator.isCanceled()) return;
 
     if (isEnabled(myPreferences.getGenerateSources(), demand)) {
       generateSources(project, createGenerateCommand(mavenProjects));
@@ -190,13 +190,15 @@ public class MavenArtifactDownloader {
   }
 
   void download(final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts, final String classifier) {
-    myProgressIndicator.setText(ProjectBundle.message("maven.progress.downloading", classifier));
+    if (myProgressIndicator != null) myProgressIndicator.setText(ProjectBundle.message("maven.progress.downloading", classifier));
     int step = 0;
     for (Map.Entry<MavenId, Set<ArtifactRepository>> entry : libraryArtifacts.entrySet()) {
-      if (myProgressIndicator.isCanceled()) return;
-      myProgressIndicator.setFraction(((double)step++) / libraryArtifacts.size());
+      if (myProgressIndicator != null && myProgressIndicator.isCanceled()) return;
       final MavenId id = entry.getKey();
-      myProgressIndicator.setText2(id.toString());
+      if (myProgressIndicator != null) {
+        myProgressIndicator.setFraction(((double)step++) / libraryArtifacts.size());
+        myProgressIndicator.setText2(id.toString());
+      }
       try {
         myEmbedder.resolve(
           myEmbedder.createArtifactWithClassifier(id.groupId, id.artifactId, id.version, MavenToIdeaConverter.JAR_TYPE, classifier),
@@ -216,17 +218,19 @@ public class MavenArtifactDownloader {
   }
 
   private void downloadPlugins(final Map<Plugin, MavenProject> plugins) {
-    myProgressIndicator.setText(ProjectBundle.message("maven.progress.downloading", "plugins"));
+    if (myProgressIndicator != null) myProgressIndicator.setText(ProjectBundle.message("maven.progress.downloading", "plugins"));
 
     int step = 0;
 
     for (Map.Entry<Plugin, MavenProject> entry : plugins.entrySet()) {
-      myProgressIndicator.setFraction(((double)step++) / plugins.size());
-      if (myProgressIndicator.isCanceled()) {
-        return;
-      }
       final Plugin plugin = entry.getKey();
-      myProgressIndicator.setText2(plugin.getKey());
+      if (myProgressIndicator != null){
+        myProgressIndicator.setFraction(((double)step++) / plugins.size());
+        if (myProgressIndicator.isCanceled()) {
+          return;
+        }
+        myProgressIndicator.setText2(plugin.getKey());
+      }
       MavenEmbedderAdapter.verifyPlugin(plugin, entry.getValue(), myEmbedder);
     }
   }
