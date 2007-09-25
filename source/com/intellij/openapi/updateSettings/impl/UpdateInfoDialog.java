@@ -32,20 +32,14 @@ class UpdateInfoDialog extends DialogWrapper {
     myNewVersion = newVersion;
     myUploadedPlugins = uploadedPlugins;
     setTitle(IdeBundle.message("updates.info.dialog.title"));
+    setOKButtonText(myUploadedPlugins != null ? IdeBundle.message("update.plugins.shutdown.action") : IdeBundle.message("updates.more.info.button"));
+    setCancelButtonText(myUploadedPlugins != null ? IdeBundle.message("update.plugins.update.later.action") : CommonBundle.getCloseButtonText());
     init();
   }
 
   protected JComponent createCenterPanel() {
     myUpdateInfoPanel = new UpdateInfoPanel();
     return myUpdateInfoPanel.myPanel;
-  }
-
-  protected Action[] createActions() {
-    final Action cancelAction = getCancelAction();
-    cancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
-    final Action okAction = getOKAction();
-    okAction.putValue(Action.NAME, IdeBundle.message("updates.more.info.button"));
-    return new Action[] {cancelAction, okAction};
   }
 
   protected void doOKAction() {

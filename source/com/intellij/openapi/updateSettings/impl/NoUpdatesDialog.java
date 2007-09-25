@@ -40,7 +40,8 @@ class NoUpdatesDialog extends DialogWrapper {
     cancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
     if (myUploadedPlugins != null) {
       final Action okAction = getOKAction();
-      okAction.putValue(Action.NAME, CommonBundle.getOkButtonText());
+      okAction.putValue(Action.NAME, IdeBundle.message("update.plugins.shutdown.action"));
+      cancelAction.putValue(Action.NAME, IdeBundle.message("update.plugins.update.later.action"));
       return new Action[] {okAction, cancelAction};
     }
     return new Action[]{cancelAction};
