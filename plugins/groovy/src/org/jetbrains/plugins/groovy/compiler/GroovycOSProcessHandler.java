@@ -216,7 +216,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   private TranslatingCompiler.OutputItem getOutputItem(final String outputPath, final String sourceFile, final String outputRootDir) throws InvocationTargetException, InterruptedException {
 
     final VirtualFile sourceVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(sourceFile));
-    if (sourceVirtualFile == null) return null; //should not happen, but just a sanity check
+    if (sourceVirtualFile == null) return null; //the source might already have been deleted
 
     return new TranslatingCompiler.OutputItem() {
       public String getOutputPath() {
