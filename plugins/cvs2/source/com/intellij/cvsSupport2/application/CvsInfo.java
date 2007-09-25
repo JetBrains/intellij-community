@@ -20,6 +20,7 @@ import org.netbeans.lib.cvsclient.connection.IConnection;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * author: lesya
@@ -134,7 +135,7 @@ public class CvsInfo {
   }
 
   public synchronized Collection<Entry> getEntries() {
-    return getCvsEntries().getEntries();
+    return new HashSet<Entry>(getCvsEntries().getEntries());
   }
 
   private File getParentFile() {

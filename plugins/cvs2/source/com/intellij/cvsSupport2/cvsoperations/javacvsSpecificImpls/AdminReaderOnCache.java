@@ -1,14 +1,15 @@
 package com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsstatuses.CvsStatusProvider;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.admin.AdminReader;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
@@ -19,8 +20,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
-import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -34,7 +33,7 @@ public class AdminReaderOnCache implements IAdminReader {
 
   public Entry getEntry(final AbstractFileObject fileObject, final ICvsFileSystem cvsFileSystem) throws IOException {
     ProgressManager.getInstance().checkCanceled();
-    setProgressText(com.intellij.CvsBundle.message("progress.text.scanning.directory", cvsFileSystem.getLocalFileSystem().getFile(fileObject.getParent()).getAbsolutePath()));
+    setProgressText(CvsBundle.message("progress.text.scanning.directory", cvsFileSystem.getLocalFileSystem().getFile(fileObject.getParent()).getAbsolutePath()));
     File file = cvsFileSystem.getAdminFileSystem().getFile(fileObject);
     Entry result = myCvsEntriesManager.getEntryFor(CvsVfsUtil.findFileByIoFile(file.getParentFile()), file.getName());
     if (result == null) {
@@ -51,16 +50,15 @@ public class AdminReaderOnCache implements IAdminReader {
     }
   }
 
-  public Collection getEntries(final DirectoryObject directoryObject, final ICvsFileSystem cvsFileSystem) throws IOException {
-    setProgressText(com.intellij.CvsBundle.message("progress.text.scanning.directory", cvsFileSystem.getLocalFileSystem().getFile(directoryObject).getAbsolutePath()));
+  public Collection<Entry> getEntries(final DirectoryObject directoryObject, final ICvsFileSystem cvsFileSystem) throws IOException {
+    setProgressText(CvsBundle.message("progress.text.scanning.directory", cvsFileSystem.getLocalFileSystem().getFile(directoryObject).getAbsolutePath()));
     ProgressManager.getInstance().checkCanceled();
     File parent = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
-    Collection entries = myCvsEntriesManager.getEntriesIn(CvsVfsUtil.findFileByIoFile(parent));
-    ArrayList copy = new ArrayList();
-    for (Iterator each = entries.iterator(); each.hasNext();) {
-      Entry entry = (Entry)each.next();
+    Collection<Entry> entries = myCvsEntriesManager.getEntriesIn(CvsVfsUtil.findFileByIoFile(parent));
+    ArrayList<Entry> copy = new ArrayList<Entry>();
+    for (final Entry entry : entries) {
       try {
-        copy.add(entry.clone());
+        copy.add((Entry)entry.clone());
       }
       catch (CloneNotSupportedException e) {
         LOG.error(e);

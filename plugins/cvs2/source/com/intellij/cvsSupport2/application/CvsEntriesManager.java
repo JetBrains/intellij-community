@@ -286,7 +286,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   }
 
 
-  public Collection getEntriesIn(VirtualFile parent) {
+  public Collection<Entry> getEntriesIn(VirtualFile parent) {
     return getCvsInfo(parent).getEntries();
 
   }
