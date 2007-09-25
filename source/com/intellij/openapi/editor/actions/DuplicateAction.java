@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.editor.ex.DocumentEx;
 
 public class DuplicateAction extends EditorAction {
   public DuplicateAction() {
@@ -53,7 +52,7 @@ public class DuplicateAction extends EditorAction {
       final int lineToCheck = nextLineStart.line - 1;
 
       if(lineToCheck == document.getLineCount () /*empty document*/ ||
-         ((DocumentEx) document).getLineSeparatorLength(lineToCheck) == 0) {
+         document.getLineSeparatorLength(lineToCheck) == 0) {
         s = "\n"+s;
       }
       document.insertString(end, s);

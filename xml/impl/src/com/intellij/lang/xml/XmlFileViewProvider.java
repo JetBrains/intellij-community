@@ -11,13 +11,12 @@ import java.util.*;
 
 public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
   private Set<Language> myRelevantLanguages = null;
-  private XMLLanguage myLanguage;
+  private final XMLLanguage myLanguage;
 
   public XmlFileViewProvider(final PsiManager manager, final VirtualFile virtualFile, final boolean physical, XMLLanguage language) {
     super(manager, virtualFile, physical);
     myLanguage = language;
   }
-
 
   public void contentsSynchronized() {
     super.contentsSynchronized();
