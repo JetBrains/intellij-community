@@ -38,18 +38,19 @@ import com.intellij.peer.PeerFactory;
 import java.awt.*;
 
 public class SvnFileStatus {
+  private SvnFileStatus() {
+  }
+
   public static final FileStatus EXTERNAL =
     PeerFactory.getInstance().getFileStatusFactory()
       .createFileStatus("IDEA_SVN_FILESTATUS_EXTERNAL", SvnBundle.message("file.status.external"), new Color(0x72A038));
+
   public static final FileStatus OBSTRUCTED =
     PeerFactory.getInstance().getFileStatusFactory()
       .createFileStatus("IDEA_SVN_FILESTATUS_OBSTRUCTED", SvnBundle.message("file.status.obstructed"), new Color(0x727238));
+
   public static final FileStatus REPLACED =
     PeerFactory.getInstance().getFileStatusFactory().createFileStatus("IDEA_SVN_REPLACED",
                                                                       SvnBundle.message("file.status.replaced"),
                                                                       FileStatus.COLOR_ADDED);
-  public static final FileStatus SWITCHED =
-    PeerFactory.getInstance().getFileStatusFactory().createFileStatus("IDEA_SVN_SWITCHED",
-                                                                      SvnBundle.message("file.status.switched"),
-                                                                      new Color(0x72A038));
 }
