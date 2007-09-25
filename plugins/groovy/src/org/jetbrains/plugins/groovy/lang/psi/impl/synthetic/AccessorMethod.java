@@ -48,12 +48,6 @@ public class AccessorMethod extends LightElement implements PsiMethod {
     return null;
   }
 
-  public PsiElement getOriginalElement() {
-    final PsiElement propertyOriginal = myProperty.getOriginalElement();
-    if (!propertyOriginal.equals(myProperty)) return propertyOriginal;
-    return this;
-  }
-
   @NotNull
   public PsiParameterList getParameterList() {
     final PsiManager manager = getManager();
