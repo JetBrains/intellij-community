@@ -131,7 +131,6 @@ public class ClasspathStorage implements StateStorage {
 
   @NotNull
   public ExternalizationSession startExternalization() {
-    assert mySession == null;
     final ExternalizationSession session = new ExternalizationSession() {
       public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec)
         throws StateStorageException {
