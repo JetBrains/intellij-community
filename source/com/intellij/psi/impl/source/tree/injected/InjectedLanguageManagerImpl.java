@@ -217,7 +217,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       PsiElement element = context;
       PsiElement parent = context.getParent();
       while (parent instanceof PsiBinaryExpression) {
-        //if (((PsiBinaryExpression)parent).getLOperand() != element) return;
         element = parent;
         parent = parent.getParent();
       }
@@ -230,15 +229,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       else {
         tryInjectors(injectionPlacesRegistrar, context);
       }
-      //if (context instanceof PsiBinaryExpression) {
-      //  List<PsiElement> operands = new ArrayList<PsiElement>();
-      //  collectOperands(context, operands);
-      //  PsiElement[] elements = operands.toArray(new PsiElement[operands.size()]);
-      //  tryInjectors(injectionPlacesRegistrar, elements);
-      //}
-      //else if (context instanceof PsiLanguageInjectionHost) {
-      //  tryInjectors(injectionPlacesRegistrar, context);
-      //}
     }
 
     private void collectOperands(PsiElement expression, List<PsiElement> operands) {
