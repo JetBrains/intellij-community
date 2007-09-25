@@ -109,7 +109,7 @@ public class FocusTrackback {
   }
 
   public void restoreFocus() {
-    if (wrongOS()) return;
+    if (wrongOS() || myConsumed) return;
 
     consume();
 

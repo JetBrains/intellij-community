@@ -1,13 +1,15 @@
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.DimensionService;
+import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -32,6 +34,8 @@ public class FrameWrapper {
   private final ArrayList<Disposable> myDisposables = new ArrayList<Disposable>();
   private Project myProject;
   private ProjectManagerListener myProjectListener = new MyProjectManagerListener();
+  private FocusTrackback myFocusTrackback;
+  private FocusWatcher myFocusWatcher;
 
   public FrameWrapper(@NonNls String dimensionServiceKey) {
     myDimensionKey = dimensionServiceKey;
@@ -49,11 +53,16 @@ public class FrameWrapper {
 
   public void show() {
     final JFrame frame = getFrame();
+
+    myFocusTrackback = new FocusTrackback(this, null, true);
+
     frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     WindowAdapter focusListener = new WindowAdapter() {
       public void windowOpened(WindowEvent e) {
-        if (myPreferedFocus != null)
+        if (myPreferedFocus != null) {
           myPreferedFocus.requestFocusInWindow();
+          myFocusTrackback.registerFocusComponent(myPreferedFocus);
+        }
       }
     };
     frame.addWindowListener(focusListener);
@@ -62,6 +71,14 @@ public class FrameWrapper {
     frame.setTitle(myTitle);
     frame.setIconImage(myImage);
     loadFrameState(myDimensionKey, frame);
+
+    myFocusWatcher = new FocusWatcher() {
+      protected void focusLostImpl(final FocusEvent e) {
+        myFocusTrackback.consume();
+      }
+    };
+    myFocusWatcher.install(myComponent);
+
     frame.setVisible(true);
   }
 
@@ -162,6 +179,13 @@ public class FrameWrapper {
         myProject = null;
       }
       myPreferedFocus = null;
+
+      myFocusTrackback.restoreFocus();
+      if (myComponent != null) {
+        myFocusWatcher.deinstall(myComponent);
+      }
+      myFocusWatcher = null;
+
       super.dispose();
     }
 
