@@ -516,7 +516,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   @Nullable
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
-    final PsiMethod[] byName = findMethodsByName(patternMethod.getName(), checkBases);
+    final PsiMethod[] byName = findMethodsByName(patternMethod.getName(), checkBases, false);
     for (PsiMethod method : byName) {
       final PsiClass clazz = method.getContainingClass();
       PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(clazz, this, PsiSubstitutor.EMPTY);
@@ -535,17 +535,23 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiMethod[] findMethodsByName(@NonNls String name, boolean checkBases) {
+    return findMethodsByName(name, checkBases, true);
+  }
+
+  private PsiMethod[] findMethodsByName(String name, boolean checkBases, boolean includeSyntheticAccessors) {
     if (!checkBases) {
       List<PsiMethod> result = new ArrayList<PsiMethod>();
       for (GrMethod method : getMethods()) {
         if (name.equals(method.getName())) result.add(method);
       }
 
-      for (GrField field : getFields()) {
-        final PsiMethod setter = field.getSetter();
-        if (setter != null && name.equals(setter.getName())) result.add(setter);
-        final PsiMethod getter = field.getGetter();
-        if (getter != null && name.equals(getter.getName())) result.add(getter);
+      if (includeSyntheticAccessors) {
+        for (GrField field : getFields()) {
+          final PsiMethod setter = field.getSetter();
+          if (setter != null && name.equals(setter.getName())) result.add(setter);
+          final PsiMethod getter = field.getGetter();
+          if (getter != null && name.equals(getter.getName())) result.add(getter);
+        }
       }
 
       return result.toArray(new PsiMethod[result.size()]);
