@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.OuterImportsActionCreator;
+import org.jetbrains.plugins.groovy.annotator.quickFixes.ChangeExtendsImplementsQuickFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -545,47 +546,53 @@ public class GroovyAnnotator implements Annotator {
     }
 
     //TODO: add quickfix to change implements -> extends or class to interface 
+    Annotation annotation = null;
+
     final GrImplementsClause implementsClause = typeDefinition.getImplementsClause();
     if (implementsClause != null) {
-      checkForImplementingInterface(holder, implementsClause);
+      annotation = checkForImplementingInterface(holder, implementsClause);
     }
 
     final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();
     if (extendsClause != null) {
-      checkForExtendingClass(holder, extendsClause);
+      annotation = checkForExtendingClass(holder, extendsClause);
+    }
+
+    if (annotation != null) {
+      annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
     }
   }
 
-  private boolean checkForExtendingClass(AnnotationHolder holder, GrExtendsClause extendsClause) {
+  private Annotation checkForExtendingClass(AnnotationHolder holder, GrExtendsClause extendsClause) {
     final GrCodeReferenceElement[] extendsList = extendsClause.getReferenceElements();
     if (extendsList.length != 0) {
       for (GrCodeReferenceElement extendsElement : extendsList) {
         final PsiElement extClass = extendsElement.resolve();
-        if (extClass == null || !(extClass instanceof PsiClass)) return false;
+        if (extClass == null || !(extClass instanceof PsiClass)) return null;
 
         if (((PsiClass) extClass).isInterface()) {
-          holder.createErrorAnnotation(extendsElement, GroovyBundle.message("interface.is.not.expected.here"));
+          return holder.createErrorAnnotation(extendsClause, GroovyBundle.message("interface.is.not.expected.here"));
         }
       }
     }
 
-    return true;
+    return null;
   }
 
-  private boolean checkForImplementingInterface(AnnotationHolder holder, GrImplementsClause implementsClause) {
+  private Annotation checkForImplementingInterface(AnnotationHolder holder, GrImplementsClause implementsClause) {
     final GrCodeReferenceElement[] implementsList = implementsClause.getReferenceElements();
 
     if (implementsList.length != 0) {
       for (GrCodeReferenceElement implementElement : implementsList) {
         final PsiElement implClass = implementElement.resolve();
-        if (implClass == null || !(implClass instanceof PsiClass)) return false;
+        if (implClass == null || !(implClass instanceof PsiClass)) return null;
 
         if (!((PsiClass) implClass).isInterface()) {
-          holder.createErrorAnnotation(implementElement, GroovyBundle.message("interface.expected.here"));
+          return holder.createErrorAnnotation(implementElement, GroovyBundle.message("interface.expected.here"));
         }
       }
     }
-    return true;
+    return null;
   }
 
   private void checkReferenceExpression(AnnotationHolder holder, final GrReferenceExpression refExpr) {
