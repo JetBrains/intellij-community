@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
@@ -161,6 +162,16 @@ public class ChangesUtil {
       while (true);
     }
     return parent;
+  }
+
+  @Nullable
+  public static String getProjectRelativePath(final Project project, @Nullable final File fileName) {
+    if (fileName == null) return null;
+    VirtualFile baseDir = project.getBaseDir();
+    if (baseDir == null) return fileName.toString();
+    String relativePath = FileUtil.getRelativePath(new File(baseDir.getPath()), fileName);
+    if (relativePath != null) return relativePath;
+    return fileName.toString();
   }
 
   public interface PerVcsProcessor<T> {

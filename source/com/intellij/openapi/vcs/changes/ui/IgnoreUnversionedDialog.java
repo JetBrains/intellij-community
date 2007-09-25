@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,12 +27,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 public class IgnoreUnversionedDialog extends DialogWrapper {
   private JRadioButton myIgnoreSpecifiedFileRadioButton;
@@ -42,7 +43,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   private JPanel myPanel;
   private TextFieldWithBrowseButton myIgnoreFileTextField;
   private List<VirtualFile> myFilesToIgnore;
-  private Project myProject;
+  private final Project myProject;
   private boolean myInternalChange;
 
   public IgnoreUnversionedDialog(final Project project) {
@@ -159,7 +160,6 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   }
 
   public IgnoredFileBean[] getSelectedIgnoredFiles() {
-    VirtualFile projectDir = myProject.getBaseDir();
     if (myIgnoreSpecifiedFileRadioButton.isSelected()) {
       if (myFilesToIgnore == null) {
         IgnoredFileBean bean = new IgnoredFileBean();
@@ -169,8 +169,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       IgnoredFileBean[] result = new IgnoredFileBean[myFilesToIgnore.size()];
       for(int i=0; i<myFilesToIgnore.size(); i++) {
         result [i] = new IgnoredFileBean();
-        String path = FileUtil.getRelativePath(new File(projectDir.getPresentableUrl()), new File(myFilesToIgnore.get(i).getPresentableUrl()));
-        result [i].setPath(path);
+        result [i].setPath(ChangesUtil.getProjectRelativePath(myProject, new File(myFilesToIgnore.get(i).getPresentableUrl())));
       }
       return result;
     }
@@ -178,7 +177,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       IgnoredFileBean result = new IgnoredFileBean();
       String path = myIgnoreDirectoryTextField.getText();
       if (new File(path).isAbsolute()) {
-        final String relPath = FileUtil.getRelativePath(new File(projectDir.getPresentableUrl()), new File(path));
+        final String relPath = ChangesUtil.getProjectRelativePath(myProject, new File(path));
         if (relPath != null) {
           path = relPath;
         }

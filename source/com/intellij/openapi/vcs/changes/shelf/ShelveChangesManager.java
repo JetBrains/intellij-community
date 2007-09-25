@@ -163,19 +163,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       FileUtil.copy(afterRevision.getFile().getIOFile(), shelvedFile);
       shelvedPath = shelvedFile.getPath();
     }
-    String beforePath = getProjectRelativePath(beforeFile);
-    String afterPath = getProjectRelativePath(afterFile);
+    String beforePath = ChangesUtil.getProjectRelativePath(myProject, beforeFile);
+    String afterPath = ChangesUtil.getProjectRelativePath(myProject, afterFile);
     return new ShelvedBinaryFile(beforePath, afterPath, shelvedPath);
-  }
-
-  @Nullable
-  private String getProjectRelativePath(@Nullable final File fileName) {
-    if (fileName == null) return null;
-    VirtualFile baseDir = myProject.getBaseDir();
-    if (baseDir == null) return fileName.toString();
-    String relativePath = FileUtil.getRelativePath(new File(baseDir.getPath()), fileName);
-    if (relativePath != null) return relativePath;
-    return fileName.toString();
   }
 
   private void notifyStateChanged() {
