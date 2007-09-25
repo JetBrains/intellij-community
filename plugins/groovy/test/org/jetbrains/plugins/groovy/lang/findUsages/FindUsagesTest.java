@@ -110,6 +110,10 @@ public class FindUsagesTest extends IdeaTestCase {
     doTest("typeAlias/A.groovy", 2);
   }
 
+  public void testForInParameter() throws Throwable {
+    doTest("forInParameter/A.groovy", 1);
+  }
+
   public void testSyntheticParameter() throws Throwable {
     doTest("syntheticParameter/A.groovy", 1);
   }
