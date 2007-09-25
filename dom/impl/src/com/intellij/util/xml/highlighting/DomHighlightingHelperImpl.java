@@ -188,6 +188,11 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
 
   @NotNull
   public List<DomElementProblemDescriptor> checkResolveProblems(GenericDomValue element, final DomElementAnnotationHolder holder) {
+    if (StringUtil.isEmpty(element.getStringValue())) {
+      final Required required = element.getAnnotation(Required.class);
+      if (required != null && !required.nonEmpty()) return Collections.emptyList();
+    }
+
     final XmlElement valueElement = DomUtil.getValueElement(element);
     if (valueElement != null && !isSoftReference(element)) {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
