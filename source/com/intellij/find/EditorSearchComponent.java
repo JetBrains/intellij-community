@@ -277,10 +277,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       myEditor.getCaretModel().moveToOffset(myEditor.getSelectionModel().getSelectionStart());
       myEditor.getSelectionModel().removeSelection();
     }
+
     myEditor.setHeaderComponent(null);
+    addCurrentTextToRecents();
+  }
+
+  public void removeNotify() {
+    super.removeNotify();
+
     myEditor.getDocument().removeDocumentListener(myDocumentListener);
     myConnection.disconnect();
-    addCurrentTextToRecents();
   }
 
   private void updateResults(boolean allowedToChangedEditorSelection) {
