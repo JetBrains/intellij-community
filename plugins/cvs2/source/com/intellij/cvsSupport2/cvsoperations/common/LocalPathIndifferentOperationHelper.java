@@ -35,6 +35,7 @@ public class LocalPathIndifferentOperationHelper {
   }
 
   public void addFile(File file) {
+    assert file.getParentFile() != null;
     myFileToEntryMap.put(file, Entry.createEntryForLine("/" + file.getName() + "/" + myRevision + "/"
         + Entry.getLastModifiedDateFormatter().format(new Date()) + "//"));
   }
