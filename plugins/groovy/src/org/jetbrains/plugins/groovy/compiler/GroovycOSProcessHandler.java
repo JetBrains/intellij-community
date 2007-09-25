@@ -18,10 +18,11 @@ package org.jetbrains.plugins.groovy.compiler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.TranslatingCompiler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
@@ -74,7 +75,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
           StringTokenizer tokenizer = new StringTokenizer(text, GroovycRunner.SEPARATOR, false);
 
-          String token = "";
+          String token;
           /*
           * output path
           * source file
@@ -102,7 +103,10 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
           try {
             myContext.getProgressIndicator().setText(sourceFile);
-            compiledFilesNames.add(getOutputItem(outputPath, sourceFile, outputRootDirectory));
+            final TranslatingCompiler.OutputItem item = getOutputItem(outputPath, sourceFile, outputRootDirectory);
+            if (item != null) {
+              compiledFilesNames.add(item);
+            }
           } catch (InvocationTargetException e) {
             LOG.error(e);
           } catch (InterruptedException e) {
@@ -199,7 +203,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
     String text;
     text = outputBuffer.substring(
         outputBuffer.indexOf(START_MARKER) + START_MARKER.length(),
-        outputBuffer.indexOf(END_MARKER)).toString();
+        outputBuffer.indexOf(END_MARKER));
 
     outputBuffer.delete(
         outputBuffer.indexOf(START_MARKER),
@@ -208,9 +212,11 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
     return text;
   }
 
+  @Nullable
   private TranslatingCompiler.OutputItem getOutputItem(final String outputPath, final String sourceFile, final String outputRootDir) throws InvocationTargetException, InterruptedException {
 
     final VirtualFile sourceVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(sourceFile));
+    if (sourceVirtualFile == null) return null; //should not happen, but just a sanity check
 
     return new TranslatingCompiler.OutputItem() {
       public String getOutputPath() {
