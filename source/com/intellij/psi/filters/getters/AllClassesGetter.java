@@ -62,15 +62,16 @@ public class AllClassesGetter implements ContextGetter{
       if (element == null) return endOffset;
 
 
-      boolean insertFqn = true;
       final RangeMarker toDelete = DefaultInsertHandler.insertSpace(endOffset, document);
       psiDocumentManager.commitAllDocuments();
       PsiReference psiReference = file.findReferenceAt(endOffset - 1);
+      boolean insertFqn = true;
       if (psiReference != null) {
         final PsiManager psiManager = file.getManager();
         if (psiManager.areElementsEquivalent(psiClass, resolveReference(psiReference))) {
           insertFqn = false;
-        } else {
+        }
+        else {
           try {
             final PsiElement newUnderlying = psiReference.bindToElement(psiClass);
             if (newUnderlying != null) {
@@ -80,7 +81,8 @@ public class AllClassesGetter implements ContextGetter{
               }
               insertFqn = false;
             }
-          } catch (IncorrectOperationException e) {
+          }
+          catch (IncorrectOperationException e) {
             //if it's empty we just insert fqn below
           }
         }
@@ -101,7 +103,7 @@ public class AllClassesGetter implements ContextGetter{
       //todo[peter] hack, to deal with later
       if (psiClass.isAnnotationType()) {
         // Check if someone inserts annotation class that require @
-        psiDocumentManager.commitDocument(document);
+        psiDocumentManager.commitAllDocuments();
         PsiElement elementAt = file.findElementAt(startOffset);
         final PsiElement parentElement = elementAt != null ? elementAt.getParent():null;
 
@@ -136,7 +138,7 @@ public class AllClassesGetter implements ContextGetter{
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(startOffset);
       LOG.assertTrue(iterator.getTokenType() == JavaTokenType.IDENTIFIER);
       iterator.retreat();
-      if (iterator.getTokenType() == JavaTokenType.WHITE_SPACE) iterator.retreat();
+      if (iterator.getTokenType() == TokenType.WHITE_SPACE) iterator.retreat();
       return iterator.getTokenType() != JavaTokenType.AT && iterator.getTokenType() != JavaTokenType.DOT;
     }
 
