@@ -15,7 +15,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
@@ -63,8 +62,6 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
       private FileEditorManagerEvent myLastEvent;
       public void selectionChanged(final FileEditorManagerEvent event) {
         myLastEvent = event;
-        //System.out.println(event.getNewFile().getPath());
-        final PsiManager psiManager = PsiManager.getInstance(myProject);
         myAlarm.cancelAllRequests();
         myAlarm.addRequest(
           new Runnable() {
@@ -75,7 +72,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
                     return;
                   }
                   try {
-                    if (psiManager.isDisposed()) {
+                    if (myProject.isDisposed()) {
                       return; // project may have been closed
                     }
                     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
