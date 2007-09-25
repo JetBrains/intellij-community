@@ -56,6 +56,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
   }
 
   public void propertyChanged(VirtualFilePropertyEvent e) {
+    if (!e.getPropertyName().equals(VirtualFile.PROP_NAME)) return;
     processEvent(e);
   }
 
