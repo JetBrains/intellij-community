@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,39 +50,51 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
   public void select(PsiElement element, final boolean requestFocus) {
+    PsiElement toSelect = getElementToSelect(element);
+    if (toSelect == null) return;
+    PsiElement originalElement = toSelect.getOriginalElement();
+    final VirtualFile virtualFile = PsiUtil.getVirtualFile(originalElement);
+    select(originalElement, virtualFile, requestFocus);
+  }
+
+  private static PsiElement getElementToSelect(PsiElement element) {
+    PsiFile baseRootFile = getBaseRootFile(element);
+    if (baseRootFile == null) return null;
     PsiElement current = element;
     while (current != null) {
       if (current instanceof PsiFileSystemItem) {
         break;
       }
-      if (isTopLevelClass(current)) {
+      if (isTopLevelClass(current, baseRootFile)) {
         break;
       }
       current = current.getParent();
     }
 
-    if (current instanceof PsiJavaFile) {
-      PsiClass[] classes = ((PsiJavaFile)current).getClasses();
-      if (classes.length > 0 && isTopLevelClass(classes[0])) {
+    if (current instanceof PsiClassOwner) {
+      PsiClass[] classes = ((PsiClassOwner)current).getClasses();
+      if (classes.length > 0 && isTopLevelClass(classes[0], baseRootFile)) {
         current = classes[0];
       }
     }
-    if (current == null) {
-      current = element;
-    }
-    PsiElement originalElement = current.getOriginalElement();
-    JspFile jspFile = PsiUtil.getJspFile(originalElement);
-    final VirtualFile virtualFile = PsiUtil.getVirtualFile(originalElement);
-    select(jspFile == null ? originalElement : jspFile, virtualFile, requestFocus);
+    return current instanceof PsiClass ? current : baseRootFile;
   }
 
-  private static boolean isTopLevelClass(final PsiElement element) {
+  private static PsiFile getBaseRootFile(PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) return null;
+
+    final FileViewProvider viewProvider = containingFile.getViewProvider();
+    return viewProvider.getPsi(viewProvider.getBaseLanguage());
+  }
+
+  private static boolean isTopLevelClass(final PsiElement element, PsiFile baseRootFile) {
     if (!(element instanceof PsiClass)) {
       return false;
     }
     final PsiElement parent = element.getParent();
-    
-    return parent instanceof PsiFile && !PsiUtil.isInJspFile(element);
+                                        // do not select JspClass
+    return parent instanceof PsiFile && parent.getLanguage() == baseRootFile.getLanguage();
   }
 
   public final String getToolWindowId() {
