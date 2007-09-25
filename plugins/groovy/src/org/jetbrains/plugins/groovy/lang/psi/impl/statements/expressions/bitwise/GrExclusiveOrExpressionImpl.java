@@ -13,22 +13,30 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ilyas
  */
-public class GrInclusiveOrExprImpl extends GrLogicalExpressionImpl {
+public class GrExclusiveOrExpressionImpl extends GrBinaryExpressionImpl {
 
-  public GrInclusiveOrExprImpl(@NotNull ASTNode node) {
+  public GrExclusiveOrExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
-    return "Inclusive OR expression";
+    return "Exclusive OR expression";
+  }
+
+  @Nullable
+  public PsiType getType() {
+    return TypesUtil.getNumericResultType(this);
   }
 }

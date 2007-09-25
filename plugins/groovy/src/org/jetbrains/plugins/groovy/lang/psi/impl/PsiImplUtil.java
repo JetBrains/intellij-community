@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.*;
 import org.jetbrains.plugins.groovy.refactoring.GroovyVariableUtil;
 
 import java.util.ArrayList;
@@ -237,9 +238,9 @@ public class PsiImplUtil {
     if (expr instanceof GrRelationalExpression) priority = 11;
     if (expr instanceof GrEqualityExprImpl) priority = 12;
     if (expr instanceof GrRegexExprImpl) priority = 13;
-    if (expr instanceof GrAndExprImpl) priority = 14;
-    if (expr instanceof GrExclusiveOrExprImpl) priority = 15;
-    if (expr instanceof GrInclusiveOrExprImpl) priority = 16;
+    if (expr instanceof GrAndExpressionImpl) priority = 14;
+    if (expr instanceof GrExclusiveOrExpressionImpl) priority = 15;
+    if (expr instanceof GrInclusiveOrExpressionImpl) priority = 16;
     if (expr instanceof GrLogicalAndExprImpl) priority = 17;
     if (expr instanceof GrLogicalOrExprImpl) priority = 18;
     if (expr instanceof GrConditionalExpression) priority = 19;

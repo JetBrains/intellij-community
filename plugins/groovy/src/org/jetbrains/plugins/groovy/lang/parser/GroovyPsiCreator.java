@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSecti
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
@@ -118,10 +119,10 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(FOR_TRADITIONAL_CLAUSE)) return new GrTraditionalForClauseImpl(node);
     if (elem.equals(WHILE_STATEMENT)) return new GrWhileStatementImpl(node);
     if (elem.equals(WITH_STATEMENT)) return new GrWithStatementImpl(node);
-    if (elem.equals(TRY_BLOCK_STATEMENT)) return new GrTryCatchStmtImpl(node);
+    if (elem.equals(TRY_BLOCK_STATEMENT)) return new GrTryCatchStatementImpl(node);
     if (elem.equals(CATCH_CLAUSE)) return new GrCatchClauseImpl(node);
     if (elem.equals(FINALLY_CLAUSE)) return new GrFinallyClauseImpl(node);
-    if (elem.equals(SYNCHRONIZED_STATEMENT)) return new GrSynchroStmtImpl(node);
+    if (elem.equals(SYNCHRONIZED_STATEMENT)) return new GrSynchronizedStatementImpl(node);
     if (elem.equals(SWITCH_STATEMENT)) return new GrSwitchStatementImpl(node);
     if (elem.equals(CASE_LABEL)) return new GrCaseLabelImpl(node);
     if (elem.equals(CASE_SECTION)) return new GrCaseSectionImpl(node);
@@ -191,9 +192,9 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(ASSIGNMENT_EXPRESSION)) return new GrAssignmentExpressionImpl(node);
     if (elem.equals(LOGICAL_OR_EXPRESSION)) return new GrLogicalOrExprImpl(node);
     if (elem.equals(LOGICAL_AND_EXPRESSION)) return new GrLogicalAndExprImpl(node);
-    if (elem.equals(EXCLUSIVE_OR_EXPRESSION)) return new GrExclusiveOrExprImpl(node);
-    if (elem.equals(INCLUSIVE_OR_EXPRESSION)) return new GrInclusiveOrExprImpl(node);
-    if (elem.equals(AND_EXPRESSION)) return new GrAndExprImpl(node);
+    if (elem.equals(EXCLUSIVE_OR_EXPRESSION)) return new GrExclusiveOrExpressionImpl(node);
+    if (elem.equals(INCLUSIVE_OR_EXPRESSION)) return new GrInclusiveOrExpressionImpl(node);
+    if (elem.equals(AND_EXPRESSION)) return new GrAndExpressionImpl(node);
     if (elem.equals(REGEX_EXPRESSION)) return new GrRegexExprImpl(node);
     if (elem.equals(EQUALITY_EXPRESSION)) return new GrEqualityExprImpl(node);
     if (elem.equals(RELATIONAL_EXPRESSION)) return new GrRelationalExpressionImpl(node);

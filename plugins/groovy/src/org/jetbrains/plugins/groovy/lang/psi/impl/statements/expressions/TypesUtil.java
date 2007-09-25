@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -195,7 +195,7 @@ public class TypesUtil {
     return result;
   }
 
-  static PsiType getTypeForIncOrDecExpression(GrUnaryExpression expr) {
+  public static PsiType getTypeForIncOrDecExpression(GrUnaryExpression expr) {
     final GrExpression op = expr.getOperand();
     if (op != null) {
       final PsiType opType = op.getType();

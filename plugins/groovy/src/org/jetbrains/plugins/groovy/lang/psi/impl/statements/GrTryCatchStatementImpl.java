@@ -27,8 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 /**
  * @author ilyas
  */
-public class GrTryCatchStmtImpl extends GroovyPsiElementImpl implements GrTryCatchStatement {
-  public GrTryCatchStmtImpl(@NotNull ASTNode node) {
+public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrTryCatchStatement {
+  public GrTryCatchStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
