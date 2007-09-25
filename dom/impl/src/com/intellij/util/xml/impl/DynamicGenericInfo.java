@@ -11,6 +11,9 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -24,7 +27,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author peter
@@ -38,9 +40,9 @@ public class DynamicGenericInfo implements DomGenericInfo {
   private final ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private final ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
   private final ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
-  private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-  private static final ReentrantReadWriteLock.ReadLock r = rwl.readLock();
-  private static final ReentrantReadWriteLock.WriteLock w = rwl.writeLock();
+  private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
+  private static final JBLock r = rwl.readLock();
+  private static final JBLock w = rwl.writeLock();
 
   public DynamicGenericInfo(final DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo, final Project project) {
     myInvocationHandler = handler;

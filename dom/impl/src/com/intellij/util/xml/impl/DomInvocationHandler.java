@@ -7,7 +7,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NullableFactory;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -16,6 +19,9 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.CollectionElementAddedEvent;
@@ -38,7 +44,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author peter                  
@@ -86,9 +91,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     }
   };
 
-  private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-  public static final ReentrantReadWriteLock.ReadLock r = rwl.readLock();
-  public static final ReentrantReadWriteLock.WriteLock w = rwl.writeLock();
+  private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
+  public static final JBLock r = rwl.readLock();
+  public static final JBLock w = rwl.writeLock();
 
   protected DomInvocationHandler(final Type type,
                                  final XmlTag tag,

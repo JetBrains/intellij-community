@@ -93,6 +93,13 @@ public class Patches {
   public static final boolean APPLE_BUG_ID_3716835 = DP2_OR_DP3;
 
   /**
+   * Use of JDK1.5 ReentrantReadWriteLock API eventually leads to JVM lock-up or core dump crashes.
+   * With this flag true, API is wrapped with alternative implementation via early days Doug Lea's API.
+   * @see com.intellij.util.concurrency.LockFactory
+   */
+  public static final boolean APPLE_BUG_ID_5359442 = SystemInfo.isMac;
+
+  /**
    * Index out of bounds at apple.laf.AquaTabbedPaneUI.tabForCoordinate
    * http://www.jetbrains.net/jira/browse/IDEADEV-15769
    */

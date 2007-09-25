@@ -540,7 +540,17 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         if (!canExit()) return;
 
         disposeSelf();
-        System.exit(0);
+
+        if (SystemInfo.isMac) {
+          new Thread(new Runnable() {
+            public void run() {
+              System.exit(0);
+            }
+          }).start();
+        }
+        else {
+          System.exit(0);
+        }
       }
     };
     

@@ -13,6 +13,9 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NonNls;
@@ -21,12 +24,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.annotation.Annotation;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author peter
@@ -137,9 +138,9 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private long myModificationCount;
   private boolean myInvalidated;
 
-  private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-  private static final Lock r = rwl.readLock();
-  private static final Lock w = rwl.writeLock();
+  private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
+  private static final JBLock r = rwl.readLock();
+  private static final JBLock w = rwl.writeLock();
 
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,

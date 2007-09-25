@@ -4,7 +4,6 @@
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.concurrent.PriorityBlockingQueue;
@@ -16,7 +15,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @NonNls
 public class JobSchedulerImpl extends JobScheduler {
-  public static final int CORES_COUNT = SystemInfo.isMac ? 1 : Runtime.getRuntime().availableProcessors(); // TODO: Remove Mac hack when hang magic goes away
+  public static final int CORES_COUNT = Runtime.getRuntime().availableProcessors();
+  
   @NonNls private static final String THREADS_NAME = "JobScheduler pool";
   private static final ThreadFactory WORKERS_FACTORY = new ThreadFactory() {
     public Thread newThread(final Runnable r) {

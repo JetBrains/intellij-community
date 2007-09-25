@@ -24,6 +24,9 @@ import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.TimedReference;
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ParameterizedCachedValueImpl<T,P> implements ParameterizedCachedValue<T,P> {
   private static final Object NULL = new Object();
@@ -46,9 +47,9 @@ public class ParameterizedCachedValueImpl<T,P> implements ParameterizedCachedVal
 
 
   private long myLastPsiTimeStamp = -1;
-  private final ReentrantReadWriteLock rw = new ReentrantReadWriteLock();
-  private final Lock r = rw.readLock();
-  private final Lock w = rw.writeLock();
+  private final JBReentrantReadWriteLock rw = LockFactory.createReadWriteLock();
+  private final JBLock r = rw.readLock();
+  private final JBLock w = rw.writeLock();
 
   public ParameterizedCachedValueImpl(PsiManager manager, ParameterizedCachedValueProvider<T,P> provider, boolean trackValue) {
     myManager = manager;

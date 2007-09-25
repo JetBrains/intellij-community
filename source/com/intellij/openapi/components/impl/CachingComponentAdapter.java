@@ -1,11 +1,10 @@
 package com.intellij.openapi.components.impl;
 
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
-
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author mike
@@ -16,9 +15,9 @@ public class CachingComponentAdapter extends DecoratingComponentAdapter implemen
   private boolean disposed;
   private boolean started;
   private boolean delegateHasLifecylce;
-  private ReadWriteLock rw = new ReentrantReadWriteLock();
-  private Lock r = rw.readLock();
-  private Lock w = rw.writeLock();
+  private JBReentrantReadWriteLock rw = LockFactory.createReadWriteLock();
+  private JBLock r = rw.readLock();
+  private JBLock w = rw.writeLock();
 
   public CachingComponentAdapter(ComponentAdapter delegate) {
     this(delegate, new SimpleReference());

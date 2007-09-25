@@ -12,6 +12,9 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomElement;
@@ -27,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author peter
@@ -63,9 +64,9 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   private final DomManagerImpl myDomManager;
   private int myModCount;
 
-  private static final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-  private static final Lock r = rwl.readLock();
-  protected static final Lock w = rwl.writeLock();
+  private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
+  private static final JBLock r = rwl.readLock();
+  protected static final JBLock w = rwl.writeLock();
 
   public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;

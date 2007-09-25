@@ -22,6 +22,9 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.TimedReference;
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CachedValueImpl<T> implements CachedValue<T> {
   private static final Object NULL = new Object();
@@ -44,9 +45,9 @@ public class CachedValueImpl<T> implements CachedValue<T> {
 
 
   private long myLastPsiTimeStamp = -1;
-  private ReentrantReadWriteLock rw = new ReentrantReadWriteLock();
-  private Lock r = rw.readLock();
-  private Lock w = rw.writeLock();
+  private JBReentrantReadWriteLock rw = LockFactory.createReadWriteLock();
+  private JBLock r = rw.readLock();
+  private JBLock w = rw.writeLock();
 
   public CachedValueImpl(PsiManager manager, CachedValueProvider<T> provider, boolean trackValue) {
     myManager = manager;

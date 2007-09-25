@@ -1,12 +1,14 @@
 package com.intellij.openapi.util;
 
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 
 public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
 
-  private ReentrantReadWriteLock ourLock = new ReentrantReadWriteLock();
-  private ReentrantReadWriteLock.ReadLock r;
-  private ReentrantReadWriteLock.WriteLock w;
+  private JBReentrantReadWriteLock ourLock = LockFactory.createReadWriteLock();
+  private JBLock r;
+  private JBLock w;
 
 
   protected FieldCache() {

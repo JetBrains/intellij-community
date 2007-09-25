@@ -29,6 +29,8 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RefManagerImpl extends RefManager {
 
@@ -64,7 +64,7 @@ public class RefManagerImpl extends RefManager {
 
   private EntryPointsManager myEntryPointsManager = null;
 
-  private ReadWriteLock myLock = new ReentrantReadWriteLock();
+  private JBReentrantReadWriteLock myLock = LockFactory.createReadWriteLock();
 
   public RefManagerImpl(Project project, AnalysisScope scope, GlobalInspectionContextImpl context) {
     myDeclarationsFound = false;

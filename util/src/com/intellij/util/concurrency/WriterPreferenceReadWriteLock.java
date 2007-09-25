@@ -153,7 +153,7 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
   protected class ReaderLock extends Signaller implements Sync {
 
     public  void acquire() throws InterruptedException {
-      if (Thread.interrupted()) throw new InterruptedException();
+      //TODO: [not sure why this is necessary but very inperformant] if (Thread.interrupted()) throw new InterruptedException();
       InterruptedException ie = null;
       synchronized(this) {
         if (!startReadFromNewReader()) {
@@ -190,7 +190,7 @@ public class WriterPreferenceReadWriteLock implements ReadWriteLock {
     synchronized void signalWaiters() { ReaderLock.this.notifyAll(); }
 
     public boolean attempt(long msecs) throws InterruptedException { 
-      if (Thread.interrupted()) throw new InterruptedException();
+     //TODO: [not sure why this is necessary but very inperformant] if (Thread.interrupted()) throw new InterruptedException();
       InterruptedException ie = null;
       synchronized(this) {
         if (msecs <= 0)

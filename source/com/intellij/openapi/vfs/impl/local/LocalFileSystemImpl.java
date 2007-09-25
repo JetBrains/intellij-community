@@ -16,6 +16,9 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.io.fs.IFile;
 import com.intellij.vfs.local.win32.FileWatcher;
@@ -26,16 +29,13 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class LocalFileSystemImpl extends LocalFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
 
-  private final ReadWriteLock LOCK = new ReentrantReadWriteLock();
-  final Lock READ_LOCK = LOCK.readLock();
-  final Lock WRITE_LOCK = LOCK.writeLock();
+  private final JBReentrantReadWriteLock LOCK = LockFactory.createReadWriteLock();
+  final JBLock READ_LOCK = LOCK.readLock();
+  final JBLock WRITE_LOCK = LOCK.writeLock();
 
   private final List<WatchRequest> myRootsToWatch = new ArrayList<WatchRequest>();
   private WatchRequest[] myCachedNormalizedRequests = null;
