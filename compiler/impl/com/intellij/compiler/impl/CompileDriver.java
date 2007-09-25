@@ -299,6 +299,9 @@ public class CompileDriver {
     compileTask.start(new Runnable() {
       public void run() {
         try {
+          if (myProject.isDisposed()) {
+            return;
+          }
           if (LOG.isDebugEnabled()) {
             LOG.debug("COMPILATION STARTED");
           }
