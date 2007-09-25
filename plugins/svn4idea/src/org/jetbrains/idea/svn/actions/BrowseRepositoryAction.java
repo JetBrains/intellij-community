@@ -23,6 +23,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.peer.PeerFactory;
+import com.intellij.ui.content.Content;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog;
 
 import javax.swing.*;
@@ -43,22 +46,32 @@ public class BrowseRepositoryAction extends AnAction {
 
       ToolWindow w = manager.getToolWindow(REPOSITORY_BROWSER_TOOLWINDOW);
       if (w == null) {
-        JComponent component = createToolWindowComponent(project);
-        w = manager.registerToolWindow(REPOSITORY_BROWSER_TOOLWINDOW, component, ToolWindowAnchor.BOTTOM);
+        RepositoryToolWindowPanel component = new RepositoryToolWindowPanel(project);
+        w = manager.registerToolWindow(REPOSITORY_BROWSER_TOOLWINDOW, true, ToolWindowAnchor.BOTTOM);
+        final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, "", false);
+        content.setDisposer(component);
+        w.getContentManager().addContent(content);
       }
       w.show(null);
       w.activate(null);
     }
   }
 
-  private static JComponent createToolWindowComponent(Project project) {
-    RepositoryBrowserDialog dialog = new RepositoryBrowserDialog(project);
-    JComponent component = dialog.createBrowserComponent(true);
-    JPanel panel = new JPanel(new BorderLayout());
+  private static class RepositoryToolWindowPanel extends JPanel implements Disposable {
+    private RepositoryBrowserDialog myDialog;
 
-    panel.add(component, BorderLayout.CENTER);
-    panel.add(dialog.createToolbar(false), BorderLayout.WEST);
+    private RepositoryToolWindowPanel(Project project) {
+      super(new BorderLayout());
 
-    return panel;
+      myDialog = new RepositoryBrowserDialog(project);
+      JComponent component = myDialog.createBrowserComponent(true);
+
+      add(component, BorderLayout.CENTER);
+      add(myDialog.createToolbar(false), BorderLayout.WEST);
+    }
+
+    public void dispose() {
+      myDialog.disposeRepositoryBrowser();
+    }
   }
 }

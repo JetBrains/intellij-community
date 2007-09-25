@@ -273,9 +273,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return myRepositoryBrowser;
   }
 
-  private void disposeRepositoryBrowser() {
+  public void disposeRepositoryBrowser() {
     if (myRepositoryBrowser != null) {
       Disposer.dispose(myRepositoryBrowser);
+      myRepositoryBrowser = null;
     }
   }
 
