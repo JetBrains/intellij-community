@@ -9,12 +9,12 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="idea" />
+    <orderEntry type="module" module-name="idea-tests" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="lvcs-openapi" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="Mocks" level="project" />
     <orderEntry type="library" name="picocontainer" level="project" />
-    <orderEntry type="module" module-name="idea-tests" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

@@ -200,7 +200,7 @@ public class Updater implements CacheUpdater {
     log(b, myVfsRoots);
     log(b, myVcs.getRoots());
 
-    return false;
+    throw new RuntimeException(b.toString());
   }
 
   private void log(StringBuilder b, VirtualFile[] roots) {

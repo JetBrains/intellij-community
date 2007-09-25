@@ -3,17 +3,19 @@ package com.intellij.history.integration;
 import com.intellij.history.core.ContentFactory;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.utils.Reversed;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-// todo synchronization
 public class LocalHistoryFacade {
   private ILocalVcs myVcs;
   private IdeaGateway myGateway;
   private int myChangeSetDepth = 0;
+
+  private List<String> myLog = new ArrayList<String>();
 
   public LocalHistoryFacade(ILocalVcs vcs, IdeaGateway gw) {
     myGateway = gw;
@@ -21,22 +23,28 @@ public class LocalHistoryFacade {
   }
 
   public void startRefreshing() {
+    log("refresh started");
     beginChangeSet();
   }
 
   public void finishRefreshing() {
+    log("refresh finished");
     endChangeSet(LocalHistoryBundle.message("system.label.external.change"));
   }
 
   public void startCommand() {
+    log("command started");
     beginChangeSet();
   }
 
   public void finishCommand(String name) {
+    log("command finished: " + name);
     endChangeSet(name);
   }
 
   public void startAction() {
+    log("action started (depth=" + myChangeSetDepth);
+
     if (myChangeSetDepth == 0) myVcs.beginChangeSet();
     registerUnsavedDocumentChanges();
     myVcs.endChangeSet(null);
@@ -46,6 +54,8 @@ public class LocalHistoryFacade {
   }
 
   public void finishAction(String name) {
+    log("action finished: " + name);
+
     registerUnsavedDocumentChanges();
     endChangeSet(name);
   }
@@ -62,12 +72,22 @@ public class LocalHistoryFacade {
   }
 
   private void endChangeSet(String name) {
-    assert myChangeSetDepth > 0;
+    assert depthIsValid();
 
     myChangeSetDepth--;
     if (myChangeSetDepth == 0) {
       myVcs.endChangeSet(name);
     }
+  }
+
+  private boolean depthIsValid() {
+    if (myChangeSetDepth > 0) return true;
+
+    String log = "";
+    for (String s : Reversed.list(myLog)) {
+      log += s + "\n";
+    }
+    throw new RuntimeException(log);
   }
 
   public void create(VirtualFile f) {
@@ -142,5 +162,9 @@ public class LocalHistoryFacade {
 
   public void delete(VirtualFile f) {
     myVcs.delete(f.getPath());
+  }
+
+  private void log(String s) {
+    assert myLog.add(s);
   }
 }
