@@ -82,7 +82,7 @@ public final class FileSystem
 	private String getPath(File file) throws OutOfFileSystemException {
 		final String canonicalFilePath = getCanonicalFileName(file);
 		if (!canonicalFilePath.startsWith(canonicalRootDirectoryName)) {
-			throw new OutOfFileSystemException(file, this);
+			throw new OutOfFileSystemException(canonicalFilePath, canonicalRootDirectoryName);
 		}
 
 		final String filePath = file.getAbsolutePath();

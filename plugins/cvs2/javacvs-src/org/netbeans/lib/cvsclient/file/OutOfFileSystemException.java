@@ -14,20 +14,19 @@ package org.netbeans.lib.cvsclient.file;
 
 import org.jetbrains.annotations.NonNls;
 
-import java.io.File;
-
 /**
- * @author  Thomas Singer
+ * @author Thomas Singer
  */
 public final class OutOfFileSystemException extends RuntimeException {
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
-	public OutOfFileSystemException(File file, IFileSystem fileSystem) {
-		super(createMessage(file, fileSystem));
-	}
+  public OutOfFileSystemException(String file, String rootPath) {
+    super(createMessage(file, rootPath));
+  }
 
-  @NonNls private static String createMessage(final File file, final IFileSystem fileSystem) {
-    return "File " + file + " not contained in file system below root " + fileSystem.getRootDirectory();
+  @NonNls
+  private static String createMessage(final String file, final String rootPath) {
+    return "File " + file + " not contained in file system below root " + rootPath;
   }
 }
