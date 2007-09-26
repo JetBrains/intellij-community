@@ -16,9 +16,9 @@ import java.util.*;
  */
 public abstract class VcsVFSListener {
   protected static class MovedFileInfo {
-    public String myOldPath;
+    public final String myOldPath;
     public String myNewPath;
-    private VirtualFile myFile;
+    private final VirtualFile myFile;
 
     public MovedFileInfo(VirtualFile file, final String newPath) {
       myOldPath = file.getPath();
@@ -32,8 +32,8 @@ public abstract class VcsVFSListener {
   private final ChangeListManager myChangeListManager;
   private final MyVirtualFileAdapter myVFSListener;
   private final MyCommandAdapter myCommandListener;
-  private VcsShowConfirmationOption myAddOption;
-  private VcsShowConfirmationOption myRemoveOption;
+  private final VcsShowConfirmationOption myAddOption;
+  private final VcsShowConfirmationOption myRemoveOption;
   private final List<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
   private final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<VirtualFile, VirtualFile>();
   private final List<FilePath> myDeletedFiles = new ArrayList<FilePath>();
@@ -42,7 +42,7 @@ public abstract class VcsVFSListener {
 
   protected enum VcsDeleteType { SILENT, CONFIRM, IGNORE }
 
-  public VcsVFSListener(final Project project, final AbstractVcs vcs) {
+  protected VcsVFSListener(final Project project, final AbstractVcs vcs) {
     myProject = project;
     myVcs = vcs;
     myChangeListManager = ChangeListManager.getInstance(project);
@@ -212,7 +212,7 @@ public abstract class VcsVFSListener {
       }
     }
 
-    public void fileDeleted(final VirtualFileEvent event) {
+    public void beforeFileDeletion(final VirtualFileEvent event) {
       if (!isEventIgnored(event)) {
         addFileToDelete(event.getFile());
       }
