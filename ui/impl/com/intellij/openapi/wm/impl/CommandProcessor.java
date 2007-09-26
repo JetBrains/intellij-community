@@ -55,11 +55,13 @@ public final class CommandProcessor implements Runnable {
       final Bulk bulk = getNextCommandBulk();
       if (bulk == null) return;
 
-      final Condition expire = myCommandToExpire.get(bulk);
+      final Condition bulkExpire = myCommandToExpire.get(bulk);
 
       if (bulk.myList.size() > 0) {
         final FinalizableCommand command = (FinalizableCommand)bulk.myList.remove(0);
         myCommandCount--;
+
+        final Condition expire = command.getExpired() != null ? command.getExpired() : bulkExpire;
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("CommandProcessor.run " + command);
@@ -68,7 +70,7 @@ public final class CommandProcessor implements Runnable {
         // definitely have some since runnables in command list may (and do) request some PSI activity
 
         final boolean queueNext = myCommandCount > 0;
-        ApplicationManager.getApplication().getInvokator().invokeLater(command, ModalityState.NON_MODAL, expire).doWhenDone(new Runnable() {
+        ApplicationManager.getApplication().getInvokator().invokeLater(command, ModalityState.NON_MODAL, expire == null ? Condition.FALSE : expire).doWhenDone(new Runnable() {
           public void run() {
             if (queueNext) {
               CommandProcessor.this.run();

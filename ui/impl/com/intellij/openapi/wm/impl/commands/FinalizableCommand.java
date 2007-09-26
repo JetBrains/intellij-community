@@ -1,6 +1,8 @@
 package com.intellij.openapi.wm.impl.commands;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladimir Kondratyev
@@ -21,4 +23,10 @@ public abstract class FinalizableCommand implements Runnable{
   public void beforeExecute(final ToolWindowManagerImpl toolWindowManager) {
     myManager = toolWindowManager;
   }
+
+  @Nullable
+  public Condition getExpired() {
+    return null;
+  }
+
 }

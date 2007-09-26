@@ -1190,6 +1190,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         finish();
       }
     }
+
+    @Nullable
+  public Condition getExpired() {
+      return Condition.FALSE;
+    }
   }
 
   private final class EditorComponentFocusWatcher extends FocusWatcher {
