@@ -32,6 +32,18 @@ public final class QuickFixAction {
     registerQuickFixAction(info, null, action, null);
   }
 
+  @Deprecated
+  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
+    if (info == null || action == null) return;
+    final TextRange fixRange = new TextRange(info.startOffset, info.endOffset);
+    if (info.quickFixActionRanges == null) {
+      info.quickFixActionRanges = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>>();
+    }
+    info.quickFixActionRanges.add(Pair.create(new HighlightInfo.IntentionActionDescriptor(action, options, displayName), fixRange));
+    info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
+    info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
+  }
+
   public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
     if (info == null || action == null) return;
     if (fixRange == null) fixRange = new TextRange(info.startOffset, info.endOffset);

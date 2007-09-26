@@ -96,7 +96,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
 
         if (pass == null) {
           ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().markFileUpToDate(editor.getDocument(), passId);
-        } 
+        }
         else {
           TIntArrayList ids = new TIntArrayList(passConfig.completionPredecessorIds.length);
           for (int id : passConfig.completionPredecessorIds) {

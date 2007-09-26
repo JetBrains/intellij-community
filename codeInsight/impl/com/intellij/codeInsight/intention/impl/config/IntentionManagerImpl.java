@@ -44,8 +44,6 @@ public class IntentionManagerImpl extends IntentionManager {
   public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
 
-    //addAction(new QuickFixAction());
-
     String[] CONTROL_FLOW_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.control.flow")};
     registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CATEGORY);
     registerIntentionAndMetaData(new InvertIfConditionAction(), CONTROL_FLOW_CATEGORY);
