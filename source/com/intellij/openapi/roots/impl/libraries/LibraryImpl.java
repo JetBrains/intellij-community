@@ -85,6 +85,9 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
       myWatchRequests.clear();
     }
+    if (myVfsListener != null) {
+      VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
+    }
   }
 
   public String getName() {
