@@ -4,6 +4,7 @@
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +17,8 @@ import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class StartupActionScriptManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.StartupActionScriptManager");
+
   @NonNls private static final String ACTION_SCRIPT_FILE = "action.script";
 
   private StartupActionScriptManager() {
@@ -62,7 +65,7 @@ public class StartupActionScriptManager {
         System.err.println(MessageFormat.format(
           "Internal file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them."
         ));
-        e.printStackTrace();
+        LOG.info(e);
 
         return new ArrayList<ActionCommand>();
       }
