@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRuntimeExceptionToThrowsAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
@@ -45,8 +44,7 @@ public class IntentionManagerImpl extends IntentionManager {
   public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
 
-    addAction(new QuickFixAction());
-    //addAction(new PostIntentionsQuickFixAction());
+    //addAction(new QuickFixAction());
 
     String[] CONTROL_FLOW_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.control.flow")};
     registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CATEGORY);

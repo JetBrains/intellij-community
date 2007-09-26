@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -52,6 +53,7 @@ import java.util.List;
  * @author Mike
  * @author Valentin
  * @author Eugene Belyaev
+ * @author and me too
  */
 public class IntentionHintComponent extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
@@ -111,8 +113,7 @@ public class IntentionHintComponent extends JPanel implements Disposable {
       return result;
     }
 
-    private boolean wrapActionsTo(final List<HighlightInfo.IntentionActionDescriptor> descriptors,
-                               final Set<IntentionActionWithTextCaching> cachedActions) {
+    private boolean wrapActionsTo(final List<HighlightInfo.IntentionActionDescriptor> descriptors, final Set<IntentionActionWithTextCaching> cachedActions) {
       boolean result = true;
       for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
         IntentionAction action = descriptor.getAction();
@@ -167,7 +168,7 @@ public class IntentionHintComponent extends JPanel implements Disposable {
     public PopupStep onChosen(final IntentionActionWithTextCaching action, final boolean finalChoice) {
       if (finalChoice && !(action.getAction() instanceof EmptyIntentionAction)) {
         applyAction(action);
-        return PopupStep.FINAL_CHOICE;
+        return FINAL_CHOICE;
       }
 
       if (hasSubstep(action)) {
@@ -592,6 +593,7 @@ public class IntentionHintComponent extends JPanel implements Disposable {
             }
             Runnable runnable = new Runnable() {
               public void run() {
+                removeActionFromList(cachedAction);
                 try {
                   action.invoke(myProject, myEditor, file);
                 }
@@ -618,9 +620,19 @@ public class IntentionHintComponent extends JPanel implements Disposable {
     });
   }
 
+  private void removeActionFromList(IntentionActionWithTextCaching cachedAction) {
+    IntentionListStep step = (IntentionListStep)myPopup.getListStep();
+    if (step == null) return;
+    
+    step.myCachedErrorFixes.remove(cachedAction);
+    step.myCachedInspectionFixes.remove(cachedAction);
+
+    QuickFixAction.removeAction(myEditor, myProject, cachedAction.getAction());
+  }
+
   public static class EnableDisableIntentionAction implements IntentionAction{
-    private String myActionFamilyName;
-    private IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
+    private final String myActionFamilyName;
+    private final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
 
     public EnableDisableIntentionAction(IntentionAction action) {
       myActionFamilyName = action.getFamilyName();

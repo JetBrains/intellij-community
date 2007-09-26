@@ -8,8 +8,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -30,7 +28,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<PassConfig>();
   private int nextAvailableId = Pass.EXTERNAL_TOOLS+1;
   private boolean checkedForCycles;
-  private Project myProject;
+  private final Project myProject;
 
   public TextEditorHighlightingPassRegistrarImpl(Project project) {
     myProject = project;
@@ -114,7 +112,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
           id2Pass.put(passId, pass);
           if (passConfig.runIntentionsPassAfter && !(pass instanceof ProgressableTextEditorHighlightingPass.EmptyPass)) {
             Project project = psiFile.getProject();
-            ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, passId, new IntentionAction[] {new QuickFixAction()});
+            ShowIntentionsPass intentionsPass = new ShowIntentionsPass(project, editor, passId, null);
             intentionsPass.setCompletionPredecessorIds(new int[]{passId});
             int id = nextAvailableId++;
             intentionsPass.setId(id);

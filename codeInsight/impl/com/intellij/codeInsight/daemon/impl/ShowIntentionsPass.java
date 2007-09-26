@@ -62,8 +62,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   private final PsiFile myFile;
 
-  private int myStartOffset;
-  private int myEndOffset;
+  private final int myStartOffset;
+  private final int myEndOffset;
   private final int myPassIdToShowIntentionsFor;
 
   ShowIntentionsPass(@NotNull Project project, @NotNull Editor editor, int passId, @Nullable IntentionAction[] intentionActions) {
@@ -208,8 +208,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     int offset = editor.getCaretModel().getOffset();
     Project project = psiFile.getProject();
-    final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, true);
     for (IntentionAction action : allIntentionActions) {
       if (action instanceof PsiElementBaseIntentionAction && isInProject && ((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)
           || action.isAvailable(project, editor, psiFile)) {
@@ -219,8 +217,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
     }
 
-    QuickFixAction quickFixAction = new QuickFixAction();
-    List<HighlightInfo.IntentionActionDescriptor> actions = quickFixAction.getAvailableActions(editor, psiFile, passIdToShowIntentionsFor);
+    List<HighlightInfo.IntentionActionDescriptor> actions = QuickFixAction.getAvailableActions(editor, psiFile, passIdToShowIntentionsFor);
+    final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+    HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, true);
     if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
       errorFixesToShow.addAll(actions);
     }
