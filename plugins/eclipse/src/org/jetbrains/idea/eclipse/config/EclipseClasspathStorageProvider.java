@@ -164,9 +164,9 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       return fileCache != null ? fileCache : getFileCache(module);
     }
 
-    public void getClasspath(final Element element) throws IOException, InvalidDataException {
+    public IdeaModuleModel getClasspath(final Element element) throws IOException, InvalidDataException {
       try {
-        EclipseToIdeaConverter.convert(element, true, ClasspathStorage.getModuleDir(module), module.getName(), ClasspathStorage.getStorageRootMap(module.getProject(), module),
+        return EclipseToIdeaConverter.convert(element, true, ClasspathStorage.getModuleDir(module), module.getName(), ClasspathStorage.getStorageRootMap(module.getProject(), module),
                                        getDocumentSet(module), EclipseToIdeaConverter.Options.defValue, EclipseProjectReader.Options.defValue,
                                        createLibraryResolver(module.getProject()));
       }

@@ -1,7 +1,6 @@
 package org.jetbrains.idea.eclipse.action;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -11,7 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.libraries.Library;
@@ -188,8 +187,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
       return false;
     }
 
-    Set<String> undefinedMacros = getUndefinedMacros(ideaProjectModel);
-    if (undefinedMacros.size() != 0 && !ProjectManagerImpl.showMacrosConfigurationDialog(dstProject, undefinedMacros)) {
+    if (!ProjectMacrosUtil.checkMacros(dstProject, ideaProjectModel.getVariables())) {
       return false;
     }
 
@@ -274,17 +272,6 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
     catch (ModuleCircularDependencyException e) {
       // not an error, actually not even ever thrown
     }
-  }
-
-  static Set<String> getUndefinedMacros(final IdeaProjectModel projectModel) {
-    final PathMacros pathMacros = PathMacros.getInstance();
-    final Set<String> undefinedMacros = new HashSet<String>();
-    for (String macro : projectModel.getVariables()) {
-      if (pathMacros.getValue(macro) == null) {
-        undefinedMacros.add((macro));
-      }
-    }
-    return undefinedMacros;
   }
 
   public Parameters getParameters() {
