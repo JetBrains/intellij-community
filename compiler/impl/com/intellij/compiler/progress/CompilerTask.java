@@ -47,6 +47,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CompilerTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
@@ -67,9 +68,9 @@ public class CompilerTask extends Task.Backgroundable {
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private boolean myMessagesAutoActivated = false;
 
-  private ProgressIndicator myIndicator;
+  private volatile ProgressIndicator myIndicator;
   private Runnable myCompileWork;
-  private boolean myMessageViewWasPrepared;
+  private AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
 
   public CompilerTask(@NotNull Project project, boolean compileInBackground, String contentName, final boolean headlessMode) {
     super(project, contentName);
@@ -99,14 +100,19 @@ public class CompilerTask extends Task.Backgroundable {
       myCompileWork.run();
     }
     finally {
+      indicator.stop();
       semaphore.release();
     }
   }
 
   private void prepareMessageView() {
-    if (myMessageViewWasPrepared) return;
-
-    myMessageViewWasPrepared = true;
+    final ProgressIndicator indicator = myIndicator;
+    if (indicator == null || !indicator.isRunning()) {
+      return;
+    }
+    if (myMessageViewWasPrepared.getAndSet(true)) {
+      return;
+    }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -114,15 +120,13 @@ public class CompilerTask extends Task.Backgroundable {
         //  openMessageView();
         //} 
         //else {
-          if (myIndicator.isRunning()) {
-            synchronized (myMessageViewLock) {
-              // clear messages from the previous compilation
-              if (myErrorTreeView == null) {
-                // if message view != null, the contents has already been cleared
-                removeAllContents(myProject, null);
-              }
-            }
+        synchronized (myMessageViewLock) {
+          // clear messages from the previous compilation
+          if (myErrorTreeView == null) {
+            // if message view != null, the contents has already been cleared
+            removeAllContents(myProject, null);
           }
+        }
         //}
       }
     });
@@ -330,7 +334,6 @@ public class CompilerTask extends Task.Backgroundable {
     if (myIndicator.isCanceled()) {
       return;
     }
-    final CompilerMessage[] deferred;
     synchronized (myMessageViewLock) {
       if (myErrorTreeView != null) {
         return;
