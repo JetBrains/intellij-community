@@ -6,10 +6,7 @@
  */
 package com.intellij.xml.refactoring;
 
-import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -125,7 +122,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
       LookupManager.getInstance(getProject()).showLookup(editor, lookupItems, prefix, null, new CharFilter() {
-        public int accept(char c, final String prefix) {
+        public int accept(char c, final String prefix, final LookupElement element) {
           if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
           return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
         }

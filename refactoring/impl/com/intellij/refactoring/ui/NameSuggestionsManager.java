@@ -1,9 +1,6 @@
 package com.intellij.refactoring.ui;
 
-import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -57,7 +54,7 @@ public class NameSuggestionsManager {
     editor.getSelectionModel().removeSelection();
     LookupItemPreferencePolicy first = pair.first;
     LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, first, new CharFilter() {
-      public int accept(char c, final String prefix) {
+      public int accept(char c, final String prefix, final LookupElement element) {
         if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
         return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
       }

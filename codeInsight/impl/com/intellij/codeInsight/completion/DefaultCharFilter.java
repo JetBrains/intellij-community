@@ -9,12 +9,17 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.*;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -72,8 +77,12 @@ public class DefaultCharFilter implements CharFilter {
     }
   }
 
-  public int accept(char c, final String prefix) {
-    if (myDelegate != null) return myDelegate.accept(c, prefix);
+  public int accept(char c, final String prefix, final LookupElement element) {
+    for (final String string : ((LookupItem<?>)element).getAllLookupStrings()) {
+      if (string.startsWith(prefix + c)) return ADD_TO_PREFIX;
+    }
+
+    if (myDelegate != null) return myDelegate.accept(c, prefix, element);
 
     if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
     switch(c){

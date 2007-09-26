@@ -33,6 +33,7 @@ import gnu.trove.THashSet;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -445,6 +446,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList.setSelectedIndex(myIndex);
   }
 
+  @Nullable
   public LookupItem getCurrentItem(){
     LookupItem item = (LookupItem)myList.getSelectedValue();
     if (item != null && item.getAttribute(EMPTY_ITEM_ATTRIBUTE) != null){

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -368,7 +369,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     editor.getCaretModel().moveToOffset(prefix.length());
     editor.getSelectionModel().removeSelection();
     LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, new CharFilter() {
-      public int accept(char c, final String prefix) {
+      public int accept(char c, final String prefix, final LookupElement element) {
         if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
         return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
       }

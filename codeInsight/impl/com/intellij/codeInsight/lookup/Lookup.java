@@ -4,11 +4,14 @@ import com.intellij.openapi.util.UserDataHolder;
 
 import java.awt.*;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface Lookup extends UserDataHolder{
   char NORMAL_SELECT_CHAR = '\n';
   char REPLACE_SELECT_CHAR = '\t';
   char COPMLETE_STATEMENT_SELECT_CHAR = '\r';
 
+  @Nullable
   LookupItem getCurrentItem();
   void setCurrentItem(LookupItem item);
 
