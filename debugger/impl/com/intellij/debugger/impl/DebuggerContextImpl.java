@@ -107,15 +107,16 @@ public final class DebuggerContextImpl implements DebuggerContext {
     }
     catch (EvaluateException e) {
       DebuggerCommandImpl currentCommand = getDebugProcess().getManagerThread().getCurrentCommand();
-      LOG.assertTrue(currentCommand instanceof SuspendContextCommandImpl);
-      final SuspendContextImpl currentCommandContext = ((SuspendContextCommandImpl)currentCommand).getSuspendContext();
-      final ThreadReferenceProxyImpl commandThread = currentCommandContext.getThread();
-      if (commandThread != frameProxy.threadProxy()) {
-        LOG.assertTrue(false);
-        LOG.info("Current Command: " + currentCommand.getClass().getName());
-        LOG.info("Current Command Thread : " + (commandThread != null? commandThread.name() : "null"));
+      if (currentCommand instanceof SuspendContextCommandImpl) {
+        final SuspendContextImpl currentCommandContext = ((SuspendContextCommandImpl)currentCommand).getSuspendContext();
+        final ThreadReferenceProxyImpl commandThread = currentCommandContext.getThread();
+        if (commandThread != frameProxy.threadProxy()) {
+          LOG.assertTrue(false);
+          LOG.info("Current Command: " + currentCommand.getClass().getName());
+          LOG.info("Current Command Thread : " + (commandThread != null? commandThread.name() : "null"));
+        }
+        LOG.info("Thread : " + frameProxy.threadProxy().name(), e);
       }
-      LOG.info("Thread : " + frameProxy.threadProxy().name(), e);
       objectReference = null;
     }
     return new EvaluationContextImpl(getSuspendContext(), frameProxy, objectReference);
