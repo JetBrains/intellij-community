@@ -17,19 +17,21 @@ package com.intellij.psi.util;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class InheritanceUtil {
   /**
    * @deprecated Use {@link PsiClass#isInheritor(com.intellij.psi.PsiClass, boolean)} instead.
    */
-  public static boolean isInheritor(PsiClass candidateClass, PsiClass baseClass, boolean checkDeep) {
+  public static boolean isInheritor(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, boolean checkDeep) {
     return candidateClass.isInheritor(baseClass, checkDeep);
   }
 
   /**
    * @return true if aClass is the baseClass or baseClass inheritor
    */
-  public static boolean isInheritorOrSelf(PsiClass aClass, PsiClass baseClass, boolean checkDeep) { //TODO: remove this method!!
+  public static boolean isInheritorOrSelf(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) { //TODO: remove this method!!
     if (aClass == null || baseClass == null) return false;
     PsiManager manager = aClass.getManager();
     return manager.areElementsEquivalent(baseClass, aClass) || aClass.isInheritor(baseClass, checkDeep);
@@ -38,7 +40,7 @@ public class InheritanceUtil {
   /**
    * @return true if aClass is the baseClass or baseClass inheritor
    */
-  public static boolean isCorrectDescendant(PsiClass aClass, PsiClass baseClass, boolean checkDeep) {
+  public static boolean isCorrectDescendant(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) {
     return isInheritorOrSelf(aClass, baseClass, checkDeep);
   }
 }
