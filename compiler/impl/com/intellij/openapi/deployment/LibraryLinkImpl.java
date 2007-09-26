@@ -35,6 +35,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
@@ -44,7 +45,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
@@ -168,15 +169,24 @@ public class LibraryLinkImpl extends LibraryLink {
   }
 
   public boolean hasDirectoriesOnly() {
-    List<String> urls = getUrls();
     boolean hasDirsOnly = true;
-    for (final String url : urls) {
-      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-      VirtualFile localFile = file == null ? null :
-                              LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file)));
-      if (localFile != null && !localFile.isDirectory()) {
-        hasDirsOnly = false;
-        break;
+    final Library library = getLibrary();
+    if (library != null) {
+      final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+      for (VirtualFile file : files) {
+        if (file != null && !VfsUtil.virtualToIoFile(file).isDirectory()) {
+          hasDirsOnly = false;
+          break;
+        }
+      }
+    } else {
+      final List<String> urls = getUrls();
+      for (final String url : urls) {
+        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+        if (file != null && !VfsUtil.virtualToIoFile(file).isDirectory()) {
+          hasDirsOnly = false;
+          break;
+        }
       }
     }
     return hasDirsOnly;
