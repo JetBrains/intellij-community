@@ -93,6 +93,16 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
         }
       }
 
+      public boolean isToBuildChildrenInBackground(final Object element) {
+        if (element instanceof TreeElementWrapper) {
+          final Object o = ((TreeElementWrapper)element).getElement();
+          final TreeElement root = myModel.getRoot();
+          if (o == root)
+          return true;
+        }
+        return false;
+      }
+
       protected TreeElementWrapper createTree() {
         return new StructureViewTreeElementWrapper(myProject, myModel.getRoot(), myModel);
       }
