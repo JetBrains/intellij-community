@@ -62,9 +62,7 @@ public class StartupActionScriptManager {
         // problem with scrambled code
         // fas fixed, but still appear because corrupted file still exists
         // return empty list.
-        System.err.println(MessageFormat.format(
-          "Internal file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them."
-        ));
+        System.err.println("Internal file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them.");
         LOG.info(e);
 
         return new ArrayList<ActionCommand>();
