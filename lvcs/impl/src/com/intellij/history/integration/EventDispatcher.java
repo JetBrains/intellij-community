@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 
 public class EventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener, CacheUpdater {
   private ILocalVcs myVcs;
@@ -94,7 +93,34 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   private boolean wasCreatedDuringRootsUpdate(VirtualFile f) {
+    return hasEntryFor(f);
+  }
+
+  private boolean hasEntryFor(VirtualFile f) {
     return myVcs.hasEntry(f.getPath());
+  }
+
+  private void create(VirtualFile fileOrDir) {
+    myFacade.beginChangeSet();
+    createRecursively(fileOrDir);
+    myFacade.endChangeSet(null);
+  }
+
+  private void createRecursively(VirtualFile f) {
+    if (notAllowedOrNotUnderContentRoot(f)) return;
+
+    if (isRefreshing && !f.isDirectory()) {
+      getOrInitProcessor().addFileToCreate(f);
+      return;
+    }
+
+    myFacade.create(f);
+
+    if (f.isDirectory()) {
+      for (VirtualFile child : f.getChildren()) {
+        createRecursively(child);
+      }
+    }
   }
 
   @Override
@@ -102,18 +128,6 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
     if (notAllowedOrNotUnderContentRoot(e)) return;
     assert e.getFile().isValid();
     changeContent(e.getFile());
-  }
-
-  private void create(VirtualFile fileOrDir) {
-    if (!isRefreshing) {
-      myFacade.create(fileOrDir);
-      return;
-    }
-
-    List<VirtualFile> files = myFacade.createOnlyDirectories(fileOrDir);
-    for (VirtualFile f : files) {
-      getOrInitProcessor().addFileToCreate(f);
-    }
   }
 
   private void changeContent(VirtualFile f) {
@@ -144,7 +158,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   private void fileRenamed(VirtualFilePropertyEvent e) {
     VirtualFile newFile = e.getFile();
     VirtualFile oldFile = new RenamedVirtualFile(e.getFile(), (String)e.getOldValue());
-    boolean wasInContent = myVcs.hasEntry(oldFile.getPath());
+    boolean wasInContent = hasEntryFor(oldFile);
 
     // todo try make it more clear... and refactor
     if (notAllowedOrNotUnderContentRoot(newFile)) {
@@ -153,7 +167,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
     }
 
     if (!wasInContent) {
-      myFacade.create(newFile);
+      create(newFile);
       return;
     }
 
@@ -162,7 +176,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
   private void readOnlyStatusChanged(VirtualFilePropertyEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    
+
     VirtualFile f = e.getFile();
     if (f.isDirectory()) return;
     myFacade.changeROStatus(f);
@@ -175,14 +189,14 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
 
     if (isMovedFromOutside(e)) {
       if (notAllowedOrNotUnderContentRoot(e)) return;
-      myFacade.create(e.getFile());
+      create(e.getFile());
       return;
     }
 
     VirtualFile oldFile = new ReparentedVirtualFile(e.getOldParent(), e.getFile());
 
     if (isMovedToOutside(e)) {
-      boolean wasInContent = myVcs.hasEntry(oldFile.getPath());
+      boolean wasInContent = hasEntryFor(oldFile);
       if (wasInContent) myFacade.delete(oldFile);
       return;
     }
@@ -199,7 +213,7 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   private boolean wasDeletedDuringRootsUpdate(VirtualFile f) {
-    return !myVcs.hasEntry(f.getPath());
+    return !hasEntryFor(f);
   }
 
   private boolean notAllowedOrNotUnderContentRoot(VirtualFile f) {

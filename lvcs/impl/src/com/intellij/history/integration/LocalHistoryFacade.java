@@ -64,14 +64,14 @@ public class LocalHistoryFacade {
     myGateway.registerUnsavedDocuments(myVcs);
   }
 
-  private void beginChangeSet() {
+  public void beginChangeSet() {
     myChangeSetDepth++;
     if (myChangeSetDepth == 1) {
       myVcs.beginChangeSet();
     }
   }
 
-  private void endChangeSet(String name) {
+  public void endChangeSet(String name) {
     assert depthIsValid();
 
     myChangeSetDepth--;
@@ -91,33 +91,11 @@ public class LocalHistoryFacade {
   }
 
   public void create(VirtualFile f) {
-    doCreate(f, null);
-  }
-
-  public List<VirtualFile> createOnlyDirectories(VirtualFile f) {
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
-    doCreate(f, files);
-    return files;
-  }
-
-  private void doCreate(VirtualFile f, List<VirtualFile> files) {
-    myVcs.beginChangeSet();
-    createRecursively(f, files);
-    myVcs.endChangeSet(null);
-  }
-
-  private void createRecursively(VirtualFile f, List<VirtualFile> filesToCollect) {
     if (f.isDirectory()) {
       myVcs.createDirectory(f.getPath());
-      for (VirtualFile child : f.getChildren()) createRecursively(child, filesToCollect);
     }
     else {
-      if (filesToCollect == null) {
-        myVcs.createFile(f.getPath(), contentFactoryFor(f), f.getTimeStamp(), !f.isWritable());
-      }
-      else {
-        filesToCollect.add(f);
-      }
+      myVcs.createFile(f.getPath(), contentFactoryFor(f), f.getTimeStamp(), !f.isWritable());
     }
   }
 

@@ -61,6 +61,41 @@ public class EventDispatcherListeningTest extends EventDispatcherTestCase {
   }
 
   @Test
+  public void testIgnoringUnversioningFilesAndDirectories() {
+    TestVirtualFile dir = testDir("dir");
+    TestVirtualFile f = testFile("f");
+
+    filter.setNotAllowedFiles(dir, f);
+
+    fireCreated(dir);
+    fireCreated(f);
+
+    assertFalse(vcs.hasEntry("dir"));
+    assertFalse(vcs.hasEntry("f"));
+  }
+
+  @Test
+  public void testIgnoringCreationOfUnversionedChildrenOfVersionedDirectory() {
+    TestVirtualFile dir = testDir("dir");
+    TestVirtualFile subDir = testDir("subDir");
+    TestVirtualFile file = testFile("file");
+    TestVirtualFile subFile = testFile("subFile");
+
+    dir.addChild(subDir);
+    dir.addChild(file);
+    subDir.addChild(subFile);
+
+    filter.setNotAllowedFiles(subDir, file);
+
+    fireCreated(dir);
+
+    assertTrue(vcs.hasEntry("dir"));
+    assertFalse(vcs.hasEntry("dir/subDir"));
+    assertFalse(vcs.hasEntry("dir/subDir/subFile"));
+    assertFalse(vcs.hasEntry("dir/file"));
+  }
+
+  @Test
   public void testCreationOfDirectoryWithChildrenIsThreatedAsOneChange() {
     TestVirtualFile dir = testDir("dir");
     dir.addChild(testFile("one"));
