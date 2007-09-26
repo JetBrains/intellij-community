@@ -25,7 +25,7 @@ public class RootFileElement extends FileElement {
 
   public Object[] getChildren() {
     if (myFiles.length <= 1 && myShowFileSystemRoots) {
-      return  getFileSystemRoots();
+      return getFileSystemRoots();
     }
     if (myChildren == null) {
       myChildren = createFileElementArray();
@@ -37,7 +37,9 @@ public class RootFileElement extends FileElement {
     final List<FileElement> roots = new ArrayList<FileElement>();
     for (int i = 0; i < myFiles.length; i++) {
       final VirtualFile file = myFiles[i];
-      roots.add(new FileElement(file, file.getPresentableUrl()));
+      if (file != null) {
+        roots.add(new FileElement(file, file.getPresentableUrl()));
+      }
     }
     return roots.toArray(new Object[roots.size()]);
   }
