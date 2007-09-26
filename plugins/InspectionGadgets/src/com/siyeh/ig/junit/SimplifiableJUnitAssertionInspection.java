@@ -22,7 +22,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,6 +34,10 @@ import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ArrayList;
 
 public class SimplifiableJUnitAssertionInspection extends BaseInspection {
 
@@ -653,7 +659,23 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         }
         final PsiExpression rhs =
                 binaryExpression.getROperand();
-        return rhs != null;
+        if (rhs == null) {
+            return false;
+        }
+        final LanguageLevel languageLevel =
+                PsiUtil.getLanguageLevel(expression);
+        if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiType lhsType = lhs.getType();
+            if (lhsType instanceof PsiPrimitiveType) {
+                return false;
+            }
+            final PsiType rhsType = rhs.getType();
+            if (rhsType instanceof PsiPrimitiveType) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static boolean isNullComparison(PsiExpression expression) {
