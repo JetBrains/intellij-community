@@ -3,7 +3,6 @@
  */
 package com.intellij.ide.startup;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
@@ -61,8 +60,10 @@ public class StartupActionScriptManager {
         // fas fixed, but still appear because corrupted file still exists
         // return empty list.
         System.err.println(MessageFormat.format(
-          "Internal {0} file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them.",
-          ApplicationNamesInfo.getInstance().getProductName()));
+          "Internal file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them."
+        ));
+        e.printStackTrace();
+
         return new ArrayList<ActionCommand>();
       }
       finally {
