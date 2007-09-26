@@ -314,8 +314,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     Set<DocumentReference> docsOnHold = new HashSet<DocumentReference>(myUndoStacksHolder.getAffectedDocuments());
     docsOnHold.addAll(myRedoStacksHolder.getAffectedDocuments());
 
-    docsOnHold.removeAll(myUndoStacksHolder.getDocsInGlobalQueue());
-    docsOnHold.removeAll(myRedoStacksHolder.getDocsInGlobalQueue());
+    docsOnHold.removeAll(myUndoStacksHolder.getGlobalStackAffectedDocuments());
+    docsOnHold.removeAll(myRedoStacksHolder.getGlobalStackAffectedDocuments());
 
     Set<DocumentReference> openedDocs = new HashSet<DocumentReference>();
     for (DocumentReference docRef : docsOnHold) {
