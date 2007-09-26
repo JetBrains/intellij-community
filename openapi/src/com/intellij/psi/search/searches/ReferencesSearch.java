@@ -80,6 +80,10 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
   }
 
   public static Query<PsiReference> search(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(element, searchScope, ignoreAccessScope), HASHING_STRATEGY);
+    return search(new SearchParameters(element, searchScope, ignoreAccessScope));
+  }
+
+  public static Query<PsiReference> search(final SearchParameters parameters) {
+    return INSTANCE.createUniqueResultsQuery(parameters, HASHING_STRATEGY);
   }
 }
