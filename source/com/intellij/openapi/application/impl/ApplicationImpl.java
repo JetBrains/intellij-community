@@ -541,16 +541,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         disposeSelf();
 
-        if (SystemInfo.isMac) {
-          new Thread(new Runnable() {
-            public void run() {
-              System.exit(0);
-            }
-          }).start();
-        }
-        else {
-          System.exit(0);
-        }
+        System.exit(0);
       }
     };
     
