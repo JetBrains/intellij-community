@@ -566,6 +566,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (descriptor.getText().toLowerCase().contains(filter)) {
       return true;
     }
+    if (descriptor.getGroup().toLowerCase().contains(filter)) {
+      return true;
+    }
     for (Set<String> keySet : keySetList) {
       if (keySet.contains(descriptor.getKey().toString())) {
         if (!forceInclude) {
