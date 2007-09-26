@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.jdk15;
+package com.siyeh.ig.jdk;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -107,10 +107,10 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (statement == null) {
                 return;
             }
-            boolean deleteInitialization =
+            final boolean deleteInitialization =
                     replaceMethodCalls(variable, statement.getTextOffset(),
                             variableName);
-            PsiStatement newStatement =
+            final PsiStatement newStatement =
                     createDeclaration(methodCallExpression, variableName);
             if (newStatement == null) {
                 return;
@@ -139,7 +139,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
                 newStatementText.append("final ");
             }
-            newStatementText.append("Iterator ");
+            newStatementText.append("java.util.Iterator ");
             newStatementText.append(variableName);
             newStatementText.append('=');
             final PsiReferenceExpression methodExpression =
@@ -178,8 +178,12 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             newStatementText.append(';');
             final PsiManager manager = methodCallExpression.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
-            return factory.createStatementFromText(newStatementText.toString(),
+            final PsiStatement statement =
+                    factory.createStatementFromText(newStatementText.toString(),
                             methodExpression);
+            final CodeStyleManager styleManager = manager.getCodeStyleManager();
+            styleManager.shortenClassReferences(statement);
+            return statement;
         }
 
         /** @return true if the initialization of the Enumeration variable can
