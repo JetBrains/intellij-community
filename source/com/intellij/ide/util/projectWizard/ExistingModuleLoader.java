@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.CommonBundle;
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.IdeBundle;
@@ -29,13 +30,12 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.CommonBundle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -89,7 +89,7 @@ public class ExistingModuleLoader extends ModuleBuilder {
         usedMacros.remove("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$");
         usedMacros.removeAll(definedMacros);
         if (usedMacros.size() > 0) {
-          final boolean ok = ProjectManagerImpl.showMacrosConfigurationDialog(current, usedMacros);
+          final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(current, usedMacros);
           if (!ok) {
             return false;
           }

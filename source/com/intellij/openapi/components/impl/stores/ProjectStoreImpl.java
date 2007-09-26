@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
@@ -39,13 +40,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
@@ -309,65 +308,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return (ProjectConversionHelper)project.getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
   }
 
-  private static boolean checkMacros(final Project project, Element root)  {
-    final Set<String> usedMacros = new HashSet<String>(Arrays.asList(readUsedMacros(root)));
-
-    usedMacros.removeAll(getDefinedMacros());
-
-    // try to lookup values in System properties
-    @NonNls final String pathMacroSystemPrefix = "path.macro.";
-    for (Iterator it = usedMacros.iterator(); it.hasNext();) {
-      final String macro = (String)it.next();
-      final String value = System.getProperty(pathMacroSystemPrefix + macro, null);
-      if (value != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            PathMacros.getInstance().setMacro(macro, value);
-          }
-        });
-        it.remove();
-      }
-    }
-
-    if (usedMacros.isEmpty()) {
-      return true; // all macros in configuration files are defined
-    }
-
-    // there are undefined macros, need to define them before loading components
-    final boolean[] result = new boolean[1];
-
-    try {
-      final Runnable r = new Runnable() {
-        public void run() {
-          result[0] = ProjectManagerImpl.showMacrosConfigurationDialog(project, usedMacros);
-        }
-      };
-
-      if (!ApplicationManager.getApplication().isDispatchThread()) {
-        SwingUtilities.invokeAndWait(r);
-      }
-      else {
-        r.run();
-      }
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-    return result[0];
-  }
-
-  private static Set<String> getDefinedMacros() {
-    final PathMacros pathMacros = PathMacros.getInstance();
-
-    Set<String> definedMacros = new HashSet<String>(pathMacros.getUserMacroNames());
-    definedMacros.addAll(pathMacros.getSystemMacroNames());
-    definedMacros = Collections.unmodifiableSet(definedMacros);
-    return definedMacros;
-  }
-
 
   @Nullable
   public VirtualFile getProjectFile() {
@@ -500,7 +440,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     protected void load(@NotNull final Element rootElement) throws IOException {
-      final boolean macrosOk = checkMacros(myProject, rootElement);
+      final Set<String> usedMacros1 = new HashSet<String>(Arrays.asList(readUsedMacros(rootElement)));
+      final boolean macrosOk = ProjectMacrosUtil.checkMacros(myProject, usedMacros1);
       if (!macrosOk) {
         throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
       }

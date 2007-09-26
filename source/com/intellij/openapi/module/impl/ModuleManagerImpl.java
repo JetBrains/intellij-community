@@ -178,63 +178,58 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   public void loadModules() {
     if (myModulePaths != null && myModulePaths.length > 0) {
       final Application app = ApplicationManager.getApplication();
-      Runnable swingRunnable = new Runnable() {
+      final Runnable swingRunnable = new Runnable() {
         public void run() {
-          app.runWriteAction(new Runnable() {
-            public void run() {
-              myFailedModulePaths.clear();
-              myFailedModulePaths.addAll(Arrays.asList(myModulePaths));
-              final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
-              for (final ModulePath modulePath : myModulePaths) {
-                try {
-                  final Module module = myModuleModel.loadModuleInternal(modulePath.getPath());
-                  if (module.getModuleType() instanceof UnknownModuleType) {
-                    modulesWithUnknownTypes.add(module);
-                  }
-                  final String groupPathString = modulePath.getModuleGroup();
-                  if (groupPathString != null) {
-                    final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
-                    myModuleModel.setModuleGroupPath(module, groupPath); //model should be updated too
-                  }
-                  myFailedModulePaths.remove(modulePath);
-                }
-                catch (final IOException e) {
-                  fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
-                }
-                catch (JDOMException e) {
-                  fireError(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath(), e.getMessage()), modulePath);
-                }
-                catch (InvalidDataException e) {
-                  fireError(ProjectBundle.message("module.corrupted.data.error", modulePath.getPath()), modulePath);
-                }
-                catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-                  fireError(moduleWithNameAlreadyExists.getMessage(), modulePath);
-                }
-                catch (StateStorage.StateStorageException e) {
-                  fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
-                }
+          myFailedModulePaths.clear();
+          myFailedModulePaths.addAll(Arrays.asList(myModulePaths));
+          final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
+          for (final ModulePath modulePath : myModulePaths) {
+            try {
+              final Module module = myModuleModel.loadModuleInternal(modulePath.getPath());
+              if (module.getModuleType() instanceof UnknownModuleType) {
+                modulesWithUnknownTypes.add(module);
               }
-              if (!app.isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
-                String message;
-                if (modulesWithUnknownTypes.size() == 1) {
-                  message = ProjectBundle.message("module.unknown.type.single.error", modulesWithUnknownTypes.get(0).getName());
-                }
-                else {
-                  StringBuilder modulesBuilder = new StringBuilder();
-                  for (final Module module : modulesWithUnknownTypes) {
-                    modulesBuilder.append("\n\"");
-                    modulesBuilder.append(module.getName());
-                    modulesBuilder.append("\"");
-                  }
-                  message = ProjectBundle.message("module.unknown.type.multiple.error", modulesBuilder.toString());
-                }
-                Messages.showWarningDialog(myProject, message, ProjectBundle.message("module.unknown.type.title"));
+              final String groupPathString = modulePath.getModuleGroup();
+              if (groupPathString != null) {
+                final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
+                myModuleModel.setModuleGroupPath(module, groupPath); //model should be updated too
               }
+              myFailedModulePaths.remove(modulePath);
             }
-          });
+            catch (final IOException e) {
+              fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
+            }
+            catch (JDOMException e) {
+              fireError(ProjectBundle.message("module.corrupted.file.error", modulePath.getPath(), e.getMessage()), modulePath);
+            }
+            catch (InvalidDataException e) {
+              fireError(ProjectBundle.message("module.corrupted.data.error", modulePath.getPath()), modulePath);
+            }
+            catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
+              fireError(moduleWithNameAlreadyExists.getMessage(), modulePath);
+            }
+            catch (StateStorage.StateStorageException e) {
+              fireError(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()), modulePath);
+            }
+          }
+          if (!app.isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
+            String message;
+            if (modulesWithUnknownTypes.size() == 1) {
+              message = ProjectBundle.message("module.unknown.type.single.error", modulesWithUnknownTypes.get(0).getName());
+            }
+            else {
+              StringBuilder modulesBuilder = new StringBuilder();
+              for (final Module module : modulesWithUnknownTypes) {
+                modulesBuilder.append("\n\"");
+                modulesBuilder.append(module.getName());
+                modulesBuilder.append("\"");
+              }
+              message = ProjectBundle.message("module.unknown.type.multiple.error", modulesBuilder.toString());
+            }
+            Messages.showWarningDialog(myProject, message, ProjectBundle.message("module.unknown.type.title"));
+          }
         }
       };
-
       if (app.isDispatchThread() || app.isHeadlessEnvironment()) {
         swingRunnable.run();
       }

@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
@@ -89,7 +90,12 @@ public class ClasspathStorage implements StateStorage {
     try {
       final Module module = ((ModuleRootManagerImpl)component).getModule();
       final Element element = new Element(ClasspathStorage.COMPONENT_TAG);
-      myConverter.getClasspath(element);
+      final ClasspathStorageProvider.Classpath classpath = myConverter.getClasspath(element);
+      final Set<String> macros = classpath.getUsedMacros();
+      final boolean macrosOk = ProjectMacrosUtil.checkMacros(module.getProject(), macros);
+      if (!macrosOk) {
+        throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
+      }
       PathMacroManager.getInstance(module).expandPaths(element);
       ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
       moduleRootManagerState.readExternal(element);
@@ -358,7 +364,7 @@ public class ClasspathStorage implements StateStorage {
           throw new UnsupportedOperationException(getDescription());
         }
 
-        public void getClasspath(final Element element) throws IOException, InvalidDataException {
+        public Classpath getClasspath(final Element element) throws IOException, InvalidDataException {
           throw new InvalidDataException(getDescription());
         }
 

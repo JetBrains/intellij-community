@@ -1,16 +1,17 @@
 package com.intellij.openapi.roots.impl.storage;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nls;
-import org.jdom.Element;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -35,8 +36,12 @@ public interface ClasspathStorageProvider {
 
     FileSet getFileSet();
 
-    void getClasspath(Element element) throws IOException, InvalidDataException;
+    Classpath getClasspath(Element element) throws IOException, InvalidDataException;
 
     void setClasspath(Element element) throws IOException, WriteExternalException;
+  }
+
+  interface Classpath {
+    Set<String> getUsedMacros();
   }
 }

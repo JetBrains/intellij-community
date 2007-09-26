@@ -17,7 +17,6 @@ import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,7 +30,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -240,28 +238,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     return filePath;
-  }
-
-  public static boolean showMacrosConfigurationDialog(Project project, final Set<String> undefinedMacros) {
-    final String text = ProjectBundle.message("project.load.undefined.path.variables.message");
-    final Application application = ApplicationManager.getApplication();
-    if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {
-      throw new RuntimeException(text + ": " + StringUtil.join(undefinedMacros, ", "));
-    }
-    final UndefinedMacrosConfigurable configurable =
-      new UndefinedMacrosConfigurable(text, undefinedMacros.toArray(new String[undefinedMacros.size()]));
-    final SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable) {
-      protected void doOKAction() {
-        if (!getConfigurable().isModified()) {
-          Messages.showErrorDialog(getContentPane(), ProjectBundle.message("project.load.undefined.path.variables.all.needed"),
-                                   ProjectBundle.message("project.load.undefined.path.variables.title"));
-          return;
-        }
-        super.doOKAction();
-      }
-    };
-    editor.show();
-    return editor.isOK();
   }
 
   public synchronized Project getDefaultProject() {
