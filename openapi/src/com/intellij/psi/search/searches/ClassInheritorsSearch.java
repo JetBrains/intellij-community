@@ -9,19 +9,17 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiBundle;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashSet;
-
-import java.util.Collection;
 
 /**
  * @author max
@@ -53,7 +51,6 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
                                            baseClass,
                                            searchScope,
                                            p.isCheckDeep(),
-                                           new THashSet<PsiClass>(),
                                            p.isCheckInheritance(),
                                            p.isIncludeAnonymous());
 
@@ -128,7 +125,6 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
                                            final PsiClass baseClass,
                                            final SearchScope searchScope,
                                            final boolean checkDeep,
-                                           final Collection<PsiClass> processed,
                                            final boolean checkInheritance,
                                            final boolean includeAnonymous) {
     LOG.assertTrue(searchScope != null);
@@ -136,13 +132,6 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     if (baseClass instanceof PsiAnonymousClass) return true;
 
     if (isFinal(baseClass)) return true;
-
-    /* TODO
-    if ("java.lang.Object".equals(baseClass.getQualifiedName())) { // special case
-      // TODO!
-    }
-    */
-    final PsiManager psiManager = PsiManager.getInstance(baseClass.getProject());
 
     final Ref<PsiClass> currentBase = Ref.create(null);
     final Stack<PsiClass> stack = new Stack<PsiClass>();
@@ -152,7 +141,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             if (checkInheritance || (checkDeep && !(candidate instanceof PsiAnonymousClass))) {
-              if (!processed.add(candidate) || !candidate.isInheritor(currentBase.get(), false)) {
+              if (!candidate.isInheritor(currentBase.get(), false)) {
                 result.set(true);
                 return;
               }
