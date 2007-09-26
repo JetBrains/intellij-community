@@ -93,4 +93,6 @@ public interface ComponentPopupBuilder {
 
   @NotNull ComponentPopupBuilder setAlpha(float alpha);
 
+  @NotNull ComponentPopupBuilder setBelongsToGlobalPopupStack(boolean isInStack);
+
 }
