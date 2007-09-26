@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -102,13 +103,15 @@ public class TypeConversionUtil {
     if (isNullType(fromType) || isNullType(toType)) return true;
 
     // or narrowing reference conversion
-    return isNarrowingReferenceConversionAllowed(fromType, toType);
+    return isNarrowingReferenceConversionAllowed(fromType, toType, null);
   }
 
   /**
    * see JLS 5.1.5, JLS3 5.5
    */
-  private static boolean isNarrowingReferenceConversionAllowed(PsiType fromType, PsiType toType) {
+  private static boolean isNarrowingReferenceConversionAllowed(final PsiType fromType, final PsiType toType, Collection<Pair<PsiType,PsiType>> visited) {
+    //guard from infinite recursion caused by incorrect code like class C extends C{}
+    if (visited != null && visited.contains(Pair.create(fromType,toType))) return false;
     if (toType instanceof PsiPrimitiveType || fromType instanceof PsiPrimitiveType) return fromType.equals(toType);
     //Done with primitives
 
@@ -117,7 +120,7 @@ public class TypeConversionUtil {
         final PsiClass resolved = ((PsiClassType)fromType).resolve();
         if (resolved instanceof PsiTypeParameter) {
           for (final PsiClassType boundType : resolved.getExtendsListTypes()) {
-            if (!isNarrowingReferenceConversionAllowed(boundType, toType)) return false;
+            if (!isNarrowingReferenceConversionAllowed(boundType, toType, addTo(visited, fromType, toType))) return false;
           }
           return true;
         }
@@ -129,21 +132,21 @@ public class TypeConversionUtil {
         final PsiClass resolved = ((PsiClassType)toType).resolve();
         if (resolved instanceof PsiTypeParameter) {
           for (final PsiClassType boundType : resolved.getExtendsListTypes()) {
-            if (!isNarrowingReferenceConversionAllowed(fromType, boundType)) return false;
+            if (!isNarrowingReferenceConversionAllowed(fromType, boundType, addTo(visited, fromType, toType))) return false;
           }
           return true;
         }
       }
       return toType instanceof PsiArrayType
              && isNarrowingReferenceConversionAllowed(((PsiArrayType)fromType).getComponentType(),
-                                                      ((PsiArrayType)toType).getComponentType());
+                                                      ((PsiArrayType)toType).getComponentType(), addTo(visited, fromType, toType));
     }
     //Done with array types
 
     if (fromType instanceof PsiIntersectionType) {
       final PsiType[] conjuncts = ((PsiIntersectionType)fromType).getConjuncts();
       for (PsiType conjunct : conjuncts) {
-        if (isNarrowingReferenceConversionAllowed(conjunct, toType)) return true;
+        if (isNarrowingReferenceConversionAllowed(conjunct, toType, addTo(visited, fromType, toType))) return true;
       }
       return false;
     } else if (toType instanceof PsiIntersectionType) return false;
@@ -155,20 +158,21 @@ public class TypeConversionUtil {
       if (fromWildcard.isSuper()) {
         return isAssignable(toType, bound);
       }
-      return isNarrowingReferenceConversionAllowed(bound, toType);
+      return isNarrowingReferenceConversionAllowed(bound, toType, addTo(visited, fromType, toType));
     }
     if (toType instanceof PsiWildcardType) {
       final PsiWildcardType toWildcard = (PsiWildcardType)toType;
       if (toWildcard.isSuper()) return false;
       final PsiType bound = toWildcard.getBound();
-      return bound == null || isNarrowingReferenceConversionAllowed(fromType, bound);
+      return bound == null || isNarrowingReferenceConversionAllowed(fromType, bound, addTo(visited, fromType, toType));
     }
 
     if (toType instanceof PsiCapturedWildcardType) {
-      return isNarrowingReferenceConversionAllowed(toType, ((PsiCapturedWildcardType)toType).getWildcard());
+      return isNarrowingReferenceConversionAllowed(toType, ((PsiCapturedWildcardType)toType).getWildcard(), addTo(visited, fromType, toType));
     }
     if (fromType instanceof PsiCapturedWildcardType) {
-      return isNarrowingReferenceConversionAllowed(((PsiCapturedWildcardType)fromType).getWildcard(), toType);
+      return isNarrowingReferenceConversionAllowed(((PsiCapturedWildcardType)fromType).getWildcard(), toType, addTo(visited, fromType,
+                                                                                                                    toType));
     }
 
     if (isAssignable(fromType, toType)) return true;
@@ -180,12 +184,14 @@ public class TypeConversionUtil {
     PsiClassType.ClassResolveResult fromResult = fromClassType.resolveGenerics();
     final PsiClass fromClass = fromResult.getElement();
     if (fromClass == null) return false;
-    if (fromClass instanceof PsiTypeParameter) return isNarrowingReferenceConversionAllowed(fromClass.getSuperTypes()[0], toType);
+    if (fromClass instanceof PsiTypeParameter) return isNarrowingReferenceConversionAllowed(fromClass.getSuperTypes()[0], toType, addTo(visited, fromType,
+                                                                                                                                        toType));
 
     PsiClassType.ClassResolveResult toResult = toClassType.resolveGenerics();
     final PsiClass toClass = toResult.getElement();
     if (toClass == null) return false;
-    if (toClass instanceof PsiTypeParameter) return isNarrowingReferenceConversionAllowed(fromType, toClass.getSuperTypes()[0]);
+    if (toClass instanceof PsiTypeParameter) return isNarrowingReferenceConversionAllowed(fromType, toClass.getSuperTypes()[0], addTo(visited, fromType,
+                                                                                                                                      toType));
     //Done with type parameters
 
     PsiManager manager = fromClass.getManager();
@@ -261,6 +267,14 @@ public class TypeConversionUtil {
         }
       }
     }
+  }
+
+  private static Collection<Pair<PsiType,PsiType>> addTo(Collection<Pair<PsiType,PsiType>> visited, PsiType fromType, PsiType toType) {
+    if (visited == null) {
+      visited = new THashSet<Pair<PsiType, PsiType>>(2);
+    }
+    visited.add(Pair.create(fromType, toType));
+    return visited;
   }
 
   private static boolean checkSuperTypesWithDifferentTypeArguments(PsiClassType.ClassResolveResult baseResult,
