@@ -27,10 +27,11 @@ public class RandomAccessDataFile implements Forceable {
 
   public RandomAccessDataFile(final File file) throws IOException {
     myFile = file;
+    if (!file.exists()) {
+      throw new FileNotFoundException(file.getPath() + " does not exist");
+    }
 
-    final FileChannel channel = ourCache.getChannel(file);
-    mySize = channel.size();
-    ourCache.releaseChannel(file);
+    mySize = file.length();
   }
 
   public void put(long addr, byte[] bytes, int off, int len) {
