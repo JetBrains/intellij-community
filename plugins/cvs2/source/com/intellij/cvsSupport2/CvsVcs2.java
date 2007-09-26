@@ -20,16 +20,13 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditOptionsDialog;
 import com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
-import com.intellij.cvsSupport2.cvsstatuses.CvsUpToDateRevisionProvider;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.cvsIntegration.CvsResult;
-import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -40,6 +37,7 @@ import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -58,7 +56,7 @@ import java.util.List;
 
 public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFileProvider, CvsEntriesListener {
 
-  private Cvs2Configurable myConfigurable;
+  private final Cvs2Configurable myConfigurable;
 
 
   private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
@@ -68,17 +66,16 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   private final CvsStandardOperationsProvider myCvsStandardOperationsProvider;
   private final CvsUpdateEnvironment myCvsUpdateEnvironment;
   private final CvsStatusEnvironment myCvsStatusEnvironment;
-  private CvsUpToDateRevisionProvider myUpToDateRevisionProvider;
   private final CvsAnnotationProvider myCvsAnnotationProvider;
   private final CvsDiffProvider myDiffProvider;
   private final CvsCommittedChangesProvider myCommittedChangesProvider;
-  private VcsShowSettingOption myAddOptions;
-  private VcsShowSettingOption myRemoveOptions;
-  private VcsShowSettingOption myCheckoutOptions;
-  private VcsShowSettingOption myEditOption;
+  private final VcsShowSettingOption myAddOptions;
+  private final VcsShowSettingOption myRemoveOptions;
+  private final VcsShowSettingOption myCheckoutOptions;
+  private final VcsShowSettingOption myEditOption;
 
-  private VcsShowConfirmationOption myAddConfirmation;
-  private VcsShowConfirmationOption myRemoveConfirmation;
+  private final VcsShowConfirmationOption myAddConfirmation;
+  private final VcsShowConfirmationOption myRemoveConfirmation;
 
   private ChangeProvider myChangeProvider;
 
@@ -210,14 +207,6 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     return CvsBundle.message("message.text.edit.file.request");
   }
 
-  public LocalVcsItemsLocker getItemsLocker() {
-    if (myUpToDateRevisionProvider == null) {
-      myUpToDateRevisionProvider = new CvsUpToDateRevisionProvider((CvsChangeProvider) getChangeProvider());
-    }
-    return myUpToDateRevisionProvider;
-  }
-
-
   public ChangeProvider getChangeProvider() {
     if (myChangeProvider == null) {
       myChangeProvider = new CvsChangeProvider(this, CvsEntriesManager.getInstance());
@@ -305,8 +294,10 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
     // the VirtualFile has a full path if annotate is called from history (when we have a real file on disk),
     // and has the path equal to a CVS module name if annotate is called from the CVS repository browser
     // (when there's no real path)
+    boolean hasLocalFile = false;
     File cvsFile = new File(cvsVirtualFile.getPath());
     if (cvsFile.isAbsolute()) {
+      hasLocalFile = true;
       cvsFile = new File(CvsUtil.getModuleName(cvsVirtualFile));
     }
     final AnnotateOperation annotateOperation = new AnnotateOperation(cvsFile, revision, environment);
@@ -315,9 +306,16 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
                                CvsOperationExecutorCallback.EMPTY);
 
     if (executor.getResult().hasNoErrors()) {
-      final CvsHistoryProvider historyProvider =  (CvsHistoryProvider)getVcsHistoryProvider();
-      final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(cvsVirtualFile);
-      final List<VcsFileRevision> revisions = historyProvider.createRevisions(filePath);
+      final List<VcsFileRevision> revisions;
+      if (hasLocalFile) {
+        final CvsHistoryProvider historyProvider = (CvsHistoryProvider)getVcsHistoryProvider();
+        final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(cvsVirtualFile);
+        revisions = historyProvider.createRevisions(filePath);
+      }
+      else {
+        // TODO[yole]: implement loading history for nonlocal annotation
+        revisions = null;
+      }
       return new CvsFileAnnotation(annotateOperation.getContent(), annotateOperation.getLineAnnotations(), revisions, cvsVirtualFile);
     }
     else {

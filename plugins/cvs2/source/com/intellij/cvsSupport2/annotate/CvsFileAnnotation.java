@@ -31,6 +31,7 @@
  */
 package com.intellij.cvsSupport2.annotate;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotation;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
@@ -39,11 +40,12 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 public class CvsFileAnnotation implements FileAnnotation{
   private final String myContent;
@@ -87,12 +89,15 @@ public class CvsFileAnnotation implements FileAnnotation{
   };
 
 
-  public CvsFileAnnotation(final String content, final Annotation[] annotations, final List<VcsFileRevision> revisions, VirtualFile file) {
+  public CvsFileAnnotation(final String content, final Annotation[] annotations,
+                           @Nullable final List<VcsFileRevision> revisions, VirtualFile file) {
     myContent = content;
     myAnnotations = annotations;
     myFile = file;
-    for(VcsFileRevision revision: revisions) {
-      myRevisionComments.put(revision.getRevisionNumber().toString(), revision.getCommitMessage());
+    if (revisions != null) {
+      for(VcsFileRevision revision: revisions) {
+        myRevisionComments.put(revision.getRevisionNumber().toString(), revision.getCommitMessage());
+      }
     }
 
     myCvsEntriesListener = new CvsEntriesListener() {
@@ -103,8 +108,8 @@ public class CvsFileAnnotation implements FileAnnotation{
 
       private void fireAnnotationChanged() {
         final AnnotationListener[] listeners = myListeners.toArray(new AnnotationListener[myListeners.size()]);
-        for (int i = 0; i < listeners.length; i++) {
-          listeners[i].onAnnotationChanged();
+        for (AnnotationListener listener : listeners) {
+          listener.onAnnotationChanged();
         }
       }
 
@@ -144,7 +149,7 @@ public class CvsFileAnnotation implements FileAnnotation{
     if (comment == null) {
       return "";
     }
-    return "Revision " + revision + ": " + comment;
+    return CvsBundle.message("annotation.tooltip", revision, comment);
   }
 
   public String getAnnotatedContent() {
