@@ -135,7 +135,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
     try {
       List<FilePatch> patches = PatchBuilder.buildPatch(textChanges, myProject.getBaseDir().getPresentableUrl(), true, false);
-      UnifiedDiffWriter.write(patches, writer);
+      UnifiedDiffWriter.write(patches, writer, "\n");
     }
     finally {
       writer.close();
@@ -324,7 +324,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     try {
       writer = new OutputStreamWriter(new FileOutputStream(changeList.PATH));
       try {
-        UnifiedDiffWriter.write(remainingPatches, writer);
+        UnifiedDiffWriter.write(remainingPatches, writer, "\n");
       }
       finally {
         writer.close();

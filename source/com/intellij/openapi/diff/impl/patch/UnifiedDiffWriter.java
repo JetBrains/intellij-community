@@ -18,11 +18,12 @@ public class UnifiedDiffWriter {
   private UnifiedDiffWriter() {
   }
 
-  public static void write(Collection<FilePatch> patches, Writer writer) throws IOException {
+  public static void write(Collection<FilePatch> patches, Writer writer, final String lineSeparator) throws IOException {
     for(FilePatch patch: patches) {
-      writeFileHeading(patch, writer);
+      writeFileHeading(patch, writer, lineSeparator);
       for(PatchHunk hunk: patch.getHunks()) {
-        writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter());
+        writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
+                       lineSeparator);
         for(PatchLine line: hunk.getLines()) {
           char prefixChar = ' ';
           switch(line.getType()) {
@@ -30,37 +31,44 @@ public class UnifiedDiffWriter {
             case REMOVE: prefixChar = '-'; break;
             case CONTEXT: prefixChar = ' '; break;
           }
-          writeLine(writer, line.getText(), prefixChar);
-          if (line.isSuppressNewLine()) {
-            writer.write("\n" + PatchReader.NO_NEWLINE_SIGNATURE + "\n");
+          String text = line.getText();
+          if (text.endsWith("\n")) {
+            text = text.substring(0, text.length()-1);
           }
-          else if (!line.getText().endsWith("\n")) {
-            writer.write("\n");
+          writeLine(writer, text, prefixChar);
+          if (line.isSuppressNewLine()) {
+            writer.write(lineSeparator + PatchReader.NO_NEWLINE_SIGNATURE + lineSeparator);
+          }
+          else {
+            writer.write(lineSeparator);
           }
         }
       }
     }
   }
 
-  private static void writeFileHeading(final FilePatch patch, final Writer writer) throws IOException {
-    writeRevisionHeading(writer, "---", patch.getBeforeName(), patch.getBeforeVersionId());
-    writeRevisionHeading(writer, "+++", patch.getAfterName(), patch.getAfterVersionId());
+  private static void writeFileHeading(final FilePatch patch, final Writer writer, final String lineSeparator) throws IOException {
+    writeRevisionHeading(writer, "---", patch.getBeforeName(), patch.getBeforeVersionId(), lineSeparator);
+    writeRevisionHeading(writer, "+++", patch.getAfterName(), patch.getAfterVersionId(), lineSeparator);
   }
 
-  private static void writeRevisionHeading(final Writer writer, final String prefix, final String revisionPath, final String revisionName)
+  private static void writeRevisionHeading(final Writer writer, final String prefix,
+                                           final String revisionPath, final String revisionName,
+                                           final String lineSeparator)
     throws IOException {
     writer.write(prefix + " ");
     writer.write(revisionPath);
     writer.write("\t");
     writer.write(revisionName);
-    writer.write("\n");
+    writer.write(lineSeparator);
   }
 
-  private static void writeHunkStart(Writer writer, int startLine1, int endLine1, int startLine2, int endLine2)
+  private static void writeHunkStart(Writer writer, int startLine1, int endLine1, int startLine2, int endLine2,
+                                     final String lineSeparator)
     throws IOException {
     StringBuilder builder = new StringBuilder("@@ -");
     builder.append(startLine1+1).append(",").append(endLine1-startLine1);
-    builder.append(" +").append(startLine2+1).append(",").append(endLine2-startLine2).append(" @@\n");
+    builder.append(" +").append(startLine2+1).append(",").append(endLine2-startLine2).append(" @@").append(lineSeparator);
     writer.append(builder.toString());
   }
 

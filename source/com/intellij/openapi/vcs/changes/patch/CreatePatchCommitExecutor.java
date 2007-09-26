@@ -2,17 +2,12 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 14.11.2006
- * Time: 18:43:58
- */
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchBuilder;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
@@ -25,7 +20,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.Icons;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -41,11 +36,14 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @author yole
+ */
 public class CreatePatchCommitExecutor implements CommitExecutor, ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor");
   
-  private Project myProject;
-  private ChangeListManager myChangeListManager;
+  private final Project myProject;
+  private final ChangeListManager myChangeListManager;
 
   public String PATCH_PATH = "";
   public boolean REVERSE_PATCH = false;
@@ -107,7 +105,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
   }
 
   private class CreatePatchCommitSession implements CommitSession {
-    private CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel();
+    private final CreatePatchConfigurationPanel myPanel = new CreatePatchConfigurationPanel();
 
     @Nullable
     public JComponent getAdditionalConfigurationUI() {
@@ -152,7 +150,8 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
         Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
         try {
           List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getBaseDir().getPresentableUrl(), false, REVERSE_PATCH);
-          UnifiedDiffWriter.write(patches, writer);
+          final String lineSeparator = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().getLineSeparator();
+          UnifiedDiffWriter.write(patches, writer, lineSeparator);
         }
         finally {
           writer.close();
