@@ -276,7 +276,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
     HighlightInfoType type = null;
     if (highlightType == ProblemHighlightType.INFO) {
-      type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(HighlightSeverity.INFORMATION);
+      type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(HighlightSeverity.INFO);
     }
     if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING || highlightType == ProblemHighlightType.J2EE_PROBLEM) {
       type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity);
