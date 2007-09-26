@@ -90,7 +90,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
 
-  public static final DualViewColumnInfo REVISION =
+  private static final DualViewColumnInfo REVISION =
     new VcsColumnInfo<VcsRevisionNumber>(VcsBundle.message("column.name.revision.version")) {
       protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
         return object.getRevisionNumber();
@@ -106,7 +106,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     };
 
-  public static final DualViewColumnInfo DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
+  private static final DualViewColumnInfo DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
     protected String getDataOf(VcsFileRevision object) {
       Date date = object.getRevisionDate();
       if (date == null) return "";
@@ -123,7 +123,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   };
 
-  public static final DualViewColumnInfo AUTHOR = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.list.author")) {
+  private static final DualViewColumnInfo AUTHOR = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.list.author")) {
     protected String getDataOf(VcsFileRevision object) {
       return object.getAuthor();
     }
@@ -207,7 +207,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private final DualViewColumnInfo[] COLUMNS;
 
-  public static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
+  private static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
   private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
 
@@ -256,7 +256,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     listener.install(myDualView.getFlatView());
     listener.install(myDualView.getTreeView());
 
-    createDualView(null);
+    createDualView();
 
     myPopupActions = createPopupActions();
 
@@ -332,7 +332,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return result;
   }
 
-  public void refresh(VcsHistorySession session) {
+  private void refresh(VcsHistorySession session) {
     myHistorySession = session;
     HistoryAsTreeProvider treeHistoryProvider = getHistoryProvider().getTreeHistoryProvider();
 
@@ -352,7 +352,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     addToGroup(false, group);
   }
 
-  private void createDualView(final ColumnInfo defaultColumnToSortBy) {
+  private void createDualView() {
     myDualView.setShowGrid(true);
     myDualView.getTreeView().addMouseListener(new PopupHandler() {
       public void invokePopup(Component comp, int x, int y) {
@@ -393,11 +393,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     TableViewModel sortableModel = myDualView.getFlatView().getTableViewModel();
     sortableModel.setSortable(true);
 
-    if (defaultColumnToSortBy == null) {
+    if (null == null) {
       sortableModel.sortByColumn(0, SortableColumnModel.SORT_DESCENDING);
     }
     else {
-      sortableModel.sortByColumn(getColumnIndex(defaultColumnToSortBy), SortableColumnModel.SORT_DESCENDING);
+      sortableModel.sortByColumn(getColumnIndex(null), SortableColumnModel.SORT_DESCENDING);
     }
 
   }
@@ -874,8 +874,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       VcsFileRevision revision = e.getData( VcsDataKeys.VCS_FILE_REVISION );
       FileType fileType = revVFile == null ? null : revVFile.getFileType();
       e.getPresentation()
-        .setEnabled( revision != null && revVFile != null && !fileType.isBinary() &&
-                     myAnnotationProvider != null && myAnnotationProvider.isAnnotationValid( revision ) );
+        .setEnabled(revision != null && revVFile != null && !fileType.isBinary() &&
+                    myHistorySession.isContentAvailable(revision) &&
+                    myAnnotationProvider != null && myAnnotationProvider.isAnnotationValid(revision));
     }
 
 
@@ -949,7 +950,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return myRevisionToVirtualFile.get(revision);
   }
 
-  public List getSelection() {
+  private List getSelection() {
     return myDualView.getSelection();
   }
 
