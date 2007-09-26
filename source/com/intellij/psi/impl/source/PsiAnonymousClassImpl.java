@@ -13,6 +13,7 @@ import java.util.Collection;
 
 public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousClass {
   private PsiClassType myCachedBaseType = null;
+  private final Object CACHED_TYPE_LOCK = new Object();
 
   public PsiAnonymousClassImpl(PsiManagerEx manager, long repositoryId) {
     super(manager, repositoryId);
@@ -49,7 +50,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   @NotNull
   public PsiClassType getBaseClassType() {
     // Only do caching if no tree element is avaliable. Otherwise we're in danger to leak tree element via cached type.
-    synchronized (PsiLock.LOCK) {
+    synchronized (CACHED_TYPE_LOCK) {
       if (getTreeElement() != null) {
         myCachedBaseType = null;
         return getTypeByTree();
