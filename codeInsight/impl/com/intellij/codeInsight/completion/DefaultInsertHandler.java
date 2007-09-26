@@ -706,14 +706,14 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if (endOffset < length && Character.isJavaIdentifierPart(chars.charAt(endOffset))){
       document.insertString(endOffset, " ");
       toDelete = document.createRangeMarker(endOffset, endOffset + 1);
-      toDelete.setGreedyToLeft(true);
-      toDelete.setGreedyToRight(true);
     } else if (endOffset >= length) {
       toDelete = document.createRangeMarker(length - 1, length - 1);
     }
     else {
       toDelete = document.createRangeMarker(endOffset, endOffset);
     }
+    toDelete.setGreedyToLeft(true);
+    toDelete.setGreedyToRight(true);
     return toDelete;
   }
 
