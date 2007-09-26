@@ -68,6 +68,7 @@ public final class QuickFixAction {
   }
 
   private static <T> void removeFrom(List<Pair<HighlightInfo.IntentionActionDescriptor, T>> list, IntentionAction action) {
+    if (list == null) return;
     Iterator<Pair<HighlightInfo.IntentionActionDescriptor, T>> iterator = list.iterator();
     while (iterator.hasNext()) {
       Pair<HighlightInfo.IntentionActionDescriptor, T> pair = iterator.next();
