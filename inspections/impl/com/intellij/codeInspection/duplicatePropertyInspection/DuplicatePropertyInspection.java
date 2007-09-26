@@ -8,9 +8,11 @@ import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -19,7 +21,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -148,32 +150,47 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   private void checkFile(final PsiFile file, final InspectionManager manager) {
     if (!(file instanceof PropertiesFile)) return;
     if (getContext().RUN_WITH_EDITOR_PROFILE &&
-        InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile((PsiElement)file).getInspectionTool(getShortName()) != this) {
+        InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile(file).getInspectionTool(getShortName()) != this) {
       return;
     }
     final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
-    final PropertiesFile propertiesFile = ((PropertiesFile)file);
+    final PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<Property> properties = propertiesFile.getProperties();
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return;
     final GlobalSearchScope scope = CURRENT_FILE
                                     ? (GlobalSearchScope)GlobalSearchScope.fileScope(file)
-                                    : (MODULE_WITH_DEPENDENCIES
-                                       ? GlobalSearchScope.moduleWithDependenciesScope(module)
-                                       : GlobalSearchScope.projectScope(file.getProject()));
-    final Map<String, Set<PsiFile>> processedValueToFiles = new HashMap<String, Set<PsiFile>>();
-    final Map<String, Set<PsiFile>> processedKeyToFiles = new HashMap<String, Set<PsiFile>>();
+                                    : MODULE_WITH_DEPENDENCIES
+                                      ? GlobalSearchScope.moduleWithDependenciesScope(module)
+                                      : GlobalSearchScope.projectScope(file.getProject());
+    final Map<String, Set<PsiFile>> processedValueToFiles = Collections.synchronizedMap(new HashMap<String, Set<PsiFile>>());
+    final Map<String, Set<PsiFile>> processedKeyToFiles = Collections.synchronizedMap(new HashMap<String, Set<PsiFile>>());
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
     final ProgressIndicator progress = original == null ? null : new ProgressWrapper(original);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        for (Property property : properties) {
-          if (original != null) {
-            if (original.isCanceled()) throw new ProcessCanceledException();
-            original.setText2(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
-          }
-          processTextUsages(processedValueToFiles, property.getValue(), processedKeyToFiles, searchHelper, scope);
-          processTextUsages(processedKeyToFiles, property.getUnescapedKey(), processedValueToFiles, searchHelper, scope);
+        final Job<?> job = JobScheduler.getInstance().createJob("Searching properties usages", Job.DEFAULT_PRIORITY); // TODO: Better name, handle priority
+
+        for (final Property property : properties) {
+          job.addTask(new Runnable(){
+            public void run() {
+              if (original != null) {
+                original.checkCanceled();
+                original.setText2(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
+              }
+              processTextUsages(processedValueToFiles, property.getValue(), processedKeyToFiles, searchHelper, scope);
+              processTextUsages(processedKeyToFiles, property.getUnescapedKey(), processedValueToFiles, searchHelper, scope);
+            }
+          });
+        }
+        try {
+          job.scheduleAndWaitForResults();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
         }
 
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
@@ -181,7 +198,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
         if (CHECK_DUPLICATE_KEYS || CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) prepareDuplicateKeysByFile(processedKeyToFiles, manager, keyToDifferentValues, problemDescriptors, file, original);
         if (CHECK_DUPLICATE_VALUES) prepareDuplicateValuesByFile(processedValueToFiles, manager, problemDescriptors, file, original);
         if (CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) processDuplicateKeysWithDifferentValues(keyToDifferentValues, processedKeyToFiles, problemDescriptors, manager, file, original);
-        if (problemDescriptors.size() > 0) {
+        if (!problemDescriptors.isEmpty()) {
           addProblemElement(getRefManager().getReference(file), problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]));
         }
       }
@@ -189,18 +206,19 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   }
 
   private static void processTextUsages(final Map<String, Set<PsiFile>> processedTextToFiles,
-                                 final String text,
-                                 final Map<String, Set<PsiFile>> processedFoundTextToFiles,
-                                 final PsiSearchHelper searchHelper,
-                                 final GlobalSearchScope scope) {
-    if (!processedTextToFiles.containsKey(text)){
-      if (processedFoundTextToFiles.containsKey(text)){
+                                        final String text,
+                                        final Map<String, Set<PsiFile>> processedFoundTextToFiles,
+                                        final PsiSearchHelper searchHelper,
+                                        final GlobalSearchScope scope) {
+    if (!processedTextToFiles.containsKey(text)) {
+      if (processedFoundTextToFiles.containsKey(text)) {
         final Set<PsiFile> filesWithValue = processedFoundTextToFiles.get(text);
         processedTextToFiles.put(text, filesWithValue);
-      } else {
+      }
+      else {
         final Set<PsiFile> resultFiles = new HashSet<PsiFile>();
         findFilesWithText(text, searchHelper, scope, resultFiles);
-        if (resultFiles.size() == 0) return;
+        if (resultFiles.isEmpty()) return;
         processedTextToFiles.put(text, resultFiles);
       }
     }
@@ -229,7 +247,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
           ) {
           PsiElement element = file.findElementAt(offset);
           if (element != null && element.getParent() instanceof Property) {
-            final Property property = ((Property)element.getParent());
+            final Property property = (Property)element.getParent();
             if (Comparing.equal(property.getValue(), value) && element.getStartOffsetInParent() != 0) {
               if (duplicatesCount == 0){
                 message.append(InspectionsBundle.message("duplicate.property.value.problem.descriptor", property.getValue()));
@@ -332,7 +350,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
                                         GlobalSearchScope scope,
                                         final Set<PsiFile> resultFiles) {
     final List<String> words = StringUtil.getWordsIn(stringToFind);
-    if (words.size() == 0) return;
+    if (words.isEmpty()) return;
     Collections.sort(words, new Comparator<String>() {
       public int compare(final String o1, final String o2) {
         return o2.length() - o1.length();
@@ -341,13 +359,13 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     for (String word : words) {
       final Set<PsiFile> files = new THashSet<PsiFile>();
       searchHelper.processAllFilesWithWord(word, scope, new CommonProcessors.CollectProcessor<PsiFile>(files), true);
-      if (resultFiles.size() == 0) {
+      if (resultFiles.isEmpty()) {
         resultFiles.addAll(files);
       }
       else {
         resultFiles.retainAll(files);
       }
-      if (resultFiles.size() == 0) return;
+      if (resultFiles.isEmpty()) return;
     }
   }
 
@@ -422,18 +440,5 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
       }
     });
     return myWholePanel;
-  }
-
-  private static class ProgressWrapper extends ProgressIndicatorBase {
-    private ProgressIndicator myOriginal;
-
-    public ProgressWrapper(final ProgressIndicator original) {
-      myOriginal = original;
-    }
-
-    public boolean isCanceled() {
-      return myOriginal.isCanceled();
-    }
-
   }
 }

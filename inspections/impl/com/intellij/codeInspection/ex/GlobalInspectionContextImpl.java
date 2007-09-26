@@ -27,7 +27,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
@@ -706,18 +706,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   public ToggleAction createToggleAutoscrollAction() {
     return myUIOptions.getAutoScrollToSourceHandler().createToggleAction();
-  }
-
-  private static class ProgressWrapper extends ProgressIndicatorBase {
-    private final ProgressIndicator myOriginal;
-
-    public ProgressWrapper(final ProgressIndicator original) {
-      myOriginal = original;
-    }
-
-    public boolean isCanceled() {
-      return myOriginal.isCanceled();
-    }
   }
 
   private int getRequestCount() {

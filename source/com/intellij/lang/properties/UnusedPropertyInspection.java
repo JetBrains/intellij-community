@@ -6,16 +6,20 @@ import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -32,7 +36,7 @@ import java.util.List;
  * @author cdr
  */
 public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
-
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.UnusedPropertyInspection");
   @NotNull
   public String getGroupDisplayName() {
     return PropertiesBundle.message("properties.files.inspection.group.display.name");
@@ -58,11 +62,15 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
     final GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
     final ProgressIndicator progress = original == null ? null : new ProgressWrapper(original);
-
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        for (Property property : properties) {
+
+    final Job<?> job = JobScheduler.getInstance().createJob("Searching properties usages", Job.DEFAULT_PRIORITY); // TODO: Better name, handle priority
+    for (final Property property : properties) {
+      job.addTask(new Runnable() {
+        public void run() {
           if (original != null) {
+            original.checkCanceled();
             original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
           }
 
@@ -75,9 +83,22 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
             PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
             String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
             ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-            descriptors.add(descriptor);
+            synchronized (descriptors) {
+              descriptors.add(descriptor);
+            }
           }
         }
+      });
+    }
+    try {
+      job.scheduleAndWaitForResults();
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
       }
     }, progress);
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
@@ -118,19 +139,6 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
     return false;
   }
 
-  private static class ProgressWrapper extends ProgressIndicatorBase {
-    private ProgressIndicator myOriginal;
-
-    public ProgressWrapper(final ProgressIndicator original) {
-      myOriginal = original;
-    }
-
-    public boolean isCanceled() {
-      return myOriginal.isCanceled();
-    }
-  }
-
-
   private static class SuppressSinglePropertyFix implements IntentionAction {
     @NotNull private final Property myProperty;
 
@@ -148,11 +156,11 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
       return PropertiesBundle.message("unused.property.suppress.for.property");
     }
 
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-      return myProperty != null && myProperty.isValid();
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return myProperty.isValid();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
       @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -180,11 +188,11 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
       return PropertiesBundle.message("unused.property.suppress.for.file");
     }
 
-    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return file instanceof PropertiesFile && file.isValid();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
       @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
