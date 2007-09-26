@@ -12,12 +12,11 @@ import com.intellij.util.io.RecordDataOutput;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Storage implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.Storage");
 
-  private final ReentrantLock lock = new ReentrantLock();
+  private final Object lock = new Object();
   private final RecordsTable myRecordsTable;
   private DataTable myDataTable;
 
@@ -76,101 +75,79 @@ public class Storage implements Disposable, Forceable {
   }
 
   private void compact(final String path) {
-    LOG.info("Space waste in " + path + " is " + myDataTable.getWaste() + " bytes. Compacting now.");
-    long start = System.currentTimeMillis();
+    synchronized (lock) {
+      LOG.info("Space waste in " + path + " is " + myDataTable.getWaste() + " bytes. Compacting now.");
+      long start = System.currentTimeMillis();
 
-    lock.lock();
-    try {
-      File newDataFile = new File(path + ".data.temp");
-      FileUtil.delete(newDataFile);
-      newDataFile.createNewFile();
+      try {
+        File newDataFile = new File(path + ".data.temp");
+        FileUtil.delete(newDataFile);
+        newDataFile.createNewFile();
 
-      File oldDataFile = new File(path + ".data");
-      DataTable newDataTable = new DataTable(newDataFile);
+        File oldDataFile = new File(path + ".data");
+        DataTable newDataTable = new DataTable(newDataFile);
 
-      final int count = myRecordsTable.getRecordsCount();
-      for (int i = 0; i < count; i++) {
-        final long addr = myRecordsTable.getAddress(i);
-        final int size = myRecordsTable.getSize(i);
+        final int count = myRecordsTable.getRecordsCount();
+        for (int i = 0; i < count; i++) {
+          final long addr = myRecordsTable.getAddress(i);
+          final int size = myRecordsTable.getSize(i);
 
-        if (addr != 0 && size != 0) {
-          final long newaddr = newDataTable.allocateSpace(size);
-          final byte[] bytes = new byte[size];
-          myDataTable.readBytes(addr, bytes);
-          newDataTable.writeBytes(newaddr, bytes);
-          myRecordsTable.setAddress(i, newaddr);
+          if (addr != 0 && size != 0) {
+            final long newaddr = newDataTable.allocateSpace(size);
+            final byte[] bytes = new byte[size];
+            myDataTable.readBytes(addr, bytes);
+            newDataTable.writeBytes(newaddr, bytes);
+            myRecordsTable.setAddress(i, newaddr);
+          }
         }
+
+        myDataTable.dispose();
+        newDataTable.dispose();
+
+        if (!FileUtil.delete(oldDataFile)) {
+          throw new IOException("Can't delete file: " + oldDataFile);
+        }
+
+        newDataFile.renameTo(oldDataFile);
+        myDataTable = new DataTable(oldDataFile);
+      }
+      catch (IOException e) {
+        LOG.info("Compact failed: " + e.getMessage());
       }
 
-      myDataTable.dispose();
-      newDataTable.dispose();
-      
-      if (!FileUtil.delete(oldDataFile)) {
-        throw new IOException("Can't delete file: " + oldDataFile);
-      }
-
-      newDataFile.renameTo(oldDataFile);
-      myDataTable = new DataTable(oldDataFile);
+      long timedelta = System.currentTimeMillis() - start;
+      LOG.info("Done compacting in " + timedelta + "msec.");
     }
-    catch (IOException e) {
-      LOG.info("Compact failed: " + e.getMessage());
-    }
-    finally {
-      lock.unlock();
-    }
-
-    long timedelta = System.currentTimeMillis() - start;
-    LOG.info("Done compacting in " + timedelta + "msec.");
   }
 
   public int getVersion() {
-    lock.lock();
-    try {
+    synchronized (lock) {
       return myRecordsTable.getVersion();
-    }
-    finally {
-      lock.unlock();
     }
   }
 
   public void setVersion(int expectedVersion) {
-    lock.lock();
-    try {
+    synchronized (lock) {
       myRecordsTable.setVersion(expectedVersion);
-    }
-    finally {
-      lock.unlock();
     }
   }
 
   public void force() {
-    lock.lock();
-    try {
+    synchronized (lock) {
       myDataTable.force();
       myRecordsTable.force();
-    }
-    finally {
-      lock.unlock();
     }
   }
 
   public boolean isDirty() {
-    lock.lock();
-    try {
+    synchronized (lock) {
       return myDataTable.isDirty() || myRecordsTable.isDirty();
-    }
-    finally {
-      lock.unlock();
     }
   }
 
   public int createNewRecord() {
-    lock.lock();
-    try {
+    synchronized (lock) {
       return myRecordsTable.createNewRecord();
-    }
-    finally {
-      lock.unlock();
     }
   }
 
@@ -179,8 +156,7 @@ public class Storage implements Disposable, Forceable {
   }
 
   public void writeBytes(int record, byte[] bytes) {
-    lock.lock();
-    try {
+    synchronized (lock) {
       final int requiredLength = bytes.length;
       final int currentSize = myRecordsTable.getSize(record);
 
@@ -198,9 +174,6 @@ public class Storage implements Disposable, Forceable {
       myDataTable.writeBytes(address, bytes);
       myRecordsTable.setSize(record, requiredLength);
     }
-    finally {
-      lock.unlock();
-    }
   }
 
   public StorageDataOutput writeStream(final int record) {
@@ -213,8 +186,7 @@ public class Storage implements Disposable, Forceable {
   }
 
   public byte[] readBytes(int record) {
-    lock.lock();
-    try {
+    synchronized (lock) {
       final int length = myRecordsTable.getSize(record);
       if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
 
@@ -224,14 +196,10 @@ public class Storage implements Disposable, Forceable {
 
       return result;
     }
-    finally {
-      lock.unlock();
-    }
   }
 
   public void deleteRecord(int record) {
-    lock.lock();
-    try {
+    synchronized (lock) {
       final int length = myRecordsTable.getSize(record);
       if (length != 0) {
         final long address = myRecordsTable.getAddress(record);
@@ -240,19 +208,12 @@ public class Storage implements Disposable, Forceable {
 
       myRecordsTable.deleteRecord(record);
     }
-    finally {
-      lock.unlock();
-    }
   }
 
   public void dispose() {
-    lock.lock();
-    try {
+    synchronized (lock) {
       myRecordsTable.dispose();
       myDataTable.dispose();
-    }
-    finally {
-      lock.unlock();
     }
   }
 

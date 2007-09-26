@@ -27,15 +27,13 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class JarHandler implements FileSystemInterface {
   @NonNls private static final String JARS_FOLDER = "jars";
 
-  private final Lock lock = new ReentrantLock();
+  private final Object lock = new Object();
   private SoftReference<ZipFile> myZipFile = new SoftReference<ZipFile>(null);
   private final JarFileSystemImpl myFileSystem;
   private final String myBasePath;
@@ -69,8 +67,7 @@ public class JarHandler implements FileSystemInterface {
 
   @Nullable
   public VirtualFile markDirty() {
-    lock.lock();
-    try {
+    synchronized (lock) {
       myRelPathsToEntries.clear();
       myZipFile = new SoftReference<ZipFile>(null);
 
@@ -81,9 +78,6 @@ public class JarHandler implements FileSystemInterface {
         return root;
       }
       return null;
-    }
-    finally {
-      lock.unlock();
     }
   }
 
@@ -112,9 +106,7 @@ public class JarHandler implements FileSystemInterface {
 
   @NotNull
   private Map<String, EntryInfo> initEntries() {
-
-    lock.lock();
-    try {
+    synchronized (lock) {
       Map<String, EntryInfo> map = myRelPathsToEntries.get();
       if (map == null) {
         final ZipFile zip = getZip();
@@ -135,9 +127,6 @@ public class JarHandler implements FileSystemInterface {
       }
       return map;
     }
-    finally {
-      lock.unlock();
-    }
   }
 
   private static EntryInfo getOrCreate(String entryName, boolean isDirectory, Map<String, EntryInfo> map) {
@@ -154,8 +143,7 @@ public class JarHandler implements FileSystemInterface {
   }
 
   public String[] list(final VirtualFile file) {
-    lock.lock();
-    try {
+    synchronized (lock) {
       EntryInfo parentEntry = getEntryInfo(file);
 
       Set<String> names = new HashSet<String>();
@@ -166,9 +154,6 @@ public class JarHandler implements FileSystemInterface {
       }
 
       return names.toArray(new String[names.size()]);
-    }
-    finally {
-      lock.unlock();
     }
   }
 
@@ -263,19 +248,14 @@ public class JarHandler implements FileSystemInterface {
   }
 
   public long getLength(final VirtualFile file) {
-    lock.lock();
-    try {
+    synchronized (lock) {
       final ZipEntry entry = convertToEntry(file);
       return entry != null ? entry.getSize() : 0;
-    }
-    finally {
-      lock.unlock();
     }
   }
 
   public InputStream getInputStream(final VirtualFile file) throws IOException {
-    lock.lock();
-    try {
+    synchronized (lock) {
       final ZipEntry entry = convertToEntry(file);
       if (entry == null) {
         return new ByteArrayInputStream(new byte[0]);
@@ -295,34 +275,23 @@ public class JarHandler implements FileSystemInterface {
 
       return new ByteArrayInputStream(result.toByteArray());
     }
-    finally{
-      lock.unlock();
-    }
   }
 
   public long getTimeStamp(final VirtualFile file) {
     if (file.getParent() == null) return -1L; // Optimization
-    lock.lock();
-    try {
+    synchronized (lock) {
       final ZipEntry entry = convertToEntry(file);
       return entry != null ? entry.getTime() : -1L;
-    }
-    finally {
-      lock.unlock();
     }
   }
 
   public boolean isDirectory(final VirtualFile file) {
     if (file.getParent() == null) return true; // Optimization
 
-    lock.lock();
-    try {
+    synchronized (lock) {
       String path = getRelativePath(file);
       final EntryInfo info = getEntriesMap().get(path);
       return info == null || info.isDirectory;
-    }
-    finally {
-      lock.unlock();
     }
   }
 

@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class JobImpl<T> implements Job<T> {
   private final String myTitle;
@@ -22,7 +20,7 @@ public class JobImpl<T> implements Job<T> {
   private List<PrioritizedFutureTask<T>> myFutures;
   private volatile boolean myCanceled = false;
 
-  private final Lock myLock = new ReentrantLock();
+  private final Object myLock = new Object();
 
   public JobImpl(String title, int priority) {
     myTitle = title;
@@ -34,16 +32,12 @@ public class JobImpl<T> implements Job<T> {
   }
 
   public void addTask(Callable<T> task) {
-    myLock.lock();
-    try {
+    synchronized (myLock) {
       if (myFutures != null) {
         throw new IllegalStateException("Already running. You can't add tasks to a job, which is already scheduled");
       }
 
       myTasks.add(task);
-    }
-    finally {
-      myLock.unlock();
     }
   }
 
@@ -63,12 +57,8 @@ public class JobImpl<T> implements Job<T> {
       }
       List<T> results = new ArrayList<T>(myTasks.size());
       for (Callable<T> task : myTasks) {
-        myLock.lock();
-        try {
+        synchronized (myLock) {
           if (myCanceled) return Collections.emptyList();
-        }
-        finally {
-          myLock.unlock();
         }
         results.add(task.call());
       }
@@ -76,8 +66,7 @@ public class JobImpl<T> implements Job<T> {
       return results;
     }
 
-    myLock.lock();
-    try {
+    synchronized (myLock) {
       final Application application = ApplicationManager.getApplication();
       boolean callerHasReadAccess = application != null && application.isReadAccessAllowed();
 
@@ -92,9 +81,6 @@ public class JobImpl<T> implements Job<T> {
       for (PrioritizedFutureTask<T> future : myFutures) {
         JobSchedulerImpl.execute(future);
       }
-    }
-    finally {
-      myLock.unlock();
     }
 
     // http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
@@ -141,8 +127,7 @@ public class JobImpl<T> implements Job<T> {
   }
 
   public void cancel() {
-    myLock.lock();
-    try {
+    synchronized (myLock) {
       if (myCanceled) return;
       myCanceled = true;
       if (CachesBasedRefSearcher.DEBUG) {
@@ -158,9 +143,6 @@ public class JobImpl<T> implements Job<T> {
         future.cancel(false);
       }
     }
-    finally {
-      myLock.unlock();
-    }
   }
 
   public boolean isCanceled() {
@@ -168,8 +150,7 @@ public class JobImpl<T> implements Job<T> {
   }
 
   public void schedule() {
-    myLock.lock();
-    try {
+    synchronized (myLock) {
       myFutures = new ArrayList<PrioritizedFutureTask<T>>(myTasks.size());
 
       int startTaskIndex = JobSchedulerImpl.currentTaskIndex();
@@ -182,14 +163,10 @@ public class JobImpl<T> implements Job<T> {
         JobSchedulerImpl.execute(future);
       }
     }
-    finally {
-      myLock.unlock();
-    }
   }
 
   public boolean isDone() {
-    myLock.lock();
-    try {
+    synchronized (myLock) {
       if (myFutures == null) return false;
 
       for (Future<T> future : myFutures) {
@@ -197,9 +174,6 @@ public class JobImpl<T> implements Job<T> {
       }
 
       return true;
-    }
-    finally {
-      myLock.unlock();
     }
   }
 }

@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
 public class FSRecords implements Disposable, Forceable {
@@ -61,8 +60,7 @@ public class FSRecords implements Disposable, Forceable {
   private static final int CORRUPTED_MAGIC = 0xabcf7f7f;
 
   private static final String CHILDREN_ATT = "FsRecords.DIRECTORY_CHILDREN";
-  private final static ReentrantLock r = new ReentrantLock();
-  private final static ReentrantLock w = r;
+  private final static Object lock = new Object();
   private DbConnection myConnection;
 
   static {
@@ -159,8 +157,7 @@ public class FSRecords implements Disposable, Forceable {
     }
 
     public static void force() {
-      w.lock();
-      try {
+      synchronized (lock) {
         try {
           markClean();
         }
@@ -170,9 +167,6 @@ public class FSRecords implements Disposable, Forceable {
         myNames.force();
         myAttributes.force();
         myRecords.force();
-      }
-      finally {
-        w.unlock();
       }
     }
 
@@ -290,44 +284,40 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   public int createRecord() {
-    w.lock();
-    try {
-      DbConnection.markDirty();
-      final int next = getRecords().getInt(HEADER_FREE_RECORD_OFFSET);
+    synchronized (lock) {
+      try {
+        DbConnection.markDirty();
+        final int next = getRecords().getInt(HEADER_FREE_RECORD_OFFSET);
 
-      if (next == 0) {
-        final int filelength = (int)getRecords().length();
-        LOG.assertTrue(filelength % RECORD_SIZE == 0);
-        int result = filelength / RECORD_SIZE;
-        DbConnection.cleanRecord(result);
-        return result;
+        if (next == 0) {
+          final int filelength = (int)getRecords().length();
+          LOG.assertTrue(filelength % RECORD_SIZE == 0);
+          int result = filelength / RECORD_SIZE;
+          DbConnection.cleanRecord(result);
+          return result;
+        }
+        else {
+          getRecords().putInt(HEADER_FREE_RECORD_OFFSET, getNextFree(next));
+          setNextFree(next, 0);
+          return next;
+        }
       }
-      else {
-        getRecords().putInt(HEADER_FREE_RECORD_OFFSET, getNextFree(next));
-        setNextFree(next, 0);
-        return next;
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
       }
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
     }
   }
 
   public void deleteRecordRecursively(int id) {
-    w.lock();
-    try {
-      DbConnection.markDirty();
-      incModCount(id);
-      doDeleteRecursively(id);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
+    synchronized (lock) {
+      try {
+        DbConnection.markDirty();
+        incModCount(id);
+        doDeleteRecursively(id);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
@@ -340,28 +330,26 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   private void deleteRecord(final int id) {
-    w.lock();
-    try {
-      DbConnection.markDirty();
-      int att_page = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
+    synchronized (lock) {
+      try {
+        DbConnection.markDirty();
+        int att_page = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
 
-      while (att_page != 0) {
-        final DataInputStream page = getAttributes().readStream(att_page);
-        page.readInt(); // Skip att_id
-        final int next = page.readInt();
-        page.close();
-        getAttributes().deleteRecord(att_page);
-        att_page = next;
+        while (att_page != 0) {
+          final DataInputStream page = getAttributes().readStream(att_page);
+          page.readInt(); // Skip att_id
+          final int next = page.readInt();
+          page.close();
+          getAttributes().deleteRecord(att_page);
+          att_page = next;
+        }
+
+        DbConnection.cleanRecord(id);
+        addToFreeRecordsList(id);
       }
-
-      DbConnection.cleanRecord(id);
-      addToFreeRecordsList(id);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
@@ -372,8 +360,7 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   public int[] listRoots() throws IOException {
-    w.lock();
-    try {
+    synchronized (lock) {
       DbConnection.markDirty();
       final DataInputStream input = readAttribute(1, CHILDREN_ATT);
       if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
@@ -393,9 +380,6 @@ public class FSRecords implements Disposable, Forceable {
 
       return result;
     }
-    finally {
-      w.unlock();
-    }
   }
 
   public void force() {
@@ -407,8 +391,7 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   public int findRootRecord(String rootUrl) throws IOException {
-    w.lock();
-    try {
+    synchronized (lock) {
       DbConnection.markDirty();
       final int root = getNames().enumerate(rootUrl);
 
@@ -455,14 +438,10 @@ public class FSRecords implements Disposable, Forceable {
 
       return id;
     }
-    finally {
-      w.unlock();
-    }
   }
 
   public void deleteRootRecord(int id) throws IOException {
-    w.lock();
-    try {
+    synchronized (lock) {
       DbConnection.markDirty();
       final DataInputStream input = readAttribute(1, CHILDREN_ATT);
       assert input != null;
@@ -501,54 +480,47 @@ public class FSRecords implements Disposable, Forceable {
         output.close();
       }
     }
-    finally {
-      w.unlock();
-    }
   }
 
   public int[] list(int id) {
-    r.lock();
-    try {
-      final DataInputStream input = readAttribute(id, CHILDREN_ATT);
-      if (input == null) return new int[0];
+    synchronized (lock) {
+      try {
+        final DataInputStream input = readAttribute(id, CHILDREN_ATT);
+        if (input == null) return new int[0];
 
-      final int count = input.readInt();
-      final int[] result = new int[count];
-      for (int i = 0; i < count; i++) {
-        result[i] = input.readInt();
+        final int count = input.readInt();
+        final int[] result = new int[count];
+        for (int i = 0; i < count; i++) {
+          result[i] = input.readInt();
+        }
+        input.close();
+        return result;
       }
-      input.close();
-      return result;
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public void updateList(int id, int[] children) {
-    w.lock();
-    try {
-      DbConnection.markDirty();
-      final DataOutputStream record = writeAttribute(id, CHILDREN_ATT);
-      record.writeInt(children.length);
-      for (int child : children) {
-        if (child == id) {
-          LOG.error("Cyclic parent child relations");
+    synchronized (lock) {
+      try {
+        DbConnection.markDirty();
+        final DataOutputStream record = writeAttribute(id, CHILDREN_ATT);
+        record.writeInt(children.length);
+        for (int child : children) {
+          if (child == id) {
+            LOG.error("Cyclic parent child relations");
+          }
+          else {
+            record.writeInt(child);
+          }
         }
-        else {
-          record.writeInt(child);
-        }
+        record.close();
       }
-      record.close();
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
@@ -564,34 +536,30 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   public int getModCount() {
-    r.lock();
-    try {
-      return getRecords().getInt(HEADER_GLOBAL_MODCOUNT_OFFSET);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
+    synchronized (lock) {
+      try {
+        return getRecords().getInt(HEADER_GLOBAL_MODCOUNT_OFFSET);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public int getParent(int id) {
-    r.lock();
-    try {
-      final int parentId = getRecords().getInt(id * RECORD_SIZE + PARENT_OFFSET);
-      if (parentId == id) {
-        LOG.error("Cyclic parent child relations in the database. id = " + id);
-        return 0;
-      }
+    synchronized (lock) {
+      try {
+        final int parentId = getRecords().getInt(id * RECORD_SIZE + PARENT_OFFSET);
+        if (parentId == id) {
+          LOG.error("Cyclic parent child relations in the database. id = " + id);
+          return 0;
+        }
 
-      return parentId;
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
+        return parentId;
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
@@ -601,17 +569,15 @@ public class FSRecords implements Disposable, Forceable {
       return;
     }
 
-    w.lock();
-    try {
-      DbConnection.markDirty();
-      incModCount(id);
-      getRecords().putInt(id * RECORD_SIZE + PARENT_OFFSET, parent);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
+    synchronized (lock) {
+      try {
+        DbConnection.markDirty();
+        incModCount(id);
+        getRecords().putInt(id * RECORD_SIZE + PARENT_OFFSET, parent);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
@@ -629,128 +595,110 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   public String getName(int id) {
-    r.lock();
-    try {
-      final int nameId = getRecords().getInt(id * RECORD_SIZE + NAME_OFFSET);
-      return nameId != 0 ? getNames().valueOf(nameId) : "";
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
+    synchronized (lock) {
+      try {
+        final int nameId = getRecords().getInt(id * RECORD_SIZE + NAME_OFFSET);
+        return nameId != 0 ? getNames().valueOf(nameId) : "";
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public void setName(int id, String name) {
-    w.lock();
-    try {
-      DbConnection.markDirty();
-      incModCount(id);
-      getRecords().putInt(id * RECORD_SIZE + NAME_OFFSET, getNames().enumerate(name));
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
+    synchronized (lock) {
+      try {
+        DbConnection.markDirty();
+        incModCount(id);
+        getRecords().putInt(id * RECORD_SIZE + NAME_OFFSET, getNames().enumerate(name));
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public int getFlags(int id) {
-    r.lock();
-    try {
-      return getRecords().getInt(id * RECORD_SIZE + FLAGS_OFFSET);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
+    synchronized (lock) {
+      try {
+        return getRecords().getInt(id * RECORD_SIZE + FLAGS_OFFSET);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public void setFlags(int id, int flags) {
-    w.lock();
-    try {
-      DbConnection.markDirty();
-      incModCount(id);
-      getRecords().putInt(id * RECORD_SIZE + FLAGS_OFFSET, flags);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
+    synchronized (lock) {
+      try {
+        DbConnection.markDirty();
+        incModCount(id);
+        getRecords().putInt(id * RECORD_SIZE + FLAGS_OFFSET, flags);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public long getLength(int id) {
-    r.lock();
-    try {
-      return getRecords().getLong(id * RECORD_SIZE + LENGTH_OFFSET);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
+    synchronized (lock) {
+      try {
+        return getRecords().getLong(id * RECORD_SIZE + LENGTH_OFFSET);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public void setLength(int id, long len) {
-    w.lock();
-    try {
-      DbConnection.markDirty();
-      incModCount(id);
-      getRecords().putLong(id * RECORD_SIZE + LENGTH_OFFSET, len);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
+    synchronized (lock) {
+      try {
+        DbConnection.markDirty();
+        incModCount(id);
+        getRecords().putLong(id * RECORD_SIZE + LENGTH_OFFSET, len);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public long getTimestamp(int id) {
-    r.lock();
-    try {
-      return getRecords().getLong(id * RECORD_SIZE + TIMESTAMP_OFFSET);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
+    synchronized (lock) {
+      try {
+        return getRecords().getLong(id * RECORD_SIZE + TIMESTAMP_OFFSET);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public void setTimestamp(int id, long value) {
-    w.lock();
-    try {
-      DbConnection.markDirty();
-      incModCount(id);
-      getRecords().putLong(id * RECORD_SIZE + TIMESTAMP_OFFSET, value);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
+    synchronized (lock) {
+      try {
+        DbConnection.markDirty();
+        incModCount(id);
+        getRecords().putLong(id * RECORD_SIZE + TIMESTAMP_OFFSET, value);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public int getModCount(int id) {
-    r.lock();
-    try {
-      return getRecords().getInt(id * RECORD_SIZE + MODCOUNT_OFFSET);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
+    synchronized (lock) {
+      try {
+        return getRecords().getInt(id * RECORD_SIZE + MODCOUNT_OFFSET);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
@@ -760,38 +708,36 @@ public class FSRecords implements Disposable, Forceable {
 
   @Nullable
   public DataInputStream readAttribute(int id, String attId) {
-    try {
-      r.lock();
-      int encodedAttId = DbConnection.getAttributeId(attId);
-      int att_page = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
-      while (att_page != 0) {
-        final DataInputStream page = getAttributes().readStream(att_page);
-        int attIdOnPage;
-        int next;
-        try {
-          attIdOnPage = page.readInt();
-          next = page.readInt();
-        }
-        catch (IOException e) {
-          LOG.error(DbConnection.handleError(e));
-          attIdOnPage = 0;
-          next = 0;
-        }
-        if (attIdOnPage == encodedAttId) {
-          return page;
+    synchronized (lock) {
+      try {
+        int encodedAttId = DbConnection.getAttributeId(attId);
+        int att_page = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
+        while (att_page != 0) {
+          final DataInputStream page = getAttributes().readStream(att_page);
+          int attIdOnPage;
+          int next;
+          try {
+            attIdOnPage = page.readInt();
+            next = page.readInt();
+          }
+          catch (IOException e) {
+            LOG.error(DbConnection.handleError(e));
+            attIdOnPage = 0;
+            next = 0;
+          }
+          if (attIdOnPage == encodedAttId) {
+            return page;
+          }
+
+          att_page = next;
+          page.close();
         }
 
-        att_page = next;
-        page.close();
+        return null;
       }
-
-      return null;
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
@@ -832,41 +778,31 @@ public class FSRecords implements Disposable, Forceable {
 
   @NotNull
   public DataOutputStream writeAttribute(final int id, final String attId) {
-    w.lock();
-    try {
-      DbConnection.markDirty();
-      final int encodedAttId = DbConnection.getAttributeId(attId);
-      final int headPage = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
-      return findPageToWrite(id, encodedAttId, headPage);
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
+    synchronized (lock) {
+      try {
+        DbConnection.markDirty();
+        final int encodedAttId = DbConnection.getAttributeId(attId);
+        final int headPage = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
+        return findPageToWrite(id, encodedAttId, headPage);
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 
   public void disposeAndDeleteFiles() {
-    w.lock();
-    try {
-      dispose();
-    }
-    finally {
-      w.unlock();
-    }
+    dispose();
   }
 
   public void dispose() {
-    w.lock();
-    try {
-      DbConnection.closeFiles();
-    }
-    catch (IOException e) {
-      throw DbConnection.handleError(e);
-    }
-    finally {
-      w.unlock();
+    synchronized (lock) {
+      try {
+        DbConnection.closeFiles();
+      }
+      catch (IOException e) {
+        throw DbConnection.handleError(e);
+      }
     }
   }
 }
