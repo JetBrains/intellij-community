@@ -51,7 +51,7 @@ public class GspEnterHandler extends EditorWriteActionHandler {
     int carret = editor.getCaretModel().getOffset();
     if (carret == 0) return false;
 
-    //assert file != null;
+    assert file != null;
     PsiElement element = file.findElementAt(carret - 1);
     if (element != null &&
         element.getNode().getElementType() != GspTokenTypesEx.JSCRIPT_BEGIN) {
@@ -76,7 +76,8 @@ public class GspEnterHandler extends EditorWriteActionHandler {
       }
       if (position < text.length() &&
           text.charAt(position) == '%') {
-        return false;
+        myOriginalHandler.execute(editor, dataContext);
+        return true;
       } else {
         EditorModificationUtil.insertStringAtCaret(editor, "%>");
         editor.getCaretModel().moveCaretRelatively(-2, 0, false, false, true);
