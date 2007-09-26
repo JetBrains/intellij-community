@@ -560,12 +560,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         session.clearHash();
       }
 
-      final List<IFile> myFiles = super.getAllStorageFilesToSave(false);
-
-      if (myFiles.size() > 0 && !moduleSaves) {
+      final XmlElementStorage.MySaveSession session = (XmlElementStorage.MySaveSession)myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
+      if (session.needsSave()) {
         updateUsedMacros();
       }
-      result.addAll(myFiles);
+
+      result.addAll(super.getAllStorageFilesToSave(false));
 
       return result;
     }
