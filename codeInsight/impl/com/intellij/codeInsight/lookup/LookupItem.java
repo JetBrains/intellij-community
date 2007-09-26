@@ -17,8 +17,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -246,7 +246,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
   }
 
   @NotNull
-  public LookupElement<T> setGrouping(final int grouping) {
+  public LookupItem<T> setGrouping(final int grouping) {
     myGrouping = grouping;
     return this;
   }
