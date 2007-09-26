@@ -484,7 +484,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     protected int computeHash() {
-      return super.computeHash()*31 + myUsedMacros.hashCode();
+      return super.computeHash()*31/* + myUsedMacros.hashCode()*/;
     }
 
     @Nullable
@@ -543,13 +543,29 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
 
     public List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
-      if (!includingSubStructures) return super.getAllStorageFilesToSave(false);
+      List<IFile> result = new ArrayList<IFile>();
 
-      List<IFile> result = new ArrayList<IFile>(super.getAllStorageFilesToSave(false));
-
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        result.addAll(moduleSaveSession.getAllStorageFilesToSave(true));
+      boolean moduleSaves = false;
+      if (includingSubStructures) {
+        for (SaveSession moduleSaveSession : myModuleSaveSessions) {
+          final List<IFile> moduleFiles = moduleSaveSession.getAllStorageFilesToSave(true);
+          if (moduleFiles.size() > 0) moduleSaves = true;
+          result.addAll(moduleFiles);
+        }
       }
+
+      if (moduleSaves) {
+        updateUsedMacros();
+        final FileBasedStorage.FileSaveSession session = (FileBasedStorage.FileSaveSession)myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
+        session.clearHash();
+      }
+
+      final List<IFile> myFiles = super.getAllStorageFilesToSave(false);
+
+      if (myFiles.size() > 0 && !moduleSaves) {
+        updateUsedMacros();
+      }
+      result.addAll(myFiles);
 
       return result;
     }
@@ -585,10 +601,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return this;
     }
 
-    protected void commit() throws StateStorage.StateStorageException {
-      super.commit();
-
-      //todo: make it clearer
+    private void updateUsedMacros() {
       final XmlElementStorage.MySaveSession session = (XmlElementStorage.MySaveSession)myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
       final XmlElementStorage.StorageData data = session.getData();
 
@@ -597,6 +610,10 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
         storageData.setUsedMacros(getUsedMacros());
       }
+    }
+
+    protected void commit() throws StateStorage.StateStorageException {
+      super.commit();
     }
 
     @Nullable

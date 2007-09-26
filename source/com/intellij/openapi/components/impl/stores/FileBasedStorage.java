@@ -123,6 +123,10 @@ public class FileBasedStorage extends XmlElementStorage {
     public List<IFile> getAllStorageFiles() {
       return Collections.singletonList(myFile);
     }
+
+    public void clearHash() {
+      myUpToDateHash = null;
+    }
   }
 
 
