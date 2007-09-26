@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.tree.ChameleonElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor;
@@ -147,7 +148,8 @@ public class GroovyBlock implements Block, GroovyElementTypes {
         (lastChild.getPsi() instanceof PsiWhiteSpace || lastChild.getPsi() instanceof PsiComment)) {
       lastChild = lastChild.getTreePrev();
     }
-    return lastChild != null && (lastChild.getPsi() instanceof PsiErrorElement || isIncomplete(lastChild));
+    return lastChild != null && !(lastChild instanceof ChameleonElement) &&
+        (lastChild.getPsi() instanceof PsiErrorElement || isIncomplete(lastChild));
   }
 
   public boolean isLeaf() {
