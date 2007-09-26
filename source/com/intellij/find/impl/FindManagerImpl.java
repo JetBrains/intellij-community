@@ -22,10 +22,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -175,6 +172,24 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
   }
 
   public FindModel getFindNextModel() {
+    return myFindNextModel;
+  }
+
+  public FindModel getFindNextModel(final Editor editor) {
+    if (myFindNextModel == null) return null;
+
+    final JComponent header = editor.getHeaderComponent();
+    if (header instanceof EditorSearchComponent) {
+      final EditorSearchComponent searchComponent = (EditorSearchComponent)header;
+      final String textInField = searchComponent.getTextInField();
+      if (!Comparing.equal(textInField, myFindInFileModel.getStringToFind())) {
+        FindModel patched = new FindModel();
+        patched.copyFrom(myFindNextModel);
+        patched.setStringToFind(textInField);
+        return patched;
+      }
+    }
+
     return myFindNextModel;
   }
 
@@ -398,7 +413,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
 
-      FindModel model = getFindNextModel();
+      FindModel model = getFindNextModel(editor);
       if (model != null && model.searchHighlighters()) {
         RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(myProject)).getHighlighters(editor);
         if (highlighters.length > 0) {
@@ -483,7 +498,7 @@ public class FindManagerImpl extends FindManager implements ProjectComponent, JD
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
 
-      FindModel model = getFindNextModel();
+      FindModel model = getFindNextModel(editor);
       if (model != null && model.searchHighlighters()) {
         RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(myProject)).getHighlighters(editor);
         if (highlighters.length > 0) {

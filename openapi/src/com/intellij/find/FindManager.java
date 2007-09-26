@@ -15,6 +15,7 @@
 */
 package com.intellij.find;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -130,6 +131,16 @@ public abstract class FindManager {
    * @return the model to use for the operations.
    */
   public abstract FindModel getFindNextModel();
+
+  /**
+   * Gets the model containing the search settings to use for "Find Next" and
+   * "Find Previous" operations specific for the editor given. It may be different than {@link #getFindNextModel()}
+   * if there is find bar currently shown for the editor.
+   *
+   * @param editor editor, for which find model shall be retreived for
+   * @return the model to use for the operations.
+   */
+  public abstract FindModel getFindNextModel(Editor editor);
 
   /**
    * Checks if the Find Usages action is available for the specified element.

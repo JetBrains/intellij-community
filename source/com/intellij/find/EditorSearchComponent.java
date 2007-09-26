@@ -28,7 +28,6 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +51,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
   public static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
   private final JComponent myToolbarComponent;
-  private final com.intellij.openapi.editor.event.DocumentAdapter myDocumentListener;
-  private final MessageBusConnection myConnection;
+  private com.intellij.openapi.editor.event.DocumentAdapter myDocumentListener;
   private ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
 
   @Nullable
@@ -205,19 +203,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     };
 
     myEditor.getDocument().addDocumentListener(myDocumentListener);
-
-    myConnection = project.getMessageBus().connect();
-    myConnection.subscribe(FindManager.FIND_MODEL_TOPIC, new FindModelListener() {
-      public void findNextModelChanged() {
-        final FindModel model = FindManager.getInstance(project).getFindNextModel();
-        if (model != null) {
-          final String text = model.getStringToFind();
-          if (!Comparing.equal(text, mySearchField.getText())) {
-            mySearchField.setText(text);
-          }
-        }
-      }
-    });
   }
 
   private void searchBackward() {
@@ -285,8 +270,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   public void removeNotify() {
     super.removeNotify();
 
-    myEditor.getDocument().removeDocumentListener(myDocumentListener);
-    myConnection.disconnect();
+    if (myDocumentListener != null) {
+      myEditor.getDocument().removeDocumentListener(myDocumentListener);
+      myDocumentListener = null;
+    }
   }
 
   private void updateResults(boolean allowedToChangedEditorSelection) {
@@ -388,6 +375,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     mySearchField.setBackground(LightColors.RED);
   }
 
+  public String getTextInField() {
+    return mySearchField.getText();
+  }
+
   private boolean isWholeWords() {
     return FindManager.getInstance(myProject).getFindInFileModel().isWholeWordsOnly();
   }
@@ -433,6 +424,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     for (RangeHighlighter highlighter : myHighlighters) {
       highlighter.setErrorStripeTooltip(text);
     }
+  }
+
+  public void setTextInField(final String text) {
+    mySearchField.setText(text);
+    updateResults(true);
   }
 
   private class PrevOccurenceAction extends AnAction {

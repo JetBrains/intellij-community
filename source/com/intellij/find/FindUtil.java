@@ -87,6 +87,13 @@ public class FindUtil {
     model.setStringToFind(s);
     model.setCaseSensitive(true);
     model.setWholeWordsOnly(!editor.getSelectionModel().hasSelection());
+
+    final JComponent header = editor.getHeaderComponent();
+    if (header instanceof EditorSearchComponent) {
+      final EditorSearchComponent searchComponent = (EditorSearchComponent)header;
+      searchComponent.setTextInField(model.getStringToFind());
+    }
+
     findManager.setFindNextModel(model);
     doSearch(project, editor, caretOffset, true, model, true);
   }
@@ -213,7 +220,7 @@ public class FindUtil {
       return;
     }
 
-    FindModel model = findManager.getFindNextModel();
+    FindModel model = findManager.getFindNextModel(editor);
     if (model == null) {
       model = findManager.getFindInFileModel();
     }
@@ -255,7 +262,7 @@ public class FindUtil {
       return false;
     }
 
-    FindModel model = findManager.getFindNextModel();
+    FindModel model = findManager.getFindNextModel(editor);
     if (model == null) {
       model = findManager.getFindInFileModel();
     }
@@ -567,7 +574,7 @@ public class FindUtil {
         result = null;
       }
 
-      FindModel modelForNextSearch = findManager.getFindNextModel();
+      FindModel modelForNextSearch = findManager.getFindNextModel(editor);
       if (modelForNextSearch == null) {
         modelForNextSearch = findManager.getFindInFileModel();
       }
