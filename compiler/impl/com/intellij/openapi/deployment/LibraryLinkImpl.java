@@ -37,17 +37,16 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -66,6 +65,8 @@ public class LibraryLinkImpl extends LibraryLink {
   @NonNls private static final String TEMP_ELEMENT_NAME = "temp";
   @NonNls static final String NAME_ATTRIBUTE_NAME = "name";
 
+  @NonNls private static final String JAR_SUFFIX = ".jar";
+
   static {
     methodToDescriptionForDirs.put(PackagingMethod.DO_NOT_PACKAGE, CompilerBundle.message("packaging.method.description.do.not.package"));
     methodToDescriptionForDirs.put(PackagingMethod.COPY_FILES, CompilerBundle.message("packaging.method.description.copy.directories"));
@@ -79,14 +80,14 @@ public class LibraryLinkImpl extends LibraryLink {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.LibraryLink");
   private LibraryInfo myLibraryInfo;
+  @Nullable
   private final Project myProject;
-  @NonNls private static final String JAR_SUFFIX = ".jar";
 
   public LibraryLinkImpl(@Nullable Library library, @NotNull Module parentModule) {
     this(library, parentModule.getProject(), parentModule);
   }
 
-  public LibraryLinkImpl(@Nullable Library library, @NotNull Project project, @Nullable Module parentModule) {
+  public LibraryLinkImpl(@Nullable Library library, @Nullable Project project, @Nullable Module parentModule) {
     super(parentModule);
     myProject = project;
     if (library == null) {
@@ -136,7 +137,7 @@ public class LibraryLinkImpl extends LibraryLink {
     if (levelName.equals(MODULE_LEVEL)) {
       return CompilerBundle.message("library.link.description.module.library");
     }
-    final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(levelName, myProject);
+    final LibraryTable table = findTable(levelName, myProject);
     return table == null ? "???" : table.getPresentation().getDisplayName(false);
   }
 

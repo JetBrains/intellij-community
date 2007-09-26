@@ -65,10 +65,12 @@ public abstract class LibraryLink extends ContainerElement {
   }
 
   @Nullable
-  private static LibraryTable findTable(String libraryLevel, Project project) {
+  protected static LibraryTable findTable(String libraryLevel, Project project) {
     if (libraryLevel == null) return null;
-
-    return LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryLevel, project);
+    if (LibraryTablesRegistrar.APPLICATION_LEVEL.equals(libraryLevel)) {
+      return LibraryTablesRegistrar.getInstance().getLibraryTable();
+    }
+    return project == null? null : LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryLevel, project);
   }
 
 }
