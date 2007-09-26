@@ -4,19 +4,16 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.injected.EditorWindow;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.impl.injected.EditorWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,14 +145,16 @@ public class SelectWordHandler extends EditorActionHandler {
   private static PsiElement getUpperElement(final PsiElement e) {
     final PsiElement parent = e.getParent();
 
-    if (PsiUtil.isInJspFile(e.getContainingFile()) && e.getLanguage()instanceof JavaLanguage && !(e instanceof PsiErrorElement)) {
-      final JspFile psiFile = PsiUtil.getJspFile(e.getContainingFile());
-      if (e.getParent().getTextLength() == psiFile.getTextLength()) {
-        PsiFile baseRoot = psiFile.getBaseLanguageRoot();
-        final ASTNode node = baseRoot.getNode();
-        if (node == null) return parent;
-        final ASTNode leafElementAt = node.findLeafElementAt(e.getTextRange().getStartOffset());
-        return leafElementAt != null ? leafElementAt.getPsi() : parent;
+    if (!(e instanceof PsiErrorElement)) {
+      final FileViewProvider viewProvider = e.getContainingFile().getViewProvider();
+      if (viewProvider.getBaseLanguage() != e.getLanguage()) {
+        final PsiFile baseRoot = viewProvider.getPsi(viewProvider.getBaseLanguage());
+        if (parent.getTextLength() == baseRoot.getTextLength()) {
+          final ASTNode node = baseRoot.getNode();
+          if (node == null) return parent;
+          final ASTNode leafElementAt = node.findLeafElementAt(e.getTextRange().getStartOffset());
+          return leafElementAt != null ? leafElementAt.getPsi() : parent;
+        }
       }
     }
 
