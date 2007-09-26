@@ -18,11 +18,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
@@ -72,8 +74,8 @@ public class StaticImportMethodFix implements IntentionAction {
     ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
     if (name == null) return list;
     GlobalSearchScope scope = myMethodCall.getResolveScope();
-    PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, 10);
-    ArrayList<PsiMethod> applicableList = new ArrayList<PsiMethod>();
+    PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, 20);
+    List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     for (PsiMethod method : methods) {
       ProgressManager.getInstance().checkCanceled();
       PsiClass aClass = method.getContainingClass();
@@ -90,7 +92,9 @@ public class StaticImportMethodFix implements IntentionAction {
         }
       }
     }
-    return applicableList.isEmpty() ? list : applicableList;
+    List<PsiMethod> result = applicableList.isEmpty() ? list : applicableList;
+    Collections.sort(result, new PsiProximityComparator(argumentList, argumentList.getProject()));
+    return result;
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
