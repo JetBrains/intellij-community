@@ -19,9 +19,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
+import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 
 /**
  * @author ilyas
@@ -44,5 +46,22 @@ public abstract class GspEditorActionUtil {
       buffer.append(" ");
     }
     EditorModificationUtil.insertStringAtCaret(editor, buffer.toString());
+  }
+
+  static boolean checkSciptletSeparatorBalance(HighlighterIterator iterator) {
+    int balance = 0;
+    while (!iterator.atEnd()) {
+      if (GspTokenTypesEx.JSCRIPT_BEGIN == iterator.getTokenType()) balance++;
+      if (GspTokenTypesEx.JSCRIPT_END == iterator.getTokenType()) balance--;
+      iterator.advance();
+    }
+    return balance > 0;
+  }
+
+  static boolean isWhiteSpace(String text, int i) {
+    return text.charAt(i) == ' ' ||
+        text.charAt(i) == '\t' ||
+        text.charAt(i) == '\r' ||
+        text.charAt(i) == '\n';
   }
 }

@@ -15,15 +15,19 @@
 
 package org.jetbrains.plugins.grails.lang.gsp.editor.actions;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
 
@@ -37,8 +41,27 @@ public class GspEnterHandler extends EditorWriteActionHandler {
     myOriginalHandler = actionHandler;
   }
 
-  public void executeWriteAction(Editor editor, DataContext dataContext) {
-    if (!handleEnter(editor, dataContext) && myOriginalHandler != null) {
+  public boolean isEnabled(Editor editor, DataContext dataContext) {
+    return myOriginalHandler.isEnabled(editor, dataContext);
+  }
+
+  public void executeWriteAction(final Editor editor, final DataContext dataContext) {
+
+    final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+    if (project != null) {
+      PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
+        public void run() {
+          executeWriteActionInner(editor, dataContext);
+        }
+      });
+    } else {
+      executeWriteActionInner(editor, dataContext);
+    }
+  }
+
+  private void executeWriteActionInner(Editor editor, DataContext dataContext) {
+    if (!handleEnter(editor, dataContext) &&
+        myOriginalHandler != null) {
       myOriginalHandler.execute(editor, dataContext);
     }
   }
@@ -50,11 +73,12 @@ public class GspEnterHandler extends EditorWriteActionHandler {
     if (!(file instanceof GspFile)) return false;
 
     int carret = editor.getCaretModel().getOffset();
-    if (carret == 0) return false;
+    if (carret < 1) return false;
 
-    PsiElement element = file.findElementAt(carret - 1);
-    if (element != null &&
-        element.getNode().getElementType() != GspTokenTypesEx.JSCRIPT_BEGIN) {
+    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
+    HighlighterIterator iterator = highlighter.createIterator(carret - 1);
+
+    if (iterator.getTokenType() != GspTokenTypesEx.JSCRIPT_BEGIN) {
       return false;
     }
 
@@ -71,11 +95,9 @@ public class GspEnterHandler extends EditorWriteActionHandler {
       return false;
     }
     if (text.charAt(carret - 1) == '%' && text.charAt(carret - 2) == '<') {
-      int position = carret;
-      for (; position < text.length() && isWhiteSpace(text, position); position++) {
-      }
-      if (position < text.length() &&
-          text.charAt(position) == '%') {
+      final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
+      HighlighterIterator iterator = highlighter.createIterator(carret - 1);
+      if (!GspEditorActionUtil.checkSciptletSeparatorBalance(iterator)) {
         myOriginalHandler.execute(editor, dataContext);
         return true;
       } else {
@@ -91,10 +113,4 @@ public class GspEnterHandler extends EditorWriteActionHandler {
     }
   }
 
-  private static boolean isWhiteSpace(String text, int i) {
-    return text.charAt(i) == ' ' ||
-        text.charAt(i) == '\t' ||
-        text.charAt(i) == '\r' ||
-        text.charAt(i) == '\n';
-  }
 }

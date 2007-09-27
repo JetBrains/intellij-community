@@ -147,7 +147,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
       }
     }
 
-    if (GroovyRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS != null){
+    if (GroovyRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS != null) {
       myCbIsFinal.setSelected(GroovyRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS);
     }
 
@@ -182,7 +182,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
 
     myNameComboBox.setEditor(comboEditor);
     myNameComboBox.setRenderer(new EditorComboBoxRenderer(comboEditor));
-    // todo implement name contributor
 
     myNameComboBox.setEditable(true);
     myNameComboBox.setMaximumRowCount(8);
