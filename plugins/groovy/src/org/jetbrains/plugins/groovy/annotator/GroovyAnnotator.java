@@ -147,7 +147,7 @@ public class GroovyAnnotator implements Annotator {
     final int startOffset = typeDefinition.getTextRange().getStartOffset();
     final GrTypeDefinitionBody body = typeDefinition.getBody();
     int endOffset = body != null ? body.getTextRange().getStartOffset() : typeDefinition.getTextRange().getEndOffset();
-    final Annotation annotation = holder.createErrorAnnotation(new TextRange(startOffset, endOffset), GroovyBundle.message("method.is.not.implemented", notImplementedMethodName));
+    final Annotation annotation = holder.createWarningAnnotation(new TextRange(startOffset, endOffset), GroovyBundle.message("method.is.not.implemented", notImplementedMethodName));
     registerImplementsMethodsFix(typeDefinition, annotation);
   }
 
