@@ -225,6 +225,7 @@ class FormatProcessor {
                                CodeStyleSettings.IndentOptions indentOption, CodeStyleSettings.IndentOptions javaOptions) {
     int shift = 0;
     boolean bulkReformat = false;
+    boolean bulkReformatFinished = false;
     DocumentEx updatedDocument = null;
 
     try {
@@ -246,7 +247,7 @@ class FormatProcessor {
 
         if (index + 1 == blocksToModifyCount) {
           if(updatedDocument != null) updatedDocument.setInBulkUpdate(false);
-          updatedDocument = null;
+          bulkReformatFinished = true;
         }
 
         // block could be gc'd
@@ -256,8 +257,10 @@ class FormatProcessor {
       }
     }
     finally {
-      if (bulkReformat && updatedDocument != null) {   // emergency clean up
-        updatedDocument.setInBulkUpdate(false);
+      if (bulkReformat && updatedDocument != null) {
+        if (!bulkReformatFinished) {   // emergency clean up
+          updatedDocument.setInBulkUpdate(false);
+        }
       }
       model.commitChanges();
     }

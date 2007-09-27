@@ -363,6 +363,11 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
         textBlock.lock();
         final CharSequence chars = document.getCharsSequence();
+        final Boolean data = document.getUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY);
+        if (data != null) {
+          document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
+          file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
+        }
 
         if (file.getViewProvider().getBaseLanguage() == StdLanguages.JSPX && file.getLanguage() == StdLanguages.JAVA) {
           myBlockSupport.reparseRange(file, 0, document.getTextLength(), document.getTextLength() - file.getTextLength(), chars); // hack

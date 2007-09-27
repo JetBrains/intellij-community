@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -469,13 +470,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  //private void flushReferenceMarkersQueue() {
-  //  WeakReference<RangeMarkerImpl> weakRef;
-  //  while((weakRef = (WeakReference<RangeMarkerImpl>)myRangeMarkerWeaksQueue.poll()) != null) {
-  //    myRangeMarkers.remove(weakRef);
-  //  }
-  //}
-
   public String getText() {
     assertReadAccessToDocumentsAllowed();
     return myText.toString();
@@ -698,7 +692,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public final void setInBulkUpdate(boolean value) {
     putUserData(DOING_BULK_UPDATE,value ? Boolean.TRUE : null);
-    if (value) CodeFoldingManagerImpl.resetFoldingInfo(this);
+    if (value) {
+      CodeFoldingManagerImpl.resetFoldingInfo(this);
+      putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
+    }
   }
 }
 

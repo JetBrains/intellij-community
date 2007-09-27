@@ -16,6 +16,7 @@ public abstract class BlockSupport {
   public abstract void reparseRange(PsiFile file, int startOffset, int endOffset, @NonNls CharSequence newText) throws IncorrectOperationException;
   public abstract void reparseRange(PsiFile file, int startOffset, int endOffset, int lengthShift, CharSequence newText) throws IncorrectOperationException;
 
+  public static final Key<Boolean> DO_NOT_REPARSE_INCREMENTALLY = Key.create("SKIP_INCREMENTAL_REPARSE");
   public static final Key<ASTNode> TREE_TO_BE_REPARSED = new Key<ASTNode>("TREE_TO_BE_REPARSED");
 
   public static class ReparsedSuccessfullyException extends RuntimeException {

@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -230,7 +229,10 @@ public class BlockSupportImpl extends BlockSupport {
       final FileElement newFileElement = (FileElement)newFile.getNode();
       final FileElement oldFileElement = (FileElement)fileImpl.getNode();
 
-      if (false) { // TODO: Just to switch off incremental tree patching for certain conditions (like languages) if necessary.
+      final Boolean data = fileImpl.getUserData(DO_NOT_REPARSE_INCREMENTALLY);
+      if (data != null) fileImpl.putUserData(DO_NOT_REPARSE_INCREMENTALLY, null);
+
+      if (data != null && data.booleanValue()) { // TODO: Just to switch off incremental tree patching for certain conditions (like languages) if necessary.
         replaceFileElement(fileImpl, oldFileElement, newFileElement, manager);
       }
       else {
