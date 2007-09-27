@@ -113,7 +113,7 @@ public class ForCanBeForEachInspection{
     public void didTheyImplementLists(){
         List list = new ArrayList();
         for(int i = 0; i < list.size(); i++){
-            Object o = list.get(i);
+            list.remove(i);
         }
     }
 
@@ -121,5 +121,36 @@ public class ForCanBeForEachInspection{
         for (int i = 0; i < (numbers.size()); i++) {
             System.out.println("numbers[i]: " + numbers.get(i));
         }
+    }
+
+    private List<Integer> myPath = new ArrayList<Integer>();
+    private Integer[] myArray = new Integer[100];
+
+    public void foo(ForCanBeForEachInspection p) {
+        for (int i = 0; i < myPath.size(); i++) {
+            if (!myPath.get(i).equals(p.myPath.get(i))) {
+            }
+        }
+    }
+
+    void foo2(ForCanBeForEachInspection p) {
+        for (int i = 0; i < myArray.length; i++) {
+            if (!myArray[i].equals(this.myArray[i])) {
+
+            
+            }
+        }
+    }
+
+    void bla(Collection totalDiscounts) {
+        for ( Iterator iterator = totalDiscounts.iterator(); iterator.hasNext() ; ) {
+            String deliveryDiscount = ( String )iterator.next();
+            currentActiveDiscountInIteration( deliveryDiscount, iterator );
+        }
+
+    }
+
+    private void currentActiveDiscountInIteration(String deliveryDiscount, Iterator iterator) {
+        //To change body of created methods use File | Settings | File Templates.
     }
 }
