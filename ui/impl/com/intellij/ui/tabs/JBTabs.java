@@ -67,6 +67,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   private boolean mySingleRow = true;
   private TableLayoutData myLastTableLayout;
 
+  private boolean myForcedRelayout;
+
   public JBTabs(ActionManager actionManager, Disposable parent) {
     myActionManager = actionManager;
 
@@ -234,7 +236,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   }
 
   private void updateAll() {
-    update();
+    update(false);
     updateListeners();
     updateSelected();
   }
@@ -248,7 +250,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
 
-    update();
+    update(false);
 
     if (oldInfo != newInfo) {
       for (TabsListener eachListener : myTabListeners) {
@@ -281,7 +283,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
     }
 
-    update();
+    update(false);
   }
 
   @Nullable
@@ -348,17 +350,22 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   }
 
   public void doLayout() {
-    final Max max = computeMaxSize();
-    myHeaderFitSize =
-      new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
+    try {
+      final Max max = computeMaxSize();
+      myHeaderFitSize =
+        new Dimension(getSize().width, myHorizontalSide ? Math.max(max.myLabel.height, max.myToolbar.height) : max.myLabel.height);
 
-    if (mySingleRow) {
-      myLastTableLayout = null;
-      layoutSingleRow();
+      if (mySingleRow) {
+        layoutSingleRow();
+        myLastTableLayout = null;
+      }
+      else {
+        layoutTable();
+        myLastSingRowLayout = null;
+      }
     }
-    else {
-      myLastSingRowLayout = null;
-      layoutTable();
+    finally {
+      myForcedRelayout = false;
     }
   }
 
@@ -455,7 +462,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     LineLayoutData data = new LineLayoutData();
     boolean layoutLabels = true;
 
-    if (myLastSingRowLayout != null && myLastSingRowLayout.contentCount == getTabCount() && myLastSingRowLayout.laayoutSize.equals(getSize())) {
+    if (!myForcedRelayout && myLastSingRowLayout != null && myLastSingRowLayout.contentCount == getTabCount() && myLastSingRowLayout.laayoutSize.equals(getSize())) {
       for (TabInfo each : myInfos) {
         if (getSelectedInfo() == each) {
           final TabLabel eachLabel = myInfo2Label.get(each);
@@ -472,12 +479,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
     resetLayout(layoutLabels);
 
+    if (!myHorizontalSide && selectedToolbar != null) {
+      data.xAddin = selectedToolbar.getPreferredSize().width + 1;
+    }
+
     if (layoutLabels) {
       data.eachX = insets.left;
-      if (!myHorizontalSide && selectedToolbar != null) {
-        data.xAddin = selectedToolbar.getPreferredSize().width + 1;
-      }
-
 
       recomputeToLayout(selectedToolbar, data, insets);
 
@@ -831,7 +838,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     Dimension myToolbar = new Dimension();
   }
 
-  private void update() {
+  private void update(boolean forced) {
+    myForcedRelayout = forced;
     revalidate();
     repaint();
   }
@@ -1027,15 +1035,14 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       each.getChangeSupport().firePropertyChange(TabInfo.ACTION_GROUP, "new1", "new2");
     }
 
-    revalidate();
-    repaint();
+
+    update(true);
   }
 
   public void setSingleRow(boolean singleRow) {
     mySingleRow = singleRow;
 
-    revalidate();
-    repaint();
+    update(true);
   }
 
   public boolean isSingleRow() {
