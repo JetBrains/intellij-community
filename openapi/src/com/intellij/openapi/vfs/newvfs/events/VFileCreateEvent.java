@@ -45,7 +45,7 @@ public class VFileCreateEvent extends VFileEvent {
   }
 
   public boolean isValid() {
-    return myParent.findChild(myChildName) == null;
+    return myParent.isValid() && myParent.findChild(myChildName) == null;
   }
 
   public boolean equals(final Object o) {
