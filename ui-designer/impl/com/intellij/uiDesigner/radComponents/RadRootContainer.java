@@ -162,6 +162,10 @@ public final class RadRootContainer extends RadContainer implements IRootContain
     return group;
   }
 
+  public void deleteGroup(RadButtonGroup group) {
+    myButtonGroups.remove(group);
+  }
+
   public void setButtonGroups(final IButtonGroup[] buttonGroups) {
     myButtonGroups.clear();
     for(IButtonGroup lwGroup: buttonGroups) {

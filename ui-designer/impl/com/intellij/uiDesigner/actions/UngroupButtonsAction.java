@@ -6,6 +6,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,8 +21,15 @@ public class UngroupButtonsAction extends AbstractGuiEditorAction {
   }
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
-    for(RadComponent component: selection) {
-      editor.getRootContainer().setGroupForComponent(component, null);
+    if (selection.size() == 1) {
+      final RadComponent component = selection.get(0);
+      IButtonGroup group = FormEditingUtil.findGroupForComponent(editor.getRootContainer(), component);
+      editor.getRootContainer().deleteGroup((RadButtonGroup) group);
+    }
+    else {
+      for(RadComponent component: selection) {
+        editor.getRootContainer().setGroupForComponent(component, null);
+      }
     }
   }
 
@@ -33,7 +41,7 @@ public class UngroupButtonsAction extends AbstractGuiEditorAction {
 
   private static boolean canUngroup(final GuiEditor editor, final ArrayList<RadComponent> selectedComponents) {
     if (selectedComponents.size() < 2) {
-      return false;
+      return selectedComponents.size() == 1;
     }
     return isSameGroup(editor, selectedComponents);
   }
