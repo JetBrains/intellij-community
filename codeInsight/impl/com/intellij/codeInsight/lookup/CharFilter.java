@@ -8,8 +8,6 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import org.jetbrains.annotations.Nullable;
-
 public interface CharFilter {
   int ADD_TO_PREFIX = 0;
   int SELECT_ITEM_AND_FINISH_LOOKUP = 1;
@@ -19,8 +17,7 @@ public interface CharFilter {
    * Informs about further action on typing character c when completion lookup has specified prefix
    * @param c character being inserted
    * @param prefix current completion prefix
-   * @param element
    * @return one of above constants
    */
-  int accept(char c, final String prefix, @Nullable final LookupElement element);
+  int accept(char c, final String prefix);
 }

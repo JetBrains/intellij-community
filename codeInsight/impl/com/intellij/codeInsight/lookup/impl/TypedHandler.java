@@ -30,7 +30,9 @@ class TypedHandler implements TypedActionHandler {
     }
 
     CharFilter charFilter = lookup.getCharFilter();
-    final int result = charFilter.accept(charTyped, lookup.getPrefix(), lookup.getCurrentItem());
+    final String prefix = lookup.getPrefix();
+    final LookupItem<?> currentItem = lookup.getCurrentItem();
+    final int result = getLookupAction(charTyped, charFilter, prefix, currentItem);
 
     CommandProcessor.getInstance().executeCommand(DataKeys.PROJECT.getData(dataContext), new Runnable() {
       public void run() {
@@ -50,7 +52,6 @@ class TypedHandler implements TypedActionHandler {
         lookup.setBounds(point.x,point.y,preferredSize.width,preferredSize.height);
       }
       else{
-        final String prefix = lookup.getPrefix();
         ListModel model = lookup.getList().getModel();
         for(int i = 0; i < model.getSize(); i++){
           LookupItem item = (LookupItem)model.getElementAt(i);
@@ -77,5 +78,14 @@ class TypedHandler implements TypedActionHandler {
       lookup.hide();
       myOriginalHandler.execute(editor, charTyped, dataContext);
     }
+  }
+
+  private static int getLookupAction(final char charTyped, final CharFilter charFilter, final String prefix, final LookupItem<?> currentItem) {
+    if (currentItem != null) {
+      for (String lookupString : currentItem.getAllLookupStrings()) {
+        if (lookupString.startsWith(prefix + charTyped)) return CharFilter.ADD_TO_PREFIX;
+      }
+    }
+    return charFilter.accept(charTyped, prefix);
   }
 }

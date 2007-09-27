@@ -8,9 +8,8 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.openapi.editor.Editor;
 
 public class XmlCharFilter implements CharFilter {
@@ -22,7 +21,7 @@ public class XmlCharFilter implements CharFilter {
     myEditor = editor;
   }
 
-  public int accept(char c, final String prefix, final LookupElement element) {
+  public int accept(char c, final String prefix) {
     if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
     switch(c){
       case ':':

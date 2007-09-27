@@ -9,8 +9,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
@@ -39,7 +37,7 @@ public class DefaultCharFilter implements CharFilter {
       psiElement = file.findElementAt(offset + 1);
       if (psiElement == null && offset > 0) psiElement = file.findElementAt(offset - 1);
     }
-    
+
     if (psiElement != null) myDelegate = ourCharFilterRegistry.get(psiElement.getLanguage());
 
     if (myFile instanceof XmlFile && myDelegate == null) {
@@ -56,7 +54,7 @@ public class DefaultCharFilter implements CharFilter {
           inJavaContext = true;
         }
       }
-      
+
       if (!inJavaContext) {
         final PsiElement parentElement = psiElement.getParent() != null ? psiElement.getParent():null;
         String s;
@@ -77,14 +75,8 @@ public class DefaultCharFilter implements CharFilter {
     }
   }
 
-  public int accept(char c, final String prefix, final LookupElement element) {
-    if (element != null) {
-      for (final String string : ((LookupItem<?>)element).getAllLookupStrings()) {
-        if (string.startsWith(prefix + c)) return ADD_TO_PREFIX;
-      }
-    }
-
-    if (myDelegate != null) return myDelegate.accept(c, prefix, element);
+  public int accept(char c, final String prefix) {
+    if (myDelegate != null) return myDelegate.accept(c, prefix);
 
     if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
     switch(c){
