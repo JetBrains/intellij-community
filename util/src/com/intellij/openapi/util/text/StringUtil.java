@@ -1137,7 +1137,7 @@ public class StringUtil {
     return text.length() > length ? text.substring(0, length) + (appendEllipsis ? "..." : "") : text;
   }
 
-  public static String escapeQuotes( @NotNull String str) {
+  public static String escapeQuotes(final @NotNull String str) {
     int idx = str.indexOf('"');
     if (idx < 0) return str;
     StringBuilder buf = new StringBuilder(str);
@@ -1152,4 +1152,44 @@ public class StringUtil {
     }
     return buf.toString();
   }
+
+  @NonNls private static final String[] REPLACES_REFS = new String[]{"&lt;", "&nbsp;", "&gt;", "&amp;", "&apos;", "&quot;"};
+  @NonNls private static final String[] REPLACES_DISP = new String[]{"<", "\u00a0", ">", "&", "'", "\""};
+
+  public static String unescapeXml(final String text) {
+    if (text == null) return null;
+    return replace(text, REPLACES_REFS, REPLACES_DISP);
+  }
+
+  public static String escapeXml(final String text) {
+    if (text == null) return null;
+    return replace(text, REPLACES_DISP, REPLACES_REFS);
+  }
+
+  @SuppressWarnings({"AssignmentToForLoopParameter"})
+  private static String replace(final String text, final String[] from, final String[] to) {
+    final StringBuilder result = StringBuilderSpinAllocator.alloc();
+    try {
+      replace:
+      for (int i = 0; i < text.length(); i++) {
+        for (int j = 0; j < from.length; j += 1) {
+          String toReplace = from[j];
+          String replaceWith = to[j];
+
+          final int len = toReplace.length();
+          if (text.regionMatches(i, toReplace, 0, len)) {
+            result.append(replaceWith);
+            i += len - 1;
+            continue replace;
+          }
+        }
+        result.append(text.charAt(i));
+      }
+      return result.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(result);
+    }
+  }
+
 }

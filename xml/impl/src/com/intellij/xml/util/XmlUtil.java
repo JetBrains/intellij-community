@@ -1267,43 +1267,12 @@ public class XmlUtil {
     return text;
   }
 
-  @NonNls private static final String[] REPLACES_REFS = new String[]{"&lt;",  "&nbsp;", "&gt;", "&amp;",  "&apos;", "&quot;"};
-  @NonNls private static final String[] REPLACES_DISP = new String[]{"<",     "\u00a0",      ">",    "&",      "'",      "\""};
-
   public static String unescape(String text) {
-    if (text == null) return null;
-    return replace(text, REPLACES_REFS, REPLACES_DISP);
+    return StringUtil.unescapeXml(text);
   }
 
   public static String escape(String text) {
-    if (text == null) return null;
-    return replace(text, REPLACES_DISP, REPLACES_REFS);
-  }
-
-  @SuppressWarnings({"AssignmentToForLoopParameter"})
-  private static String replace(final String text, final String[] from, final String[] to) {
-    final StringBuilder result = StringBuilderSpinAllocator.alloc();
-    try {
-      replace:
-      for (int i = 0; i < text.length(); i++) {
-        for (int j = 0; j < from.length; j += 1) {
-          String toReplace = from[j];
-          String replaceWith = to[j];
-
-          final int len = toReplace.length();
-          if (text.regionMatches(i, toReplace, 0, len)) {
-            result.append(replaceWith);
-            i += len - 1;
-            continue replace;
-          }
-        }
-        result.append(text.charAt(i));
-      }
-      return result.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(result);
-    }
+    return StringUtil.escapeXml(text);
   }
 
   @NonNls private static final byte[] XML_PROLOG_START_BYTES = CharsetToolkit.getUtf8Bytes("<?xml");
