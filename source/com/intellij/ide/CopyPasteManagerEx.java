@@ -326,7 +326,16 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   private static final DataFlavor ourDataFlavor;
   static {
     try {
-      ourDataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + MyData.class.getName());
+      final Class<MyData> flavorClass = MyData.class;
+      final Thread currentThread = Thread.currentThread();
+      final ClassLoader currentLoader = currentThread.getContextClassLoader();
+      try {
+        currentThread.setContextClassLoader(flavorClass.getClassLoader());
+        ourDataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + flavorClass.getName());
+      }
+      finally {
+        currentThread.setContextClassLoader(currentLoader);
+      }
     }
     catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
