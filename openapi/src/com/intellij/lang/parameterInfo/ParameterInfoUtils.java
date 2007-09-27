@@ -68,6 +68,7 @@ public class ParameterInfoUtils {
         if (!acceptRparenth){
           if (offset == range.getEndOffset() - 1){
             PsiElement[] children = parent.getChildren();
+            if (children.length == 0) return null;
             PsiElement last = children[children.length - 1];
             if (last.getNode().getElementType() == findArgumentListHelper.getActualParametersRBraceType()){
               parent = parent.getParent();

@@ -50,7 +50,7 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
     return null;
   }
 
-  public void showParameterInfo(final PsiReferenceParameterList element, final CreateParameterInfoContext context) {
+  public void showParameterInfo(@NotNull final PsiReferenceParameterList element, final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
@@ -58,7 +58,7 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
     return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);
   }
 
-  public void updateParameterInfo(final PsiReferenceParameterList o, final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(@NotNull final PsiReferenceParameterList o, final UpdateParameterInfoContext context) {
     int index = ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), context.getOffset(), JavaTokenType.COMMA);
     context.setCurrentParameter(index);
     final Object[] objectsToView = context.getObjectsToView();

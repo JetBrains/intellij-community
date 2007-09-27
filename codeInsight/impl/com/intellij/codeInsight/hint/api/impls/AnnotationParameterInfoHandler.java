@@ -6,6 +6,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -58,7 +59,7 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
     return null;
   }
 
-  public void showParameterInfo(final PsiAnnotationParameterList element, final CreateParameterInfoContext context) {
+  public void showParameterInfo(@NotNull final PsiAnnotationParameterList element, final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
@@ -67,7 +68,7 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
     return annotation != null ? annotation.getParameterList() : null;
   }
 
-  public void updateParameterInfo(final PsiAnnotationParameterList o, final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(@NotNull final PsiAnnotationParameterList o, final UpdateParameterInfoContext context) {
     CharSequence chars = context.getEditor().getDocument().getCharsSequence();
     int offset1 = CharArrayUtil.shiftForward(chars, context.getEditor().getCaretModel().getOffset(), " \t");
     if (chars.charAt(offset1) == ',') {

@@ -18,7 +18,7 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   // Null returns leads to removing hint
   @Nullable
   ParameterOwner findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context);
-  void updateParameterInfo(final @NotNull ParameterOwner o, final UpdateParameterInfoContext context);
+  void updateParameterInfo(@NotNull final ParameterOwner o, final UpdateParameterInfoContext context);
 
   // Can be null if parameter info does not track parameter index
   @Nullable String getParameterCloseChars();

@@ -80,7 +80,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return null;
   }
 
-  public void updateParameterInfo(final XmlTag o, final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(@NotNull final XmlTag o, final UpdateParameterInfoContext context) {
     if (context.getParameterOwner() == null || o.equals(context.getParameterOwner())) {
       context.setParameterOwner( o );
     } else {

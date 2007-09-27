@@ -24,7 +24,7 @@ import java.util.Set;
  * @author Maxim.Mossienko
  */
 public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList,Object,PsiExpression> {
-  private static Set<Class> ourArgumentListAllowedParentClassesSet = new HashSet<Class>(
+  private static final Set<Class> ourArgumentListAllowedParentClassesSet = new HashSet<Class>(
       Arrays.asList(PsiMethodCallExpression.class,PsiNewExpression.class, PsiAnonymousClass.class,PsiEnumConstant.class));
 
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
@@ -76,7 +76,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static PsiExpressionList findMethodsForArgumentList(final CreateParameterInfoContext context,
-                                                              final @NotNull PsiExpressionList argumentList) {
+                                                              @NotNull final PsiExpressionList argumentList) {
 
     CandidateInfo[] candidates = getMethods(argumentList);
     if (candidates.length == 0) {
@@ -196,35 +196,40 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return true;
   }
 
+  @NotNull
   public Class<PsiExpressionList> getArgumentListClass() {
     return PsiExpressionList.class;
   }
 
+  @NotNull
   public IElementType getActualParametersRBraceType() {
     return JavaTokenType.RBRACE;
   }
 
+  @NotNull
   public Set<Class> getArgumentListAllowedParentClasses() {
     return ourArgumentListAllowedParentClassesSet;
   }
 
+  @NotNull
   public IElementType getActualParameterDelimiterType() {
     return JavaTokenType.COMMA;
   }
 
-  public PsiExpression[] getActualParameters(PsiExpressionList psiExpressionList) {
+  @NotNull
+  public PsiExpression[] getActualParameters(@NotNull PsiExpressionList psiExpressionList) {
     return psiExpressionList.getExpressions();
   }
 
   private static PsiCall getCall(PsiExpressionList list){
     if (list.getParent() instanceof PsiMethodCallExpression){
-      return (PsiCallExpression)list.getParent();
+      return (PsiCall)list.getParent();
     }
     else if (list.getParent() instanceof PsiNewExpression){
-      return (PsiCallExpression)list.getParent();
+      return (PsiCall)list.getParent();
     }
     else if (list.getParent() instanceof PsiAnonymousClass){
-      return (PsiCallExpression)list.getParent().getParent();
+      return (PsiCall)list.getParent().getParent();
     }
     else if (list.getParent() instanceof PsiEnumConstant){
       return (PsiCall)list.getParent();
@@ -234,7 +239,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     }
   }
 
-  public static CandidateInfo[] getMethods(PsiExpressionList argList) {
+  private static CandidateInfo[] getMethods(PsiExpressionList argList) {
     final PsiCall call = getCall(argList);
     PsiResolveHelper helper = argList.getManager().getResolveHelper();
 
@@ -248,7 +253,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         }
       }
       else {
-        PsiClass aClass = (PsiAnonymousClass)argList.getParent();
+        PsiClass aClass = (PsiClass)argList.getParent();
         for (CandidateInfo candidate : candidates) {
           if (candidate.isStaticsScopeCorrect() && helper.isAccessible((PsiMethod)candidate.getElement(), argList, aClass)) {
             result.add(candidate);
