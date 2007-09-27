@@ -282,4 +282,24 @@ public class LibraryLinkImpl extends LibraryLink {
     return libraryLink;
   }
 
+  public void adjustLibrary() {
+    if (myLibraryInfo instanceof LibraryInfoBasedOnLibrary) {
+      Library library = ((LibraryInfoBasedOnLibrary)myLibraryInfo).getLibrary();
+      LibraryTable table = library.getTable();
+      if (table != null && !isInTable(library, table)) {
+        LibraryInfoImpl info = new LibraryInfoImpl(library);
+        Library newLibrary = info.findLibrary(myProject, getParentModule(), null);
+        myLibraryInfo = newLibrary != null ? new LibraryInfoBasedOnLibrary(newLibrary) : info;
+      }
+    }
+  }
+
+  private static boolean isInTable(final Library library, final LibraryTable table) {
+    for (Library aLibrary : table.getLibraries()) {
+      if (aLibrary == library) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

@@ -87,8 +87,8 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   public Facet createAndAddFacet(Module module, FacetType<?, ?> type, String name, final @Nullable FacetInfo underlyingFacet) {
     final Facet facet = createFacet(type, module, name, myInfo2Facet.get(underlyingFacet));
     myCreatedFacets.add(facet);
-    getOrCreateModifiableModel(module).addFacet(facet);
     addFacetInfo(facet);
+    getOrCreateModifiableModel(module).addFacet(facet);
     return facet;
   }
 
@@ -134,10 +134,15 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   }
 
   @NotNull
-  public ModifiableFacetModel getOrCreateModifiableModel(Module module) {
+  public ModifiableFacetModel getOrCreateModifiableModel(final Module module) {
     ModifiableFacetModel model = myModels.get(module);
     if (model == null) {
       model = FacetManager.getInstance(module).createModifiableModel();
+      model.addListener(new ModifiableFacetModel.Listener() {
+        public void onChanged() {
+          fireFacetModelChanged(module);
+        }
+      }, null);
       myModels.put(module, model);
     }
     return model;
@@ -274,6 +279,12 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     for (Facet facet : allFacets) {
       FacetEditor editor = getOrCreateEditor(facet);
       ((FacetEditorContextBase)editor.getContext()).fireModuleRootsChanged(moduleRootModel);
+    }
+  }
+
+  private void fireFacetModelChanged(Module module) {
+    for (Facet facet : getAllFacets(module)) {
+      ((FacetEditorContextBase)getOrCreateEditor(facet).getContext()).fireFacetModelChanged(module);
     }
   }
 

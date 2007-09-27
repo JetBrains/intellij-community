@@ -81,13 +81,15 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
     return myFacet2NewName.containsKey(facet) ? myFacet2NewName.get(facet) : facet.getName();
   }
 
-  public void addListener(final Listener listener, Disposable parent) {
+  public void addListener(@NotNull final Listener listener, @Nullable Disposable parentDisposable) {
     myListeners.add(listener);
-    Disposer.register(parent, new Disposable() {
-      public void dispose() {
-        myListeners.remove(listener);
-      }
-    });
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, new Disposable() {
+        public void dispose() {
+          myListeners.remove(listener);
+        }
+      });
+    }
   }
 
   protected void facetsChanged() {

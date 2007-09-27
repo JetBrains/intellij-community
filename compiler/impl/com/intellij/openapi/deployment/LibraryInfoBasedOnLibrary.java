@@ -20,7 +20,7 @@ import java.util.Arrays;
 class LibraryInfoBasedOnLibrary implements LibraryInfo {
   private final Library myLibrary;
 
-  public LibraryInfoBasedOnLibrary(Library library) {
+  public LibraryInfoBasedOnLibrary(@NotNull Library library) {
     myLibrary = library;
   }
 

@@ -4,25 +4,26 @@
 
 package com.intellij.facet.impl.ui;
 
-import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.facet.FacetInfo;
+import com.intellij.facet.impl.DefaultFacetsProvider;
+import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -33,7 +34,7 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   private ModulesProvider myModulesProvider;
   private final FacetInfo myFacetInfo;
   private UserDataHolder mySharedModuleData;
-  private EventDispatcher<ModuleRootsChangeListener> myModuleRootsDispatcher = EventDispatcher.create(ModuleRootsChangeListener.class);
+  private EventDispatcher<FacetContextChangeListener> myFacetContextChangeDispatcher = EventDispatcher.create(FacetContextChangeListener.class);
   private UserDataHolder mySharedProjectData;
 
   public FacetEditorContextBase(@NotNull FacetInfo facetInfo, final @Nullable FacetEditorContext parentContext, final @Nullable FacetsProvider facetsProvider,
@@ -134,11 +135,15 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     return name;
   }
 
-  public void addModuleRootListener(ModuleRootsChangeListener moduleRootsChangeListener) {
-    myModuleRootsDispatcher.addListener(moduleRootsChangeListener);
+  public void addFacetContextChangeListener(FacetContextChangeListener facetContextChangeListener) {
+    myFacetContextChangeDispatcher.addListener(facetContextChangeListener);
   }
 
   public void fireModuleRootsChanged(final ModifiableRootModel moduleRootModel) {
-    myModuleRootsDispatcher.getMulticaster().moduleRootsChanged(moduleRootModel);
+    myFacetContextChangeDispatcher.getMulticaster().moduleRootsChanged(moduleRootModel);
+  }
+
+  public void fireFacetModelChanged(final Module module) {
+    myFacetContextChangeDispatcher.getMulticaster().facetModelChanged(module);
   }
 }

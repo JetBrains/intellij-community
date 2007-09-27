@@ -5,15 +5,18 @@
 package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -23,6 +26,16 @@ class LibraryInfoImpl implements LibraryInfo {
   private final List<String> myUrls = new ArrayList<String>();
   private String myName;
   private String myLevel;
+
+  LibraryInfoImpl() {
+  }
+
+  LibraryInfoImpl(@NotNull Library library) {
+    myName = library.getName();
+    LibraryTable table = library.getTable();
+    myLevel = table == null ? LibraryLink.MODULE_LEVEL : table.getTableLevel();
+    myUrls.addAll(Arrays.asList(library.getUrls(OrderRootType.CLASSES)));
+  }
 
   public String getName() {
     return myName;
