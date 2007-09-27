@@ -78,8 +78,10 @@ public class DefaultCharFilter implements CharFilter {
   }
 
   public int accept(char c, final String prefix, final LookupElement element) {
-    for (final String string : ((LookupItem<?>)element).getAllLookupStrings()) {
-      if (string.startsWith(prefix + c)) return ADD_TO_PREFIX;
+    if (element != null) {
+      for (final String string : ((LookupItem<?>)element).getAllLookupStrings()) {
+        if (string.startsWith(prefix + c)) return ADD_TO_PREFIX;
+      }
     }
 
     if (myDelegate != null) return myDelegate.accept(c, prefix, element);
