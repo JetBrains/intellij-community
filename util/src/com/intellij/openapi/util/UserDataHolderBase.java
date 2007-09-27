@@ -28,7 +28,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   private volatile Map<Key, Object> myUserMap = null;
   private static final Object WRITE_LOCK = new Object();
 
-  protected static final Key<Map<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
+  private static final Key<Map<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   protected Object clone() {
     try {
@@ -61,7 +61,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
   public <T> T getUserData(Key<T> key) {
     final Map<Key, Object> map = myUserMap;
-    return map != null ? (T)myUserMap.get(key) : null;
+    return map == null ? null : (T)map.get(key);
   }
 
   public <T> void putUserData(Key<T> key, T value) {
@@ -82,7 +82,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     }
   }
 
-  private static <T> LockPoolSynchronizedMap<Key, Object> createMap() {
+  private static LockPoolSynchronizedMap<Key, Object> createMap() {
     return new LockPoolSynchronizedMap<Key, Object>(2, 0.9f);
   }
 
@@ -92,7 +92,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
   protected <T> T getCopyableUserDataImpl(Key<T> key) {
     Map map = getUserData(COPYABLE_USER_MAP_KEY);
-    return map != null ? (T)map.get(key) : null;
+    return map == null ? null : (T)map.get(key);
   }
 
   public <T> void putCopyableUserData(Key<T> key, T value) {
@@ -166,8 +166,7 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   protected void copyCopyableDataTo(UserDataHolderBase clone) {
-    Map<Key, Object> copyableMap;
-    copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
+    Map<Key, Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
     if (copyableMap != null) {
       copyableMap = ((LockPoolSynchronizedMap)copyableMap).clone();
     }
