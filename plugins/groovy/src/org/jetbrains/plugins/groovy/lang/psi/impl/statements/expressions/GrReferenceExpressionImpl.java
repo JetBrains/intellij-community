@@ -231,9 +231,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   private static final class MyTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
-      if (inferred != null) return inferred;
-
-      return refExpr.getNominalType();
+      final PsiType nominal = refExpr.getNominalType();
+      if (inferred == null) return nominal;
+      if (nominal == null) return inferred;
+      if (!nominal.isAssignableFrom(inferred)) return nominal; //see GRVY-487
+      return inferred;
     }
   }
 

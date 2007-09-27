@@ -1,0 +1,5 @@
+String s = new Object()
+
+s.int<caret>
+-----
+intern

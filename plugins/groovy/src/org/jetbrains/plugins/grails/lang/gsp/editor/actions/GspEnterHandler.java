@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
+import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
 
 /**
  * @author ilyas
@@ -45,13 +46,12 @@ public class GspEnterHandler extends EditorWriteActionHandler {
   private boolean handleEnter(Editor editor, DataContext dataContext) {
     final Project project = DataKeys.PROJECT.getData(dataContext);
     PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
-    if (project == null) {
-      return false;
-    }
+    if (project == null) return false;
+    if (!(file instanceof GspFile)) return false;
+
     int carret = editor.getCaretModel().getOffset();
     if (carret == 0) return false;
 
-    assert file != null;
     PsiElement element = file.findElementAt(carret - 1);
     if (element != null &&
         element.getNode().getElementType() != GspTokenTypesEx.JSCRIPT_BEGIN) {
