@@ -20,7 +20,7 @@ public class PatchCreator {
     Writer writer = new OutputStreamWriter(new FileOutputStream(filePath));
     try {
       List<FilePatch> patches = PatchBuilder.buildPatch(changes, gw.getBaseDir(), false, isReverse);
-      final String lineSeparator = CodeStyleSettingsManager.getInstance(gw.getProject()).getCurrentSettings().getLineSeparator();
+      String lineSeparator = CodeStyleSettingsManager.getInstance(gw.getProject()).getCurrentSettings().getLineSeparator();
       UnifiedDiffWriter.write(patches, writer, lineSeparator);
     }
     finally {

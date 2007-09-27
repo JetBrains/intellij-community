@@ -126,8 +126,23 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   @Override
   public void contentsChanged(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
-    assert e.getFile().isValid();
+    assert fileIsValid(e.getFile());
     changeContent(e.getFile());
+  }
+
+  private boolean fileIsValid(VirtualFile f) {
+    if (f.isValid()) return true;
+
+    String s = "\nfile is not valid: " + f.getPath();
+
+    VirtualFile validParent = f.getParent();
+    while(validParent != null && !validParent.isValid()) {
+      validParent = validParent.getParent();
+    }
+
+    s += "\nfirst valid parent: " + (validParent == null ? "null" : validParent.getPath());
+
+    throw new RuntimeException(s);
   }
 
   private void changeContent(VirtualFile f) {
