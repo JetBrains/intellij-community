@@ -191,7 +191,8 @@ public class ApplyPatchDialog extends DialogWrapper {
         }
       }
       catch (Exception e) {
-        Messages.showErrorDialog(myProject, "Error loading changes for " + patch.getAfterFileName() + ": " + e.getMessage(), "Apply Patch");
+        Messages.showErrorDialog(myProject, "Error loading changes for " + patch.getAfterFileName() + ": " + e.getMessage(),
+                                 VcsBundle.message("patch.apply.dialog.title"));
         return;
       }
     }
@@ -372,6 +373,7 @@ public class ApplyPatchDialog extends DialogWrapper {
         }
         parent = parent.getParentDirectory();
       }
+      if (parent == null) return false;
       myDetectedStripLeadingDirs = 0;
       myDetectedBaseDirectory = parent.getVirtualFile().getPresentableUrl();
       return true;
@@ -553,8 +555,8 @@ public class ApplyPatchDialog extends DialogWrapper {
   }
 
   private class PatchCellRendererPanel extends JPanel implements ListCellRenderer {
-    private PatchCellRenderer myRenderer;
-    private JLabel myFileTypeLabel;
+    private final PatchCellRenderer myRenderer;
+    private final JLabel myFileTypeLabel;
 
     public PatchCellRendererPanel() {
       super(new BorderLayout());
@@ -585,9 +587,9 @@ public class ApplyPatchDialog extends DialogWrapper {
   }
 
   private class PatchCellRenderer extends ColoredListCellRenderer {
-    private SimpleTextAttributes myNewAttributes = new SimpleTextAttributes(0, FileStatus.ADDED.getColor());
-    private SimpleTextAttributes myDeletedAttributes = new SimpleTextAttributes(0, FileStatus.DELETED.getColor());
-    private SimpleTextAttributes myModifiedAttributes = new SimpleTextAttributes(0, FileStatus.MODIFIED.getColor());
+    private final SimpleTextAttributes myNewAttributes = new SimpleTextAttributes(0, FileStatus.ADDED.getColor());
+    private final SimpleTextAttributes myDeletedAttributes = new SimpleTextAttributes(0, FileStatus.DELETED.getColor());
+    private final SimpleTextAttributes myModifiedAttributes = new SimpleTextAttributes(0, FileStatus.MODIFIED.getColor());
 
     private boolean assumeProblemWillBeFixed(final FilePatch filePatch) {
       // if some of the files are valid, assume that "red" new files will be fixed by creating directories
