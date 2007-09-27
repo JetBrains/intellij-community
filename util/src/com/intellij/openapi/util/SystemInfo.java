@@ -21,6 +21,7 @@ public class SystemInfo {
   public static final String OS_VERSION = System.getProperty("os.version").toLowerCase();
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
+  public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
 
   public static final boolean isWindows = OS_NAME.startsWith("windows");
   public static final boolean isWindowsNT = OS_NAME.startsWith("windows nt");
@@ -38,6 +39,10 @@ public class SystemInfo {
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
+
+
+  public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
+  public static final boolean is64Bit = !is32Bit;
 
   /**
    * Whether IDEA is running under MacOS X version 10.4 or later.
