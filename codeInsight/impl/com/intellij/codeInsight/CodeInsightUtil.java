@@ -114,7 +114,7 @@ public class CodeInsightUtil {
       if (parent instanceof PsiCodeBlock) break;
       if (PsiUtil.isInJspFile(parent) && parent instanceof PsiFile) break;
       if (parent instanceof PsiCodeFragment) break;
-      if (parent instanceof PsiFile) return PsiElement.EMPTY_ARRAY;
+      if (parent == null || parent instanceof PsiFile) return PsiElement.EMPTY_ARRAY;
       parent = parent.getParent();
     }
 
@@ -418,7 +418,7 @@ public class CodeInsightUtil {
                               language);
   }
 
-  private static Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
+  private static final Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
 
   public static boolean isAntFile(final PsiFile file) {
     if (file instanceof XmlFile) {
