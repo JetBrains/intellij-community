@@ -162,76 +162,80 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public PsiType getNominalType() {
     return GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper().doInference(new Computable<PsiType>() {
       public PsiType compute() {
-        IElementType dotType = getDotTokenType();
-        final GroovyResolveResult resolveResult = advancedResolve();
-        PsiElement resolved = resolveResult.getElement();
-        PsiType result = null;
-        PsiManager manager = getManager();
-        if (resolved instanceof PsiClass) {
-          if (getParent() instanceof GrReferenceExpression) {
-            result = manager.getElementFactory().createType((PsiClass) resolved);
-          } else {
-            PsiClass javaLangClass = manager.findClass("java.lang.Class", getResolveScope());
-            if (javaLangClass != null) {
-              PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-              final PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
-              if (typeParameters.length == 1) {
-                substitutor = substitutor.put(typeParameters[0], manager.getElementFactory().createType((PsiClass) resolved));
-              }
-              result = manager.getElementFactory().createType(javaLangClass, substitutor);
-            }
-          }
-        } else if (resolved instanceof GrVariable) {
-          result = ((GrVariable) resolved).getTypeGroovy();
-        } else if (resolved instanceof PsiVariable) {
-          result = ((PsiVariable) resolved).getType();
-        } else
-        if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
-          if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
-            return manager.getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
-          }
-          PsiMethod method = (PsiMethod) resolved;
-          if (PropertyUtil.isSimplePropertySetter(method)) {
-            result = method.getParameterList().getParameters()[0].getType();
-          } else {
-            result = method.getReturnType();
-          }
-        } else if (resolved instanceof GrReferenceExpression) {
-          PsiElement parent = resolved.getParent();
-          if (parent instanceof GrAssignmentExpression) {
-            GrAssignmentExpression assignment = (GrAssignmentExpression) parent;
-            if (resolved.equals(assignment.getLValue())) {
-              GrExpression rValue = assignment.getRValue();
-              if (rValue != null) {
-                PsiType rType = rValue.getType();
-                if (rType != null) result = rType;
-              }
-            }
-          }
-        } else if (resolved == null) {
-          if ("class".equals(getReferenceName())) {
-            return getManager().getElementFactory().createTypeByFQClassName("java.lang.Class",
-                getResolveScope());
-          }
-        }
-
-        if (result != null) {
-          result = resolveResult.getSubstitutor().substitute(result);
-          result = TypesUtil.boxPrimitiveType(result, manager, getResolveScope());
-        }
-        if (dotType != GroovyTokenTypes.mSPREAD_DOT) {
-          return result;
-        } else {
-          return ResolveUtil.getListTypeForSpreadOperator(GrReferenceExpressionImpl.this, result);
-        }
+        return getNominalTypeImpl();
       }
     }, Collections.<String, PsiType>emptyMap());
+  }
+
+  private PsiType getNominalTypeImpl() {
+    IElementType dotType = getDotTokenType();
+    final GroovyResolveResult resolveResult = advancedResolve();
+    PsiElement resolved = resolveResult.getElement();
+    PsiType result = null;
+    PsiManager manager = getManager();
+    if (resolved instanceof PsiClass) {
+      if (getParent() instanceof GrReferenceExpression) {
+        result = manager.getElementFactory().createType((PsiClass) resolved);
+      } else {
+        PsiClass javaLangClass = manager.findClass("java.lang.Class", getResolveScope());
+        if (javaLangClass != null) {
+          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+          final PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
+          if (typeParameters.length == 1) {
+            substitutor = substitutor.put(typeParameters[0], manager.getElementFactory().createType((PsiClass) resolved));
+          }
+          result = manager.getElementFactory().createType(javaLangClass, substitutor);
+        }
+      }
+    } else if (resolved instanceof GrVariable) {
+      result = ((GrVariable) resolved).getTypeGroovy();
+    } else if (resolved instanceof PsiVariable) {
+      result = ((PsiVariable) resolved).getType();
+    } else
+    if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
+      if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
+        return manager.getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
+      }
+      PsiMethod method = (PsiMethod) resolved;
+      if (PropertyUtil.isSimplePropertySetter(method)) {
+        result = method.getParameterList().getParameters()[0].getType();
+      } else {
+        result = method.getReturnType();
+      }
+    } else if (resolved instanceof GrReferenceExpression) {
+      PsiElement parent = resolved.getParent();
+      if (parent instanceof GrAssignmentExpression) {
+        GrAssignmentExpression assignment = (GrAssignmentExpression) parent;
+        if (resolved.equals(assignment.getLValue())) {
+          GrExpression rValue = assignment.getRValue();
+          if (rValue != null) {
+            PsiType rType = rValue.getType();
+            if (rType != null) result = rType;
+          }
+        }
+      }
+    } else if (resolved == null) {
+      if ("class".equals(getReferenceName())) {
+        return getManager().getElementFactory().createTypeByFQClassName("java.lang.Class",
+            getResolveScope());
+      }
+    }
+
+    if (result != null) {
+      result = resolveResult.getSubstitutor().substitute(result);
+      result = TypesUtil.boxPrimitiveType(result, manager, getResolveScope());
+    }
+    if (dotType != GroovyTokenTypes.mSPREAD_DOT) {
+      return result;
+    } else {
+      return ResolveUtil.getListTypeForSpreadOperator(this, result);
+    }
   }
 
   private static final class MyTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
-      final PsiType nominal = refExpr.getNominalType();
+      final PsiType nominal = refExpr.getNominalTypeImpl();
       if (inferred == null) return nominal;
       if (nominal == null) return inferred;
       if (!nominal.isAssignableFrom(inferred)) return nominal; //see GRVY-487

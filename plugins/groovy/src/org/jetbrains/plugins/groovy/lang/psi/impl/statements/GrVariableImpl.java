@@ -105,8 +105,6 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
             }
           }
         }
-
-        if (declaredType == null) declaredType = initializerType;
       }
     }
 
