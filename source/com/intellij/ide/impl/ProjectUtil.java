@@ -398,7 +398,7 @@ public class ProjectUtil {
     });
   }
 
-  public static void processIncluded(final ContentEntry contentEntry, final Set<VirtualFile> included) {
+  private static void processIncluded(final ContentEntry contentEntry, final Set<VirtualFile> included) {
     if (included.isEmpty()) return;
     final Set<VirtualFile> parents = new HashSet<VirtualFile>();
     for (VirtualFile file : included) {
@@ -415,7 +415,7 @@ public class ProjectUtil {
     processIncluded(contentEntry, parents);
   }
 
-  public static void iterate(VirtualFile contentRoot, ContentIterator iterator, ProjectFileIndex idx) {
+  private static void iterate(VirtualFile contentRoot, ContentIterator iterator, ProjectFileIndex idx) {
     if (!iterator.processFile(contentRoot)) return;
     if (idx.getModuleForFile(contentRoot) == null) return; //already excluded
     final VirtualFile[] files = contentRoot.getChildren();
@@ -424,7 +424,7 @@ public class ProjectUtil {
     }
   }
 
-  public static Map<Pattern, Set<Pattern>> loadPatterns(@NonNls String propertyKey) {
+  private static Map<Pattern, Set<Pattern>> loadPatterns(@NonNls String propertyKey) {
     final Map<Pattern, Set<Pattern>> result = new HashMap<Pattern, Set<Pattern>>();
     final String patterns = System.getProperty(propertyKey);
     if (patterns != null) {
