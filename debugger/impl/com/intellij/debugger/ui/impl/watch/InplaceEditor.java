@@ -15,6 +15,7 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -85,7 +86,9 @@ public abstract class InplaceEditor implements AWTEventListener{
     final JLayeredPane layeredPane = rootPane.getLayeredPane();
 
     Rectangle bounds = getEditorBounds();
-
+    if (bounds == null) {
+      return;
+    }
     Point layeredPanePoint = SwingUtilities.convertPoint(tree, bounds.x, bounds.y,layeredPane);
 
     final JComponent inplaceEditorComponent = createInplaceEditorComponent();
@@ -120,6 +123,9 @@ public abstract class InplaceEditor implements AWTEventListener{
             JTree tree = myNode.getTree();
             JLayeredPane layeredPane = tree.getRootPane().getLayeredPane();
             Rectangle bounds = getEditorBounds();
+            if (bounds == null) {
+              return;
+            }
             Point layeredPanePoint = SwingUtilities.convertPoint(tree, bounds.x, bounds.y, layeredPane);
             inplaceEditorComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, bounds.width, bounds.height);
             inplaceEditorComponent.revalidate();
@@ -213,10 +219,14 @@ public abstract class InplaceEditor implements AWTEventListener{
     cancelEditing();
   }
 
+  @Nullable
   private Rectangle getEditorBounds() {
     final DebuggerTree tree = myNode.getTree();
     Rectangle bounds = tree.getVisibleRect();
     Rectangle nodeBounds = tree.getPathBounds(new TreePath(myNode.getPath()));
+    if (bounds == null || nodeBounds == null) {
+      return null;
+    }
     bounds.y = nodeBounds.y;
     bounds.height = nodeBounds.height;
 
