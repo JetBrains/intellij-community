@@ -111,8 +111,6 @@ public class IOExceptionDialog extends JDialog {
    * @return <code>false</code> if "Cancel" button pressed
    */
   public static boolean showErrorDialog (IOException e, String title, String text) {
-    e.printStackTrace(System.err);
-
     final IOExceptionDialog dlg = new IOExceptionDialog(e, title, text);
     try {
       final Runnable doRun = new Runnable() {

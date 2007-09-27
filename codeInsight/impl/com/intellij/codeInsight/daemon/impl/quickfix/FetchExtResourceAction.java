@@ -185,8 +185,9 @@ public class FetchExtResourceAction extends BaseIntentionAction {
                 message = QuickFixBundle.message("error.fetching.dependent.resource.title");
               }
 
-              if (!IOExceptionDialog.showErrorDialog(
-                (IOException)ioproblem.getCause(),
+              final IOException cause = (IOException)ioproblem.getCause();
+              LOG.warn(cause);
+              if (!IOExceptionDialog.showErrorDialog(cause,
                 message,
                 QuickFixBundle.message("error.fetching.resource", ioproblem.url))
               ) {
