@@ -8,9 +8,6 @@ public abstract class CvsStorageComponent extends VirtualFileAdapter {
   protected boolean myIsActive = false;
   public static final CvsStorageComponent ABSENT_STORAGE = new CvsStorageComponent() {
 
-    public void purge() {
-    }
-
     public void init(Project project, boolean synch) {
     }
 
@@ -31,15 +28,11 @@ public abstract class CvsStorageComponent extends VirtualFileAdapter {
     public void deleteIfAdminDirCreated(VirtualFile addedFile) {
     }
 
-    public void sync() {
-    }
-
     public String getComponentName() {
       return "CvsStorageComponent.Absent";
     }
   };
 
-  public abstract void purge();
   public abstract void init(Project project, boolean synch);
   public abstract void dispose();
 
@@ -49,5 +42,4 @@ public abstract class CvsStorageComponent extends VirtualFileAdapter {
 
   public abstract void deleteIfAdminDirCreated(VirtualFile addedFile);
 
-  public abstract void sync();
 }

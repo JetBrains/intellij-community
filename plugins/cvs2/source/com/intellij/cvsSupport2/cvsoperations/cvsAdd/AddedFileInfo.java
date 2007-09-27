@@ -219,7 +219,6 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
     if (!myAddedFile.isDirectory()) return;
     CvsStorageComponent cvsStorageComponent = CvsStorageSupportingDeletionComponent.getInstance(myProject);
     cvsStorageComponent.deleteIfAdminDirCreated(myAddedFile);
-    cvsStorageComponent.sync();
   }
 
 }

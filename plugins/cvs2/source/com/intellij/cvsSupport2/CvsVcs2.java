@@ -133,7 +133,6 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
   public void commitTransaction(Object parameters) throws VcsException {
     myCvsStandardOperationsProvider.commit(parameters);
-    myStorageComponent.purge();
   }
 
   public void rollbackTransaction(Object parameters) {

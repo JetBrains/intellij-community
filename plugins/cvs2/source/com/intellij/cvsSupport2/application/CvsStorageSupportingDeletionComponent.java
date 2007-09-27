@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
 
 import java.io.File;
-import java.io.IOException;
 
 public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent implements CommandListener {
   private static final Logger LOG = Logger.getInstance("#" + CvsStorageSupportingDeletionComponent.class.getName());
@@ -136,15 +135,6 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
 
   private boolean isUnderCvsManagedModuleRoot(VirtualFile file) {
     return getFileVcs(file) == CvsVcs2.getInstance(myProject);
-  }
-
-  public void purge() {
-    try {
-      myDeletedStorage.purgeDirsWithNoEntries();
-    }
-    catch (IOException e) {
-      LOG.info("Purging saved CVS storage: ", e);
-    }
   }
 
   private boolean disabled(VirtualFile file) {

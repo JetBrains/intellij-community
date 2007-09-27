@@ -1,23 +1,17 @@
 package com.intellij.cvsSupport2.application;
 
-import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.RemoveLocallyFileOrDirectoryAction;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
-import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
-import com.intellij.cvsSupport2.ui.RestoreDirectoriesConfirmationDialog;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -45,54 +39,17 @@ class DeleteHandler {
   }
 
   public void execute() {
-    try {
-      boolean restored = false;
-      for (final String myDeletedFilesPath : myDeletedFilesPaths) {
-        restored |= myDeletedStorage.restore((String)myDeletedFilesPath);
-      }
-      myDeletedStorage.purgeDirsWithNoEntries();
-      final boolean showWarning = restored;
-
-      if (CvsVcs2.getInstance(myProject).getRemoveConfirmation().getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
-        if (!myCvsStorageComponent.getIsActive()) return;
-        removeFiles();
-      }
-
-      final int[] myRefreshedParents = new int[]{myDeletedFilesParents.size()};
-      for (final VirtualFile myDeletedFilesParent : myDeletedFilesParents) {
-        myDeletedFilesParent.refresh(true, true, new Runnable() {
-          public void run() {
-            myRefreshedParents[0]++;
-            if (myRefreshedParents[0] == myDeletedFilesParents.size()) {
-              if (showWarning) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  public void run() {
-                    if (!myCvsStorageComponent.getIsActive()) return;
-                    if (CvsApplicationLevelConfiguration.getInstance().SHOW_RESTORE_DIRECTORIES_CONFIRMATION) {
-                      new RestoreDirectoriesConfirmationDialog().show();
-                    }
-                  }
-                });
-              }
-            }
-          }
-        });
-      }
-
-
+    if (CvsVcs2.getInstance(myProject).getRemoveConfirmation().getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
+      if (!myCvsStorageComponent.getIsActive()) return;
+      removeFiles();
     }
-    catch (final IOException e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Messages.showMessageDialog(CvsBundle.message("message.error.cannot.restore.cvs.admin.directories", e.getLocalizedMessage()),
-                                     CvsBundle.message("message.error.cannot.restore.cvs.admin.directories.title"),
-                                     Messages.getErrorIcon());
-        }
-      });
+
+    for (final VirtualFile myDeletedFilesParent : myDeletedFilesParents) {
+      myDeletedFilesParent.refresh(true, true);
     }
   }
 
-  public void removeFiles() {
+  private void removeFiles() {
     for (File file : myFilesToDeleteEntry) {
       if (!file.exists()) {
         CvsUtil.removeEntryFor(file);
