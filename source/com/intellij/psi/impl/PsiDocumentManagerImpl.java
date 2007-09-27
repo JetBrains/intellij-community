@@ -324,6 +324,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
+    if (doc instanceof DocumentWindow) doc = ((DocumentWindow)doc).getDelegate();
     final PostprocessReformattingAspect component = myProject.getComponent(PostprocessReformattingAspect.class);
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
     if(viewProvider != null) component.doPostponedFormatting(viewProvider);
