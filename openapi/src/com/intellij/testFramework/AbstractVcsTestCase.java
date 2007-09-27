@@ -284,7 +284,11 @@ public class AbstractVcsTestCase {
   }
 
   protected void moveFileInCommand(final VirtualFile file, final VirtualFile newParent) {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+    moveFileInCommand(myProject, file, newParent);
+  }
+
+  public static void moveFileInCommand(final Project project, final VirtualFile file, final VirtualFile newParent) {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         try {
           file.move(this, newParent);

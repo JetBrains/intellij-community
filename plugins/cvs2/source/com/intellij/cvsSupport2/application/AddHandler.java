@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,6 +22,7 @@ import java.util.Iterator;
 class AddHandler {
   private final Collection<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
   private final Collection<VirtualFile> myAllFiles = new ArrayList<VirtualFile>();
+  private final Collection<File> myIOFiles = new ArrayList<File>();
   private final Project myProject;
   private final CvsStorageComponent myCvsStorageComponent;
 
@@ -33,8 +35,22 @@ class AddHandler {
     myAllFiles.add(file);
   }
 
+  public void addFile(File file) {
+    myIOFiles.add(file);
+  }
+
   @SuppressWarnings({"UnnecessaryContinue"})
   public void execute() {
+    //for(final File file: myIOFiles) {
+    //  ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    //    public void run() {
+    //      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    //      if (virtualFile != null) {
+    //        myAllFiles.add(virtualFile);
+    //      }
+    //    }
+    //  });
+    //}
     for (VirtualFile file : myAllFiles) {
       if (!CvsUtil.fileIsUnderCvs(file.getParent())) {
         continue;
@@ -56,13 +72,19 @@ class AddHandler {
 
     if (!myAddedFiles.isEmpty()) {
       if (CvsVcs2.getInstance(myProject).getAddConfirmation().getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (!myCvsStorageComponent.getIsActive()) return;
-                AddFileOrDirectoryAction.createActionToAddNewFileAutomatically()
-                  .actionPerformed(createDataContext(myAddedFiles));
-              }
-            });
+        final Runnable addRunnable = new Runnable() {
+          public void run() {
+            if (!myCvsStorageComponent.getIsActive()) return;
+            AddFileOrDirectoryAction.createActionToAddNewFileAutomatically()
+              .actionPerformed(createDataContext(myAddedFiles));
+          }
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          addRunnable.run();
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(addRunnable);
+        }
       }
     }
   }

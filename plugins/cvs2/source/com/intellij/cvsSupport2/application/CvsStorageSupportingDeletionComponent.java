@@ -1,21 +1,18 @@
 package com.intellij.cvsSupport2.application;
 
-import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.components.ServiceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,11 +24,12 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   private DeletedCVSDirectoryStorage myDeletedStorage;
   private DeleteHandler myDeleteHandler = null;
   private AddHandler myAddHandler = null;
+  private CvsFileOperationsHandler myFileOperationsHandler;
 
   private int myCommandLevel = 0;
 
   private boolean myAnotherProjectCommand = false;
-  private static final Key<AbstractVcs> FILE_VCS = new Key<AbstractVcs>("File VCS");
+  static final Key<AbstractVcs> FILE_VCS = new Key<AbstractVcs>("File VCS");
 
   public void commandStarted(CommandEvent event) {
     myCommandLevel++;
@@ -69,6 +67,8 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     VirtualFileManager.getInstance().addVirtualFileListener(this);
     CvsEntriesManager.getInstance().registerAsVirtualFileListener();
     CommandProcessor.getInstance().addCommandListener(this);
+    myFileOperationsHandler = new CvsFileOperationsHandler(project, this);
+    LocalFileSystem.getInstance().registerAuxiliaryFileOperationsHandler(myFileOperationsHandler);
     myIsActive = true;
   }
 
@@ -76,43 +76,23 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     VirtualFileManager.getInstance().removeVirtualFileListener(this);
     CvsEntriesManager.getInstance().unregisterAsVirtualFileListener();
     CommandProcessor.getInstance().removeCommandListener(this);
+    LocalFileSystem.getInstance().unregisterAuxiliaryFileOperationsHandler(myFileOperationsHandler);
+    myFileOperationsHandler = null;
     myIsActive = false;
     myProject = null;
   }
 
   public void beforeFileDeletion(VirtualFileEvent event) {
-    VirtualFile file = event.getFile();
-    file.putUserData(FILE_VCS, ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file));
-    if (!CvsUtil.fileIsUnderCvs(file)) return;
-    if (!shouldProcessEvent(event, false)) return;
-    LOG.info("Preserving CVS info from " + file);
-    try {
-      if (event.getRequestor() != myDeletedStorage) {
-        if (myDeleteHandler == null) {
-          myDeleteHandler = myDeletedStorage.createDeleteHandler(myProject, this);
-        }
-        myDeleteHandler.addDeletedRoot(file);
-        myDeletedStorage.saveCVSInfo(VfsUtil.virtualToIoFile(file));
-      }
+  }
+
+  public DeleteHandler getDeleteHandler() {
+    if (myDeleteHandler == null) {
+      myDeleteHandler = myDeletedStorage.createDeleteHandler(myProject, this);
     }
-    catch (final IOException e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          Messages.showMessageDialog(CvsBundle.message("message.error.cannot.restore.cvs.admin.directories", e.getLocalizedMessage()),
-                                     CvsBundle.message("message.error.cannot.restore.cvs.admin.directories.title"), Messages.getErrorIcon());
-        }
-      });
-    }
+    return myDeleteHandler;
   }
 
   public void fileDeleted(VirtualFileEvent event) {
-    try {
-      if (!shouldProcessEvent(event, true)) return;
-      execute();
-    }
-    finally {
-      event.getFile().putUserData(FILE_VCS, null);
-    }
   }
 
   private boolean shouldProcessEvent(VirtualFileEvent event, boolean parentShouldBeUnderCvs) {
@@ -134,14 +114,9 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   }
 
   public void beforeFileMovement(VirtualFileMoveEvent event) {
-    LOG.assertTrue(myCommandLevel > 0);
-    beforeFileDeletion(event);
   }
 
   public void fileMoved(VirtualFileMoveEvent event) {
-    if (processMoveOrRename()) {
-      fileDeleted(event);
-    }
     fileCreated(event);
   }
 
@@ -198,16 +173,21 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     final VirtualFile file = event.getFile();
     myDeletedStorage.checkNeedForPurge(VfsUtil.virtualToIoFile(file));
     deleteIfAdminDirCreated(file);
-    if (myAddHandler == null) myAddHandler = new AddHandler(project, this);
-    myAddHandler.addFile(file);
+    getAddHandler().addFile(file);
 
     execute();
   }
 
-  private void execute() {
+  public AddHandler getAddHandler() {
+    if (myAddHandler == null) {
+      myAddHandler = new AddHandler(myProject, this);
+    }
+    return myAddHandler;
+  }
 
+  private void execute() {
     if (myCommandLevel > 0) return;
-    myDeletedStorage.sync();
+    //myDeletedStorage.sync();
     if (myDeleteHandler != null) myDeleteHandler.execute();
     if (myAddHandler != null) myAddHandler.execute();
 
@@ -227,7 +207,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   }
 
   public void sync() {
-    myDeletedStorage.sync();
+    //myDeletedStorage.sync();
   }
 
   public static CvsStorageComponent getInstance(Project project) {

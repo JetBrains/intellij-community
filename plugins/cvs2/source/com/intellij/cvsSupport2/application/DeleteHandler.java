@@ -10,9 +10,9 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.ui.RestoreDirectoriesConfirmationDialog;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -54,13 +54,8 @@ class DeleteHandler {
       final boolean showWarning = restored;
 
       if (CvsVcs2.getInstance(myProject).getRemoveConfirmation().getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (!myCvsStorageComponent.getIsActive()) return;
-            removeFiles();
-          }
-        }, ModalityState.NON_MODAL);
-
+        if (!myCvsStorageComponent.getIsActive()) return;
+        removeFiles();
       }
 
       final int[] myRefreshedParents = new int[]{myDeletedFilesParents.size()};
@@ -98,21 +93,16 @@ class DeleteHandler {
   }
 
   public void removeFiles() {
-
     for (File file : myFilesToDeleteEntry) {
       if (!file.exists()) {
         CvsUtil.removeEntryFor(file);
       }
     }
 
-    final ArrayList<String> reallyDeletedFiles = new ArrayList<String>();
+    if (myDeletedFiles.isEmpty()) return;
     for (String s : myDeletedFiles) {
-      if (!new File(s).exists()) {
-        reallyDeletedFiles.add(s);
-      }
+      FileUtil.delete(new File(s));
     }
-
-    if (reallyDeletedFiles.isEmpty()) return;
 
     CvsContext context = new CvsContextAdapter() {
       public Project getProject() {
@@ -120,7 +110,7 @@ class DeleteHandler {
       }
 
       public Collection<String> getDeletedFileNames() {
-        return reallyDeletedFiles;
+        return myDeletedFiles;
       }
 
     };

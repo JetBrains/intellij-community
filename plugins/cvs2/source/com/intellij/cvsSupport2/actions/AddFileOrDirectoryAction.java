@@ -113,7 +113,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(context.getProject());
     for(VirtualFile file: filesToAdd) {
       if (file.isDirectory()) {
-        dirtyScopeManager.dirDirtyRecursively(file, true);
+        dirtyScopeManager.dirDirtyRecursively(file);
       }
       else {
         dirtyScopeManager.fileDirty(file);        
