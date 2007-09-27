@@ -414,7 +414,7 @@ public class InjectedLanguageUtil {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     documentManager.commitAllDocuments();
 
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = file.getViewProvider().findElementAt(offset, file.getLanguage());
     PsiElement inj = element == null ? null : findInside(element, file, offset, documentManager);
     if (inj != null) return inj;
 
