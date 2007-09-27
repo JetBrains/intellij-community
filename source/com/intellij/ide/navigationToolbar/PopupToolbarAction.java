@@ -24,6 +24,9 @@ public class PopupToolbarAction extends AnAction {
       new SelectInNavBarTarget(project).select(null, false);
       return;
     }
+    if (DataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) {
+      return;
+    }
     final Editor editor = DataKeys.EDITOR.getData(dataContext);
     final NavBarPanel toolbarPanel = new NavBarPanel(project) {
       public Dimension getPreferredSize() {
