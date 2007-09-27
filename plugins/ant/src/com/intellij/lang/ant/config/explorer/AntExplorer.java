@@ -319,6 +319,9 @@ public class AntExplorer extends JPanel implements DataProvider {
 
   @Nullable
   private AntBuildFileNodeDescriptor getCurrentBuildFileNodeDescriptor() {
+    if (myTree == null) {
+      return null;
+    }
     final TreePath path = myTree.getSelectionPath();
     if (path == null) {
       return null;
