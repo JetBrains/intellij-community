@@ -78,7 +78,9 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public PsiModifierList getModifierList() {
-    CompositeElement first = (CompositeElement)TreeUtil.findChild(getTreeParent(), LOCAL_VARIABLE);
+    CompositeElement parent = getTreeParent();
+    if (parent == null) return null;
+    CompositeElement first = (CompositeElement)TreeUtil.findChild(parent, LOCAL_VARIABLE);
     return (PsiModifierList)first.findChildByRoleAsPsiElement(ChildRole.MODIFIER_LIST);
   }
 
