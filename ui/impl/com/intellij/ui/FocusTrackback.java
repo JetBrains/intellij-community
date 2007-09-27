@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ public class FocusTrackback {
   private Component myFocusOwner;
 
   private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<Window, List<FocusTrackback>>();
+  private static final Map<Window, WeakReference<Component>> ourRootWindowToFocusedMap = new WeakHashMap<Window, WeakReference<Component>>();
 
   private String myRequestorName;
   private ComponentQuery myFocusedComponentQuery;
@@ -67,6 +69,21 @@ public class FocusTrackback {
     } else {
       setFocusOwner(stack.get(0).getFocusOwner());
     }
+
+    if (stack.size() == 1 && getFocusOwner() == null) {
+      setFocusOwner(getFocusFor(myRoot));
+    } else if (stack.indexOf(this) == 0 && getFocusOwner() != null) {
+      setFocusFor(myRoot, getFocusOwner());
+    }
+  }
+
+  private Component getFocusFor(Window parent) {
+    final WeakReference<Component> ref = ourRootWindowToFocusedMap.get(parent);
+    return ref != null ? ref.get() : null;
+  }
+
+  private  void setFocusFor(Window parent, Component focus) {
+    ourRootWindowToFocusedMap.put(parent, new WeakReference<Component>(focus));
   }
 
   private static boolean wrongOS() {
