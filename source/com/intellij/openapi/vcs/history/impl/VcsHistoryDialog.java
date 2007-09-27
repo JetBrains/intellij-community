@@ -318,6 +318,7 @@ public class VcsHistoryDialog extends DialogWrapper {
     }
 
     loadContentsFor(new VcsFileRevision[]{firstRev, secondRev});
+    if (myIsDisposed) return;
     myDiffPanel.setContents(new SimpleContent(getContentToShow(firstRev), myContentFileType),
                             new SimpleContent(getContentToShow(secondRev), myContentFileType));
     myDiffPanel.setTitle1(VcsBundle.message("diff.content.title.revision.number", firstRev.getRevisionNumber()));
