@@ -47,7 +47,7 @@ import java.util.Map;
  */
 public class VariableInplaceRenamer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
-  private PsiVariable myElementToRename;
+  private final PsiVariable myElementToRename;
   @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
   private ArrayList<RangeHighlighter> myHighlighters;
@@ -108,9 +108,13 @@ public class VariableInplaceRenamer {
                 if (snapshot != null) {
                   final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
                   if (templateState != null) {
-                    String newName = templateState.getVariableValue(PRIMARY_VARIABLE_NAME).toString();
+                    final String newName = templateState.getVariableValue(PRIMARY_VARIABLE_NAME).toString();
                     if (PsiManager.getInstance(myProject).getNameHelper().isIdentifier(newName)) {
-                      snapshot.apply(newName);
+                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                        public void run() {
+                          snapshot.apply(newName);
+                        }
+                      });
                     }
                   }
                 }
@@ -134,7 +138,7 @@ public class VariableInplaceRenamer {
     }, RefactoringBundle.message("rename.title"), null);
   }
 
-  public void finish() {
+  private void finish() {
     ourRenamersStack.pop();
 
     final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
