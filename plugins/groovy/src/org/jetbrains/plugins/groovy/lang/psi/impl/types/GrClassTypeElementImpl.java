@@ -35,8 +35,4 @@ public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrCl
   public PsiType getType() {
     return new GrClassReferenceType(getReferenceElement());
   }
-
-  public PsiReference getReference() {
-    return getReferenceElement();
-  }
 }
