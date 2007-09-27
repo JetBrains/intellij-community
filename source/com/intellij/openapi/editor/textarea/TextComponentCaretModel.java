@@ -5,9 +5,9 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.CaretListener;
 
+import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
-import javax.swing.*;
 
 /**
  * @author yole
@@ -36,7 +36,7 @@ public class TextComponentCaretModel implements CaretModel {
   }
 
   public void moveToOffset(final int offset) {
-    myTextComponent.setCaretPosition(offset);
+    myTextComponent.setCaretPosition(Math.min(offset, myTextComponent.getText().length()));
   }
 
   public LogicalPosition getLogicalPosition() {
