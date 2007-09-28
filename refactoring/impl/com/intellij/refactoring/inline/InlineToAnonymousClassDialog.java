@@ -51,6 +51,11 @@ public class InlineToAnonymousClassDialog extends InlineOptionsDialog {
 
   protected JComponent createCenterPanel() {
     JComponent optionsPanel = super.createCenterPanel();
+
+    // TODO[yole]: make visible again when "inline this" option is fixed (IDEADEV-17928)
+    myOptionsPanel.setVisible(false);
+    myRbInlineAll.setSelected(true);
+    
     JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();

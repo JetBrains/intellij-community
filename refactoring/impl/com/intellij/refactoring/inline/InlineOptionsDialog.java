@@ -13,9 +13,10 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   protected JRadioButton myRbInlineAll;
   protected JRadioButton myRbInlineThisOnly;
   protected boolean myInvokedOnReference;
-  protected PsiElement myElement;
+  protected final PsiElement myElement;
   private JLabel myNameLabel = new JLabel();
-  
+  protected JPanel myOptionsPanel;
+
   protected InlineOptionsDialog(Project project, boolean canBeParent, PsiElement element) {
     super(project, canBeParent);
     myElement = element;
@@ -31,9 +32,9 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   }
 
   protected JComponent createCenterPanel() {
-    JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(getBorderTitle()));
-    optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
+    myOptionsPanel = new JPanel();
+    myOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder(getBorderTitle()));
+    myOptionsPanel.setLayout(new BoxLayout(myOptionsPanel, BoxLayout.Y_AXIS));
 
     myRbInlineAll = new JRadioButton();
     myRbInlineAll.setText(getInlineAllText());
@@ -41,8 +42,8 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     myRbInlineThisOnly = new JRadioButton();
     myRbInlineThisOnly.setText(getInlineThisText());
 
-    optionsPanel.add(myRbInlineAll);
-    optionsPanel.add(myRbInlineThisOnly);
+    myOptionsPanel.add(myRbInlineAll);
+    myOptionsPanel.add(myRbInlineThisOnly);
     ButtonGroup bg = new ButtonGroup();
     bg.add(myRbInlineAll);
     bg.add(myRbInlineThisOnly);
@@ -81,7 +82,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
         }
       }
     );
-    return optionsPanel;
+    return myOptionsPanel;
   }
 
   protected abstract String getNameLabelText();
