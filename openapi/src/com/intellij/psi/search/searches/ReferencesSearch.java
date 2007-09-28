@@ -15,7 +15,7 @@ import gnu.trove.TObjectHashingStrategy;
  * @author max
  */
 public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
-  public static ReferencesSearch INSTANCE = new ReferencesSearch();
+  public static final ReferencesSearch INSTANCE = new ReferencesSearch();
   private static final TObjectHashingStrategy<PsiReference> HASHING_STRATEGY = new TObjectHashingStrategy<PsiReference>() {
     public int computeHashCode(final PsiReference object) {
       if (object == null) return 0;
