@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -14,7 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class CreateConstructorParameterFromFieldFix implements IntentionAction {
-  private SmartPsiElementPointer myField;
+  private final SmartPsiElementPointer myField;
 
   public CreateConstructorParameterFromFieldFix(@NotNull PsiField field) {
     myField = SmartPointerManager.getInstance(field.getProject()).createSmartPsiElementPointer(field);
@@ -70,13 +71,22 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     final SmartPointerManager manager = SmartPointerManager.getInstance(getField().getProject());
     final SmartPsiElementPointer constructorPointer = manager.createSmartPsiElementPointer(constructor);
 
-    IntentionAction addParamFix = new ChangeMethodSignatureFromUsageFix(constructor, expressions, PsiSubstitutor.EMPTY, constructor, true);
+    ChangeMethodSignatureFromUsageFix addParamFix = new ChangeMethodSignatureFromUsageFix(constructor, expressions, PsiSubstitutor.EMPTY, constructor, true, 1);
     addParamFix.invoke(project, editor, file);
     constructor = (PsiMethod)constructorPointer.getElement();
     assert constructor != null;
     PsiParameter[] newParameters = constructor.getParameterList().getParameters();
     if (newParameters == parameters) return false; //user must have canceled dialog
-    final PsiParameter parameter = newParameters[newParameters.length-1];
+    String newName = addParamFix.getNewParameterNameByOldIndex(-1);
+    PsiParameter parameter = null;
+    for (PsiParameter newParameter : newParameters) {
+      if (Comparing.strEqual(newName, newParameter.getName())) {
+        parameter = newParameter;
+        break;
+      }
+    }
+    if (parameter == null) return false;
+
     // do not introduce assignment in chanined constructor
     if (HighlightControlFlowUtil.getChainedConstructors(constructor) == null) {
       AssignFieldFromParameterAction.addFieldAssignmentStatement(project, getField(), parameter, editor);

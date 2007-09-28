@@ -46,19 +46,21 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   private final PsiExpression[] myExpressions;
   private final PsiSubstitutor mySubstitutor;
   private final PsiElement myContext;
-  private final boolean myChangeSingleUsageSignature;
+  private final boolean myChangeAllUsages;
+  private final int myMinUsagesNumberToShowDialog;
   private ParameterInfo[] myNewParametersInfo;
 
   ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
                                     @NotNull PsiExpression[] expressions,
                                     @NotNull PsiSubstitutor substitutor,
                                     @NotNull PsiElement context,
-                                    boolean changeSingleUsageSignature) {
+                                    boolean changeAllUsages, int minUsagesNumberToShowDialog) {
     myTargetMethod = targetMethod;
     myExpressions = expressions;
     mySubstitutor = substitutor;
     myContext = context;
-    myChangeSingleUsageSignature = changeSingleUsageSignature;
+    myChangeAllUsages = changeAllUsages;
+    myMinUsagesNumberToShowDialog = minUsagesNumberToShowDialog;
   }
 
   @NotNull
@@ -129,7 +131,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       public void run() {
         Processor<UsageInfo> processor = new Processor<UsageInfo>() {
           public boolean process(final UsageInfo t) {
-            return ++usagesFound[0] < 2;
+            return ++usagesFound[0] < myMinUsagesNumberToShowDialog;
           }
         };
         FindUsagesUtil.processUsages(method, processor, options);
@@ -139,7 +141,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return;
 
     myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
-    if (usagesFound[0] <= 1) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || usagesFound[0] < myMinUsagesNumberToShowDialog) {
       ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
                             project,
                             method,
@@ -149,7 +151,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
                             myNewParametersInfo){
         @NotNull
         protected UsageInfo[] findUsages() {
-          return myChangeSingleUsageSignature ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
+          return myChangeAllUsages ? super.findUsages() : UsageInfo.EMPTY_ARRAY;
         }
       };
       processor.run();
@@ -165,7 +167,17 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false, refExpr);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
+      myNewParametersInfo = dialog.getParameters();
     }
+  }
+
+  public String getNewParameterNameByOldIndex(int oldIndex) {
+    for (ParameterInfo info : myNewParametersInfo) {
+      if (info.oldParameterIndex == oldIndex) {
+        return info.getName();
+      }
+    }
+    return null;
   }
 
   private static ParameterInfo[] getNewParametersInfo(PsiExpression[] expressions,
@@ -293,7 +305,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
     if (method != null && context.getManager().isInProject(method)) {
-      ChangeMethodSignatureFromUsageFix fix = new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context, false);
+      ChangeMethodSignatureFromUsageFix fix = new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context, false, 2);
       QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, fix, null);
     }
   }

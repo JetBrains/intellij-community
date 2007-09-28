@@ -19,7 +19,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   private List<PsiTypeCodeFragment> myTypeCodeFraments;
   private List<PsiCodeFragment> myDefaultValuesCodeFragments;
   private final PsiParameterList myParameterList;
-  private PsiReferenceExpression myReferenceExpression; //if change signature was invoked on mehod reference, this is it. Default value is edited in the context of this ref
+  private final PsiReferenceExpression myReferenceExpression; //if change signature was invoked on mehod reference, this is it. Default value is edited in the context of this ref
   private final ChangeSignatureDialog myDialog;
   static final String ANY_VAR_COLUMN_NAME = RefactoringBundle.message("column.name.any.var");
 
@@ -205,7 +205,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     }
   }
 
-  PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
+  private PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
     return myParameterList.getManager().getElementFactory().createTypeCodeFragment(
         typeText, context, false, true, true
       );

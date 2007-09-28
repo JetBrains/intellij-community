@@ -37,28 +37,27 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
 public class ChangeSignatureDialog extends RefactoringDialog {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.refactoring.changeSignature.ChangeSignatureDialog");
-  private Project myProject;
-  private PsiMethod myMethod;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeSignatureDialog");
+  private final PsiMethod myMethod;
   private final boolean myAllowDelegation;
   private EditorTextField myNameField;
   private EditorTextField myReturnTypeField;
   private JTable myParametersTable;
-  private ParameterTableModel myParametersTableModel;
+  private final ParameterTableModel myParametersTableModel;
   private JTextArea mySignatureArea;
-  private Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private VisibilityPanel myVisibilityPanel;
   private PsiTypeCodeFragment myReturnTypeCodeFragment;
   private DelegationPanel myDelegationPanel;
   private JTable myExceptionsTable;
-  private ExceptionsTableModel myExceptionsTableModel;
+  private final ExceptionsTableModel myExceptionsTableModel;
   private JButton myPropagateParamChangesButton;
   private JButton myPropagateExnChangesButton;
   private Set<PsiMethod> myMethodsToPropagateParameters = null;
@@ -69,7 +68,6 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
   public ChangeSignatureDialog(Project project, final PsiMethod method, boolean allowDelegation, final PsiReferenceExpression ref) {
     super(project, true);
-    myProject = project;
     myMethod = method;
     myParametersTableModel = new ParameterTableModel(myMethod.getParameterList(), ref, this);
     myExceptionsTableModel = new ExceptionsTableModel(myMethod.getThrowsList());
@@ -135,7 +133,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     }
   }
 
-  private ParameterInfo[] getParameters() {
+  public ParameterInfo[] getParameters() {
     return myParametersTableModel.getParameters();
   }
 
@@ -148,7 +146,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myParametersTableModel.getRowCount() > 0 ? (JComponent)myParametersTable : myNameField;
+    return myParametersTableModel.getRowCount() > 0 ? myParametersTable : myNameField;
   }
 
 
@@ -369,8 +367,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     editor.getSelectionModel().removeSelection();
     LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, new CharFilter() {
       public int accept(char c, final String prefix) {
-        if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
-        return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
+        if (Character.isJavaIdentifierPart(c)) return ADD_TO_PREFIX;
+        return SELECT_ITEM_AND_FINISH_LOOKUP;
       }
     });
   }
@@ -439,7 +437,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   }
 
   private String calculateSignature() {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
 
     PsiModifierList modifierList = myMethod.getModifierList();
     String modifiers = modifierList.getText();
@@ -449,7 +447,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     if (!newModifier.equals(oldModifier)) {
       int index = modifiers.indexOf(oldModifier);
       if (index >= 0) {
-        StringBuffer buf = new StringBuffer(modifiers);
+        StringBuilder buf = new StringBuilder(modifiers);
         buf.replace(index,
                     index + oldModifier.length() + ("".equals(newModifierStr) ? 1 : 0),
                     newModifierStr);
@@ -476,11 +474,11 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     buffer.append(getMethodName());
     buffer.append("(");
 
-    final String indent = "    ";
     final List<PsiTypeCodeFragment> codeFraments = myParametersTableModel.getCodeFraments();
 
     final ParameterInfo[] parameterInfos = myParametersTableModel.getParameters();
     LOG.assertTrue(codeFraments.size() == parameterInfos.length);
+    final String indent = "    ";
     for (int i = 0; i < parameterInfos.length; i++) {
       ParameterInfo info = parameterInfos[i];
       if (i > 0) {
@@ -699,7 +697,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
             }
           }
         }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, KeyEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
       return textField;
     }
   }

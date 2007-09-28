@@ -15,7 +15,7 @@ import java.util.List;
 
 public class ParameterInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterInfo");
-  int oldParameterIndex;
+  public final int oldParameterIndex;
   boolean useAnySingleVariable;
   private String name = "";
   private CanonicalTypes.Type myType;
@@ -39,7 +39,7 @@ public class ParameterInfo {
   public ParameterInfo(int oldParameterIndex, @NonNls String name, PsiType aType, @NonNls String defaultValue, boolean useAnyVariable) {
     this(oldParameterIndex, name, aType);
     this.defaultValue = defaultValue;
-    this.useAnySingleVariable = useAnyVariable;
+    useAnySingleVariable = useAnyVariable;
   }
 
   public void setUseAnySingleVariable(boolean useAnySingleVariable) {
@@ -70,8 +70,7 @@ public class ParameterInfo {
   }
 
   public int hashCode() {
-    int result;
-    result = getName().hashCode();
+    int result = getName().hashCode();
     result = 29 * result + getTypeText().hashCode();
     return result;
   }
