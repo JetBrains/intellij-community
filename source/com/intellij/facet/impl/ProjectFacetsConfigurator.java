@@ -277,14 +277,19 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     Module module = moduleRootModel.getModule();
     Facet[] allFacets = getAllFacets(module);
     for (Facet facet : allFacets) {
-      FacetEditor editor = getOrCreateEditor(facet);
-      ((FacetEditorContextBase)editor.getContext()).fireModuleRootsChanged(moduleRootModel);
+      FacetEditor facetEditor = myEditors.get(facet);
+      if (facetEditor != null) {
+        ((FacetEditorContextBase)facetEditor.getContext()).fireModuleRootsChanged(moduleRootModel);
+      }
     }
   }
 
   private void fireFacetModelChanged(Module module) {
     for (Facet facet : getAllFacets(module)) {
-      ((FacetEditorContextBase)getOrCreateEditor(facet).getContext()).fireFacetModelChanged(module);
+      FacetEditor facetEditor = myEditors.get(facet);
+      if (facetEditor != null) {
+        ((FacetEditorContextBase)facetEditor.getContext()).fireFacetModelChanged(module);
+      }
     }
   }
 
