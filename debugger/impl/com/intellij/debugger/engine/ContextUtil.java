@@ -2,6 +2,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,12 +33,13 @@ public class ContextUtil {
     if(debugProcess == null) {
       return null;
     }
-    if(context.getFrameProxy() == null) {
+    final StackFrameProxy frameProxy = context.getFrameProxy();
+    if(frameProxy == null) {
       return null;
     }
     Location location = null;
     try {
-      location = context.getFrameProxy().location();
+      location = frameProxy.location();
     }
     catch (Throwable th) {
       LOG.debug(th);
