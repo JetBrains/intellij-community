@@ -32,6 +32,7 @@ class RecordsTable implements Disposable, Forceable {
     myStorage = new RandomAccessDataFile(storageFilePath);
     if (myStorage.length() == 0) {
       cleanRecord(0); // Initialize header
+      myIsDirty = true;
     }
     else {
       if (myStorage.getInt(HEADER_MAGIC_OFFSET) != SAFELY_CLOSED_MAGIC) {

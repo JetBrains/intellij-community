@@ -27,6 +27,7 @@ class DataTable implements Disposable, Forceable {
     myFile = new RandomAccessDataFile(filePath);
     if (myFile.length() == 0) {
       fillInHeader(CONNECTED_MAGIC, 0);
+      myIsDirty = true;
     }
     else {
       readInHeader(filePath);
