@@ -22,29 +22,23 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.groovy.compiler.rt.CompilerMessage;
+import org.jetbrains.groovy.compiler.rt.*;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.groovy.compiler.rt.CompilerMessage;
-import org.jetbrains.groovy.compiler.rt.MessageCollector;
-import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -57,7 +51,6 @@ import java.util.*;
 public class GroovyCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.groovy.compiler.GroovyCompiler");
 
-  private static final String JAVA_EXE = "java";
   private static final String XMX_COMPILER_PROPERTY = "-Xmx";
   private static final String XMX_COMPILER_VALUE = "300m";
 
@@ -80,7 +73,9 @@ public class GroovyCompiler implements TranslatingCompiler {
     for (Map.Entry<Module, Set<VirtualFile>> entry : mapModulesToVirtualFiles.entrySet()) {
 
       commandLine = new GeneralCommandLine();
-      commandLine.setExePath(JAVA_EXE);
+      final ProjectJdk jdk = ModuleRootManager.getInstance(entry.getKey()).getJdk();
+      assert jdk != null; //verified before
+      commandLine.setExePath(jdk.getVMExecutablePath());
 
       /*commandLine.addParameter("-Xdebug");
       commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5046");*/
@@ -304,7 +299,28 @@ public class GroovyCompiler implements TranslatingCompiler {
 
     final String groovyInstallPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath();
     if (groovyInstallPath == null || groovyInstallPath.length() == 0) {
-      Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files"), GroovyBundle.message("cannot.compile"));
+      Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.facet"), GroovyBundle.message("cannot.compile"));
+      return false;
+    }
+
+    Set<Module> nojdkModules = new HashSet<Module>();
+    for (Module module : compileScope.getAffectedModules()) {
+      final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
+      if (jdk == null) nojdkModules.add(module);
+    }
+
+    if (!nojdkModules.isEmpty()) {
+      final Module[] modules = nojdkModules.toArray(new Module[nojdkModules.size()]);
+      if (modules.length == 1) {
+        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.sdk", modules[0].getName()), GroovyBundle.message("cannot.compile"));
+      } else {
+        StringBuffer modulesList = new StringBuffer();
+        for (int i = 0; i < modules.length; i++) {
+          if (i > 0) modulesList.append(", ");
+          modulesList.append(modules[i].getName());
+        }
+        Messages.showErrorDialog(myProject, GroovyBundle.message("cannot.compile.groovy.files.no.sdk.mult", modulesList.toString()), GroovyBundle.message("cannot.compile"));
+      }
       return false;
     }
 
