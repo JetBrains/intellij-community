@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 
 /**
  * @author ven
@@ -77,7 +78,10 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
       final String typeText = getTypeText(type);
       int lastDot = typeText.lastIndexOf('.');
       int idx = 0 < lastDot && lastDot < typeText.length() - 1 ? lastDot + 1 : 0;
-      if (Character.isLowerCase(typeText.charAt(idx))) text.append("def ");
+      if (Character.isLowerCase(typeText.charAt(idx)) &&
+          !GroovyNamesUtil.isKeyword(typeText)) { //primitive type
+        text.append("def ");
+      }
       text.append(typeText).append(" ");
     } else {
       text.append("def ");
