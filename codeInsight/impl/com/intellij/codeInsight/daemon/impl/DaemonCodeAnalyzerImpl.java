@@ -340,8 +340,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     HighlightInfo[] highlights = getHighlights(document, project);
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
     Collection<HighlightInfo> array = new ArrayList<HighlightInfo>();
+    final SeverityRegistrar instance = SeverityRegistrar.getInstance(project);
+    
     for (HighlightInfo info : highlights) {
-      if (SeverityRegistrar.getInstance(project).compare(info.getSeverity(), minSeverity) >= 0 &&
+      if (instance.compare(info.getSeverity(), minSeverity) >= 0 &&
           info.startOffset >= startOffset &&
           info.endOffset <= endOffset) {
         array.add(info);
