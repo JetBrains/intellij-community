@@ -41,10 +41,6 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public abstract Icon getBigIcon();
   public abstract Icon getNodeIcon(boolean isOpened);
 
-  public String getProjectType() {
-    return getName();
-  }
-
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, T moduleBuilder, ModulesProvider modulesProvider) {
     return ModuleWizardStep.EMPTY_ARRAY;
   }

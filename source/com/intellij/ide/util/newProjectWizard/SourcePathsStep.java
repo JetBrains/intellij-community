@@ -327,6 +327,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
   }
 
   private String getContentRootPath() {
+    final String path = myBuilder.getContentEntryPath();
+    if (path != null) return path;
     return myContext.getProjectFileDirectory();
   }
 

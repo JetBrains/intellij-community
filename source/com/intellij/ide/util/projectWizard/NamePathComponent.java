@@ -43,6 +43,15 @@ public class NamePathComponent extends JPanel{
                            final String pathChooserTitle,
                            final String pathChooserDescription,
                            boolean hideIgnored) {
+    this(nameLabelText, pathLabelText, pathChooserTitle, pathChooserDescription, hideIgnored, true);
+  }
+
+  public NamePathComponent(String nameLabelText,
+                           String pathLabelText,
+                           final String pathChooserTitle,
+                           final String pathChooserDescription,
+                           boolean hideIgnored,
+                           boolean bold) {
     super(new GridBagLayout());
 
     myTfName = new JTextField();
@@ -54,9 +63,9 @@ public class NamePathComponent extends JPanel{
     myTfPath.setPreferredSize(new Dimension(200, myTfPath.getPreferredSize().height));
 
     myNameLabel = new JLabel(nameLabelText);
-    myNameLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    if (bold) myNameLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     myNameLabel.setLabelFor(myTfName);
-    this.add(myNameLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    this.add(myNameLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
     this.add(myTfName, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 8, 0), 0, 0));
     // todo: review texts
@@ -71,7 +80,7 @@ public class NamePathComponent extends JPanel{
     myPathPanel = new FieldPanel(myTfPath, pathLabelText, null, browseButtonActionListener, null);
     final JLabel locationLabel = myPathPanel.getFieldLabel();
     locationLabel.setLabelFor(myTfPath);
-    locationLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    if (bold) locationLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     this.add(myPathPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 0, 0, 0), 0, 0));
   }
 

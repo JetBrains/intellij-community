@@ -40,9 +40,10 @@ import javax.swing.*;
 
 public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
   private static final Icon ICON = IconLoader.getIcon("/modules/emptyProjectType.png");
+  @NonNls public static final String EMPTY_MODULE = "EMPTY_MODULE";
 
   public EmptyModuleType() {
-    this("EMPTY_MODULE");
+    this(EMPTY_MODULE);
   }
 
   protected EmptyModuleType(@NonNls String id) {

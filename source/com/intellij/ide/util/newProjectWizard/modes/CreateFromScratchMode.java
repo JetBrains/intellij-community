@@ -4,18 +4,20 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.ProjectNameWithTypeStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
+import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +27,7 @@ import java.util.Map;
 
 public class CreateFromScratchMode extends WizardMode {
 
-  private Map<String, ModuleBuilder> myBuildersMap = new HashMap<String, ModuleBuilder>();
+  @NonNls private Map<String, ModuleBuilder> myBuildersMap = new HashMap<String, ModuleBuilder>();
 
   @NotNull
   public String getDisplayName(final WizardContext context) {
@@ -56,6 +58,7 @@ public class CreateFromScratchMode extends WizardMode {
           sequence.addCommonStep(new SupportForFrameworksStep(builder));
         }
       }
+    myBuildersMap.put(ModuleType.EMPTY.getId(), new EmptyModuleBuilder());
     return myStepSequence;
   }
 

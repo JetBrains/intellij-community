@@ -66,10 +66,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     return ProjectBundle.message("module.type.java.name");
   }
 
-  public String getProjectType() {
-    return ProjectBundle.message("project.type.java.name");
-  }
-
   public String getDescription() {
     return ProjectBundle.message("module.type.java.description");
   }

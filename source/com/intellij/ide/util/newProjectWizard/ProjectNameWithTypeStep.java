@@ -2,22 +2,26 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
+import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -25,22 +29,37 @@ import java.io.File;
 public class ProjectNameWithTypeStep extends ProjectNameStep {
   private JEditorPane myModuleDescriptionPane;
   private JList myTypesList;
-  private LabeledField myModuleName;
-  private LabeledField myModuleContentRoot;
+  private JCheckBox myCreateModuleCb;
+  private JPanel myModulePanel;
+  private JPanel myInternalPanel;
+  private JTextField myModuleName;
+  private TextFieldWithBrowseButton myModuleContentRoot;
+  private TextFieldWithBrowseButton myModuleFileLocation;
+
+  private boolean myModuleNameChangedByUser = false;
+  private boolean myModuleNameDocListenerEnabled = true;
+
+  private boolean myContentRootChangedByUser = false;
+  private boolean myContentRootDocListenerEnabled = true;
+
+  private boolean myImlLocationChangedByUser = false;
+  private boolean myImlLocationDocListenerEnabled = true;
+
 
   public ProjectNameWithTypeStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     super(wizardContext, sequence, mode);
-
-    myModuleName = new LabeledField(myNamePathComponent.getNameValue(), ProjectBundle.message("project.new.wizard.module.name.title"));
-    myModuleName.getComponent().setColumns(20);
-    myModuleContentRoot = new LabeledField(FileUtil.toSystemDependentName(myNamePathComponent.getPath()), ProjectBundle.message("project.new.wizard.module.root.title"));
-    
-    updateModuleNameComponent(false);
-    
-    myAdditionalContentPanel.add(myModuleName, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    myAdditionalContentPanel.add(myModuleContentRoot, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 5, 0, 0), 0, 0));
-
-    myModuleDescriptionPane = new JEditorPane();
+    myAdditionalContentPanel.add(myModulePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    myCreateModuleCb.setVisible(myWizardContext.isCreatingNewProject());
+    myCreateModuleCb.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        UIUtil.setEnabled(myInternalPanel, myCreateModuleCb.isSelected(), true);
+        fireStateChanged();
+      }
+    });
+    myCreateModuleCb.setSelected(true);
+    if (!myWizardContext.isCreatingNewProject()){
+      myInternalPanel.setBorder(null);
+    }
     myModuleDescriptionPane.setContentType(UIUtil.HTML_MIME);
     myModuleDescriptionPane.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -57,10 +76,11 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     myModuleDescriptionPane.setEditable(false);
 
     ModuleType[] allModuleTypes = ModuleTypeManager.getInstance().getRegisteredTypes();
-    if (myWizardContext.getProject() != null) {
-      allModuleTypes = ArrayUtil.remove(allModuleTypes, ArrayUtil.find(allModuleTypes, ModuleType.EMPTY));
+    final DefaultListModel defaultListModel = new DefaultListModel();
+    for (ModuleType moduleType : allModuleTypes) {
+      defaultListModel.addElement(moduleType);
     }
-    myTypesList = new JList(allModuleTypes);
+    myTypesList.setModel(defaultListModel);
     myTypesList.setSelectionModel(new PermanentSingleSelectionModel());
     myTypesList.setCellRenderer(new DefaultListCellRenderer(){
       public Component getListCellRendererComponent(final JList list, final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
@@ -68,7 +88,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         final ModuleType moduleType = (ModuleType)value;
         setIcon(moduleType.getBigIcon());
         setDisabledIcon(moduleType.getBigIcon());
-        setText(myWizardContext.getProject() == null ? moduleType.getProjectType() : moduleType.getName());
+        setText(moduleType.getName());
         return rendererComponent;
       }
     });
@@ -81,8 +101,6 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         final ModuleType typeSelected = (ModuleType)myTypesList.getSelectedValue();
         //noinspection HardCodedStringLiteral
         myModuleDescriptionPane.setText("<html><body><font face=\"verdana\" size=\"-1\">" + typeSelected.getDescription() + "</font></body></html>");
-
-        updateModuleNameComponent(typeSelected != ModuleType.EMPTY);
 
         fireStateChanged();
         SwingUtilities.invokeLater(new Runnable(){
@@ -101,93 +119,143 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       }
     });
 
-    final DocumentAdapter contentRootUpdater = new DocumentAdapter() {
+    myModuleName.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
-        if (!myModuleContentRoot.isChangedByUser()) {
-          final String currentModuleName = myModuleName.getFieldText();
-          final String filePath; 
-          if (currentModuleName.equals(myNamePathComponent.getNameValue())) {
-            filePath = myNamePathComponent.getPath();
-          }
-          else {
-            filePath = myNamePathComponent.getPath() + File.separator + currentModuleName;
-          }
-          myModuleContentRoot.setFieldText(FileUtil.toSystemDependentName(filePath));
-        }
-      }
-    };
-    
-    myModuleName.getComponent().getDocument().addDocumentListener(contentRootUpdater);
-    myNamePathComponent.getPathComponent().getDocument().addDocumentListener(contentRootUpdater);
-    myNamePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (!myModuleName.isChangedByUser()) {
-          myModuleName.setFieldText(myNamePathComponent.getNameValue());
+        if (myModuleNameDocListenerEnabled) {
+          myModuleNameChangedByUser = true;
         }
       }
     });
-    
-    final JLabel moduleTypeLabel = new JLabel(IdeBundle.message("label.select.module.type"));
-    moduleTypeLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    myAdditionalContentPanel.add(moduleTypeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(7, 0, 0, 0), 0, 0));
+    myNamePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (!myModuleNameChangedByUser) {
+          setModuleName(myNamePathComponent.getNameValue());
+        }
+      }
+    });
+    setModuleName(myNamePathComponent.getNameValue());
 
-    final JLabel descriptionLabel = new JLabel(IdeBundle.message("label.description"));
-    descriptionLabel.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    myAdditionalContentPanel.add(descriptionLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(7, 5, 0, 0), 0, 0));
+    myModuleContentRoot.addBrowseFolderListener(ProjectBundle.message("project.new.wizard.module.content.root.chooser.title"), ProjectBundle.message("project.new.wizard.module.content.root.chooser.description"),
+                                                myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+    myModuleContentRoot.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (myContentRootDocListenerEnabled) {
+          myContentRootChangedByUser = true;
+        }
+      }
+    });
+    myNamePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (!myContentRootChangedByUser) {
+          setModuleContentRoot(myNamePathComponent.getPath());
+        }
+      }
+    });
+    myModuleName.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (!myContentRootChangedByUser) {
+          final String path = myModuleContentRoot.getText();
+          final int lastSeparatorIndex = path.lastIndexOf(File.separator);
+          if (lastSeparatorIndex >= 0) {
+            setModuleContentRoot(path.substring(0, lastSeparatorIndex + 1) + myModuleName.getText());
+          }
+        }
+      }
+    });
+    setModuleContentRoot(myNamePathComponent.getPath());
 
-    final JScrollPane typesListScrollPane = ScrollPaneFactory.createScrollPane(myTypesList);
-    final Dimension preferredSize = calcTypeListPreferredSize(allModuleTypes);
-    typesListScrollPane.setPreferredSize(preferredSize);
-    typesListScrollPane.setMinimumSize(preferredSize);
-    myAdditionalContentPanel.add(typesListScrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0 , GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-
-    final JScrollPane descriptionScrollPane = ScrollPaneFactory.createScrollPane(myModuleDescriptionPane);
-    descriptionScrollPane.setPreferredSize(new Dimension(preferredSize.width * 3, preferredSize.height));
-    myAdditionalContentPanel.add(descriptionScrollPane, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 5, 0, 0), 0, 0));
+    myModuleFileLocation.addBrowseFolderListener(ProjectBundle.message("project.new.wizard.module.file.chooser.title"), ProjectBundle.message("project.new.wizard.module.file.description"),
+                                                 myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+    myModuleFileLocation.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (myImlLocationDocListenerEnabled) {
+          myImlLocationChangedByUser = true;
+        }
+      }
+    });
+    myNamePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (!myImlLocationChangedByUser) {
+          setImlFileLocation(myNamePathComponent.getPath());
+        }
+      }
+    });
+    myModuleContentRoot.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (!myImlLocationChangedByUser) {
+          setImlFileLocation(myModuleContentRoot.getText());
+        }
+      }
+    });
+    myModuleName.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (!myImlLocationChangedByUser) {
+          final String path = myModuleFileLocation.getText();
+          final int lastSeparatorIndex = path.lastIndexOf(File.separator);
+          if (lastSeparatorIndex >= 0) {
+            setImlFileLocation(path.substring(0, lastSeparatorIndex + 1) + myModuleName.getText());
+          }
+        }
+      }
+    });
+    setImlFileLocation(myNamePathComponent.getPath());
   }
 
-  private void updateModuleNameComponent(final boolean isEditable) {
-    final boolean isVisible = myWizardContext.isCreatingNewProject();
-    
-    myModuleName.getComponent().setEditable(isEditable);
-    myModuleName.setEnabled(isEditable);
-    myModuleName.setVisible(isVisible);
-    
-    myModuleContentRoot.getComponent().setEditable(isEditable);
-    myModuleContentRoot.setEnabled(isEditable);
-    myModuleContentRoot.setVisible(isVisible);
+  private void setImlFileLocation(final String path) {
+    myImlLocationDocListenerEnabled = false;
+    myModuleFileLocation.setText(FileUtil.toSystemDependentName(path));
+    myImlLocationDocListenerEnabled = true;
+  }
+
+  private void setModuleContentRoot(final String path) {
+    myContentRootDocListenerEnabled = false;
+    myModuleContentRoot.setText(FileUtil.toSystemDependentName(path));
+    myContentRootDocListenerEnabled = true;
+  }
+
+  private void setModuleName(String moduleName) {
+    myModuleNameDocListenerEnabled = false;
+    myModuleName.setText(moduleName);
+    myModuleNameDocListenerEnabled = true;
   }
 
   public void updateStep() {
     super.updateStep();
-    mySequence.setType(((ModuleType)myTypesList.getSelectedValue()).getId());
+    if (myCreateModuleCb.isSelected()) {
+      mySequence.setType(((ModuleType)myTypesList.getSelectedValue()).getId());
+    } else {
+      mySequence.setType(null);
+    }
   }
 
   public void updateDataModel() {
-    mySequence.setType(((ModuleType)myTypesList.getSelectedValue()).getId());
-    super.updateDataModel();
-    final ModuleBuilder builder = (ModuleBuilder)myMode.getModuleBuilder();
-    assert builder != null;
-    builder.setName(myModuleName.getComponent().getText());
+    if (myCreateModuleCb.isSelected()) {
+      mySequence.setType(((ModuleType)myTypesList.getSelectedValue()).getId());
+      super.updateDataModel();
+      final ModuleBuilder builder = (ModuleBuilder)myMode.getModuleBuilder();
+      assert builder != null;
+      builder.setName(myModuleName.getText());
+      builder.setModuleFilePath(FileUtil.toSystemIndependentName(myModuleFileLocation.getText()) + "/" + myModuleName.getText() + ".iml");
+      ((SourcePathsBuilder)builder).setContentEntryPath(FileUtil.toSystemIndependentName(myModuleContentRoot.getText()));
+    } else {
+      mySequence.setType(null);
+      super.updateDataModel();
+    }
+  }
+
+  public boolean validate() throws ConfigurationException {
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.file"), myModuleFileLocation.getText(), myImlLocationChangedByUser)) {
+      return false;
+    }
+    if (!ProjectWizardUtil
+      .createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), myModuleContentRoot.getText(), myContentRootChangedByUser)) {
+      return false;
+    }
+    return super.validate();
   }
 
   public void disposeUIResources() {
     super.disposeUIResources();
-  }
-
-  private Dimension calcTypeListPreferredSize(final ModuleType[] allModuleTypes) {
-    int width = 0;
-    int height = 0;
-    final FontMetrics fontMetrics = myTypesList.getFontMetrics(myTypesList.getFont());
-    final int fontHeight = fontMetrics.getMaxAscent() + fontMetrics.getMaxDescent();
-    for (final ModuleType type : allModuleTypes) {
-      final Icon icon = type.getBigIcon();
-      final int iconHeight = icon != null ? icon.getIconHeight() : 0;
-      final int iconWidth = icon != null ? icon.getIconWidth() : 0;
-      height += Math.max(iconHeight, fontHeight) + 6;
-      width = Math.max(width, iconWidth + fontMetrics.stringWidth(type.getName()) + 10);
-    }
-    return new Dimension(width, height);
   }
 
   private static class PermanentSingleSelectionModel extends DefaultListSelectionModel {
@@ -204,45 +272,5 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
   public String getHelpId() {
     return "reference.dialogs.new.project.fromScratch";
-  }
-  
-  private static class LabeledField extends LabeledComponent<JTextField> {
-    private boolean myDocListenerEnabled = true;
-    private boolean myChangedByUser = false;
-    
-    public LabeledField(String initialValue, final String labelText) {
-      final JTextField field = new JTextField();
-      if (initialValue != null) {
-        field.setText(initialValue);
-      }
-      setComponent(field);
-      setText(labelText);
-      getLabel().setFont(getFont().deriveFont(Font.BOLD));
-      field.getDocument().addDocumentListener(new DocumentAdapter() {
-        protected void textChanged(final DocumentEvent e) {
-          if (myDocListenerEnabled) {
-            myChangedByUser = true;
-          }
-        }
-      });
-    }
-
-    public boolean isChangedByUser() {
-      return myChangedByUser;
-    }
-    
-    public void setFieldText(String text) {
-      myDocListenerEnabled = false;
-      try {
-        getComponent().setText(text);
-      }
-      finally {
-        myDocListenerEnabled = true;
-      }
-    }
-    
-    public String getFieldText() {
-      return getComponent().getText();
-    }
   }
 }

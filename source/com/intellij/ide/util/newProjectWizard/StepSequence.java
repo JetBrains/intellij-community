@@ -5,6 +5,8 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.openapi.module.ModuleType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -12,7 +14,7 @@ import java.util.*;
 public class StepSequence {
   private List<ModuleWizardStep> myCommonSteps = new ArrayList<ModuleWizardStep>();
   private Map<String, StepSequence> mySpecificSteps = new HashMap<String, StepSequence>();
-  private String myType;
+  @NonNls private String myType;
   private StepSequence myParentSequence;
 
   public StepSequence() {
@@ -79,8 +81,12 @@ public class StepSequence {
     return stepSequence != null ? stepSequence.getPreviousStep(step) : null;
   }
 
-  public void setType(final String type) {
-    myType = type;
+  public void setType(@NonNls final String type) {
+    if (type == null) {
+      myType = ModuleType.EMPTY.getId();
+    } else {
+      myType = type;
+    }
   }
 
   public String getSelectedType() {

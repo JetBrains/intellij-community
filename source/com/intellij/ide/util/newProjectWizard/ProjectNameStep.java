@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -41,31 +40,24 @@ public class ProjectNameStep extends ModuleWizardStep {
     myMode = mode;
     myNamePathComponent = new NamePathComponent(
       IdeBundle.message("label.project.name"),
-      IdeBundle.message("label.component.file.location", StringUtil.capitalize(wizardContext.getPresentationName())),
-      'a', 'l', IdeBundle.message("title.select.project.file.directory", wizardContext.getPresentationName()),
-      IdeBundle.message("description.select.project.file.directory", StringUtil.capitalize(wizardContext.getPresentationName()))
+      IdeBundle.message("label.component.file.location", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      IdeBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
+      IdeBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      true, false
     );
-    final String baseDir = myWizardContext.getProject() == null
-                           ? myWizardContext.getProjectFileDirectory()
-                           : FileUtil.toSystemDependentName(myWizardContext.getProject().getBaseDir().getPath());
+    final String baseDir = myWizardContext.getProjectFileDirectory();
     final String projectName = myWizardContext.getProjectName();
     final String initialProjectName = projectName != null ? projectName : ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
     myNamePathComponent.setPath(projectName == null ? (baseDir + File.separator + initialProjectName) : baseDir);
     myNamePathComponent.setNameValue(initialProjectName);
     myNamePathComponent.getNameComponent().setSelectionStart(0);
     myNamePathComponent.getNameComponent().setSelectionEnd(initialProjectName.length());
-
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(10, 10, 10, 10)));
-    final ApplicationInfo info = ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
-    String appName = info.getVersionName();
-    final JLabel promptLabel = new JLabel(
-      IdeBundle.message("label.please.enter.project.name", appName, wizardContext.getPresentationName())
-    );
-    myPanel.add(promptLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 0, 8, 0), 0, 0));
-    myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(8, 0, 8, 0), 0, 0));
+    myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 0, 0), 0, 0));
+    myNamePathComponent.setVisible(myWizardContext.getProject() == null);
     myAdditionalContentPanel = new JPanel(new GridBagLayout());
-    myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(8, 0, 8, 0), 0, 0));
+    myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
   }
   
   public JComponent getComponent() {

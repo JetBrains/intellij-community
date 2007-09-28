@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.ide.util.newProjectWizard.ProjectNameWithTypeStep">
+  <grid id="807b" binding="myModulePanel" layout-manager="GridBagLayout">
+    <constraints>
+      <xy x="20" y="20" width="707" height="453"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="27dc6" binding="myInternalPanel" layout-manager="GridBagLayout">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <gridbag top="4" left="4" bottom="4" right="0" weightx="1.0" weighty="1.0"/>
+        </constraints>
+        <properties>
+          <maximumSize width="250" height="150"/>
+          <preferredSize width="250" height="150"/>
+        </properties>
+        <border type="etched" title="Module Settings"/>
+        <children>
+          <component id="1f996" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="5" use-parent-layout="false"/>
+              <gridbag top="0" left="4" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.name.title"/>
+            </properties>
+          </component>
+          <component id="e6ad1" class="javax.swing.JTextField" binding="myModuleName">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+              <gridbag top="2" left="0" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="c4851" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="3" use-parent-layout="false"/>
+              <gridbag top="0" left="4" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.root.title"/>
+            </properties>
+          </component>
+          <component id="4af6e" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myModuleContentRoot">
+            <constraints>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="0" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="a4319" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag top="0" left="4" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.file.title"/>
+            </properties>
+          </component>
+          <component id="83a50" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myModuleFileLocation">
+            <constraints>
+              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <gridbag top="2" left="0" bottom="0" right="0" weightx="1.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <preferredSize width="280" height="20"/>
+            </properties>
+          </component>
+          <scrollpane id="d8de8">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag top="0" left="4" bottom="0" right="0" weightx="0.1" weighty="1.0"/>
+            </constraints>
+            <properties>
+              <horizontalScrollBarPolicy value="31"/>
+              <preferredSize width="125" height="128"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <component id="c263e" class="javax.swing.JList" binding="myTypesList">
+                <constraints/>
+                <properties/>
+              </component>
+            </children>
+          </scrollpane>
+          <component id="fb71" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag top="20" left="4" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.select.type.label"/>
+            </properties>
+          </component>
+          <component id="9073d" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <gridbag top="20" left="3" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.description.title"/>
+            </properties>
+          </component>
+          <scrollpane id="6260">
+            <constraints>
+              <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <gridbag top="0" left="3" bottom="0" right="0" weightx="0.8" weighty="0.0"/>
+            </constraints>
+            <properties>
+              <horizontalScrollBarPolicy value="30"/>
+              <preferredSize width="28" height="20"/>
+            </properties>
+            <border type="none"/>
+            <children>
+              <component id="6e12" class="javax.swing.JEditorPane" binding="myModuleDescriptionPane">
+                <constraints/>
+                <properties/>
+              </component>
+            </children>
+          </scrollpane>
+        </children>
+      </grid>
+      <component id="63a74" class="javax.swing.JCheckBox" binding="myCreateModuleCb">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text value="&amp;Create module"/>
+        </properties>
+      </component>
+    </children>
+  </grid>
+</form>
