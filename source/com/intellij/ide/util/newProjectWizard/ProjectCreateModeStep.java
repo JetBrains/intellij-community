@@ -32,6 +32,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
     myModes = modes;
     myWizardContext = wizardContext;
     myWholePanel = new JPanel(new GridBagLayout());
+    myWholePanel.setBorder(BorderFactory.createEtchedBorder());
     myMode = selection;
     final Insets insets = new Insets(0, 0, 0, 0);
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST,
