@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyEditorActionUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
@@ -57,7 +58,8 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
       return Indent.getNoneIndent();
     }
 
-    if (GroovyEditorActionUtil.GSTRING_TOKENS_INNER.contains(child.getElementType())) {
+    if (GroovyEditorActionUtil.GSTRING_TOKENS_INNER.contains(child.getElementType()) &&
+        GroovyTokenTypes.mGSTRING_SINGLE_BEGIN != child.getElementType()) {
       return Indent.getAbsoluteNoneIndent();
     }
 

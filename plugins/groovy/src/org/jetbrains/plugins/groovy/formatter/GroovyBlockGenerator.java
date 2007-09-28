@@ -78,12 +78,23 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         myBlock.getNode().getElementType() == GroovyTokenTypes.mGSTRING_LITERAL) &&
         myBlock.getTextRange().equals(myBlock.getNode().getTextRange())) {
       String text = myBlock.getNode().getText();
-      if (text.length() >= 6) {
+      if (text.length() > 6) {
         if (text.substring(0, 3).equals("'''") && text.substring(text.length() - 3).equals("'''") ||
             text.substring(0, 3).equals("\"\"\"") & text.substring(text.length() - 3).equals("\"\"\"")) {
           return generateForMultiLineString(myBlock.getNode());
         }
       }
+    }
+
+    if (myBlock.getNode().getElementType() == GroovyTokenTypes.mGSTRING_SINGLE_BEGIN &&
+        myBlock.getTextRange().equals(myBlock.getNode().getTextRange())) {
+      String text = myBlock.getNode().getText();
+      if (text.length() > 3) {
+        if (text.substring(0, 3).equals("\"\"\"")) {
+          return generateForMultiLineGStringBegin(myBlock.getNode());
+        }
+      }
+
     }
 
     //For nested selections
@@ -127,7 +138,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
   private static List<Block> generateForMultiLineString(ASTNode node) {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
-
     final int start = node.getTextRange().getStartOffset();
     final int end = node.getTextRange().getEndOffset();
 
@@ -147,6 +157,26 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       @NotNull
       public TextRange getTextRange() {
         return new TextRange(end - 3, end);
+      }
+    });
+    return subBlocks;
+  }
+
+  private static List<Block> generateForMultiLineGStringBegin(ASTNode node) {
+    final ArrayList<Block> subBlocks = new ArrayList<Block>();
+    final int start = node.getTextRange().getStartOffset();
+    final int end = node.getTextRange().getEndOffset();
+
+    subBlocks.add(new GroovyBlock(node, myAlignment, Indent.getNoneIndent(), myWrap, mySettings) {
+      @NotNull
+      public TextRange getTextRange() {
+        return new TextRange(start, start + 3);
+      }
+    });
+    subBlocks.add(new GroovyBlock(node, myAlignment, Indent.getAbsoluteNoneIndent(), myWrap, mySettings) {
+      @NotNull
+      public TextRange getTextRange() {
+        return new TextRange(start + 3, end);
       }
     });
     return subBlocks;
