@@ -162,12 +162,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public PsiType getNominalType() {
     return GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper().doInference(new Computable<PsiType>() {
       public PsiType compute() {
-        return getNominalTypeImpl();
+        return getNominalTypeImpl(true);
       }
     }, Collections.<String, PsiType>emptyMap());
   }
 
-  private PsiType getNominalTypeImpl() {
+  private PsiType getNominalTypeImpl(boolean inferFromInitializer) {
     IElementType dotType = getDotTokenType();
     final GroovyResolveResult resolveResult = advancedResolve();
     PsiElement resolved = resolveResult.getElement();
@@ -188,7 +188,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     } else if (resolved instanceof GrVariable) {
-      result = ((GrVariable) resolved).getTypeGroovy();
+      result = ((GrVariable) resolved).getTypeGroovy(inferFromInitializer);
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else
@@ -235,7 +235,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   private static final class MyTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
-      final PsiType nominal = refExpr.getNominalTypeImpl();
+      final PsiType nominal = refExpr.getNominalTypeImpl(false);
       if (inferred == null) return nominal;
       if (nominal == null) return inferred;
       if (!nominal.isAssignableFrom(inferred)) return nominal; //see GRVY-487
@@ -427,7 +427,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
 
   public boolean isSoft() {
-    return getQualifierExpression() != null;  //todo rethink
+    return false;
   }
 
   public GrExpression getQualifierExpression() {

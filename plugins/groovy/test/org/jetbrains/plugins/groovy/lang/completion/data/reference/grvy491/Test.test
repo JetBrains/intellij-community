@@ -1,0 +1,7 @@
+class Test {
+    def c = 0
+}
+
+new Test().c.dou<caret>
+-----
+doubleValue

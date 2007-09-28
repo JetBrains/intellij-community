@@ -52,7 +52,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   }
 
   @Nullable
-  public PsiType getTypeGroovy() {
+  public PsiType getTypeGroovy(boolean inferFromInitializer) {
     GrTypeElement typeElement = getTypeElementGroovy();
     if (typeElement != null) return typeElement.getType();
     PsiElement parent = getParent();

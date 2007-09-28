@@ -38,7 +38,7 @@ public interface GrVariable extends PsiVariable, GroovyPsiElement {
   GrExpression getInitializerGroovy();
 
   @Nullable
-  PsiType getTypeGroovy();
+  PsiType getTypeGroovy(boolean inferFromInitializer);
 
   void setType(@Nullable PsiType type);
 

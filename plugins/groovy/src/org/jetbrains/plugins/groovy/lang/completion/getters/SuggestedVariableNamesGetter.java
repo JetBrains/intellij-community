@@ -2,7 +2,6 @@ package org.jetbrains.plugins.groovy.lang.completion.getters;
 
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -24,7 +23,7 @@ public class SuggestedVariableNamesGetter implements ContextGetter {
       if (parent instanceof GrVariable) {
         final GrVariable variable = (GrVariable) parent;
         if (context.equals(variable.getNameIdentifierGroovy())) {
-          final PsiType type = variable.getTypeGroovy();
+          final PsiType type = variable.getTypeGroovy(true);
           if (type != null) {
             final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(context.getProject());
             VariableKind kind = variable instanceof GrParameter ? VariableKind.PARAMETER :

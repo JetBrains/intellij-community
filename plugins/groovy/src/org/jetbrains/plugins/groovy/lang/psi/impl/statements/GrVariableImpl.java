@@ -60,7 +60,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
 
   @NotNull
   public PsiType getType() {
-    PsiType type = getTypeGroovy();
+    PsiType type = getDeclaredType();
     return type != null ? type : getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
   }
 
@@ -78,7 +78,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   }
 
   @Nullable
-  public PsiType getTypeGroovy() {
+  public PsiType getTypeGroovy(boolean inferFromInitializer) {
     GrTypeElement typeElement = getTypeElementGroovy();
     PsiType declaredType = null;
     if (typeElement != null) {
@@ -106,7 +106,10 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
           }
         }
       }
+
+      if (inferFromInitializer && declaredType == null) declaredType = initializerType;
     }
+
 
     return declaredType;
   }
