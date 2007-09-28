@@ -87,8 +87,10 @@ class DataTable implements Disposable, Forceable {
   }
 
   private void markClean() {
-    myIsDirty = false;
-    fillInHeader(SAFELY_CLOSED_MAGIC, myWasteSize);
+    if (myIsDirty) {
+      myIsDirty = false;
+      fillInHeader(SAFELY_CLOSED_MAGIC, myWasteSize);
+    }
   }
 
   private void markDirty() {
