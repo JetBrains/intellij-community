@@ -122,12 +122,11 @@ public abstract class Change {
   }
 
   protected static class HighlighterHolder implements ChangeType.MarkupHolder {
-    private static final RangeHighlighter[] NO_HIGHLIGHTERS = new RangeHighlighter[0];
     private Editor myEditor;
     private final ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>(3);
     private RangeHighlighter myMainHighlighter = null;
     private AnAction[] myActions;
-    private RangeHighlighter[] myActionHighlighters = NO_HIGHLIGHTERS;
+    private RangeHighlighter[] myActionHighlighters = RangeHighlighter.EMPTY_ARRAY;
 
     public void highlight(ChangeType.ChangeSide changeSide, Editor editor, ChangeType type) {
       LOG.assertTrue(myEditor == null || editor == myEditor);
@@ -176,7 +175,7 @@ public abstract class Change {
 
     public void removeHighlighters() {
       if (myEditor == null) {
-        LOG.assertTrue(myHighlighters.size() == 0);
+        LOG.assertTrue(myHighlighters.isEmpty());
         LOG.assertTrue(myMainHighlighter == null);
         return;
       }
@@ -195,7 +194,7 @@ public abstract class Change {
       for (RangeHighlighter actionHighlighter : myActionHighlighters) {
         markupModel.removeHighlighter(actionHighlighter);
       }
-      myActionHighlighters = NO_HIGHLIGHTERS;
+      myActionHighlighters = RangeHighlighter.EMPTY_ARRAY;
     }
 
     public void setActions(AnAction[] action) {

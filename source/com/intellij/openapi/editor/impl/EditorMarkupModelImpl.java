@@ -49,14 +49,19 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsFound.png");
 
-  private EditorImpl myEditor;
+  private final EditorImpl myEditor;
   private MyErrorPanel myErrorPanel;
   private ErrorStripeRenderer myErrorStripeRenderer = null;
-  private List<ErrorStripeListener> myErrorMarkerListeners = new ArrayList<ErrorStripeListener>();
+  private final List<ErrorStripeListener> myErrorMarkerListeners = new ArrayList<ErrorStripeListener>();
   private ErrorStripeListener[] myCachedErrorMarkerListeners = null;
   private List<RangeHighlighter> myCachedSortedHighlighters = null;
-  private MarkSpots myMarkSpots = new MarkSpots();
+  private final MarkSpots myMarkSpots = new MarkSpots();
   private int myScrollBarHeight;
+  private static final Comparator<RangeHighlighter> LAYER_COMPARATOR = new Comparator<RangeHighlighter>() {
+    public int compare(final RangeHighlighter o1, final RangeHighlighter o2) {
+      return o1.getLayer() - o2.getLayer();
+    }
+  };
 
   private int offsetToLine(int offset) {
     final Document document = myEditor.getDocument();
@@ -71,12 +76,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private final int yStart;
     private int yEnd;
     // sorted by layers from bottom to top
-    private List<RangeHighlighter> highlighters;
+    private RangeHighlighter[] highlighters = RangeHighlighter.EMPTY_ARRAY;
 
     public MarkSpot(final int yStart, final int yEnd) {
       this.yStart = yStart;
       this.yEnd = yEnd;
-      highlighters = new SmartList<RangeHighlighter>();
     }
 
     private boolean near(MouseEvent e, double width) {
@@ -112,7 +116,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final List<MarkSpot> nearestMarkSpots = getNearestMarkSpots(e, width);
       Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
       for (MarkSpot markSpot : nearestMarkSpots) {
-        highlighters.addAll(markSpot.highlighters);
+        highlighters.addAll(Arrays.asList(markSpot.highlighters));
       }
       LineTooltipRenderer bigRenderer = null;
       List<HighlightInfo> infos = new SmartList<HighlightInfo>();
@@ -218,8 +222,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       MarkSpot currentSpot = null;
       while (!startQueue.isEmpty() || !endQueue.isEmpty() || index != sortedHighlighters.size()) {
         LOG.assertTrue(startQueue.size() == endQueue.size());
-        final THashSet<PositionedRangeHighlighter> set = new THashSet<PositionedRangeHighlighter>(startQueue);
-        LOG.assertTrue(set.containsAll(endQueue));
 
         final PositionedRangeHighlighter positionedMark;
         boolean addingNew;
@@ -292,15 +294,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     private void spitOutMarkSpot(final MarkSpot currentSpot, final Queue<PositionedRangeHighlighter> startQueue) {
       mySpots.add(currentSpot);
-      currentSpot.highlighters = new SmartList<RangeHighlighter>();
+      currentSpot.highlighters = new RangeHighlighter[startQueue.size()];
+      int i =0;
       for (PositionedRangeHighlighter positioned : startQueue) {
-        currentSpot.highlighters.add(positioned.highlighter);
+        currentSpot.highlighters[i++] = positioned.highlighter;
       }
-      Collections.sort(currentSpot.highlighters, new Comparator<RangeHighlighter>() {
-        public int compare(final RangeHighlighter o1, final RangeHighlighter o2) {
-          return o1.getLayer() - o2.getLayer();
-        }
-      });
+      Arrays.sort(currentSpot.highlighters, LAYER_COMPARATOR);
     }
 
     private void repaint(Graphics g, final int width) {
@@ -309,7 +308,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         MarkSpot markSpot = mySpots.get(i);
 
         int yStart = markSpot.yStart;
-        RangeHighlighter mark = markSpot.highlighters.get(markSpot.highlighters.size() - 1);
+        RangeHighlighter mark = markSpot.highlighters[markSpot.highlighters.length - 1];
 
         int yEnd = markSpot.yEnd;
 
@@ -351,8 +350,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private boolean wider(MarkSpot markTop, MarkSpot markBottom) {
-      final RangeHighlighter highlighterTop = markTop.highlighters.get(markTop.highlighters.size() - 1);
-      final RangeHighlighter highlighterBottom = markBottom.highlighters.get(markBottom.highlighters.size() - 1);
+      final RangeHighlighter highlighterTop = markTop.highlighters[markTop.highlighters.length - 1];
+      final RangeHighlighter highlighterBottom = markBottom.highlighters[markBottom.highlighters.length - 1];
       return !highlighterTop.isThinErrorStripeMark() && highlighterBottom.isThinErrorStripeMark();
     }
 

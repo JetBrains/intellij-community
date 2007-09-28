@@ -106,7 +106,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
   @NotNull
   public RangeHighlighter[] getHighlighters(Editor editor) {
     Map<RangeHighlighter, HighlightInfo> highlightersMap = getHighlightInfoMap(editor, false);
-    if (highlightersMap == null) return new RangeHighlighter[0];
+    if (highlightersMap == null) return RangeHighlighter.EMPTY_ARRAY;
     Set<RangeHighlighter> set = new HashSet<RangeHighlighter>();
     for (Map.Entry<RangeHighlighter, HighlightInfo> entry : highlightersMap.entrySet()) {
       HighlightInfo info = entry.getValue();

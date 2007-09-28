@@ -29,6 +29,7 @@ import java.awt.*;
  * @see com.intellij.lang.annotation.Annotation
  */
 public interface RangeHighlighter extends RangeMarker {
+  RangeHighlighter[] EMPTY_ARRAY = new RangeHighlighter[0];
   /**
    * Returns the relative priority of the highlighter (higher priority highlighters can override
    * lower priority ones; layer number values for standard IDEA highlighters are given in

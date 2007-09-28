@@ -51,7 +51,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
 
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
-    return new RangeHighlighter[0];
+    return RangeHighlighter.EMPTY_ARRAY;
   }
 
   public <T> T getUserData(Key<T> key) {
