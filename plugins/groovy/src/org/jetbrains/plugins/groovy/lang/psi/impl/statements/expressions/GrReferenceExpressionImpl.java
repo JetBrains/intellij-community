@@ -188,7 +188,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     } else if (resolved instanceof GrVariable) {
-      result = ((GrVariable) resolved).getTypeGroovy(resolved instanceof GrField);  //for locals true nominal type would do
+      result = ((GrVariable) resolved).getTypeGroovy();
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else
@@ -238,7 +238,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       final PsiType nominal = refExpr.getNominalTypeImpl();
       if (inferred == null) return nominal;
       if (nominal == null) return inferred;
-      if (!nominal.isAssignableFrom(inferred)) return nominal; //see GRVY-487
+      if (!nominal.isAssignableFrom(inferred)) {
+        final PsiElement resolved = refExpr.resolve();
+        if (resolved instanceof GrVariable && ((GrVariable) resolved).getTypeElementGroovy() != null) {
+          return nominal; //see GRVY-487
+        }
+      }
       return inferred;
     }
   }

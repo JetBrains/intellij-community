@@ -118,6 +118,7 @@ public class DefaultHighlighter {
       HighlighterColors.JAVA_STRING.getDefaultAttributes());
 
   public static TextAttributesKey UNTYPED_ACCESS = TextAttributesKey.createTextAttributesKey(UNTYPED_ACCESS_ID,
-      new TextAttributes(HighlighterColors.JAVA_BRACKETS.getDefaultAttributes().getForegroundColor(), null,
-          HighlighterColors.JAVA_BRACKETS.getDefaultAttributes().getForegroundColor(), EffectType.LINE_UNDERSCORE, Font.PLAIN));
+      new TextAttributes(HighlighterColors.JAVA_BRACKETS.getDefaultAttributes().getForegroundColor(),
+                         HighlighterColors.JAVA_BRACKETS.getDefaultAttributes().getBackgroundColor(),
+                         HighlighterColors.JAVA_BRACKETS.getDefaultAttributes().getForegroundColor(), EffectType.LINE_UNDERSCORE, Font.PLAIN));
 }

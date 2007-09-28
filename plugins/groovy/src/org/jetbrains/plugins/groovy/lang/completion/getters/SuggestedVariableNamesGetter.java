@@ -23,7 +23,7 @@ public class SuggestedVariableNamesGetter implements ContextGetter {
       if (parent instanceof GrVariable) {
         final GrVariable variable = (GrVariable) parent;
         if (context.equals(variable.getNameIdentifierGroovy())) {
-          final PsiType type = variable.getTypeGroovy(true);
+          final PsiType type = variable.getTypeGroovy();
           if (type != null) {
             final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(context.getProject());
             VariableKind kind = variable instanceof GrParameter ? VariableKind.PARAMETER :

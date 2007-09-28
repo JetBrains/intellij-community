@@ -78,7 +78,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   }
 
   @Nullable
-  public PsiType getTypeGroovy(boolean inferFromInitializer) {
+  public PsiType getTypeGroovy() {
     GrTypeElement typeElement = getTypeElementGroovy();
     PsiType declaredType = null;
     if (typeElement != null) {
@@ -107,7 +107,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
         }
       }
 
-      if (inferFromInitializer && declaredType == null) declaredType = initializerType;
+      if (declaredType == null) declaredType = initializerType;
     }
 
 
