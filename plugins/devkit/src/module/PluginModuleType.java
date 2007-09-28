@@ -89,10 +89,6 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return DevKitBundle.message("module.title");
   }
 
-  public String getProjectType() {
-    return DevKitBundle.message("project.title");
-  }
-
   public String getDescription() {
     return DevKitBundle.message("module.description");
   }
