@@ -51,10 +51,8 @@ import java.util.*;
 public class GroovyCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.groovy.compiler.GroovyCompiler");
 
-  private static final String XMX_COMPILER_PROPERTY = "-Xmx";
-  private static final String XMX_COMPILER_VALUE = "300m";
+  private static final String XMX_COMPILER_PROPERTY = "-Xmx300m";
 
-  private static final String CLASS_PATH_LIST_SEPARATOR = File.pathSeparator;
   private Project myProject;
 
   public GroovyCompiler(Project project) {
@@ -84,7 +82,7 @@ public class GroovyCompiler implements TranslatingCompiler {
       String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
       final StringBuilder classPathBuilder = new StringBuilder();
       classPathBuilder.append(rtJarPath);
-      classPathBuilder.append(CLASS_PATH_LIST_SEPARATOR);
+      classPathBuilder.append(File.pathSeparator);
 
       String libPath = GroovyGrailsConfiguration.getInstance().getGroovyInstallPath() + "/lib";
       libPath = libPath.replace(File.separatorChar, '/');
@@ -93,13 +91,13 @@ public class GroovyCompiler implements TranslatingCompiler {
         for (VirtualFile file : lib.getChildren()) {
           if (required(file.getName())) {
             classPathBuilder.append(file.getPath());
-            classPathBuilder.append(CLASS_PATH_LIST_SEPARATOR);
+            classPathBuilder.append(File.pathSeparator);
           }
         }
       }
 
       commandLine.addParameter(classPathBuilder.toString());
-      commandLine.addParameter(XMX_COMPILER_PROPERTY + XMX_COMPILER_VALUE);
+      commandLine.addParameter(XMX_COMPILER_PROPERTY);
 
       commandLine.addParameter(GroovycRunner.class.getName());
 
