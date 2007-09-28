@@ -26,7 +26,6 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -42,8 +41,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, FileLookup {
   private final FileChooserDescriptor myChooserDescriptor;
@@ -321,26 +322,19 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private final class FileTreeExpansionListener implements TreeExpansionListener {
     public void treeExpanded(TreeExpansionEvent event) {
       final Object[] path = event.getPath().getPath();
-      Set<String> toAdd = new HashSet<String>();
-
-      for (Object o : path) {
-        final DefaultMutableTreeNode node = ((DefaultMutableTreeNode)o);
+      if (path.length == 2) {
+        // top node has been expanded => watch disk recursively
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path [1];
         Object userObject = node.getUserObject();
         if (userObject instanceof FileNodeDescriptor) {
           final VirtualFile file = ((FileNodeDescriptor)userObject).getElement().getFile();
           if (file != null && file.isDirectory()) {
             final String rootPath = file.getPath();
             if (myRequests.get(rootPath) == null) {
-              toAdd.add(rootPath);
+              final LocalFileSystem.WatchRequest watchRequest = LocalFileSystem.getInstance().addRootToWatch(rootPath, true);
+              myRequests.put(rootPath, watchRequest);
             }
           }
-        }
-      }
-
-      if (toAdd.size() > 0) {
-        final Set<LocalFileSystem.WatchRequest> requests = LocalFileSystem.getInstance().addRootsToWatch(toAdd, false);
-        for (LocalFileSystem.WatchRequest request : requests) {
-          myRequests.put(request.getRootPath(), request);
         }
       }
     }
