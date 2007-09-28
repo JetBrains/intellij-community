@@ -240,7 +240,9 @@ public class MappedFile implements Forceable {
   }
 
   public void close() {
-    writeLength(mySize);
+    if (myIsDirty) {
+      writeLength(mySize);
+    }
     unmap();
   }
 
