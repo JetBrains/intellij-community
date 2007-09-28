@@ -362,6 +362,12 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
     return myDelegate;
   }
 
+  //RangeMarker nextRange = i==myRelevantRangesInHostDocument.length-1 ? null : myRelevantRangesInHostDocument[i+1];
+  //if (nextRange == null || hostOffset < nextRange.getStartOffset()) {
+  //  if (hostOffset >= currentRange.getEndOffset()) hostOffset = currentRange.getEndOffset();
+  //  return offset + hostOffset - currentRange.getStartOffset();
+  //}
+
   //todo use escaper?
   public int hostToInjected(int hostOffset) {
     if (hostOffset < myRelevantRangesInHostDocument[0].getStartOffset()) return myPrefixes[0].length();
@@ -369,7 +375,9 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
     for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
       offset += myPrefixes[i].length();
       RangeMarker currentRange = myRelevantRangesInHostDocument[i];
-      if (hostOffset < currentRange.getEndOffset()) {
+      RangeMarker nextRange = i==myRelevantRangesInHostDocument.length-1 ? null : myRelevantRangesInHostDocument[i+1];
+      if (nextRange == null || hostOffset < nextRange.getStartOffset()) {
+        if (hostOffset >= currentRange.getEndOffset()) hostOffset = currentRange.getEndOffset();
         return offset + hostOffset - currentRange.getStartOffset();
       }
       offset += currentRange.getEndOffset() - currentRange.getStartOffset();

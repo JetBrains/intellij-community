@@ -205,8 +205,13 @@ public abstract class AnAction {
    * @param e
    */
   public void beforeActionPerformedUpdate(AnActionEvent e) {
-    e.setInjectedContext(isInInjectedContext());
+    boolean worksInInjected = isInInjectedContext();
+    e.setInjectedContext(worksInInjected);
     update(e);
+    if (!e.getPresentation().isEnabled() && worksInInjected) {
+      e.setInjectedContext(false);
+      update(e);
+    }
   }
 
   /**

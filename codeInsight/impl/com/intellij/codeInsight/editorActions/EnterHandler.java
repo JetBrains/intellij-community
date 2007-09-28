@@ -423,13 +423,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     private boolean myForceIndent = false;
     private static final String LINE_SEPARATOR = "\n";
 
-    public DoEnterAction(
-      PsiFile file,
-      Editor view,
-      Document document,
-      int offset,
-      boolean insertSpace,
-      int caretAdvance) {
+    public DoEnterAction(PsiFile file, Editor view, Document document, int offset, boolean insertSpace, int caretAdvance) {
       myEditor = view;
       myFile = file;
       myOffset = offset;
@@ -448,6 +442,7 @@ public class EnterHandler extends EditorWriteActionHandler {
 
         int offset = CharArrayUtil.shiftBackwardUntil(chars, myOffset - 1, LINE_SEPARATOR) - 1;
         offset = CharArrayUtil.shiftBackwardUntil(chars, offset, LINE_SEPARATOR) + 1;
+        if (offset < 0) offset = 0;
         int lineStart = CharArrayUtil.shiftForward(chars, offset, " \t");
 
         final Commenter langCommenter = PsiUtil.getLanguageAtOffset(myFile, offset).getCommenter();
