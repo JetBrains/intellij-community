@@ -229,7 +229,7 @@ public class ModuleEditor implements Place.Navigator {
     updateOrderEntriesInEditors();
   }
 
-  public void updateOrderEntriesInEditors() {
+  private void updateOrderEntriesInEditors() {
     if (getModule() != null) { //module with attached module libraries was deleted
       getPanel();  //init editor if needed
       for (final ModuleConfigurationEditor myEditor : myEditors) {
@@ -240,7 +240,7 @@ public class ModuleEditor implements Place.Navigator {
   }
 
   public void updateCompilerOutputPathChanged(String baseUrl, String moduleName){
-    getPanel();  //init editor if needed
+    if (myGenericSettingsPanel == null) return; //wasn't initialized yet
     for (final ModuleConfigurationEditor myEditor : myEditors) {
       if (myEditor instanceof ModuleElementsEditor) {
         ((ModuleElementsEditor)myEditor).moduleCompileOutputChanged(baseUrl, moduleName);

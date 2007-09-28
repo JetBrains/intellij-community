@@ -129,25 +129,29 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   }
 
   private void updateOutputPathPresentation() {
-    final VirtualFile compilerOutputPath = myModel.getCompilerOutputPath();
-    if (compilerOutputPath != null) {
-      myOutputPathPanel.setText(FileUtil.toSystemDependentName(compilerOutputPath.getPath()));
-    }
-    else {
-      final String compilerOutputUrl = myModel.getCompilerOutputPathUrl();
-      if (compilerOutputUrl != null) {
-        myOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutputUrl)));
+    if (myModel.isCompilerOutputPathInherited()) {
+      final String baseUrl = ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl();
+      moduleCompileOutputChanged(baseUrl, myModel.getModule().getName());
+    } else {
+      final VirtualFile compilerOutputPath = myModel.getCompilerOutputPath();
+      if (compilerOutputPath != null) {
+        myOutputPathPanel.setText(FileUtil.toSystemDependentName(compilerOutputPath.getPath()));
       }
-    }
-
-    final VirtualFile testsOutputPath = myModel.getCompilerOutputPathForTests();
-    if (testsOutputPath != null) {
-      myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(testsOutputPath.getPath()));
-    }
-    else {
-      final String testsOutputUrl = myModel.getCompilerOutputPathForTestsUrl();
-      if (testsOutputUrl != null) {
-        myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(testsOutputUrl)));
+      else {
+        final String compilerOutputUrl = myModel.getCompilerOutputPathUrl();
+        if (compilerOutputUrl != null) {
+          myOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutputUrl)));
+        }
+      }
+      final VirtualFile testsOutputPath = myModel.getCompilerOutputPathForTests();
+      if (testsOutputPath != null) {
+        myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(testsOutputPath.getPath()));
+      }
+      else {
+        final String testsOutputUrl = myModel.getCompilerOutputPathForTestsUrl();
+        if (testsOutputUrl != null) {
+          myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(testsOutputUrl)));
+        }
       }
     }
   }
