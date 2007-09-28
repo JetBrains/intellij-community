@@ -38,7 +38,7 @@ public class FileReferenceSet {
 
   private static final char SEPARATOR = '/';
   private static final String SEPARATOR_STRING = "/";
-  private static final Key<CachedValue<PsiFileSystemItem>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<PsiFileSystemItem>>("default file contexts");
+  private static final Key<CachedValue<Collection<PsiFileSystemItem>>> DEFAULT_CONTEXTS_KEY = new Key<CachedValue<Collection<PsiFileSystemItem>>>("default file contexts");
   public static final CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>> DEFAULT_PATH_EVALUATOR_OPTION =
     new CustomizableReferenceProvider.CustomizationKey<Function<PsiFile, Collection<PsiFileSystemItem>>>(PsiBundle.message("default.path.evaluator.option"));
   public static final Function<PsiFile, Collection<PsiFileSystemItem>> ABSOLUTE_TOP_LEVEL = new Function<PsiFile, Collection<PsiFileSystemItem>>() {
@@ -241,17 +241,17 @@ public class FileReferenceSet {
       return getAbsoluteTopLevelDirLocations(file);
     }
 
-    final CachedValueProvider<PsiFileSystemItem> myDefaultContextProvider = new CachedValueProvider<PsiFileSystemItem>() {
-      public Result<PsiFileSystemItem> compute() {
-        final PsiFileSystemItem context = getContextByFile(file);
-        return Result.createSingleDependency(context,
+    final CachedValueProvider<Collection<PsiFileSystemItem>> myDefaultContextProvider = new CachedValueProvider<Collection<PsiFileSystemItem>>() {
+      public Result<Collection<PsiFileSystemItem>> compute() {
+        final Collection<PsiFileSystemItem> contexts = getContextByFile(file);
+        return Result.createSingleDependency(contexts,
                                              PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     };
     final CachedValuesManager cachedValuesManager = PsiManager.getInstance(myElement.getProject()).getCachedValuesManager();
-    final PsiFileSystemItem value =
+    final Collection<PsiFileSystemItem> value =
       cachedValuesManager.getCachedValue(file, DEFAULT_CONTEXTS_KEY, myDefaultContextProvider, false);
-    return value == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.singleton(value);
+    return value == null ? Collections.<PsiFileSystemItem>emptyList() : value;
   }
 
   @Nullable
@@ -266,30 +266,28 @@ public class FileReferenceSet {
   }
 
   @Nullable
-  private PsiFileSystemItem getContextByFile(final @NotNull PsiFile file) {
+  private Collection<PsiFileSystemItem> getContextByFile(final @NotNull PsiFile file) {
 
     final Project project = file.getProject();
     final JspContextManager manager = JspContextManager.getInstance(project);
     if (manager != null) {
       final PsiFileSystemItem item = manager.getContextFolder(file);
       if (item != null) {
-        return item;
+        return Collections.singleton(item);
       }
       if (useIncludingFileAsContext()) {
         final JspFile contextFile = manager.getContextFile(file);
         if (contextFile != null) {
-          return contextFile.getParent();
+          return Collections.<PsiFileSystemItem>singleton(contextFile.getParent());
         }
       }
     }
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
-      final PsiFileSystemItem item = FileReferenceHelperRegistrar.getNotNullHelper(file).getPsiFileSystemItem(project, virtualFile);
-      if (item != null) {
-        return item.getParent();
-      }
+      return FileReferenceHelperRegistrar.getNotNullHelper(file).getContexts(project, virtualFile);
     }
-    return file.getParent();
+    final PsiDirectory parent = file.getParent();
+    return parent == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.<PsiFileSystemItem>singleton(parent);
   }
 
   public String getPathString() {
@@ -310,11 +308,12 @@ public class FileReferenceSet {
   }
 
   @NotNull
-  public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(final @NotNull PsiFile file) {
+  private static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(final @NotNull PsiFile file) {
+
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return Collections.emptyList();
 
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
+    for (final FileReferenceHelper<?> helper : FileReferenceHelperRegistrar.getHelpers()) {
       final Collection<PsiFileSystemItem> roots = helper.getRoots(module);
       if (roots.size() > 0) {
         return roots;

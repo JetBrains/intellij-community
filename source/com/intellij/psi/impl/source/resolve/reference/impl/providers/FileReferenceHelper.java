@@ -36,11 +36,14 @@ public interface FileReferenceHelper<T extends PsiFileSystemItem> {
   List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference);
 
   @Nullable
-  PsiFileSystemItem getPsiFileSystemItem(final Project project, @NotNull VirtualFile file);
+  PsiFileSystemItem getPsiFileSystemItem(final Project project, final @NotNull VirtualFile file);
 
   @Nullable
-  PsiFileSystemItem findRoot(final Project project, @NotNull VirtualFile file);
+  PsiFileSystemItem findRoot(final Project project, final @NotNull VirtualFile file);
 
   @NotNull
   Collection<PsiFileSystemItem> getRoots(@NotNull Module module);
+
+  @NotNull
+  Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file);
 }

@@ -25,8 +25,12 @@ import java.util.Collection;
  * @author peter
  */
 public class FileReferenceHelperRegistrar {
+  
   private static final ClassMap<FileReferenceHelper> ourHelpersMap = new ClassMap<FileReferenceHelper>();
   private static final LinkedList<FileReferenceHelper> ourHelpers = new LinkedList<FileReferenceHelper>();
+
+  private FileReferenceHelperRegistrar() {
+  }
 
   static {
     final PsiFileReferenceHelper helper = new PsiFileReferenceHelper();
@@ -65,12 +69,6 @@ public class FileReferenceHelperRegistrar {
     return element2.getManager().areElementsEquivalent(element1, element2);
   }
 
-  @Nullable
-  public static PsiFileSystemItem normalizeItem(@NotNull final PsiFileSystemItem item) {
-    final VirtualFile file = item.getVirtualFile();
-    return file == null ? null : getNotNullHelper(item).getPsiFileSystemItem(item.getProject(), file);
-  }
-
   private static class NullFileReferenceHelper<T extends PsiFileSystemItem> implements FileReferenceHelper<T> {
     @NotNull
     public Class<T> getDirectoryClass() {
@@ -105,6 +103,11 @@ public class FileReferenceHelperRegistrar {
 
     @NotNull
     public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
+      return Collections.emptyList();
+    }
+
+    @NotNull
+    public Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file) {
       return Collections.emptyList();
     }
   }

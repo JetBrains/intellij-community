@@ -9,15 +9,19 @@ import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -58,6 +62,31 @@ public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory>
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
     return FilePathReferenceProvider.getRoots(module, false);
+  }
+
+  @NotNull
+  public Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file) {
+    final PsiFileSystemItem item = getPsiFileSystemItem(project, file);
+    if (item != null) {
+      final PsiFileSystemItem parent = item.getParent();
+      if (parent != null) {
+        final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+        final VirtualFile parentFile = parent.getVirtualFile();
+        assert parentFile != null;
+        VirtualFile root = index.getSourceRootForFile(parentFile);
+        if (root != null) {
+          final String path = VfsUtil.getRelativePath(parentFile, root, '.');
+          final PsiPackage psiPackage = PsiManager.getInstance(project).findPackage(path);
+          if (psiPackage != null) {
+            final Module module = ModuleUtil.findModuleForFile(file, project);
+            assert module != null;
+            return Arrays.<PsiFileSystemItem>asList(psiPackage.getDirectories(module.getModuleWithDependenciesScope()));
+          }
+        }
+        return Collections.singleton(parent);
+      }
+    }
+    return Collections.emptyList();
   }
 
   @NotNull
