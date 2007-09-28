@@ -53,7 +53,7 @@ public class Helper {
     return getIndent(element, includeNonSpace, 0);
   }
   
-  private static final int TOO_BIG_WALK_THRESHOULD = 1000;
+  private static final int TOO_BIG_WALK_THRESHOULD = 450;
 
   private int getIndent(final ASTNode element, boolean includeNonSpace, int recursionLevel) {
     if (recursionLevel > TOO_BIG_WALK_THRESHOULD) return 0;
