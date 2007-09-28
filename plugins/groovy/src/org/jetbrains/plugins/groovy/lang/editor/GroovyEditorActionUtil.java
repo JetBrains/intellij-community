@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.grails.lang.gsp.editor.actions;
+package org.jetbrains.plugins.groovy.lang.editor;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -22,14 +23,17 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 /**
  * @author ilyas
  */
-public abstract class GspEditorActionUtil {
-  static void insertSpacesByIndent(Editor editor, Project project) {
+public abstract class GroovyEditorActionUtil {
+  public static void insertSpacesByIndent(Editor editor, Project project) {
     int indentSize = CodeStyleSettingsManager.getSettings(project).getIndentSize(GspFileType.GSP_FILE_TYPE);
     StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < indentSize; i++) {
@@ -38,7 +42,7 @@ public abstract class GspEditorActionUtil {
     EditorModificationUtil.insertStringAtCaret(editor, buffer.toString());
   }
 
-  static void insertSpacesByIndent(Editor editor, DataContext dataContext) {
+  public static void insertSpacesByIndent(Editor editor, DataContext dataContext) {
     final Project project = DataKeys.PROJECT.getData(dataContext);
     int indentSize = CodeStyleSettingsManager.getSettings(project).getIndentSize(GspFileType.GSP_FILE_TYPE);
     StringBuffer buffer = new StringBuffer();
@@ -48,7 +52,7 @@ public abstract class GspEditorActionUtil {
     EditorModificationUtil.insertStringAtCaret(editor, buffer.toString());
   }
 
-  static boolean checkSciptletSeparatorBalance(HighlighterIterator iterator) {
+  public static boolean areSciptletSeparatorsUnbalanced(HighlighterIterator iterator) {
     int balance = 0;
     while (!iterator.atEnd()) {
       if (GspTokenTypesEx.JSCRIPT_BEGIN == iterator.getTokenType()) balance++;
@@ -58,10 +62,39 @@ public abstract class GspEditorActionUtil {
     return balance > 0;
   }
 
-  static boolean isWhiteSpace(String text, int i) {
+  public static boolean isWhiteSpace(String text, int i) {
     return text.charAt(i) == ' ' ||
         text.charAt(i) == '\t' ||
         text.charAt(i) == '\r' ||
         text.charAt(i) == '\n';
   }
+
+  public static boolean isPlainStringLiteral(ASTNode node) {
+    if (node.getElementType() != GroovyTokenTypes.mSTRING_LITERAL) {
+      return false;
+    }
+    String text = node.getText();
+    return text.length() < 3 && text.equals("''") || !text.substring(0, 3).equals("'''");
+  }
+
+  public static boolean isPlainGString(ASTNode node) {
+    if (!(node.getPsi() instanceof GrLiteral)) {
+      return false;
+    }
+    String text = node.getText();
+    return text.length() < 3 && text.equals("\"\"") || !text.substring(0, 3).equals("\"\"\"");
+  }
+
+  public static TokenSet GSTRING_TOKENS = TokenSet.create(
+      GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
+      GroovyTokenTypes.mGSTRING_SINGLE_END,
+      GroovyTokenTypes.mGSTRING_LITERAL
+  );
+
+  public static TokenSet GSTRING_TOKENS_INNER = TokenSet.create(
+      GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
+      GroovyTokenTypes.mGSTRING_SINGLE_END
+  );
 }

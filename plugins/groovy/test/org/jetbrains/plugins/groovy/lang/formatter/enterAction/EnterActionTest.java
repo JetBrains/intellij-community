@@ -90,11 +90,17 @@ public class EnterActionTest extends ActionTestCase {
       offset = myEditor.getCaretModel().getOffset();
       result = myEditor.getDocument().getText();
       result = result.substring(0, offset) + CARET_MARKER + result.substring(offset);
-
-    } finally {
+    }
+    catch (IndexOutOfBoundsException e) {
+      offset = myEditor.getCaretModel().getOffset();
+      result = myEditor.getDocument().getText();
+      result = result.substring(0, offset) + CARET_MARKER + result.substring(offset);
+    }
+    finally {
       fileEditorManager.closeFile(virtualFile);
       myEditor = null;
     }
+
     return result;
   }
 
@@ -102,7 +108,11 @@ public class EnterActionTest extends ActionTestCase {
     setSettings();
     String fileText = data[0];
     final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
-    return processFile(psiFile);
+    String result = processFile(psiFile);
+    System.out.println("------------------------ " + testName + " ------------------------");
+    System.out.println(result);
+    System.out.println("");
+    return result;
   }
 
 
