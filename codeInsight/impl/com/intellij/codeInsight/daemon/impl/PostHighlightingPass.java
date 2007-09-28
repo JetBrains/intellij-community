@@ -124,8 +124,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
         boolean doubleCheckUsages = false;
         if (PsiUtil.isInJspFile(myFile)) {
-          final PsiFile[] includingFiles = JspSpiUtil.getReferencingFiles(PsiUtil.getJspFile(myFile));
-          doubleCheckUsages = includingFiles.length > 1 || includingFiles.length == 1 && includingFiles[0] != myFile;
+          doubleCheckUsages = JspSpiUtil.isIncludedOrIncludesSomething(PsiUtil.getJspFile(myFile));
         }
 
         List<PsiNamedElement> unusedDcls = myRefCountHolder.getUnusedDcls();
@@ -199,8 +198,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     final UnusedSymbolLocalInspection unusedSymbolInspection = unusedSymbolTool == null ? null : (UnusedSymbolLocalInspection)unusedSymbolTool.getTool();
 
     if (unusedImportEnabled && PsiUtil.isInJspFile(myFile)) {
-      final PsiFile[] includingFiles = JspSpiUtil.getReferencingFiles(PsiUtil.getJspFile(myFile));
-      unusedImportEnabled = includingFiles.length == 0 || includingFiles.length == 1 && includingFiles[0] == myFile;
+      unusedImportEnabled = !JspSpiUtil.isIncludedOrIncludesSomething(PsiUtil.getJspFile(myFile));
     }
 
     for (PsiElement element : elements) {

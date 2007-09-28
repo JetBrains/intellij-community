@@ -112,6 +112,32 @@ public abstract class JspSpiUtil {
     return util == null ? PsiFile.EMPTY_ARRAY : util._getReferencingFiles(jspFile);
   }
 
+  public static boolean isIncludedOrIncludesSomething(@NotNull JspFile file) {
+    return isIncludingAnything(file) || isIncluded(file);
+  }
+
+  public static boolean isIncluded(@NotNull JspFile jspFile) {
+    final JspSpiUtil util = getJspSpiUtil();
+    return util != null && util._isIncluded(jspFile);
+  }
+
+  public abstract boolean _isIncluded(@NotNull final JspFile jspFile);
+
+  public static boolean isIncludingAnything(@NotNull JspFile jspFile) {
+    final JspSpiUtil util = getJspSpiUtil();
+    return util != null && util._isIncludingAnything(jspFile);
+  }
+
+  protected abstract boolean _isIncludingAnything(@NotNull final JspFile jspFile);
+
+  public static PsiFile[] getIncludedFiles(@NotNull JspFile jspFile) {
+    final JspSpiUtil util = getJspSpiUtil();
+    return util == null ? PsiFile.EMPTY_ARRAY : util._getIncludedFiles(jspFile);
+  }
+
+  @NotNull
+  protected abstract PsiFile[] _getIncludedFiles(@NotNull final JspFile jspFile);
+
   @NotNull
   protected abstract PsiFile[] _getReferencingFiles(JspFile jspFile);
 
