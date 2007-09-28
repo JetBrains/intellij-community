@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -122,13 +123,68 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     return false;
   }
 
+  private static TokenSet AFTER_DOLLAR = TokenSet.create(
+      GroovyTokenTypes.mLCURLY,
+      GroovyTokenTypes.mIDENT,
+      GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
+  );
+
+  private static TokenSet ALL_STRINGS = TokenSet.create(
+      GroovyTokenTypes.mSTRING_LITERAL,
+      GroovyTokenTypes.mGSTRING_LITERAL,
+      GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+      GroovyTokenTypes.mGSTRING_SINGLE_END,
+      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT,
+      GroovyTokenTypes.mRCURLY,
+      GroovyTokenTypes.mIDENT
+  );
+
+  private static TokenSet BEFORE_DOLLAR = TokenSet.create(
+      GroovyTokenTypes.mGSTRING_SINGLE_BEGIN,
+      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
+  );
+
+  private static TokenSet EXPR_END = TokenSet.create(
+      GroovyTokenTypes.mRCURLY,
+      GroovyTokenTypes.mIDENT
+  );
+
+  private static TokenSet AFTER_EXPR_END = TokenSet.create(
+      GroovyTokenTypes.mGSTRING_SINGLE_END,
+      GroovyTokenTypes.mGSTRING_SINGLE_CONTENT
+  );
+
+  private static TokenSet STRING_END = TokenSet.create(
+      GroovyTokenTypes.mSTRING_LITERAL,
+      GroovyTokenTypes.mGSTRING_LITERAL,
+      GroovyTokenTypes.mGSTRING_SINGLE_END
+  );
+
+
   private boolean handleInString(Editor editor, int carret, DataContext dataContext) throws IncorrectOperationException {
     PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
     Project project = DataKeys.PROJECT.getData(dataContext);
 
     String fileText = editor.getDocument().getText();
     if (fileText.length() == carret) return false;
-    if (fileText.length() > carret && (fileText.charAt(carret) == '\n' || fileText.charAt(carret) == '\r')) {
+    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
+    HighlighterIterator iteratorLeft = highlighter.createIterator(carret - 1);
+    HighlighterIterator iteratorRight = highlighter.createIterator(carret);
+
+    if (iteratorLeft != null && !(ALL_STRINGS.contains(iteratorLeft.getTokenType()))) {
+      return false;
+    }
+    if (iteratorLeft != null && BEFORE_DOLLAR.contains(iteratorLeft.getTokenType()) &&
+        iteratorRight != null && !AFTER_DOLLAR.contains(iteratorRight.getTokenType())) {
+      return false;
+    }
+    if (iteratorLeft != null && EXPR_END.contains(iteratorLeft.getTokenType()) &&
+        iteratorRight != null && !AFTER_EXPR_END.contains(iteratorRight.getTokenType())) {
+      return false;
+    }
+    if (iteratorLeft != null && STRING_END.contains(iteratorLeft.getTokenType()) &&
+        iteratorRight != null && !STRING_END.contains(iteratorRight.getTokenType())) {
       return false;
     }
 
