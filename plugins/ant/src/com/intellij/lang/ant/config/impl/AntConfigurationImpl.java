@@ -123,6 +123,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
   }
 
+  private volatile boolean myIsInitialized = false;
+  
+  public boolean isInitialized() {
+    return myIsInitialized;
+  }
+
   public AntBuildFile[] getBuildFiles() {
     return myBuildFiles.toArray(new AntBuildFile[myBuildFiles.size()]);
   }
@@ -628,6 +634,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               }
               finally {
                 updateRegisteredActions();
+                myIsInitialized = true;
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
                     myEventDispatcher.getMulticaster().configurationLoaded();

@@ -54,8 +54,12 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   public Object[] getChildElements(Object element) {
+    final AntConfiguration configuration = AntConfiguration.getInstance(myProject);
     if (element == myRoot) {
-      final AntBuildFile[] buildFiles = AntConfiguration.getInstance(myProject).getBuildFiles();
+      if (!configuration.isInitialized()) {
+        return new Object[] {AntBundle.message("loading.ant.config.progress")};
+      }
+      final AntBuildFile[] buildFiles = configuration.getBuildFiles();
       return (buildFiles.length != 0) ? buildFiles : new Object[]{AntBundle.message("ant.tree.structure.no.build.files.message")};
     }
 
@@ -67,7 +71,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
         new ArrayList<AntBuildTarget>(Arrays.asList(myFilteredTargets ? model.getFilteredTargets() : model.getTargets()));
       Collections.sort(targets, ourTargetComparator);
 
-      final List<AntBuildTarget> metaTargets = Arrays.asList(AntConfiguration.getInstance(myProject).getMetaTargets(buildFile));
+      final List<AntBuildTarget> metaTargets = Arrays.asList(configuration.getMetaTargets(buildFile));
       Collections.sort(metaTargets, ourTargetComparator);
       targets.addAll(metaTargets);
 

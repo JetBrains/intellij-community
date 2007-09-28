@@ -62,6 +62,8 @@ public abstract class AntConfiguration {
     return ACTION_ID_PREFIX + project.getLocationHash();
   }
   
+  public abstract boolean isInitialized();
+  
   public abstract AntBuildFile[] getBuildFiles();
 
   public abstract AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException;
