@@ -44,6 +44,7 @@ class RecordsTable implements Disposable, Forceable {
 
   private void markDirty() {
     if (!myIsDirty) {
+      myIsDirty = true;
       myStorage.putInt(HEADER_MAGIC_OFFSET, CONNECTED_MAGIC);
     }
   }
@@ -142,7 +143,7 @@ class RecordsTable implements Disposable, Forceable {
 
   private void markClean() {
     if (myIsDirty) {
-      myIsDirty = true;
+      myIsDirty = false;
       myStorage.putInt(HEADER_MAGIC_OFFSET, SAFELY_CLOSED_MAGIC);
     }
   }
