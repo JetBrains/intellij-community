@@ -162,12 +162,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public PsiType getNominalType() {
     return GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper().doInference(new Computable<PsiType>() {
       public PsiType compute() {
-        return getNominalTypeImpl(true);
+        return getNominalTypeImpl();
       }
     }, Collections.<String, PsiType>emptyMap());
   }
 
-  private PsiType getNominalTypeImpl(boolean inferFromInitializer) {
+  private PsiType getNominalTypeImpl() {
     IElementType dotType = getDotTokenType();
     final GroovyResolveResult resolveResult = advancedResolve();
     PsiElement resolved = resolveResult.getElement();
@@ -188,7 +188,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         }
       }
     } else if (resolved instanceof GrVariable) {
-      result = ((GrVariable) resolved).getTypeGroovy(inferFromInitializer);
+      result = ((GrVariable) resolved).getTypeGroovy(resolved instanceof GrField);  //for locals true nominal type would do
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else
@@ -235,7 +235,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   private static final class MyTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
-      final PsiType nominal = refExpr.getNominalTypeImpl(false);
+      final PsiType nominal = refExpr.getNominalTypeImpl();
       if (inferred == null) return nominal;
       if (nominal == null) return inferred;
       if (!nominal.isAssignableFrom(inferred)) return nominal; //see GRVY-487
