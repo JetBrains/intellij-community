@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
+import org.jetbrains.plugins.groovy.lang.editor.GroovyEditorActionUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
@@ -54,6 +55,10 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     // For Groovy file
     if (psiParent instanceof GroovyFileBase) {
       return Indent.getNoneIndent();
+    }
+
+    if (GroovyEditorActionUtil.GSTRING_TOKENS_INNER.contains(child.getElementType())) {
+      return Indent.getAbsoluteNoneIndent();
     }
 
     if (psiParent instanceof GrListOrMap) {

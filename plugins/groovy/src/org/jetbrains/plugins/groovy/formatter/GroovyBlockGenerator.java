@@ -24,9 +24,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GspOuterGroovyElement;
 import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -71,6 +73,19 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       return generateForBinaryExpr();
     }
 
+    //For multiline strings
+    if ((myBlock.getNode().getElementType() == GroovyTokenTypes.mSTRING_LITERAL ||
+        myBlock.getNode().getElementType() == GroovyTokenTypes.mGSTRING_LITERAL) &&
+        myBlock.getTextRange().equals(myBlock.getNode().getTextRange())) {
+      String text = myBlock.getNode().getText();
+      if (text.length() >= 6) {
+        if (text.substring(0, 3).equals("'''") && text.substring(text.length() - 3).equals("'''") ||
+            text.substring(0, 3).equals("\"\"\"") & text.substring(text.length() - 3).equals("\"\"\"")) {
+          return generateForMultiLineString(myBlock.getNode());
+        }
+      }
+    }
+
     //For nested selections
     if (NESTED.contains(myBlock.getNode().getElementType()) &&
         myBlock.getNode().getPsi().getParent() != null &&
@@ -106,6 +121,34 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         prevChildNode = childNode;
       }
     }
+    return subBlocks;
+  }
+
+
+  private static List<Block> generateForMultiLineString(ASTNode node) {
+    final ArrayList<Block> subBlocks = new ArrayList<Block>();
+
+    final int start = node.getTextRange().getStartOffset();
+    final int end = node.getTextRange().getEndOffset();
+
+    subBlocks.add(new GroovyBlock(node, myAlignment, Indent.getNoneIndent(), myWrap, mySettings) {
+      @NotNull
+      public TextRange getTextRange() {
+        return new TextRange(start, start + 3);
+      }
+    });
+    subBlocks.add(new GroovyBlock(node, myAlignment, Indent.getAbsoluteNoneIndent(), myWrap, mySettings) {
+      @NotNull
+      public TextRange getTextRange() {
+        return new TextRange(start + 3, end - 3);
+      }
+    });
+    subBlocks.add(new GroovyBlock(node, myAlignment, Indent.getAbsoluteNoneIndent(), myWrap, mySettings) {
+      @NotNull
+      public TextRange getTextRange() {
+        return new TextRange(end - 3, end);
+      }
+    });
     return subBlocks;
   }
 

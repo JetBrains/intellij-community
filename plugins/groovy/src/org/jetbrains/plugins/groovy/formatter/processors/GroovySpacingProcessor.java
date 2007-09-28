@@ -15,16 +15,16 @@
 
 package org.jetbrains.plugins.groovy.formatter.processors;
 
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
-import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
+import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
+import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 
 /**
  * @author ilyas
@@ -43,10 +43,17 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
     ASTNode rightNode = child2.getNode();
 
 /********** Braces ************/
+
+    // For multi-line strings
+    if (!child1.getNode().getTextRange().equals(child1.getTextRange()) ||
+        !child2.getNode().getTextRange().equals(child2.getTextRange())) {
+      return NO_SPACING;
+    }
+
     // For left parentheses in method declarations or calls
     if (mLPAREN.equals(rightNode.getElementType()) &&
-            rightNode.getPsi().getParent().getNode() != null &&
-            METHOD_DEFS.contains(rightNode.getPsi().getParent().getNode().getElementType())) {
+        rightNode.getPsi().getParent().getNode() != null &&
+        METHOD_DEFS.contains(rightNode.getPsi().getParent().getNode().getElementType())) {
       return NO_SPACING;
     }
 
@@ -55,20 +62,20 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
     }
     // For left square bracket in array declarations and selections by index
     if ((mLBRACK.equals(rightNode.getElementType()) &&
-            rightNode.getPsi().getParent().getNode() != null &&
-            INDEX_OR_ARRAY.contains(rightNode.getPsi().getParent().getNode().getElementType())) ||
-            ARRAY_DECLARATOR.equals(rightNode.getElementType())) {
+        rightNode.getPsi().getParent().getNode() != null &&
+        INDEX_OR_ARRAY.contains(rightNode.getPsi().getParent().getNode().getElementType())) ||
+        ARRAY_DECLARATOR.equals(rightNode.getElementType())) {
       return NO_SPACING;
     }
     // For parentheses in arguments and typecasts
     if (LEFT_BRACES.contains(leftNode.getElementType()) ||
-            RIGHT_BRACES.contains(rightNode.getElementType())) {
+        RIGHT_BRACES.contains(rightNode.getElementType())) {
       return NO_SPACING_WITH_NEWLINE;
     }
     // For type parameters
     if ((mLT.equals(leftNode.getElementType()) || mGT.equals(rightNode.getElementType())) &&
-            leftNode.getPsi().getParent() != null &&
-            leftNode.getPsi().getParent() instanceof GrTypeArgumentList) {
+        leftNode.getPsi().getParent() != null &&
+        leftNode.getPsi().getParent() instanceof GrTypeArgumentList) {
       return NO_SPACING_WITH_NEWLINE;
     }
 
@@ -79,8 +86,8 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
 /********** punctuation marks ************/
     // For dots, commas etc.
     if ((PUNCTUATION_SIGNS.contains(rightNode.getElementType())) ||
-            (mCOLON.equals(rightNode.getElementType()) &&
-                    !(rightNode.getPsi().getParent() instanceof GrConditionalExpression))) {
+        (mCOLON.equals(rightNode.getElementType()) &&
+            !(rightNode.getPsi().getParent() instanceof GrConditionalExpression))) {
       return NO_SPACING;
     }
 
@@ -90,43 +97,43 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
 
 /********** imports ************/
     if (IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
-            IMPORT_STATEMENT.equals(rightNode.getElementType())) {
+        IMPORT_STATEMENT.equals(rightNode.getElementType())) {
       return IMPORT_BETWEEN_SPACING;
     }
     if ((IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
-            (!IMPORT_STATEMENT.equals(rightNode.getElementType()) &&
-                    !mSEMI.equals(rightNode.getElementType()))) ||
-            ((!IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
-                    !mSEMI.equals(leftNode.getElementType())) &&
-                    IMPORT_STATEMENT.equals(rightNode.getElementType()))) {
+        (!IMPORT_STATEMENT.equals(rightNode.getElementType()) &&
+            !mSEMI.equals(rightNode.getElementType()))) ||
+        ((!IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
+            !mSEMI.equals(leftNode.getElementType())) &&
+            IMPORT_STATEMENT.equals(rightNode.getElementType()))) {
       return IMPORT_OTHER_SPACING;
     }
 
 /********** exclusions ************/
     // For << and >> ...
     if ((mLT.equals(leftNode.getElementType()) && mLT.equals(rightNode.getElementType())) ||
-            (mGT.equals(leftNode.getElementType()) && mGT.equals(rightNode.getElementType()))) {
+        (mGT.equals(leftNode.getElementType()) && mGT.equals(rightNode.getElementType()))) {
       return NO_SPACING_WITH_NEWLINE;
     }
 
     // Unary and postfix expressions
     if (PREFIXES.contains(leftNode.getElementType()) ||
-            POSTFIXES.contains(rightNode.getElementType()) ||
-            (PREFIXES_OPTIONAL.contains(leftNode.getElementType()) &&
-                    leftNode.getPsi().getParent() instanceof GrUnaryExpression)) {
+        POSTFIXES.contains(rightNode.getElementType()) ||
+        (PREFIXES_OPTIONAL.contains(leftNode.getElementType()) &&
+            leftNode.getPsi().getParent() instanceof GrUnaryExpression)) {
       return NO_SPACING_WITH_NEWLINE;
     }
 
     if (RANGES.contains(leftNode.getElementType()) ||
-            RANGES.contains(rightNode.getElementType())) {
+        RANGES.contains(rightNode.getElementType())) {
       return NO_SPACING_WITH_NEWLINE;
     }
 
     // For Gstrings and regexes
     if (leftNode.getPsi().getParent() != null &&
-            leftNode.getPsi().getParent().equals(rightNode.getPsi().getParent()) &&
-            leftNode.getPsi().getParent() instanceof GrString
-            ) {
+        leftNode.getPsi().getParent().equals(rightNode.getPsi().getParent()) &&
+        leftNode.getPsi().getParent() instanceof GrString
+        ) {
       return null;
     }
 
