@@ -251,7 +251,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
    * then removes the oldest ones to fit the history to new size.
    */
   private void trimToSize(){
-    final int limit = UISettings.getInstance().RECENT_FILES_LIMIT;
+    final int limit = UISettings.getInstance().RECENT_FILES_LIMIT + 1;
     while(myEntriesList.size()>limit){
       myEntriesList.remove(0);
     }
