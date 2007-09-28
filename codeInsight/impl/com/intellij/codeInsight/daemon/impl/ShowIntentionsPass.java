@@ -209,12 +209,15 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset = editor.getCaretModel().getOffset();
     Project project = psiFile.getProject();
     for (IntentionAction action : allIntentionActions) {
-      if (action instanceof PsiElementBaseIntentionAction && isInProject && ((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)
-          || action.isAvailable(project, editor, psiFile)) {
-        List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
-        enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
-        intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
+      if (action instanceof PsiElementBaseIntentionAction) {
+        if (!isInProject || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) continue;
       }
+      else if (!action.isAvailable(project, editor, psiFile)) {
+        continue;
+      }
+      List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
+      enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
+      intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
     }
 
     List<HighlightInfo.IntentionActionDescriptor> actions = QuickFixAction.getAvailableActions(editor, psiFile, passIdToShowIntentionsFor);
