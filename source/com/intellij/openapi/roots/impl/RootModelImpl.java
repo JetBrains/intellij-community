@@ -107,13 +107,14 @@ public class RootModelImpl implements ModifiableRootModel {
 
   RootModelImpl(ModuleRootManagerImpl moduleRootManager,
                 ProjectRootManagerImpl projectRootManager,
-                VirtualFilePointerManager filePointerManager) {
+                VirtualFilePointerManager filePointerManager,
+                final VirtualFilePointerListener listener) {
     myModuleRootManager = moduleRootManager;
     myProjectRootManager = projectRootManager;
     myFilePointerManager = filePointerManager;
 
     myWritable = false;
-    myVirtualFilePointerListener = null;
+    myVirtualFilePointerListener = listener;
     addSourceOrderEntries();
     myOrderEntryProperties = new OrderEntryProperties();
     myJavadocPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);

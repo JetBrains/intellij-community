@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
@@ -402,15 +401,11 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private class MyRootProviderImpl extends RootProviderBaseImpl {
     
     public String[] getUrls(OrderRootType rootType) {
-      final VirtualFile[] files = getFiles(rootType);
-      if (files.length == 0) {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
+      Set<String> originalUrls = new HashSet<String>(Arrays.asList(LibraryImpl.this.getUrls(rootType)));
+      for (VirtualFile file : getFiles(rootType)) { // Add those expanded with jar directories.
+        originalUrls.add(file.getUrl());
       }
-      final String[] urls = new String[files.length];
-      for (int i = 0; i < files.length; i++) {
-        urls[i] = files[i].getUrl();
-      }
-      return urls;
+      return originalUrls.toArray(new String[originalUrls.size()]);
     }
 
     public void fireRootSetChanged() {

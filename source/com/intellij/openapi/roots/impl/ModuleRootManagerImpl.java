@@ -77,7 +77,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myFileIndex = new ModuleFileIndexImpl(myModule, directoryIndex);
     myCachedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
     myCachedExportedFiles = new THashMap<OrderRootType, Set<VirtualFilePointer>>();
-    myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
+
+    final VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(
+      myModule.getProject())).getVirtualFilePointerListener();
+
+    myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager, listener);
   }
 
   @NotNull
