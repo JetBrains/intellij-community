@@ -14,6 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -77,6 +78,8 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public boolean isToHideOnEmptyContent() {
       return false;
     }
+
+
 
     public ToolWindowType getType() {
       return ToolWindowType.SLIDING;
@@ -193,6 +196,14 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   public boolean isEditorComponentActive() {
     return false;
+  }
+
+  public ActionCallback requestFocus(final Component c, final boolean forced) {
+    return new ActionCallback.Done();
+  }
+
+  public ActionCallback requestFocus(final ActionCallback.Runnable command, final boolean forced) {
+    return new ActionCallback.Done();
   }
 
   public String[] getToolWindowIds() {

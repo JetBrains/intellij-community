@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.ui.DocumentAdapter;
@@ -180,7 +181,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
           close();
         }
         else {
-          myEditor.getContentComponent().requestFocus();
+          requestFocus(myEditor.getContentComponent());
           addCurrentTextToRecents();
         }
       }
@@ -203,6 +204,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     };
 
     myEditor.getDocument().addDocumentListener(myDocumentListener);
+  }
+
+  private void requestFocus(Component c) {
+    ToolWindowManager.getInstance(myProject).requestFocus(c, true);
   }
 
   private void searchBackward() {
@@ -253,7 +258,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   public void requestFocus() {
-    mySearchField.requestFocus();
+    requestFocus(mySearchField);
   }
 
   private void close() {

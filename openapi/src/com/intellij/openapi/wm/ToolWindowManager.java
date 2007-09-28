@@ -17,10 +17,11 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public abstract class ToolWindowManager {
 
@@ -90,4 +91,7 @@ public abstract class ToolWindowManager {
    */
   public abstract void invokeLater(Runnable runnable);
 
+  public abstract ActionCallback requestFocus(Component c, boolean forced);
+
+  public abstract ActionCallback requestFocus(ActionCallback.Runnable command, boolean forced);
 }

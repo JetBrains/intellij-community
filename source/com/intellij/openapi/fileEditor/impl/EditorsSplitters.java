@@ -16,8 +16,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ArrayListSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -408,10 +408,19 @@ public final class EditorsSplitters extends JPanel {
     if (window != null) {
       final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
       if (selectedEditor != null) {
-        final boolean focusEditor = ToolWindowManager.getInstance(myManager.myProject).isEditorComponentActive() &&
+        final boolean shouldAssureFocus = ToolWindowManager.getInstance(myManager.myProject).isEditorComponentActive() &&
                                     !window.getManager().isFocusingBlocked();
-        if (focusEditor || requestFocus) {
-          selectedEditor.getComponent().requestFocus();
+
+
+        boolean alreadyFocused = false;
+        final JComponent comp = selectedEditor.getComponent();
+        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (owner != null && comp != null) {
+          alreadyFocused = owner == comp || SwingUtilities.isDescendingFrom(owner, comp);
+        }
+
+        if (shouldAssureFocus && !alreadyFocused) {
+          ToolWindowManager.getInstance(myManager.getProject()).requestFocus(comp, requestFocus);
         }
       }
     }

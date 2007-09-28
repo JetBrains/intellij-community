@@ -329,7 +329,7 @@ public abstract class EditorComposite{
       }
       else{
         JComponent component = getPreferredFocusedComponent();
-        if(component instanceof DataProvider){
+        if(component instanceof DataProvider && component != this){
           return ((DataProvider)component).getData(dataId);
         }
         else{
