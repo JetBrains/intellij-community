@@ -142,16 +142,19 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
 
     // For simple String literals like 'abcdef'
-    if (GroovyTokenTypes.mSTRING_LITERAL == node.getElementType() &&
-        GroovyEditorActionUtil.isPlainStringLiteral(node)) {
-      String text = node.getText();
-      String innerText = text.equals("''") ? "" : text.substring(1, text.length() - 1);
-      PsiElement literal = stringElement.getParent();
-      if (!(literal instanceof GrLiteral)) return false;
-      ((GrExpression) literal).replaceWithExpression(factory.createExpressionFromText("'''" + innerText + "'''"));
-      editor.getCaretModel().moveToOffset(carret + 2);
-      EditorModificationUtil.insertStringAtCaret(editor, "\n");
-      //myOriginalHandler.execute(editor, dataContext);
+    if (GroovyTokenTypes.mSTRING_LITERAL == node.getElementType()) {
+      if (GroovyEditorActionUtil.isPlainStringLiteral(node)) {
+        String text = node.getText();
+        String innerText = text.equals("''") ? "" : text.substring(1, text.length() - 1);
+        PsiElement literal = stringElement.getParent();
+        if (!(literal instanceof GrLiteral)) return false;
+        ((GrExpression) literal).replaceWithExpression(factory.createExpressionFromText("'''" + innerText + "'''"));
+        editor.getCaretModel().moveToOffset(carret + 2);
+        EditorModificationUtil.insertStringAtCaret(editor, "\n");
+        //myOriginalHandler.execute(editor, dataContext);
+      } else {
+        EditorModificationUtil.insertStringAtCaret(editor, "\n");
+      }
       return true;
     }
 
@@ -184,8 +187,10 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         if (rightFromDollar) {
           editor.getCaretModel().moveCaretRelatively(1, 0, false, false, true);
         }
-        return true;
+      } else {
+        EditorModificationUtil.insertStringAtCaret(editor, "\n");
       }
+      return true;
     }
     return false;
   }
