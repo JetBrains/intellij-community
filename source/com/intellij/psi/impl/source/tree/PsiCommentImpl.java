@@ -63,6 +63,6 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJav
   }
 
   public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor, true);
+    InjectedLanguageUtil.enumerate(this, visitor);
   }
 }

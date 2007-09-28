@@ -44,7 +44,7 @@ import java.util.Iterator;
 public class EditorWindow implements EditorEx, UserDataHolderEx {
   private final DocumentWindow myDocumentWindow;
   private final EditorImpl myDelegate;
-  private PsiFile myInjectedFile;
+  private volatile PsiFile myInjectedFile;
   private final boolean myOneLine;
   private final CaretModelWindow myCaretModelDelegate;
   private final SelectionModelWindow mySelectionModelDelegate;
@@ -103,11 +103,6 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return offsetToLogicalPosition(offsetInInjected);
   }
 
-  public VisualPosition hostToInjected(VisualPosition pos) {
-    assert isValid();
-    LogicalPosition logical = hostToInjected(myDelegate.visualToLogicalPosition(pos));
-    return logicalToVisualPosition(logical);
-  }
   public LogicalPosition injectedToHost(LogicalPosition pos) {
     assert isValid();
     int offsetInHost = myDocumentWindow.injectedToHost(logicalPositionToOffset(pos));

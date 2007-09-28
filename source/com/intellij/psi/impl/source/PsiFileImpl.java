@@ -68,7 +68,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     myViewProvider = provider;
   }
 
-  protected void init(final IElementType elementType, final IElementType contentElementType) {
+  protected void init(@NotNull final IElementType elementType, final IElementType contentElementType) {
     myElementType = elementType;
     myContentElementType = contentElementType;
   }

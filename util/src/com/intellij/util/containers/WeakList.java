@@ -26,10 +26,14 @@ public class WeakList<T> extends AbstractList<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.WeakList");
   private final WeakReferenceArray<T> myArray;
 
-  public WeakList() { this(new WeakReferenceArray<T>()); }
+  public WeakList() {
+    this(new WeakReferenceArray<T>());
+  }
 
   // For testing only
-  WeakList(WeakReferenceArray<T> array) { myArray = array; }
+  WeakList(WeakReferenceArray<T> array) {
+    myArray = array;
+  }
 
   public T get(int index) {
     synchronized (myArray) {
@@ -39,16 +43,21 @@ public class WeakList<T> extends AbstractList<T> {
 
   public boolean add(T element) {
     synchronized (myArray) {
-      modCount++;
       tryReduceCapacity(-1);
       myArray.add(element);
     }
     return true;
   }
 
+  public void add(int index, T element) {
+    synchronized (myArray) {
+      tryReduceCapacity(-1);
+      myArray.add(index, element);
+    }
+  }
+
   public T remove(int index) {
     synchronized (myArray) {
-      modCount++;
       tryReduceCapacity(-1);
       return myArray.remove(index);
     }
@@ -59,18 +68,18 @@ public class WeakList<T> extends AbstractList<T> {
   }
 
   public int size() {
-    return myArray.size();
+    synchronized (myArray) {
+      return myArray.size();
+    }
   }
 
   private int tryReduceCapacity(int trackIndex) {
-    synchronized (myArray) {
-      modCount++;
-      if (canReduceCapacity()) {
-        return myArray.reduceCapacity(trackIndex);
-      }
-      else {
-        return propablyCompress(trackIndex);
-      }
+    modCount++;
+    if (canReduceCapacity()) {
+      return myArray.reduceCapacity(trackIndex);
+    }
+    else {
+      return propablyCompress(trackIndex);
     }
   }
 

@@ -443,7 +443,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   }
 
   public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor, true);
+    InjectedLanguageUtil.enumerate(this, visitor);
   }
 }
 

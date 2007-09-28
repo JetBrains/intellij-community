@@ -476,6 +476,6 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return new XmlTextLiteralEscaper(this);
   }
   public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor, true);
+    InjectedLanguageUtil.enumerate(this, visitor);
   }
 }

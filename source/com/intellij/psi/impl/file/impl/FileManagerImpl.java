@@ -30,14 +30,15 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.Query;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ConcurrentWeakValueHashMap;
+import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentWeakValueHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -207,7 +208,7 @@ public class FileManagerImpl implements FileManager {
     //TODO: other listeners
   }
 
-  // for tests
+  @TestOnly
   public void checkConsistency() {
     ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> fileToViewProvider = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
     myVFileToViewProviderMap.clear();

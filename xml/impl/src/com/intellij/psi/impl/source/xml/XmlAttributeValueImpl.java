@@ -12,7 +12,6 @@ import com.intellij.psi.impl.source.tree.injected.XmlAttributeLiteralEscaper;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,17 +74,6 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
 
-  public PsiElement replaceRangeInText(final TextRange range, String newSubText)
-    throws IncorrectOperationException {
-    XmlFile file = (XmlFile) getManager().getElementFactory().createFileFromText("dummy.xml", "<a attr=" + getNewText(range, newSubText) + "/>");
-    return replace(file.getDocument().getRootTag().getAttributes()[0].getValueElement());
-  }
-
-  private String getNewText(final TextRange range, String newSubstring) {
-    final String text = getText();
-    return text.substring(0, range.getStartOffset()) + newSubstring + text.substring(range.getEndOffset());
-  }
-
   public int getTextOffset() {
     return getTextRange().getStartOffset() + 1;
   }
@@ -118,6 +106,6 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     return new XmlAttributeLiteralEscaper(this);
   }
   public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(this, visitor, true);
+    InjectedLanguageUtil.enumerate(this, visitor);
   }
 }

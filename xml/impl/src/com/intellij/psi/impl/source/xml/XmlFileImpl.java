@@ -44,7 +44,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
     if (dataLanguage == StdLanguages.XHTML) return XHTML_FILE;
     if (dataLanguage == StdLanguages.HTML) return HTML_FILE;
     if (dataLanguage == StdLanguages.DTD) return DTD_FILE;
-    return null;
+    return XML_FILE;
   }
 
   public XmlDocument getDocument() {

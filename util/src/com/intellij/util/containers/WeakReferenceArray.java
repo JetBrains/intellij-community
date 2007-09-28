@@ -27,7 +27,7 @@ public class WeakReferenceArray <T> {
 
   static boolean PEFORM_CHECK_THREAD = true;
   static final int MINIMUM_CAPACITY = 5;
-  private ReferenceQueue<T> myQueue = new ReferenceQueue<T>();
+  private final ReferenceQueue<T> myQueue = new ReferenceQueue<T>();
   private MyWeakReference[] myReferences;
   private int mySize = 0;
   private int myCorpseCounter = 0;
@@ -41,14 +41,11 @@ public class WeakReferenceArray <T> {
   }
 
   public T remove(int index) {
-    checkThread();
     checkRange(index);
     T result = getImpl(index);
     removeReference(index);
     return result;
   }
-
-  private void checkThread() {}
 
   private void checkRange(int index) {
     if (index >= mySize)
@@ -71,9 +68,22 @@ public class WeakReferenceArray <T> {
   }
 
   public void add(T object) {
-    checkThread();
     ensureCapacity(mySize + 1);
     MyWeakReference.createAt(myReferences, mySize, object, myQueue);
+    mySize++;
+  }
+  public void add(int index, T element) {
+    ensureCapacity(mySize + 1);
+    if (index < 0 || index > mySize) {
+      throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
+    }
+    for (int i = mySize-1; i >= index; i--) {
+      MyWeakReference aliveReference = MyWeakReference.getFrom(myReferences, i);
+      if (aliveReference != null) {
+        aliveReference.putTo(myReferences, i+1);
+      }
+    }
+    MyWeakReference.createAt(myReferences, index, element, myQueue);
     mySize++;
   }
 
@@ -102,17 +112,15 @@ public class WeakReferenceArray <T> {
   }
 
   public int compress(int trackIndex) {
-    checkThread();
     if (getCorpseCount() == 0) return trackIndex;
-    int newIndex = doCompress(myReferences, trackIndex);
-    return newIndex;
+    return doCompress(myReferences, trackIndex);
   }
 
   private int doCompress(MyWeakReference[] references, int trackIndex) {
+    myCorpseCounter = 0;
     int validIndex = 0;
     int newIndex = -1;
     boolean trackingDone = false;
-    myCorpseCounter = 0;
     for (int i = nextValid(-1); i < size(); i = nextValid(i)) {
       if (!trackingDone) {
         if (i == trackIndex) {
@@ -180,7 +188,6 @@ public class WeakReferenceArray <T> {
   }
 
   public int reduceCapacity(int trackIndex) {
-    checkThread();
     int aliveSize = getNotBuriedCount();
     if (myReferences.length / 4 >= aliveSize) {
       MyWeakReference[] references = new MyWeakReference[aliveSize * 2];
@@ -194,8 +201,9 @@ public class WeakReferenceArray <T> {
   private int getNotBuriedCount() {
     flushQueue();
     int counter = 0;
-    for (int i = 0; i < myReferences.length; i++)
-      if (myReferences[i] != null) counter++;
+    for (MyWeakReference myReference : myReferences) {
+      if (myReference != null) counter++;
+    }
     return counter;
   }
 
@@ -208,8 +216,7 @@ public class WeakReferenceArray <T> {
 
   boolean removeReference(int index) {
     MyWeakReference reference = MyWeakReference.getFrom(myReferences, index);
-    if (reference == null) return false;
-    return reference.removeFrom(myReferences);
+    return reference != null && reference.removeFrom(myReferences);
   }
 
   private static class MyWeakReference<E> extends WeakReference<E> {

@@ -12,7 +12,7 @@ public class VirtualFileWindow extends LightVirtualFile {
   private final VirtualFile myDelegate;
   private final DocumentWindow myDocumentWindow;
 
-  public VirtualFileWindow(@NotNull VirtualFile delegate, @NotNull DocumentWindow window, @NotNull Language language, @NotNull String text) {
+  public VirtualFileWindow(@NotNull VirtualFile delegate, @NotNull DocumentWindow window, @NotNull Language language, @NotNull CharSequence text) {
     super(delegate.getName(), language, text);
     setCharset(delegate.getCharset());
     myDelegate = delegate;
@@ -27,18 +27,7 @@ public class VirtualFileWindow extends LightVirtualFile {
     return myDocumentWindow;
   }
 
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    VirtualFileWindow that = (VirtualFileWindow)o;
-
-    if (myDelegate != that.myDelegate) return false;
-    if (!getContent().equals(that.getContent())) return false;
-    return myDocumentWindow.equals(that.myDocumentWindow);
-  }
-
-  public int hashCode() {
-    return getContent().hashCode();
+  public boolean isValid() {
+    return myDocumentWindow.isValid();
   }
 }

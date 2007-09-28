@@ -58,7 +58,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
     }
   }
 
-  public LightVirtualFile(final String name, final Language language, final String text) {
+  public LightVirtualFile(final String name, final Language language, final CharSequence text) {
     myName = name;
     final Language typeLanguage = language instanceof LanguageDialect? ((LanguageDialect)language).getBaseLanguage() : language;
     for (final FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {

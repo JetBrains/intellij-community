@@ -121,14 +121,16 @@ public class CtrlMouseHandler implements ProjectComponent {
       if (e.isConsumed() || myProject.isDisposed()) {
         return;
       }
-
-
       MouseEvent mouseEvent = e.getMouseEvent();
 
       Editor editor = e.getEditor();
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       Point point = new Point(mouseEvent.getPoint());
-      editor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
+      if (!PsiDocumentManager.getInstance(myProject).isUncommited(editor.getDocument())) {
+        // when document is committed, try to check injected stuff - it's fast
+        editor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
+      }
+
       LogicalPosition pos = editor.xyToLogicalPosition(point);
       int offset = editor.logicalPositionToOffset(pos);
       int selStart = editor.getSelectionModel().getSelectionStart();
@@ -148,7 +150,7 @@ public class CtrlMouseHandler implements ProjectComponent {
     }
   };
 
-  public static final TextAttributesKey CTRL_CLICKABLE_ATTRIBUTES_KEY =
+  private static final TextAttributesKey CTRL_CLICKABLE_ATTRIBUTES_KEY =
     TextAttributesKey.createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(Color.blue, null, Color.blue, EffectType.LINE_UNDERSCORE, 0));
 
   public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager) {
@@ -193,7 +195,7 @@ public class CtrlMouseHandler implements ProjectComponent {
     final MouseShortcut syntheticShortcat = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for ( Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
       if ( shortcut instanceof MouseShortcut) {
-        final MouseShortcut mouseShortcut = ((MouseShortcut)shortcut);
+        final MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
         if ( mouseShortcut.getModifiers() == syntheticShortcat.getModifiers() ) {
           return true;
         }
@@ -203,7 +205,7 @@ public class CtrlMouseHandler implements ProjectComponent {
   }
 
   @Nullable
-  public static String generateInfo(PsiElement element) {
+  private static String generateInfo(PsiElement element) {
     final PsiFile file = element.getContainingFile();
     final Language language = (file != null ? file : element).getLanguage();
     final DocumentationProvider documentationProvider = language.getDocumentationProvider();
@@ -247,9 +249,9 @@ public class CtrlMouseHandler implements ProjectComponent {
     }
 
     @Nullable
-    abstract public String getInfo();
+    public abstract String getInfo();
 
-    abstract public boolean isValid();
+    public abstract boolean isValid();
   }
 
   private static class InfoSingle extends Info {
@@ -277,10 +279,6 @@ public class CtrlMouseHandler implements ProjectComponent {
         /* && targetNavigateable(myTargetElement)*/;
     }
 
-    private static boolean targetNavigateable(final PsiElement targetElement) {
-      PsiElement navElement = targetElement.getNavigationElement();
-      return navElement instanceof Navigatable && ((Navigatable)navElement).canNavigate();
-    }
   }
 
   private static class InfoMultiple extends Info {
@@ -338,7 +336,7 @@ public class CtrlMouseHandler implements ProjectComponent {
               return found.size() != 2;
             }
           });
-          return found.toArray(PsiElement.EMPTY_ARRAY);
+          return found.toArray(new PsiElement[found.size()]);
         }
       }.searchImplementations(editor, file, element, offset);
       if ( targetElements.length > 1) {

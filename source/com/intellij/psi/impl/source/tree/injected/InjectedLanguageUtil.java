@@ -68,7 +68,7 @@ public class InjectedLanguageUtil {
           }
         }
       }
-    }, true);
+    });
     return result.isEmpty() ? null : result;
   }
 
@@ -140,9 +140,9 @@ public class InjectedLanguageUtil {
   private static interface Places extends List<Place> {}
   private static class PlacesImpl extends SmartList<Place> implements Places {}
 
-  public static void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor, boolean probeUp) {
+  public static void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     PsiFile containingFile = host.getContainingFile();
-    enumerate(host, containingFile, visitor, probeUp);
+    enumerate(host, containingFile, visitor, true);
   }
   public static void enumerate(@NotNull PsiElement host, @NotNull PsiFile containingFile, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor, boolean probeUp) {
     Places places = probeElementsUp(host, containingFile, probeUp);
@@ -603,7 +603,7 @@ public class InjectedLanguageUtil {
             throw new IllegalStateException("Seems you haven't called addPlace()");
           }
           DocumentWindow documentWindow = new DocumentWindow(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
-          VirtualFileWindow virtualFile = myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars, myProject);
+          VirtualFileWindow virtualFile = myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
 
           DocumentImpl decodedDocument = new DocumentImpl(outChars);
           FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
@@ -639,7 +639,6 @@ public class InjectedLanguageUtil {
           List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens =
             obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, shreds, virtualFile, documentWindow, myProject);
           psiFile.putUserData(HIGHLIGHT_TOKENS, tokens);
-          Project project = psiFile.getProject();
           PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
 
           Place place = new Place(psiFile, new ArrayList<PsiLanguageInjectionHost.Shred>(shreds));

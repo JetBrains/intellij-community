@@ -6,6 +6,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -19,8 +20,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.WeakList;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +36,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author cdr
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
-  private final WeakList<VirtualFileWindow> cachedFiles = new WeakList<VirtualFileWindow>();
+  private final ConcurrentMap<VirtualFile, List<VirtualFileWindow>> cachedFiles = new ConcurrentWeakHashMap<VirtualFile, List<VirtualFileWindow>>();
   private final Project myProject;
+  private final PsiManagerEx myPsiManager;
   private final AtomicReference<MultiHostInjector> myPsiManagerRegisteredInjectorsAdapter = new AtomicReference<MultiHostInjector>();
   private final AtomicReference<MultiHostInjector> myRegisteredConcatenationAdapter = new AtomicReference<MultiHostInjector>();
   private final ExtensionPointListener<LanguageInjector> myListener;
@@ -44,8 +47,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
   }
 
-  public InjectedLanguageManagerImpl(Project project) {
+  public InjectedLanguageManagerImpl(Project project, PsiManagerEx psiManager) {
     myProject = project;
+    myPsiManager = psiManager;
 
     final ExtensionPoint<ConcatenationAwareInjector> concatPoint = Extensions.getArea(project).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
     concatPoint.addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
@@ -121,38 +125,85 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   VirtualFileWindow createVirtualFile(final Language language,
                                       final VirtualFile hostVirtualFile,
                                       final DocumentWindow documentWindow,
-                                      StringBuilder text,
-                                      Project project) {
-    clearInvalidFiles(project);
-    VirtualFileWindow virtualFile = new VirtualFileWindow(hostVirtualFile, documentWindow, language, text.toString());
-    synchronized (cachedFiles) {
-      cachedFiles.add(virtualFile);
+                                      StringBuilder text) {
+    VirtualFileWindow virtualFile = new VirtualFileWindow(hostVirtualFile, documentWindow, language, text);
+    List<VirtualFileWindow> cachedList = cachedFiles.get(hostVirtualFile);
+    if (cachedList == null) {
+      cachedList = ConcurrencyUtil.cacheOrGet(cachedFiles, hostVirtualFile, new ArrayList<VirtualFileWindow>());
     }
-
-    return virtualFile;
+    return insertFileNear(cachedList, virtualFile);
   }
 
-  private void clearInvalidFiles(Project project) {
-    FileManager fileManager = ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager();
-    synchronized (cachedFiles) {
-      Iterator<VirtualFileWindow> iterator = cachedFiles.iterator();
-      while (iterator.hasNext()) {
-        VirtualFileWindow cachedFile = iterator.next();
-        PsiFile cached = fileManager.getCachedPsiFile(cachedFile);
-        PsiElement context;
-        if (cached == null || (context = cached.getContext()) == null || !context.isValid()) {
-          iterator.remove();
-          fileManager.setViewProvider(cachedFile, null);
-          continue;
-        }
+  private static final MyRangesIntersectionComparator rangesIntersectionComparator = new MyRangesIntersectionComparator();
+  private VirtualFileWindow insertFileNear(List<VirtualFileWindow> cachedList, VirtualFileWindow virtualFile) {
+    FileManager fileManager = myPsiManager.getFileManager();
+    synchronized (cachedList) {
+      int insertionIndex = Collections.binarySearch(cachedList, virtualFile, rangesIntersectionComparator);
+      if (insertionIndex < 0) insertionIndex = -insertionIndex - 1;
 
-        Document cachedDocument = PsiDocumentManager.getInstance(project).getCachedDocument(cached);
-        if (!(cachedDocument instanceof DocumentWindow)) {
-          fileManager.setViewProvider(cachedFile, null);
-          iterator.remove();
+      //check for validity all files adjacent to our file
+      while (insertionIndex != 0 && insertionIndex < cachedList.size()) {
+        if (compareRanges(cachedList.get(insertionIndex), virtualFile) == 0) {
+          insertionIndex--;
+        }
+        else {
+          break;
+        }
+      }
+      // remove all invalid files immediately before ours
+      while (insertionIndex > 0) {
+        if (checkAndRemoveInvalidFile(insertionIndex-1,cachedList,fileManager) == null) {
+          insertionIndex--;
+        }
+        else {
+          break;
+        }
+      }
+
+      // and after ours
+      boolean enoughChecking = false;
+      int i = insertionIndex;
+      while (i < cachedList.size()) {
+        VirtualFileWindow oldValidFile = checkAndRemoveInvalidFile(i,cachedList,fileManager);
+        if (oldValidFile == null) {
+          enoughChecking = false;
+        }
+        else {
+          if (enoughChecking && compareRanges(oldValidFile, virtualFile) == 1) break;
+          i++;
+          enoughChecking = true;
+        }
+      }
+      cachedList.add(insertionIndex, virtualFile);
+    }
+    return virtualFile;
+  }
+  //returns null if file is invalid and has been removed
+  private static VirtualFileWindow checkAndRemoveInvalidFile(int index, List<VirtualFileWindow> cachedList, FileManager fileManager) {
+    VirtualFileWindow oldFile = cachedList.get(index);
+    boolean isValid = oldFile.isValid();
+    if (isValid) {
+      PsiFile cached = fileManager.getCachedPsiFile(oldFile);
+      PsiElement context;
+      if (cached == null || (context = cached.getContext()) == null || !cached.isValid() || !context.isValid()) {
+        isValid = false;
+      }
+      else if (index < cachedList.size() - 1) {
+        VirtualFileWindow nextFile = cachedList.get(index + 1);
+        if (oldFile.getDocumentWindow().areRangesEqual(nextFile.getDocumentWindow())) {
+          PsiFile nextCached = fileManager.getCachedPsiFile(nextFile);
+          if (nextCached != null && nextCached.isValid()) {
+            isValid = false;
+          }
         }
       }
     }
+    if (isValid) {
+      return oldFile;
+    }
+    cachedList.remove(index);
+    fileManager.setViewProvider(oldFile, null);
+    return null;
   }
 
   public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element) {
@@ -292,8 +343,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   public void clearCaches(VirtualFileWindow virtualFile) {
-    synchronized (cachedFiles) {
-      cachedFiles.remove(virtualFile);
+    VirtualFile hostFile = virtualFile.getDelegate();
+    List<VirtualFileWindow> cachedList = cachedFiles.get(hostFile);
+    if (cachedList != null) {
+      synchronized (cachedList) {
+        cachedList.remove(virtualFile);
+      }
     }
   }
 
@@ -326,5 +381,23 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
       return Arrays.asList(PsiLanguageInjectionHost.class);
     }
+  }
+
+  private static class MyRangesIntersectionComparator implements Comparator<VirtualFileWindow> {
+    public int compare(VirtualFileWindow v1, VirtualFileWindow v2) {
+      return compareRanges(v1, v2);
+    }
+
+  }
+
+  private static int compareRanges(VirtualFileWindow v1, VirtualFileWindow v2) {
+    DocumentWindow d1 = v1.getDocumentWindow();
+    DocumentWindow d2 = v2.getDocumentWindow();
+    RangeMarker[] ranges1 = d1.getHostRanges();
+    RangeMarker[] ranges2 = d2.getHostRanges();
+    if (ranges1.length == 0 || ranges2.length == 0) return -1;
+    if (ranges1[ranges1.length - 1].getEndOffset() <= ranges2[0].getStartOffset()) return -1;
+    if (ranges1[0].getStartOffset() >= ranges2[ranges2.length - 1].getEndOffset()) return 1;
+    return 0;
   }
 }
