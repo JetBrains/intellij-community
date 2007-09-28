@@ -150,7 +150,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
       if (!(literal instanceof GrLiteral)) return false;
       ((GrExpression) literal).replaceWithExpression(factory.createExpressionFromText("'''" + innerText + "'''"));
       editor.getCaretModel().moveToOffset(carret + 2);
-      myOriginalHandler.execute(editor, dataContext);
+      EditorModificationUtil.insertStringAtCaret(editor, "\n");
+      //myOriginalHandler.execute(editor, dataContext);
       return true;
     }
 
@@ -178,7 +179,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         String innerText = text.equals("\"\"") ? "" : text.substring(1, text.length() - 1);
         ((GrLiteral) parent).replaceWithExpression(factory.createExpressionFromText("\"\"\"" + innerText + "\"\"\""));
         editor.getCaretModel().moveToOffset(carret + 2);
-        myOriginalHandler.execute(editor, dataContext);
+        EditorModificationUtil.insertStringAtCaret(editor, "\n");
+        //myOriginalHandler.execute(editor, dataContext);
         if (rightFromDollar) {
           editor.getCaretModel().moveCaretRelatively(1, 0, false, false, true);
         }
