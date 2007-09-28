@@ -206,7 +206,10 @@ public class InlineParameterExpressionProcessor {
       }
     }
     else if (element instanceof PsiMethod || element instanceof PsiField) {
-      return mySameClass;
+      return mySameClass || ((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
+    }
+    else if (element instanceof PsiClass) {
+      return true;
     }
     return false;
   }
