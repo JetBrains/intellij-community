@@ -20,9 +20,7 @@ import com.intellij.util.io.ZipUtil;
 
 import java.awt.*;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -47,7 +45,7 @@ public class ImportSettingsAction extends AnAction {
       }
       final ZipFile zipFile = new ZipFile(saveFile);
 
-      final ZipEntry magicEntry = zipFile.getEntry(ExportSettingsAction.SETTINGS_JAR_MARKER);
+      final ZipEntry magicEntry = zipFile.getEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER);
       if (magicEntry == null) {
         Messages.showErrorDialog(
           IdeBundle.message("error.file.contains.no.settings.to.import", presentableFileName(saveFile), promptLocationMessage()),
@@ -79,7 +77,7 @@ public class ImportSettingsAction extends AnAction {
       final File tempFile = new File(PathManagerEx.getPluginTempPath() + "/" + saveFile.getName());
       FileUtil.copy(saveFile, tempFile);
       File outDir = new File(PathManager.getConfigPath());
-      final MyFilenameFilter filenameFilter = new MyFilenameFilter(relativeNamesToExtract);
+      final ImportSettingsFilenameFilter filenameFilter = new ImportSettingsFilenameFilter(relativeNamesToExtract);
       StartupActionScriptManager.ActionCommand unzip = new StartupActionScriptManager.UnzipCommand(tempFile, outDir, filenameFilter);
       StartupActionScriptManager.addActionCommand(unzip);
       // remove temp file
@@ -135,22 +133,4 @@ public class ImportSettingsAction extends AnAction {
     return components;
   }
 
-  private static class MyFilenameFilter implements FilenameFilter, Serializable {
-    private final Set<String> myRelativeNamesToExtract;
-    public MyFilenameFilter(Set<String> relativeNamesToExtract) {
-      myRelativeNamesToExtract = relativeNamesToExtract;
-    }
-
-    public boolean accept(File dir, String name) {
-      if (name.equals(ExportSettingsAction.SETTINGS_JAR_MARKER)) return false;
-      final File configPath = new File(PathManager.getConfigPath());
-      final String rPath = FileUtil.getRelativePath(configPath, new File(dir, name));
-      assert rPath != null;
-      final String relativePath = FileUtil.toSystemIndependentName(rPath);
-      for (final String allowedRelPath : myRelativeNamesToExtract) {
-        if (relativePath.startsWith(allowedRelPath)) return true;
-      }
-      return false;
-    }
-  }
 }

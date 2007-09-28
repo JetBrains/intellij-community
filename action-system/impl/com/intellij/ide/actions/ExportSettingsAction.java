@@ -16,7 +16,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -27,8 +26,6 @@ import java.util.jar.JarOutputStream;
 
 public class ExportSettingsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ExportSettingsAction");
-
-  @NonNls static final String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
 
   public void actionPerformed(AnActionEvent e) {
     List<ExportableApplicationComponent> exportableComponents = new ArrayList<ExportableApplicationComponent>();
@@ -70,10 +67,10 @@ public class ExportSettingsAction extends AnAction {
             ZipUtil.addFileOrDirRecursively(output, saveFile, file, relativePath, null, writtenItemRelativePaths);
           }
         }
-        final File magicFile = new File(FileUtil.getTempDirectory(), SETTINGS_JAR_MARKER);
+        final File magicFile = new File(FileUtil.getTempDirectory(), ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER);
         magicFile.createNewFile();
         magicFile.deleteOnExit();
-        ZipUtil.addFileToZip(output, magicFile, SETTINGS_JAR_MARKER, writtenItemRelativePaths, null);
+        ZipUtil.addFileToZip(output, magicFile, ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER, writtenItemRelativePaths, null);
       }
       finally {
         output.close();
