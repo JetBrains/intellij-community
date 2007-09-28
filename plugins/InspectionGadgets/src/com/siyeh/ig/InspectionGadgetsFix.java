@@ -90,6 +90,18 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.reformat(replacementExpression);
     }
+    protected static void replaceExpressionWithReferenceTo(
+            @NotNull PsiExpression expression,
+            @NotNull PsiMember target)
+            throws IncorrectOperationException{
+        final PsiManager psiManager = expression.getManager();
+        final PsiElementFactory factory = psiManager.getElementFactory();
+        final PsiReferenceExpression newExpression = (PsiReferenceExpression)factory.createExpressionFromText("xxx", expression);
+        final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)expression.replace(newExpression);
+      PsiElement element = replacementExpression.bindToElement(target);
+      final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
+        styleManager.shortenClassReferences(element);
+    }
 
     protected static void replaceExpressionAndShorten(
             @NotNull PsiExpression expression,

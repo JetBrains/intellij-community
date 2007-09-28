@@ -68,15 +68,10 @@ public class StaticFieldReferenceOnSubclassInspection
             final PsiReferenceExpression expression =
                     (PsiReferenceExpression) name.getParent();
             assert expression != null;
-            final String fieldName = expression.getReferenceName();
             final PsiField field = (PsiField) expression.resolve();
             assert field != null;
-            final PsiClass containingClass = field.getContainingClass();
-            assert containingClass != null;
-            final String containingClassName = containingClass.getName();
-            replaceExpression(expression, containingClassName + '.' + fieldName);
+            replaceExpressionWithReferenceTo(expression, field);
         }
-
     }
 
     public BaseInspectionVisitor buildVisitor(){
