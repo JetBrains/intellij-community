@@ -222,7 +222,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     private final PsiScopeProcessor myDelegate;
     private String myNameToFilter;
     private boolean myIsProcessingOnDemand;
-    private HashSet<String> myHiddenNames = new HashSet<String>();
+    private final HashSet<String> myHiddenNames = new HashSet<String>();
 
     public StaticImportFilteringProcessor(PsiScopeProcessor delegate, String nameToFilter) {
       myDelegate = delegate;
@@ -478,17 +478,15 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (module != null) {
       return module.getEffectiveLanguageLevel();
     }
-    else {
-      final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
-      if (sourceRoot != null) {
-        String relativePath = VfsUtil.getRelativePath(virtualFile.getParent(), sourceRoot, '/');
-        LOG.assertTrue(relativePath != null);
-        final VirtualFile[] files = index.getOrderEntriesForFile(virtualFile).get(0).getFiles(OrderRootType.CLASSES);
-        for (VirtualFile rootFile : files) {
-          final VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
-          if (classFile != null) {
-            return getLanguageLevel(classFile);
-          }
+    final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
+    if (sourceRoot != null) {
+      String relativePath = VfsUtil.getRelativePath(virtualFile.getParent(), sourceRoot, '/');
+      LOG.assertTrue(relativePath != null);
+      final VirtualFile[] files = index.getOrderEntriesForFile(virtualFile).get(0).getFiles(OrderRootType.CLASSES);
+      for (VirtualFile rootFile : files) {
+        final VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
+        if (classFile != null) {
+          return getLanguageLevel(classFile);
         }
       }
     }

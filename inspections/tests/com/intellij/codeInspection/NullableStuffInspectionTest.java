@@ -19,9 +19,13 @@ public class NullableStuffInspectionTest extends InspectionTestCase {
   private void doTest() throws Exception {
     doTest("nullableProblems/" + getTestName(true), new LocalInspectionToolWrapper(myInspection),"java 1.5");
   }
+  private void doTest14() throws Exception {
+    doTest("nullableProblems/" + getTestName(true), new LocalInspectionToolWrapper(myInspection),"java 1.4");
+  }
 
   public void testProblems() throws Exception{ doTest(); }
   public void testProblems2() throws Exception{ doTest(); }
+  public void testJdk14() throws Exception{ doTest14(); }
 
   public void testGetterSetterProblems() throws Exception{ doTest(); }
   public void testOverriddenMethods() throws Exception{

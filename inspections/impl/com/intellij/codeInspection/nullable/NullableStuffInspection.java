@@ -12,7 +12,9 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,14 +48,15 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-
       }
 
       public void visitMethod(PsiMethod method) {
+        if (PsiUtil.getLanguageLevel(method).compareTo(LanguageLevel.JDK_1_5) < 0) return;
         checkNullableStuffForMethod(method, holder);
       }
 
       public void visitField(PsiField field) {
+        if (PsiUtil.getLanguageLevel(field).compareTo(LanguageLevel.JDK_1_5) < 0) return;
         Annotated annotated = check(field, holder, field.getType());
         if (annotated.isDeclaredNotNull || annotated.isDeclaredNullable) {
           final String anno = annotated.isDeclaredNotNull ? AnnotationUtil.NOT_NULL : AnnotationUtil.NULLABLE;
@@ -92,14 +95,15 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       }
 
       public void visitParameter(PsiParameter parameter) {
+        if (PsiUtil.getLanguageLevel(parameter).compareTo(LanguageLevel.JDK_1_5) < 0) return;
         check(parameter, holder, parameter.getType());
       }
     };
   }
 
-  static class Annotated {
-    boolean isDeclaredNotNull;
-    boolean isDeclaredNullable;
+  private static class Annotated {
+    private final boolean isDeclaredNotNull;
+    private final boolean isDeclaredNullable;
 
     public Annotated(final boolean isDeclaredNotNull, final boolean isDeclaredNullable) {
       this.isDeclaredNotNull = isDeclaredNotNull;

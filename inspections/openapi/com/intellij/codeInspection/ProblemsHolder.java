@@ -27,7 +27,7 @@ import java.util.List;
  * @author max
  */
 public class ProblemsHolder {
-  private InspectionManager myManager;
+  private final InspectionManager myManager;
   private List<ProblemDescriptor> myProblems = null;
 
   public ProblemsHolder(final InspectionManager manager) {
