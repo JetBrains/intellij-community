@@ -177,7 +177,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(TYPE_EXTENDS_BOUND_LIST)) return new GrTypeExtendsBoundsImpl(node);
 
     //Branch statements
-    if (elem.equals(RETURN_STATEMENT)) return new GrReturnStmtImpl(node);
+    if (elem.equals(RETURN_STATEMENT)) return new GrReturnStatementImpl(node);
     if (elem.equals(THROW_STATEMENT)) return new GrThrowStatementImpl(node);
     if (elem.equals(ASSERT_STATEMENT)) return new GrAssertStatementImpl(node);
     if (elem.equals(BREAK_STATEMENT)) return new GrBreakStatementImpl(node);

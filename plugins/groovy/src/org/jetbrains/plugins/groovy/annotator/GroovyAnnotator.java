@@ -95,9 +95,11 @@ public class GroovyAnnotator implements Annotator {
       checkDuplicateMethod(((GrTypeDefinition) element).getBody().getMethods(), holder);
       checkImplementedMethodsOfClass(holder, (GrTypeDefinition) element);
     } else if (element instanceof GrMethod) {
-      checkMethodDefinitionModifiers(holder, (GrMethod) element);
-      checkInnerMethod(holder, (GrMethod) element);
-      addOverrideGutter(holder, (GrMethod) element);
+      final GrMethod method = (GrMethod) element;
+      checkMethodDefinitionModifiers(holder, method);
+      checkInnerMethod(holder, method);
+      checkMethodReturnExpression(holder, method);
+      addOverrideGutter(holder, method);
     } else if (element instanceof GrVariableDeclaration) {
       checkVariableDeclaration(holder, (GrVariableDeclaration) element);
     } else if (element instanceof GrVariable) {
@@ -128,6 +130,23 @@ public class GroovyAnnotator implements Annotator {
       if (node != null && !(element instanceof PsiWhiteSpace) && !GroovyTokenTypes.COMMENT_SET.contains(node.getElementType()) &&
           element.getContainingFile() instanceof GroovyFile) {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
+      }
+    }
+  }
+
+  private void checkMethodReturnExpression(AnnotationHolder holder, GrMethod method) {
+    final GrOpenBlock block = method.getBlock();
+    if (block != null) {
+      final GrStatement[] statements = block.getStatements();
+      if (statements.length > 0) {
+        final GrStatement lastStatement = statements[statements.length - 1];
+        if (lastStatement instanceof GrExpression) {
+          final PsiType methodType = method.getReturnType();
+          final PsiType returnType = ((GrExpression) lastStatement).getType();
+          if (returnType != null && methodType != null && !PsiType.VOID.equals(methodType)) {
+            checkAssignability(holder, methodType, returnType, lastStatement);
+          }
+        }
       }
     }
   }
@@ -459,12 +478,13 @@ public class GroovyAnnotator implements Annotator {
           if (method.isConstructor()) {
             holder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.constructor"));
           } else {
-            final PsiType returnType = method.getReturnType();
-            if (returnType != null) {
-              if (PsiType.VOID.equals(returnType)) {
+            final PsiType methodType = method.getReturnType();
+            final PsiType returnType = value.getType();
+            if (methodType != null) {
+              if (PsiType.VOID.equals(methodType)) {
                 holder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.void.method"));
-              } else {
-                checkAssignability(holder, returnType, type, value);
+              } else if (returnType != null) {
+                checkAssignability(holder, methodType, returnType, value);
               }
             }
           }
@@ -535,8 +555,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
-    if (typeDefinition != null &&
-        typeDefinition.isAnnotationType()) {
+    if (typeDefinition.isAnnotationType()) {
       Annotation annotation = holder.createInfoAnnotation(typeDefinition.getNameIdentifierGroovy(), null);
       annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
     }
@@ -546,7 +565,7 @@ public class GroovyAnnotator implements Annotator {
     }
 
     //TODO: add quickfix to change implements -> extends or class to interface 
-    Annotation annotation = null;
+    Annotation annotation;
 
     final GrImplementsClause implementsClause = typeDefinition.getImplementsClause();
     final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();

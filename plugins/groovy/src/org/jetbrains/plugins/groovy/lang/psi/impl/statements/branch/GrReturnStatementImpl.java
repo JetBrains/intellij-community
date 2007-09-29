@@ -25,8 +25,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 /**
  * @author ilyas
  */
-public class GrReturnStmtImpl extends GroovyPsiElementImpl implements GrReturnStatement {
-  public GrReturnStmtImpl(@NotNull ASTNode node) {
+public class GrReturnStatementImpl extends GroovyPsiElementImpl implements GrReturnStatement {
+  public GrReturnStatementImpl(@NotNull ASTNode node) {
     super(node);
   }
 
