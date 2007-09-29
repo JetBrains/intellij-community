@@ -71,4 +71,6 @@ public interface FoldingModel {
    * @param operation the operation to execute.
    */
   void runBatchFoldingOperation(Runnable operation);
+
+  void runBatchFoldingOperationDoNotCollapseCaret(Runnable operation);
 }

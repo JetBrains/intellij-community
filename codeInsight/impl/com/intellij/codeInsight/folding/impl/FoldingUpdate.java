@@ -68,7 +68,7 @@ class FoldingUpdate {
     final Runnable operation = new UpdateFoldRegionsOperation(editor, elementsToFoldMap, applyDefaultState);
     return new Runnable() {
       public void run() {
-        editor.getFoldingModel().runBatchFoldingOperation(operation);
+        editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
         editor.putUserData(LAST_UPDATE_STAMP_KEY, timeStamp);
       }
     };

@@ -97,7 +97,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
                 documentFoldingInfo.clear();
               }
             };
-            editor.getFoldingModel().runBatchFoldingOperation(operation);
+            editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
           }
         });
       }

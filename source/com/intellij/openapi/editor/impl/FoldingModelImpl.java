@@ -35,6 +35,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   private FoldRegionsTree myFoldTree;
   private TextAttributes myFoldTextAttributes;
   private boolean myIsBatchFoldingProcessing;
+  private boolean myDoNotCollapseCaret;
   private boolean myFoldRegionsProcessed;
 
   private int mySavedCaretX;
@@ -51,6 +52,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myEditor = editor;
     myIsFoldingEnabled = true;
     myIsBatchFoldingProcessing = false;
+    myDoNotCollapseCaret = false;
     myFoldTree = new FoldRegionsTree();
     myFoldRegionsProcessed = false;
     refreshSettings();
@@ -91,7 +93,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public void runBatchFoldingOperation(Runnable operation) {
+    runBatchFoldingOperation(operation, false);
+  }
+
+  private void runBatchFoldingOperation(final Runnable operation, final boolean dontCollapseCaret) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    boolean oldDontCollapseCaret = myDoNotCollapseCaret;
+    myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
     if (!oldBatchFlag) {
       mySavedCaretShift = myEditor.visibleLineNumberToYPosition(myEditor.getCaretModel().getVisualPosition().line) - myEditor.getScrollingModel().getVerticalScrollOffset();
@@ -101,7 +109,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     myFoldTree.myCachedLastIndex = -1;
     operation.run();
     myFoldTree.myCachedLastIndex = -1;
-    
+
     if (!oldBatchFlag) {
       if (myFoldRegionsProcessed) {
         notifyBatchFoldingProcessingDone();
@@ -109,6 +117,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
       }
       myIsBatchFoldingProcessing = false;
     }
+    myDoNotCollapseCaret = oldDontCollapseCaret;
+  }
+
+  public void runBatchFoldingOperationDoNotCollapseCaret(final Runnable operation) {
+    runBatchFoldingOperation(operation, true);
   }
 
   public void flushCaretShift() {
@@ -192,6 +205,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
 
     if (myFoldTree.contains(region, caretOffset)) {
+      if (myDoNotCollapseCaret) return;
+
       if (!myCaretPositionSaved) {
         mySavedCaretX = caretPosition.column;
         mySavedCaretY = caretPosition.line;
