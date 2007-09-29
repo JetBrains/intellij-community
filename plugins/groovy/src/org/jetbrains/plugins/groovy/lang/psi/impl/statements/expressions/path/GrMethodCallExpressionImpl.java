@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -80,7 +80,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
     return findChildByClass(GrExpression.class);
   }
 
-  public GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException{
+  public GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException {
 
     ASTNode parentNode = this.getParent().getNode();
     if (!(newExpr instanceof GrClosableBlock)) {
@@ -94,7 +94,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
       }
       allArgs.addAll(closureArgs);
       allArgs.add(newExpr);
-      int refIndex = allArgs.size()-1;
+      int refIndex = allArgs.size() - 1;
 
       // New argument list
       GrArgumentList newArgList = GroovyElementFactory.getInstance(getProject()).createExpressionArgumentList(allArgs.toArray(GrExpression.EMPTY_ARRAY));
@@ -108,7 +108,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
       assert arguments.length == refIndex + 1;
       return arguments[refIndex];
     } else {
-      return closure.replaceWithExpression(newExpr);
+      return closure.replaceWithExpression(newExpr, true);
     }
   }
 

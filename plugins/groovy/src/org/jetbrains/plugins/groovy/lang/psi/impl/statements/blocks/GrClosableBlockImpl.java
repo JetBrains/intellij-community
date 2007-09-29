@@ -17,7 +17,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -122,8 +124,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return myDelegate;
   }
 
-  public GrExpression replaceWithExpression(@NotNull GrExpression newExpr) throws IncorrectOperationException {
-    return PsiImplUtil.replaceExpression(this, newExpr);
+  public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) throws IncorrectOperationException {
+    return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 
 

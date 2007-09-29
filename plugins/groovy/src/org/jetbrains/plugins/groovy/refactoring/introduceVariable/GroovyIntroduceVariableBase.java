@@ -191,7 +191,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
                   if (element instanceof GrClosableBlock && element.getParent() instanceof GrMethodCallExpression) {
                     replaced.add(((GrMethodCallExpression) element.getParent()).replaceClosureArgument(((GrClosableBlock) element), refExpr));
                   } else {
-                    replaced.add(element.replaceWithExpression(refExpr));
+                    replaced.add(element.replaceWithExpression(refExpr, true));
                   }
                   // For caret position
                   if (occurrence.equals(selectedExpr)) {
@@ -213,7 +213,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
               if (selectedExpr instanceof GrClosableBlock && selectedExpr.getParent() instanceof GrMethodCallExpression) {
                 refreshPositionMarker(((GrMethodCallExpression) selectedExpr.getParent()).replaceClosureArgument(((GrClosableBlock) selectedExpr), refExpr));
               } else {
-                refreshPositionMarker(selectedExpr.replaceWithExpression(refExpr));
+                refreshPositionMarker(selectedExpr.replaceWithExpression(refExpr, true));
               }
             }
           }
@@ -247,7 +247,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
             varDef.getNameIdentifierGroovy().getText().equals(((GrField) psiReference.resolve()).getNameIdentifierGroovy().getText())) {
           GroovyElementFactory factory = GroovyElementFactory.getInstance(tempContainer.getProject());
           try {
-            ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()));
+            ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()), true);
           } catch (IncorrectOperationException e) {
             LOG.error(e);
           }
@@ -328,13 +328,13 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     GroovyElementFactory factory = GroovyElementFactory.getInstance(stmt.getProject());
     GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(refText);
     if (!replaceAllOccurrences) {
-      expr.replaceWithExpression(refExpr);
+      expr.replaceWithExpression(refExpr, true);
     } else {
       PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(expr, stmt);
       for (PsiElement occurrence : occurrences) {
         if (occurrence instanceof GrExpression) {
           GrExpression grExpression = (GrExpression) occurrence;
-          grExpression.replaceWithExpression(refExpr);
+          grExpression.replaceWithExpression(refExpr, true);
           refExpr = factory.createReferenceExpressionFromText(refText);
         } else {
           throw new IncorrectOperationException();

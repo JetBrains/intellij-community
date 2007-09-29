@@ -41,7 +41,7 @@ import java.io.IOException;
 public class EnterActionTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "./test/org/jetbrains/plugins/groovy/lang/formatter/enterAction/data/";
+  private static final String DATA_PATH = "./test/org/jetbrains/plugins/groovy/lang/formatter/enterAction/data";
 
   protected Editor myEditor;
   protected FileEditorManager fileEditorManager;

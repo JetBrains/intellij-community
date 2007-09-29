@@ -6,7 +6,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +56,9 @@ public abstract class Intention implements IntentionAction {
     final GroovyElementFactory factory = GroovyElementFactory.getInstance(expression.getProject());
     final GrExpression newCall =
         factory.createExpressionFromText(newExpression);
-    final PsiElement insertedElement = expression.replaceWithExpression(newCall);
-  //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
-   // codeStyleManager.reformat(insertedElement);
+    final PsiElement insertedElement = expression.replaceWithExpression(newCall, true);
+    //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+    // codeStyleManager.reformat(insertedElement);
   }
 
 
@@ -69,8 +71,8 @@ public abstract class Intention implements IntentionAction {
     final GrStatement newCall =
         (GrStatement) factory.createTopElementFromText(newStatement);
     final PsiElement insertedElement = statement.replaceWithStatement(newCall);
-  //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
-   // codeStyleManager.reformat(insertedElement);
+    //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+    // codeStyleManager.reformat(insertedElement);
   }
 
 
@@ -92,9 +94,9 @@ public abstract class Intention implements IntentionAction {
     final GrExpression newCall =
         factory.createExpressionFromText(expString);
     assert expressionToReplace != null;
-    final PsiElement insertedElement = expressionToReplace.replaceWithExpression(newCall);
-   //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
-   //  codeStyleManager.reformat(insertedElement);
+    final PsiElement insertedElement = expressionToReplace.replaceWithExpression(newCall, true);
+    //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+    //  codeStyleManager.reformat(insertedElement);
   }
 
 

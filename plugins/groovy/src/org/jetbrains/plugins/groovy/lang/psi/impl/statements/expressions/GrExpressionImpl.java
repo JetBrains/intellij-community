@@ -12,7 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 
 import java.util.Collections;
 
@@ -39,8 +42,8 @@ public abstract class GrExpressionImpl extends GroovyPsiElementImpl implements G
     }, Collections.<String, PsiType>emptyMap());
   }
 
-  public GrExpression replaceWithExpression(@NotNull GrExpression newExpr) throws IncorrectOperationException {
-    return PsiImplUtil.replaceExpression(this, newExpr);
+  public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) throws IncorrectOperationException {
+    return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 
   public PsiType getTypeByFQName(String fqName) {

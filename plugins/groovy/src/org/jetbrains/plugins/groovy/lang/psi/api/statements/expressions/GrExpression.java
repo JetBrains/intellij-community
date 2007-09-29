@@ -32,5 +32,6 @@ public interface GrExpression extends GrStatement {
   @Nullable
   PsiType getNominalType();
 
-  GrExpression replaceWithExpression(GrExpression expression) throws IncorrectOperationException;
+  GrExpression replaceWithExpression(GrExpression expression,
+                                     boolean removeUnnecessaryParentheses) throws IncorrectOperationException;
 }

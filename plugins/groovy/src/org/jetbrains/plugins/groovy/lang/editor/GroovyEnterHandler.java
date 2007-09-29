@@ -168,26 +168,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
 
     String fileText = editor.getDocument().getText();
     if (fileText.length() == carret) return false;
-    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
-    HighlighterIterator iteratorLeft = highlighter.createIterator(carret - 1);
-    HighlighterIterator iteratorRight = highlighter.createIterator(carret);
 
-    if (iteratorLeft != null && !(ALL_STRINGS.contains(iteratorLeft.getTokenType()))) {
-      return false;
-    }
-    if (iteratorLeft != null && BEFORE_DOLLAR.contains(iteratorLeft.getTokenType()) &&
-        iteratorRight != null && !AFTER_DOLLAR.contains(iteratorRight.getTokenType())) {
-      return false;
-    }
-    if (iteratorLeft != null && EXPR_END.contains(iteratorLeft.getTokenType()) &&
-        iteratorRight != null && !AFTER_EXPR_END.contains(iteratorRight.getTokenType())) {
-      return false;
-    }
-    if (iteratorLeft != null && STRING_END.contains(iteratorLeft.getTokenType()) &&
-        iteratorRight != null && !STRING_END.contains(iteratorRight.getTokenType())) {
-      return false;
-    }
-
+    if (checkStringApplicable(editor, carret)) return false;
     if (file == null || project == null) return false;
 
     PsiElement stringElement = file.findElementAt(carret - 1);
@@ -204,7 +186,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         String innerText = text.equals("''") ? "" : text.substring(1, text.length() - 1);
         PsiElement literal = stringElement.getParent();
         if (!(literal instanceof GrLiteral)) return false;
-        ((GrExpression) literal).replaceWithExpression(factory.createExpressionFromText("'''" + innerText + "'''"));
+        ((GrExpression) literal).replaceWithExpression(factory.createExpressionFromText("'''" + innerText + "'''"), false);
         editor.getCaretModel().moveToOffset(carret + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
         //myOriginalHandler.execute(editor, dataContext);
@@ -236,7 +218,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         if (rightFromDollar) carret--;
         String text = parent.getText();
         String innerText = text.equals("\"\"") ? "" : text.substring(1, text.length() - 1);
-        ((GrLiteral) parent).replaceWithExpression(factory.createExpressionFromText("\"\"\"" + innerText + "\"\"\""));
+        ((GrLiteral) parent).replaceWithExpression(factory.createExpressionFromText("\"\"\"" + innerText + "\"\"\""), false);
         editor.getCaretModel().moveToOffset(carret + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
         //myOriginalHandler.execute(editor, dataContext);
@@ -246,6 +228,29 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
       } else {
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
       }
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean checkStringApplicable(Editor editor, int carret) {
+    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
+    HighlighterIterator iteratorLeft = highlighter.createIterator(carret - 1);
+    HighlighterIterator iteratorRight = highlighter.createIterator(carret);
+
+    if (iteratorLeft != null && !(ALL_STRINGS.contains(iteratorLeft.getTokenType()))) {
+      return true;
+    }
+    if (iteratorLeft != null && BEFORE_DOLLAR.contains(iteratorLeft.getTokenType()) &&
+        iteratorRight != null && !AFTER_DOLLAR.contains(iteratorRight.getTokenType())) {
+      return true;
+    }
+    if (iteratorLeft != null && EXPR_END.contains(iteratorLeft.getTokenType()) &&
+        iteratorRight != null && !AFTER_EXPR_END.contains(iteratorRight.getTokenType())) {
+      return true;
+    }
+    if (iteratorLeft != null && STRING_END.contains(iteratorLeft.getTokenType()) &&
+        iteratorRight != null && !STRING_END.contains(iteratorRight.getTokenType())) {
       return true;
     }
     return false;

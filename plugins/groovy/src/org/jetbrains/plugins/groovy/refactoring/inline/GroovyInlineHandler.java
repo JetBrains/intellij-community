@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -33,7 +33,6 @@ import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -99,7 +98,7 @@ public class GroovyInlineHandler implements InlineHandler {
    */
   private Settings inlineDialogResult(String localName, Project project, Collection<PsiReference> refs) {
     Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode()) { 
+    if (!application.isUnitTestMode()) {
       final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(
           REFACTORING_NAME,
@@ -168,7 +167,7 @@ public class GroovyInlineHandler implements InlineHandler {
         GrExpression initializerGroovy = variable.getInitializerGroovy();
         assert initializerGroovy != null;
         GrExpression tempExpr = initializerGroovy;
-        while (tempExpr instanceof GrParenthesizedExpr){
+        while (tempExpr instanceof GrParenthesizedExpr) {
           tempExpr = ((GrParenthesizedExpr) tempExpr).getOperand();
         }
         Project project = variable.getProject();
@@ -176,7 +175,7 @@ public class GroovyInlineHandler implements InlineHandler {
         GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText());
 
         try {
-          newExpr = exprToBeReplaced.replaceWithExpression(newExpr);
+          newExpr = exprToBeReplaced.replaceWithExpression(newExpr, true);
           FileEditorManager manager = FileEditorManager.getInstance(project);
           Editor editor = manager.getSelectedTextEditor();
           GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});

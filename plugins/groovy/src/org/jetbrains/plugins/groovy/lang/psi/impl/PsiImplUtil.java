@@ -49,10 +49,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrPowerExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrExclusiveOrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrInclusiveOrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalAndExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalOrExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.*;
 import org.jetbrains.plugins.groovy.refactoring.GroovyVariableUtil;
 
 import java.util.ArrayList;
@@ -65,7 +68,10 @@ import java.util.List;
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil");
 
-  public static GrExpression replaceExpression(GrExpression oldExpr, GrExpression newExpr) throws IncorrectOperationException {
+  public static GrExpression replaceExpression(GrExpression oldExpr,
+                                               GrExpression newExpr,
+                                               boolean removeUnnecessaryParentheses)
+      throws IncorrectOperationException {
     ASTNode oldNode = oldExpr.getNode();
     ASTNode parentNode = oldExpr.getParent().getNode();
     if (oldExpr.getParent() == null ||
@@ -73,9 +79,11 @@ public class PsiImplUtil {
       throw new IncorrectOperationException();
     }
     // Remove unnecessary parentheses
-    if (oldExpr.getParent() instanceof GrParenthesizedExpr &&
-        getExprPriorityLevel(newExpr) == 0) {
-      return ((GrExpression) oldExpr.getParent()).replaceWithExpression(newExpr);
+    if (removeUnnecessaryParentheses) {
+      if (oldExpr.getParent() instanceof GrParenthesizedExpr &&
+          getExprPriorityLevel(newExpr) == 0) {
+        return ((GrExpression) oldExpr.getParent()).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
+      }
     }
 
     // check priorities
@@ -323,7 +331,7 @@ public class PsiImplUtil {
   public static PsiMethod extractUniqueElement(GroovyResolveResult[] results) {
     if (results.length != 1) return null;
     final PsiElement element = results[0].getElement();
-    return element instanceof PsiMethod ? (PsiMethod)element : null;
+    return element instanceof PsiMethod ? (PsiMethod) element : null;
   }
 
   public static GroovyResolveResult extractUniqueResult(GroovyResolveResult[] results) {
