@@ -217,7 +217,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     r.lock();
     try {
       if (myXmlTag != null && myXmlTag.isPhysical()) {
-        assert myManager.getDomElement(myXmlTag) == getProxy() : myManager.getDomElement(myXmlTag);
+        assert myManager.getDomElement(myXmlTag) == getProxy() : myManager.getDomElement(myXmlTag) + "\n\n" + myXmlTag.getParent().getText();
         final SmartPsiElementPointer<XmlTag> pointer =
           SmartPointerManager.getInstance(myManager.getProject()).createSmartPsiElementPointer(myXmlTag);
         return myManager.createStableValue(new NullableFactory<T>() {
