@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -41,6 +42,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: anna
@@ -108,22 +110,22 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   @Nullable
-  public final String getVersionString(final String sdkHome) {
-    final Sdk internalJavaSdk = getInternalJavaSdk(sdkHome);
+  public final String getVersionString(final Sdk sdk) {
+    final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk != null ? internalJavaSdk.getVersionString() : null;
   }
 
   @Nullable
-  private static String getInternalToolsPath(final String sdkHome){
+  private static String getInternalToolsPath(final Sdk sdk){
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
       final @NonNls String toolsJar = "tools.jar";
-      final File tools = new File(new File(new File(sdkHome, JRE_DIR_NAME), LIB_DIR_NAME), toolsJar);
+      final File tools = new File(new File(new File(sdk.getHomePath(), JRE_DIR_NAME), LIB_DIR_NAME), toolsJar);
       if (tools.exists()){
         return tools.getPath();
       }
     }
 
-    final ProjectJdk jdk = getInternalJavaSdk(sdkHome);
+    final ProjectJdk jdk = getInternalJavaSdk(sdk);
     if (jdk != null && jdk.getVersionString() != null){
       return jdk.getToolsPath();
     }
@@ -131,10 +133,10 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   @Nullable
-  private static String getInternalRtPath(final String homePath) {
+  private static String getInternalRtPath(final Sdk sdk) {
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
       final @NonNls String rtJar = "rt.jar";
-      final String oldJrePath = homePath + File.separator + JRE_DIR_NAME + File.separator;
+      final String oldJrePath = sdk.getHomePath() + File.separator + JRE_DIR_NAME + File.separator;
       final String pathSuffix = LIB_DIR_NAME + File.separator + rtJar;
       String rtPath = oldJrePath + pathSuffix;
       if (new File(rtPath).exists()) {
@@ -145,7 +147,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
         return rtPath;
       }
     }
-    final ProjectJdk jdk = getInternalJavaSdk(homePath);
+    final ProjectJdk jdk = getInternalJavaSdk(sdk);
     if (jdk != null && jdk.getVersionString() != null){
       return jdk.getRtLibraryPath();
     }
@@ -153,23 +155,12 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   @Nullable
-  private static ProjectJdk getInternalJavaSdk(final String sdkHome) {
-    if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      final String oldJrePath = sdkHome + File.separator + JRE_DIR_NAME;
-      String jreHome = oldJrePath + File.separator + JRE_DIR_NAME;
-      if (new File(jreHome).exists()){
-        return JavaSdk.getInstance().createJdk("", jreHome);
-      }
-      if (new File(oldJrePath).exists()){
-        return JavaSdk.getInstance().createJdk("", oldJrePath);
-      }
+  private static ProjectJdk getInternalJavaSdk(final Sdk sdk) {
+    final SdkAdditionalData data = sdk.getSdkAdditionalData();
+    if (data instanceof Sandbox) {
+      return (ProjectJdk)((Sandbox)data).getSdk();
     }
-    final String jrePath = System.getProperty(JAVA_HOME_PROPERTY);
-    final File parent = new File(jrePath).getParentFile();
-    if (JavaSdk.checkForJdk(parent)) {
-      return JavaSdk.getInstance().createJdk("", parent.getPath(), false);
-    }
-    return JavaSdk.getInstance().createJdk("", jrePath);
+    return null;
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
@@ -215,33 +206,57 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
 
-  public void setupSdkPaths(Sdk sdk) {
+  public boolean setupSdkPaths(final Sdk sdk, SdkModel sdkModel) {
     final Sandbox additionalData = (Sandbox)sdk.getSdkAdditionalData();
     if (additionalData != null) {    
       additionalData.cleanupWatchedRoots();
     }
 
     final SdkModificator sdkModificator = sdk.getSdkModificator();
-    final File home = new File(sdk.getHomePath());
 
+    final List<String> javaSdks = new ArrayList<String>();
+    final Sdk[] sdks = sdkModel.getSdks();
+    for (Sdk jdk : sdks) {
+      if (jdk.getSdkType() instanceof JavaSdk) {
+        javaSdks.add(jdk.getName());
+      }
+    }
+    if (javaSdks.isEmpty()){
+      Messages.showErrorDialog("Please, configure Java SDK to be used in IDEA SDK", "No Java SDK found");
+      return false;
+    }
+
+    final int choice = Messages
+      .showChooseDialog("Choose Java SDK to be used ",
+                        "Select Java SDK to be used in IDEA SDK", javaSdks.toArray(new String[javaSdks.size()]), javaSdks.get(0), Messages.getQuestionIcon());
+
+    if (choice != -1) {
+      final String name = javaSdks.get(choice);
+      final Sdk jdk = sdkModel.findSdk(name);
+      setupSdkPaths(sdk, sdkModificator, sdk.getHomePath(), jdk);
+      sdkModificator.setSdkAdditionalData(new Sandbox(getDefaultSandbox(), jdk));
+      sdkModificator.commitChanges();
+      return true;
+    }
+    return false;
+  }
+
+  public static void setupSdkPaths(final Sdk sdk, final SdkModificator sdkModificator, final String sdkHome, final Sdk internalJava) {
     //roots from internal jre
-    addClasses(sdkModificator);
-    addDocs(sdkModificator);
-    addSources(sdkModificator);
-
+    addClasses(sdkModificator, internalJava);
+    addDocs(sdkModificator, internalJava);
+    addSources(sdkModificator, internalJava);
     //roots for openapi and other libs
-    if (!isFromIDEAProject(sdk.getHomePath())) {
-      final VirtualFile[] ideaLib = getIdeaLibrary(sdk.getHomePath());
+    if (!isFromIDEAProject(sdkHome)) {
+      final VirtualFile[] ideaLib = getIdeaLibrary(sdkHome);
       if (ideaLib != null) {
         for (VirtualFile aIdeaLib : ideaLib) {
           sdkModificator.addRoot(aIdeaLib, ProjectRootType.CLASS);
         }
       }
-      addSources(home, sdkModificator);
-      addDocs(home, sdkModificator);
+      addSources(new File(sdkHome), sdkModificator);
+      addDocs(new File(sdkHome), sdkModificator);
     }
-    sdkModificator.setSdkAdditionalData(new Sandbox(getDefaultSandbox()));
-    sdkModificator.commitChanges();
   }
 
   static String getDefaultSandbox() {
@@ -301,12 +316,12 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
   }
 
-  private static void addClasses(SdkModificator sdkModificator) {
-    addOrderEntries(OrderRootType.CLASSES, ProjectRootType.CLASS, getInternalJavaSdk(sdkModificator.getHomePath()), sdkModificator);
+  private static void addClasses(SdkModificator sdkModificator, final Sdk javaSdk) {
+    addOrderEntries(OrderRootType.CLASSES, ProjectRootType.CLASS, javaSdk, sdkModificator);
   }
 
-  private static void addDocs(SdkModificator sdkModificator) {
-    if (!addOrderEntries(OrderRootType.JAVADOC, ProjectRootType.JAVADOC, getInternalJavaSdk(sdkModificator.getHomePath()), sdkModificator) &&
+  private static void addDocs(SdkModificator sdkModificator, final Sdk javaSdk) {
+    if (!addOrderEntries(OrderRootType.JAVADOC, ProjectRootType.JAVADOC, javaSdk, sdkModificator) &&
         SystemInfo.isMac){
       ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
       for (ProjectJdk jdk : jdks) {
@@ -318,10 +333,9 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
   }
 
-  private static void addSources(SdkModificator sdkModificator) {
-    final Sdk internalJavaSdk = getInternalJavaSdk(sdkModificator.getHomePath());
-    if (internalJavaSdk != null) {
-      if (!addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, internalJavaSdk, sdkModificator)){
+  private static void addSources(SdkModificator sdkModificator, final Sdk javaSdk) {
+    if (javaSdk != null) {
+      if (!addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, javaSdk, sdkModificator)){
         if (SystemInfo.isMac) {
           ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
           for (ProjectJdk jdk : jdks) {
@@ -332,7 +346,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
           }
         }
         else {
-          final File jdkHome = new File(internalJavaSdk.getHomePath()).getParentFile();
+          final File jdkHome = new File(javaSdk.getHomePath()).getParentFile();
           @NonNls final String srcZip = "src.zip";
           final File jarFile = new File(jdkHome, srcZip);
           if (jarFile.exists()){
@@ -358,29 +372,56 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, SdkModificator sdkModificator) {
-    return new IdeaJdkConfigurable();
+    final IdeaJdkConfigurable mobileSdkConfigurable = new IdeaJdkConfigurable(sdkModel, sdkModificator);
+    sdkModel.addListener(new SdkModel.Listener() {
+      public void sdkAdded(Sdk sdk) {
+        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
+          mobileSdkConfigurable.addJavaSdk(sdk);
+        }
+      }
+
+      public void beforeSdkRemove(Sdk sdk) {
+        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
+          mobileSdkConfigurable.removeJavaSdk(sdk);
+        }
+      }
+
+      public void sdkChanged(Sdk sdk, String previousName) {
+        if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
+          mobileSdkConfigurable.updateJavaSdkList(sdk, previousName);
+        }
+      }
+
+      public void sdkHomeSelected(final Sdk sdk, final String newSdkHome) {
+        if (sdk.getSdkType() instanceof IdeaJdk) {
+          mobileSdkConfigurable.updateRoots(newSdkHome);
+        }
+      }
+    });
+
+    return mobileSdkConfigurable;
   }
 
   @Nullable
   public String getBinPath(Sdk sdk) {
-    final Sdk internalJavaSdk = getInternalJavaSdk(sdk.getHomePath());
+    final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk == null ? null : JavaSdk.getInstance().getBinPath(internalJavaSdk);
   }
 
   @Nullable
   public String getToolsPath(Sdk sdk) {
-    return getInternalToolsPath(sdk.getHomePath());
+    return getInternalToolsPath(sdk);
   }
 
   @Nullable
   public String getVMExecutablePath(Sdk sdk) {
-    final Sdk internalJavaSdk = getInternalJavaSdk(sdk.getHomePath());
+    final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk == null ? null : JavaSdk.getInstance().getVMExecutablePath(internalJavaSdk);
   }
 
   @Nullable
   public String getRtLibraryPath(Sdk sdk) {
-    return getInternalRtPath(sdk.getHomePath());
+    return getInternalRtPath(sdk);
   }
 
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {

@@ -15,16 +15,17 @@
  */
 package org.jetbrains.idea.devkit.projectRoots;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
@@ -37,13 +38,18 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
   @SuppressWarnings({"WeakerAccess"})
   public String mySandboxHome;
 
-  private LocalFileSystem.WatchRequest mySandboxRoot = null;
+  private String mySdkName;
+  private Sdk mySdk;
 
-  public Sandbox(String sandboxHome) {
+  private LocalFileSystem.WatchRequest mySandboxRoot = null;
+  @NonNls private static final String SDK = "sdk";
+
+  public Sandbox(String sandboxHome, Sdk sdk) {
     mySandboxHome = sandboxHome;
     if (mySandboxHome != null) {
       mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
     }
+    mySdk = sdk;
   }
 
   //readExternal()
@@ -55,11 +61,11 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
   }
 
   public Object clone() throws CloneNotSupportedException {
-    return new Sandbox(mySandboxHome);
+    return new Sandbox(mySandboxHome, getSdk());
   }
 
   public void checkValid(SdkModel sdkModel) throws ConfigurationException {
-    if (mySandboxHome == null || mySandboxHome.length() == 0){
+    if (mySandboxHome == null || mySandboxHome.length() == 0 || getSdk() == null){
       throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
     }
   }
@@ -67,6 +73,7 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     LOG.assertTrue(mySandboxRoot == null);
+    mySdkName = element.getAttributeValue(SDK);
     if (mySandboxHome != null) {
       mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
     }
@@ -74,11 +81,39 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
+    final Sdk sdk = getSdk();
+    if (sdk != null) {
+      element.setAttribute(SDK, sdk.getName());
+    }
   }
 
   void cleanupWatchedRoots() {
     if (mySandboxRoot != null) {
       LocalFileSystem.getInstance().removeWatchedRoot(mySandboxRoot);
     }
+  }
+
+  @Nullable
+  public Sdk getSdk() {
+    final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+    if (mySdk == null) {
+      if (mySdkName != null) {
+        mySdk = jdkTable.findJdk(mySdkName);
+        mySdkName = null;
+      }
+      else {
+        for (ProjectJdk jdk : jdkTable.getAllJdks()) {
+          if (jdk.getSdkType() instanceof JavaSdk) {
+            mySdk = jdk;
+            break;
+          }
+        }
+      }
+    }
+    return mySdk;
+  }
+
+  public void setSdk(final Sdk sdk) {
+    mySdk = sdk;
   }
 }
