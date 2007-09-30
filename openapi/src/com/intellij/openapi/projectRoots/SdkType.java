@@ -33,12 +33,25 @@ public abstract class SdkType {
 
   public abstract boolean isValidSdkHome(String path);
 
+
   @Nullable
-  public abstract String getVersionString(String sdkHome);
+  public String getVersionString(Sdk sdk) {
+    return getVersionString(sdk.getHomePath());
+  }
+
+  @Nullable
+  public String getVersionString(String sdkHome){
+    return null;
+  }
 
   public abstract String suggestSdkName(String currentSdkName, String sdkHome);
 
-  public abstract void setupSdkPaths(Sdk sdk);
+  public void setupSdkPaths(Sdk sdk) {}
+
+  public boolean setupSdkPaths(final Sdk sdk, final SdkModel sdkModel) {
+    setupSdkPaths(sdk);
+    return true;
+  }
 
   /**
    * @return Configurable object for the sdk's additional data or null if not applicable

@@ -238,7 +238,9 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     }
     final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
     newJdk.setHomePath(home);
-    type.setupSdkPaths(newJdk);
+
+    if (!type.setupSdkPaths(newJdk, this)) return;
+
     myProjectJdks.put(newJdk, newJdk);
     updateTree.consume(newJdk);
     mySdkEventsDispatcher.getMulticaster().sdkAdded(newJdk);

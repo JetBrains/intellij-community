@@ -72,10 +72,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
 
   public String getVersionString() {
     if (myVersionString == null && !myVersionDefined) {
-      String homePath = getHomePath();
-      if (homePath != null && homePath.length() > 0) {
-        setVersionString(mySdkType.getVersionString(homePath));
-      }
+      setVersionString(mySdkType.getVersionString(this));
     }
     return myVersionString;
   }
@@ -213,7 +210,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     final String name = getName();
     dest.setName(name);
     dest.setHomePath(getHomePath());
-    dest.setVersionString(getVersionString());
+    //dest.setVersionString(getVersionString());
     dest.setSdkAdditionalData(getSdkAdditionalData());
     dest.myRootContainer.startChange();
     dest.myRootContainer.removeAllRoots();
