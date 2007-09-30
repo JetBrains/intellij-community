@@ -233,8 +233,10 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     if (choice != -1) {
       final String name = javaSdks.get(choice);
       final Sdk jdk = sdkModel.findSdk(name);
+      LOG.assertTrue(jdk != null);
       setupSdkPaths(sdk, sdkModificator, sdk.getHomePath(), jdk);
       sdkModificator.setSdkAdditionalData(new Sandbox(getDefaultSandbox(), jdk));
+      sdkModificator.setVersionString(jdk.getVersionString());
       sdkModificator.commitChanges();
       return true;
     }
