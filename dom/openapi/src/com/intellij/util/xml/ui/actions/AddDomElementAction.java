@@ -38,7 +38,10 @@ public abstract class AddDomElementAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    if (!isEnabled(e)) return;
+    if (!isEnabled(e)) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
 
     final AnAction[] actions = getChildren(e);
     for (final AnAction action : actions) {
@@ -90,7 +93,9 @@ public abstract class AddDomElementAction extends AnAction {
   }
 
   protected void showPopup(final ListPopup groupPopup, final AnActionEvent e) {
-    final Component component = e.getInputEvent().getComponent();
+    Component component = (Component)e.getDataContext().getData(DataConstants.CONTEXT_COMPONENT);
+    if (component == null) component = e.getInputEvent().getComponent();
+
     if (component instanceof JMenuItem) {
       groupPopup.showInBestPositionFor(e.getDataContext());
     } else {

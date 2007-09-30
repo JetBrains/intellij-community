@@ -4,18 +4,21 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author peter
  */
 public class DomTableView extends AbstractTableView<DomElement> {
+  private final List<TypeSafeDataProvider> myCustomDataProviders = new SmartList<TypeSafeDataProvider>();
 
   public DomTableView(final Project project) {
     super(project);
@@ -23,6 +26,17 @@ public class DomTableView extends AbstractTableView<DomElement> {
 
   public DomTableView(final Project project, final String emptyPaneText, final String helpID) {
     super(project, emptyPaneText, helpID);
+  }
+
+  public void addCustomDataProvider(TypeSafeDataProvider provider) {
+    myCustomDataProviders.add(provider);
+  }
+
+  public void calcData(final DataKey key, final DataSink sink) {
+    super.calcData(key, sink);
+    for (final TypeSafeDataProvider customDataProvider : myCustomDataProviders) {
+      customDataProvider.calcData(key, sink);
+    }
   }
 
   @Deprecated

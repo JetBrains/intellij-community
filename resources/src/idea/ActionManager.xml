@@ -1398,6 +1398,18 @@
       <reference ref="DomElementsTreeView.DeleteElement"/>
     </group>
 
+    <group id="DomCollectionControl">
+      <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction" text="Add">
+        <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
+      </action>
+      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" text="Edit">
+        <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
+      </action>
+      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" text="Remove">
+        <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
+      </action>
+    </group>
+
     <group id="PropertyInspectorActions" text="InspectorActions">
       <group id="PropertyInspectorActions.CommonActions">
         <action id="PropertyInspectorActions.AddProperty" class="com.intellij.designer.inspector.impl.actions.AddPropertyAction"

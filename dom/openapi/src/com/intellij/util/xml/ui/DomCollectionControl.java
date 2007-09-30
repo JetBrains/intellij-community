@@ -3,10 +3,7 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -36,7 +33,9 @@ import java.util.List;
 /**
  * @author peter
  */
-public class DomCollectionControl<T extends DomElement> extends DomUIControl implements Highlightable {
+public class DomCollectionControl<T extends DomElement> extends DomUIControl implements Highlightable, TypeSafeDataProvider {
+  private static final DataKey<DomCollectionControl> DOM_COLLECTION_CONTROL = DataKey.create("DomCollectionControl");
+
   private final EventDispatcher<CommitListener> myDispatcher = EventDispatcher.create(CommitListener.class);
   private DomTableView myCollectionPanel;
 
@@ -45,57 +44,20 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   private List<T> myCollectionElements = new ArrayList<T>();
   private ColumnInfo<T, ?>[] myColumnInfos;
   private boolean myEditable = false;
-  private AnAction myAddAction = new AddDomElementAction() {
-
-    @NotNull
-    protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
-      return new DomCollectionChildDescription[] {getChildDescription()};
-    }
-
-    protected DomElement getParentDomElement(final AnActionEvent e) {
-      return getDomElement();
-    }
-
-    protected JComponent getComponent(AnActionEvent e) {
-      return DomCollectionControl.this.getComponent();
-    }
-
-    @NotNull
-    public AnAction[] getChildren(final AnActionEvent e) {
-      AnAction[] actions = createAdditionActions();
-      return actions == null ? super.getChildren(e) : actions;
-    }
-
-    protected DefaultAddAction createAddingAction(final AnActionEvent e,
-                                                  final String name,
-                                                  final Icon icon,
-                                                  final Type type,
-                                                  final DomCollectionChildDescription description) {
-      return createDefaultAction(name, icon, type);
-    }
-
-  };
-
-  private AnAction myEditAction = new AnAction(ApplicationBundle.message("action.edit"), null, EDIT_ICON) {
-    public void actionPerformed(AnActionEvent e) {
-      doEdit();
-      reset();
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setVisible(isEditable());
-      e.getPresentation().setEnabled(getComponent().getTable().getSelectedRowCount() == 1);
+  private AnAction myAddAction = new AddAction() {
+    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
+      return DomCollectionControl.this;
     }
   };
-  private AnAction myRemoveAction = new AnAction(ApplicationBundle.message("action.remove"), null, REMOVE_ICON) {
-    public void actionPerformed(AnActionEvent e) {
-      doRemove();
-      reset();
-    }
 
-    public void update(AnActionEvent e) {
-      final JTable table = getComponent().getTable();
-      e.getPresentation().setEnabled(table != null && table.getSelectedRowCount() > 0);
+  private AnAction myEditAction = new EditAction() {
+    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
+      return DomCollectionControl.this;
+    }
+  };
+  private AnAction myRemoveAction = new RemoveAction() {
+    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
+      return DomCollectionControl.this;
     }
   };
   public static final Icon ADD_ICON = IconLoader.getIcon("/general/add.png");
@@ -165,6 +127,12 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     myCollectionPanel.getTable().setRowSelectionInterval(index, index);
   }
 
+  public void calcData(final DataKey key, final DataSink sink) {
+    if (DOM_COLLECTION_CONTROL.equals(key)) {
+      sink.put(DOM_COLLECTION_CONTROL, this);
+    }
+  }
+
   @Nullable
   protected String getHelpId() {
     return null;
@@ -185,6 +153,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     myCollectionPanel.setToolbarActions(myAddAction, myEditAction, myRemoveAction);
     myCollectionPanel.installPopup(ActionPlaces.J2EE_ATTRIBUTES_VIEW_POPUP, createPopupActionGroup());
     myCollectionPanel.initializeTable();
+    myCollectionPanel.addCustomDataProvider(this);
     myCollectionPanel.addChangeListener(new DomTableView.ChangeListener() {
       public void changed() {
         reset();
@@ -194,11 +163,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   protected DefaultActionGroup createPopupActionGroup() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(myAddAction);
-    group.add(myEditAction);
-    group.add(myRemoveAction);
-    return group;
+    return (DefaultActionGroup)ActionManager.getInstance().getAction("DomCollectionControl");
   }
 
   protected ColumnInfo[] createColumnInfos(DomElement parent) {
@@ -392,5 +357,97 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
   }
 
+  public static DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
+    return e.getData(DOM_COLLECTION_CONTROL);
+  }
 
+  public static class AddAction extends AddDomElementAction {
+    protected boolean isEnabled(final AnActionEvent e) {
+      return getDomCollectionControl(e) != null || "ProjectViewToolbar".equals(e.getPlace());
+    }
+
+    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
+      return DomCollectionControl.getDomCollectionControl(e);
+    }
+
+    @NotNull
+    protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
+      return new DomCollectionChildDescription[] {getDomCollectionControl(e).getChildDescription()};
+    }
+
+    protected DomElement getParentDomElement(final AnActionEvent e) {
+      return getDomCollectionControl(e).getDomElement();
+    }
+
+    protected JComponent getComponent(AnActionEvent e) {
+      return getDomCollectionControl(e).getComponent();
+    }
+
+    @NotNull
+    public AnAction[] getChildren(final AnActionEvent e) {
+      final DomCollectionControl control = getDomCollectionControl(e);
+      AnAction[] actions = control.createAdditionActions();
+      return actions == null ? super.getChildren(e) : actions;
+    }
+
+    protected DefaultAddAction createAddingAction(final AnActionEvent e,
+                                                  final String name,
+                                                  final Icon icon,
+                                                  final Type type,
+                                                  final DomCollectionChildDescription description) {
+      return getDomCollectionControl(e).createDefaultAction(name, icon, type);
+    }
+
+  }
+
+  public static class EditAction extends AnAction {
+    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
+      return DomCollectionControl.getDomCollectionControl(e);
+    }
+
+    public EditAction() {
+      super(ApplicationBundle.message("action.edit"), null, DomCollectionControl.EDIT_ICON);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final DomCollectionControl control = getDomCollectionControl(e);
+      control.doEdit();
+      control.reset();
+    }
+
+    public void update(AnActionEvent e) {
+      final DomCollectionControl control = getDomCollectionControl(e);
+      final boolean visible = control != null && control.isEditable();
+      e.getPresentation().setVisible(visible);
+      e.getPresentation().setEnabled(visible && control.getComponent().getTable().getSelectedRowCount() == 1);
+    }
+  }
+
+  public static class RemoveAction extends AnAction {
+    public RemoveAction() {
+      super(ApplicationBundle.message("action.remove"), null, DomCollectionControl.REMOVE_ICON);
+    }
+
+    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
+      return DomCollectionControl.getDomCollectionControl(e);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      final DomCollectionControl control = getDomCollectionControl(e);
+      control.doRemove();
+      control.reset();
+    }
+
+    public void update(AnActionEvent e) {
+      final boolean enabled;
+      final DomCollectionControl control = getDomCollectionControl(e);
+      if (control != null) {
+        final JTable table = control.getComponent().getTable();
+        enabled = table != null && table.getSelectedRowCount() > 0;
+      } else {
+        enabled = false;
+      }
+      e.getPresentation().setEnabled(enabled);
+    }
+  }
 }

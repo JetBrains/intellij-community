@@ -141,7 +141,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
         if (editor != null) {
           final MarkupModel markupModel = editor.getMarkupModel();
           markupModel.removeAllHighlighters();
-          if (!errorProblems.isEmpty()) {
+          if (!errorProblems.isEmpty() && editor.getDocument().getLineCount() > 0) {
             final TextAttributes attributes = SimpleTextAttributes.ERROR_ATTRIBUTES.toTextAttributes();
             attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
             attributes.setEffectColor(attributes.getForegroundColor());
