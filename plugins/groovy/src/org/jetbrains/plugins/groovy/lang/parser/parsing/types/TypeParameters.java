@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
@@ -66,7 +67,7 @@ public class TypeParameters implements GroovyElementTypes {
       if (kEXTENDS == builder.getTokenType()) {
         parseExtendsBoundList(builder);
       } else {
-        builder.mark().done(TYPE_EXTENDS_BOUND_LIST);
+        builder.mark().done(TYPE_PARAMETER_EXTENDS_BOUND_LIST);
       }
       marker.done(TYPE_PARAMETER);
       return TYPE_PARAMETER;
@@ -79,20 +80,20 @@ public class TypeParameters implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kEXTENDS);
     ParserUtils.getToken(builder, mNLS);
-    GroovyElementType type = TypeSpec.parseClassOrInterfaceType(builder);
-    if (type == WRONGWAY) {
+    GroovyElementType reference = ReferenceElement.parseReferenceElement(builder);
+    if (reference == WRONGWAY) {
       builder.error(GroovyBundle.message("identifier.expected"));
     } else {
-      while (mBAND == builder.getTokenType() && type != WRONGWAY) {
+      while (mBAND == builder.getTokenType() && reference != WRONGWAY) {
         ParserUtils.getToken(builder, mBAND);
         ParserUtils.getToken(builder, mNLS);
-        type = TypeSpec.parseClassOrInterfaceType(builder);
-        if (type == WRONGWAY) {
+        reference = ReferenceElement.parseReferenceElement(builder);
+        if (reference == WRONGWAY) {
           builder.error(GroovyBundle.message("type.argument.expected"));
         }
       }
     }
-    marker.done(TYPE_EXTENDS_BOUND_LIST);
-    return TYPE_EXTENDS_BOUND_LIST;
+    marker.done(TYPE_PARAMETER_EXTENDS_BOUND_LIST);
+    return TYPE_PARAMETER_EXTENDS_BOUND_LIST;
   }
 }

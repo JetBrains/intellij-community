@@ -16,11 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import com.intellij.psi.PsiTypeParameter;
 
 /**
  * @author ilyas
  */
-public interface GrTypeParameter extends GroovyPsiElement {
+public interface GrTypeParameter extends GroovyPsiElement, PsiTypeParameter {
 
 
 }

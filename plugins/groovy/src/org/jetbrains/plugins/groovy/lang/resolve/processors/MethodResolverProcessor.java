@@ -15,11 +15,17 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -54,6 +60,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
       if (!isAccessible((PsiNamedElement) element)) return true;
 
+      substitutor = inferMethodTypeParameters(method, substitutor);
       if (myForCompletion || PsiUtil.isApplicable(myArgumentTypes, method, PsiSubstitutor.EMPTY)) { //do not use substitutor here!
         myCandidates.add(new GroovyResolveResultImpl(method, true, myImportStatementContext, substitutor));
       }
@@ -71,6 +78,76 @@ public class MethodResolverProcessor extends ResolverProcessor {
     }
 
     return true;
+  }
+
+  private PsiSubstitutor inferMethodTypeParameters(PsiMethod method, PsiSubstitutor partialSubstitutor) {
+    final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    if (myArgumentTypes != null) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final int max = Math.max(parameters.length, myArgumentTypes.length);
+      PsiType[] parameterTypes = new PsiType[max];
+      PsiType[] argumentTypes = new PsiType[max];
+      for (int i = 0; i < parameterTypes.length; i++) {
+        if (i < parameters.length) {
+          final PsiType type = parameters[i].getType();
+          if (myArgumentTypes.length == parameters.length &&
+              type instanceof PsiEllipsisType &&
+              !(myArgumentTypes[myArgumentTypes.length - 1] instanceof PsiArrayType)) {
+            parameterTypes[i] = ((PsiEllipsisType) type).getComponentType();
+          } else {
+            parameterTypes[i] = type;
+          }
+        }
+        else {
+          if (parameters.length > 0) {
+            final PsiType lastParameterType = parameters[parameters.length - 1].getType();
+            if (myArgumentTypes.length > parameters.length && lastParameterType instanceof PsiEllipsisType) {
+              parameterTypes[i] = ((PsiEllipsisType) lastParameterType).getComponentType();
+            } else {
+              parameterTypes[i] = lastParameterType;
+            }
+          } else {
+            parameterTypes[i] = PsiType.NULL;
+          }
+        }
+        argumentTypes[i] = i < myArgumentTypes.length ? myArgumentTypes[i] : PsiType.NULL;
+      }
+
+      final PsiResolveHelper helper = method.getManager().getResolveHelper();
+      PsiSubstitutor substitutor = helper.inferTypeArguments(typeParameters, parameterTypes, argumentTypes, LanguageLevel.HIGHEST);
+      for (PsiTypeParameter typeParameter : typeParameters) {
+        if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
+          substitutor = inferFromContext(typeParameter, method.getReturnType(), substitutor, helper);
+        }
+      }
+      return substitutor;
+    }
+
+    return partialSubstitutor;
+  }
+
+  private PsiSubstitutor inferFromContext(PsiTypeParameter typeParameter, PsiType lType, PsiSubstitutor substitutor, PsiResolveHelper helper) {
+    if (myPlace != null) {
+      final PsiType inferred = helper.getSubstitutionForTypeParameter(typeParameter, lType, getContextType(), false, LanguageLevel.HIGHEST);
+      if (inferred != PsiType.NULL) {
+        return substitutor.put(typeParameter, inferred);
+      }
+    }
+    return substitutor;
+  }
+
+  private PsiType getContextType() {
+    final PsiElement parent = myPlace.getParent();
+    PsiType rType = null;
+    if (parent instanceof GrReturnStatement) {
+      final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class);
+      if (method != null) rType = method.getDeclaredReturnType();
+    } else if (parent instanceof GrAssignmentExpression && myPlace.equals(((GrAssignmentExpression) parent).getRValue())) {
+      rType = ((GrAssignmentExpression) parent).getLValue().getType();
+    } else if (parent instanceof GrVariable) {
+      rType = ((GrVariable) parent).getDeclaredType();
+    }
+    return rType;
   }
 
   public GroovyResolveResult[] getCandidates() {

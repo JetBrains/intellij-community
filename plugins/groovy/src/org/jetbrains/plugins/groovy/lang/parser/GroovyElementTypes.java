@@ -147,7 +147,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   GroovyElementType TYPE_PARAMETER_LIST = new GroovyElementType("type parameter list");
   GroovyElementType TYPE_PARAMETER = new GroovyElementType("type parameter");
-  GroovyElementType TYPE_EXTENDS_BOUND_LIST = new GroovyElementType("type extends list");
+  GroovyElementType TYPE_PARAMETER_EXTENDS_BOUND_LIST = new GroovyElementType("type extends list");
 
   //fields
   GroovyElementType DEFAULT_ANNOTATION_MEMBER = new GroovyElementType("default annotation member");
