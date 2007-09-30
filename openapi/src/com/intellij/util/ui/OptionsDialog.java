@@ -15,9 +15,9 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -79,19 +79,19 @@ public abstract class OptionsDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    doOKAction(!myCheckBoxDoNotShowDialog.isSelected());
-  }
-
-  private void doOKAction(boolean toBeShown) {
     if (canBeHidden()) {
-      setToBeShown(toBeShown, true);
+      setToBeShown(toBeShown(), true);
     }
     super.doOKAction();
   }
 
+  protected boolean toBeShown() {
+    return !myCheckBoxDoNotShowDialog.isSelected();
+  }
+
   public void doCancelAction() {
     if (shouldSaveOptionsOnCancel() && canBeHidden()) {
-      setToBeShown(!myCheckBoxDoNotShowDialog.isSelected(), false);
+      setToBeShown(toBeShown(), false);
     }
     super.doCancelAction();
   }

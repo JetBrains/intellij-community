@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -216,9 +217,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     return false; 
   }
 
-  public boolean useExternalAnnotations(@NotNull final PsiElement element) {
-    if (!element.isPhysical()) return false; //element just created
-    if (!element.getManager().isInProject(element)) return true;
+  public AnnotationPlace chooseAnnotationsPlace(@NotNull final PsiElement element) {
+    if (!element.isPhysical()) return AnnotationPlace.IN_CODE; //element just created
+    if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
     final Project project = element.getProject();
     final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
     LOG.assertTrue(virtualFile != null);
@@ -227,7 +228,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       for (OrderEntry entry : entries) {
         if (!(entry instanceof ModuleOrderEntry)) {
           if (entry.getUrls(OrderRootType.ANNOTATIONS).length > 0) {
-            return true;
+            return AnnotationPlace.EXTERNAL;
           }
           break;
         }
@@ -236,11 +237,13 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     final MyExternalPromptDialog dialog = new MyExternalPromptDialog(project);
     if (dialog.isToBeShown()) {
       dialog.show();
-      if (dialog.isOK()) {
-        return true;
+      if (dialog.getExitCode() == 2) {
+        return AnnotationPlace.EXTERNAL;
+      } else if (dialog.getExitCode() == 1) {
+        return AnnotationPlace.NOWHERE;
       }
     }
-    return false;
+    return AnnotationPlace.IN_CODE;
   }
 
   private void appendChosenAnnotationsRoot(final OrderEntry entry, final VirtualFile vFile) {
@@ -419,6 +422,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {
     private final Project myProject;
+    private static final String ADD_IN_CODE = ProjectBundle.message("external.annotations.in.code.option");
 
     public MyExternalPromptDialog(final Project project) {
       super(project, ProjectBundle.message("external.annotations.suggestion.message"), ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
@@ -427,11 +431,29 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
 
     protected String getOkActionName() {
-      return CommonBundle.getOkButtonText();
+      return ADD_IN_CODE;
     }
 
     protected String getCancelActionName() {
       return CommonBundle.getCancelButtonText();
+    }
+
+    @SuppressWarnings({"NonStaticInitializer"})
+    protected Action[] createActions() {
+      final Action okAction = getOKAction();
+      assignMnemonic(ADD_IN_CODE, okAction);
+      final String externalName = ProjectBundle.message("external.annotations.external.option");
+      return new Action[] {okAction, new AbstractAction(externalName) {
+        {
+          assignMnemonic(externalName, this);
+        }
+        public void actionPerformed(final ActionEvent e) {
+          if (canBeHidden()) {
+            setToBeShown(toBeShown(), true);
+          }
+          close(2);
+        }
+      } , getCancelAction()};
     }
 
     protected boolean isToBeShown() {

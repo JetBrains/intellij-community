@@ -16,7 +16,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MultiLineLabelUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +46,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
     return new Action[]{okAction,cancelAction};
   }
 
-  private void assignMnemonic(String option, Action action) {
+  protected static void assignMnemonic(String option, Action action) {
     action.putValue(Action.NAME, option);
 
     int mnemoPos = option.indexOf("&");
@@ -71,7 +70,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
 
     if (myMessage != null) {
       JLabel textLabel = new JLabel(myMessage);
-      textLabel.setUI(new MultiLineLabelUI());
+      //textLabel.setUI(new MultiLineLabelUI());
       panel.add(textLabel, BorderLayout.CENTER);
     }
     return panel;

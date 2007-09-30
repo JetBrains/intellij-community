@@ -15,6 +15,12 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ExternalAnnotationsManager {
   @NonNls public static final String ANNOTATIONS_XML = "annotations.xml";
 
+  public enum AnnotationPlace {
+    IN_CODE,
+    EXTERNAL,
+    NOWHERE
+  }
+
   public static ExternalAnnotationsManager getInstance(Project project) {
     return ServiceManager.getService(project, ExternalAnnotationsManager.class);
   }
@@ -29,6 +35,6 @@ public abstract class ExternalAnnotationsManager {
 
   public abstract boolean deannotate(final PsiModifierListOwner listOwner, final String annotationFQN);
 
-  public abstract boolean useExternalAnnotations(final PsiElement element);
+  public abstract AnnotationPlace chooseAnnotationsPlace(final PsiElement element);
 
 }
