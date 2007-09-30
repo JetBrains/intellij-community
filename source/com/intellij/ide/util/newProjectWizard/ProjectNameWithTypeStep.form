@@ -24,6 +24,7 @@
               <gridbag top="0" left="4" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
+              <labelFor value="e6ad1"/>
               <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.name.title"/>
             </properties>
           </component>
@@ -42,6 +43,7 @@
               <gridbag top="0" left="4" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
+              <labelFor value="4af6e"/>
               <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.root.title"/>
             </properties>
           </component>
@@ -58,6 +60,7 @@
               <gridbag top="0" left="4" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
+              <labelFor value="83a50"/>
               <text resource-bundle="messages/ProjectBundle" key="project.new.wizard.module.file.title"/>
             </properties>
           </component>
@@ -118,7 +121,9 @@
             <children>
               <component id="6e12" class="javax.swing.JEditorPane" binding="myModuleDescriptionPane">
                 <constraints/>
-                <properties/>
+                <properties>
+                  <text value=""/>
+                </properties>
               </component>
             </children>
           </scrollpane>
