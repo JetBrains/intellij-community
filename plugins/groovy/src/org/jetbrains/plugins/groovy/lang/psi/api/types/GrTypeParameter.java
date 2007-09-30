@@ -22,6 +22,5 @@ import com.intellij.psi.PsiTypeParameter;
  * @author ilyas
  */
 public interface GrTypeParameter extends GroovyPsiElement, PsiTypeParameter {
-
-
+  public static final GrTypeParameter[] EMPTY_ARRAY = new GrTypeParameter[0];
 }

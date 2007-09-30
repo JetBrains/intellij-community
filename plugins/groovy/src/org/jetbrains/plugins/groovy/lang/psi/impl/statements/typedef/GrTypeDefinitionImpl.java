@@ -667,16 +667,19 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return getTypeParameters().length > 0;
   }
 
-  @NotNull
+  @Nullable
   public GrTypeParameterList getTypeParameterList() {
-    final GrTypeParameterList list = findChildByClass(GrTypeParameterList.class);
-    assert list != null;
-    return list;
+    return findChildByClass(GrTypeParameterList.class);
   }
 
   @NotNull
   public GrTypeParameter[] getTypeParameters() {
-    return getTypeParameterList().getTypeParameters();
+    final GrTypeParameterList list = getTypeParameterList();
+    if (list != null) {
+      return list.getTypeParameters();
+    }
+
+    return GrTypeParameter.EMPTY_ARRAY;
   }
 
   @Nullable

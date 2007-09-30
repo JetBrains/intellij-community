@@ -387,16 +387,19 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return getTypeParameters().length > 0;
   }
 
-  @NotNull
+  @Nullable
   public GrTypeParameterList getTypeParameterList() {
-    final GrTypeParameterList result = findChildByClass(GrTypeParameterList.class);
-    assert result != null;
-    return result;
+    return findChildByClass(GrTypeParameterList.class);
   }
 
   @NotNull
   public GrTypeParameter[] getTypeParameters() {
-    return getTypeParameterList().getTypeParameters();
+    final GrTypeParameterList list = getTypeParameterList();
+    if (list != null) {
+      return list.getTypeParameters();
+    }
+
+    return GrTypeParameter.EMPTY_ARRAY;
   }
 
   public PsiClass getContainingClass() {
