@@ -39,8 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceD
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
@@ -102,6 +101,10 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+    for (final GrTypeParameter typeParameter : getTypeParameters()) {
+      if (!ResolveUtil.processElement(processor, typeParameter)) return false;
+    }
+
     for (final GrParameter parameter : getParameters()) {
       if (!ResolveUtil.processElement(processor, parameter)) return false;
     }
@@ -381,7 +384,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   public boolean hasTypeParameters() {
-    return false;
+    return getTypeParameters().length > 0;
   }
 
   @NotNull
@@ -392,8 +395,8 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   @NotNull
-  public PsiTypeParameter[] getTypeParameters() {
-    return ((PsiTypeParameterList) getTypeParameterList()).getTypeParameters();
+  public GrTypeParameter[] getTypeParameters() {
+    return getTypeParameterList().getTypeParameters();
   }
 
   public PsiClass getContainingClass() {

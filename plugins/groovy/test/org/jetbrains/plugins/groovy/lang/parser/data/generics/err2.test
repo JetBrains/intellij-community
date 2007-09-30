@@ -15,9 +15,8 @@ Groovy script
         Type extends bounds list
           PsiElement(extends)('extends')
           PsiWhiteSpace(' ')
-          Type element
-            Reference element
-              PsiElement(identifier)('B')
+          Reference element
+            PsiElement(identifier)('B')
           PsiWhiteSpace(' ')
           PsiElement(&)('&')
           PsiErrorElement:Type argument expected

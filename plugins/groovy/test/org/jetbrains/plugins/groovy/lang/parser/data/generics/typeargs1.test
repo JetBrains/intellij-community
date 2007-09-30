@@ -16,15 +16,14 @@ Groovy script
         Type extends bounds list
           PsiElement(extends)('extends')
           PsiWhiteSpace(' ')
-          Type element
-            Reference element
-              PsiElement(identifier)('List')
-              Type arguments
-                PsiElement(<)('<')
-                Type element
-                  Reference element
-                    PsiElement(identifier)('S')
-                PsiElement(>)('>')
+          Reference element
+            PsiElement(identifier)('List')
+            Type arguments
+              PsiElement(<)('<')
+              Type element
+                Reference element
+                  PsiElement(identifier)('S')
+              PsiElement(>)('>')
       PsiElement(>)('>')
     PsiWhiteSpace(' ')
     Type definition body
