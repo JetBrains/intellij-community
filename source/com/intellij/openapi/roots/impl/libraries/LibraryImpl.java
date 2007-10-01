@@ -13,12 +13,18 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -39,12 +45,12 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private final LibraryTable myLibraryTable;
   private Map<OrderRootType, VirtualFilePointerContainer> myRoots;
   private Map<String, Boolean> myJarDirectories = new HashMap<String, Boolean>();
-  private VirtualFileListener myVfsListener;
   private List<LocalFileSystem.WatchRequest> myWatchRequests = new ArrayList<LocalFileSystem.WatchRequest>();
   private LibraryImpl mySource;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
   private ModifiableRootModel myRootModel;
+  private MessageBusConnection myBusConnection = null;
 
   LibraryImpl(String name, LibraryTable table) {
     myName = name;
@@ -84,8 +90,9 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
       myWatchRequests.clear();
     }
-    if (myVfsListener != null) {
-      VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
+    if (myBusConnection != null) {
+      myBusConnection.disconnect();
+      myBusConnection = null;
     }
   }
 
@@ -383,17 +390,67 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
       }
     }
     if (myJarDirectories.size() > 0) {
-      if (myVfsListener == null) {
-        final VirtualFileAdapter listener = new VFSChangesListsner();
-        myVfsListener = listener;
-        VirtualFileManager.getInstance().addVirtualFileListener(listener, this);
+      if (myBusConnection == null) {
+        myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
+        myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+          public void before(final List<? extends VFileEvent> events) {}
+
+          public void after(final List<? extends VFileEvent> events) {
+            boolean changesDetected = false;
+            for (VFileEvent event : events) {
+              if (event instanceof VFileCopyEvent) {
+                final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
+                if (isUnderJarDirectory(copyEvent.getNewParent() + "/" + copyEvent.getNewChildName()) || isUnderJarDirectory(copyEvent.getFile().getUrl())) {
+                  changesDetected = true;
+                  break;
+                }
+              }
+              else if (event instanceof VFileMoveEvent) {
+                final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
+
+                final VirtualFile file = moveEvent.getFile();
+                if (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(moveEvent.getOldParent().getUrl() + "/" + file.getName())) {
+                  changesDetected = true;
+                  break;
+                }
+              }
+              else if (event instanceof VFileDeleteEvent) {
+                final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
+                if (isUnderJarDirectory(deleteEvent.getFile().getUrl())) {
+                  changesDetected = true;
+                  break;
+                }
+              }
+              else if (event instanceof VFileCreateEvent) {
+                final VFileCreateEvent createEvent = (VFileCreateEvent)event;
+                if (isUnderJarDirectory(createEvent.getParent().getUrl() + "/" + createEvent.getChildName())) {
+                  changesDetected = true;
+                  break;
+                }
+              }
+            }
+
+            if (changesDetected) {
+              myRootProvider.fireRootSetChanged();
+            }
+          }
+
+          private boolean isUnderJarDirectory(String url) {
+            for (String rootUrl : myJarDirectories.keySet()) {
+              if (FileUtil.startsWith(url, rootUrl)) {
+                return true;
+              }
+            }
+            return false;
+          }
+        });
       }
     }
     else {
-      final VirtualFileListener listener = myVfsListener;
-      if (listener != null) {
-        myVfsListener = null;
-        VirtualFileManager.getInstance().removeVirtualFileListener(listener);
+      final MessageBusConnection connection = myBusConnection;
+      if (connection != null) {
+        myBusConnection = null;
+        connection.disconnect();
       }
     }
   }
@@ -416,44 +473,6 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   public LibraryTable getTable() {
     return myLibraryTable;
   }
-
-  private class VFSChangesListsner extends VirtualFileAdapter {
-    public void fileMoved(final VirtualFileMoveEvent event) {
-      final VirtualFile file = event.getFile();
-      if (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(event.getOldParent().getUrl() + "/" + file.getName())) {
-        myRootProvider.fireRootSetChanged();
-      }
-    }
-
-    public void fileCopied(final VirtualFileCopyEvent event) {
-      final VirtualFile file = event.getFile();
-      if (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(event.getOriginalFile().getUrl())) {
-        myRootProvider.fireRootSetChanged();
-      }
-    }
-
-    public void fileDeleted(final VirtualFileEvent event) {
-      if (isUnderJarDirectory(event.getFile().getUrl())) {
-        myRootProvider.fireRootSetChanged();
-      }
-    }
-
-    public void fileCreated(final VirtualFileEvent event) {
-      if (isUnderJarDirectory(event.getFile().getUrl())) {
-        myRootProvider.fireRootSetChanged();
-      }
-    }
-
-    private boolean isUnderJarDirectory(String url) {
-      for (String rootUrl : myJarDirectories.keySet()) {
-        if (FileUtil.startsWith(url, rootUrl)) {
-          return true;
-        }
-      }
-      return false;
-    }
-  }
-
 
   public boolean equals(final Object o) {
     if (this == o) return true;

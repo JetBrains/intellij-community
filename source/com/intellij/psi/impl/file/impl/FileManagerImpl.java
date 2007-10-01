@@ -1239,12 +1239,16 @@ public class FileManagerImpl implements FileManager {
 
   private class MyModuleRootListener implements ModuleRootListener {
     private VirtualFile[] myOldContentRoots = null;
+    private volatile int depthCounter = 0;
     public void beforeRootsChange(final ModuleRootEvent event) {
       if (!myInitialized) return;
       if (event.isCausedByFileTypesChange()) return;
       ApplicationManager.getApplication().runWriteAction(
         new PsiExternalChangeAction() {
           public void run() {
+            depthCounter++;
+            if (depthCounter > 1) return;
+
             PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
             treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
             final VirtualFile[] contentRoots = myProjectRootManager.getContentRoots();
@@ -1269,6 +1273,9 @@ public class FileManagerImpl implements FileManager {
       ApplicationManager.getApplication().runWriteAction(
         new PsiExternalChangeAction() {
           public void run() {
+            depthCounter--;
+            if (depthCounter > 0) return;
+
             removeInvalidFilesAndDirs(true);
 
             PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
