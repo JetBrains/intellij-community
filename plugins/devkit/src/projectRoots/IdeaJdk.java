@@ -222,13 +222,13 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       }
     }
     if (javaSdks.isEmpty()){
-      Messages.showErrorDialog("Please, configure Java SDK to be used in IDEA SDK", "No Java SDK found");
+      Messages.showErrorDialog("Please, configure Java SDK to be used as IDEA internal platform", "No Java SDK found");
       return false;
     }
 
     final int choice = Messages
-      .showChooseDialog("Choose Java SDK to be used ",
-                        "Select Java SDK to be used in IDEA SDK", javaSdks.toArray(new String[javaSdks.size()]), javaSdks.get(0), Messages.getQuestionIcon());
+      .showChooseDialog("Select Java SDK to be used as IDEA internal platform",
+                        "Select internal Java platform", javaSdks.toArray(new String[javaSdks.size()]), javaSdks.get(0), Messages.getQuestionIcon());
 
     if (choice != -1) {
       final String name = javaSdks.get(choice);
