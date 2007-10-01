@@ -47,8 +47,11 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
 	    final PsiExpression forCondition = forStatement.getCondition();
 	    final PsiExpression whileCondition = whileStatement.getCondition();
 	    final PsiStatement body = forStatement.getBody();
-	    whileCondition.replace(forCondition);
-	    final PsiElement newBody;
+      if (forCondition != null) {
+        assert whileCondition != null;
+        whileCondition.replace(forCondition);
+      }
+      final PsiElement newBody;
 	    if (body instanceof PsiBlockStatement) {
 	        final PsiStatement whileBody = whileStatement.getBody();
 		    final PsiBlockStatement newWhileBody = (PsiBlockStatement)whileBody.replace(body);
