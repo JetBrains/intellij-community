@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -110,7 +111,9 @@ abstract class Mover {
       while(!lineContainsNonSpaces(document, realLine2) && realLine2 > realLine1) realLine2--;
 
       try {
-        codeStyleManager.adjustLineIndent(file, new TextRange(document.getLineStartOffset(realLine1), document.getLineStartOffset(realLine2)));
+        final FileViewProvider provider = file.getViewProvider();
+        PsiFile rootToAdjustIndentIn = provider.getPsi(provider.getBaseLanguage());
+        codeStyleManager.adjustLineIndent(rootToAdjustIndentIn, new TextRange(document.getLineStartOffset(realLine1), document.getLineStartOffset(realLine2)));
       } catch (IncorrectOperationException ex) {
         throw new RuntimeException(ex);
       }
