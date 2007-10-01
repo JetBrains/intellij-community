@@ -265,11 +265,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (typeParameters1.length == 0 || typeParameters2.length == 0) {
       if (typeParameters1.length > 0) {
         final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
-        methodSubstitutor1 = resolveHelper.inferTypeArguments(typeParameters1, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
+        methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, types1, types2, resolveHelper);
       }
       else if (typeParameters2.length > 0) {
         final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
-        methodSubstitutor2 = resolveHelper.inferTypeArguments(typeParameters2, types2, types1, PsiUtil.getLanguageLevel(myArgumentsList));
+        methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, types2, types1, resolveHelper);
       }
     }
     else {
@@ -330,6 +330,20 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
 
     return isMoreSpecific;
+  }
+
+  private PsiSubstitutor calculateMethodSubstitutor(final PsiTypeParameter[] typeParameters,
+                                                    final PsiType[] types1,
+                                                    final PsiType[] types2,
+                                                    final PsiResolveHelper resolveHelper) {
+    PsiSubstitutor substitutor =
+      resolveHelper.inferTypeArguments(typeParameters, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
+    for (PsiTypeParameter typeParameter : typeParameters) {
+      if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
+        substitutor = substitutor.put(typeParameter, TypeConversionUtil.typeParameterErasure(typeParameter));
+      }
+    }
+    return substitutor;
   }
 
   private static PsiSubstitutor createRawSubstitutor(final PsiTypeParameter[] typeParameters) {

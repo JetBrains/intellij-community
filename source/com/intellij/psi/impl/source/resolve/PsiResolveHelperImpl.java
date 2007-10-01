@@ -303,7 +303,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (leftTypes.length != rightTypes.length) throw new IllegalArgumentException("Types must be of the same length");
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     for (PsiTypeParameter typeParameter : typeParameters) {
-      PsiType substitution = null;
+      PsiType substitution = PsiType.NULL;
+      PsiType lowerBound = PsiType.NULL;
       for (int i1 = 0; i1 < leftTypes.length; i1++) {
         PsiType leftType = leftTypes[i1];
         PsiType rightType = rightTypes[i1];
@@ -316,18 +317,30 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             substitution = current;
             break;
           } else if (constraintType == ConstraintType.SUBTYPE) {
-            if (substitution == null) {
+            if (substitution == PsiType.NULL) {
               substitution = current;
             }
             else {
               substitution = GenericsUtil.getLeastUpperBound(substitution, current, typeParameter.getManager());
             }
+          } else {
+            if (lowerBound == PsiType.NULL) {
+              lowerBound = current;
+            }
+            else {
+              lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, current, typeParameter.getManager());
+            }
           }
         }
       }
 
-      if (substitution == null) substitution = TypeConversionUtil.typeParameterErasure(typeParameter);
-      substitutor = substitutor.put(typeParameter, substitution);
+      if (substitution == PsiType.NULL) {
+        substitution = lowerBound;
+      }
+
+      if (substitution != PsiType.NULL) {
+        substitutor = substitutor.put(typeParameter, substitution);
+      }
     }
     return substitutor;
   }
