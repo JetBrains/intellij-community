@@ -21,6 +21,9 @@ public class PropertiesFileStructureViewComponent extends PropertiesGroupingStru
     if (dataId.equals(DataConstants.VIRTUAL_FILE)) {
       return myPropertiesFile.getVirtualFile();
     }
+    if (dataId.equals(DataConstants.PSI_ELEMENT)) {
+      return myPropertiesFile;
+    }
     return super.getData(dataId);
   }
 }
