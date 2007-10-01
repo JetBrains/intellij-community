@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.history;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
@@ -16,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
@@ -136,8 +138,11 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return "cvs.selectionHistory";
   }
 
+  @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) {
-    return new VcsHistorySession(createRevisions(filePath)) {
+    final List<VcsFileRevision> fileRevisionList = createRevisions(filePath);
+    if (fileRevisionList == null) return null;
+    return new VcsHistorySession(fileRevisionList) {
       @Nullable
       public VcsRevisionNumber calcCurrentRevisionNumber() {
         return getCurrentRevision(filePath);
@@ -174,8 +179,12 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
   }
 
+  @Nullable
   public List<VcsFileRevision> createRevisions(final FilePath filePath) {
     final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
+    final VirtualFile root = CvsVfsUtil.refreshAndFindFileByIoFile(filePath.getIOFile().getParentFile());
+    // check if we have a history pane open for a file in a package which has just been deleted
+    if (root == null) return null;
     final LocalPathIndifferentLogOperation logOperation =
       new LocalPathIndifferentLogOperation(filePath.getIOFile());
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
