@@ -71,6 +71,10 @@
       <separator/>
       <add-to-group group-id="UpdateActionGroup" anchor="first"/>
     </group>
+
+    <action class="org.jetbrains.idea.svn.actions.CleanupProjectAction" id="Subversion.CleanupProject">
+      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.IntegrateProject"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
