@@ -128,8 +128,8 @@ public class TypesUtil {
       return isNumericType(rType) || rType.equalsToText("java.lang.String") || rType.equals(PsiType.NULL);
     } else {
       if (lType.equalsToText("java.lang.String") && isNumericType(rType)) return true;
-      rType = boxPrimitiveTypeAndEraseGenerics(rType, manager, scope);
-      lType = boxPrimitiveTypeAndEraseGenerics(lType, manager, scope);
+      rType = boxPrimitiveType(rType, manager, scope);
+      lType = boxPrimitiveType(lType, manager, scope);
     }
 
     return TypeConversionUtil.isAssignable(lType, rType);
@@ -142,8 +142,8 @@ public class TypesUtil {
       lType = unboxPrimitiveTypeWrapper(lType);
       rType = unboxPrimitiveTypeWrapper(rType);
     } else {
-      rType = boxPrimitiveTypeAndEraseGenerics(rType, manager, scope);
-      lType = boxPrimitiveTypeAndEraseGenerics(lType, manager, scope);
+      rType = boxPrimitiveType(rType, manager, scope);
+      lType = boxPrimitiveType(lType, manager, scope);
     }
 
     return TypeConversionUtil.isAssignable(lType, rType);

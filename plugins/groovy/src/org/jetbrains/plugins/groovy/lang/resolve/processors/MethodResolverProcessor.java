@@ -38,7 +38,7 @@ import java.util.*;
  */
 public class MethodResolverProcessor extends ResolverProcessor {
   @Nullable
-  PsiType[] myArgumentTypes;
+  private final PsiType[] myArgumentTypes;
 
   private Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private boolean myIsConstructor;
@@ -82,6 +82,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   private PsiSubstitutor inferMethodTypeParameters(PsiMethod method, PsiSubstitutor partialSubstitutor) {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    if (typeParameters.length == 0) return partialSubstitutor;
+    
     if (myArgumentTypes != null) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final int max = Math.max(parameters.length, myArgumentTypes.length);
@@ -120,7 +122,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
           substitutor = inferFromContext(typeParameter, method.getReturnType(), substitutor, helper);
         }
       }
-      return substitutor;
+
+      return partialSubstitutor.putAll(substitutor);
     }
 
     return partialSubstitutor;
