@@ -397,7 +397,8 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     PsiManager manager = getManager();
     if (element instanceof PsiClass) {
       String qName = ((PsiClass)element).getQualifiedName();
-      if (qName != null && getManager().findClass(qName, getResolveScope()) == null) {
+      if (qName == null) throw new IncorrectOperationException("Cannot bind to unqualified class: "+element);
+      if (getManager().findClass(qName, getResolveScope()) == null) {
         return this;
       }
       boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified(this);
