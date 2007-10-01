@@ -135,7 +135,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     mySdkModificator.removeAllRoots();
     final Sdk jdk = (Sdk)myInternalJres.getSelectedItem();
     if (jdk != null) {
-      IdeaJdk.setupSdkPaths(myIdeaJdk, mySdkModificator, newSdkHome, jdk);
+      IdeaJdk.setupSdkPaths(mySdkModificator, newSdkHome, jdk);
     }
   }
 
