@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.Nullable;
 
 public class ToggleShowLineNumbersAction extends ToggleAction {
 
@@ -43,11 +44,13 @@ public class ToggleShowLineNumbersAction extends ToggleAction {
   }
 
   public boolean isSelected(AnActionEvent e) {
-    return getEditor(e).getSettings().isLineNumbersShown();
+    final Editor editor = getEditor(e);
+    return editor != null && editor.getSettings().isLineNumbersShown();
   }
 
-  private Editor getEditor(AnActionEvent e) {
-    return DataKeys.EDITOR.getData(e.getDataContext());
+  @Nullable
+  private static Editor getEditor(AnActionEvent e) {
+    return e.getData(DataKeys.EDITOR);
   }
 
   public void update(AnActionEvent e){
