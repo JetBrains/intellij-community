@@ -234,7 +234,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       final String name = javaSdks.get(choice);
       final Sdk jdk = sdkModel.findSdk(name);
       LOG.assertTrue(jdk != null);
-      setupSdkPaths(sdk, sdkModificator, sdk.getHomePath(), jdk);
+      setupSdkPaths(sdkModificator, sdk.getHomePath(), jdk);
       sdkModificator.setSdkAdditionalData(new Sandbox(getDefaultSandbox(), jdk));
       sdkModificator.setVersionString(jdk.getVersionString());
       sdkModificator.commitChanges();
@@ -243,7 +243,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     return false;
   }
 
-  public static void setupSdkPaths(final Sdk sdk, final SdkModificator sdkModificator, final String sdkHome, final Sdk internalJava) {
+  public static void setupSdkPaths(final SdkModificator sdkModificator, final String sdkHome, final Sdk internalJava) {
     //roots from internal jre
     addClasses(sdkModificator, internalJava);
     addDocs(sdkModificator, internalJava);
