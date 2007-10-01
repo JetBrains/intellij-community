@@ -219,7 +219,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
             staticClasses.add(c);
           }
         }
-        return staticClasses.size() > 0 ? staticClasses.toArray(new PsiClass[staticClasses.size()]) : PsiClass.EMPTY_ARRAY;
+        return staticClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : staticClasses.toArray(new PsiClass[staticClasses.size()]);
       }
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -287,7 +287,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
 
     String qName = elementText.substring(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
-    if (qName.indexOf(".") == -1) {
+    if (!qName.contains(".")) {
       final String defaultPackage = JavaClassReferenceProvider.DEFAULT_PACKAGE.getValue(getOptions());
       if (StringUtil.isNotEmpty(defaultPackage)) {
         final JavaResolveResult resolveResult = advancedResolveInner(psiElement, defaultPackage + "." + qName);
@@ -360,7 +360,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     if (scope == null) {
       final Module module = ModuleUtil.findModuleForPsiElement(getElement());
       if (module != null) {
-        return module.getModuleWithDependenciesAndLibrariesScope(false);
+        return module.getModuleWithDependenciesAndLibrariesScope(true);
       }
       return GlobalSearchScope.allScope(getElement().getProject());
     }
@@ -399,11 +399,12 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       boolean createJavaClass = JavaClassReferenceProvider.CLASS_REFERENCE_TYPE.getPrimitives().length == primitives.length &&
                                 JavaClassReferenceProvider.CLASS_REFERENCE_TYPE.isAssignableTo(primitives[0]);
       final List<PsiDirectory> writableDirectoryList = getWritableDirectoryList(context);
-      if (writableDirectoryList.size() != 0 && checkCreateClassOrPackage(writableDirectoryList, createJavaClass)) {
+      if (!writableDirectoryList.isEmpty() && checkCreateClassOrPackage(writableDirectoryList, createJavaClass)) {
         final CreateClassOrPackageFix fix = doRegisterQuickFix(info, writableDirectoryList, createJavaClass, extendClass);
         if (list == null) {
           return Arrays.asList(fix);
-        } else {
+        }
+        else {
           final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>(list.size() + 1);
           fixes.addAll(list);
           fixes.add(fix);
