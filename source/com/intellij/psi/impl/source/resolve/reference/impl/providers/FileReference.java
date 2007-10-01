@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -324,15 +325,31 @@ public class FileReference
     } else { // relative path
       PsiFileSystemItem curItem = null;
       PsiFileSystemItem dstItem = null;
-      for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-        PsiFileSystemItem _curItem = helper.getPsiFileSystemItem(project, curVFile);
-        if (_curItem != null) {
-          PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
-          if (_dstItem != null) {
-            curItem = _curItem;
-            dstItem = _dstItem;
-            break;                         
-          }
+      helpers: for (final FileReferenceHelper<?> helper: FileReferenceHelperRegistrar.getHelpers()) {
+
+        final Collection<PsiFileSystemItem> contexts = helper.getContexts(project, curVFile);
+        switch (contexts.size()) {
+          case 0:
+            continue;
+          default:
+            for (PsiFileSystemItem context : contexts) {
+              final VirtualFile contextFile = context.getVirtualFile();
+              assert contextFile != null;
+              if (VfsUtil.isAncestor(contextFile, dstVFile, true)) {
+                final String path = VfsUtil.getRelativePath(dstVFile, contextFile, '/');
+                if (path != null) {
+                  return rename(path); 
+                }
+              }
+            }
+          case 1:
+            PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
+            PsiFileSystemItem _curItem = helper.getPsiFileSystemItem(project, curVFile);
+            if (_dstItem != null && _curItem != null) {
+              curItem = _curItem;
+              dstItem = _dstItem;
+              break helpers;
+            }
         }
       }
       checkNotNull(curItem, curVFile, dstVFile);
@@ -346,6 +363,10 @@ public class FileReference
       }
     }
 
+    return rename(newName);
+  }
+
+  private PsiElement rename(final String newName) throws IncorrectOperationException {
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
     final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(getElement());
     if (manipulator == null) {

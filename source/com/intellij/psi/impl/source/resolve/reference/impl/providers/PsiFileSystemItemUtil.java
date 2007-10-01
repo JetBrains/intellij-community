@@ -79,7 +79,7 @@ public class PsiFileSystemItemUtil {
   }
 
   @Nullable
-  static String getRelativePathFromAncestor(PsiFileSystemItem file, PsiFileSystemItem ancestor) {
+  public static String getRelativePathFromAncestor(PsiFileSystemItem file, PsiFileSystemItem ancestor) {
     int length = 0;
     PsiFileSystemItem parent = file;
 
