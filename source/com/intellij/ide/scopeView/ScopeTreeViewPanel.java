@@ -2,6 +2,8 @@ package com.intellij.ide.scopeView;
 
 import com.intellij.ProjectTopics;
 import com.intellij.coverage.CoverageDataManager;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
@@ -16,10 +18,7 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.lang.StdLanguages;
-import com.intellij.history.LocalHistoryAction;
-import com.intellij.history.LocalHistory;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -518,7 +518,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     private void processRenamed(final NamedScope scope, final PsiFile file) {
       if (!file.isValid() || !file.isPhysical()) return;
       final PackageSet packageSet = scope.getValue();
-      LOG.assertTrue(packageSet != null);
+      if (packageSet == null) return; //invalid scope selected
       if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
         reload(myBuilder.getFileParentNode(file));
       }
