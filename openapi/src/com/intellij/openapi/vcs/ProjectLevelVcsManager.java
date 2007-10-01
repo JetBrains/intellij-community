@@ -225,6 +225,8 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract VirtualFile[] getAllVersionedRoots();
 
+  public abstract VcsRoot[] getAllVcsRoots();
+
   public abstract void updateActiveVcss();
 
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();

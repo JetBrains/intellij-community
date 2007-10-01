@@ -767,6 +767,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return vFiles.toArray(new VirtualFile[vFiles.size()]);
   }
 
+  public VcsRoot[] getAllVcsRoots() {
+    List<VcsRoot> vcsRoots = new ArrayList<VcsRoot>();
+    for(AbstractVcs vcs: myActiveVcss) {
+      final VirtualFile[] roots = getRootsUnderVcs(vcs);
+      for(VirtualFile root: roots) {
+        vcsRoots.add(new VcsRoot(vcs, root));
+      }
+    }
+    return vcsRoots.toArray(new VcsRoot[vcsRoots.size()]);
+  }
+
   public void updateActiveVcss() {
     if (!myIsInitialized) {
       initialize();

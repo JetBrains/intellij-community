@@ -304,19 +304,17 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   private List<ChangesCacheFile> getAllCaches() {
     List<ChangesCacheFile> result = new ArrayList<ChangesCacheFile>();
-    final VirtualFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
-      public VirtualFile[] compute() {
-        return myVcsManager.getAllVersionedRoots();
+    final VcsRoot[] vcsRoots = ApplicationManager.getApplication().runReadAction(new Computable<VcsRoot[]>() {
+      public VcsRoot[] compute() {
+        return myVcsManager.getAllVcsRoots();
       }
     });
-    for(VirtualFile file: files) {
-      final AbstractVcs vcs = myVcsManager.getVcsFor(file);
-      assert vcs != null: "VCS not found for versioned root " + file.getPath();
-      final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+    for(VcsRoot root: vcsRoots) {
+      final CommittedChangesProvider provider = root.vcs.getCommittedChangesProvider();
       if (provider instanceof CachingCommittedChangesProvider) {
-        final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(file));
+        final RepositoryLocation location = provider.getLocationFor(new FilePathImpl(root.path));
         if (location != null) {
-          ChangesCacheFile cacheFile = getCacheFile(vcs, file, location);
+          ChangesCacheFile cacheFile = getCacheFile(root.vcs, root.path, location);
           result.add(cacheFile);
         }
       }
