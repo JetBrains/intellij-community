@@ -90,10 +90,12 @@ public class GroovyAnnotator implements Annotator {
     } else if (element instanceof GrReferenceExpression) {
       checkReferenceExpression(holder, (GrReferenceExpression) element);
     } else if (element instanceof GrTypeDefinition) {
-      checkTypeDefinition(holder, (GrTypeDefinition) element);
-      checkTypeDefinitionModifiers(holder, (GrTypeDefinition) element);
-      checkDuplicateMethod(((GrTypeDefinition) element).getBody().getMethods(), holder);
-      checkImplementedMethodsOfClass(holder, (GrTypeDefinition) element);
+      final GrTypeDefinition typeDefinition = (GrTypeDefinition) element;
+      checkTypeDefinition(holder, typeDefinition);
+      checkTypeDefinitionModifiers(holder, typeDefinition);
+      final GrTypeDefinitionBody body = typeDefinition.getBody();
+      if (body != null) checkDuplicateMethod(body.getMethods(), holder);
+      checkImplementedMethodsOfClass(holder, typeDefinition);
     } else if (element instanceof GrMethod) {
       final GrMethod method = (GrMethod) element;
       checkMethodDefinitionModifiers(holder, method);
