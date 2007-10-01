@@ -64,7 +64,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private OutputParser myParsingThread;
   private final Project myProject;
   private final JPanel myMessagePanel;
-  private final AntBuildFileBase myBuildFile;
+  private AntBuildFileBase myBuildFile;
   private final String[] myTargets;
   private static final int VERBOSE_MODE = AntMain2.MSG_VERBOSE;
   private static final int BRIEF_MODE = AntMain2.MSG_VERBOSE - 1;
@@ -540,11 +540,14 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     public void contentRemoved(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         AntBuildMessageView buildMessageView = myContent.getUserData(KEY);
-        if (!myCloseAllowed) buildMessageView.stopProcess();
+        if (!myCloseAllowed) {
+          buildMessageView.stopProcess();
+        }
         myContentManager.removeContentManagerListener(this);
         ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
         myContent.release();
         myContent = null;
+        buildMessageView.myBuildFile = null;
         buildMessageView.myPlainTextView.dispose();
       }
     }
