@@ -137,7 +137,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
   private PsiType getContextType() {
-    final PsiElement parent = myPlace.getParent();
+    final PsiElement parent = myPlace.getParent().getParent();
     PsiType rType = null;
     if (parent instanceof GrReturnStatement) {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class);
