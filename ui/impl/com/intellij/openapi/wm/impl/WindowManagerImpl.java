@@ -53,6 +53,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   @NonNls private static final String WIDTH_ATTR = "width";
   @NonNls private static final String HEIGHT_ATTR = "height";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
+  private Boolean myAlphaModeSupported = null;
 
   static {
     initialize();
@@ -187,7 +188,19 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   public final boolean isAlphaModeSupported() {
-    return WindowUtils.isWindowAlphaSupported();
+    if (myAlphaModeSupported == null) {
+      myAlphaModeSupported = calcAlphaModelSupported();
+    }
+    return myAlphaModeSupported.booleanValue();
+  }
+
+  private static boolean calcAlphaModelSupported() {
+    try {
+      return WindowUtils.isWindowAlphaSupported();
+    }
+    catch (Throwable e) {
+      return false;
+    }
   }
 
   public final void setAlphaModeRatio(final Window window, final float ratio) {
