@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 
 import java.util.*;
 
@@ -192,7 +193,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
 
   @Nullable
   public PsiIdentifier getNameIdentifier() {
-    return null;
+    return new JavaIdentifier(getManager(), getContainingFile(), getNameIdentifierGroovy().getTextRange());
   }
 
   public PsiElement getScope() {
@@ -240,6 +241,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
     return this;
   }
 
+  @NotNull
   private PsiElement getNameIdentifierGroovy() {
     PsiElement result = findChildByType(GroovyElementTypes.mIDENT);
     assert result != null;
@@ -285,5 +287,9 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
+  }
+
+  public String getName() {
+    return getNameIdentifierGroovy().getText();
   }
 }
