@@ -62,7 +62,9 @@ public class FileReference
     ResolveResult[] resolveResults = contextRef.multiResolve(false);
     ArrayList<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
     for (ResolveResult resolveResult : resolveResults) {
-      result.add((PsiFileSystemItem)resolveResult.getElement());
+      if (resolveResult.getElement() != null) {
+        result.add((PsiFileSystemItem)resolveResult.getElement());
+      }
     }
     return result;
   }
@@ -79,10 +81,11 @@ public class FileReference
   protected ResolveResult[] innerResolve() {
     final String referenceText = getText();
     final Collection<PsiFileSystemItem> contexts = getContexts();
-//    final Collection<ResolveResult> result = new ArrayList<ResolveResult>(contexts.size());
     final Collection<ResolveResult> result = new HashSet<ResolveResult>(contexts.size());
     for (final PsiFileSystemItem context : contexts) {
-      innerResolveInContext(referenceText, context, result);
+      if (context != null) {
+        innerResolveInContext(referenceText, context, result);
+      }
     }
     final int resultCount = result.size();
     return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
@@ -281,6 +284,7 @@ public class FileReference
     throw new IncorrectOperationException("Manipulator for this element is not defined");
   }
 
+  /* Happens when it's been moved to another folder */
   public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
     
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
