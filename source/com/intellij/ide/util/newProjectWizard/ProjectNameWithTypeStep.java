@@ -11,9 +11,11 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.UIUtil;
 
@@ -133,7 +135,6 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         }
       }
     });
-    setModuleName(myNamePathComponent.getNameValue());
 
     myModuleContentRoot.addBrowseFolderListener(ProjectBundle.message("project.new.wizard.module.content.root.chooser.title"), ProjectBundle.message("project.new.wizard.module.content.root.chooser.description"),
                                                 myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
@@ -162,7 +163,6 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         }
       }
     });
-    setModuleContentRoot(myNamePathComponent.getPath());
 
     myModuleFileLocation.addBrowseFolderListener(ProjectBundle.message("project.new.wizard.module.file.chooser.title"), ProjectBundle.message("project.new.wizard.module.file.description"),
                                                  myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
@@ -198,7 +198,20 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         }
       }
     });
-    setImlFileLocation(myNamePathComponent.getPath());
+    if (wizardContext.isCreatingNewProject()) {
+      setModuleName(myNamePathComponent.getNameValue());
+      setModuleContentRoot(myNamePathComponent.getPath());
+      setImlFileLocation(myNamePathComponent.getPath());
+    } else {
+      final Project project = wizardContext.getProject();
+      assert project != null;
+      final VirtualFile baseDir = project.getBaseDir();
+      assert baseDir != null;
+      final String moduleName = ProjectWizardUtil.findNonExistingFileName(baseDir.getPath(), "untitled", "");
+      setModuleName(moduleName);
+      setModuleContentRoot(baseDir.getPath() + "/" + moduleName);
+      setImlFileLocation(baseDir.getPath() + "/" + moduleName);
+    }
   }
 
   private void setImlFileLocation(final String path) {
