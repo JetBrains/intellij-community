@@ -207,6 +207,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     catch (StateStorage.StateStorageException e) {
       throw e;
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Throwable ex) {
       handleInitComponentError(ex, false, component.getClass().getName());
     }
