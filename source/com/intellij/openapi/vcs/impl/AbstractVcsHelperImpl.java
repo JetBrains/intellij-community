@@ -53,6 +53,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -453,7 +454,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   public void showChangesBrowser(final CommittedChangesProvider provider,
                                  final RepositoryLocation location,
                                  @Nls String title,
-                                 final Component parent) {
+                                 Component parent) {
     final ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
     ChangeBrowserSettings settings = provider.createDefaultSettings();
     boolean ok;
@@ -468,7 +469,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     if (ok) {
-      if (myProject.isDefault()) {
+      if (myProject.isDefault() || ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) {
         final List<CommittedChangeList> versions = new ArrayList<CommittedChangeList>();
         final List<VcsException> exceptions = new ArrayList<VcsException>();
         final Ref<CommittedChangesTableModel> tableModelRef = new Ref<CommittedChangesTableModel>();
@@ -500,6 +501,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
           return;
         }
 
+        if (parent == null || !parent.isValid()) {
+          parent = WindowManager.getInstance().suggestParentWindow(myProject);
+        }
         showChangesBrowser(tableModelRef.get(), title, filterUI != null, parent);
       }
       else {
