@@ -123,7 +123,7 @@ public class ImplicitFacetManager implements Disposable {
   }
 
   private void firePendingNotifications() {
-    if (myPendingNewFacets.isEmpty()) return;
+    if (myPendingNewFacets.isEmpty() || myProject.isDisposed()) return;
 
     List<Facet> newFacets = new ArrayList<Facet>();
     for (Facet newFacet : myPendingNewFacets) {
