@@ -37,10 +37,10 @@ class DefaultsStateStorage implements StateStorage {
       return documentElement;
     }
     catch (IOException e) {
-      throw new StateStorageException(e);
+      throw new StateStorageException("Error loading state from " + url, e);
     }
     catch (JDOMException e) {
-      throw new StateStorageException(e);
+      throw new StateStorageException("Error loading state from " + url, e);
     }
   }
 
