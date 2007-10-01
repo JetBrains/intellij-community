@@ -660,7 +660,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   public void removeUsage(@NotNull Usage usage) {
     final UsageNode node = myUsageNodes.remove(usage);
-    if (node != NULL_NODE) {
+    if (node != NULL_NODE && node != null) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (isDisposed) return;
@@ -675,7 +675,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void includeUsages(@NotNull Usage[] usages) {
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
-      if (node != NULL_NODE) {
+      if (node != NULL_NODE && node != null) {
         node.setUsageExcluded(false);
       }
     }
@@ -685,7 +685,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void excludeUsages(@NotNull Usage[] usages) {
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
-      if (node != NULL_NODE) {
+      if (node != NULL_NODE && node != null) {
         node.setUsageExcluded(true);
       }
     }
@@ -698,7 +698,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
 
-      if (node != NULL_NODE) {
+      if (node != NULL_NODE && node != null) {
         paths.add(new TreePath(node.getPath()));
       }
     }
@@ -860,7 +860,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (Map.Entry<Usage, UsageNode> entry : usages) {
       Usage usage = entry.getKey();
       UsageNode node = entry.getValue();
-      if (node != NULL_NODE && !node.isExcluded() && usage.isReadOnly()) {
+      if (node != null && node != NULL_NODE && !node.isExcluded() && usage.isReadOnly()) {
         result.add(usage);
       }
     }
@@ -894,7 +894,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     Set<Usage> result = new THashSet<Usage>();
     Collection<UsageNode> usageNodes = myUsageNodes.values();
     for (final UsageNode node : usageNodes) {
-      if (node == NULL_NODE) {
+      if (node == NULL_NODE || node == null) {
         continue;
       }
       if (node.isExcluded()) {
