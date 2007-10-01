@@ -44,7 +44,12 @@ public class ContextUtil {
     catch (Throwable th) {
       LOG.debug(th);
     }
-    return ((DebugProcessImpl)context.getDebugProcess()).getPositionManager().getSourcePosition(location);
+    final CompoundPositionManager positionManager = debugProcess.getPositionManager();
+    if (positionManager == null) {
+      // process already closed
+      return null;
+    }
+    return positionManager.getSourcePosition(location);
   }
 
   @Nullable
