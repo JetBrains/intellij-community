@@ -127,9 +127,5 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     }
 
   }
-
-  public boolean isActionActive(String name) {
-    return GroupByWordPrefixes.ID.equals(name) || super.isActionActive(name);
-  }
 }
 
