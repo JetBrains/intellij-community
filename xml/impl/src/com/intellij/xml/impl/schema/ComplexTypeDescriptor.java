@@ -134,7 +134,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   // Read-only calculation
   private XmlAttributeDescriptor[] doCollectAttributes(@Nullable XmlElement context) {
     List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
-    collectAttributes(result, myTag, new THashSet<XmlTag>(), context);
+    collectAttributes(result, myTag, new THashSet<XmlTag>(), "",context);
 
     return result.toArray(new XmlAttributeDescriptor[result.size()]);
   }
@@ -183,15 +183,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         if (ref != null) {
           final String local = XmlUtil.findLocalNameByQualifiedName(ref);
-          String namespacePrefix = XmlUtil.findPrefixByQualifiedName(ref);
-
-          String namespace = "".equals(namespacePrefix) ?
-                                   myDocumentDescriptor.getDefaultNamespace() :
-                                   tag.getNamespaceByPrefix(namespacePrefix);
-          if (namespacePrefix.length() == 0 && nsPrefixFromContext.length() != 0) {
-            String namespaceFromContext = ((XmlDocument)myDocumentDescriptor.getDeclaration()).getRootTag().getNamespaceByPrefix(nsPrefixFromContext);
-            if (namespaceFromContext.length() > 0) namespace = namespaceFromContext;
-          }
+          String namespace = getNamespace(tag, nsPrefixFromContext, ref);
 
           XmlNSDescriptorImpl nsDescriptor = myDocumentDescriptor;
           if (!namespace.equals(myDocumentDescriptor.getDefaultNamespace())) {
@@ -220,7 +212,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         
         // TODO: This is bad hack, but we need context for "include-style" schemas
         if (groupTag == null && context instanceof XmlTag) {
-          final XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(myDocumentDescriptor.getDefaultNamespace(), true);
+          final XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(getNamespace(tag, nsPrefixFromContext, ref), true);
 
           if (descriptor instanceof XmlNSDescriptorImpl && descriptor != myDocumentDescriptor) {
             groupTag = ((XmlNSDescriptorImpl)descriptor).findGroup(ref);
@@ -229,8 +221,11 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         if (groupTag != null) {
           XmlTag[] tags = groupTag.getSubTags();
+          String nsPrefixFromRef = XmlUtil.findPrefixByQualifiedName(ref);
+          if (nsPrefixFromRef.length() == 0) nsPrefixFromRef = nsPrefixFromContext;
+          
           for (XmlTag subTag : tags) {
-            collectElements(result, subTag, visited, XmlUtil.findPrefixByQualifiedName(ref), context);
+            collectElements(result, subTag, visited, nsPrefixFromRef, context);
           }
         }
       }
@@ -265,12 +260,25 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
   }
 
+  private String getNamespace(final XmlTag tag, final String nsPrefixFromContext, final String ref) {
+    String namespacePrefix = XmlUtil.findPrefixByQualifiedName(ref);
+
+    String namespace = "".equals(namespacePrefix) ? myDocumentDescriptor.getDefaultNamespace() : tag.getNamespaceByPrefix(namespacePrefix);
+    if (namespacePrefix.length() == 0 && nsPrefixFromContext.length() != 0) {
+      String namespaceFromContext =
+        ((XmlDocument)myDocumentDescriptor.getDeclaration()).getRootTag().getNamespaceByPrefix(nsPrefixFromContext);
+      if (namespaceFromContext.length() > 0) namespace = namespaceFromContext;
+    }
+    return namespace;
+  }
+
   private static void addElementDescriptor(Map<String,XmlElementDescriptor> result, XmlElementDescriptor element) {
     result.remove(element.getName());
     result.put(element.getName(),element);
   }
 
-  private void collectAttributes(List<XmlAttributeDescriptor> result, XmlTag tag, THashSet<XmlTag> visited, @Nullable XmlElement context) {
+  private void collectAttributes(List<XmlAttributeDescriptor> result, XmlTag tag, THashSet<XmlTag> visited, @NotNull String nsPrefixFromContext,
+                                 @Nullable XmlElement context) {
     if(visited.contains(tag)) return;
     visited.add(tag);
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, ELEMENT_TAG_NAME)) {
@@ -285,7 +293,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           removeAttributeDescriptor(result, name);
         }
         else {
-          addAttributeDescriptor(result, tag);
+          addAttributeDescriptor(result, myDocumentDescriptor.createAttributeDescriptor(tag));
         }
       }
       else {
@@ -296,10 +304,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           }
           else {
             final String local = XmlUtil.findLocalNameByQualifiedName(ref);
-            final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(ref);
-            final String namespace = "".equals(namespacePrefix) ?
-                                     myDocumentDescriptor.getDefaultNamespace() :
-                                     tag.getNamespaceByPrefix(namespacePrefix);
+            final String namespace = getNamespace(tag, nsPrefixFromContext, ref);
 
             final XmlAttributeDescriptor attributeDescriptor = myDocumentDescriptor.getAttribute(local, namespace, tag);
             if (attributeDescriptor instanceof XmlAttributeDescriptorImpl) {
@@ -321,14 +326,16 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         // TODO: 
         if (parentTag != null && context instanceof XmlTag) {
-          if (XmlNSDescriptorImpl.equalsToSchemaName(parentTag, "attributeGroup")) {
-            String parentGroupName = parentTag.getAttributeValue("name");
-            if (ref.equals(parentGroupName)) {
-              final PsiElement element = tag.getAttribute(REF_ATTR_NAME).getValueElement().getReferences()[0].resolve();
-              if (element instanceof XmlTag) groupTag = (XmlTag)element;
-            }
+          String parentGroupName;
+
+          if (XmlNSDescriptorImpl.equalsToSchemaName(parentTag, "attributeGroup") &&
+              (parentGroupName = parentTag.getAttributeValue("name")) != null &&
+              ref.equals(parentGroupName)
+             ) {
+            final PsiElement element = tag.getAttribute(REF_ATTR_NAME).getValueElement().getReferences()[0].resolve();
+            if (element instanceof XmlTag) groupTag = (XmlTag)element;
           } else {
-            final XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(myDocumentDescriptor.getDefaultNamespace(), true);
+            final XmlNSDescriptor descriptor = ((XmlTag)context).getNSDescriptor(getNamespace(tag, nsPrefixFromContext, ref), true);
 
             if (descriptor instanceof XmlNSDescriptorImpl && descriptor != myDocumentDescriptor) {
               final XmlTag group = ((XmlNSDescriptorImpl)descriptor).findAttributeGroup(ref);
@@ -341,8 +348,10 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         if (groupTag != null) {
           XmlTag[] tags = groupTag.getSubTags();
+          String nsPrefixFromRef = XmlUtil.findPrefixByQualifiedName(ref);
+          if (nsPrefixFromRef.length() == 0) nsPrefixFromRef = nsPrefixFromContext;
           for (XmlTag subTag : tags) {
-            collectAttributes(result, subTag, visited, context);
+            collectAttributes(result, subTag, visited, nsPrefixFromRef, context);
           }
         }
       }
@@ -356,7 +365,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
           final PsiElement element = tag.getAttribute(BASE_ATTR_NAME).getValueElement().getReferences()[0].resolve();
           if (element instanceof XmlTag) {
             for (XmlTag subTag : ((XmlTag)element).getSubTags()) {
-              collectAttributes(result, subTag, visited, context);
+              collectAttributes(result, subTag, visited, nsPrefixFromContext, context);
             }
           }
         } else {
@@ -366,14 +375,14 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
           if (descriptor instanceof ComplexTypeDescriptor) {
             ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
-            complexTypeDescriptor.collectAttributes(result, complexTypeDescriptor.myTag, visited, context);
+            complexTypeDescriptor.collectAttributes(result, complexTypeDescriptor.myTag, visited, nsPrefixFromContext, context);
           }
         }
 
         XmlTag[] tags = tag.getSubTags();
 
         for (XmlTag subTag : tags) {
-          collectAttributes(result, subTag, visited, context);
+          collectAttributes(result, subTag, visited, nsPrefixFromContext, context);
         }
       }
     }
@@ -381,7 +390,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       XmlTag[] tags = tag.getSubTags();
 
       for (XmlTag subTag : tags) {
-        collectAttributes(result, subTag, visited, context);
+        collectAttributes(result, subTag, visited, nsPrefixFromContext, context);
       }
     }
   }
@@ -394,10 +403,6 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         iterator.remove();
       }
     }
-  }
-
-  private void addAttributeDescriptor(List<XmlAttributeDescriptor> result, XmlTag tag) {
-    addAttributeDescriptor(result, myDocumentDescriptor.createAttributeDescriptor(tag));
   }
 
   private static void addAttributeDescriptor(List<XmlAttributeDescriptor> result, XmlAttributeDescriptor descriptor) {
