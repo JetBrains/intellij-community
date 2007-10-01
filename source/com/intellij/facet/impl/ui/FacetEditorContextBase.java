@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author nik
@@ -111,7 +112,7 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     return getModifiableRootModel();
   }
 
-  public static Library createLibraryInTable(final String name, final VirtualFile[] roots, final VirtualFile[] sources, final LibraryTable table) {
+  public static Library createLibraryInTable(final @NonNls String name, final VirtualFile[] roots, final VirtualFile[] sources, final LibraryTable table) {
     LibraryTable.ModifiableModel modifiableModel = table.getModifiableModel();
     Library library = modifiableModel.createLibrary(getUniqueLibraryName(name, modifiableModel));
     modifiableModel.commit();

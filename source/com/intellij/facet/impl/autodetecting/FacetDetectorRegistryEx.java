@@ -5,8 +5,10 @@
 package com.intellij.facet.impl.autodetecting;
 
 import com.intellij.facet.FacetConfiguration;
+import com.intellij.facet.FacetType;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.FacetDetectorRegistry;
+import com.intellij.facet.autodetecting.DetectedFacetPresentation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Condition;
@@ -29,10 +31,15 @@ import java.util.Collection;
 public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements FacetDetectorRegistry<C> {
   private final @Nullable FacetDetectorForWizardRegistry<C> myForWizardDelegate;
   private final @Nullable FacetOnTheFlyDetectorRegistry<C> myOnTheFlyDelegate;
+  private DetectedFacetPresentation myPresentation;
 
   public FacetDetectorRegistryEx(final @Nullable FacetDetectorForWizardRegistry<C> forWizardDelegate, final @Nullable FacetOnTheFlyDetectorRegistry<C> onTheFlyDelegate) {
     myForWizardDelegate = forWizardDelegate;
     myOnTheFlyDelegate = onTheFlyDelegate;
+  }
+
+  public void customizeDetectedFacetPresentation(@NotNull final DetectedFacetPresentation presentation) {
+    myPresentation = presentation;
   }
 
   public <U extends FacetConfiguration> void registerUniversalDetectorByFileNameAndRootTag(@NotNull @NonNls String fileName,
@@ -123,5 +130,13 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
         return virtualFile != null ? detector.detectFacet(virtualFile, existentFacetConfigurations) : null;
       }
     };
+  }
+
+  @NotNull
+  public static <C extends FacetConfiguration> DetectedFacetPresentation getDetectedFacetPresentation(@NotNull FacetType<?,C> facetType) {
+    FacetDetectorRegistryEx<C> registry = new FacetDetectorRegistryEx<C>(null, null);
+    facetType.registerDetectors(registry);
+    DetectedFacetPresentation presentation = registry.myPresentation;
+    return presentation != null ? presentation : DefaultDetectedFacetPresentation.INSTANCE;
   }
 }

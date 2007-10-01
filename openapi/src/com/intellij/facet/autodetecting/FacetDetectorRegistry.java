@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface FacetDetectorRegistry<C extends FacetConfiguration> {
 
+  void customizeDetectedFacetPresentation(@NotNull DetectedFacetPresentation presentation);
+
   void registerUniversalDetector(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull FacetDetector<VirtualFile, C> detector);
 
   void registerDetectorForWizard(@NotNull FileType fileType, @NotNull VirtualFileFilter virtualFileFilter, @NotNull FacetDetector<VirtualFile, C> detector);
