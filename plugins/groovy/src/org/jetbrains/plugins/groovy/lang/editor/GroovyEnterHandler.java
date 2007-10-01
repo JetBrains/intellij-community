@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -28,6 +29,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -166,12 +168,14 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
     Project project = DataKeys.PROJECT.getData(dataContext);
 
-    String fileText = editor.getDocument().getText();
+    Document document = editor.getDocument();
+    String fileText = document.getText();
     if (fileText.length() == caretOffset) return false;
 
     if (!checkStringApplicable(editor, caretOffset)) return false;
     if (file == null || project == null) return false;
 
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiElement stringElement = file.findElementAt(caretOffset - 1);
     if (stringElement == null) return false;
     ASTNode node = stringElement.getNode();
@@ -189,7 +193,6 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         ((GrExpression) literal).replaceWithExpression(factory.createExpressionFromText("'''" + innerText + "'''"), false);
         editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
-        //myOriginalHandler.execute(editor, dataContext);
       } else {
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
       }
@@ -221,7 +224,6 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         ((GrLiteral) parent).replaceWithExpression(factory.createExpressionFromText("\"\"\"" + innerText + "\"\"\""), false);
         editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
-        //myOriginalHandler.execute(editor, dataContext);
         if (rightFromDollar) {
           editor.getCaretModel().moveCaretRelatively(1, 0, false, false, true);
         }
