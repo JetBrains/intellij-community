@@ -446,7 +446,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     for (ModuleEditor moduleEditor : myModuleEditors) {
       if (Comparing.strEqual(moduleEditor.getName(), oldName)) {
         moduleEditor.setModuleName(name);
-        moduleEditor.updateCompilerOutputPathChanged(ModuleStructureConfigurable.getInstance(myProject).getCompilerOutputUrl(), name);
+        moduleEditor.updateCompilerOutputPathChanged(ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl(), name);
         return;
       }
     }

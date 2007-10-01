@@ -37,7 +37,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.ProjectConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -84,8 +83,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private boolean myPlainMode;
 
   private final ModuleManager myModuleManager;
-
-  private ProjectConfigurable myProjectConfigurable;
 
   private FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this, TREE_UPDATER);
 
@@ -314,7 +311,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   public void reset() {
-    myProjectConfigurable = myContext.myModulesConfigurator.getModulesConfigurable();
     myContext.reset();
 
     super.reset();
@@ -325,8 +321,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final Set<MyNode> roots = new HashSet<MyNode>();
     roots.add(myRoot);
     if (!canApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"))) return;
-    if (isInitialized(myProjectConfigurable) && myProjectConfigurable.isModified()) myProjectConfigurable.apply(); //do not reorder
-
 
     if (myContext.myModulesConfigurator.isModified()) myContext.myModulesConfigurator.apply();
   }
@@ -515,10 +509,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return null;
   }
 
-
-  public String getCompilerOutputUrl() {
-    return isInitialized(myProjectConfigurable) ? myProjectConfigurable.getCompilerOutputUrl() : ProjectRootManager.getInstance(myProject).getCompilerOutputUrl();
-  }
 
   @Nullable
   public Module getModule(final String moduleName) {
