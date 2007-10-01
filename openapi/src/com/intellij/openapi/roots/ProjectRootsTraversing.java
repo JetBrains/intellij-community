@@ -199,6 +199,7 @@ public class ProjectRootsTraversing {
     public static final AddModuleOutput ALL_OUTPUTS = new AddModuleOutput(true);
     public static final AddModuleOutput GENERAL_OUTPUT = new AddModuleOutput(false);
     public static final AddModuleSource SOURCES = new AddModuleSource();
+    public static final AddModuleSource PRODUCTION_SOURCES = new AddModuleSource(true);
 
     public static final Visit<OrderEntry> ADD_CLASSES = new Visit<OrderEntry>() {
       public void visit(OrderEntry orderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
@@ -241,8 +242,31 @@ public class ProjectRootsTraversing {
     }
 
     public static class AddModuleSource implements Visit<ModuleSourceOrderEntry> {
+      private boolean myExcludeTests;
+
+      public AddModuleSource() {
+        this(false);
+      }
+
+      public AddModuleSource(final boolean excludeTests) {
+        myExcludeTests = excludeTests;
+      }
+
       public void visit(ModuleSourceOrderEntry orderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
-        state.addAll(orderEntry.getFiles(OrderRootType.SOURCES));
+        if (myExcludeTests) {
+          ContentEntry[] contentEntries = ModuleRootManager.getInstance(orderEntry.getOwnerModule()).getContentEntries();
+          for (ContentEntry contentEntry : contentEntries) {
+            for (SourceFolder folder : contentEntry.getSourceFolders()) {
+              VirtualFile root = folder.getFile();
+              if (root != null && !folder.isTestSource()) {
+                state.add(root);
+              }
+            }
+          }
+        }
+        else {
+          state.addAll(orderEntry.getFiles(OrderRootType.SOURCES));
+        }
       }
     }
   }
