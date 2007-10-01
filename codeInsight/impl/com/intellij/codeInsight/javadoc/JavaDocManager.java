@@ -646,7 +646,11 @@ public class JavaDocManager implements ProjectComponent {
           return;
         }
 
-        final PsiElement element = provider.getElement();
+        final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+          public PsiElement compute() {
+            return provider.getElement();
+          }
+        });
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
 
