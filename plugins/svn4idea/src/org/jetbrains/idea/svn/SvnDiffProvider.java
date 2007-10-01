@@ -56,6 +56,11 @@ public class SvnDiffProvider implements DiffProvider {
     final SVNStatusClient client = myVcs.createStatusClient();
     try {
       final SVNStatus svnStatus = client.doStatus(new File(file.getPresentableUrl()), true, false);
+      if (svnStatus == null) {
+        // IDEADEV-21785 (no idea why this can happen)
+        LOG.info("No SVN status returned for " + file.getPath());
+        return new SvnRevisionNumber(SVNRevision.HEAD);
+      }
       final SVNRevision remoteRevision = svnStatus.getRemoteRevision();
       if (remoteRevision != null) {
         return new SvnRevisionNumber(remoteRevision);
