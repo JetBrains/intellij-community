@@ -2,9 +2,10 @@
 /abcdef
 -----
 Groovy script
-  PsiErrorElement:';' or new line expected
-    PsiElement(/)('/')
-    PsiElement(identifier)('asd')
+  Literal
+    PsiElement(wrong regex)('/asd')
+    PsiErrorElement:Wrong string literal
+      <empty list>
   PsiElement(new line)('\n')
   Literal
     PsiElement(wrong regex)('/abcdef')

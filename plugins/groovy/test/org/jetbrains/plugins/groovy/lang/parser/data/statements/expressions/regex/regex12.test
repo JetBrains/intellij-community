@@ -2,7 +2,5 @@
 -----
 Groovy script
   PsiWhiteSpace('    ')
-  PsiErrorElement:';' or new line expected
-    PsiElement(/)('/')
-    PsiElement(identifier)('abc')
-    PsiElement(/)('/')
+  Literal
+    PsiElement(regexp)('/abc/')
