@@ -695,6 +695,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   private void setSelectedEditor(final FileEditor editor) {
     final EditorWithProviderComposite composite = getEditorComposite(editor);
+    if (composite == null) return;
+
     final FileEditor[] editors = composite.getEditors();
     for (int i = 0; i < editors.length; i++) {
       final FileEditor each = editors[i];
