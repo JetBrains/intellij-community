@@ -27,4 +27,11 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     assertNotNull(type);
     assertEquals("java.lang.Exception", type.getCanonicalText());
   }
+
+  public void testGenericMethod() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("genericMethod/A.groovy");
+    final PsiType type = ref.getType();
+    assertNotNull(type);
+    assertEquals("java.util.List<java.lang.String>", type.getCanonicalText());
+  }
 }
