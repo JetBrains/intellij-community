@@ -90,17 +90,17 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   private boolean handleEnter(Editor editor, DataContext dataContext) throws IncorrectOperationException {
     final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
-    int carret = editor.getCaretModel().getOffset();
-    if (carret < 1) return false;
+    int caretOffset = editor.getCaretModel().getOffset();
+    if (caretOffset < 1) return false;
 
-    if (handleJspLikeScriptlet(editor, carret, dataContext)) {
+    if (handleJspLikeScriptlet(editor, caretOffset, dataContext)) {
       GroovyEditorActionUtil.insertSpacesByIndent(editor, project);
       return true;
     }
-    if (handleInLineComment(editor, carret, dataContext)) {
+    if (handleInLineComment(editor, caretOffset, dataContext)) {
       return true;
     }
-    if (handleInString(editor, carret, dataContext)) {
+    if (handleInString(editor, caretOffset, dataContext)) {
       return true;
     }
     return false;
@@ -162,17 +162,17 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   );
 
 
-  private boolean handleInString(Editor editor, int carret, DataContext dataContext) throws IncorrectOperationException {
+  private boolean handleInString(Editor editor, int caretOffset, DataContext dataContext) throws IncorrectOperationException {
     PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
     Project project = DataKeys.PROJECT.getData(dataContext);
 
     String fileText = editor.getDocument().getText();
-    if (fileText.length() == carret) return false;
+    if (fileText.length() == caretOffset) return false;
 
-    if (checkStringApplicable(editor, carret)) return false;
+    if (!checkStringApplicable(editor, caretOffset)) return false;
     if (file == null || project == null) return false;
 
-    PsiElement stringElement = file.findElementAt(carret - 1);
+    PsiElement stringElement = file.findElementAt(caretOffset - 1);
     if (stringElement == null) return false;
     ASTNode node = stringElement.getNode();
     if (node == null) return false;
@@ -187,7 +187,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         PsiElement literal = stringElement.getParent();
         if (!(literal instanceof GrLiteral)) return false;
         ((GrExpression) literal).replaceWithExpression(factory.createExpressionFromText("'''" + innerText + "'''"), false);
-        editor.getCaretModel().moveToOffset(carret + 2);
+        editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
         //myOriginalHandler.execute(editor, dataContext);
       } else {
@@ -214,12 +214,12 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
       if (GroovyEditorActionUtil.isPlainGString(parent.getNode())) {
         PsiElement exprSibling = stringElement.getNextSibling();
         boolean rightFromDollar = exprSibling instanceof GrExpression &&
-            exprSibling.getTextRange().getStartOffset() == carret;
-        if (rightFromDollar) carret--;
+            exprSibling.getTextRange().getStartOffset() == caretOffset;
+        if (rightFromDollar) caretOffset--;
         String text = parent.getText();
         String innerText = text.equals("\"\"") ? "" : text.substring(1, text.length() - 1);
         ((GrLiteral) parent).replaceWithExpression(factory.createExpressionFromText("\"\"\"" + innerText + "\"\"\""), false);
-        editor.getCaretModel().moveToOffset(carret + 2);
+        editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
         //myOriginalHandler.execute(editor, dataContext);
         if (rightFromDollar) {
@@ -239,21 +239,21 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     HighlighterIterator iteratorRight = highlighter.createIterator(carret);
 
     if (iteratorLeft != null && !(ALL_STRINGS.contains(iteratorLeft.getTokenType()))) {
-      return true;
+      return false;
     }
     if (iteratorLeft != null && BEFORE_DOLLAR.contains(iteratorLeft.getTokenType()) &&
         iteratorRight != null && !AFTER_DOLLAR.contains(iteratorRight.getTokenType())) {
-      return true;
+      return false;
     }
     if (iteratorLeft != null && EXPR_END.contains(iteratorLeft.getTokenType()) &&
         iteratorRight != null && !AFTER_EXPR_END.contains(iteratorRight.getTokenType())) {
-      return true;
+      return false;
     }
     if (iteratorLeft != null && STRING_END.contains(iteratorLeft.getTokenType()) &&
         iteratorRight != null && !STRING_END.contains(iteratorRight.getTokenType())) {
-      return true;
+      return false;
     }
-    return false;
+    return true;
   }
 
   private static boolean checkGStringInnerExpression(PsiElement element) {

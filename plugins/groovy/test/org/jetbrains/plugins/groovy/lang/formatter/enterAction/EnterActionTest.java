@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.formatter.enterAction;
 
-import com.intellij.codeInsight.editorActions.EnterHandler;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -57,10 +56,7 @@ public class EnterActionTest extends ActionTestCase {
 
 
   protected EditorActionHandler getMyHandler() {
-    EditorActionManager manager = EditorActionManager.getInstance();
-    final EditorActionHandler handler = new EnterHandler(manager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER));
-    manager.setActionHandler(IdeActions.ACTION_EDITOR_ENTER, handler);
-    return handler;
+    return EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
   }
 
 
@@ -90,13 +86,7 @@ public class EnterActionTest extends ActionTestCase {
       offset = myEditor.getCaretModel().getOffset();
       result = myEditor.getDocument().getText();
       result = result.substring(0, offset) + CARET_MARKER + result.substring(offset);
-    }
-    catch (IndexOutOfBoundsException e) {
-      offset = myEditor.getCaretModel().getOffset();
-      result = myEditor.getDocument().getText();
-      result = result.substring(0, offset) + CARET_MARKER + result.substring(offset);
-    }
-    finally {
+    } finally {
       fileEditorManager.closeFile(virtualFile);
       myEditor = null;
     }
