@@ -29,7 +29,7 @@ import java.util.EnumSet;
 public class PropertyResolverProcessor extends ResolverProcessor {
   private static Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor");
 
-  public PropertyResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion) {
+  public PropertyResolverProcessor(String name, PsiElement place, boolean forCompletion) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion, PsiType.EMPTY_ARRAY);
   }
 
