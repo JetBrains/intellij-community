@@ -3689,7 +3689,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     public int getEditorFontSize() {
       if (myFontSize == -1) {
-        myFontSize = getGlobal().getEditorFontSize();
+        return getGlobal().getEditorFontSize();
       }
       return myFontSize;
     }
@@ -3703,7 +3703,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     public String getEditorFontName() {
       if (myFaceName == null) {
-        myFaceName = getGlobal().getEditorFontName();
+        return getGlobal().getEditorFontName();
       }
       return myFaceName;
     }
