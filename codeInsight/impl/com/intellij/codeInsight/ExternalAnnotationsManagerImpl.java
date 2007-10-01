@@ -6,7 +6,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -30,6 +29,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.util.HashMap;
@@ -55,8 +56,6 @@ import java.util.Map;
 
 public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
-
-  @NonNls private static final String EXTERNAL_ANNOTATIONS_PROPERTY = "ExternalAnnotations";
 
   private Map<VirtualFile, XmlFile> myExternalAnotations = new WeakHashMap<VirtualFile, XmlFile>();
   private PsiManager myPsiManager;
@@ -423,9 +422,10 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   private static class MyExternalPromptDialog extends OptionsMessageDialog {
     private final Project myProject;
     private static final String ADD_IN_CODE = ProjectBundle.message("external.annotations.in.code.option");
+    private static final String MESSAGE = ProjectBundle.message("external.annotations.suggestion.message");
 
     public MyExternalPromptDialog(final Project project) {
-      super(project, ProjectBundle.message("external.annotations.suggestion.message"), ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
+      super(project, MESSAGE, ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
       myProject = project;
       init();
     }
@@ -458,12 +458,17 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
     protected boolean isToBeShown() {
       if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) return false;
-      final String value = PropertiesComponent.getInstance(myProject).getValue(EXTERNAL_ANNOTATIONS_PROPERTY);
-      return value == null || Boolean.valueOf(value).booleanValue();
+      return CodeStyleSettingsManager.getSettings(myProject).USE_EXTERNAL_ANNOTATIONS;
     }
 
     protected void setToBeShown(boolean value, boolean onOk) {
-      PropertiesComponent.getInstance(myProject).setValue(EXTERNAL_ANNOTATIONS_PROPERTY, String.valueOf(value));
+      CodeStyleSettingsManager.getSettings(myProject).USE_EXTERNAL_ANNOTATIONS = value;
+    }
+
+    protected JComponent createNorthPanel() {
+      final JPanel northPanel = (JPanel)super.createNorthPanel();
+      northPanel.add(new JLabel(MESSAGE), BorderLayout.CENTER);
+      return northPanel;
     }
 
     protected boolean shouldSaveOptionsOnCancel() {

@@ -3,7 +3,7 @@
   <grid id="8cf0d" binding="myPanel" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="18" y="29" width="514" height="443"/>
+      <xy x="18" y="29" width="514" height="444"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -261,6 +261,14 @@
           </component>
         </children>
       </grid>
+      <component id="be81b" class="javax.swing.JCheckBox" binding="myCbUseExternalAnnotations">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Use &amp;external annotations"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

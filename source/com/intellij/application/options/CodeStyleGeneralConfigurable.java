@@ -40,6 +40,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
   private CodeStyleSettings mySettings;
   private JCheckBox myCbGenerateFinalParameters;
   private JCheckBox myCbGenerateFinalLocals;
+  private JCheckBox myCbUseExternalAnnotations;
 
   public CodeStyleGeneralConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
@@ -218,6 +219,8 @@ public class CodeStyleGeneralConfigurable implements Configurable {
     myCbGenerateFinalLocals.setSelected(mySettings.GENERATE_FINAL_LOCALS);
     myCbGenerateFinalParameters.setSelected(mySettings.GENERATE_FINAL_PARAMETERS);
     myMembersOrderList.reset(mySettings);
+
+    myCbUseExternalAnnotations.setSelected(mySettings.USE_EXTERNAL_ANNOTATIONS);
   }
 
   public void apply() {
@@ -238,6 +241,8 @@ public class CodeStyleGeneralConfigurable implements Configurable {
 
     mySettings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
     mySettings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
+
+    mySettings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
 
     myMembersOrderList.apply(mySettings);
 
@@ -267,6 +272,8 @@ public class CodeStyleGeneralConfigurable implements Configurable {
 
     isModified |= isModified(myCbGenerateFinalLocals, mySettings.GENERATE_FINAL_LOCALS);
     isModified |= isModified(myCbGenerateFinalParameters, mySettings.GENERATE_FINAL_PARAMETERS);
+
+    isModified |= isModified(myCbUseExternalAnnotations, mySettings.USE_EXTERNAL_ANNOTATIONS);
 
     isModified |= myMembersOrderList.isModified(mySettings);
 
