@@ -355,10 +355,14 @@ public class AnalysisScope {
         }
       }
     } else if (myScope instanceof LocalSearchScope) {
-      final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
-      for (PsiElement element : psiElements) {
-        element.accept(visitor);
-      }
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
+          for (PsiElement element : psiElements) {
+            element.accept(visitor);
+          }
+        }
+      });
     } else if (myProject != null) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
