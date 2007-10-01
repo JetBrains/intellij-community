@@ -4,9 +4,14 @@ package com.intellij.historyIntegrTests;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -123,6 +128,35 @@ public class ContentRootsAndUpdatingTest extends IntegrationTestCase {
     parent.createChildDirectory(null, name); // shouldn't throw
 
     assertTrue(hasVcsEntry(path));
+  }
+
+  public void testUpdateAndRefreshAtTheSameTime() throws Exception {
+    // this test reproduces situation when roots changes and refreshes
+    // work simultaneously and lead to 'entry already exists' exception.
+    VirtualFile dir = root.createChildDirectory(this, "dir");
+    addJarDirectory(dir);
+
+    File jarExternal = new File(createJarWithSomeFiles());
+    File txtExternal = new File(createFileExternally("f.txt"));
+
+    File jar = new File(dir.getPath(), "f.jar");
+    File txt = new File(dir.getPath(), "f.txt");
+
+    FileUtil.copy(jarExternal, jar);
+    FileUtil.copy(txtExternal, txt);
+
+    VirtualFileManager.getInstance().refresh(false); // shouldn't throw
+  }
+
+  private void addJarDirectory(VirtualFile dir) {
+    ModifiableRootModel rm = ModuleRootManager.getInstance(myModule).getModifiableModel();
+
+    Library l = rm.getModuleLibraryTable().createLibrary();
+    Library.ModifiableModel lm = l.getModifiableModel();
+    lm.addJarDirectory(dir, true);
+    lm.commit();
+
+    rm.commit();
   }
 
   public void testIgnoreContentRootsNotFromLocalFileSystem() throws IOException {

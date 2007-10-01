@@ -161,9 +161,6 @@ public class Updater implements CacheUpdater {
   private void createRecursively(VirtualFile fileOrDir) {
     if (notAllowed(fileOrDir)) return;
 
-    // todo catching IDEADEV-18728 and IDEADEV-20412 bugs
-    assert doesNotExist(fileOrDir);
-
     if (fileOrDir.isDirectory()) {
       myVcs.createDirectory(fileOrDir.getPath());
       for (VirtualFile f : fileOrDir.getChildren()) {
@@ -177,43 +174,5 @@ public class Updater implements CacheUpdater {
 
   private boolean notAllowed(VirtualFile f) {
     return !myGateway.getFileFilter().isAllowedAndUnderContentRoot(f);
-  }
-
-  private boolean doesNotExist(VirtualFile f) {
-    Entry e = myVcs.findEntry(f.getPath());
-    if (e == null) return true;
-
-    StringBuilder b = new StringBuilder();
-
-    b.append("already exists!!\n");
-    b.append("file: " + f + "\n");
-    b.append("file.name: " + f.getName() + "\n");
-    b.append("file.parent: " + f.getParent() + "\n");
-    if (f.getParent() != null) b.append("file.parent.name: " + f.getParent().getName() + "\n");
-    b.append("entry: " + e + "\n");
-    b.append("entry.parent: " + e.getParent() + "\n");
-    if (f.getParent() != null) b.append("entry for file.parent: " + myVcs.findEntry(f.getParent().getPath()) + "\n");
-    b.append("has vcs root: " + hasVcsRoot(f) + "\n");
-    b.append("has vfs root: " + hasVfsRoot(e) + "\n");
-    b.append("is file allowed: " + !notAllowed(f) + "\n");
-    if (f.getParent() != null) b.append("is file parent allowed: " + !notAllowed(f.getParent()) + "\n");
-    log(b, myVfsRoots);
-    log(b, myVcs.getRoots());
-
-    throw new RuntimeException(b.toString());
-  }
-
-  private void log(StringBuilder b, VirtualFile[] roots) {
-    b.append("vfs roots:\n");
-    for (VirtualFile r : roots) {
-      b.append("-" + r + "\n");
-    }
-  }
-
-  private void log(StringBuilder b, List<Entry> roots) {
-    b.append("vcs roots:\n");
-    for (Entry r : roots) {
-      b.append("-" + r + "\n");
-    }
   }
 }

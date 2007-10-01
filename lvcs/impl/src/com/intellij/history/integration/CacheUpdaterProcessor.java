@@ -40,11 +40,24 @@ public class CacheUpdaterProcessor {
 
   public void processFile(FileContent c) {
     VirtualFile f = c.getVirtualFile();
+    String path = f.getPath();
+
     if (myFilesToCreate.contains(f)) {
-      myVcs.createFile(f.getPath(), contentFactoryFor(c), f.getTimeStamp(), !f.isWritable());
+      // todo: quite of a hack
+      // we have to check if file already exists because there is a situation in which
+      // there are refresh and update work simultaneously -
+      // firstly files created during refresh are collected,
+      // when same files are collected during roots change update
+      // when roots change updater processes files
+      // and at last files collected during refresh are processed.
+      // And this causes exception (entry already exists).
+      // But it is much better to fix this bug somehow else...
+      // but for now we can live with this hack 8)
+      if (myVcs.hasEntry(path)) return;
+      myVcs.createFile(path, contentFactoryFor(c), f.getTimeStamp(), !f.isWritable());
     }
     else {
-      myVcs.changeFileContent(f.getPath(), contentFactoryFor(c), f.getTimeStamp());
+      myVcs.changeFileContent(path, contentFactoryFor(c), f.getTimeStamp());
     }
   }
 
