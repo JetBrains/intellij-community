@@ -531,7 +531,14 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 "?"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mQUESTION);  }
-"/"                                       {  return(mDIV);  } 
+"/"                                       {  if (zzStartRead == 0 ||
+                                                 zzBuffer.subSequence(0, zzStartRead).toString().trim().length() == 0) {
+                                                yypushback(1);
+                                                yybegin(WAIT_FOR_REGEX);
+                                             } else {
+                                               return(mDIV);
+                                             }
+                                          }
 "/="                                      {  yybegin(WAIT_FOR_REGEX);
                                              return(mDIV_ASSIGN);  }
 "("                                       {  yybegin(WAIT_FOR_REGEX);

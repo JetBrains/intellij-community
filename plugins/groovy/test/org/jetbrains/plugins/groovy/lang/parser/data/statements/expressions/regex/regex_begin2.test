@@ -1,0 +1,6 @@
+       /temp_regex/
+-----
+Groovy script
+  PsiWhiteSpace('       ')
+  Literal
+    PsiElement(regexp)('/temp_regex/')
