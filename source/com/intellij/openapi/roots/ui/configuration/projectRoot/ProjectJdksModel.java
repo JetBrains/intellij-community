@@ -35,18 +35,7 @@ import java.util.*;
 public class ProjectJdksModel implements NotifiableSdkModel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel");
 
-  private TreeMap<ProjectJdk, ProjectJdk> myProjectJdks = new TreeMap<ProjectJdk, ProjectJdk>(new Comparator<ProjectJdk>() {
-    public int compare(final ProjectJdk o1, final ProjectJdk o2) {
-      if (o1 == null || o2 == null) return 1;
-      final SdkType type1 = o1.getSdkType();
-      final SdkType type2 = o2.getSdkType();
-      final int typeComp = type1.getName().compareTo(type2.getName());
-      if (typeComp != 0) {
-        return typeComp;
-      }
-      return o1.getName().compareTo(o2.getName());
-    }
-  });
+  private HashMap<ProjectJdk, ProjectJdk> myProjectJdks = new HashMap<ProjectJdk, ProjectJdk>();
   private EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(SdkModel.Listener.class);
 
   private boolean myModified = false;
@@ -104,7 +93,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     myInitialized = false;
   }
 
-  public TreeMap<ProjectJdk, ProjectJdk> getProjectJdks() {
+  public Map<ProjectJdk, ProjectJdk> getProjectJdks() {
     return myProjectJdks;
   }
 

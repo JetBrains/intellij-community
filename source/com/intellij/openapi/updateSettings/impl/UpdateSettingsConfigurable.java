@@ -42,7 +42,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @NonNls public static final String MONTHLY = "Monthly";
   private static final Map<Object, String> PERIOD_VALUE_MAP = new HashMap<Object, String>();
 
-  public JDOMExternalizableStringList myPluginHosts = new JDOMExternalizableStringList();
+  @SuppressWarnings({"WeakerAccess"})
+  public final JDOMExternalizableStringList myPluginHosts = new JDOMExternalizableStringList();
 
   static {
     PERIOD_VALUE_MAP.put(ON_START_UP, IdeBundle.message("updates.check.period.on.startup"));

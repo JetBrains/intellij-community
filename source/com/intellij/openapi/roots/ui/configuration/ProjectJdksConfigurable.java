@@ -38,10 +38,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 @State(
   name = "ProjectJDKsConfigurable.UI",
@@ -83,7 +80,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     myProjectJdksModel.reset(myProject);
 
     myRoot.removeAllChildren();
-    final TreeMap<ProjectJdk, ProjectJdk> sdks = myProjectJdksModel.getProjectJdks();
+    final Map<ProjectJdk,ProjectJdk> sdks = myProjectJdksModel.getProjectJdks();
     for (ProjectJdk sdk : sdks.keySet()) {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myProjectJdksModel, TREE_UPDATER, myHistory);
       addNode(new MyNode(configurable), myRoot);

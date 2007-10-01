@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.util.TreeMap;
+import java.util.Map;
 
 @State(
   name = "JdkListConfigurable.UI",
@@ -108,7 +108,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   protected void loadTree() {
-    final TreeMap<ProjectJdk, ProjectJdk> sdks = myJdksTreeModel.getProjectJdks();
+    final Map<ProjectJdk,ProjectJdk> sdks = myJdksTreeModel.getProjectJdks();
     for (ProjectJdk sdk : sdks.keySet()) {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER, myHistory);
       addNode(new MyNode(configurable), myRoot);

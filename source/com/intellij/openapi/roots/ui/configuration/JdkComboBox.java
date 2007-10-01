@@ -12,8 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -24,7 +24,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -177,7 +180,12 @@ class JdkComboBox extends JComboBox{
     final DefaultComboBoxModel model = ((DefaultComboBoxModel)getModel());
     model.removeAllElements();
     model.addElement(firstItem);
-    final Collection<ProjectJdk> projectJdks = ProjectJdksModel.getInstance(project).getProjectJdks().values();
+    final List<ProjectJdk> projectJdks = new ArrayList<ProjectJdk>(ProjectJdksModel.getInstance(project).getProjectJdks().values());
+    Collections.sort(projectJdks, new Comparator<ProjectJdk>() {
+      public int compare(final ProjectJdk o1, final ProjectJdk o2) {
+        return o1.getName().compareToIgnoreCase(o2.getName());
+      }
+    });
     for (ProjectJdk projectJdk : projectJdks) {
       model.addElement(new JdkComboBox.JdkComboBoxItem(projectJdk));
     }
