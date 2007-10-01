@@ -10,11 +10,17 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
+import java.text.MessageFormat;
 
 public class UnifiedDiffWriter {
+  @NonNls private static final String INDEX_SIGNATURE = "Index: {0}{1}";
+  private static final String HEADER_SEPARATOR = "===================================================================";
+
   private UnifiedDiffWriter() {
   }
 
@@ -48,6 +54,8 @@ public class UnifiedDiffWriter {
   }
 
   private static void writeFileHeading(final FilePatch patch, final Writer writer, final String lineSeparator) throws IOException {
+    writer.write(MessageFormat.format(INDEX_SIGNATURE, patch.getBeforeName(), lineSeparator));
+    writer.write(HEADER_SEPARATOR + lineSeparator);
     writeRevisionHeading(writer, "---", patch.getBeforeName(), patch.getBeforeVersionId(), lineSeparator);
     writeRevisionHeading(writer, "+++", patch.getAfterName(), patch.getAfterVersionId(), lineSeparator);
   }
