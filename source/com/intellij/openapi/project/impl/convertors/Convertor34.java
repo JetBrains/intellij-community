@@ -108,8 +108,8 @@ public class Convertor34 {
   private static void convertProjectFile(Element root, String filePath, ArrayList<String> conversionProblems) {
     Element rootComponent = null;
     List components = root.getChildren("component");
-    for (Iterator iterator = components.iterator(); iterator.hasNext();) {
-      Element component = (Element)iterator.next();
+    for (final Object component1 : components) {
+      Element component = (Element)component1;
       if (isProjectRootManager(component)) rootComponent = component;
     }
 

@@ -19,6 +19,10 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.project.impl.convertors.Convertor01;
+import com.intellij.openapi.project.impl.convertors.Convertor12;
+import com.intellij.openapi.project.impl.convertors.Convertor23;
+import com.intellij.openapi.project.impl.convertors.Convertor34;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
@@ -67,6 +71,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   static final String DEFAULT_STATE_STORAGE = PROJECT_FILE_STORAGE;
 
   static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
+  private static int originalVersion = -1;
 
   private StorageScheme myScheme = StorageScheme.DEFAULT;
 
@@ -94,9 +99,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   public boolean checkVersion() {
-    int version = getOriginalVersion();
     final ApplicationNamesInfo appNamesInfo = ApplicationNamesInfo.getInstance();
-    if (version >= 0 && version < ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
+    if (originalVersion >= 0 && originalVersion < ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
       final VirtualFile projectFile = getProjectFile();
       LOG.assertTrue(projectFile != null);
       String name = projectFile.getNameWithoutExtension();
@@ -150,7 +154,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       });
     }
 
-    if (version > ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
+    if (originalVersion > ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
       String message =
         ProjectBundle.message("project.load.new.version.warning", myProject.getName(), appNamesInfo.getProductName());
 
@@ -439,21 +443,43 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       myUsedMacros = new TreeSet<String>(storageData.myUsedMacros);
     }
 
-    protected void load(@NotNull final Element rootElement) throws IOException {
-      final Set<String> usedMacros1 = new HashSet<String>(Arrays.asList(readUsedMacros(rootElement)));
+    protected void load(@NotNull final Element root) throws IOException {
+      final String v = root.getAttributeValue(VERSION_OPTION);
+      originalVersion = v != null ? Integer.parseInt(v) : 0;
+
+      if (originalVersion != ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
+        convert(root);
+      }
+
+      final Set<String> usedMacros1 = new HashSet<String>(Arrays.asList(readUsedMacros(root)));
       final boolean macrosOk = ProjectMacrosUtil.checkMacros(myProject, usedMacros1);
       if (!macrosOk) {
         throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
       }
 
-      final Element usedMacros = rootElement.getChild(USED_MACROS_ELEMENT_NAME);
+      final Element usedMacros = root.getChild(USED_MACROS_ELEMENT_NAME);
       if (usedMacros != null) {
         for (Element e : JDOMUtil.getElements(usedMacros)) {
           myUsedMacros.add(e.getAttributeValue(NAME_ATTR));
         }
       }
 
-      super.load(rootElement);
+      super.load(root);
+    }
+
+    private void convert(final Element root) {
+      if (originalVersion < 1) {
+        Convertor01.execute(root);
+      }
+      if (originalVersion < 2) {
+        Convertor12.execute(root);
+      }
+      if (originalVersion < 3) {
+        Convertor23.execute(root);
+      }
+      if (originalVersion < 4) {
+        Convertor34.execute(root, myFilePath, getConversionProblemsStorage());
+      }
     }
 
     @NotNull
