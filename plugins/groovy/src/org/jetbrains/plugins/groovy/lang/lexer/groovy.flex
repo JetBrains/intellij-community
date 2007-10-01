@@ -178,19 +178,15 @@ mGSTRING_SINGLE_CONTENT = ({mSTRING_ESC}
 
 // Triple-double-quoted GStrings
 mGSTRING_TRIPLE_BEGIN = \"\"\""$"
-    |  \"\"\" ([^\""$"] | {mSTRING_ESC})? {mGSTRING_TRIPLE_CONTENT}"$"
+    |  \"\"\" ([^\"] | {mSTRING_ESC})? {mGSTRING_TRIPLE_CONTENT}"$"
 mGSTRING_TRIPLE_CONTENT = ({mSTRING_ESC}
     | \'
     | \" (\")? [^\"]
     | [^\""$"]
     | {mSTRING_NL} )*
-mGSTRING_TRIPLE_CTOR_END = {mGSTRING_TRIPLE_CONTENT}  \"\"\"
 
-mGSTRING_TRIPLE_CTOR_END = ( {mSTRING_ESC}
-    | \'
-    | \" (\")? [^\"]
-    | [^\""$"]
-    | {mSTRING_NL} )* \"\"\"
+
+mGSTRING_TRIPLE_CTOR_END = {mGSTRING_TRIPLE_CONTENT} \"\"\"
 
 
 mGSTRING_LITERAL = \"\"
