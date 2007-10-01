@@ -34,6 +34,7 @@ public class FileBasedStorage extends XmlElementStorage {
   private final IFile myFile;
   protected final String myRootElementName;
   private Integer myUpToDateHash;
+  private long myInitialFileTimestamp;
 
   public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager,
                           final String filePath,
@@ -50,12 +51,9 @@ public class FileBasedStorage extends XmlElementStorage {
     MessageBus messageBus = (MessageBus)picoContainer.getComponentInstanceOfType(MessageBus.class);
 
 
-    /*
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
-    if (virtualFile != null) {
-      virtualFile.refresh(false, true);
+    if (myFile.exists()) {
+      myInitialFileTimestamp = myFile.getTimeStamp();
     }
-    */
 
     if (virtualFileTracker != null && messageBus != null) {
       final String path = myFile.getAbsolutePath();
@@ -65,7 +63,9 @@ public class FileBasedStorage extends XmlElementStorage {
       final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
       virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
         public void contentsChanged(final VirtualFileEvent event) {
-          listener.storageFileChanged(event, FileBasedStorage.this);
+          if (event.getFile().getTimeStamp() != myInitialFileTimestamp) {
+            listener.storageFileChanged(event, FileBasedStorage.this);
+          }
         }
       }, true, this);
     }

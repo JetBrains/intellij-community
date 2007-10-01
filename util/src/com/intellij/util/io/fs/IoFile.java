@@ -99,6 +99,10 @@ class IoFile implements IFile {
     myFile.mkdir();
   }
 
+  public long getTimeStamp() {
+    return myFile.lastModified();
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

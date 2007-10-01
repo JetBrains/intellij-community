@@ -38,4 +38,5 @@ public interface IFile {
 
   void mkDir();
 
+  long getTimeStamp();
 }
