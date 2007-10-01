@@ -696,7 +696,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   private static ProblemDescriptor createMissingParamTagDescriptor(PsiElement elementToHighlight,
                                                                    PsiParameter param,
                                                                    final InspectionManager manager) {
-    String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.param.tag", "<code>@param</code>", "<code>" + param + "</code>");
+    String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.param.tag", "<code>@param</code>", "<code>" + param.getName() + "</code>");
     return createDescriptor(elementToHighlight, message, new AddMissingParamTagFix(param), manager);
   }
 
