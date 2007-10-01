@@ -144,8 +144,8 @@ public class GroupByWordPrefixes implements Grouper {
   }
 
   private static class Key {
-    List<String> words;
-    TreeElement node;
+    final List<String> words;
+    final TreeElement node;
 
     public Key(final List<String> words, final TreeElement node) {
       this.words = words;

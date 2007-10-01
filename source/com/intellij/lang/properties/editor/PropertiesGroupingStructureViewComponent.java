@@ -21,7 +21,7 @@ import java.util.Map;
  * @author cdr
  */
 public class PropertiesGroupingStructureViewComponent extends StructureViewComponent {
-  public PropertiesGroupingStructureViewComponent(Project project,
+  protected PropertiesGroupingStructureViewComponent(Project project,
                                                   FileEditor editor,
                                                   PropertiesGroupingStructureViewModel structureViewModel) {
     super(editor, structureViewModel, project);
@@ -37,7 +37,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   private class ChangeGroupSeparatorAction extends ComboBoxAction {
     private DefaultActionGroup myActionGroup;
     // separator -> presentable text
-    private Map<String,String> myPredefindedSeparators = new LinkedHashMap<String, String>();
+    private final Map<String,String> myPredefindedSeparators = new LinkedHashMap<String, String>();
     private JPanel myPanel;
 
     public ChangeGroupSeparatorAction() {
@@ -126,6 +126,10 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       }
     }
 
+  }
+
+  public boolean isActionActive(String name) {
+    return GroupByWordPrefixes.ID.equals(name) || super.isActionActive(name);
   }
 }
 

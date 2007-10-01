@@ -10,7 +10,7 @@ import java.util.*;
 
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
   private List<CachingChildrenTreeNode> myChildren;
-  protected List<CachingChildrenTreeNode> myOldChildren = null;
+  private List<CachingChildrenTreeNode> myOldChildren = null;
   protected final TreeModel myTreeModel;
 
   public CachingChildrenTreeNode(Project project, Value value, TreeModel treeModel) {
@@ -31,13 +31,13 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  public void addSubElement(CachingChildrenTreeNode node) {
+  protected void addSubElement(CachingChildrenTreeNode node) {
     ensureChildrenAreInitialized();
     myChildren.add(node);
     node.setParent(this);
   }
 
-  public void setChildren(Collection<AbstractTreeNode> children) {
+  protected void setChildren(Collection<AbstractTreeNode> children) {
     clearChildren();
     for (AbstractTreeNode node : children) {
       myChildren.add((CachingChildrenTreeNode)node);
@@ -63,7 +63,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  public void sortChildren(Sorter[] sorters) {
+  protected void sortChildren(Sorter[] sorters) {
     Collections.sort(myChildren, new CompositeComparator(sorters));
 
     for (CachingChildrenTreeNode child : myChildren) {
@@ -73,7 +73,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  public void filterChildren(Filter[] filters) {
+  protected void filterChildren(Filter[] filters) {
     Collection<AbstractTreeNode> children = getChildren();
     for (Filter filter : filters) {
       for (Iterator<AbstractTreeNode> eachNode = children.iterator(); eachNode.hasNext();) {
@@ -86,7 +86,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     setChildren(children);
   }
 
-  public void groupChildren(Grouper[] groupers) {
+  protected void groupChildren(Grouper[] groupers) {
     for (Grouper grouper : groupers) {
       groupElements(grouper);
     }
