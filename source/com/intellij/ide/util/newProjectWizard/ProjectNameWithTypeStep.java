@@ -244,14 +244,16 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
   }
 
   public boolean validate() throws ConfigurationException {
-    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.file"), myModuleFileLocation.getText(), myImlLocationChangedByUser)) {
-      return false;
+    if (myCreateModuleCb.isSelected() || !myWizardContext.isCreatingNewProject()) {
+      if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.module.file"), myModuleFileLocation.getText(), myImlLocationChangedByUser)) {
+        return false;
+      }
+      if (!ProjectWizardUtil
+        .createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), myModuleContentRoot.getText(), myContentRootChangedByUser)) {
+        return false;
+      }
     }
-    if (!ProjectWizardUtil
-      .createDirectoryIfNotExists(IdeBundle.message("directory.module.content.root"), myModuleContentRoot.getText(), myContentRootChangedByUser)) {
-      return false;
-    }
-    return super.validate();
+    return !myWizardContext.isCreatingNewProject() || super.validate();
   }
 
   public void disposeUIResources() {
