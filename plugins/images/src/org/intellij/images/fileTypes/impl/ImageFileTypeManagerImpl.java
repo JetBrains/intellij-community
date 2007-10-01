@@ -15,6 +15,7 @@
  */
 package org.intellij.images.fileTypes.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -38,9 +39,8 @@ import java.util.Set;
  */
 final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements ApplicationComponent {
     @NonNls private static final String NAME = "ImagesFileTypeManager";
-    
-    private static final String[] EMPTY_STRING_ARRAY = new String[] {};
-    @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
+
+  @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
     private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
     private UserFileType imageFileType;
 
@@ -60,9 +60,9 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
     }
 
     public void initComponent() {
-        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+        final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         String[] readerFormatNames = ImageIO.getReaderFormatNames();
-        Set<String> extensions = new HashSet<String>(readerFormatNames.length);
+        final Set<String> extensions = new HashSet<String>(readerFormatNames.length);
         for (String format : readerFormatNames) {
             extensions.add(format.toLowerCase());
         }
@@ -70,7 +70,11 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
         imageFileType.setIcon(IconLoader.getIcon("/org/intellij/images/icons/ImagesFileType.png"));
         imageFileType.setName(IMAGE_FILE_TYPE_NAME);
         imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
-        fileTypeManager.registerFileType(imageFileType, extensions.toArray(EMPTY_STRING_ARRAY));
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            fileTypeManager.registerFileType(imageFileType, extensions.toArray(new String[extensions.size()]));
+          }
+        });
     }
 
     public void disposeComponent() {
