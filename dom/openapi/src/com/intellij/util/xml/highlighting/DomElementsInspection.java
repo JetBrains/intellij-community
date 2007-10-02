@@ -28,6 +28,7 @@ import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
+ * @see com.intellij.util.xml.highlighting.BasicDomElementsInspection
  */
 public abstract class DomElementsInspection<T extends DomElement> extends XmlSuppressableInspectionTool {
 
