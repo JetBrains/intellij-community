@@ -298,7 +298,7 @@ public class MethodSignatureUtil {
       final PsiSubstitutor substitutor1 = method1.getSubstitutor();
       final PsiSubstitutor substitutor2 = method2.getSubstitutor();
       for (int i = 0; i < parameterTypes1.length; i++) {
-        final PsiType type1 = TypeConversionUtil.erasure(substitutor1.substitute(parameterTypes1[i]));
+        final PsiType type1 = TypeConversionUtil.erasure(substitutor1.substitute(parameterTypes1[i]), substitutor1);
         final PsiType type2 = TypeConversionUtil.erasure(substitutor2.substitute(parameterTypes2[i]), substitutor2);
         if (!Comparing.equal(type1, type2)) return false;
       }
