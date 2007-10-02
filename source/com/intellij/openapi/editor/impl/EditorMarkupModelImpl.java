@@ -120,19 +120,25 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       LineTooltipRenderer bigRenderer = null;
       List<HighlightInfo> infos = new SmartList<HighlightInfo>();
+      Collection<String> tooltips = new THashSet<String>(); //do not show same tooltip twice
       for (RangeHighlighter marker : highlighters) {
         final Object tooltipObject = marker.getErrorStripeTooltip();
         if (tooltipObject == null) continue;
         if (tooltipObject instanceof HighlightInfo) {
-          infos.add((HighlightInfo)tooltipObject);
+          HighlightInfo info = (HighlightInfo)tooltipObject;
+          if (info.toolTip != null && tooltips.add(info.toolTip)) {
+            infos.add(info);
+          }
         }
         else {
           final String text = tooltipObject.toString();
-          if (bigRenderer == null) {
-            bigRenderer = new LineTooltipRenderer(text);
-          }
-          else {
-            bigRenderer.addBelow(text);
+          if (tooltips.add(text)) {
+            if (bigRenderer == null) {
+              bigRenderer = new LineTooltipRenderer(text);
+            }
+            else {
+              bigRenderer.addBelow(text);
+            }
           }
         }
       }
@@ -140,7 +146,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         // show errors first
         Collections.sort(infos, new Comparator<HighlightInfo>() {
           public int compare(final HighlightInfo o1, final HighlightInfo o2) {
-            return SeverityRegistrar.getInstance(myEditor.getProject()).compare(o2.getSeverity(), o1.getSeverity());
+            int i = SeverityRegistrar.getInstance(myEditor.getProject()).compare(o2.getSeverity(), o1.getSeverity());
+            if (i != 0) return i;
+            return o1.toolTip.compareTo(o2.toolTip);
           }
         });
         final HighlightInfoComposite composite = new HighlightInfoComposite(infos);
@@ -262,7 +270,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             currentSpot = new MarkSpot(positionedMark.yStart, -1);
           }
           while (index != sortedHighlighters.size()) {
-            //&& sortedHighlighters.get(index).getStartOffset() == mark.getStartOffset()) {
             PositionedRangeHighlighter positioned = getPositionedRangeHighlighter(sortedHighlighters.get(index));
             if (positioned.yStart != positionedMark.yStart) break;
             startQueue.add(positioned);
@@ -283,7 +290,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 break;
               }
             }
-            //startQueue.remove(highlighter);
           }
           if (startQueue.isEmpty()) {
             currentSpot = null;
