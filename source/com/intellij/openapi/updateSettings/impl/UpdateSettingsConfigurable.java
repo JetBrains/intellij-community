@@ -42,8 +42,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @NonNls public static final String MONTHLY = "Monthly";
   private static final Map<Object, String> PERIOD_VALUE_MAP = new HashMap<Object, String>();
 
-  @SuppressWarnings({"WeakerAccess"})
-  public final JDOMExternalizableStringList myPluginHosts = new JDOMExternalizableStringList();
+  @SuppressWarnings({"WeakerAccess", "CanBeFinal"})
+  public JDOMExternalizableStringList myPluginHosts = new JDOMExternalizableStringList();
 
   static {
     PERIOD_VALUE_MAP.put(ON_START_UP, IdeBundle.message("updates.check.period.on.startup"));
@@ -127,10 +127,17 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   }
 
   public List<String> getPluginHosts() {
+    final ArrayList<String> hosts = new ArrayList<String>();
     if (myUpdatesSettingsPanel != null) {
-      return myUpdatesSettingsPanel.getPluginsHosts();
+      hosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
+    } else {
+      hosts.addAll(myPluginHosts);
     }
-    return myPluginHosts;
+    final String pluginHosts = System.getProperty("idea.plugin.hosts");
+    if (pluginHosts != null) {
+      hosts.addAll(Arrays.asList(pluginHosts.split(";")));
+    }
+    return hosts;
   }
 
   private class UpdatesSettingsPanel {
