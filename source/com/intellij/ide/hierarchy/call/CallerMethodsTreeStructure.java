@@ -46,7 +46,8 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     }
     else if (CallHierarchyBrowser.SCOPE_PROJECT.equals(myScopeType)) {
       searchScope = GlobalSearchScope.projectProductionScope(myProject, true);
-    } else if (CallHierarchyBrowser.SCOPE_TEST.equals(myScopeType)) {
+    }
+    else if (CallHierarchyBrowser.SCOPE_TEST.equals(myScopeType)) {
       searchScope = GlobalSearchScope.projectTestScope(myProject, true);
     }
 

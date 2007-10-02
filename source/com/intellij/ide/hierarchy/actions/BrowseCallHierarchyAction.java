@@ -68,8 +68,7 @@ public final class BrowseCallHierarchyAction extends AnAction {
 
     final Runnable runnable = new Runnable() {
       public void run() {
-        final String typeName = CallerMethodsTreeStructure.TYPE;
-        hierarchyBrowser.changeView(typeName);
+        hierarchyBrowser.changeView(CallerMethodsTreeStructure.TYPE);
       }
     };
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY).activate(runnable);

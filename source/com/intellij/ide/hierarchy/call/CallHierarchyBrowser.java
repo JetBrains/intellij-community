@@ -50,8 +50,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
   static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
   static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
 
-  @NonNls
-  private final static String HELP_ID = "viewingStructure.callHierarchy";
+  @NonNls private static final String HELP_ID = "viewingStructure.callHierarchy";
 
   private Content myContent;
   private final Project myProject;
@@ -69,7 +68,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   private static final String CALL_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.call.CallHierarchyBrowser";
-  private List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
+  private final List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
   private static final CallHierarchyNodeDescriptor[] EMPTY_DESCRIPTORS = new CallHierarchyNodeDescriptor[0];
   private final HashMap<String, OccurenceNavigator> myOccurenceNavigators = new HashMap<String, OccurenceNavigator>();
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
@@ -112,11 +111,6 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
       protected void setAutoScrollMode(final boolean state) {
         HierarchyBrowserManager.getInstance(myProject).IS_AUTOSCROLL_TO_SOURCE = state;
       }
-
-      protected void scrollToSource(Component tree) {
-        super.scrollToSource(tree);
-      }
-
     };
 
     setHierarchyBase(method);
@@ -235,8 +229,8 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
       final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(""));
       tree.setModel(model);
 
-      final HierarchyTreeStructure structure;
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      final HierarchyTreeStructure structure;
       if (CallerMethodsTreeStructure.TYPE.equals(typeName)) {
         structure = new CallerMethodsTreeStructure(myProject, method, getCurrentScopeType());
       }

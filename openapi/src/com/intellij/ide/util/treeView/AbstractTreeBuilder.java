@@ -36,7 +36,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   protected final JTree myTree;
   // protected for TestNG
-  protected final DefaultTreeModel myTreeModel;
+  @SuppressWarnings({"WeakerAccess"}) protected final DefaultTreeModel myTreeModel;
   protected AbstractTreeStructure myTreeStructure;
 
   protected final AbstractTreeUpdater myUpdater;
@@ -66,18 +66,18 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
   private boolean myDisposed = false;
   // used for searching only
-  private final AbstractTreeNode TREE_NODE_WRAPPER = createSearchingTreeNodeWrapper();
+  private final AbstractTreeNode<Object> TREE_NODE_WRAPPER = createSearchingTreeNodeWrapper();
 
   private boolean myRootNodeWasInitialized = false;
 
-  private Map<Object, List<NodeAction>> myBackgroundableNodeActions = new HashMap<Object, List<NodeAction>>();
+  private final Map<Object, List<NodeAction>> myBackgroundableNodeActions = new HashMap<Object, List<NodeAction>>();
 
   private boolean myUpdateFromRootRequested;
   private boolean myWasEverShown;
-  private boolean myUpdateIfInactive;
+  private final boolean myUpdateIfInactive;
 
   protected AbstractTreeNode createSearchingTreeNodeWrapper() {
-    return new AbstractTreeNodeWrapper(null);
+    return new AbstractTreeNodeWrapper();
   }
 
   public AbstractTreeBuilder(JTree tree,
@@ -195,8 +195,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
     return myTree;
   }
 
-  public final
   @Nullable
+  public final
   DefaultMutableTreeNode getNodeForElement(Object element) {
     //DefaultMutableTreeNode node = (DefaultMutableTreeNode)myElementToNodeMap.get(element);
     DefaultMutableTreeNode node = getFirstNode(element);
@@ -453,7 +453,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
         updateNodeDescriptor(projectViewNode);
         if (projectViewNode.getValue() == null) continue;
       }
-      elementToIndexMap.put(child, new Integer(index));
+      elementToIndexMap.put(child, Integer.valueOf(index));
       index++;
     }
     return elementToIndexMap;
@@ -870,9 +870,9 @@ public abstract class AbstractTreeBuilder implements Disposable {
       }
       if (onDone != null) {
         onDone.run();
-        return;
       }
-    } else {
+    }
+    else {
       _select(elements[i], new Runnable() {
         public void run() {
           addNext(elements, i + 1, onDone, originalRows);
@@ -885,7 +885,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     _select(element, onDone, false);
   }
 
-  final List<Runnable> myDeferredSelections = new ArrayList<Runnable>();
+  private final List<Runnable> myDeferredSelections = new ArrayList<Runnable>();
   private void _select(final Object element, final Runnable onDone, final boolean addToSelection) {
     final Runnable _onDone = new Runnable() {
       public void run() {
@@ -962,7 +962,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   @Nullable
-  private Object getElementFor(DefaultMutableTreeNode node) {
+  private static Object getElementFor(DefaultMutableTreeNode node) {
     if (node != null) {
       final Object o = node.getUserObject();
       if (o instanceof NodeDescriptor) {
@@ -1102,7 +1102,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
       return (DefaultMutableTreeNode)value;
     }
     final List<DefaultMutableTreeNode> nodes = (List<DefaultMutableTreeNode>)value;
-    return !nodes.isEmpty() ? nodes.get(0) : null;
+    return nodes.isEmpty() ? null : nodes.get(0);
   }
 
   protected Object findNodeByElement(Object element) {
@@ -1141,8 +1141,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   private static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
-    public AbstractTreeNodeWrapper(Object element) {
-      super(null, element);
+    public AbstractTreeNodeWrapper() {
+      super(null, null);
     }
 
     @NotNull
