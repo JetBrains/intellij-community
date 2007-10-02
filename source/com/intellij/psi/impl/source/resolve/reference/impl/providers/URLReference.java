@@ -184,7 +184,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
       assert document != null;
       XmlTag rootTag = document.getRootTag();
       final ArrayList<String> additionalNs = new ArrayList<String>();
-      processWsdlSchemas(rootTag, new Processor<XmlTag>() {
+      if (rootTag != null) processWsdlSchemas(rootTag, new Processor<XmlTag>() {
         public boolean process(final XmlTag xmlTag) {
           final String s = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME);
           if (s != null) { additionalNs.add(s); }
