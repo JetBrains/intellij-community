@@ -457,16 +457,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         left = revision2;
         right = revision1;
       }
-      byte[] content1 = left.getContent();
-      byte[] content2 = right.getContent();
+      final byte[] content1 = left.getContent();
+      if (content1 == null) throw new VcsException("Failed to load content for revision " + left.getRevisionNumber().asString());
+      final byte[] content2 = right.getContent();
+      if (content2 == null) throw new VcsException("Failed to load content for revision " + right.getRevisionNumber().asString());
 
 
       SimpleDiffRequest diffData = new SimpleDiffRequest(myProject, myFilePath.getPresentableUrl());
 
       diffData.addHint(DiffTool.HINT_SHOW_FRAME);
-
-      LOG.assertTrue(content1 != null);
-      LOG.assertTrue(content2 != null);
 
       Document doc = myFilePath.getDocument();
 
