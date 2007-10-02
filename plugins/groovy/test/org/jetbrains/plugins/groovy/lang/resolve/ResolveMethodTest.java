@@ -320,6 +320,11 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertNotNull(ref.resolve());
   }
 
+  public void testGenericOverriding() throws Exception {
+    PsiReference ref = configureByFile("genericOverriding/A.groovy");
+    assertNotNull(ref.resolve());
+  }
+
   public void testExplicitGetter() throws Exception {
     PsiReference ref = configureByFile("explicitGetter/A.groovy");
     final PsiElement resolved = ref.resolve();

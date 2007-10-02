@@ -61,7 +61,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (!isAccessible((PsiNamedElement) element)) return true;
 
       substitutor = inferMethodTypeParameters(method, substitutor);
-      if (myForCompletion || PsiUtil.isApplicable(myArgumentTypes, method, PsiSubstitutor.EMPTY)) { //do not use substitutor here!
+      if (myForCompletion || PsiUtil.isApplicable(myArgumentTypes, method, substitutor)) { //do not use substitutor here!
         myCandidates.add(new GroovyResolveResultImpl(method, true, myImportStatementContext, substitutor));
       }
       else {
@@ -179,12 +179,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
         methodsPresent = true;
         PsiMethod currentMethod = (PsiMethod) currentElement;
         for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
-          PsiElement element = iterator.next().getElement();
+          final GroovyResolveResult otherResolveResult = iterator.next();
+          PsiElement element = otherResolveResult.getElement();
           if (element instanceof PsiMethod) {
             PsiMethod method = (PsiMethod) element;
-            if (dominated(currentMethod, method, manager, scope)) {
+            if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor(), manager, scope)) {
               continue Outer;
-            } else if (dominated(method, currentMethod, manager, scope)) {
+            } else if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor(), manager, scope)) {
               iterator.remove();
             }
           }
@@ -208,7 +209,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return result.toArray(new GroovyResolveResult[result.size()]);
   }
 
-  private boolean dominated(PsiMethod method1, PsiMethod method2, PsiManager manager, GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
+  private boolean dominated(PsiMethod method1, PsiSubstitutor substitutor1, PsiMethod method2, PsiSubstitutor substitutor2, PsiManager manager, GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
     if (!method1.getName().equals(method2.getName())) return false;
     
     PsiParameter[] params1 = method1.getParameterList().getParameters();
@@ -221,8 +222,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
     }
 
     for (int i = 0; i < params2.length; i++) {
-      PsiType type1 = params1[i].getType();
-      PsiType type2 = params2[i].getType();
+      PsiType type1 = substitutor1.substitute(params1[i].getType());
+      PsiType type2 = substitutor2.substitute(params2[i].getType());
       if (type1 instanceof PsiArrayType && !(type2 instanceof PsiArrayType)) {
         type1 = ((PsiArrayType) type1).getComponentType();
       }
