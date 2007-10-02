@@ -130,11 +130,13 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
 
     final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> problems = new ConcurrentHashMap<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>();
     mergeMaps(problems, myCachedErrors.get(domElement));
-    domElement.acceptChildren(new DomElementVisitor() {
-      public void visitDomElement(DomElement element) {
-        mergeMaps(problems, getProblemsMap(element));
-      }
-    });
+    if (domElement.getXmlElement() != null) {
+      domElement.acceptChildren(new DomElementVisitor() {
+        public void visitDomElement(DomElement element) {
+          mergeMaps(problems, getProblemsMap(element));
+        }
+      });
+    }
     myCachedChildrenErrors.put(domElement, problems);
     return problems;
   }
