@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithStoredHistory;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
@@ -35,6 +36,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * User: anna
@@ -114,10 +117,22 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
       }
     });
 
-    myInternalJres.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        updateRoots(mySdkModificator.getHomePath());
-        myModified = true;
+    myInternalJres.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        final ProjectJdk javaJdk = (ProjectJdk)e.getItem();
+        for (ProjectRootType type : ProjectRootType.ALL_TYPES) {
+          final VirtualFile[] internalRoots = javaJdk.getSdkModificator().getRoots(type);
+          final VirtualFile[] configuredRoots = mySdkModificator.getRoots(type);
+          for (VirtualFile file : internalRoots) {
+            if (e.getStateChange() == ItemEvent.DESELECTED) {
+              mySdkModificator.removeRoot(file, type);
+            } else {
+              if (ArrayUtil.find(configuredRoots, file) == -1) {
+                mySdkModificator.addRoot(file, type);
+              }
+            }
+          }
+        }
       }
     });
 
