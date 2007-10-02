@@ -57,6 +57,7 @@ public class CheckboxTreeBase extends Tree {
         public void keyPressed(KeyEvent e) {
           if(isToggleEvent(e)) {
             TreePath treePath = getLeadSelectionPath();
+            if (treePath == null) return;
             CheckedTreeNode firstNode = (CheckedTreeNode)treePath.getLastPathComponent();
             boolean checked = toggleNode(firstNode);
 
