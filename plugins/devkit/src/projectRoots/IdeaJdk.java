@@ -217,12 +217,12 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     final List<String> javaSdks = new ArrayList<String>();
     final Sdk[] sdks = sdkModel.getSdks();
     for (Sdk jdk : sdks) {
-      if (jdk.getSdkType() instanceof JavaSdk) {
+      if (isValidInternalJdk(jdk)) {
         javaSdks.add(jdk.getName());
       }
     }
     if (javaSdks.isEmpty()){
-      Messages.showErrorDialog("Please, configure Java SDK to be used as IDEA internal platform", "No Java SDK found");
+      Messages.showErrorDialog("Please, configure Java SDK to be used as IDEA internal platform (1.5 or higher)", "No Java SDK found");
       return false;
     }
 
@@ -239,6 +239,15 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       sdkModificator.setVersionString(jdk.getVersionString());
       sdkModificator.commitChanges();
       return true;
+    }
+    return false;
+  }
+
+  public static boolean isValidInternalJdk(Sdk sdk) {
+    final SdkType sdkType = sdk.getSdkType();
+    if (sdkType instanceof JavaSdk) {
+      final String versionString = sdkType.getVersionString(sdk);
+      return versionString != null && (versionString.contains("5.0") || versionString.contains("1.5") || versionString.contains("1.6"));
     }
     return false;
   }

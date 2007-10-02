@@ -58,6 +58,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
 
   private SdkModel mySdkModel;
   private final SdkModificator mySdkModificator;
+  private boolean myFreeze = false;
 
   public IdeaJdkConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
     mySdkModel = sdkModel;
@@ -67,7 +68,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private void updateJdkList() {
     myJdksModel.removeAllElements();
     for (Sdk sdk : mySdkModel.getSdks()) {
-      if (sdk.getSdkType() instanceof JavaSdk) {
+      if (IdeaJdk.isValidInternalJdk(sdk)) {
         myJdksModel.addElement(sdk);
       }
     }
@@ -119,6 +120,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
 
     myInternalJres.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
+        if (myFreeze) return;
         final ProjectJdk javaJdk = (ProjectJdk)e.getItem();
         for (ProjectRootType type : ProjectRootType.ALL_TYPES) {
           final VirtualFile[] internalRoots = javaJdk.getSdkModificator().getRoots(type);
@@ -179,7 +181,9 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   }
 
   public void reset() {
+    myFreeze = true;
     updateJdkList();
+    myFreeze = false;
     mySandboxHome.reset();
     if (myIdeaJdk != null && myIdeaJdk.getSdkAdditionalData() instanceof Sandbox) {
       final Sandbox sandbox = (Sandbox)myIdeaJdk.getSdkAdditionalData();
