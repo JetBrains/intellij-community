@@ -61,6 +61,14 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
     return entry.getContentRoots();
   }
 
+  protected String getEntriesChooserTitle() {
+    return "Modules";
+  }
+
+  protected String getDependenciesTitle() {
+    return "Module dependencies";
+  }
+
   protected String getSplitDialogTitle() {
     return "Split Module";
   }

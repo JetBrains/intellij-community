@@ -55,6 +55,14 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
     return entry.getJars();
   }
 
+  protected String getEntriesChooserTitle() {
+    return "Libraries";
+  }
+
+  protected String getDependenciesTitle() {
+    return "Library contents";
+  }
+
   protected String getSplitDialogTitle() {
     return "Split Library";
   }

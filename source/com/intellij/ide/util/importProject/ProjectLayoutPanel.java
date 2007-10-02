@@ -58,8 +58,14 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     myDependenciesList = createList();
 
     final Splitter splitter = new Splitter(false);
-    splitter.setFirstComponent(new JScrollPane(myEntriesChooser));
-    splitter.setSecondComponent(new JScrollPane(myDependenciesList));
+    
+    final JScrollPane entriesPane = new JScrollPane(myEntriesChooser);
+    entriesPane.setBorder(BorderFactory.createTitledBorder(getEntriesChooserTitle()));
+    splitter.setFirstComponent(entriesPane);
+    
+    final JScrollPane depsPane = new JScrollPane(myDependenciesList);
+    depsPane.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(getDependenciesTitle()), depsPane.getBorder()));
+    splitter.setSecondComponent(depsPane);
     
     JPanel groupPanel = new JPanel(new BorderLayout());
     groupPanel.add(createEntriesActionToolbar().getComponent(), BorderLayout.NORTH);
@@ -273,6 +279,10 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
   protected abstract String getNameAlreadyUsedMessage(final String name);
 
   protected abstract String getStepDescriptionText();
+  
+  protected abstract String getEntriesChooserTitle();
+  
+  protected abstract String getDependenciesTitle();
   
   private boolean isNameAlreadyUsed(String entryName) {
     final Set<T> itemsToIgnore = new HashSet<T>(myEntriesChooser.getSelectedElements());
