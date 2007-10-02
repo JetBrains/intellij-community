@@ -138,7 +138,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   public void changeView() {
     showAntView(!isTreeView());
-    myBuildFile.setTreeView(isTreeView());
+    if (myBuildFile != null) {
+      myBuildFile.setTreeView(isTreeView());
+    }
   }
 
   private boolean isTreeView() {
@@ -147,7 +149,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   public void setVerboseMode(boolean verbose) {
     changeDetalizationLevel(verbose ? VERBOSE_MODE : BRIEF_MODE);
-    myBuildFile.setVerboseMode(verbose);
+    if (myBuildFile != null) {
+      myBuildFile.setVerboseMode(verbose);
+    }
   }
 
   public boolean isVerboseMode() {
@@ -786,14 +790,17 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (getErrorCount() == 0 && myBuildFile.isViewClosedWhenNoErrors()) {
-          close();
-        }
-        else if (getErrorCount() > 0) {
-          myTreeView.scrollToFirstError();
-        }
-        else {
-          myTreeView.scrollToStatus();
+        final AntBuildFileBase buildFile = myBuildFile;
+        if (buildFile != null) {
+          if (getErrorCount() == 0 && buildFile.isViewClosedWhenNoErrors()) {
+            close();
+          }
+          else if (getErrorCount() > 0) {
+            myTreeView.scrollToFirstError();
+          }
+          else {
+            myTreeView.scrollToStatus();
+          }
         }
 
         VirtualFileManager.getInstance().refresh(true, new Runnable() {
