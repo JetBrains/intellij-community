@@ -593,7 +593,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         if (!isDirectory) {
           final PsiFile psiFile = element.getContainingFile();
           final PackageSet packageSet = getCurrentScope().getValue();
-          LOG.assertTrue(packageSet != null);
+          if (packageSet == null) return;
           if (psiFile != null) {
             final ProjectView projectView = ProjectView.getInstance(myProject);
             if (!packageSet.contains(psiFile, NamedScopesHolder.getHolder(myProject, CURRENT_SCOPE_NAME, myDependencyValidationManager))) {
