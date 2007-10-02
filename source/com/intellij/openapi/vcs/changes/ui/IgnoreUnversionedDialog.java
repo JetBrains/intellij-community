@@ -107,7 +107,6 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     finally {
       myInternalChange = false;
     }
-    updateControls();
 
     for(VirtualFile file: virtualFiles) {
       if (file.isDirectory()) {
@@ -116,6 +115,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
         myIgnoreFileTextField.setEnabled(false);
       }
     }
+    updateControls();
 
     final VirtualFile[] ancestors = VfsUtil.getCommonAncestors(virtualFiles.toArray(new VirtualFile[virtualFiles.size()]));
     if (ancestors.length > 0) {
