@@ -146,10 +146,11 @@ public class SelectWordHandler extends EditorActionHandler {
     final PsiElement parent = e.getParent();
 
     if (!(e instanceof PsiErrorElement)) {
-      final FileViewProvider viewProvider = e.getContainingFile().getViewProvider();
+      final PsiFile file = e.getContainingFile();
+      final FileViewProvider viewProvider = file.getViewProvider();
       if (viewProvider.getBaseLanguage() != e.getLanguage()) {
         final PsiFile baseRoot = viewProvider.getPsi(viewProvider.getBaseLanguage());
-        if (parent.getTextLength() == baseRoot.getTextLength()) {
+        if (baseRoot != file && parent.getTextLength() == baseRoot.getTextLength()) {
           final ASTNode node = baseRoot.getNode();
           if (node == null) return parent;
           final ASTNode leafElementAt = node.findLeafElementAt(e.getTextRange().getStartOffset());
