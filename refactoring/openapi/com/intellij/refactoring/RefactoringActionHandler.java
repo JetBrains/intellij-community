@@ -21,14 +21,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * RefactoringActionHandler is an implementation of IDEA refactoring,
  * with dialogs, UI and all.
  * It is what gets invoked when user choses an item from 'Refactoring' menu.<br>
  *
- * <code>RerfactoringActionHandler</code> is a &quot;one-shot&qout; object: you should not
+ * <code>RefactoringActionHandler</code> is a &quot;one-shot&quot; object: you should not
  * invoke it twice.
  * @see RefactoringActionHandlerFactory
  */
@@ -39,17 +38,19 @@ public interface RefactoringActionHandler {
    *
    * @param editor editor that refactoring is invoked in
    * @param file file should correspond to <code>editor</code>
-   * @param dataContext can be null.
+   * @param dataContext can be null for some but not all of refactoring action handlers
+   *                    (it is recommended to pass DataManager.getDataContext() instead of null)
    */
-  void invoke(@NotNull Project project, Editor editor, PsiFile file, @Nullable DataContext dataContext);
+  void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext);
 
   /**
    * Invokes refactoring action from elsewhere (not from editor). Some refactorings
    * do not implement this method.
    *
-   * @param project
+   * @param project the project in which the refactoring is invoked.
    * @param elements list of elements that refactoring should work on. Refactoring-dependent.
-   * @param dataContext can be null.
+   * @param dataContext can be null for some but not all of refactoring action handlers
+   *                    (it is recommended to pass DataManager.getDataContext() instead of null)
    */
-  void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext);
+  void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext);
 }
