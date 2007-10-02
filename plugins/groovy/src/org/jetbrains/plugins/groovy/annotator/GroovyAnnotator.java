@@ -56,7 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -663,6 +663,18 @@ public class GroovyAnnotator implements Annotator {
       //annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.black, EffectType.LINE_UNDERSCORE, 0));
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
     }
+
+//    //TODO
+//    final PsiElement refParentExpr = refExpr.getParent();
+//    if (refParentExpr != null && refParentExpr instanceof GrMethodCallExpression) {
+//      final PsiElement refParentParent = refParentExpr.getParent();
+//      final ASTNode node = refParentParent.getNode();
+//      assert node != null;
+//
+//      if (refParentParent instanceof GrReferenceExpression && GroovyElementTypes.mOPTIONAL_DOT.equals(node.getElementType())) {
+//        holder.createWarningAnnotation(refExpr, GroovyBundle.message("unsafe.dereference"));
+//      }
+//    }
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
