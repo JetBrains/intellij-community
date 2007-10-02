@@ -9,6 +9,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -293,6 +294,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+    finally {
+      UndoManager.getInstance(listOwner.getProject()).markDocumentForUndo(listOwner.getContainingFile());
+    }
   }
 
   @Nullable
@@ -335,7 +339,10 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     if (containingFile instanceof PsiJavaFile) {
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       if (myExternalAnotations.containsKey(virtualFile)) {
-        return myExternalAnotations.get(virtualFile);
+        final XmlFile xmlFile = myExternalAnotations.get(virtualFile);
+        if (xmlFile != null && xmlFile.isValid()) {
+          return xmlFile;
+        }
       }
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
       final String packageName = javaFile.getPackageName();
