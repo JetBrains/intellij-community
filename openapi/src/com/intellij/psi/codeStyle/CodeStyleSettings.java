@@ -662,7 +662,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean GENERATE_FINAL_PARAMETERS = false;
 
 //----------------- annotations ----------------
-  public boolean USE_EXTERNAL_ANNOTATIONS = true;
+  public boolean USE_EXTERNAL_ANNOTATIONS = false;
 
 //----------------- IMPORTS --------------------
 
