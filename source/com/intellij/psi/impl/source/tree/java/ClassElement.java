@@ -238,7 +238,6 @@ public class ClassElement extends RepositoryTreeElement {
         return TreeUtil.findChild(this, MODIFIER_LIST);
 
       case ChildRole.EXTENDS_LIST:
-        if (isAnnotationType() || isEnum()) return null;
         return TreeUtil.findChild(this, EXTENDS_LIST);
 
       case ChildRole.IMPLEMENTS_LIST:

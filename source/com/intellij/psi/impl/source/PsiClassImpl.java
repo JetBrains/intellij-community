@@ -271,7 +271,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public PsiReferenceList getExtendsList() {
-    if (isEnum() || isAnnotationType()) return null;
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0){
       synchronized (PsiLock.LOCK) {
