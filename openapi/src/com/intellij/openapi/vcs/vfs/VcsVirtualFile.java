@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -30,9 +31,11 @@ import java.io.IOException;
  * author: lesya
  */
 public class VcsVirtualFile extends AbstractVcsVirtualFile {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.vfs.VcsVirtualFile");
 
   private byte[] myContent;
   private final VcsFileRevision myFileRevision;
+  private boolean myContentLoadFailed = false;
 
   public VcsVirtualFile(String path,
                         VcsFileRevision revision, VirtualFileSystem fileSystem) {
@@ -49,6 +52,9 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   }
 
   public byte[] contentsToByteArray() throws IOException {
+    if (myContentLoadFailed) {
+      return new byte[0];
+    }
     if (myContent == null) {
       loadContent();
     }
@@ -79,6 +85,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
 
     }
     catch (VcsException e) {
+      myContentLoadFailed = true;
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           vcsFileSystem.fireBeforeFileDeletion(this, VcsVirtualFile.this);
@@ -116,7 +123,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
         loadContent();
       }
       catch (IOException e) {
-        e.printStackTrace(System.err);
+        LOG.info(e);
       }
     }
     return myRevision;
