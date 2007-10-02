@@ -138,13 +138,6 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme{
   public void save(File dir) throws WriteExternalException{
     Element newElement = new Element(CODE_SCHEME);
     newElement.setAttribute(NAME, getName());
-    if(getParentScheme() != null){
-      CodeStyleSchemeImpl parentScheme = (CodeStyleSchemeImpl)getParentScheme();
-      while(parentScheme.getParentScheme() != null){
-        parentScheme = (CodeStyleSchemeImpl)parentScheme.getParentScheme();
-      }
-      newElement.setAttribute(PARENT, parentScheme.getName());
-    }
     (this).writeExternal(newElement);
 
     String filePath = dir.getAbsolutePath() + File.separator + getName() + XML_EXTENSION;

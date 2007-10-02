@@ -662,7 +662,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean GENERATE_FINAL_PARAMETERS = false;
 
 //----------------- annotations ----------------
-  public boolean USE_EXTERNAL_ANNOTATIONS = false;
+  public boolean USE_EXTERNAL_ANNOTATIONS = true;
 
 //----------------- IMPORTS --------------------
 
@@ -1113,7 +1113,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    final CodeStyleSettings parentSettings = myParentSettings == null ? new CodeStyleSettings() : myParentSettings;
+    final CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
     for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
       final CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
