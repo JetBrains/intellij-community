@@ -78,6 +78,10 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
                 }
               }
             }
+
+            if ("java.lang.String".equals(clazz.getQualifiedName())) {
+              return manager.getElementFactory().createTypeByFQClassName("java.lang.Character", getResolveScope());
+            }
           }
         }
       }
