@@ -191,7 +191,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        mySearchField.setText(initialText != null && initialText.indexOf('\n') < 0 ? initialText : "");
+        final String text = initialText != null && initialText.indexOf('\n') < 0 ? initialText : "";
+        mySearchField.setText(text);
+        mySearchField.selectAll();
       }
     });
 
