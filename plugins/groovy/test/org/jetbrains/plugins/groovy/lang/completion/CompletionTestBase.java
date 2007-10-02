@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
-import junit.framework.Assert;
+import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.impl.gtag.reference.GrailsTagNameReference;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -44,7 +44,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
     String fileText = file.getText();
     int offset = fileText.indexOf(CARET_MARKER);
     fileText = removeCaretMarker(fileText);
-    myFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    myFile = createFile(fileText);
     myFileEditorManager = FileEditorManager.getInstance(myProject);
     myEditor = myFileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myFile.getVirtualFile(), 0), false);
     myEditor.getCaretModel().moveToOffset(offset);
@@ -83,6 +83,10 @@ public abstract class CompletionTestBase extends ActionTestCase {
     return result;
   }
 
+  protected PsiFile createFile(String fileText) throws IncorrectOperationException {
+    return TestUtils.createPseudoPhysicalFile(myProject, fileText);
+  }
+
   protected abstract LookupItem[] getAcceptableItems(CompletionData data) throws IncorrectOperationException;
 
 
@@ -109,28 +113,33 @@ public abstract class CompletionTestBase extends ActionTestCase {
     /**
      * Hack for IDEA completion
      */
-    PsiFile newFile = TestUtils.createPseudoPhysicalFile(myProject, newFileText);
+    PsiFile newFile = createFile(newFileText);
     PsiElement insertedElement = newFile.findElementAt(myOffset + 1);
     final int offset1 =
         myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionStart() : myEditor.getCaretModel().getOffset();
     final int offset2 = myEditor.getSelectionModel().hasSelection() ? myEditor.getSelectionModel().getSelectionEnd() : offset1;
     final CompletionContext context = new CompletionContext(myProject, myEditor, myFile, offset1, offset2);
-    context.setPrefix(elem, context.startOffset, completionData);
+    context.setPrefix(insertedElement, context.startOffset, completionData);
 
     if (lookupSet.size() == 0) {
+      final PsiReference ref = newFile.findReferenceAt(myOffset + 1);
       if (addKeywords) {
-        final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-        completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-        CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
+        if (!(inGsp() && ref instanceof GrailsTagNameReference)) {
+          context.offset = offset1;
+          final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+          completionData.addKeywordVariants(keywordVariants, context, insertedElement);
+          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
+        }
       }
       if (addReferenceVariants) {
-        final PsiReference ref = newFile.findReferenceAt(myOffset + 1);
         if (ref != null) {
+          context.offset = myOffset + 1;
           completionData.completeReference(ref, lookupSet, context, insertedElement);
         }
       }
     }
 
+    context.setPrefix(insertedElement, context.startOffset, completionData);
     ArrayList<LookupItem> lookupItems = new ArrayList<LookupItem>();
     final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
     for (LookupItem item : items) {
@@ -143,10 +152,14 @@ public abstract class CompletionTestBase extends ActionTestCase {
 
   }
 
+  protected boolean inGsp() {
+    return false;
+  }
+
   public String transform(String testName, String[] data) throws Exception {
     setSettings();
     String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    final PsiFile psiFile = createFile(fileText);
     String result = processFile(psiFile);
     System.out.println("------------------------ " + testName + " ------------------------");
     System.out.println(result);

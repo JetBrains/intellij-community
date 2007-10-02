@@ -4,24 +4,23 @@
 
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import org.junit.Assert;
 
-import java.net.URL;
-import java.net.URISyntaxException;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
-
-import org.junit.Assert;
+import java.util.List;
 
 /**
  * Utility classdef, that contains various methods for testing
@@ -40,6 +39,14 @@ public abstract class TestUtils {
     return getTestDataPath() + "/mockJDK";
   }
 
+  public static String getMockGrailsLibraryHome() {
+    return getTestDataPath() + "/mockGrailsLib";
+  }
+
+  public static String getMockGroovyLibraryHome() {
+    return getTestDataPath() + "/mockGroovyLib";
+  }
+
   public static PsiFile createPseudoPhysicalFile(final Project project, final String text) throws IncorrectOperationException {
     return createPseudoPhysicalFile(project, TEMP_FILE, text);
   }
@@ -47,7 +54,6 @@ public abstract class TestUtils {
   public static PsiFile createPseudoPhysicalGspFile(final Project project, final String text) throws IncorrectOperationException {
     return createPseudoPhysicalFile(project, GSP_TEMP_FILE, text);
   }
-
 
 
   public static PsiFile createPseudoPhysicalFile(final Project project, final String fileName, final String text) throws IncorrectOperationException {
