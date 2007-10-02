@@ -1,6 +1,7 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -23,12 +24,12 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -181,10 +182,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       private final List<VcsException> myExceptions = new ArrayList<VcsException>();
 
       public void run(final ProgressIndicator indicator) {
-        final VirtualFile[] files = myVcsManager.getAllVersionedRoots();
-        for(VirtualFile file: files) {
+        final VcsRoot[] vcsRoots = myVcsManager.getAllVcsRoots();
+        for(VcsRoot root: vcsRoots) {
           try {
-            myResult.addAll(getChanges(settings, file, maxCount, cacheOnly));
+            myResult.addAll(getChanges(settings, root.path, root.vcs, maxCount, cacheOnly));
           }
           catch (VcsException e) {
             myExceptions.add(e);
@@ -204,10 +205,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myTaskQueue.run(task);
   }
 
-  public List<CommittedChangeList> getChanges(ChangeBrowserSettings settings, final VirtualFile file, final int maxCount,
-                                              final boolean cacheOnly) throws VcsException {
-    final AbstractVcs vcs = myVcsManager.getVcsFor(file);
-    assert vcs != null;
+  public List<CommittedChangeList> getChanges(ChangeBrowserSettings settings, final VirtualFile file, @NotNull final AbstractVcs vcs,
+                                              final int maxCount, final boolean cacheOnly) throws VcsException {
     final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
     if (provider == null) {
       return Collections.emptyList();
