@@ -60,6 +60,9 @@ public class RenameDialog extends RefactoringDialog {
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext,
                       Editor editor) {
     super(project, true);
+
+    assert psiElement.isValid();
+
     myPsiElement = psiElement;
     myNameSuggestionContext = nameSuggestionContext;
     myEditor = editor;
