@@ -55,7 +55,7 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
   }
 
   @Nullable
-  protected Facet detectFacet(@NotNull Module module, VirtualFile virtualFile, S source) {
+  protected Facet detectFacet(@NotNull final Module module, VirtualFile virtualFile, S source) {
     if (!myAutodetectionFilter.isAutodetectionEnabled(module, myFacetType, virtualFile.getUrl())) {
       LOG.debug("Autodetection disabled for " + myFacetType.getPresentableName() + " facets in module " + module.getName());
       return null;
@@ -79,28 +79,28 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
       configurations.put(facet.getConfiguration(), facet);
     }
 
-    C result = myFacetDetector.detectFacet(source, Collections.unmodifiableCollection(configurations.keySet()));
-    if (result == null) {
+    final C detectedConfiguration = myFacetDetector.detectFacet(source, Collections.unmodifiableCollection(configurations.keySet()));
+    if (detectedConfiguration == null) {
       return null;
     }
 
-    if (configurations.containsKey(result)) {
-      return configurations.get(result);
+    if (configurations.containsKey(detectedConfiguration)) {
+      return configurations.get(detectedConfiguration);
     }
 
-    String name = generateName(module);
-    final Facet facet = FacetManagerImpl.createFacet(myFacetType, module, name, result, underlyingFacet);
-    facet.setImplicit(true);
+    final String name = generateName(module);
 
-    new WriteAction() {
-      protected void run(final Result result) {
+    final Facet underlyingFacet1 = underlyingFacet;
+    return new WriteAction<Facet>() {
+      protected void run(final Result<Facet> result) {
+        final Facet facet = FacetManagerImpl.createFacet(myFacetType, module, name, detectedConfiguration, underlyingFacet1);
+        facet.setImplicit(true);
         ModifiableFacetModel model = FacetManager.getInstance(facet.getModule()).createModifiableModel();
         model.addFacet(facet);
         model.commit();
+        result.setResult(facet);
       }
-    }.execute();
-
-    return facet;
+    }.execute().getResultObject();
   }
 
   private String generateName(final Module module) {
