@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.Icons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,12 +26,14 @@ import java.util.List;
  *         Date: Jul 16, 2007
  */
 abstract class ProjectLayoutPanel<T> extends JPanel {
-  private ElementsChooser<T> myEntriesChooser;
-  private JList myDependenciesList;
-  private final ModuleInsight myInsight;
+  private static final Icon ICON_MODULE = IconLoader.getIcon("/nodes/ModuleClosed.png");
   private static final Icon RENAME_ICON = IconLoader.getIcon("/modules/edit.png");
   private static final Icon MERGE_ICON = IconLoader.getIcon("/modules/merge.png");
   private static final Icon SPLIT_ICON = IconLoader.getIcon("/modules/split.png");
+  
+  private ElementsChooser<T> myEntriesChooser;
+  private JList myDependenciesList;
+  private final ModuleInsight myInsight;
   
   private final Comparator<T> COMPARATOR = new Comparator<T>() {
     public int compare(final T o1, final T o2) {
@@ -142,15 +145,110 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     return entries;
   }
 
+  @Nullable
   protected Icon getElementIcon(Object element) {
+    if (element instanceof ModuleDescriptor) {
+      return ICON_MODULE;
+    }
+    if (element instanceof LibraryDescriptor) {
+      return Icons.LIBRARY_ICON;
+    }
+    if (element instanceof File) {
+      final File file = (File)element;
+      return file.isDirectory()? Icons.DIRECTORY_CLOSED_ICON : Icons.JAR_ICON;
+    }
     return null;
   }
 
   protected int getWeight(Object element) {
+    if (element instanceof File) {
+      return 10;
+    }
+    if (element instanceof ModuleDescriptor) {
+      return 20;
+    }
+    if (element instanceof LibraryDescriptor) {
+      return ((LibraryDescriptor)element).getJars().size() > 1? 30 : 40;
+    }
     return Integer.MAX_VALUE;
   }
 
-  protected abstract String getElementText(Object element);
+  protected String getElementText(Object element) {
+    if (element instanceof LibraryDescriptor) {
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        builder.append(((LibraryDescriptor)element).getName());
+        final Collection<File> jars = ((LibraryDescriptor)element).getJars();
+        if (jars.size() == 1) {
+          final File parentFile = jars.iterator().next().getParentFile();
+          if (parentFile != null) {
+            builder.append(" (");
+            builder.append(parentFile.getPath());
+            builder.append(")");
+          }
+        }
+        return builder.toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
+    }
+    
+    if (element instanceof File) {
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        builder.append(((File)element).getName());
+        final File parentFile = ((File)element).getParentFile();
+        if (parentFile != null) {
+          builder.append(" (");
+          builder.append(parentFile.getPath());
+          builder.append(")");
+        }
+        return builder.toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
+    }
+    
+    if (element instanceof ModuleDescriptor) {
+      final ModuleDescriptor moduleDescriptor = (ModuleDescriptor)element;
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        builder.append(moduleDescriptor.getName());
+        
+        final Set<File> contents = moduleDescriptor.getContentRoots();
+        final int rootCount = contents.size();
+        if (rootCount > 0) {
+          builder.append(" (");
+          builder.append(contents.iterator().next().getPath());
+          if (rootCount > 1) {
+            builder.append("...");
+          }
+          builder.append(")");
+        }
+
+        final Set<File> sourceRoots = moduleDescriptor.getSourceRoots();
+        if (sourceRoots.size() > 0) {
+          builder.append(" [");
+          for (Iterator<File> it = sourceRoots.iterator(); it.hasNext();) {
+            File root = it.next();
+            builder.append(root.getName());
+            if (it.hasNext()) {
+              builder.append(",");
+            }
+          }
+          builder.append("]");
+        }
+        return builder.toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
+    }
+    
+    return "";
+  }
 
   protected abstract List<T> getEntries();
 
@@ -311,43 +409,6 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     public void update(final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() == 1);
-    }
-  }
-
-  protected static String getDisplayText(LibraryDescriptor lib) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(lib.getName());
-      final Collection<File> jars = lib.getJars();
-      if (jars.size() == 1) {
-        final File parentFile = jars.iterator().next().getParentFile();
-        if (parentFile != null) {
-          builder.append(" (");
-          builder.append(parentFile.getPath());
-          builder.append(")");
-        }
-      }
-      return builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
-  }
-  
-  protected static String getDisplayText(File file) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(file.getName());
-      final File parentFile = file.getParentFile();
-      if (parentFile != null) {
-        builder.append(" (");
-        builder.append(parentFile.getPath());
-        builder.append(")");
-      }
-      return builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
     }
   }
 

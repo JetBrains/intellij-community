@@ -7,7 +7,6 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.JavaUtil;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +49,6 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
   @NonNls private static final String CHOOSE_SOURCE_PANEL = "choose_source";
 
   private static final List<Pair<String,String>> EMPTY_STRING_STRING_ARRAY = Collections.emptyList();
-  private final WizardContext myContext;
   private final SourcePathsBuilder myBuilder;
   private final Icon myIcon;
   private final String myHelpId;
@@ -62,9 +60,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
   private JTextField myTfFullPath;
   private JPanel myResultPanel;
 
-  public SourcePathsStep(final WizardContext context, SourcePathsBuilder builder, Icon icon, @NonNls String helpId) {
+  public SourcePathsStep(SourcePathsBuilder builder, Icon icon, @NonNls String helpId) {
     super(IdeBundle.message("prompt.stop.searching.for.sources", ApplicationNamesInfo.getInstance().getProductName()));
-    myContext = context;
     myBuilder = builder;
     myIcon = icon;
     myHelpId = helpId;
@@ -326,10 +323,9 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
     return paths;
   }
 
+  @Nullable
   private String getContentRootPath() {
-    final String path = myBuilder.getContentEntryPath();
-    if (path != null) return path;
-    return myContext.getProjectFileDirectory();
+    return myBuilder.getContentEntryPath();
   }
 
   protected void setSourceDirectoryName(String name) {
@@ -338,7 +334,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<Pair<String, 
   }
 
   protected String getProgressText() {
-    return IdeBundle.message("progress.searching.for.sources", getContentRootPath().replace('/', File.separatorChar));
+    final String root = getContentRootPath();
+    return IdeBundle.message("progress.searching.for.sources", root != null? root.replace('/', File.separatorChar) : "") ;
   }
 
   private class BrowsePathListener extends BrowseFilesListener {

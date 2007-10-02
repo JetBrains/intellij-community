@@ -3,10 +3,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.NamePathComponent;
-import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -66,8 +63,13 @@ public class ProjectNameStep extends ModuleWizardStep {
 
   public void updateDataModel() {
     myWizardContext.setProjectName(getProjectName());
-    myWizardContext.setProjectFileDirectory(getProjectFileDirectory());
-    myWizardContext.setProjectBuilder(myMode.getModuleBuilder());
+    final String projectFileDirectory = getProjectFileDirectory();
+    myWizardContext.setProjectFileDirectory(projectFileDirectory);
+    final ProjectBuilder moduleBuilder = myMode.getModuleBuilder();
+    myWizardContext.setProjectBuilder(moduleBuilder);
+    if (moduleBuilder instanceof SourcePathsBuilder) {
+      ((SourcePathsBuilder)moduleBuilder).setContentEntryPath(projectFileDirectory);
+    }
   }
 
   public Icon getIcon() {

@@ -1,8 +1,5 @@
 package com.intellij.ide.util.importProject;
 
-import com.intellij.util.Icons;
-
-import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,45 +15,12 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
     super(insight);
   }
 
-  protected Icon getElementIcon(final Object element) {
-    if (element instanceof LibraryDescriptor) {
-      final LibraryDescriptor libDescr = (LibraryDescriptor)element;
-      final Collection<File> jars = libDescr.getJars();
-      if (jars.size() == 1) {
-        return Icons.JAR_ICON;
-      }
-      return Icons.LIBRARY_ICON;
-    }
-    if(element instanceof File) {
-      final File file = (File)element;
-      return file.isDirectory()? Icons.DIRECTORY_CLOSED_ICON : Icons.JAR_ICON;
-    }
-    return super.getElementIcon(element);
-  }
-
-  protected int getWeight(final Object element) {
-    if (element instanceof LibraryDescriptor) {
-      return ((LibraryDescriptor)element).getJars().size() > 1? 10 : 20; 
-    }
-    return super.getWeight(element);
-  }
-
   protected String getElementName(final LibraryDescriptor entry) {
     return entry.getName();
   }
 
   protected void setElementName(final LibraryDescriptor entry, final String name) {
     entry.setName(name);
-  }
-
-  protected String getElementText(final Object element) {
-    if (element instanceof LibraryDescriptor) {
-      return getDisplayText((LibraryDescriptor)element);
-    }
-    if (element instanceof File) {
-      return getDisplayText((File)element);
-    }
-    return "";
   }
 
   protected List<LibraryDescriptor> getEntries() {
