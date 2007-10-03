@@ -35,9 +35,9 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
@@ -139,7 +139,7 @@ public class CopyReferenceAction extends AnAction {
     statusBar.setInfo(IdeBundle.message("message.reference.to.fqn.has.been.copied", fqn));
   }
 
-  private static void insert(final String fqn, final PsiNamedElement element, final Editor editor) {
+  private static void insert(final String fqn, final PsiMember element, final Editor editor) {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(editor.getProject());
     documentManager.commitDocument(editor.getDocument());
     final PsiFile file = documentManager.getPsiFile(editor.getDocument());
@@ -167,7 +167,7 @@ public class CopyReferenceAction extends AnAction {
   }
 
   private static void doInsert(String fqn,
-                               PsiNamedElement elementToInsert,
+                               PsiMember targetElement,
                                final Editor editor,
                                final Project project) throws IncorrectOperationException {
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -182,9 +182,10 @@ public class CopyReferenceAction extends AnAction {
     fqn = fqn.replace('#', '.');
     String toInsert;
     String suffix = "";
-    if (elementToInsert instanceof PsiMethod && PsiTreeUtil.getParentOfType(elementAtCaret, PsiDocComment.class) != null) {
-      // fqn#methodName(ParamType)
-      PsiMethod method = (PsiMethod)elementToInsert;
+    PsiElement elementToInsert = targetElement;
+    if (targetElement instanceof PsiMethod && PsiUtil.isInsideJavadocComment(elementAtCaret)) {
+      // use fqn#methodName(ParamType)
+      PsiMethod method = (PsiMethod)targetElement;
       PsiClass aClass = method.getContainingClass();
       String className = aClass == null ? "" : aClass.getQualifiedName();
       toInsert = className == null ? "" : className;
@@ -198,14 +199,21 @@ public class CopyReferenceAction extends AnAction {
       }
       toInsert += ")";
     }
-    else if (elementToInsert == null ||
+    else if (targetElement == null ||
              PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiLiteralExpression.class, PsiComment.class) != null ||
              PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiJavaFile.class) == null) {
       toInsert = fqn;
     }
     else {
-      toInsert = elementToInsert.getName();
-      if (elementToInsert instanceof PsiMethod) {
+      toInsert = targetElement.getName();
+      if (targetElement instanceof PsiMethod) {
+        suffix = "()";
+        if (((PsiMethod)targetElement).isConstructor()) {
+          targetElement = targetElement.getContainingClass();
+        }
+      }
+      else if (targetElement instanceof PsiClass && isAfterNew(file, elementAtCaret)) {
+        // pasting reference to default constructor of the class after new
         suffix = "()";
       }
       final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
@@ -215,38 +223,58 @@ public class CopyReferenceAction extends AnAction {
                                                          : expression instanceof PsiReferenceExpression
                                                            ? (PsiReferenceExpression)expression
                                                            : null;
-      if (referenceExpression == null || referenceExpression.advancedResolve(true).getElement() != elementToInsert) {
+      if (referenceExpression == null) {
         toInsert = fqn;
+      }
+      else if (referenceExpression.advancedResolve(true).getElement() != targetElement) {
+        try {
+          referenceExpression.bindToElement(targetElement);
+        }
+        catch (IncorrectOperationException e) {
+          // failed to bind
+        }
+        if (referenceExpression.advancedResolve(true).getElement() != targetElement) {
+          toInsert = fqn;
+        }
       }
     }
     if (toInsert == null) toInsert = "";
 
     document.insertString(offset, toInsert+suffix);
-    documentManager.commitDocument(document);
+    documentManager.commitAllDocuments();
     int endOffset = offset + toInsert.length() + suffix.length();
     RangeMarker rangeMarker = document.createRangeMarker(endOffset, endOffset);
     elementAtCaret = file.findElementAt(offset);
 
     if (elementAtCaret != null && elementAtCaret.isValid()) {
-      shortenReference(elementAtCaret);
+      shortenReference(elementAtCaret, targetElement);
     }
     CodeInsightUtil.forcePsiPostprocessAndRestoreElement(file);
     CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
 
     int caretOffset = rangeMarker.getEndOffset();
-    if (elementToInsert instanceof PsiMethod && StringUtil.endsWithChar(toInsert+suffix,')')) {
+    if (elementToInsert instanceof PsiMethod && ((PsiMethod)elementToInsert).getParameterList().getParametersCount() != 0 && StringUtil.endsWithChar(suffix,')')) {
       caretOffset --;
     }
     editor.getCaretModel().moveToOffset(caretOffset);
   }
 
-  private static void shortenReference(PsiElement element) throws IncorrectOperationException {
-    if (element == null) return;
+  private static boolean isAfterNew(PsiFile file, PsiElement elementAtCaret) {
+    PsiElement prevSibling = elementAtCaret.getPrevSibling();
+    if (prevSibling == null) return false;
+    int offset = prevSibling.getTextRange().getStartOffset();
+    PsiElement prevElement = file.findElementAt(offset);
+    return PsiTreeUtil.getParentOfType(prevElement, PsiNewExpression.class) != null;
+  }
+
+  private static void shortenReference(PsiElement element, PsiMember elementToInsert) throws IncorrectOperationException {
     while (element.getParent() instanceof PsiJavaCodeReferenceElement) {
       element = element.getParent();
       if (element == null) return;
     }
-
+    if (element instanceof PsiJavaCodeReferenceElement && elementToInsert != null) {
+      element = ((PsiJavaCodeReferenceElement)element).bindToElement(elementToInsert);
+    }
     final CodeStyleManagerEx codeStyleManagerEx = (CodeStyleManagerEx)CodeStyleManager.getInstance(element.getProject());
     codeStyleManagerEx.shortenClassReferences(element, CodeStyleManagerEx.UNCOMPLETE_CODE);
   }
@@ -258,7 +286,7 @@ public class CopyReferenceAction extends AnAction {
       if (project == null || editor == null) return;
 
       final String fqn = getCopiedFqn();
-      PsiNamedElement element = fqnToElement(project, fqn);
+      PsiMember element = fqnToElement(project, fqn);
       insert(fqn, element, editor);
     }
 
@@ -360,7 +388,7 @@ public class CopyReferenceAction extends AnAction {
   }
 
   @Nullable
-  private static PsiNamedElement fqnToElement(final Project project, final String fqn) {
+  private static PsiMember fqnToElement(final Project project, final String fqn) {
     PsiClass aClass = PsiManager.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
     if (aClass != null) {
       return aClass;
@@ -372,13 +400,12 @@ public class CopyReferenceAction extends AnAction {
     aClass = PsiManager.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
     if (aClass == null) return null;
     String memberName = fqn.substring(endIndex + 1);
-    PsiNamedElement element = aClass.findFieldByName(memberName, false);
-    if (element != null) {
-      return element;
+    PsiField field = aClass.findFieldByName(memberName, false);
+    if (field != null) {
+      return field;
     }
     PsiMethod[] methods = aClass.findMethodsByName(memberName, false);
     if (methods.length == 0) return null;
-    element = methods[0];
-    return element;
+    return methods[0];
   }
 }

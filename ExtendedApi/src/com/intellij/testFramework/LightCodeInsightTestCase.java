@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -31,6 +32,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -424,5 +426,20 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
 
     actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+  }
+
+  protected DataContext getCurrentEditorDataContext() {
+    final DataContext defaultContext = DataManager.getInstance().getDataContext();
+    DataContext dataContext = new DataContext() {
+      @Nullable
+      public Object getData(@NonNls String dataId) {
+        if (dataId.equals(DataConstants.EDITOR)) return getEditor();
+        if (dataId.equals(DataConstants.PROJECT)) return getProject();
+        if (dataId.equals(DataConstants.PSI_FILE)) return getFile();
+        if (dataId.equals(DataConstants.PSI_ELEMENT)) return getFile().findElementAt(getEditor().getCaretModel().getOffset());
+        return defaultContext.getData(dataId);
+      }
+    };
+    return dataContext;
   }
 }
