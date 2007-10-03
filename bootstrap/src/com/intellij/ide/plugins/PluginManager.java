@@ -25,6 +25,7 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -203,7 +204,12 @@ public class PluginManager {
   private static void prepareLoadingPluginsErrorMessage(final String errorMessage) {
     if (errorMessage != null) {
       if (!Main.isHeadless()) {
-        myPluginError = errorMessage;
+        if (myPluginError == null) {
+          myPluginError = errorMessage;
+        }
+        else {
+          myPluginError += "\n" + errorMessage;
+        }
       } else {
         getLogger().error(errorMessage);
       }
@@ -742,6 +748,10 @@ public class PluginManager {
 
       descriptor.readExternal(jarURL);
       return descriptor;
+    }
+    catch (XmlSerializationException e) {
+      getLogger().info("Cannot load " + file, e);
+      prepareLoadingPluginsErrorMessage("Plugin file " + file.getName() + " contains invalid plugin descriptor file.");
     }
     catch (FileNotFoundException e) {
       return null;

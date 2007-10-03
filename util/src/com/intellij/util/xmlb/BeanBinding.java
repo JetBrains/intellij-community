@@ -108,7 +108,9 @@ class BeanBinding implements Binding {
       nodes.add(aNode);
     }
 
-    assert nodes.size() == 1 : "Wrong set of nodes: " + nodes + " for bean"  + myBeanClass + " in " + myAccessor;
+    if (nodes.size() != 1) {
+      throw new XmlSerializationException("Wrong set of nodes: " + nodes + " for bean" + myBeanClass + " in " + myAccessor);
+    }
     assert nodes.get(0) instanceof Element : "Wrong node: " + nodes;
     Element e = (Element)nodes.get(0);
 
