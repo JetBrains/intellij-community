@@ -15,10 +15,11 @@
  */
 package com.intellij.psi;
 
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -43,6 +44,9 @@ public interface PsiFileSystemItem extends PsiNamedElement, NavigationItem {
 
   @Nullable
   VirtualFile getVirtualFile();
+
+  @NotNull
+  String getName();
 
   boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor);
 }

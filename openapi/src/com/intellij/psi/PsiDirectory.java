@@ -39,6 +39,7 @@ public interface PsiDirectory extends PsiFileSystemItem {
   @NotNull
   VirtualFile getVirtualFile();
 
+  @NotNull
   String getName();
   @NotNull
   PsiElement setName(@NotNull String name) throws IncorrectOperationException;

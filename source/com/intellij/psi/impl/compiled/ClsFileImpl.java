@@ -125,6 +125,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return vFile.isValid();
   }
 
+  @NotNull
   public String getName() {
     return getVirtualFile().getName();
   }

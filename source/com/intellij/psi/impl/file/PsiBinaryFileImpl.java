@@ -48,6 +48,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return myContents;
   }
 
+  @NotNull
   public String getName() {
     return !isCopy() ? getVirtualFile().getName() : myName;
   }

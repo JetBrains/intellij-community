@@ -90,6 +90,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return myManager;
   }
 
+  @NotNull
   public String getName() {
     return myFile.getName();
   }
