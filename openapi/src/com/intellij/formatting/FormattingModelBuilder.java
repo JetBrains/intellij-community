@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
  * for a portion of a file.
  * A formatting model defines how a file is broken into non-whitespace blocks and different
  * types of whitespace (alignment, indents and wraps) between them.
+ * <p>For certain aspects of the custom formatting to work properly, it is recommended to use TokenType.WHITE_SPACE
+ * as the language's whitespace tokens. See {@link com.intellij.lang.ParserDefinition}
  *
  * @see com.intellij.lang.Language#getFormattingModelBuilder()
  * @see FormattingModelProvider#createFormattingModelForPsiFile(com.intellij.psi.PsiFile, Block, com.intellij.psi.codeStyle.CodeStyleSettings)
