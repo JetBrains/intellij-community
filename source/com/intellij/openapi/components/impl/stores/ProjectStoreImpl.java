@@ -580,15 +580,18 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         }
       }
 
-      if (moduleSaves) {
-        updateUsedMacros();
-        final FileBasedStorage.FileSaveSession session = (FileBasedStorage.FileSaveSession)myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
-        session.clearHash();
-      }
+      final StateStorage.SaveSession defaultSaveSession = myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
 
-      final FileBasedStorage.FileSaveSession session = (FileBasedStorage.FileSaveSession)myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
-      if (!session.isHashUpToDate()) {
-        updateUsedMacros();
+      if (defaultSaveSession instanceof FileBasedStorage.FileSaveSession) {
+        final FileBasedStorage.FileSaveSession session = (FileBasedStorage.FileSaveSession)defaultSaveSession;
+
+        if (moduleSaves) {
+          updateUsedMacros();
+          session.clearHash();
+        }
+        else if (!session.isHashUpToDate()) {
+          updateUsedMacros();
+        }
       }
 
       result.addAll(super.getAllStorageFilesToSave(false));
