@@ -51,6 +51,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ import java.util.Map;
 public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
-  private Map<VirtualFile, XmlFile> myExternalAnotations = new WeakHashMap<VirtualFile, XmlFile>();
+  private final Map<VirtualFile, XmlFile> myExternalAnotations = Collections.synchronizedMap(new WeakHashMap<VirtualFile, XmlFile>());
   private PsiManager myPsiManager;
 
   public ExternalAnnotationsManagerImpl(final Project project, final PsiManager psiManager) {
@@ -333,16 +334,14 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   }
 
   @Nullable
-  private synchronized XmlFile findExternalAnnotationsFile(PsiModifierListOwner listOwner) {
+  private XmlFile findExternalAnnotationsFile(PsiModifierListOwner listOwner) {
     final Project project = listOwner.getProject();
     final PsiFile containingFile = listOwner.getContainingFile();
     if (containingFile instanceof PsiJavaFile) {
       final VirtualFile virtualFile = containingFile.getVirtualFile();
-      if (myExternalAnotations.containsKey(virtualFile)) {
-        final XmlFile xmlFile = myExternalAnotations.get(virtualFile);
-        if (xmlFile != null && xmlFile.isValid()) {
-          return xmlFile;
-        }
+      final XmlFile xmlFile = myExternalAnotations.get(virtualFile);
+      if (xmlFile != null && xmlFile.isValid()) {
+        return xmlFile;
       }
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
       final String packageName = javaFile.getPackageName();
