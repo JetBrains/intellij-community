@@ -5,14 +5,17 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author max
@@ -47,7 +50,7 @@ public class SwitchedFileHolder {
   }
 
   private boolean fileDropped(final VirtualFile file) {
-    return !file.isValid() || !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
+    return !file.isValid() || ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file) == null;
   }
 
   public synchronized void addFile(VirtualFile file, String branchName, final boolean recursive) {

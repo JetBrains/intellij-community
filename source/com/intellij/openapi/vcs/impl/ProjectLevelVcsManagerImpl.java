@@ -586,6 +586,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myDirectoryMappingList.getDirectoryMappings(vcs.getName());
   }
 
+  public boolean hasExplicitMapping(final FilePath f) {
+    VirtualFile vFile = ChangesUtil.findValidParent(f);
+    if (vFile == null) return false;
+    return hasExplicitMapping(vFile);
+  }
+
+  public boolean hasExplicitMapping(final VirtualFile vFile) {
+    final VcsDirectoryMapping mapping = myDirectoryMappingList.getMappingFor(vFile);
+    return mapping != null && mapping.getDirectory().length() > 0;
+  }
+
   public void setDirectoryMapping(final String path, final String activeVcsName) {
     if (myMappingsLoaded) return;            // ignore per-module VCS settings if the mapping table was loaded from .ipr
     myHaveLegacyVcsConfiguration = true;

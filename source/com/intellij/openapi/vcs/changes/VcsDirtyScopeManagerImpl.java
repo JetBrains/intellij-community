@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +37,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final VcsDirtyScopeManagerImpl.MyVfsListener myVfsListener;
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
-  private final ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManagerImpl myVcsManager;
   private final ProjectRootManager myProjectRootManager;
   private boolean myIsDisposed = false;
   private boolean myIsInitialized = false;
@@ -50,7 +51,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myProjectRootManager = projectRootManager;
     myProject = project;
     myChangeListManager = changeListManager;
-    myVcsManager = vcsManager;
+    myVcsManager = (ProjectLevelVcsManagerImpl)vcsManager;
     myVfsListener = new MyVfsListener();
   }
 
@@ -150,7 +151,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if (!file.isInLocalFileSystem()) {
       return null;
     }
-    if (myProjectRootManager.getFileIndex().isInContent(file) || isFileInBaseDir(file)) {
+    if (myProjectRootManager.getFileIndex().isInContent(file) || isFileInBaseDir(file) ||
+        myVcsManager.hasExplicitMapping(file)) {
       if (myProjectRootManager.getFileIndex().isIgnored(file)) {
         return null;
       }
@@ -171,7 +173,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if (validParent == null) {
       return null;
     }
-    if (myProjectRootManager.getFileIndex().isInContent(validParent) || isFileInBaseDir(filePath)) {
+    if (myProjectRootManager.getFileIndex().isInContent(validParent) || isFileInBaseDir(filePath) ||
+        myVcsManager.hasExplicitMapping(filePath)) {
       if (myProjectRootManager.getFileIndex().isIgnored(validParent)) {
         return null;
       }
