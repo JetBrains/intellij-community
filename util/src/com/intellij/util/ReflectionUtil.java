@@ -3,12 +3,12 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
@@ -213,7 +213,7 @@ public class ReflectionUtil {
     return findMethod(aClass.getDeclaredMethods(), name, parameters);
   }
 
-  public static Object getField(Class objectClass, Object object, Class type, String name) {
+  public static Object getField(Class objectClass, Object object, Class type, @NonNls String name) {
     try {
       final Field field = findAssignableField(objectClass, type, name);
       field.setAccessible(true);

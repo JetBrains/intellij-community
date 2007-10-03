@@ -1,13 +1,14 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
@@ -25,8 +26,6 @@ import java.lang.reflect.Method;
  * @author Vladimir Kondratyev
  */
 public final class SwingCleanuper implements ApplicationComponent{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SwingCleanuper");
-
   private final Alarm myAlarm;
 
   /** Invoked by reflection
@@ -72,7 +71,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                         newFocusOwnerField.set(null, null);
                       }
                       catch(final Exception exc){
-                        LOG.error(exc);
+                        // Ignore
                       }
 
                       // Clear "realOppositeComponent", "realOppositeWindow"
@@ -90,7 +89,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                         }
                       }
                       catch (Exception e) {
-                        LOG.info(e);
+                        // Ignore
                       }
 
                       // Memory leak on javax.swing.TransferHandler$SwingDragGestureRecognizer.component
@@ -100,21 +99,19 @@ public final class SwingCleanuper implements ApplicationComponent{
                         recognizerField.setAccessible(true);
                         final Object recognizerObject = recognizerField.get(null);
                         if(recognizerObject!=null){ // that is memory leak
-                          final Method setComponentMethod = DragGestureRecognizer.class.getDeclaredMethod(
-                            "setComponent",
-                            new Class[]{Component.class}
-                          );
+                          final Method setComponentMethod = DragGestureRecognizer.class.getDeclaredMethod("setComponent", Component.class);
                           setComponentMethod.invoke(recognizerObject,new Object[]{null});
                         }
-                      }catch (Exception e){
-                        LOG.error(e);
+                      }
+                      catch (Exception e){
+                        // Ignore
                       }
                       try {
                         fixJTextComponentMemoryLeak();
                       } catch(NoSuchFieldException e) {
                         // JDK 1.5
                       } catch(Exception e) {
-                        LOG.error(e);
+                        // Ignore
                       }
 
                       focusManager.setGlobalCurrentFocusCycleRoot(null); //Remove focus leaks
@@ -125,7 +122,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                         m.invoke(focusManager, new Object[]{null});
                       }
                       catch (Exception e) {
-                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        // Ignore
                       }
                       try {
                         final Field f = KeyboardFocusManager.class.getDeclaredField("newFocusOwner");
@@ -133,7 +130,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                         f.set(null, null);
                       }
                       catch (Exception e) {
-                        e.printStackTrace();
+                        // Ignore
                       }
 
                       try {
@@ -142,7 +139,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                         f.set(null, null);
                       }
                       catch (Exception e) {
-                        e.printStackTrace();
+                        // Ignore
                       }
 
                       try {
@@ -151,7 +148,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                         f.set(null, null);
                       }
                       catch (Exception e) {
-                        e.printStackTrace();
+                        // Ignore
                       }
 
                     }
@@ -166,17 +163,18 @@ public final class SwingCleanuper implements ApplicationComponent{
     );
   }
 
-  private static void resetField(Object object, Class type, String name) {
+  private static void resetField(Object object, Class type, @NonNls String name) {
     try {
       ReflectionUtil.resetField(object, type, name);
     }
     catch (Exception e) {
-      LOG.info(e);
+      // Ignore
     }
   }
 
   public final void disposeComponent(){}
 
+  @NotNull
   public final String getComponentName(){
     return "SwingCleanuper";
   }
