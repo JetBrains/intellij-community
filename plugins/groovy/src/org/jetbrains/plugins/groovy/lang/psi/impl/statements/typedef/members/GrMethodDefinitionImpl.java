@@ -428,7 +428,9 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   public PsiElement getOriginalElement() {
-    PsiClass originalClass = (PsiClass) getContainingClass().getOriginalElement();
+    final PsiClass containingClass = getContainingClass();
+    if (containingClass == null) return this;
+    PsiClass originalClass = (PsiClass) containingClass.getOriginalElement();
     final PsiMethod originalMethod = originalClass.findMethodBySignature(this, false);
     return originalMethod != null ? originalMethod : this;
   }
