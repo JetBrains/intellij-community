@@ -23,7 +23,7 @@ public class CreateClassAction extends CreateInPackageActionBase {
 
   @NotNull
   protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
-    CreateElementActionBase.MyInputValidator validator = new CreateElementActionBase.MyInputValidator(project, directory);
+    MyInputValidator validator = new MyInputValidator(project, directory);
     Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.class.name"),
                              IdeBundle.message("title.new.class"), Messages.getQuestionIcon(), "", validator);
     return validator.getCreatedElements();
