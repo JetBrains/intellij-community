@@ -112,7 +112,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     */
 
-    checkSwitchedDir(dir, builder);
+    checkSwitchedDir(dir, builder, scope);
 
     if (CvsUtil.fileIsUnderCvs(dir) && dir.getChildren().length == 1 /* admin dir */ &&
         dirContent.getDeletedFiles().isEmpty() && hasRemovedFiles(dirContent.getFiles())) {
@@ -161,7 +161,7 @@ public class CvsChangeProvider implements ChangeProvider {
     checkSwitchedFile(filePath, builder, dir, entry);
   }
 
-  private void checkSwitchedDir(final VirtualFile dir, final ChangelistBuilder builder) {
+  private void checkSwitchedDir(final VirtualFile dir, final ChangelistBuilder builder, final VcsDirtyScope scope) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex();
     VirtualFile parentDir = dir.getParent();
     if (parentDir == null || !fileIndex.isInContent(parentDir)) {
@@ -199,6 +199,13 @@ public class CvsChangeProvider implements ChangeProvider {
         catch (ParseException e) {
           builder.processSwitchedFile(dir, CvsBundle.message("switched.date.format", dirTag.substring(1)), true);
         }
+      }
+    }
+    else if (!scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(parentDir))) {
+      // check if we're doing a partial refresh below a switched dir (IDEADEV-16611)
+      final String parentBranch = ChangeListManager.getInstance(myVcs.getProject()).getSwitchedBranch(parentDir);
+      if (parentBranch != null) {
+        builder.processSwitchedFile(dir, parentBranch, true);
       }
     }
   }
