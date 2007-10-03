@@ -48,7 +48,8 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
   private void fileChanged(final VirtualFile file) {
     for (ConfigFile descriptor : myConfigFiles.values()) {
       final VirtualFile virtualFile = descriptor.getVirtualFile();
-      if (virtualFile != null && virtualFile.equals(file)) {
+      if (virtualFile != null && VfsUtil.isAncestor(file, virtualFile, false)) {
+        myConfiguration.updateConfigFile(descriptor);
         fireDescriptorChanged(descriptor);
       }
     }

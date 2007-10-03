@@ -3,7 +3,7 @@ package com.intellij.util.descriptors;
 /**
  * @author Gregory.Shrago
  */
-public class ConfigFileAdapter implements ConfigFileListener {
+public abstract class ConfigFileAdapter implements ConfigFileListener {
   protected void configChanged(ConfigFile configFile) {
   }
 

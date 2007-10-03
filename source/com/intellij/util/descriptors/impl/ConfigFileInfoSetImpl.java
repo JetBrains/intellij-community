@@ -4,18 +4,15 @@
 
 package com.intellij.util.descriptors.impl;
 
-import com.intellij.util.descriptors.ConfigFileMetaData;
-import com.intellij.util.descriptors.ConfigFileInfoSet;
-import com.intellij.util.descriptors.ConfigFileMetaDataProvider;
-import com.intellij.util.descriptors.ConfigFileInfo;
-import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.descriptors.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -57,6 +54,14 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   public void replaceConfigFile(final ConfigFileMetaData metaData, final String newUrl) {
     myConfigFiles.removeAll(metaData);
     addConfigFile(new ConfigFileInfo(metaData, newUrl));
+  }
+
+  public ConfigFileInfo updateConfigFile(ConfigFile configFile) {
+    myConfigFiles.remove(configFile.getMetaData(), configFile.getInfo());
+    ConfigFileInfo info = new ConfigFileInfo(configFile.getMetaData(), configFile.getUrl());
+    myConfigFiles.put(info.getMetaData(), info);
+    ((ConfigFileImpl)configFile).setInfo(info);
+    return info;
   }
 
   public void removeConfigFiles(final ConfigFileMetaData... metaData) {

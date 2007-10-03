@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class ConfigFileImpl implements ConfigFile {
-  private final @NotNull ConfigFileInfo myInfo;
+  private @NotNull ConfigFileInfo myInfo;
   private VirtualFilePointer myFilePointer;
   private PsiFile myPsiFile;
   private final ConfigFileContainerImpl myContainer;
@@ -64,6 +64,10 @@ public class ConfigFileImpl implements ConfigFile {
 
   public String getUrl() {
     return myFilePointer.getUrl();
+  }
+
+  public void setInfo(@NotNull final ConfigFileInfo info) {
+    myInfo = info;
   }
 
   @Nullable
