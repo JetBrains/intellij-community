@@ -61,6 +61,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -269,6 +270,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute().throwException();
   }
 
+  public void moveFile(@NonNls final String filePath, @NonNls final String to) throws Throwable {
+    final Project project = myProjectFixture.getProject();
+    new WriteCommandAction.Simple(project) {
+      protected void run() throws Throwable {
+        configureByFile(filePath);
+        final VirtualFile file = findFile(to);
+        assert file.isDirectory() : to + " is not a directory";
+        final PsiDirectory directory = myPsiManager.findDirectory(file);
+        new MoveFilesOrDirectoriesProcessor(project, new PsiElement[] {myFile}, directory,
+                                            false, false, null, null).run();
+      }
+    }.execute().throwException();
+
+  }
+
   @Nullable
   public GutterIconRenderer findGutter(final String filePath) throws Throwable {
     final Project project = myProjectFixture.getProject();
@@ -423,10 +439,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    * @throws IOException
    */
   private int configureByFileInner(@NonNls String filePath) throws IOException {
-    String fullPath = getTempDirPath() + "/" + filePath;
-
-    final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
-    assert copy != null: "file " + fullPath + " not found";
+    final VirtualFile copy = findFile(filePath);
 
     SelectionAndCaretMarkupLoader loader = new SelectionAndCaretMarkupLoader(copy.getPath());
     try {
@@ -451,6 +464,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
     return offset;
+  }
+
+  private VirtualFile findFile(final String filePath) {
+    String fullPath = getTempDirPath() + "/" + filePath;
+
+    final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
+    assert copy != null: "file " + fullPath + " not found";
+    return copy;
   }
 
   @Nullable

@@ -186,6 +186,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    */
   void testRename(@NonNls String fileBefore, @NonNls String fileAfter, @NonNls String newName) throws Throwable;
 
+  void moveFile(@NonNls String filePath, @NonNls String to) throws Throwable;
+
   /**
    * Returns gutter renderer at the caret position.
    * Use {@link #CARET_MARKER} to mark the element to check.
