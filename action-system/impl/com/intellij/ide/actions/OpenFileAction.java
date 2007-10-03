@@ -121,15 +121,18 @@ public class OpenFileAction extends AnAction {
   }
 
   public static void openFile(String absolutePath, final Project project) {
-    String correctPath = absolutePath.replace(File.separatorChar, '/');
+    final String correctPath = absolutePath.replace(File.separatorChar, '/');
     final VirtualFile[] virtualFiles = new VirtualFile[1];
-    final String correctPath1 = correctPath;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        virtualFiles[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(correctPath1);
+        virtualFiles[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(correctPath);
       }
     });
-    if (virtualFiles[0] == null) return;
+    
+    if (virtualFiles[0] == null) {
+      Messages.showErrorDialog(project, IdeBundle.message("error.file.does.not.exist", absolutePath), IdeBundle.message("title.cannot.open.file"));
+      return;
+    }
 
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     if (editorProviderManager.getProviders(project, virtualFiles[0]).length == 0) {
