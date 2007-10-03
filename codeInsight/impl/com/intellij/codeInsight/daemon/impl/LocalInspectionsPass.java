@@ -282,18 +282,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity);
     }
     else if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
-      type = HighlightInfoType.DEPRECATED;
+      type = new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
     }
     else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
       if (severity == HighlightSeverity.ERROR) {
-        type = HighlightInfoType.WRONG_REF;
+        type = new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
       }
       else {
         type = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity);
       }
     }
     else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
-      type = HighlightInfoType.UNUSED_SYMBOL;
+      type = new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
     }
     return type;
   }
