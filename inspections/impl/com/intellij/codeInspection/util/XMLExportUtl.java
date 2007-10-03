@@ -62,7 +62,7 @@ public class XMLExportUtl {
       final RefModule refModule = (RefModule)refEntity;
       final VirtualFile moduleFile = refModule.getModule().getModuleFile();
       final Element fileElement = new Element("file");
-      fileElement.addContent(moduleFile.getUrl());
+      fileElement.addContent(moduleFile != null? moduleFile.getUrl() : refEntity.getName());
       problem.addContent(fileElement);
       appendModule(problem, refModule);
       appendFakePackage(problem);
