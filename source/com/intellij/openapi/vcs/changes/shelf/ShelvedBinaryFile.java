@@ -42,6 +42,9 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
     if (BEFORE_PATH == null) {
       return FileStatus.ADDED;
     }
+    if (SHELVED_PATH == null) {
+      return FileStatus.DELETED;
+    }
     return FileStatus.MODIFIED;
   }
 }

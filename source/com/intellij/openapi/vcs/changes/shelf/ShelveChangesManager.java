@@ -272,6 +272,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return result;
   }
 
+  @Nullable
   private FilePath unshelveBinaryFile(final ShelvedBinaryFile file) throws IOException {
     final String beforePath = file.BEFORE_PATH == null ? null : file.BEFORE_PATH.replace(File.separatorChar, '/');
     final String afterPath = file.AFTER_PATH == null ? null : file.AFTER_PATH.replace(File.separatorChar, '/');
@@ -279,18 +280,24 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     ApplyPatchContext context = new ApplyPatchContext(myProject.getBaseDir(), 0, true, true);
     final VirtualFile patchTarget = FilePatch.findPatchTarget(context, beforePath, afterPath, isNewFile);
     if (patchTarget != null) {
+      final FilePath` result = new FilePathImpl(patchTarget);
       final Ref<IOException> ex = new Ref<IOException>();
       final Ref<VirtualFile> patchedFileRef = new Ref<VirtualFile>();
-      final File shelvedFile = new File(file.SHELVED_PATH);
+      final File shelvedFile = file.SHELVED_PATH == null ? null : new File(file.SHELVED_PATH);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           VirtualFile fileToPatch = patchTarget;
           try {
-            if (isNewFile) {
-              fileToPatch = fileToPatch.createChildData(this, new File(afterPath).getName());
+            if (shelvedFile == null) {
+              fileToPatch.delete(this);
             }
-            fileToPatch.setBinaryContent(FileUtil.loadFileBytes(shelvedFile));
-            patchedFileRef.set(fileToPatch);
+            else {
+              if (isNewFile) {
+                fileToPatch = fileToPatch.createChildData(this, new File(afterPath).getName());
+              }
+              fileToPatch.setBinaryContent(FileUtil.loadFileBytes(shelvedFile));
+              patchedFileRef.set(fileToPatch);
+            }
           }
           catch (IOException e) {
             ex.set(e);
@@ -300,8 +307,10 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       if (!ex.isNull()) {
         throw ex.get();
       }
-      FileUtil.delete(shelvedFile);
-      return new FilePathImpl(patchedFileRef.get());
+      if (shelvedFile != null) {
+        FileUtil.delete(shelvedFile);
+      }
+      return result;
     }
     else {
       Messages.showErrorDialog(myProject, "Failed to unshelve binary file " + (afterPath != null ? afterPath : beforePath),
