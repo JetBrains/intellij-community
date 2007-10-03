@@ -441,7 +441,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return  RefactoringBundle.message("move.classes.command", RefactoringUtil.calculatePsiElementDescriptionList(myElementsToMove));
+    String elements = RefactoringUtil.calculatePsiElementDescriptionList(myElementsToMove);
+    String target = myTargetPackage.getQualifiedName();
+    return RefactoringBundle.message("move.classes.command", elements, target);
   }
 
   private class MyClassInstanceReferenceVisitor implements ClassInstanceScanner.ClassInstanceReferenceVisitor {
