@@ -219,11 +219,21 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   private void setAlphaMode(Window window, float ratio) {
-    WindowUtils.setWindowAlpha(window, 1.0f - ratio);
+    try {
+      WindowUtils.setWindowAlpha(window, 1.0f - ratio);
+    }
+    catch (Throwable e) {
+      LOG.debug(e);
+    }
   }
 
   public void setWindowMask(final Window window, final Shape mask) {
-    WindowUtils.setWindowMask(window, mask);
+    try {
+      WindowUtils.setWindowMask(window, mask);
+    }
+    catch (Throwable e) {
+      LOG.debug(e);
+    }
   }
 
   public void resetWindow(final Window window) {
