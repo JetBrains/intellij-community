@@ -605,13 +605,11 @@ public class DeclarationParsing extends Parsing {
     TreeElement classParameterList = parseTypeParameterList(lexer);
     TreeUtil.addChildren(aClass, classParameterList);
 
-    if (!isEnum) {
-      TreeElement extendsList = (TreeElement)parseExtendsList(lexer);
-      if (extendsList == null){
-        extendsList = Factory.createCompositeElement(EXTENDS_LIST);
-      }
-      TreeUtil.addChildren(aClass, extendsList);
+    TreeElement extendsList = (TreeElement)parseExtendsList(lexer);
+    if (extendsList == null){
+      extendsList = Factory.createCompositeElement(EXTENDS_LIST);
     }
+    TreeUtil.addChildren(aClass, extendsList);
 
     TreeElement implementsList = (TreeElement)parseImplementsList(lexer);
     if (implementsList == null){
