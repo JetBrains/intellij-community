@@ -469,6 +469,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       left = ((DfaUnboxedValue)left).getVariable();
     }
 
+    if (!(left instanceof DfaVariableValue)) return true;
+
     DfaVariableValue dfaVar = (DfaVariableValue)left;
     DfaTypeValue dfaType = (DfaTypeValue)dfaCond.getRightOperand();
 
