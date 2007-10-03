@@ -8,11 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.io.File;
 
 /**
  * User: anna
@@ -49,7 +49,7 @@ public class LogFilesManager {
           oldFiles.clear();
           oldFiles.addAll(newFiles);
         }
-        myUpdateAlarm.addRequest(myUpdateRequest, 300, ModalityState.defaultModalityState());
+        myUpdateAlarm.addRequest(myUpdateRequest, 300, ModalityState.NON_MODAL);
       }
     };
   }
@@ -64,7 +64,7 @@ public class LogFilesManager {
     }
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        myUpdateAlarm.addRequest(myUpdateRequest, 300, ModalityState.defaultModalityState());
+        myUpdateAlarm.addRequest(myUpdateRequest, 300, ModalityState.NON_MODAL);
       }
     });
   }
