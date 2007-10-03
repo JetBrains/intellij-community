@@ -417,12 +417,6 @@ public class FileReference
     return myFileReferenceSet;
   }
 
-  public void clearResolveCaches() {
-    final PsiManager manager = getElement().getManager();
-    if (manager instanceof PsiManagerImpl) {
-      ((PsiManagerImpl)manager).getResolveCache().clearResolveCaches(this);
-    }
-  }
   public LocalQuickFix[] getQuickFixes() {
     final List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     for (final FileReferenceHelper<?> helper : getHelpers()) {

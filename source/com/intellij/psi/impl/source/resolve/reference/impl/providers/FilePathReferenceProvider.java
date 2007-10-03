@@ -29,6 +29,10 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
         return soft;
       }
 
+      public boolean isAbsolutePathReference() {
+        return true;
+      }
+
       @NotNull public Collection<PsiFileSystemItem> computeDefaultContexts() {
         final Module module = ModuleUtil.findModuleForPsiElement(getElement());
         return getRoots(module, true);
