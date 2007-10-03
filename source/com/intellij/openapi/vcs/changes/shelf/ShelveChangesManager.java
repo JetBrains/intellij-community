@@ -280,7 +280,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     ApplyPatchContext context = new ApplyPatchContext(myProject.getBaseDir(), 0, true, true);
     final VirtualFile patchTarget = FilePatch.findPatchTarget(context, beforePath, afterPath, isNewFile);
     if (patchTarget != null) {
-      final FilePath` result = new FilePathImpl(patchTarget);
+      final FilePath result = new FilePathImpl(patchTarget);
       final Ref<IOException> ex = new Ref<IOException>();
       final Ref<VirtualFile> patchedFileRef = new Ref<VirtualFile>();
       final File shelvedFile = file.SHELVED_PATH == null ? null : new File(file.SHELVED_PATH);
