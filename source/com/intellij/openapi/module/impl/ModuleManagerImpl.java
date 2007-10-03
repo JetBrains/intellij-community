@@ -251,6 +251,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         );
         if (answer == 0) { // yes
           myFailedModulePaths.remove(modulePath);
+          final Module module = myModuleModel.myPathToModule.remove(FileUtil.toSystemIndependentName(modulePath.getPath()));
+          if (module != null) {
+            Disposer.dispose(module);
+          }
         }
       }
     });

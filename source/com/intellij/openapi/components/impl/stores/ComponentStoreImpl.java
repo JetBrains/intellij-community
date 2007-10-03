@@ -184,16 +184,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
     //todo: defaults merging
     final StateStorage defaultsStorage = getDefaultsStorage();
     if (defaultsStorage != null) {
-      try {
 
         state = defaultsStorage.getState(component, name, stateClass, null);
-      }
-      catch (StateStorage.StateStorageException e) {
-        LOG.error(e);
-      }
     }
 
-    try {
       Storage[] storageSpecs = getComponentStorageSpecs(component, StateStorageOperation.READ);
 
       for (Storage storageSpec : storageSpecs) {
@@ -202,13 +196,6 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
         state = stateStorage.getState(component, name, stateClass, state);
       }
-    }
-    catch (StateStorage.StateStorageException e) {
-      LOG.error("Error while initializing: " + component, e);
-    }
-    catch (Throwable e) {
-      LOG.error("Error while initializing: " + component, e);
-    }
 
     if (state != null) {
       component.loadState(state);

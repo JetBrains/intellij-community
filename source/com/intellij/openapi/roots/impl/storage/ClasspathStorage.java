@@ -93,12 +93,12 @@ public class ClasspathStorage implements StateStorage {
       final ClasspathStorageProvider.Classpath classpath = myConverter.getClasspath(element);
       final Set<String> macros = classpath.getUsedMacros();
       final boolean macrosOk = ProjectMacrosUtil.checkMacros(module.getProject(), macros);
-      if (!macrosOk) {
-        throw new IOException(ProjectBundle.message("project.load.undefined.path.variables.error"));
-      }
       PathMacroManager.getInstance(module).expandPaths(element);
       ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
       moduleRootManagerState.readExternal(element);
+      if (!macrosOk) {
+        throw new StateStorageException(ProjectBundle.message("project.load.undefined.path.variables.error"));
+      }
       //noinspection unchecked
       return (T)moduleRootManagerState;
     }
