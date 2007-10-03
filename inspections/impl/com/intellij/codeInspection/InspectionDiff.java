@@ -48,26 +48,48 @@ public class InspectionDiff {
       String newPath = args[1];
       String outPath = args.length == 3 ? args[2] : null;
 
-
-      try {
-        InputStream oldStream = new BufferedInputStream(new FileInputStream(oldPath));
-        InputStream newStream = new BufferedInputStream(new FileInputStream(newPath));
-
-        Document oldDoc = JDOMUtil.loadDocument(oldStream);
-        Document newDoc = JDOMUtil.loadDocument(newStream);
-
-        OutputStream outStream = System.out;
-        if (outPath != null) {
-          outStream = new BufferedOutputStream(new FileOutputStream(outPath));
+      final File oldResults = new File(oldPath);
+      final File newResults = new File(newPath);
+      if (oldResults.isDirectory() && newResults.isDirectory()) {
+        final File[] old = oldResults.listFiles();
+        final File[] results = newResults.listFiles();
+        for (File result : results) {
+          final String inspectionName = result.getName();
+          boolean found = false;
+          for (File oldFile : old) {
+            if (oldFile.getName().equals(inspectionName)) {
+              writeInspectionDiff(oldFile.getPath(), result.getPath(), outPath);
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            writeInspectionDiff(null, result.getPath(), outPath);
+          }
         }
-
-        Document delta = createDelta(oldDoc, newDoc);
-        JDOMUtil.writeDocument(delta, outStream, "\n");
-      } catch (Exception e) {
-        System.out.println(e);
-        e.printStackTrace();
       }
     }
+
+  private static void writeInspectionDiff(final String oldPath, final String newPath, final String outPath) {
+    try {
+      InputStream oldStream = oldPath != null ? new BufferedInputStream(new FileInputStream(oldPath)) : null;
+      InputStream newStream = new BufferedInputStream(new FileInputStream(newPath));
+
+      Document oldDoc = oldStream != null ? JDOMUtil.loadDocument(oldStream) : null;
+      Document newDoc = JDOMUtil.loadDocument(newStream);
+
+      OutputStream outStream = System.out;
+      if (outPath != null) {
+        outStream = new BufferedOutputStream(new FileOutputStream(outPath + File.separator + new File(oldPath).getName()));
+      }
+
+      Document delta = createDelta(oldDoc, newDoc);
+      JDOMUtil.writeDocument(delta, outStream, "\n");
+    } catch (Exception e) {
+      System.out.println(e);
+      e.printStackTrace();
+    }
+  }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static Document createDelta(Document oldDoc, Document newDoc) {

@@ -4,33 +4,17 @@
 #  IntelliJ IDEA Startup Script for Unix
 # ------------------------------------------------------
 #
-# Please customize this script by specifying locations of JDK_HOME and
-# IDEA_HOME below
-#
 
-#--------------------------------------------------------------------------
-#   Specify the JAVA_HOME for this script. JAVA_HOME should refer to the
-#   home location where your system's Java Development Kit version 1.4 is installed
-#   For instance, the supplied example assumes the JDK is installed at
-#   /usr/java/j2sdk1.4.0_01
-
-darwin=false;
-case "`uname`" in
-    Darwin*) darwin=true;
-esac
-
-if [ -z "$JAVA_HOME" ]; then
-    if $darwin ; then
-	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Home
-    else
-	JAVA_HOME=/usr/java/j2sdk1.4.0_01
-    fi
+# ---------------------------------------------------------------------
+# Before you run IntelliJ IDEA specify the location of the
+# JDK 1.5 installation directory which will be used for running IDEA
+# ---------------------------------------------------------------------
+if [ -z "$IDEA_JDK" ]; then
+IDEA_JDK=$JDK_HOME
+if [ -z "$IDEA_JDK" ]; then
+echo ERROR: cannot start IntelliJ IDEA.
+echo No JDK found to run IDEA. Please validate either IDEA_JDK or JDK_HOME points to valid JDK installation
 fi
-
-if $darwin ; then
-    TOOLS_PATH=$JAVA_HOME/lib/ext/jpda.jar
-else
-    TOOLS_PATH=$JAVA_HOME/lib/tools.jar
 fi
 
 #--------------------------------------------------------------------------
@@ -38,31 +22,42 @@ fi
 #   home directory where IntelliJ IDEA is installed on your system.
 
 IDEA_HOME=`dirname "$0"`/..
-
-if [ -z "$CVS_PASSFILE" ]; then
-    CVS_PASSFILE=${HOME}/.cvspass
-fi
+IDEA_BIN_HOME=`dirname "$0"`
 
 export JAVA_HOME
 export IDEA_HOME
-export CVS_PASSFILE
 
-MAIN_CLASS_NAME="com.intellij.codeInspection.InspectionDiff"
-JVM_ARGS="-Xms16M -Xmx156M"
-
-while [ $# -gt 0 ]; do
-  args="$args $1"
-  shift
-done
-
-oldcp=$CLASSPATH
-CLASSPATH=$IDEA_HOME/lib/idea.jar:$IDEA_HOME/lib/jh.jar:$IDEA_HOME/lib/oromatcher.jar:$IDEA_HOME/lib/jaxp.jar:$IDEA_HOME/lib/xerces.jar:$IDEA_HOME/lib/jdom.jar:$TOOLS_PATH:$IDEA_HOME/lib/icons.jar:$IDEA_HOME/lib/ant.jar:$IDEA_HOME/lib/junit.jar:$IDEA_HOME/lib/optional.jar:$IDEA_HOME/lib/servlet.jar:$IDEA_HOME/lib/log4j.jar
-BOOT_CLASS_PATH=$IDEA_HOME/lib/jaxp.jar:$IDEA_HOME/lib/xerces.jar:$IDEA_HOME/lib/jdom.jar
-
-# Append old classpath to current classpath
-if [ ! -z "$oldcp" ]; then
-    CLASSPATH=${CLASSPATH}:$oldcp
+if [ -n "$IDEA_PROPERTIES" ]; then
+IDEA_PROPERTIES_PROPERTY=-Didea.properties.file=$IDEA_PROPERTIES
 fi
 
+if [ -z "$IDEA_MAIN_CLASS_NAME" ]; then
+IDEA_MAIN_CLASS_NAME="com.intellij.codeInspection.InspectionDiff"
+fi
+
+if [ -z "$IDEA_VM_OPTIONS" ]; then
+IDEA_VM_OPTIONS="$IDEA_HOME/bin/idea.vmoptions"
+fi
+
+REQUIRED_JVM_ARGS="-Xbootclasspath/p:../lib/boot.jar $IDEA_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"
+JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
+JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
+
+CLASSPATH=../lib/bootstrap.jar
+CLASSPATH=$CLASSPATH:../lib/openapi.jar
+CLASSPATH=$CLASSPATH:../lib/idea.jar
+CLASSPATH=$CLASSPATH:../lib/resources_en.jar
+CLASSPATH=$CLASSPATH:../lib/jdom.jar
+CLASSPATH=$CLASSPATH:../lib/log4j.jar
+CLASSPATH=$CLASSPATH:../lib/extensions.jar
+CLASSPATH=$CLASSPATH:../lib/trove4j.jar
+CLASSPATH=$CLASSPATH:$IDEA_JDK/lib/tools.jar
+CLASSPATH=$CLASSPATH:$IDEA_CLASSPATH
+
 export CLASSPATH
-exec ${JAVA_HOME}/bin/java -Xbootclasspath/p:${BOOT_CLASS_PATH} -DCVS_PASSFILE=${CVS_PASSFILE} $JVM_ARGS $MAIN_CLASS_NAME $args
+
+LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+
+cd "$IDEA_BIN_HOME"
+exec $IDEA_JDK/bin/java $JVM_ARGS $IDEA_MAIN_CLASS_NAME $*
