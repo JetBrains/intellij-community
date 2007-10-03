@@ -359,7 +359,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myFile);
     if (!inspectionProfile.isToolEnabled(key)) return null;
 
-    HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(inspectionProfile.getErrorLevel(key).getSeverity(), level.getAttributesKey());
+    HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(psiElement), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? XmlUtil.unescape(message.replaceAll("<[^>]*>", "")) : message;
     @NonNls final String link = "<a href=\"#inspection/" + tool.getShortName() + "\"> " + DaemonBundle.message("inspection.extended.description") + "</a>";
     @NonNls String tooltip;
