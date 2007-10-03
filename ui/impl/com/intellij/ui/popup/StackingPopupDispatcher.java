@@ -68,25 +68,32 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
     SwingUtilities.convertPointToScreen(point, mouseEvent.getComponent());
 
     while (true) {
-      final Component content = popup.getContent();
-      if (!content.isShowing()) {
+      if (popup != null && !popup.isDisposed()) {
+        final Component content = popup.getContent();
+        if (!content.isShowing()) {
+          popup.cancel();
+          return false;
+        }
+
+        final Rectangle bounds = new Rectangle(content.getLocationOnScreen(), content.getSize());
+        if (bounds.contains(point) || !popup.isCancelOnClickOutside()) {
+          return false;
+        }
+
+        if (!popup.canClose()){
+          return false;
+        }
         popup.cancel();
-        return false;
       }
 
-      final Rectangle bounds = new Rectangle(content.getLocationOnScreen(), content.getSize());
-      if (bounds.contains(point) || !popup.isCancelOnClickOutside()) {
-        return false;
-      }
-
-      if (!popup.canClose()){
-        return false;
-      }
-      popup.cancel();
       if (ourInstance.myStack.isEmpty()) {
         return false;
       }
+
       popup = ourInstance.myStack.peek();
+      if (popup == null || popup.isDisposed()) {
+        ourInstance.myStack.pop();
+      }
     }
   }
 
