@@ -3,6 +3,7 @@
   <name>JUnit</name>
   <description>JUnit Integration</description>
   <version>1.0</version>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <extensions xmlns="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
