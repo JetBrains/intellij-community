@@ -500,12 +500,14 @@ public class FindInProjectUtil {
     PsiManager psiManager = PsiManager.getInstance(module.getProject());
     for (VirtualFile root : contentRoots) {
       PsiDirectory directory = psiManager.findDirectory(root);
-      GlobalSearchScope moduleContent = GlobalSearchScope.directoryScope(directory, true);
-      if (result == null) {
-        result = moduleContent;
-      }
-      else {
-        result = result.uniteWith(moduleContent);
+      if (directory != null) {
+        GlobalSearchScope moduleContent = GlobalSearchScope.directoryScope(directory, true);
+        if (result == null) {
+          result = moduleContent;
+        }
+        else {
+          result = result.uniteWith(moduleContent);
+        }
       }
     }
     if (result == null) {
