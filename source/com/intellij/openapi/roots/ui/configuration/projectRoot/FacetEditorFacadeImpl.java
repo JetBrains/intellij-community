@@ -13,8 +13,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.ui.NamedConfigurable;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreeNode;
 import java.util.*;
 
 /**
@@ -46,6 +48,9 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
   }
 
   private MasterDetailsComponent.MyNode addFacetNode(final Facet facet, final MasterDetailsComponent.MyNode moduleNode) {
+    final MasterDetailsComponent.MyNode existing = findFacetNode(facet, moduleNode);
+    if (existing != null) return existing;
+
     final FacetConfigurable facetConfigurable = new FacetConfigurable(facet, getFacetConfigurator(), myTreeUpdater);
     final MasterDetailsComponent.MyNode facetNode = new MasterDetailsComponent.MyNode(facetConfigurable);
     myNodes.put(facet, facetNode);
@@ -57,6 +62,24 @@ public class FacetEditorFacadeImpl implements FacetEditorFacade {
     }
     myConfigurable.addNode(facetNode, parent);
     return facetNode;
+  }
+
+  private MasterDetailsComponent.MyNode findFacetNode(final Facet facet, final MasterDetailsComponent.MyNode moduleNode) {
+    for (int i = 0; i < moduleNode.getChildCount(); i++) {
+      final TreeNode node = moduleNode.getChildAt(i);
+      if (node instanceof MasterDetailsComponent.MyNode) {
+        final MasterDetailsComponent.MyNode configNode = (MasterDetailsComponent.MyNode)node;
+        final NamedConfigurable config = configNode.getConfigurable();
+        if (config instanceof FacetConfigurable) {
+          final Facet existingFacet = ((FacetConfigurable)config).getEditableObject();
+          if (existingFacet != null && existingFacet.equals(facet)) {
+            return configNode;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   public boolean nodeHasFacetOfType(final FacetInfo facet, FacetTypeId typeId) {
