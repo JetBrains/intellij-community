@@ -5,7 +5,9 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.actions.TargetActionStub;
 import com.intellij.lang.ant.config.explorer.AntExplorer;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -13,6 +15,8 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.IconLoader;
@@ -41,6 +45,19 @@ public class AntToolwindowRegistrar implements ProjectComponent {
   }
 
   public void projectOpened() {
+    
+    final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
+    final String prefix = AntConfiguration.getActionIdPrefix(myProject);
+    final ActionManager actionManager = ActionManager.getInstance();
+
+    for (Keymap keymap : keymapManager.getAllKeymaps()) {
+      for (String id : keymap.getActionIds()) {
+        if (id.startsWith(prefix) && actionManager.getAction(id) == null) {
+          actionManager.registerAction(id, new TargetActionStub(id, myProject));
+        }
+      }      
+    }
+    
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, myProject);
     compilerManager.addBeforeTask(new CompileTask() {
