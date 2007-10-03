@@ -17,7 +17,7 @@ public class SetInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-    assert handler.isValid();
+    handler.checkIsValid();
     final SubTag annotation = handler.getAnnotation(SubTag.class);
     if (annotation != null && annotation.indicator()) {
       if ((Boolean)args[0]) {

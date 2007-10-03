@@ -128,7 +128,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   public <T extends DomElement> DomFileElementImpl<T> getRoot() {
-    LOG.assertTrue(isValid());
+    checkIsValid();
+
     if (myRoot == null) {
       myRoot = myParent.getRoot();
     }
@@ -137,8 +138,15 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @Nullable
   public DomElement getParent() {
-    LOG.assertTrue(isValid());
+    checkIsValid();
+
     return myParent.getProxy();
+  }
+
+  protected final void checkIsValid() {
+    if (!isValid()) {
+      throw new RuntimeException("element " + myType.toString() + " is not valid", myInvalidated);
+    }
   }
 
   @Nullable
@@ -269,7 +277,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public XmlTag ensureTagExists() {
-    assert isValid();
+    checkIsValid();
+
     if (myXmlTag != null) return myXmlTag;
 
     attach(setEmptyXmlTag());
@@ -313,13 +322,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     }
   }
 
-  protected boolean _isValid() {
+  private boolean _isValid() {
     return myInvalidated == null;
-  }
-
-  public StaticGenericInfo getStaticGenericInfo() {
-    myStaticGenericInfo.buildMethodMaps();
-    return myStaticGenericInfo;
   }
 
   @NotNull
@@ -631,9 +635,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   final void _checkInitialized(final AbstractDomChildDescriptionImpl description) {
     if (myInitializedChildren.contains(description)) return;
 
-    if (!isValid()) {
-      throw new RuntimeException("element " + myType.toString() + " is not valid", myInvalidated);
-    }
+    checkIsValid();
 
     r.unlock();
     w.lock();
@@ -851,7 +853,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public List<? extends DomElement> getCollectionChildren(final AbstractDomChildDescriptionImpl description, final NotNullFunction<DomInvocationHandler, List<XmlTag>> tagsGetter) {
-    assert isValid() : "dom element is not valid";
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();
 

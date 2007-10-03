@@ -25,31 +25,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.annotation.Annotation;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
  */
 public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T> {
   private static final DomGenericInfo EMPTY_DOM_GENERIC_INFO = new DomGenericInfo() {
-    public Collection<Method> getFixedChildrenGetterMethods() {
-      return Collections.emptyList();
-    }
-
-    public Collection<Method> getCollectionChildrenGetterMethods() {
-      return Collections.emptyList();
-    }
-
-    public int getFixedChildIndex(Method method) {
-      return 0;
-    }
-
-    public @NonNls
-    String getTagName(Method method) {
-      return "NO TAG NAME";
-    }
 
     @Nullable
     public XmlElement getNameElement(DomElement element) {
@@ -134,7 +120,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   private final EvaluatedXmlNameImpl myRootTagName;
   private final DomManagerImpl myManager;
   private WeakReference<DomRootInvocationHandler> myRootHandler;
-  private Map<Key,Object> myUserData = new HashMap<Key, Object>();
+  private final Map<Key,Object> myUserData = new HashMap<Key, Object>();
   private long myModificationCount;
   private boolean myInvalidated;
 

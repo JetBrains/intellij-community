@@ -28,7 +28,7 @@ public class GetInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-    assert handler.isValid();
+    handler.checkIsValid();
     FactoryMap<Converter,CachedValue> map = handler.getUserData(DOM_VALUE_KEY);
     if (map == null) {
       final DomManagerImpl domManager = handler.getManager();

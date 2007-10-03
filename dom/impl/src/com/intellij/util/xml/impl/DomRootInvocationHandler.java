@@ -61,7 +61,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
   }
 
   public DomElement getParent() {
-    LOG.assertTrue(isValid());
+    checkIsValid();
     return myParent;
   }
 
