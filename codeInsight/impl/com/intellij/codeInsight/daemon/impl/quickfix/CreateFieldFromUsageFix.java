@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -107,6 +108,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     }
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.field.from.usage.family");
   }

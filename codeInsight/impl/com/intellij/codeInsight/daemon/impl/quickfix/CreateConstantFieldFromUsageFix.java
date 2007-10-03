@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.psi.PsiReferenceExpression;
+import org.jetbrains.annotations.NotNull;
 
 public class CreateConstantFieldFromUsageFix extends CreateFieldFromUsageFix {
   protected boolean createConstantField() {
@@ -25,6 +26,7 @@ public class CreateConstantFieldFromUsageFix extends CreateFieldFromUsageFix {
     return QuickFixBundle.message("create.constant.from.usage.text", varName);
   }
 
+  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.constant.from.usage.family");
   }

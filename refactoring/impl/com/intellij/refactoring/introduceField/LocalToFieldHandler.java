@@ -1,5 +1,6 @@
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 public class LocalToFieldHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.LocalToFieldHandler");
 
-  public static final String REFACTORING_NAME = RefactoringBundle.message("convert.local.to.field.title");
+  private static final String REFACTORING_NAME = RefactoringBundle.message("convert.local.to.field.title");
   private final Project myProject;
   private final boolean myIsConstant;
   private final PsiManager myManager;
@@ -37,7 +38,50 @@ public class LocalToFieldHandler {
     myIsConstant = isConstant;
   }
 
-  public boolean convertLocalToField(final PsiLocalVariable local, Editor editor) {
+  protected BaseExpressionToFieldHandler.Settings showRefactoringDialog(PsiClass aClass, PsiLocalVariable local, PsiExpression[] occurences, boolean isStatic) {
+    final String fieldName;
+    final BaseExpressionToFieldHandler.InitializationPlace initializerPlace;
+    final boolean declareFinal;
+    final String fieldVisibility;
+    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(myProject, local.getType(),
+                                                                                    occurences
+    );
+
+    final boolean annotateAsNonNls;
+    if (myIsConstant) {
+      IntroduceConstantDialog dialog = new IntroduceConstantDialog(myProject, aClass,
+                                                                   local.getInitializer(), local, true, occurences, aClass, typeSelectorManager
+      );
+      dialog.show();
+      if (!dialog.isOK()) return null;
+      fieldName = dialog.getEnteredName();
+      declareFinal = true;
+      initializerPlace = IN_FIELD_DECLARATION;
+      fieldVisibility = dialog.getFieldVisibility();
+      annotateAsNonNls = dialog.isAnnotateAsNonNls();
+    }
+    else {
+      PsiMethod method = PsiTreeUtil.getParentOfType(local, PsiMethod.class);
+      IntroduceFieldDialog dialog = new IntroduceFieldDialog(myProject, aClass,
+                                                             local.getInitializer(), local,
+                                                             method != null && method.isConstructor(),
+                                                             true, isStatic,
+                                                             occurences.length, method != null, method != null,
+                                                             typeSelectorManager
+      );
+      dialog.show();
+      if (!dialog.isOK()) return null;
+      fieldName = dialog.getEnteredName();
+      initializerPlace = dialog.getInitializerPlace();
+      declareFinal = dialog.isDeclareFinal();
+      fieldVisibility = dialog.getFieldVisibility();
+      annotateAsNonNls = false;
+    }
+
+    return new BaseExpressionToFieldHandler.Settings(fieldName, true, isStatic, declareFinal, initializerPlace, fieldVisibility, local, null, true, aClass, annotateAsNonNls);
+  }
+
+  public boolean convertLocalToField(final PsiLocalVariable local, final Editor editor) {
     PsiClass aClass;
     boolean tempIsStatic = myIsConstant;
     PsiElement parent = local.getParent();
@@ -67,51 +111,21 @@ public class LocalToFieldHandler {
       RefactoringUtil.highlightAllOccurences(myProject, occurences, editor);
     }
 
+    BaseExpressionToFieldHandler.Settings settings = showRefactoringDialog(aClass, local, occurences, isStatic);
+    if (settings == null) return false;
     //LocalToFieldDialog dialog = new LocalToFieldDialog(project, aClass, local, isStatic);
-    final String variableName;
-    final String fieldName;
-    final BaseExpressionToFieldHandler.InitializationPlace initializerPlace;
-    final boolean declareFinal;
-    final String fieldVisibility;
-    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(myProject, local.getType(),
-                                                                                    occurences
-    );
-
+    final String variableName = local.getName();
+    final String fieldName = settings.getFieldName();
+    final BaseExpressionToFieldHandler.InitializationPlace initializerPlace = settings.getInitializerPlace();
+    final boolean declareFinal = settings.isDeclareFinal();
+    final String fieldVisibility = settings.getFieldVisibility();
+    final PsiClass destinationClass = settings.getDestinationClass();
     boolean rebindNeeded = false;
-    if (!myIsConstant) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(local, PsiMethod.class);
-      IntroduceFieldDialog dialog = new IntroduceFieldDialog(myProject, aClass,
-                                                             local.getInitializer(), local,
-                                                             method != null && method.isConstructor(),
-                                                             true, isStatic,
-                                                             occurences.length, method != null, method != null,
-                                                             typeSelectorManager
-      );
-      dialog.show();
-      if (!dialog.isOK()) return false;
-      variableName = local.getName();
-      fieldName = dialog.getEnteredName();
-      initializerPlace = dialog.getInitializerPlace();
-      declareFinal = dialog.isDeclareFinal();
-      fieldVisibility = dialog.getFieldVisibility();
+    if (destinationClass != null) {
+      aClass = destinationClass;
+      rebindNeeded = true;
     }
-    else {
-      IntroduceConstantDialog dialog = new IntroduceConstantDialog(myProject, aClass,
-                                                                   local.getInitializer(), local, true, occurences, aClass, typeSelectorManager
-      );
-      dialog.show();
-      if (!dialog.isOK()) return false;
-      variableName = local.getName();
-      fieldName = dialog.getEnteredName();
-      declareFinal = true;
-      initializerPlace = IN_FIELD_DECLARATION;
-      fieldVisibility = dialog.getFieldVisibility();
-      final PsiClass destinationClass = dialog.getDestinationClass();
-      if (destinationClass != null) {
-        aClass = destinationClass;
-        rebindNeeded = true;
-      }
-    }
+    final boolean annotateAsNonNls = settings.isAnnotateAsNonNls();
 
     final PsiClass aaClass = aClass;
     final boolean rebindNeeded1 = rebindNeeded;
@@ -139,9 +153,15 @@ public class LocalToFieldHandler {
           if (declareFinal) {
             field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
           }
+          if (annotateAsNonNls) {
+            PsiAnnotation annotation = local.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, field);
+            field.getModifierList().addAfter(annotation, null);
+          }
           field.getModifierList().setModifierProperty(fieldVisibility, true);
 
           field = (PsiField)aaClass.add(field);
+          CodeStyleManager.getInstance(myProject).shortenClassReferences(field);
+
           local.normalizeDeclaration();
           PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)local.getParent();
           final BaseExpressionToFieldHandler.InitializationPlace finalInitializerPlace;
@@ -200,7 +220,7 @@ public class LocalToFieldHandler {
   }
 
   private PsiField createField(PsiLocalVariable local, String fieldName, boolean includeInitializer) {
-    @NonNls StringBuffer pattern = new StringBuffer();
+    @NonNls StringBuilder pattern = new StringBuilder();
     pattern.append("private int ");
     pattern.append(fieldName);
     if (local.getInitializer() == null) {

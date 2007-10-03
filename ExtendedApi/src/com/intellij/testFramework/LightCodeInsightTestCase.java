@@ -57,7 +57,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
           public void run() {
 
             try {
-              LightCodeInsightTestCase.super.runTest();
+              doRunTest();
             } catch (Throwable t) {
               throwable[0] = t;
             }
@@ -69,6 +69,10 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     if (throwable[0] != null) {
       throw throwable[0];
     }
+  }
+
+  protected void doRunTest() throws Throwable {
+    LightCodeInsightTestCase.super.runTest();
   }
 
   /**

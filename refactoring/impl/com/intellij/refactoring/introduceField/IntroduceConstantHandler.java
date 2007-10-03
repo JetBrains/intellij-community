@@ -59,11 +59,13 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   }
 
 
-  protected BaseExpressionToFieldHandler.Settings showRefactoringDialog(Project project, PsiClass parentClass,
-                                                                        PsiExpression expr,
-                                                                        PsiType type, PsiExpression[] occurences,
-                                                                        PsiElement anchorElement,
-                                                                        PsiElement anchorElementIfAll) {
+  protected Settings showRefactoringDialog(Project project,
+                                           PsiClass parentClass,
+                                           PsiExpression expr,
+                                           PsiType type,
+                                           PsiExpression[] occurences,
+                                           PsiElement anchorElement,
+                                           PsiElement anchorElementIfAll) {
     PsiLocalVariable localVariable = null;
     if (expr instanceof PsiReferenceExpression) {
       PsiElement ref = ((PsiReferenceExpression) expr).resolve();
