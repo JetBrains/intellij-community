@@ -586,8 +586,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         session.clearHash();
       }
 
-      final XmlElementStorage.MySaveSession session = (XmlElementStorage.MySaveSession)myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
-      if (session.needsSave()) {
+      final FileBasedStorage.FileSaveSession session = (FileBasedStorage.FileSaveSession)myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
+      if (!session.isHashUpToDate()) {
         updateUsedMacros();
       }
 

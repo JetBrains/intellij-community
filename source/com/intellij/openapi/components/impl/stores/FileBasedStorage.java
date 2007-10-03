@@ -81,13 +81,9 @@ public class FileBasedStorage extends XmlElementStorage {
     }
 
     protected boolean _needsSave() throws StateStorageException {
-      int hash = myStorageData.getHash();
+      int hash = getHash();
 
-      if (myPathMacroSubstitutor != null) {
-        hash = 31*hash + myPathMacroSubstitutor.hashCode();
-      }
-
-      if (myUpToDateHash != null && hash == myUpToDateHash.intValue()) return false;
+      if (isHashUpToDate(hash)) return false;
 
       myUpToDateHash = null;
       try {
@@ -106,6 +102,23 @@ public class FileBasedStorage extends XmlElementStorage {
         LOG.debug(e);
         return true;
       }
+    }
+
+    private boolean isHashUpToDate(final int hash) {
+      return myUpToDateHash != null && hash == myUpToDateHash.intValue();
+    }
+
+    boolean isHashUpToDate() {
+      return myUpToDateHash != null && getHash() == myUpToDateHash.intValue();
+    }
+
+    private int getHash() {
+      int hash = myStorageData.getHash();
+
+      if (myPathMacroSubstitutor != null) {
+        hash = 31*hash + myPathMacroSubstitutor.hashCode();
+      }
+      return hash;
     }
 
     protected void doSave() throws StateStorageException {
