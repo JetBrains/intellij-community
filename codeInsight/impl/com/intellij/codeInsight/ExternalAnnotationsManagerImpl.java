@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -60,7 +61,8 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
   private final Map<VirtualFile, XmlFile> myExternalAnotations = Collections.synchronizedMap(new WeakHashMap<VirtualFile, XmlFile>());
-  private PsiManager myPsiManager;
+  private final XmlFile NULL;
+  private final PsiManager myPsiManager;
 
   public ExternalAnnotationsManagerImpl(final Project project, final PsiManager psiManager) {
     myPsiManager = psiManager;
@@ -72,6 +74,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         myExternalAnotations.clear();
       }
     });
+    NULL = new XmlFileImpl(new DummyHolderViewProvider(psiManager), TokenType.BAD_CHARACTER, TokenType.BAD_CHARACTER);
   }
 
   @Nullable
@@ -142,7 +145,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
               final VirtualFile[] virtualFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
               if (virtualFiles.length > 0) {
                 final XmlFile annotationsXml = createAnnotationsXml(virtualFiles[0], packageName);
-                myExternalAnotations.put(virtualFile, annotationsXml);
+                if (annotationsXml != null) {
+                  myExternalAnotations.put(virtualFile, annotationsXml);
+                }
                 annotateExternally(listOwner, annotationFQName, annotationsXml);
               }
               else {
@@ -164,7 +169,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
                               annotateExternally(listOwner, annotationFQName, xmlFile);
                             } else {
                               final XmlFile annotationsXml = createAnnotationsXml(files[0], packageName);
-                              myExternalAnotations.put(virtualFile, annotationsXml);
+                              if (annotationsXml != null) {
+                                myExternalAnotations.put(virtualFile, annotationsXml);
+                              }
                               annotateExternally(listOwner, annotationFQName, annotationsXml);
                             }
                           }
@@ -340,6 +347,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     if (containingFile instanceof PsiJavaFile) {
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       final XmlFile xmlFile = myExternalAnotations.get(virtualFile);
+      if (xmlFile == NULL) return null;
       if (xmlFile != null && xmlFile.isValid()) {
         return xmlFile;
       }
@@ -377,7 +385,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
             break;
           }
         }
-        myExternalAnotations.put(virtualFile, null);
+        myExternalAnotations.put(virtualFile, NULL);
       }
     }
     /*final VirtualFile virtualFile = containingFile.getVirtualFile(); //for java files only
