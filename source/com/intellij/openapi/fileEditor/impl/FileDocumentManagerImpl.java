@@ -450,7 +450,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     final DialogBuilder builder = new DialogBuilder((Project)null);
-    builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.TRAILING));
+    builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
     builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
     builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
     builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")){
@@ -481,6 +481,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     //int option = Messages.showYesNoDialog(message, "File Cache Conflict", Messages.getQuestionIcon());
     builder.setTitle(UIBundle.message("file.cache.conflict.dialog.title"));
     builder.setButtonsAlignment(SwingConstants.CENTER);
+    builder.setHelpId("reference.dialogs.fileCacheConflict");
     return builder.show() == 0;
     //return option == 0;
   }
