@@ -181,8 +181,15 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
             // push forward events outside thw tab bounds
             boolean shouldProcess = true;
             if (Patches.MAC_AQUA_TABS_HACK) {
-              shouldProcess = myTabbedPane.getTabCount() > 0;
+              shouldProcess = myTabbedPane != null && myTabbedPane.getTabCount() > 0;
             }
+            
+            // http://www.jetbrains.net/jira/browse/IDEADEV-4132
+            // sometimes tooltip text appears to be null, which causes NPE inside Swing's TooltipManager
+            if (e.getID() == MouseEvent.MOUSE_ENTERED && getToolTipText(e) == null) {
+              shouldProcess = false;
+            }
+
             if (shouldProcess) {
               super.processMouseEvent(e);
             }
