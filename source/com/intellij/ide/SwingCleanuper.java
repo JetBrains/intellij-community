@@ -90,7 +90,7 @@ public final class SwingCleanuper implements ApplicationComponent{
                         }
                       }
                       catch (Exception e) {
-                        LOG.error(e);
+                        LOG.info(e);
                       }
 
                       // Memory leak on javax.swing.TransferHandler$SwingDragGestureRecognizer.component
