@@ -26,7 +26,7 @@ public class PsiInvalidElementAccessException extends RuntimeException {
   private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, exceptions are stored in IdeaLogger
 
   public PsiInvalidElementAccessException(PsiElement element) {
-    super("Element: " + element.getClass());
+    super(element != null ? "Element: " + element.getClass() : "Unknown psi element");
     myElementReference = new SoftReference<PsiElement>(element);
   }
 
