@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
+import com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
@@ -163,15 +164,17 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       result[10] = max;
     }
 
-    if (object instanceof PsiLocalVariable || object instanceof PsiParameter) {
-      result[11] = 5;
-    }
-    else if (object instanceof PsiField) {
-      result[11] = 4;
-    }
-    else if (object instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)object;
-      result[11]= PropertyUtil.isSimplePropertyGetter(method) ? 3 : 2;
+    if (SmartCodeCompletionAction.isDoingSmartCodeCompleteAction()) {
+      if (object instanceof PsiLocalVariable || object instanceof PsiParameter) {
+        result[11] = 5;
+      }
+      else if (object instanceof PsiField) {
+        result[11] = 4;
+      }
+      else if (object instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)object;
+        result[11]= PropertyUtil.isSimplePropertyGetter(method) ? 3 : 2;
+      }
     }
 
     if (name != null && myExpectedInfos != null && nameEndMatchingDegree != 0) {
