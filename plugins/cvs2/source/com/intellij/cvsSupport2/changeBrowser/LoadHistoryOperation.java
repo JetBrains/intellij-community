@@ -17,7 +17,7 @@ import java.util.*;
 
 public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
-  @NonNls private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US));
+  @NonNls private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US));
 
   private static final Collection<String> ourDoNotSupportingSOptionServers = new HashSet<String>();
 
@@ -25,7 +25,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
   private final Date myDateFrom;
   private final Date myDateTo;
-  private List<LogInformationWrapper> myLog;
+  private final List<LogInformationWrapper> myLog;
 
   public LoadHistoryOperation(CvsEnvironment environment, String module,
                               @NotNull Date dateFrom,
