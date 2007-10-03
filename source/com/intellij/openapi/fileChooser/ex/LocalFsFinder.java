@@ -20,7 +20,8 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
         toFind = roots[0].getAbsolutePath();
       }
     }
-    return getLookupFile(path, LocalFileSystem.getInstance().findFileByIoFile(new File(toFind)));
+    final File file = new File(toFind);
+    return file.isAbsolute() ? getLookupFile(path, LocalFileSystem.getInstance().findFileByIoFile(file)) : null;
   }
 
   private LookupFile getLookupFile(final String path, final VirtualFile vFile) {
@@ -66,6 +67,14 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
       return myFile.getName();
     }
 
+    public boolean isDirectory() {
+      return myFile != null ? myFile.isDirectory() : false;
+    }
+
+    public LookupFile getParent() {
+      return myFile != null && myFile.getParent() != null ? new VfsFile(myFinder, myFile.getParent()) : null;
+    }
+
     public String getAbsolutePath() {
       if (myFile.getParent() == null && myFile.getName().length() == 0) return "/";
       return myFile.getPresentableUrl();
@@ -93,6 +102,21 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     public boolean exists() {
       return myFile.exists();
     }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final VfsFile vfsFile = (VfsFile)o;
+
+      if (myFile != null ? !myFile.equals(vfsFile.myFile) : vfsFile.myFile != null) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      return (myFile != null ? myFile.hashCode() : 0);
+    }
   }
 
   public static class IoFile extends VfsFile {
@@ -105,6 +129,14 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
     public String getName() {
       return myIoFile.getName();
+    }
+
+    public boolean isDirectory() {
+      return myIoFile != null ? myIoFile.isDirectory() : false;
+    }
+
+    public LookupFile getParent() {
+      return myIoFile != null && myIoFile.getParentFile() != null ? new IoFile(myIoFile.getParentFile()) : null;
     }
 
     public String getAbsolutePath() {
@@ -129,6 +161,21 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
 
     public boolean exists() {
       return myIoFile.exists();
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final IoFile ioFile = (IoFile)o;
+
+      if (myIoFile != null ? !myIoFile.equals(ioFile.myIoFile) : ioFile.myIoFile != null) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      return (myIoFile != null ? myIoFile.hashCode() : 0);
     }
   }
 }

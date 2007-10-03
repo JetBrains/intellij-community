@@ -20,8 +20,13 @@ public interface FileLookup {
 
     String getName();
     String getAbsolutePath();
-    
+    boolean isDirectory();
+
+
     List<LookupFile> getChildren(LookupFilter filter);
+
+    @Nullable
+    LookupFile getParent();
 
     boolean exists();
   }
