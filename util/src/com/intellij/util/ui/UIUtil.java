@@ -724,6 +724,8 @@ public class UIUtil {
 
   public static void disposeProgress(final JProgressBar progress) {
     final ProgressBarUI ui = progress.getUI();
+    if (ui == null) return;
+
     final Class<? extends ProgressBarUI> uiClass = ui.getClass();
     if (uiClass.getName().equals("apple.laf.CUIAquaProgressBar")) {
       try {
