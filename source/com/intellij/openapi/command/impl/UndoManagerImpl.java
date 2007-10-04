@@ -228,6 +228,21 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myRedoStacksHolder.dropHistory();
   }
 
+  public void markCommandAsNonUndoable(@Nullable final VirtualFile affectedFile) {
+    undoableActionPerformed(new NonUndoableAction() {
+      public boolean isComplex() {
+        return false;
+      }
+
+      public DocumentReference[] getAffectedDocuments() {
+        if (affectedFile != null) {
+          return new DocumentReference[] { new DocumentReferenceByVirtualFile(affectedFile) };
+        }
+        return DocumentReference.EMPTY_ARRAY;
+      }
+    });
+  }
+
   private void dropGlobalHistory() {
     dropMergers();
 

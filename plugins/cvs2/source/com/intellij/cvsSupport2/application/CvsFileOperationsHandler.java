@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.application;
 
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -83,6 +84,7 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
     newFile.mkdir();
     copyDirectoryStructure(file, newFile);
     myComponent.getAddHandler().addFile(newFile);
+    UndoManager.getInstance(myProject).markCommandAsNonUndoable(file);
     return true;
   }
 

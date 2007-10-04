@@ -48,6 +48,8 @@ public abstract class UndoManager {
 
   public abstract void dropHistory();
 
+  public abstract void markCommandAsNonUndoable(@Nullable VirtualFile affectedFile);
+
   /**
    * make undoable action in current document in order to Undo action work from current file
    */
