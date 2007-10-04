@@ -162,7 +162,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
       final NamedConfigurable namedConfigurable = (NamedConfigurable)node.getUserObject();
       jdks.add(((JdkConfigurable)namedConfigurable).getEditableObject());
     }
-    final TreeMap<ProjectJdk, ProjectJdk> sdks = new TreeMap<ProjectJdk, ProjectJdk>(myProjectJdksModel.getProjectJdks());
+    final Map<ProjectJdk, ProjectJdk> sdks = new HashMap<ProjectJdk, ProjectJdk>(myProjectJdksModel.getProjectJdks());
     for (ProjectJdk sdk : sdks.values()) {
       if (!jdks.contains(sdk)) {
         myProjectJdksModel.removeJdk(sdk);
