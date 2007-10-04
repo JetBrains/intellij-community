@@ -190,6 +190,7 @@ public class DefaultProjectProfileManager extends ProjectProfileManager {
   }
 
   public Map<String,Profile> getProfiles() {
+    getProjectProfileImpl();
     return myProfiles;
   }
 
