@@ -19,10 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -173,11 +174,11 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
 
-            final String className = psiClass.getQualifiedName();
+            final String className = PsiFormatUtil.getExternalName(psiClass);
             dataOutputStream.writeUTF(className);
 
             final PsiModifierList classModifierList = psiClass.getModifierList();
-            int classModifiers = MemberSignature.calculateModifierBitmap(classModifierList);
+            int classModifiers = classModifierList != null ? MemberSignature.calculateModifierBitmap(classModifierList) : 0;
             final MemberSignature[] methodSignatures =
                     serialVersionUIDBuilder.getNonPrivateMethodSignatures();
             if(psiClass.isInterface()){
