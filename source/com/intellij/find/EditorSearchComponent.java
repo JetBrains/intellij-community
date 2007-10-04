@@ -54,6 +54,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private final JComponent myToolbarComponent;
   private com.intellij.openapi.editor.event.DocumentAdapter myDocumentListener;
   private ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
+  private boolean myOkToSearch = false;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -213,7 +214,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private void searchBackward() {
-    if (mySearchField.getText().length() > 0) {
+    if (isOkToSearch()) {
       final SelectionModel model = myEditor.getSelectionModel();
       if (model.hasSelection()) {
         if (Comparing.equal(mySearchField.getText(), model.getSelectedText(), isCaseSensitive()) && myEditor.getCaretModel().getOffset() == model.getSelectionEnd()) {
@@ -227,7 +228,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private void searchForward() {
-    if (mySearchField.getText().length() > 0) {
+    if (isOkToSearch()) {
       final SelectionModel model = myEditor.getSelectionModel();
       if (model.hasSelection()) {
         if (Comparing.equal(mySearchField.getText(), model.getSelectedText(), isCaseSensitive()) && myEditor.getCaretModel().getOffset() == model.getSelectionStart()) {
@@ -290,8 +291,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     if (text.length() == 0) {
       setRegularBackground();
       myMatchInfoLabel.setText("");
+      myOkToSearch = false;
     }
     else {
+      myOkToSearch = true;
       FindManager findManager = FindManager.getInstance(myProject);
       FindModel model = new FindModel();
       model.setCaseSensitive(isCaseSensitive());
@@ -303,6 +306,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
           Pattern.compile(text);
         }
         catch (Exception e) {
+          myOkToSearch = false;
           setNotFoundBackground();
           myMatchInfoLabel.setText("Incorrect regular expression");
           boldMatchInfo();
@@ -457,8 +461,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(mySearchField.getText().length() > 0);
+      e.getPresentation().setEnabled(isOkToSearch());
     }
+  }
+
+  private boolean isOkToSearch() {
+    return myOkToSearch;
   }
 
   private class NextOccurenceAction extends AnAction {
@@ -479,7 +487,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(mySearchField.getText().length() > 0);
+      e.getPresentation().setEnabled(isOkToSearch());
     }
   }
 
