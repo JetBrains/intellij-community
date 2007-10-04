@@ -8,8 +8,8 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ClsParameterListImpl extends ClsElementImpl implements PsiParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsParameterListImpl");
@@ -56,7 +56,7 @@ public class ClsParameterListImpl extends ClsElementImpl implements PsiParameter
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     myMirror = element;
 
     PsiParameter[] parms = getParameters();

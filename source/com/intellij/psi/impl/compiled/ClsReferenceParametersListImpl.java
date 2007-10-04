@@ -34,7 +34,7 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     myMirror = element;
 
     PsiTypeElement[] typeElements = getTypeParameterElements();

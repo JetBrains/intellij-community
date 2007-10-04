@@ -162,7 +162,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     myMirror = element;
 
     PsiParameter mirror = (PsiParameter)SourceTreeToPsiMap.treeElementToPsi(element);

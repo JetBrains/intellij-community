@@ -15,12 +15,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.BytePointer;
@@ -274,7 +274,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     myMirror = element;
 
     PsiElement mirrorFile = SourceTreeToPsiMap.treeElementToPsi(myMirror);

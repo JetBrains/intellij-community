@@ -1013,7 +1013,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(isValid());
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     myMirror = element;
     PsiClass mirror = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(element);
 

@@ -16,10 +16,10 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
+import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -494,7 +494,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
 
   public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(isValid());
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     myMirror = element;
 
     PsiField mirror = (PsiField)SourceTreeToPsiMap.treeElementToPsi(element);

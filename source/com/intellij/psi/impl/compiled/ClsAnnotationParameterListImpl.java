@@ -40,7 +40,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
 
   public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(isValid());
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     myMirror = element;
 
     PsiAnnotationParameterList mirror = (PsiAnnotationParameterList)SourceTreeToPsiMap.treeElementToPsi(element);

@@ -144,7 +144,7 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
   }
 
   public void setMirror(@NotNull TreeElement element){
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     LOG.assertTrue(element.getElementType() == ElementType.JAVA_CODE_REFERENCE);
     myMirror = element;
   }

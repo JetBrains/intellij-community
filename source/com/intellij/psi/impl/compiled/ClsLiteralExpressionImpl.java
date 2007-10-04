@@ -49,7 +49,7 @@ public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiter
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     LOG.assertTrue(element.getElementType() == ElementType.LITERAL_EXPRESSION);
     myMirror = element;
   }

@@ -73,7 +73,7 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     myMirror = element;
 
     PsiJavaCodeReferenceElement[] refs = getReferenceElements();

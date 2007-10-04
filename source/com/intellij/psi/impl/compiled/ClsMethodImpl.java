@@ -2,8 +2,8 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.PomMethod;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -741,7 +741,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
   public void setMirror(@NotNull TreeElement element) {
     LOG.assertTrue(isValid());
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     myMirror = element;
 
     PsiMethod mirror = (PsiMethod)SourceTreeToPsiMap.treeElementToPsi(element);

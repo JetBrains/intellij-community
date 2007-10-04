@@ -59,7 +59,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     LOG.assertTrue(element.getElementType() == ElementType.PREFIX_EXPRESSION);
     myMirror = element;
   }
@@ -91,7 +91,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
     }
 
     public void setMirror(@NotNull TreeElement element) {
-      LOG.assertTrue(myMirror == null);
+      LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
       LOG.assertTrue(element.getElementType() == ElementType.MINUS);
       myMirror = element;
     }

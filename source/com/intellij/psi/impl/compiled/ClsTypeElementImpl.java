@@ -78,7 +78,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   public void setMirror(@NotNull TreeElement element){
-    LOG.assertTrue(myMirror == null);
+    LOG.assertTrue(!CHECK_MIRROR_ENABLED || myMirror == null);
     LOG.assertTrue(element.getElementType() == JavaElementType.TYPE);
     myMirror = element;
 
