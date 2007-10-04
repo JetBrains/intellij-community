@@ -129,7 +129,12 @@ public class GrClassReferenceType extends PsiClassType {
     builder.append(qName).append("<");
     for (int i = 0; i < typeArgs.length; i++) {
       if (i > 0) builder.append(",");
-      builder.append(typeArgs[i].getCanonicalText());
+      final String typeArgCanonical = typeArgs[i].getCanonicalText();
+      if (typeArgCanonical != null) {
+        builder.append(typeArgCanonical);
+      } else {
+        return null;
+      }
     }
     builder.append(">");
     return builder.toString();
