@@ -126,7 +126,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     }
 
     final Element additional = element.getChild(ELEMENT_ADDITIONAL);
-    myAdditionalData = (additional != null)? mySdkType.loadAdditionalData(additional) : null;
+    myAdditionalData = (additional != null)? mySdkType.loadAdditionalData(this, additional) : null;
   }
 
   private static SdkType getSdkTypeByName(String sdkTypeName) {

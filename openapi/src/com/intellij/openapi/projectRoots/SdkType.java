@@ -80,7 +80,16 @@ public abstract class SdkType {
 
   public abstract void saveAdditionalData(SdkAdditionalData additionalData, Element additional);
 
-  public abstract SdkAdditionalData loadAdditionalData(Element additional);
+  @Nullable
+  public SdkAdditionalData loadAdditionalData(Element additional) {
+    return null;
+  }
+
+  @Nullable
+  public SdkAdditionalData loadAdditionalData(Sdk currentSdk, Element additional) {
+    return loadAdditionalData(additional);
+  }
+
 
   public SdkType(@NonNls String name) {
     myName = name;

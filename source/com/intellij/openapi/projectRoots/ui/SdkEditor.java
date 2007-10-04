@@ -346,7 +346,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       sdkModificator.removeAllRoots();
       sdkModificator.commitChanges();
 
-      sdkType.setupSdkPaths(dummySdk);
+      sdkType.setupSdkPaths(dummySdk, mySdkModel);
 
       clearAllPaths();
       myVersionString = dummySdk.getVersionString();
@@ -360,7 +360,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       myJavadocPathEditor.addPaths(sdkModificator.getRoots(myJavadocPathEditor.getRootType()));
       myAnnotationPathEditor.addPaths(sdkModificator.getRoots(myAnnotationPathEditor.getRootType()));
 
-      mySdkModel.getMulticaster().sdkHomeSelected(mySdk, homePath);
+      mySdkModel.getMulticaster().sdkHomeSelected(dummySdk, homePath);
     }
     catch (CloneNotSupportedException e) {
       LOG.error(e); // should not happen in normal program
