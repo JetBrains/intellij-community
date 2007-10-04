@@ -3,19 +3,14 @@ package com.intellij.openapi.command.impl;
 import com.intellij.CommonBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.FragmentContent;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -202,19 +197,7 @@ class UndoableGroup {
   }
 
   private boolean affectsMultiplePhysicalDocs() {
-    final Collection<DocumentReference> affectedDocuments = getAffectedDocuments();
-    if (affectedDocuments.size() < 2) return false;
-    int count = 0;
-    for (DocumentReference docRef : affectedDocuments) {
-      VirtualFile file = docRef.getFile();
-      if (file instanceof LightVirtualFile) continue;
-
-      Document doc = docRef.getDocument();
-      if (doc != null && doc.getUserData(FragmentContent.FRAGMENT_COPY) == Boolean.TRUE) continue;
-      count++;
-    }
-
-    return count > 1;
+    return CommandMerger.areMultiplePhisicalDocsAffected(getAffectedDocuments());
   }
 
   public boolean isTransparentsOnly() {

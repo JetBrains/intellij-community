@@ -192,11 +192,28 @@ abstract class UndoOrRedo {
 
   private void removeLastFromMyStacks() {
     for (LinkedList<UndoableGroup> linkedList : getStacks()) {
+      assert hasMoreElements(linkedList);
       linkedList.removeLast();
     }
     if (myUndoableGroup.isComplex()) {
       getStackHolder().getGlobalStack().removeLast();
     }
+  }
+
+  private boolean hasMoreElements(LinkedList<UndoableGroup> l) {
+    if (!l.isEmpty()) return true;
+
+    String s = "undo stack is empty!\naffected documents:";
+    for (DocumentReference r : myUndoableGroup.getAffectedDocuments()) {
+      s += "\n" + r;
+    }
+
+    s += "\n\nstacks:";
+    for (LinkedList<UndoableGroup> stack : getStacks()) {
+      s += "\n" + stack;
+    }
+
+    throw new RuntimeException(s);
   }
 
   private void reportCannotUndo(final String message, final Collection<DocumentReference> problemFiles) {

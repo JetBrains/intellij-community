@@ -3,7 +3,6 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
-import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -67,14 +66,18 @@ class CommandMerger {
   }
 
   private boolean affectsMultiplePhysicalDocs() {
-    if (myAffectedDocuments.size() < 2) return false;
+    return areMultiplePhisicalDocsAffected(myAffectedDocuments);
+  }
+
+  protected static boolean areMultiplePhisicalDocsAffected(Collection<DocumentReference> rr) {
+    if (rr.size() < 2) return false;
     int count = 0;
-    for (DocumentReference docRef : myAffectedDocuments) {
+    for (DocumentReference docRef : rr) {
       VirtualFile file = docRef.getFile();
       if (file instanceof LightVirtualFile) continue;
 
       Document doc = docRef.getDocument();
-      if (doc != null && doc.getUserData(FragmentContent.FRAGMENT_COPY) == Boolean.TRUE) continue;
+      if (doc != null && UndoManagerImpl.isCopy(doc)) continue;
       count++;
     }
 

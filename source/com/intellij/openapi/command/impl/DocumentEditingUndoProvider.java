@@ -54,7 +54,12 @@ class DocumentEditingUndoProvider {
   private class MyEditorDocumentListener extends DocumentAdapter {
     public void documentChanged(final DocumentEvent e) {
       final Document document = e.getDocument();
+
+      // if we don't ignore copy's events, we will receive notification
+      // for the same event twice (from original document too)
+      // and undo will work incorrectly
       if (isCopy(document)) return;
+
       if (allEditorsAreViewersFor(document)) return;
       if (myProject != null && !isToPostEvents(document)) return;
 

@@ -39,7 +39,7 @@ public class FragmentContent extends DiffContent {
   private final DiffContent myOriginal;
   private final FileType myType;
   private final MyDocumentsSynchonizer mySynchonizer;
-  public final static Key<Boolean> FRAGMENT_COPY = new Key<Boolean>("FRAGMENT_COPY");
+  public final static Key<Document> ORIGINAL_DOCUMENT = new Key<Document>("ORIGINAL_DOCUMENT");
 
   public FragmentContent(DiffContent original, TextRange range, Project project, VirtualFile file) {
     this(original, range, project, file != null ? DiffContentUtil.getContentType(file) : null);
@@ -136,7 +136,7 @@ public class FragmentContent extends DiffContent {
       String textInRange = originalDocument.getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset()).toString();
       final Document result = EditorFactory.getInstance().createDocument(textInRange);
       result.setReadOnly(!originalDocument.isWritable());
-      result.putUserData(FRAGMENT_COPY, Boolean.TRUE);
+      result.putUserData(ORIGINAL_DOCUMENT, originalDocument);
       return result;
     }
 

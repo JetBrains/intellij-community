@@ -8,6 +8,7 @@ import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -62,8 +63,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder(this);
   private final UndoRedoStacksHolder myRedoStacksHolder = new UndoRedoStacksHolder(this);
-
-  private final Map<Document, List<Document>> myDocumentCopies = new HashMap<Document, List<Document>>();
 
   private DocumentEditingUndoProvider myDocumentEditingUndoProvider;
   private CommandMerger myCurrentMerger;
@@ -583,37 +582,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     });
   }
 
-  @Override
-  public void registerDocumentCopy(Document d, Document copy) {
-    List<Document> copies = myDocumentCopies.get(d);
-    if (copies == null) {
-      copies = new ArrayList<Document>();
-      myDocumentCopies.put(d, copies);
-    }
-    copies.add(copy);
-  }
-
-  @Override
-  public void unregisterDocumentCopy(Document d, Document copy) {
-    List<Document> copies = myDocumentCopies.get(d);
-    copies.remove(copy);
-    if (copies.isEmpty()) myDocumentCopies.remove(d);
-  }
-
   public Document getOriginal(Document d) {
-    for (Map.Entry<Document,List<Document>> copies: myDocumentCopies.entrySet()) {
-      for (Document copy : copies.getValue()) {
-        if (d == copy) return copies.getKey();
-      }
-    }
-    return d;
+    Document result = d.getUserData(FragmentContent.ORIGINAL_DOCUMENT);
+    return result == null ? d : result;
   }
 
-  public boolean isCopy(Document d) {
-    for (List<Document> dd : myDocumentCopies.values()) {
-      if(dd.contains(d)) return true;
-    }
-    return false;
+  public static boolean isCopy(Document d) {
+    return d.getUserData(FragmentContent.ORIGINAL_DOCUMENT) != null;
   }
 
   private class MyBeforeDeletionListener extends VirtualFileAdapter {

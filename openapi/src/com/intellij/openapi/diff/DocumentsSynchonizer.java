@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -102,10 +101,6 @@ abstract class DocumentsSynchonizer {
     final Document copy = getCopy();
     if (original == null || copy == null) return;
 
-    // if we don't ignore copy's events in undo manager, we will receive
-    // notification for the same event twice and undo will work incorrectly
-    UndoManager.getInstance(myProject).registerDocumentCopy(original, copy);
-
     beforeListenersAttached(original, copy);
     original.addDocumentListener(myOriginalListener);
     copy.addDocumentListener(myCopyListener);
@@ -121,10 +116,6 @@ abstract class DocumentsSynchonizer {
 
     if (myCopy != null) {
       myCopy.removeDocumentListener(myCopyListener);
-    }
-
-    if (myOriginal != null && myCopy != null) {
-      UndoManager.getInstance(myProject).unregisterDocumentCopy(myOriginal, myCopy);
     }
 
     myOriginal = null;
