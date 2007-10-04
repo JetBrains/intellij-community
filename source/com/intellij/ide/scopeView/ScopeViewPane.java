@@ -141,6 +141,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     for (NamedScope scope : allScopes) {
       String name = scope.getName();
       PackageSet packageSet = scope.getValue();
+      if (packageSet == null) continue;
       if (changeView(packageSet, psiFile, name, myNamedScopeManager, requestFocus)) break;
       if (changeView(packageSet, psiFile, name, myDependencyValidationManager, requestFocus)) break;
     }
