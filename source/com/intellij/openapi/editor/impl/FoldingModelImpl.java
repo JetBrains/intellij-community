@@ -480,14 +480,18 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
     public FoldRegion fetchOutermost(int offset) {
       if (!isFoldingEnabled()) return null;
+
+      final int[] starts = myCachedStartOffsets;
+      final int[] ends = myCachedEndOffsets;
+
       int start = 0;
-      int end = myCachedEndOffsets.length - 1;
+      int end = ends.length - 1;
 
       while (start <= end) {
         int i = (start + end) / 2;
-        if (offset < myCachedStartOffsets[i]) {
+        if (offset < starts[i]) {
           end = i - 1;
-        } else if (offset > myCachedEndOffsets[i]) {
+        } else if (offset > ends[i]) {
           start = i + 1;
         }
         else {
