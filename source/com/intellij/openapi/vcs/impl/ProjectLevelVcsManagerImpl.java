@@ -203,6 +203,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         return vcs;
       }
     }
+    if (myProject.isDisposed()) return null;
     final VcsEP[] vcsEPs = Extensions.getExtensions(VcsEP.EP_NAME, myProject);
     for(VcsEP ep: vcsEPs) {
       if (ep.name.equals(name)) {
