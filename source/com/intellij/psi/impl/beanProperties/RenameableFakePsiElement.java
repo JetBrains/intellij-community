@@ -11,6 +11,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,5 +71,10 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
   @Nullable
   public Icon getIcon(final int flags) {
     return getIcon();
+  }
+
+  @Nullable
+  public TextRange getTextRange() {
+    return TextRange.from(0, 0);
   }
 }
