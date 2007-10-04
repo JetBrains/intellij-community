@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.template;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,7 +35,7 @@ public class PsiTypeResult implements Result {
       return castType.getType().equals(type);
     }
     catch (IncorrectOperationException e) {
-      LOG.error(e);
+      // Indeed, not equal if cannot parse to a type.
       return false;
     }
   }
