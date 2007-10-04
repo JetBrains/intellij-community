@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -119,10 +120,12 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
         for (String fqn : myAnnotationsToRemove) {
           annotationsManager.deannotate(myModifierListOwner, fqn);
         }
-        annotationsManager.annotateExternally(myModifierListOwner, myAnnotation);
+        annotationsManager.annotateExternally(myModifierListOwner, myAnnotation, file);
       }
       else {
-        if (!file.isWritable() && ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) return;
+        final PsiFile containingFile = myModifierListOwner.getContainingFile();
+        if (!containingFile.isWritable()
+            && ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(containingFile.getVirtualFile()).hasReadonlyFiles()) return;
         for (String fqn : myAnnotationsToRemove) {
           PsiAnnotation annotation = AnnotationUtil.findAnnotation(myModifierListOwner, fqn);
           if (annotation != null) {
@@ -134,11 +137,14 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
         PsiAnnotation annotation = factory.createAnnotationFromText("@" + myAnnotation, myModifierListOwner);
         PsiElement inserted = modifierList.addAfter(annotation, null);
         CodeStyleManager.getInstance(project).shortenClassReferences(inserted);
+        if (containingFile != file) {
+          UndoManager.getInstance(project).markDocumentForUndo(file);
+        }
       }
     }
     else {
       final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-      annotationsManager.annotateExternally(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class), myAnnotation);
+      annotationsManager.annotateExternally(PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class), myAnnotation, file);
     }
   }
 

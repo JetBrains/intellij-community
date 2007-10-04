@@ -125,12 +125,12 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   }
 
 
-  public void annotateExternally(final PsiModifierListOwner listOwner, final String annotationFQName) {
+  public void annotateExternally(final PsiModifierListOwner listOwner, final String annotationFQName,final PsiFile fromFile) {
     final Project project = listOwner.getProject();
     XmlFile xmlFile = findExternalAnnotationsFile(listOwner);
     if (xmlFile != null) {
       if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(xmlFile.getVirtualFile()).hasReadonlyFiles()) return;
-      annotateExternally(listOwner, annotationFQName, xmlFile);
+      annotateExternally(listOwner, annotationFQName, xmlFile, fromFile);
     }
     else {
       final PsiFile containingFile = listOwner.getContainingFile();
@@ -148,7 +148,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
                 if (annotationsXml != null) {
                   myExternalAnotations.put(virtualFile, annotationsXml);
                 }
-                annotateExternally(listOwner, annotationFQName, annotationsXml);
+                annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile);
               }
               else {
                 if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
@@ -166,13 +166,13 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
                             final XmlFile xmlFile = findExternalAnnotationsFile(listOwner);
                             if (xmlFile != null) { //file already exists under appeared content root
                               if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(xmlFile.getVirtualFile()).hasReadonlyFiles()) return;
-                              annotateExternally(listOwner, annotationFQName, xmlFile);
+                              annotateExternally(listOwner, annotationFQName, xmlFile, fromFile);
                             } else {
                               final XmlFile annotationsXml = createAnnotationsXml(files[0], packageName);
                               if (annotationsXml != null) {
                                 myExternalAnotations.put(virtualFile, annotationsXml);
                               }
-                              annotateExternally(listOwner, annotationFQName, annotationsXml);
+                              annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile);
                             }
                           }
                         }
@@ -222,7 +222,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         }
       }
     }
-    return false; 
+    return false;
   }
 
   public AnnotationPlace chooseAnnotationsPlace(@NotNull final PsiElement element) {
@@ -279,7 +279,8 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
   private static void annotateExternally(final PsiModifierListOwner listOwner,
                                          final String annotationFQName,
-                                         @Nullable final XmlFile xmlFile) {
+                                         @Nullable final XmlFile xmlFile,
+                                         final PsiFile codeUsageFile) {
     if (xmlFile == null) return;
     try {
       final XmlDocument document = xmlFile.getDocument();
@@ -303,7 +304,9 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       LOG.error(e);
     }
     finally {
-      UndoManager.getInstance(listOwner.getProject()).markDocumentForUndo(listOwner.getContainingFile());
+      if (codeUsageFile.getVirtualFile().isInLocalFileSystem()) {
+        UndoManager.getInstance(listOwner.getProject()).markDocumentForUndo(codeUsageFile);
+      }
     }
   }
 

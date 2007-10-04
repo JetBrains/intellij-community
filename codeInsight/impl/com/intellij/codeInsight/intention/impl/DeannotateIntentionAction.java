@@ -9,12 +9,14 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -91,7 +93,7 @@ public class DeannotateIntentionAction implements IntentionAction {
     return listOwner;
   }
 
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiModifierListOwner listOwner = getContainer(editor, file);
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     final PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations(listOwner);
@@ -99,7 +101,10 @@ public class DeannotateIntentionAction implements IntentionAction {
       public PopupStep onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {
         new WriteCommandAction(project){
           protected void run(final Result result) throws Throwable {
-            annotationsManager.deannotate(listOwner, selectedValue.getQualifiedName());
+            final VirtualFile virtualFile = file.getVirtualFile();
+            if (annotationsManager.deannotate(listOwner, selectedValue.getQualifiedName()) && virtualFile != null && virtualFile.isInLocalFileSystem()) {
+              UndoManager.getInstance(listOwner.getProject()).markDocumentForUndo(file);
+            }
           }
         }.execute();
         return PopupStep.FINAL_CHOICE;

@@ -8,6 +8,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,7 @@ public abstract class ExternalAnnotationsManager {
   @Nullable
   public abstract PsiAnnotation[] findExternalAnnotations(final PsiModifierListOwner listOwner);
 
-  public abstract void annotateExternally(final PsiModifierListOwner listOwner, final String annotationFQName);
+  public abstract void annotateExternally(final PsiModifierListOwner listOwner, final String annotationFQName, final PsiFile fromFile);
 
   public abstract boolean deannotate(final PsiModifierListOwner listOwner, final String annotationFQN);
 
