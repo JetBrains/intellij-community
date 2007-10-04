@@ -83,7 +83,7 @@ public class QuickFixAction extends AnAction {
     final InspectionTree tree = view.getTree();
     final InspectionTool tool = tree.getSelectedTool();
     if (isProblemDescriptorsAcceptable()) {
-      final ProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
+      final CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
       if (descriptors.length > 0) {
         doApplyFix(view.getProject(), (DescriptorProviderInspection)tool, descriptors);
         return;
