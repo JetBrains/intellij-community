@@ -68,7 +68,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private void updateJdkList() {
     myJdksModel.removeAllElements();
     for (Sdk sdk : mySdkModel.getSdks()) {
-      if (IdeaJdk.isValidInternalJdk(sdk)) {
+      if (IdeaJdk.isValidInternalJdk(myIdeaJdk, sdk)) {
         myJdksModel.addElement(sdk);
       }
     }
@@ -148,11 +148,12 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     return wholePanel;
   }
 
-  public void updateRoots(final String newSdkHome) {
-    mySdkModificator.removeAllRoots();
-    final Sdk jdk = (Sdk)myInternalJres.getSelectedItem();
-    if (jdk != null) {
-      IdeaJdk.setupSdkPaths(mySdkModificator, newSdkHome, jdk);
+  public void internalJdkUpdate(final Sdk sdk) {
+    final Sdk javaSdk = ((Sandbox)sdk.getSdkAdditionalData()).getJavaSdk();
+    if (myJdksModel.getIndexOf(javaSdk) == -1) {
+      myJdksModel.addElement(javaSdk);
+    } else {
+      myJdksModel.setSelectedItem(javaSdk);
     }
   }
 
@@ -169,7 +170,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     if (additionalData != null) {
       additionalData.cleanupWatchedRoots();
     }
-    Sandbox sandbox = new Sandbox(mySandboxHome.getText(), (Sdk)myInternalJres.getSelectedItem());
+    Sandbox sandbox = new Sandbox(mySandboxHome.getText(), (Sdk)myInternalJres.getSelectedItem(), myIdeaJdk);
     final SdkModificator modificator = myIdeaJdk.getSdkModificator();
     modificator.setSdkAdditionalData(sandbox);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -190,7 +191,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
       final String sandboxHome = sandbox.getSandboxHome();
       mySandboxHome.setText(sandboxHome);
       mySandboxHome.setSelectedItem(sandboxHome);
-      final Sdk internalJava = sandbox.getSdk();
+      final Sdk internalJava = sandbox.getJavaSdk();
       if (internalJava != null) {
         for (int i = 0; i < myJdksModel.getSize(); i++) {
           if (Comparing.strEqual(((Sdk)myJdksModel.getElementAt(i)).getName(), internalJava.getName())){
@@ -221,9 +222,9 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     for (Sdk currentSdk : sdks) {
       if (currentSdk.getSdkType() instanceof IdeaJdk){
         final Sandbox sandbox = (Sandbox)currentSdk.getSdkAdditionalData();
-        final Sdk internalJava = sandbox.getSdk();
+        final Sdk internalJava = sandbox.getJavaSdk();
         if (internalJava != null && Comparing.equal(internalJava.getName(), previousName)){
-          sandbox.setSdk(sdk);
+          sandbox.setJavaSdk(sdk);
         }
       }
     }

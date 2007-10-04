@@ -31,6 +31,9 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.cls.BytePointer;
+import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.cls.ClsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -158,7 +161,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   private static ProjectJdk getInternalJavaSdk(final Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof Sandbox) {
-      return (ProjectJdk)((Sandbox)data).getSdk();
+      return (ProjectJdk)((Sandbox)data).getJavaSdk();
     }
     return null;
   }
@@ -217,7 +220,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     final List<String> javaSdks = new ArrayList<String>();
     final Sdk[] sdks = sdkModel.getSdks();
     for (Sdk jdk : sdks) {
-      if (isValidInternalJdk(jdk)) {
+      if (isValidInternalJdk(sdk, jdk)) {
         javaSdks.add(jdk.getName());
       }
     }
@@ -235,7 +238,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       final Sdk jdk = sdkModel.findSdk(name);
       LOG.assertTrue(jdk != null);
       setupSdkPaths(sdkModificator, sdk.getHomePath(), jdk);
-      sdkModificator.setSdkAdditionalData(new Sandbox(getDefaultSandbox(), jdk));
+      sdkModificator.setSdkAdditionalData(new Sandbox(getDefaultSandbox(), jdk, sdk));
       sdkModificator.setVersionString(jdk.getVersionString());
       sdkModificator.commitChanges();
       return true;
@@ -243,11 +246,35 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     return false;
   }
 
-  public static boolean isValidInternalJdk(Sdk sdk) {
+  public static boolean isValidInternalJdk(Sdk ideaSdk, Sdk sdk) {
     final SdkType sdkType = sdk.getSdkType();
     if (sdkType instanceof JavaSdk) {
       final String versionString = sdkType.getVersionString(sdk);
-      return versionString != null && (versionString.contains("5.0") || versionString.contains("1.5") || versionString.contains("1.6"));
+      try {
+        final VirtualFile mainClassFile =
+          JarFileSystem.getInstance().findFileByPath(ideaSdk.getHomePath() + "/lib/bootstrap.jar!/com/intellij/idea/Main.class");
+        if (mainClassFile != null) {
+          final BytePointer ptr = new BytePointer(mainClassFile.contentsToByteArray(), 6);
+          int majorVersion = ClsUtil.readU2(ptr);
+          if (versionString != null) {
+            if (majorVersion == 48 && versionString.contains("1.4")) {
+              return true;
+            }
+            if (majorVersion == 49 && (versionString.contains("5.0") || versionString.contains("1.5"))) {
+              return true;
+            }
+            if (majorVersion == 50 && versionString.contains("1.6")) {
+              return true;
+            }
+          }
+        }
+      }
+      catch (IOException e) {
+        return false;
+      }
+      catch (ClsFormatException e) {
+        return false;
+      }
     }
     return false;
   }
@@ -383,34 +410,34 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, SdkModificator sdkModificator) {
-    final IdeaJdkConfigurable mobileSdkConfigurable = new IdeaJdkConfigurable(sdkModel, sdkModificator);
+    final IdeaJdkConfigurable jdkConfigurable = new IdeaJdkConfigurable(sdkModel, sdkModificator);
     sdkModel.addListener(new SdkModel.Listener() {
       public void sdkAdded(Sdk sdk) {
         if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
-          mobileSdkConfigurable.addJavaSdk(sdk);
+          jdkConfigurable.addJavaSdk(sdk);
         }
       }
 
       public void beforeSdkRemove(Sdk sdk) {
         if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
-          mobileSdkConfigurable.removeJavaSdk(sdk);
+          jdkConfigurable.removeJavaSdk(sdk);
         }
       }
 
       public void sdkChanged(Sdk sdk, String previousName) {
         if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
-          mobileSdkConfigurable.updateJavaSdkList(sdk, previousName);
+          jdkConfigurable.updateJavaSdkList(sdk, previousName);
         }
       }
 
       public void sdkHomeSelected(final Sdk sdk, final String newSdkHome) {
         if (sdk.getSdkType() instanceof IdeaJdk) {
-          mobileSdkConfigurable.updateRoots(newSdkHome);
+          jdkConfigurable.internalJdkUpdate(sdk);
         }
       }
     });
 
-    return mobileSdkConfigurable;
+    return jdkConfigurable;
   }
 
   @Nullable
@@ -446,8 +473,8 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     }
   }
 
-  public SdkAdditionalData loadAdditionalData(Element additional) {
-    Sandbox sandbox = new Sandbox();
+  public SdkAdditionalData loadAdditionalData(Sdk sdk, Element additional) {
+    Sandbox sandbox = new Sandbox(sdk);
     try {
       sandbox.readExternal(additional);
     }

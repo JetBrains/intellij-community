@@ -37,23 +37,26 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
 
   @SuppressWarnings({"WeakerAccess"})
   public String mySandboxHome;
+  private final Sdk myCurrentJdk;
 
-  private String mySdkName;
-  private Sdk mySdk;
+  private String myJavaSdkName;
+  private Sdk myJavaSdk;
 
   private LocalFileSystem.WatchRequest mySandboxRoot = null;
   @NonNls private static final String SDK = "sdk";
 
-  public Sandbox(String sandboxHome, Sdk sdk) {
+  public Sandbox(String sandboxHome, Sdk javaSdk, Sdk currentJdk) {
     mySandboxHome = sandboxHome;
+    myCurrentJdk = currentJdk;
     if (mySandboxHome != null) {
       mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
     }
-    mySdk = sdk;
+    myJavaSdk = javaSdk;
   }
 
   //readExternal()
-  public Sandbox() {
+  public Sandbox(Sdk currentSdk) {
+    myCurrentJdk = currentSdk;
   }
 
   public String getSandboxHome() {
@@ -61,11 +64,11 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
   }
 
   public Object clone() throws CloneNotSupportedException {
-    return new Sandbox(mySandboxHome, getSdk());
+    return new Sandbox(mySandboxHome, getJavaSdk(), myCurrentJdk);
   }
 
   public void checkValid(SdkModel sdkModel) throws ConfigurationException {
-    if (mySandboxHome == null || mySandboxHome.length() == 0 || getSdk() == null){
+    if (mySandboxHome == null || mySandboxHome.length() == 0 || getJavaSdk() == null){
       throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
     }
   }
@@ -73,7 +76,7 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     LOG.assertTrue(mySandboxRoot == null);
-    mySdkName = element.getAttributeValue(SDK);
+    myJavaSdkName = element.getAttributeValue(SDK);
     if (mySandboxHome != null) {
       mySandboxRoot = LocalFileSystem.getInstance().addRootToWatch(mySandboxHome, true);
     }
@@ -81,7 +84,7 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
-    final Sdk sdk = getSdk();
+    final Sdk sdk = getJavaSdk();
     if (sdk != null) {
       element.setAttribute(SDK, sdk.getName());
     }
@@ -94,26 +97,26 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
   }
 
   @Nullable
-  public Sdk getSdk() {
+  public Sdk getJavaSdk() {
     final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-    if (mySdk == null) {
-      if (mySdkName != null) {
-        mySdk = jdkTable.findJdk(mySdkName);
-        mySdkName = null;
+    if (myJavaSdk == null) {
+      if (myJavaSdkName != null) {
+        myJavaSdk = jdkTable.findJdk(myJavaSdkName);
+        myJavaSdkName = null;
       }
       else {
         for (ProjectJdk jdk : jdkTable.getAllJdks()) {
-          if (jdk.getSdkType() instanceof JavaSdk) {
-            mySdk = jdk;
+          if (IdeaJdk.isValidInternalJdk(myCurrentJdk, jdk)) {
+            myJavaSdk = jdk;
             break;
           }
         }
       }
     }
-    return mySdk;
+    return myJavaSdk;
   }
 
-  public void setSdk(final Sdk sdk) {
-    mySdk = sdk;
+  public void setJavaSdk(final Sdk javaSdk) {
+    myJavaSdk = javaSdk;
   }
 }
