@@ -167,6 +167,10 @@ public class Storage implements Disposable, Forceable {
         address = myRecordsTable.getAddress(record);
       }
       else {
+        if (currentSize > 0) {
+          myDataTable.reclaimSpace(currentSize);
+        }
+
         address = myDataTable.allocateSpace(requiredLength);
         myRecordsTable.setAddress(record, address);
       }
@@ -202,8 +206,7 @@ public class Storage implements Disposable, Forceable {
     synchronized (lock) {
       final int length = myRecordsTable.getSize(record);
       if (length != 0) {
-        final long address = myRecordsTable.getAddress(record);
-        myDataTable.reclaimSpace(address, length);
+        myDataTable.reclaimSpace(length);
       }
 
       myRecordsTable.deleteRecord(record);

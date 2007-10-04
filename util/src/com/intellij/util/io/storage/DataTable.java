@@ -69,7 +69,7 @@ class DataTable implements Disposable, Forceable {
     return result;
   }
 
-  public void reclaimSpace(long address, int len) {
+  public void reclaimSpace(int len) {
     myWasteSize += len;
   }
 
