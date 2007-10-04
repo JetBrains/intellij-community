@@ -1192,4 +1192,20 @@ public class StringUtil {
     }
   }
 
+  public static String[] filterEmptyStrings(String[] strings) {
+    int emptyCount = 0;
+    for (String string : strings) {
+      if (string == null || string.length() == 0) emptyCount++;
+    }
+    if (emptyCount == 0) return strings;
+
+    String[] result = new String[strings.length - emptyCount];
+    int count = 0;
+    for (String string : strings) {
+      if (string == null || string.length() == 0) continue;
+      result[count++] = string;
+    }
+
+    return result;
+  }
 }

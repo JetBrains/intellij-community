@@ -6,6 +6,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -111,7 +112,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     int[] currentIds = myRecords.list(id);
 
     final NewVirtualFileSystem delegate = getDelegate(file);
-    String[] names = delegate.list(file);
+    String[] names = StringUtil.filterEmptyStrings(delegate.list(file));
     final int[] childrenIds = new int[names.length];
 
     for (int i = 0; i < names.length; i++) {
@@ -540,34 +541,40 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private void applyEvent(final VFileEvent event) {
     /*System.out.println("Apply: " + event);*/
 
-    if (event instanceof VFileCreateEvent) {
-      final VFileCreateEvent createEvent = (VFileCreateEvent)event;
-      executeCreateChild(createEvent.getParent(), createEvent.getChildName());
-    }
-    else if (event instanceof VFileDeleteEvent) {
-      final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
-      executeDelete(deleteEvent.getFile());
-    }
-    else if (event instanceof VFileContentChangeEvent) {
-      final VFileContentChangeEvent contentUpdateEvent = (VFileContentChangeEvent)event;
-      executeTouch(contentUpdateEvent.getFile(), contentUpdateEvent.isFromRefresh(), contentUpdateEvent.getModificationStamp());
-    }
-    else if (event instanceof VFileCopyEvent) {
-      final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-      executeCopy(copyEvent.getFile(), copyEvent.getNewParent(), copyEvent.getNewChildName());
-    }
-    else if (event instanceof VFileMoveEvent) {
-      final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
-      executeMove(moveEvent.getFile(), moveEvent.getNewParent());
-    }
-    else if (event instanceof VFilePropertyChangeEvent) {
-      final VFilePropertyChangeEvent propertyChangeEvent = (VFilePropertyChangeEvent)event;
-      if (VirtualFile.PROP_NAME.equals(propertyChangeEvent.getPropertyName())) {
-        executeRename(propertyChangeEvent.getFile(), (String)propertyChangeEvent.getNewValue());
+    try {
+      if (event instanceof VFileCreateEvent) {
+        final VFileCreateEvent createEvent = (VFileCreateEvent)event;
+        executeCreateChild(createEvent.getParent(), createEvent.getChildName());
       }
-      else if (VirtualFile.PROP_WRITABLE.equals(propertyChangeEvent.getPropertyName())) {
-        executeSetWritable(propertyChangeEvent.getFile(), ((Boolean)propertyChangeEvent.getNewValue()).booleanValue());
+      else if (event instanceof VFileDeleteEvent) {
+        final VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
+        executeDelete(deleteEvent.getFile());
       }
+      else if (event instanceof VFileContentChangeEvent) {
+        final VFileContentChangeEvent contentUpdateEvent = (VFileContentChangeEvent)event;
+        executeTouch(contentUpdateEvent.getFile(), contentUpdateEvent.isFromRefresh(), contentUpdateEvent.getModificationStamp());
+      }
+      else if (event instanceof VFileCopyEvent) {
+        final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
+        executeCopy(copyEvent.getFile(), copyEvent.getNewParent(), copyEvent.getNewChildName());
+      }
+      else if (event instanceof VFileMoveEvent) {
+        final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
+        executeMove(moveEvent.getFile(), moveEvent.getNewParent());
+      }
+      else if (event instanceof VFilePropertyChangeEvent) {
+        final VFilePropertyChangeEvent propertyChangeEvent = (VFilePropertyChangeEvent)event;
+        if (VirtualFile.PROP_NAME.equals(propertyChangeEvent.getPropertyName())) {
+          executeRename(propertyChangeEvent.getFile(), (String)propertyChangeEvent.getNewValue());
+        }
+        else if (VirtualFile.PROP_WRITABLE.equals(propertyChangeEvent.getPropertyName())) {
+          executeSetWritable(propertyChangeEvent.getFile(), ((Boolean)propertyChangeEvent.getNewValue()).booleanValue());
+        }
+      }
+    }
+    catch (Exception e) {
+      // Exception applying single event should not prevent other events from applying.
+      LOG.error(e);
     }
   }
 

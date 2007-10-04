@@ -288,30 +288,25 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   private void storeRefreshStatusToFiles() {
     if (FileWatcher.isAvailable()) {
-      final String[] dirtyFiles;
-      synchronized (myDirtyFiles) {
-        dirtyFiles = myDirtyFiles.toArray(new String[myDirtyFiles.size()]);
-        myDirtyFiles.clear();
-      }
-      for (String dirtyFile : dirtyFiles) {
-        String path = dirtyFile.replace(File.separatorChar, '/');
-        VirtualFile file = findFileByPathIfCached(path);
-        if (file instanceof NewVirtualFile) {
-          ((NewVirtualFile)file).markDirty();
-        }
-      }
+      markPathsDirty(getAndClear(myDirtyFiles));
+      markPathsDirty(getAndClear(myDeletedFiles));
+    }
+  }
 
-      final String[] deletedFiles;
-      synchronized (myDeletedFiles) {
-        deletedFiles = myDeletedFiles.toArray(new String[myDeletedFiles.size()]);
-        myDeletedFiles.clear();
-      }
-      for (String deletedFile : deletedFiles) {
-        String path = deletedFile.replace(File.separatorChar, '/');
-        VirtualFile file = findFileByPathIfCached(path);
-        if (file instanceof NewVirtualFile) {
-          ((NewVirtualFile)file).markDirty();
-        }
+  private static String[] getAndClear(final Set<String> set) {
+    synchronized (set) {
+      final String[] copy = set.toArray(new String[set.size()]);
+      set.clear();
+      return copy;
+    }
+  }
+
+  private void markPathsDirty(final String[] dirtyFiles) {
+    for (String dirtyFile : dirtyFiles) {
+      String path = dirtyFile.replace(File.separatorChar, '/');
+      VirtualFile file = findFileByPathIfCached(path);
+      if (file instanceof NewVirtualFile) {
+        ((NewVirtualFile)file).markDirty();
       }
     }
   }

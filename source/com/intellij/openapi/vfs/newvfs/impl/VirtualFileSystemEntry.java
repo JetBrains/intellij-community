@@ -187,6 +187,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public void setName(final String newName) {
+    if (newName != null && newName.length() == 0) {
+      throw new IllegalArgumentException("Name of the virtual file cannot be set to empty string");
+    }
+
     myParent.removeChild(this);
     myName = newName != null? newName.replace('\\', '/') : null;
     myParent.addChild(this);

@@ -48,6 +48,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   private NewVirtualFile doFindChild(final String name, final boolean createIfNotFound) {
+    if (name.length() == 0) {
+      return null;
+    }
+
     final VirtualFile[] a = asArray();
     if (a != null) {
       for (VirtualFile file : a) {
