@@ -24,8 +24,8 @@ import org.jetbrains.plugins.groovy.Icons;
 public class NewClassAction extends NewActionBase {
   public NewClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"),
-            GroovyBundle.message("newclass.menu.action.description"),
-            Icons.FILE_TYPE);
+        GroovyBundle.message("newclass.menu.action.description"),
+        Icons.CLAZZ);
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {
