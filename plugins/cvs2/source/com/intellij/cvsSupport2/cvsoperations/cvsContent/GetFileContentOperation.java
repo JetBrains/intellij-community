@@ -232,7 +232,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   }
 
   public boolean fileNotFound() {
-    getFileBytes();
+    tryGetFileBytes();
     return myState == FILE_NOT_FOUND;
   }
 
