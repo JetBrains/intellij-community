@@ -51,6 +51,7 @@ public class ShowDiffAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(DataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);
+    List<Change> changesInList = e.getData(ChangesListView.CHANGES_IN_LIST_KEY);
     if (project == null || changes == null) return;
 
     changes = checkLoadFakeRevisions(project, changes);
@@ -67,7 +68,6 @@ public class ShowDiffAction extends AnAction {
       }
       ChangeList changeList = ((ChangeListManagerImpl) ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChange);
       if (changeList != null) {
-        List<Change> changesInList = e.getData(ChangesListView.CHANGES_IN_LIST_KEY);
         if (changesInList == null) {
           changesInList = new ArrayList<Change>(changeList.getChanges());
           Collections.sort(changesInList, new Comparator<Change>() {
