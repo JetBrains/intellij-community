@@ -203,7 +203,6 @@ public class ClasspathStorage implements StateStorage {
   }
 
   public void reload(final Set<String> changedComponents) throws StateStorage.StateStorageException {
-    throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
   }
 
   public boolean needsSave() throws StateStorageException {
