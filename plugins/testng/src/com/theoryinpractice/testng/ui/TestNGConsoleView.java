@@ -196,7 +196,7 @@ public class TestNGConsoleView implements ConsoleView
     }
 
     public boolean isOutputPaused() {
-        return console.isOutputPaused();
+        return console != null && console.isOutputPaused();
     }
 
     public boolean hasDeferredOutput() {
@@ -228,7 +228,7 @@ public class TestNGConsoleView implements ConsoleView
     }
 
     public boolean canPause() {
-        return console.canPause();
+        return console != null && console.canPause();
     }
 
   @NotNull
