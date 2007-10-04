@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -219,10 +218,7 @@ public class JavaSdkImpl extends JavaSdk {
       versionString = null;
     }
 
-    if (versionString == null){
-      Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", sdkHome),
-                                 ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
-    } else {
+    if (versionString != null){
       myCachedVersionStrings.put(sdkHome, versionString);
     }
 

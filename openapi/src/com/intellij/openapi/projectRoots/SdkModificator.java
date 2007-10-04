@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 public interface SdkModificator {
   String getName();
@@ -26,6 +27,7 @@ public interface SdkModificator {
 
   void setHomePath(String path);
 
+  @Nullable
   String getVersionString();
 
   void setVersionString(String versionString);

@@ -19,6 +19,7 @@ import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -229,6 +230,11 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     newJdk.setHomePath(home);
 
     if (!type.setupSdkPaths(newJdk, this)) return;
+
+    if (newJdk.getVersionString() == null) {
+       Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", home),
+                                  ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
+    }
 
     myProjectJdks.put(newJdk, newJdk);
     updateTree.consume(newJdk);

@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.roots.RootProvider;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
@@ -27,6 +28,7 @@ public interface Sdk {
 
   String getName();
 
+  @Nullable
   String getVersionString();
 
   String getHomePath();

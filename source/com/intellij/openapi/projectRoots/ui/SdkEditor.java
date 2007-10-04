@@ -10,10 +10,11 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,12 +23,12 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -349,6 +350,10 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
       clearAllPaths();
       myVersionString = dummySdk.getVersionString();
+      if (myVersionString == null) {
+        Messages.showMessageDialog(ProjectBundle.message("sdk.java.corrupt.error", homePath),
+                                 ProjectBundle.message("sdk.java.corrupt.title"), Messages.getErrorIcon());
+      }
       sdkModificator = dummySdk.getSdkModificator();
       myClassPathEditor.addPaths(sdkModificator.getRoots(myClassPathEditor.getRootType()));
       mySourcePathEditor.addPaths(sdkModificator.getRoots(mySourcePathEditor.getRootType()));
