@@ -233,7 +233,7 @@ public class AboutAction extends AnAction {
         g2.drawImage(myImage, 0, 0, this);
         g2.setColor(col);
         int startX = (int)(-300 * (1.0f - myAlpha) + 1);
-        TextRenderer renderer = new TextRenderer(startX, 145, 398, 135, g2);
+        TextRenderer renderer = new TextRenderer(startX, 145, 398, 120, g2);
         g2.setComposite(AlphaComposite.Src);
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize+1);
@@ -350,7 +350,7 @@ public class AboutAction extends AnAction {
       private void lineFeed(int indent, final String s) throws OverflowException {
         x = indent;
         if (s.length() == 0) {
-          y += fontHeight/2;
+          y += fontHeight/3;
         }
         else {
           y += fontHeight;
