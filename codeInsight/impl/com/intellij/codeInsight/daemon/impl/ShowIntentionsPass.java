@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
@@ -79,7 +80,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     myEndOffset = range.getEndOffset();
 
     myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-    LOG.assertTrue(myFile != null);
+    assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
   }
 
   private static TextRange getVisibleRange(Editor editor) {
