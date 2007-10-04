@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -1051,7 +1052,7 @@ public class FileManagerImpl implements FileManager {
                   }
                   else if (!newPsiFile.getClass().equals(oldPsiFile.getClass()) ||
                            newPsiFile.getFileType() != myFileTypeManager.getFileTypeByFileName((String)event.getOldValue()) ||
-                           languageDialectChanged(newPsiFile)
+                           languageDialectChanged(newPsiFile, (String)event.getOldValue())
                           ) {
                     myVFileToViewProviderMap.put(vFile, fileViewProvider);
 
@@ -1227,13 +1228,14 @@ public class FileManagerImpl implements FileManager {
   // When file is renamed so that extension changes then language dialect might change and thus psiFile should be invalidated
   // We could detect it right now with checks of parser definition equivalence
   // The file name under passed psi file is "new" but parser def is from old name
-  private static boolean languageDialectChanged(final PsiFile newPsiFile) {
+  private static boolean languageDialectChanged(final PsiFile newPsiFile, String oldFileName) {
     return ( newPsiFile.getLanguageDialect() != null && 
              newPsiFile.getLanguageDialect().getParserDefinition().getClass() != newPsiFile.getLanguage().getParserDefinition().getClass()
            ) ||
            ( newPsiFile.getLanguageDialect() == null &&
              newPsiFile instanceof PsiFileBase &&
-             newPsiFile.getLanguage().getParserDefinition().getClass() == ((PsiFileBase)newPsiFile).getParserDefinition().getClass()
+             newPsiFile.getLanguage().getParserDefinition().getClass() == ((PsiFileBase)newPsiFile).getParserDefinition().getClass() &&
+             !FileUtil.getExtension(newPsiFile.getName()).equals(FileUtil.getExtension(oldFileName))
            );
   }
 
