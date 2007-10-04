@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -194,13 +195,29 @@ public class FrameDebuggerTree extends DebuggerTree {
         //noinspection unchecked
         final Set<String> vars = new HashSet<String>();
         final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
-        final PsiRecursiveElementVisitor variablesCollector = new VariablesCollector(visibleVars, lineRange, expressions, vars);
+        final PsiRecursiveElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars);
         element.accept(variablesCollector);
 
         return new Pair<Set<String>, Set<TextWithImports>>(vars, expressions);
       }
     }
     return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+  }
+
+  private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
+    final Ref<TextRange> rangeRef = new Ref<TextRange>(originalRange);
+    element.accept(new PsiRecursiveElementVisitor() {
+      public void visitExpressionStatement(final PsiExpressionStatement statement) {
+        final TextRange stRange = statement.getTextRange();
+        if (originalRange.intersects(stRange)) {
+          final TextRange currentRange = rangeRef.get();
+          final int start = Math.min(currentRange.getStartOffset(), stRange.getStartOffset());
+          final int end = Math.max(currentRange.getEndOffset(), stRange.getEndOffset());
+          rangeRef.set(new TextRange(start, end));
+        }
+      }
+    });
+    return rangeRef.get();
   }
 
   private class RefreshFrameTreeCommand extends RefreshDebuggerTreeCommand {
