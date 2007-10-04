@@ -15,8 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -600,8 +600,9 @@ public class FileManagerImpl implements FileManager {
     PsiClass bestClass = null;
     for (long classId : classIds) {
       PsiClass aClass = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(classId);
-      LOG.assertTrue(aClass != null);
-      LOG.assertTrue(aClass.isValid());
+      LOG.assertTrue(aClass != null, "null class returned while looking for : " + qName);
+      LOG.assertTrue(aClass.isValid(), "class is not valid while looking for : " + qName);
+      if (!aClass.isValid()) continue;
 
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
