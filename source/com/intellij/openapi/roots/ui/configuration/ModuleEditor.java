@@ -53,6 +53,8 @@ public class ModuleEditor implements Place.Navigator {
   private TabbedPaneWrapper myTabbedPane;
   private final ModulesProvider myModulesProvider;
   private String myName;
+  private Module myModule;
+
   private List<ModuleConfigurationEditor> myEditors = new ArrayList<ModuleConfigurationEditor>();
   private ModifiableRootModel myModifiableRootModelProxy;
 
@@ -73,6 +75,7 @@ public class ModuleEditor implements Place.Navigator {
     myModulesProvider = modulesProvider;
     myFacetsConfigurator = facetsConfigurator;
     addChangeListener(facetsConfigurator);
+    myModule = module;
     myName = module.getName();
   }
 
@@ -105,6 +108,11 @@ public class ModuleEditor implements Place.Navigator {
   }
 
   public Module getModule() {
+    final Module[] all = myModulesProvider.getModules();
+    for (Module each : all) {
+      if (each == myModule) return myModule;
+    }
+
     return myModulesProvider.getModule(myName);
   }
 

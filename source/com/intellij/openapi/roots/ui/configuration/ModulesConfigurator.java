@@ -442,11 +442,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     });
   }
 
-  public void moduleRenamed(final String oldName, final String name) {
+  public void moduleRenamed(Module module, final String oldName, final String name) {
     for (ModuleEditor moduleEditor : myModuleEditors) {
-      if (Comparing.strEqual(moduleEditor.getName(), oldName)) {
+      if (module == moduleEditor.getModule() && Comparing.strEqual(moduleEditor.getName(), oldName)) {
         moduleEditor.setModuleName(name);
         moduleEditor.updateCompilerOutputPathChanged(ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl(), name);
+        myContext.invalidateModuleName(moduleEditor.getModule());
         return;
       }
     }

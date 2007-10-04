@@ -51,7 +51,7 @@ public class ModuleConfigurable extends NamedConfigurable<Module> implements Pla
     catch (ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
       //do nothing
     }
-    myConfigurator.moduleRenamed(myModuleName, name);
+    myConfigurator.moduleRenamed(myModule, myModuleName, name);
     myModuleName = name;
     myConfigurator.setModified(!Comparing.strEqual(myModuleName, myModule.getName()));
   }

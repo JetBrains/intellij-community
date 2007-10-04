@@ -65,6 +65,14 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   public void init(StructureConfigrableContext context) {
     myContext = context;
+    myContext.addCacheUpdateListener(new Runnable() {
+      public void run() {
+        if (!myTree.isShowing()) return;
+
+        myTree.revalidate();
+        myTree.repaint();
+      }
+    });
   }
 
 
@@ -173,6 +181,11 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         if (object instanceof Module) {
           final Module module = (Module)object;
           final Map<String, Set<String>> problems = myContext.myValidityCache.get(module);
+
+          if (problems.containsKey(StructureConfigrableContext.DUPLICATE_MODULE_NAME)) {
+            buf.append(StructureConfigrableContext.DUPLICATE_MODULE_NAME).append("\n");
+          }
+
           if (problems.containsKey(StructureConfigrableContext.NO_JDK)){
             buf.append(StructureConfigrableContext.NO_JDK).append("\n");
           }

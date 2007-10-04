@@ -341,7 +341,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return "Module:" + getName();
+    return "Module:" + getName() + " path:" + getModuleFilePath();
   }
 
   private static String moduleNameByFileName(String fileName) {

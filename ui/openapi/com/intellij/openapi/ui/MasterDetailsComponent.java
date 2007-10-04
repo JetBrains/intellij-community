@@ -533,7 +533,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myInitializedConfigurables.add(configurable);
   }
 
-  protected boolean canApply(Set<MyNode> rootNodes, String prefix, String title) {
+  protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
     String alreadyExist = null;
     for (MyNode rootNode : rootNodes) {
       alreadyExist = alreadyExist(rootNode);
@@ -546,10 +546,8 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       if (o instanceof NamedScope && !Comparing.strEqual(alreadyExist, ((NamedScope)o).getName())) {
         selectNodeInTree(alreadyExist);
       }
-      Messages.showErrorDialog(myWholePanel, CommonBundle.message("smth.already.exist.error.message", prefix, alreadyExist), title);
-      return false;
+      throw new ConfigurationException(CommonBundle.message("smth.already.exist.error.message", prefix, alreadyExist), title);
     }
-    return true;
   }
 
   @Nullable

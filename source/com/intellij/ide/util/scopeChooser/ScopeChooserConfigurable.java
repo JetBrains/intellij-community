@@ -50,12 +50,9 @@ import java.util.*;
  */
 @State(
   name = "ScopeChooserConfigurable.UI",
-  storages = {
-    @Storage(
-      id ="other",
-      file = "$WORKSPACE_FILE$"
-    )}
-)
+  storages = {@Storage(
+    id = "other",
+    file = "$WORKSPACE_FILE$")})
 public class ScopeChooserConfigurable extends MasterDetailsComponent {
   private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
@@ -103,14 +100,14 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
 
   public void apply() throws ConfigurationException {
     final Set<MyNode> roots = new HashSet<MyNode>();
-    if (canApply(roots, ProjectBundle.message("rename.message.prefix.scope"), ProjectBundle.message("rename.scope.title"))) {
-      super.apply();
-      processScopes();
-      myState.order.clear();
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)((DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent()).getParent();
-      for(int i = 0; i < node.getChildCount(); i++) {
-        myState.order.add(((MyNode)node.getChildAt(i)).getDisplayName());
-      }
+    checkApply(roots, ProjectBundle.message("rename.message.prefix.scope"), ProjectBundle.message("rename.scope.title"));
+    super.apply();
+    processScopes();
+    myState.order.clear();
+    final DefaultMutableTreeNode node =
+      (DefaultMutableTreeNode)((DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent()).getParent();
+    for (int i = 0; i < node.getChildCount(); i++) {
+      myState.order.add(((MyNode)node.getChildAt(i)).getDisplayName());
     }
   }
 
@@ -141,7 +138,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
       final NamedScope namedScope = scopeConfigurable.getEditableObject();
       if (scopeConfigurable.getHolder() == myLocalScopesManager) {
         myLocalScopesManager.addScope(namedScope);
-      } else {
+      }
+      else {
         mySharedScopesManager.addScope(namedScope);
       }
     }
@@ -151,11 +149,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
     myRoot.removeAllChildren();
     loadScopes(mySharedScopesManager);
     loadScopes(myLocalScopesManager);
-    TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>(){
+    TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
       public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
         final int idx1 = myState.order.indexOf(((MyNode)o1).getDisplayName());
         final int idx2 = myState.order.indexOf(((MyNode)o2).getDisplayName());
-        return idx1- idx2;
+        return idx1 - idx2;
       }
     });
   }
@@ -272,11 +270,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
   }
 
   private void createScope(final boolean isLocal, String title, final PackageSet set) {
-    final String newName = Messages.showInputDialog(myWholePanel,
-                                                    IdeBundle.message("add.scope.name.label"),
-                                                    title,
-                                                    Messages.getInformationIcon(),
-                                                    createUniqueName(), new InputValidator() {
+    final String newName = Messages.showInputDialog(myWholePanel, IdeBundle.message("add.scope.name.label"), title,
+                                                    Messages.getInformationIcon(), createUniqueName(), new InputValidator() {
       public boolean checkInput(String inputString) {
         final NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
         for (NamedScope scope : holder.getPredefinedScopes()) {
@@ -321,12 +316,12 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       if (myChildren == null) {
         myChildren = new AnAction[2];
-        myChildren[0] =
-          new AnAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"), myLocalScopesManager.getIcon()) {
-            public void actionPerformed(AnActionEvent e) {
-              createScope(true, IdeBundle.message("add.scope.dialog.title"), null);
-            }
-          };
+        myChildren[0] = new AnAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"),
+                                     myLocalScopesManager.getIcon()) {
+          public void actionPerformed(AnActionEvent e) {
+            createScope(true, IdeBundle.message("add.scope.dialog.title"), null);
+          }
+        };
         myChildren[1] = new AnAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
                                      mySharedScopesManager.getIcon()) {
           public void actionPerformed(AnActionEvent e) {
@@ -337,7 +332,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
       if (myFromPopup) {
         final AnAction action = myChildren[getDefaultIndex()];
         action.getTemplatePresentation().setIcon(Icons.ADD_ICON);
-        return new AnAction[] {action};
+        return new AnAction[]{action};
       }
       return myChildren;
     }
@@ -398,7 +393,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
 
   private class MyCopyAction extends AnAction {
     public MyCopyAction() {
-      super(ExecutionBundle.message("copy.configuration.action.name"), ExecutionBundle.message("copy.configuration.action.name"), COPY_ICON);
+      super(ExecutionBundle.message("copy.configuration.action.name"), ExecutionBundle.message("copy.configuration.action.name"),
+            COPY_ICON);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
     }
 
@@ -406,7 +402,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
       NamedScope scope = (NamedScope)getSelectedObject();
       if (scope != null) {
         final NamedScope newScope = scope.createCopy();
-        final ScopeConfigurable configurable = (ScopeConfigurable)((MyNode)myTree.getSelectionPath().getLastPathComponent()).getConfigurable();
+        final ScopeConfigurable configurable =
+          (ScopeConfigurable)((MyNode)myTree.getSelectionPath().getLastPathComponent()).getConfigurable();
         addNewScope(new NamedScope(createUniqueName(), newScope.getValue()), configurable.getHolder() == myLocalScopesManager);
       }
     }
@@ -433,7 +430,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
           if (set != null) {
             if (scopeConfigurable.getHolder() == mySharedScopesManager) {
               createScope(false, IdeBundle.message("scopes.save.dialog.title.shared"), set.createCopy());
-            } else {
+            }
+            else {
               createScope(true, IdeBundle.message("scopes.save.dialog.title.local"), set.createCopy());
             }
           }

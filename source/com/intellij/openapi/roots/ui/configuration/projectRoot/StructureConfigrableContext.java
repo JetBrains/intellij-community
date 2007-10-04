@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -38,6 +39,7 @@ public class StructureConfigrableContext implements Disposable {
 
   @NonNls public static final String DELETED_LIBRARIES = "lib";
   public static final String NO_JDK = ProjectBundle.message("project.roots.module.jdk.problem.message");
+  public static final String DUPLICATE_MODULE_NAME = ProjectBundle.message("project.roots.module.duplicate.name.message");
 
   public final Map<Library, Set<String>> myLibraryDependencyCache = new HashMap<Library, Set<String>>();
   public final Map<ProjectJdk, Set<String>> myJdkDependencyCache = new HashMap<ProjectJdk, Set<String>>();
@@ -51,6 +53,8 @@ public class StructureConfigrableContext implements Disposable {
 
   public final Alarm myUpdateDependenciesAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   public final Alarm myReloadProjectAlarm = new Alarm();
+
+  private List<Runnable> myCacheUpdaters = new ArrayList<Runnable>();
 
 
   public final Map<String, LibrariesModifiableModel> myLevel2Providers = new THashMap<String, LibrariesModifiableModel>();
@@ -182,6 +186,7 @@ public class StructureConfigrableContext implements Disposable {
     myValidityCache.clear();
     myLibraryPathValidityCache.clear();
     myModulesDependencyCache.clear();
+    myCacheUpdaters.clear();
     myDisposed = true;
   }
 
@@ -192,6 +197,16 @@ public class StructureConfigrableContext implements Disposable {
           for (String module : modules) {
             myValidityCache.remove(myModuleManager.findModuleByName(module));
           }
+        }
+      }
+    });
+  }
+  public void invalidateModuleName(final Module module) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        final Map<String, Set<String>> problems = myValidityCache.remove(module);
+        if (problems != null) {
+          fireOnCacheChanged();            
         }
       }
     });
@@ -272,8 +287,21 @@ public class StructureConfigrableContext implements Disposable {
 
    private void updateModuleValidityCache(final Module module) {
      if (myValidityCache.containsKey(module)) return; //do not check twice
-     final OrderEntry[] entries = myModulesConfigurator.getRootModel(module).getOrderEntries();
+
+     if (myDisposed) return;
+
      Map<String, Set<String>> problems = null;
+     final ModifiableModuleModel moduleModel = myModulesConfigurator.getModuleModel();
+     final Module[] all = moduleModel.getModules();
+     for (Module each : all) {
+       if (each != module && getRealName(each).equals(getRealName(module))) {
+         problems = new HashMap<String, Set<String>>();
+         problems.put(DUPLICATE_MODULE_NAME, null);
+         break;
+       }
+     }
+
+     final OrderEntry[] entries = myModulesConfigurator.getRootModel(module).getOrderEntries();
      for (OrderEntry entry : entries) {
        if (myDisposed) return;
        if (!entry.isValid()){
@@ -303,7 +331,12 @@ public class StructureConfigrableContext implements Disposable {
      });
    }
 
-   public boolean isUnused(final Object object, MasterDetailsComponent.MyNode node) {
+  private String getRealName(final Module module) {
+    final ModifiableModuleModel moduleModel = myModulesConfigurator.getModuleModel();
+    return moduleModel.getNewName(module) != null ? moduleModel.getNewName(module) : module.getName();
+  }
+
+  public boolean isUnused(final Object object, MasterDetailsComponent.MyNode node) {
      if (object == null) return false;
      if (object instanceof Module){
        getCachedDependencies(object, node, false);
@@ -323,7 +356,10 @@ public class StructureConfigrableContext implements Disposable {
    }
 
   private void fireOnCacheChanged() {
-    //myTree.repaint();
+    final Runnable[] all = myCacheUpdaters.toArray(new Runnable[myCacheUpdaters.size()]);
+    for (Runnable each : all) {
+      each.run();
+    }
   }
 
   public void addReloadProjectRequest(final Runnable runnable) {
@@ -409,5 +445,9 @@ public class StructureConfigrableContext implements Disposable {
     myDisposed = false;
     resetLibraries();
     myModulesConfigurator.resetModuleEditors();
+  }
+
+  public void addCacheUpdateListener(Runnable runnable) {
+    myCacheUpdaters.add(runnable);
   }
 }

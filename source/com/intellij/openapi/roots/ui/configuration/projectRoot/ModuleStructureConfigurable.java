@@ -320,7 +320,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   public void apply() throws ConfigurationException {
     final Set<MyNode> roots = new HashSet<MyNode>();
     roots.add(myRoot);
-    if (!canApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"))) return;
+    checkApply(roots, ProjectBundle.message("rename.message.prefix.module"), ProjectBundle.message("rename.module.title"));
 
     if (myContext.myModulesConfigurator.isModified()) myContext.myModulesConfigurator.apply();
   }
