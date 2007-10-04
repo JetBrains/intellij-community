@@ -104,14 +104,13 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent {
     super.apply();
     processScopes();
     myState.order.clear();
-    final DefaultMutableTreeNode node =
-      (DefaultMutableTreeNode)((DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent()).getParent();
-    for (int i = 0; i < node.getChildCount(); i++) {
-      myState.order.add(((MyNode)node.getChildAt(i)).getDisplayName());
+    for (int i = 0; i < myRoot.getChildCount(); i++) {
+      myState.order.add(((MyNode)myRoot.getChildAt(i)).getDisplayName());
     }
   }
 
   public boolean isModified() {
+    if (myRoot.getChildCount() != myState.order.size()) return true;
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);
       final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)node.getConfigurable();
