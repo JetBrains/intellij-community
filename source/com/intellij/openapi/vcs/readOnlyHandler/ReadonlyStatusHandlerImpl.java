@@ -44,13 +44,12 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import gnu.trove.THashSet;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @State(
   name="ReadonlyStatusHandler",
@@ -85,8 +84,14 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     if (files.length == 0) {
       return new OperationStatus(VirtualFile.EMPTY_ARRAY, VirtualFile.EMPTY_ARRAY);
     }
-
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    Set<VirtualFile> realFiles = new THashSet<VirtualFile>(files.length);
+    for (VirtualFile file : files) {
+      if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+      realFiles.add(file);
+    }
+    files = realFiles.toArray(new VirtualFile[realFiles.size()]);
 
     final long[] modificationStamps = new long[files.length];
     for (int i = 0; i < files.length; i++) {
@@ -130,8 +135,8 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
 
     return new OperationStatus(
-      readOnlyFiles.size() > 0? readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]) : VirtualFile.EMPTY_ARRAY,
-      updatedFiles.size() > 0? updatedFiles.toArray(new VirtualFile[updatedFiles.size()]) : VirtualFile.EMPTY_ARRAY
+      readOnlyFiles.isEmpty() ? VirtualFile.EMPTY_ARRAY : readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]),
+      updatedFiles.isEmpty() ? VirtualFile.EMPTY_ARRAY : updatedFiles.toArray(new VirtualFile[updatedFiles.size()])
     );
   }
 

@@ -30,4 +30,8 @@ public class VirtualFileWindow extends LightVirtualFile {
   public boolean isValid() {
     return myDocumentWindow.isValid();
   }
+
+  public boolean isWritable() {
+    return getDelegate().isWritable();
+  }
 }
