@@ -541,7 +541,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     Project project = psiFile.getProject();
     if (!PsiManager.getInstance(project).isInProject(psiFile)) return; // do not report problems in libraries
     VirtualFile file = psiFile.getVirtualFile();
-    if (file == null || CompilerManager.getInstance(project).isExcludedFromCompilation(file)) return;
+    if (file == null) return;
 
     boolean hasErrorElement = Boolean.TRUE.equals(psiFile.getUserData(HAS_ERROR_ELEMENT));
     List<Problem> problems = convertToProblems(infos, file, hasErrorElement);

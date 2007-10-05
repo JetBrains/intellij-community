@@ -8,9 +8,12 @@ import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
@@ -51,8 +54,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final List<ProblemListener> myProblemListeners = new CopyOnWriteArrayList<ProblemListener>();
   private final List<Condition<VirtualFile>> myFilters =
     new CopyOnWriteArrayList<Condition<VirtualFile>>(Arrays.asList(new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile object) {
-        return ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(object);
+      public boolean value(final VirtualFile file) {
+        return ProjectRootManager.getInstance(myProject).getFileIndex().isJavaSourceFile(file)
+          && !CompilerManager.getInstance(myProject).isExcludedFromCompilation(file);
       }
     }));
   private final ProblemListener fireProblemListeners = new ProblemListener() {
@@ -86,15 +90,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
     private void onDeleted(final VirtualFile file) {
       if (file.isDirectory()) {
-        VirtualFile[] files;
-        synchronized (myProblems) {
-          files = myProblems.keySet().toArray(new VirtualFile[myProblems.size()]);
-        }
-        for (VirtualFile problemFile : files) {
-          if (!problemFile.isValid()) {
-            doRemove(problemFile);
-          }
-        }
+        clearInvalidFiles();
       }
       else {
         doRemove(file);
@@ -168,6 +164,30 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     };
     psiManager.addPsiTreeChangeListener(myChangeListener);
     virtualFileManager.addVirtualFileListener(myVirtualFileListener);
+    FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
+    if (fileStatusManager != null) { //tests?
+      fileStatusManager.addFileStatusListener(new FileStatusListener() {
+        public void fileStatusesChanged() {
+          clearInvalidFiles();
+        }
+
+        public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
+          fileStatusesChanged();
+        }
+      });
+    }
+  }
+
+  private void clearInvalidFiles() {
+    VirtualFile[] files;
+    synchronized (myProblems) {
+      files = myProblems.keySet().toArray(new VirtualFile[myProblems.size()]);
+    }
+    for (VirtualFile problemFile : files) {
+      if (!problemFile.isValid() || !isToBeHighlighted(problemFile)) {
+        doRemove(problemFile);
+      }
+    }
   }
 
   private void clearSyntaxErrorFlag(final PsiTreeChangeEvent event) {
@@ -175,9 +195,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     if (file == null) return;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return;
-    ProblemFileInfo info = myProblems.get(virtualFile);
-    if (info == null) return;
-    info.hasSyntaxErrors = false;
+    synchronized (myProblems) {
+      ProblemFileInfo info = myProblems.get(virtualFile);
+      if (info == null) return;
+      info.hasSyntaxErrors = false;
+    }
   }
 
   public void projectOpened() {
@@ -238,6 +260,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
   // returns true if car has been cleaned
   private boolean orderVincentToCleanTheCar(final VirtualFile file, ProgressIndicator progressIndicator) throws ProcessCanceledException {
+    if (!isToBeHighlighted(file)) {
+      clearProblems(file);
+      return true; // file is going to be red waved no more
+    }
     if (hasSyntaxErrors(file)) {
       // it's no use anyway to try clean the file with syntax errors, only changing the file itself can help
       return false;
@@ -292,8 +318,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   public boolean hasSyntaxErrors(final VirtualFile file) {
-    ProblemFileInfo info = myProblems.get(file);
-    return info != null && info.hasSyntaxErrors;
+    synchronized (myProblems) {
+      ProblemFileInfo info = myProblems.get(file);
+      return info != null && info.hasSyntaxErrors;
+    }
   }
 
   private boolean willBeHighlightedAnyway(final VirtualFile file) {
