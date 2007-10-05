@@ -212,74 +212,48 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
-    PsiClass containingClass = getContainingClass();
+        List<PsiMethod> methods = new ArrayList<PsiMethod>();
+        findDeepestSuperMethodsForClass(methods, this);
+        return methods.toArray(PsiMethod.EMPTY_ARRAY);
+    }
 
-    Map<MethodSignature, PsiMethod> methods = new HashMap<MethodSignature, PsiMethod>();
-    return findDeepestSuperMethodForClass(methods, containingClass);
-  }
+    private void findDeepestSuperMethodsForClass(List<PsiMethod> collectedMethods, PsiMethod method) {
+        PsiClassType[] superClassTypes = method.getContainingClass().getSuperTypes();
 
-  private PsiMethod findDeepestSuperMethodForInterface(PsiMethod[] deepestMethod, PsiClass psiClass) {
-    PsiClassType[] superClassTypes = psiClass.getSuperTypes();
+        for (PsiClassType superClassType : superClassTypes) {
+            PsiClass resolvedSuperClass = superClassType.resolve();
 
-    for (PsiClassType superClassType : superClassTypes) {
-      PsiClass resolvedSuperClass = superClassType.resolve();
+            if (resolvedSuperClass == null) continue;
+            PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
 
-      if (resolvedSuperClass == null) continue;
+            for (PsiMethod superClassMethod : superClassMethods) {
+                MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
+                final HierarchicalMethodSignature thisMethodSignature = getHierarchicalMethodSignature();
 
-      PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
-
-      for (PsiMethod superClassMethod : superClassMethods) {
-        MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
-
-        if (superMethodSignature.equals(getHierarchicalMethodSignature())) {
-          deepestMethod[0] = superClassMethod;
-          break;
+                if (superMethodSignature.equals(thisMethodSignature) && !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
+                    checkForMethodOverriding(collectedMethods, superClassMethod);
+                }
+                findDeepestSuperMethodsForClass(collectedMethods, superClassMethod);
+            }
         }
-      }
-      findDeepestSuperMethodForInterface(deepestMethod, resolvedSuperClass);
     }
 
-    return deepestMethod[0];
-  }
-
-  private PsiMethod[] findDeepestSuperMethodForClass(Map<MethodSignature, PsiMethod> signaturesToMethods, PsiClass psiClass) {
-    PsiClassType[] superClassTypes = psiClass.getSuperTypes();
-    PsiMethod deepestInterfacesHierarchyMethod = null;
-
-    for (PsiClassType superClassType : superClassTypes) {
-      PsiClass resolvedSuperClass = superClassType.resolve();
-
-      if (resolvedSuperClass == null) continue;
-      if (resolvedSuperClass.isInterface()) {
-        deepestInterfacesHierarchyMethod = findDeepestSuperMethodForInterface(new PsiMethod[1], resolvedSuperClass);
-        continue;
-      }
-
-      PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
-
-      for (PsiMethod superClassMethod : superClassMethods) {
-        MethodSignature superMethodSignature = superClassMethod.getHierarchicalMethodSignature();
-
-        if (superMethodSignature.equals(getHierarchicalMethodSignature()) && !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
-          signaturesToMethods.put(superMethodSignature, superClassMethod);
+    private void checkForMethodOverriding(List<PsiMethod> collectedMethods, PsiMethod superClassMethod) {
+        int i = 0;
+        while (i < collectedMethods.size()) {
+            PsiMethod collectedMethod = collectedMethods.get(i);
+            if (collectedMethod.getContainingClass().equals(superClassMethod.getContainingClass()) || collectedMethod.getContainingClass().isInheritor(superClassMethod.getContainingClass(), true)) {
+                collectedMethods.remove(collectedMethod);
+                continue;
+            }
+            i++;
         }
-      }
-
-      findDeepestSuperMethodForClass(signaturesToMethods, resolvedSuperClass);
+        collectedMethods.add(superClassMethod);
     }
 
-    List<PsiMethod> values = new ArrayList<PsiMethod>();
-    values.addAll(signaturesToMethods.values());
-
-    if (deepestInterfacesHierarchyMethod != null) {
-      values.add(deepestInterfacesHierarchyMethod);
-    }
-    return values.toArray(PsiMethod.EMPTY_ARRAY);
-  }
-
-  @NotNull
-  public PsiMethod[] findSuperMethods(boolean checkAccess) {
-    PsiClass containingClass = getContainingClass();
+    @NotNull
+    public PsiMethod[] findSuperMethods(boolean checkAccess) {
+        PsiClass containingClass = getContainingClass();
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     findSuperMethodRecursilvely(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this), new HashSet<MethodSignature>());
