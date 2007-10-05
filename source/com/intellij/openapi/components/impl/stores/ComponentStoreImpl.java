@@ -94,25 +94,15 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   private <T> void commitPersistentComponent(@NotNull final PersistentStateComponent<T> persistentStateComponent, @NotNull StateStorageManager.ExternalizationSession session) {
-    try {
-      Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
+    Storage[] storageSpecs = getComponentStorageSpecs(persistentStateComponent, StateStorageOperation.WRITE);
 
-      session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), persistentStateComponent.getState());
-    }
-    catch (StateStorage.StateStorageException e) {
-      LOG.error(e);
-    }
+    session.setState(storageSpecs, persistentStateComponent, getComponentName(persistentStateComponent), persistentStateComponent.getState());
   }
 
   private static void commitJdomExternalizable(@NotNull final JDOMExternalizable component, @NotNull StateStorageManager.ExternalizationSession session) {
     final String componentName = getComponentName(component);
 
-    try {
-      session.setStateInOldStorage(component, componentName, component);
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
+    session.setStateInOldStorage(component, componentName, component);
   }
 
   void initJdomExternalizable(@NotNull JDOMExternalizable component) {

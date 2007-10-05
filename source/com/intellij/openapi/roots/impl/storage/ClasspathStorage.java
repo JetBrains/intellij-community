@@ -128,10 +128,10 @@ public class ClasspathStorage implements StateStorage {
       myConverter.setClasspath(element);
     }
     catch (WriteExternalException e) {
-      throw new StateStorageException(e);
+      throw new StateStorageException(e.getMessage());
     }
     catch (IOException e) {
-      throw new StateStorageException(e);
+      throw new StateStorageException(e.getMessage());
     }
   }
 
