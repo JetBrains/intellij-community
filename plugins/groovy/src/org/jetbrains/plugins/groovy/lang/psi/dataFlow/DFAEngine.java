@@ -118,10 +118,10 @@ public class DFAEngine<E> {
         while (!worklist.isEmpty()) {
           final Instruction curr = worklist.remove();
           final int num = curr.num();
-          result[M++] = num;
-          visited[num] = true;
-          for (Instruction succ : curr.succ(env)) {
-            if (!visited[succ.num()]) {
+          if (!visited[num]) {
+            result[M++] = num;
+            visited[num] = true;
+            for (Instruction succ : curr.succ(env)) {
               worklist.add(succ);
             }
           }
