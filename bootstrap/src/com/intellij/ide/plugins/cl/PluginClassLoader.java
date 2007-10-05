@@ -37,7 +37,7 @@ public class PluginClassLoader extends UrlClassLoader {
 
   // changed sequence in which classes are searched, this is essential if plugin uses library, a different version of which
   // is used in IDEA.
-  public Class _loadClass(final String name, final boolean resolve) {
+  public synchronized Class _loadClass(final String name, final boolean resolve) {
     Class c = findLoadedClass(name);
     if (c == null) {
       c = _findClass(name);
