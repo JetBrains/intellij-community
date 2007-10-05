@@ -83,7 +83,7 @@ public class AddSupportForFrameworksPanel {
     return frameworkLibrariesInfos;
   }
 
-  public void downloadLibraries() {
+  public boolean downloadLibraries() {
     List<FrameworkSupportSettings> list = getFrameworkWithLibraries();
     for (FrameworkSupportSettings settings : list) {
       if (settings.isDownloadLibraries()) {
@@ -100,11 +100,16 @@ public class AddSupportForFrameworksPanel {
             LibraryDownloader downloader = new LibraryDownloader(downloadingInfos, null, myMainPanel,
                                                                  settings.getDirectoryForDownloadedLibrariesPath(),
                                                                  libraryName);
-            settings.myAddedJars.addAll(Arrays.asList(downloader.download()));
+            VirtualFile[] files = downloader.download();
+            if (files.length != downloadingInfos.length) {
+              return false;
+            }
+            settings.myAddedJars.addAll(Arrays.asList(files));
           }
         }
       }
     }
+    return true;
   }
 
   private JPanel addSettingsComponents(final List<FrameworkSupportSettings> list, JPanel treePanel, int level) {
@@ -258,7 +263,7 @@ public class AddSupportForFrameworksPanel {
     private JCheckBox myCheckBox;
     private List<FrameworkSupportSettings> myChildren = new ArrayList<FrameworkSupportSettings>();
     private @NonNls String myDirectoryForDownloadedLibrariesPath;
-    private List<VirtualFile> myAddedJars = new ArrayList<VirtualFile>();
+    private Set<VirtualFile> myAddedJars = new LinkedHashSet<VirtualFile>();
     private boolean myDownloadLibraries = true;
 
     private FrameworkSupportSettings(final FrameworkSupportProvider provider, final FrameworkSupportSettings parentNode) {
@@ -308,12 +313,12 @@ public class AddSupportForFrameworksPanel {
       return myConfigurable;
     }
 
-    public List<VirtualFile> getAddedJars() {
+    public Set<VirtualFile> getAddedJars() {
       return myAddedJars;
     }
 
     public void setAddedJars(final List<VirtualFile> addedJars) {
-      myAddedJars = addedJars;
+      myAddedJars = new LinkedHashSet<VirtualFile>(addedJars);
     }
 
     public String getDirectoryForDownloadedLibrariesPath() {

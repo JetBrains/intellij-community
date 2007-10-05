@@ -244,7 +244,8 @@ public class LibraryDownloader {
       downloadedFiles.add(Pair.create(libraryInfo, file));
     }
     else {
-      indicator.setText2(IdeBundle.message("progress.download.jar.text", getExpectedFileName(libraryInfo), presentableUrl));
+      indicator.setText2(IdeBundle.message("progress.connecting.to.dowload.jar.text", presentableUrl));
+      indicator.setIndeterminate(true);
       HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
 
       InputStream input = null;
@@ -266,6 +267,7 @@ public class LibraryDownloader {
         tempFile = FileUtil.createTempFile("downloaded", "jar");
         input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, indicator);
         output = new BufferedOutputStream(new FileOutputStream(tempFile));
+        indicator.setText2(IdeBundle.message("progress.download.jar.text", getExpectedFileName(libraryInfo), presentableUrl));
         indicator.setIndeterminate(size == -1);
 
         int len;

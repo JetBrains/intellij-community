@@ -171,7 +171,10 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
           step._commit(true);
         }
         catch (CommitStepException e) {
-          Messages.showErrorDialog(getCurrentStepComponent(), e.getMessage());
+          String message = e.getMessage();
+          if (message != null) {
+            Messages.showErrorDialog(getCurrentStepComponent(), message);
+          }
           return;
         }
         if (!isLastStep(idx)) {

@@ -57,7 +57,10 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    myAddSupportPanel.downloadLibraries();
+    if (!myAddSupportPanel.downloadLibraries()) {
+      return;
+    }
+
     new WriteAction() {
       protected void run(final Result result) {
         ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
