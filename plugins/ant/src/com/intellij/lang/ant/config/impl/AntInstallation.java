@@ -97,7 +97,11 @@ public class AntInstallation {
   public String getVersion() {
     return VERSION.get(myProperties);
   }
-
+  
+  public String getHomeDir() {
+    return HOME_DIR.get(myProperties);
+  }
+  
   public AbstractProperty.AbstractPropertyContainer getProperties() {
     return myProperties;
   }

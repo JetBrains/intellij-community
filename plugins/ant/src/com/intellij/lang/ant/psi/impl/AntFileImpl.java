@@ -7,6 +7,7 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
+import com.intellij.lang.ant.config.impl.AntConfigurationImpl;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.lang.ant.misc.AntStringInterner;
@@ -20,6 +21,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -317,6 +321,23 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @Nullable
+  public ProjectJdk getTargetJdk() {
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(XmlFile.ANT_BUILD_FILE);
+    if (buildFile == null) {
+      return ProjectRootManager.getInstance(getProject()).getProjectJdk();
+    }
+
+    String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(buildFile.getAllOptions());
+    if (jdkName == null || jdkName.length() == 0) {
+      jdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(buildFile.getAllOptions());
+    }
+    if (jdkName != null && jdkName.length() > 0) {
+      return ProjectJdkTable.getInstance().findJdk(jdkName);
+    }
+    return ProjectRootManager.getInstance(getProject()).getProjectJdk();
+  }
+
+  @Nullable
   public AntElement getAntParent() {
     return null;
   }
@@ -393,7 +414,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
-  void loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
+  private void loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
     final Enumeration props = (properties != null) ? properties.keys() : (new Hashtable()).keys();
     final @NonNls StringBuilder builder = StringBuilderSpinAllocator.alloc();
     builder.append("<project name=\"predefined properties\">");
@@ -451,14 +472,25 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         builder.append(basedir);
         builder.append("\"/>");
       }
-      builder.append("<property name=\"ant.home\" value=\"\"/>");
-      builder.append("<property name=\"ant.version\" value=\"1.6.5\"/>");
+      final AntInstallation installation = getAntInstallation();
+      
+      builder.append("<property name=\"ant.home\" value=\"");
+      final String homeDir = installation.getHomeDir();
+      if (homeDir != null) {
+        builder.append(homeDir.replace(File.separatorChar, '/'));
+      }
+      builder.append("\"/>");
+      builder.append("<property name=\"ant.version\" value=\"");
+      builder.append(installation.getVersion());
+      builder.append("\"/>");
       builder.append("<property name=\"ant.project.name\" value=\"");
       final String name = antProject.getName();
       builder.append((name == null) ? "" : name);
       builder.append("\"/>");
       builder.append("<property name=\"ant.java.version\" value=\"");
-      builder.append(SystemInfo.JAVA_VERSION);
+      final ProjectJdk jdkToRunWith = getTargetJdk();
+      final String version = jdkToRunWith != null? jdkToRunWith.getVersionString() : null;
+      builder.append(version != null? version : SystemInfo.JAVA_VERSION);
       builder.append("\"/>");
       if (file != null) {
         final String path = file.getPath();
