@@ -38,7 +38,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   private UISettings myUISettings;
   private AsyncProcessIcon myRefreshIcon;
-  private JLabel myEmptyRefreshIcon;
+  private EmptyIcon myEmptyRefreshIcon;
 
   public StatusBarImpl(UISettings uiSettings) {
     super();
@@ -59,10 +59,14 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
     final JPanel refreshPanel = new JPanel(new BorderLayout());
 
-    myRefreshIcon = new AsyncProcessIcon("Refreshing filesystem");
+    myRefreshIcon = new AsyncProcessIcon("Refreshing filesystem") {
+      protected Icon getPassiveIcon() {
+        return myEmptyRefreshIcon;
+      }
+    };
+    myEmptyRefreshIcon = new EmptyIcon(myRefreshIcon.getPreferredSize().width, myRefreshIcon.getPreferredSize().height);
+
     refreshPanel.add(myRefreshIcon, BorderLayout.WEST);
-    myEmptyRefreshIcon = new JLabel(new EmptyIcon(myRefreshIcon.getPreferredSize().width, myRefreshIcon.getPreferredSize().height));
-    refreshPanel.add(myEmptyRefreshIcon, BorderLayout.EAST);
     add(refreshPanel, BorderLayout.WEST);
     setRefreshVisible(false);
 
@@ -122,8 +126,12 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   }
 
   private void setRefreshVisible(final boolean visible) {
-    myRefreshIcon.setVisible(visible);
-    myEmptyRefreshIcon.setVisible(!visible);
+    if (visible) {
+      myRefreshIcon.resume();
+    }
+    else {
+      myRefreshIcon.suspend();
+    }
   }
 
   public void add(final ProgressIndicatorEx indicator, TaskInfo info) {
