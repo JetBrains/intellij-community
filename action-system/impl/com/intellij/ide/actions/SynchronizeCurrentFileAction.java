@@ -30,7 +30,7 @@ public class SynchronizeCurrentFileAction extends AnAction {
 
   private static String getMessage(VirtualFile[] files) {
     if (files.length == 1) {
-      return IdeBundle.message("action.synchronize.file", files[0].getName());
+      return IdeBundle.message("action.synchronize.file", files[0].getName().replace("_", "__").replace("&", "&&"));
     }
     return IdeBundle.message("action.synchronize.selected.files");
   }
@@ -50,7 +50,7 @@ public class SynchronizeCurrentFileAction extends AnAction {
     VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     for (VirtualFile f : files) {
       if (f.isDirectory()) {
-        dirtyScopeManager.dirDirtyRecursively(f, true);
+        dirtyScopeManager.dirDirtyRecursively(f);
       }
       else {
         dirtyScopeManager.fileDirty(f);
