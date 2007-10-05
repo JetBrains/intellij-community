@@ -6,11 +6,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
 
 /**
  * author: lesya
@@ -32,20 +36,26 @@ public class VcsBlockHistoryDialog extends VcsHistoryDialog{
   }
 
   protected String getContentToShow(VcsFileRevision revision) {
-    return getBlock(revision).getBlockContent();
+    final Block block = getBlock(revision);
+    if (block == null) return "";
+    return block.getBlockContent();
   }
 
+  @Nullable
   private Block getBlock(VcsFileRevision revision){
     if (myRevisionToContentMap.containsKey(revision))
       return myRevisionToContentMap.get(revision);
 
     int index = myRevisions.indexOf(revision);
 
+    final String revisionContent = getContentOf(revision);
+    if (revisionContent == null) return null;
     if (index == 0)
-      myRevisionToContentMap.put(revision, new Block(getContentOf(revision),  mySelectionStart, mySelectionEnd));
+      myRevisionToContentMap.put(revision, new Block(revisionContent,  mySelectionStart, mySelectionEnd));
     else {
       Block prevBlock = getBlock(myRevisions.get(index - 1));
-      myRevisionToContentMap.put(revision, new FindBlock(getContentOf(revision), prevBlock).getBlockInThePrevVersion());
+      if (prevBlock == null) return null;
+      myRevisionToContentMap.put(revision, new FindBlock(revisionContent, prevBlock).getBlockInThePrevVersion());
     }
     return myRevisionToContentMap.get(revision);
   }
