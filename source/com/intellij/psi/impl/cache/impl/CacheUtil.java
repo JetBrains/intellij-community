@@ -19,13 +19,17 @@ import com.intellij.psi.search.IndexPatternProvider;
 import java.io.IOException;
 
 public class CacheUtil {
-  public static Key<Boolean> CACHE_COPY_KEY = new Key<Boolean>("CACHE_COPY_KEY");
+  private static final Key<Boolean> CACHE_COPY_KEY = new Key<Boolean>("CACHE_COPY_KEY");
 
   private CacheUtil() {
   }
 
   public static PsiFile createFileCopy(PsiFile psiFile) {
     return createFileCopy(null, psiFile);
+  }
+
+  public static boolean isCopy(PsiFile psiFile) {
+    return psiFile.getUserData(CACHE_COPY_KEY) != null;
   }
 
   public static PsiFile createFileCopy(FileContent content, PsiFile psiFile) {
@@ -35,11 +39,12 @@ public class CacheUtil {
     PsiFile fileCopy;
     if (psiFile instanceof ClsFileImpl) {
       ClsFileImpl implFile = (ClsFileImpl)psiFile;
-      if (implFile.isContentsLoaded()) {
+      if (implFile.isRepositoryIdInitialized()) {
         fileCopy = implFile;
       }
       else {
         fileCopy = new ClsFileImpl((PsiManagerImpl)psiFile.getManager(), psiFile.getViewProvider());
+        fileCopy.putUserData(CACHE_COPY_KEY, Boolean.TRUE);
         ((ClsFileImpl)fileCopy).setRepositoryId(-1);
       }
     }

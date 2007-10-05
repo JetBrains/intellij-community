@@ -12,7 +12,6 @@ import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 public class ConstantValuesTest extends PsiTestCase{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ConstantValuesTest");
@@ -67,6 +66,8 @@ public class ConstantValuesTest extends PsiTestCase{
 
     LOG.assertTrue(file.isValid());
     myClass = file.getClasses()[0];
+
+    LOG.assertTrue(myClass.isValid());
     super.invokeTestRunnable(runnable);
   }
 

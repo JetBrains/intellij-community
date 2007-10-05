@@ -192,7 +192,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   protected FileElement createFileElement(final CharSequence docText) {
     final FileElement treeElement = (FileElement)Factory.createCompositeElement(myElementType);
-    if (getUserData(CacheUtil.CACHE_COPY_KEY) == Boolean.TRUE) {
+    if (CacheUtil.isCopy(this)) {
       treeElement.setCharTable(new IdentityCharTable());
     }
 
@@ -291,7 +291,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public boolean isWritable() {
-    return getViewProvider().getVirtualFile().isWritable() && getUserData(CacheUtil.CACHE_COPY_KEY) != Boolean.TRUE;
+    return getViewProvider().getVirtualFile().isWritable() && !CacheUtil.isCopy(this);
   }
 
   public PsiDirectory getParent() {
