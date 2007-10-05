@@ -90,7 +90,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return "reference.settingsdialog.project.structure.jdk ";
+    return "reference.settingsdialog.project.structure.jdk";
   }
 
   @NonNls
