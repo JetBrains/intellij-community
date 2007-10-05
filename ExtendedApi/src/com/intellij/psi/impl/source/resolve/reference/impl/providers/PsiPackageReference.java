@@ -2,10 +2,10 @@
  * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.jpa.model.xml.impl.converters;
+package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.jpa.JpaMessages;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -58,7 +58,7 @@ public class PsiPackageReference extends PsiReferenceBase<PsiElement>  implement
 
 
   public String getUnresolvedMessagePattern() {
-    return JpaMessages.message("cannot.resolve.package.0");
+    return JavaErrorMessages.message("cannot.resolve.symbol");
   }
 
 }
