@@ -35,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -225,7 +224,6 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
       PsiClass resolvedSuperClass = superClassType.resolve();
 
       if (resolvedSuperClass == null) continue;
-      assert resolvedSuperClass instanceof GrInterfaceDefinition;
 
       PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
 
