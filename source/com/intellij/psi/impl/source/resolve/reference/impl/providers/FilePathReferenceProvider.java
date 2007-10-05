@@ -47,8 +47,7 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
         final PsiScopeProcessor baseProcessor = super.createProcessor(result, allowedClasses, resolvers);
         return new PsiScopeProcessor() {
           public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-            return element instanceof PsiJavaFile && element instanceof PsiCompiledElement
-                   || baseProcessor.execute(element, substitutor);
+            return !isPsiElementAccepted(element, substitutor) || baseProcessor.execute(element, substitutor);
           }
 
           public <T> T getHint(Class<T> hintClass) {
@@ -62,6 +61,10 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
       }
     }.getAllReferences();
 
+  }
+
+  protected boolean isPsiElementAccepted(PsiElement element, PsiSubstitutor substitutor) {
+    return !(element instanceof PsiJavaFile && element instanceof PsiCompiledElement);
   }
 
   protected FileReference createFileReference(FileReferenceSet referenceSet, final TextRange range, final int index, final String text) {
