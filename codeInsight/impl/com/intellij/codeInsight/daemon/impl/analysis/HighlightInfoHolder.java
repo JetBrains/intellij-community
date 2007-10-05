@@ -24,7 +24,7 @@ public class HighlightInfoHolder extends ArrayList<HighlightInfo> {
   private int myInfoCount;
   private boolean writable = false;
 
-  public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter[] filters) {
+  public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter... filters) {
     super(5);
     myContextFile = contextFile;
     myFilters = filters;

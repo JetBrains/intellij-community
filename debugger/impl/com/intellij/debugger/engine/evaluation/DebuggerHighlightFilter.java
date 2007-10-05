@@ -36,9 +36,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class DebuggerHighlightFilter implements HighlightInfoFilter {
-  public boolean accept(HighlightInfo highlightInfo, PsiFile file) {
+  public boolean accept(@NotNull HighlightInfo highlightInfo, PsiFile file) {
     return highlightInfo.type != HighlightInfoType.UNHANDLED_EXCEPTION ||
            file == null ||
            file.getUserData(DebuggerExpressionComboBox.KEY) == null;

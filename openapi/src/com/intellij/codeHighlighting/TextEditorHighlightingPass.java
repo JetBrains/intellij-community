@@ -66,7 +66,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     doCollectInformation(progress);
   }
 
-  private boolean isValid() {
+  public boolean isValid() {
     if (myDocument != null && myDocument.getModificationStamp() != myInitialStamp) return false;
     if (myProject != null && myDocument != null) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);

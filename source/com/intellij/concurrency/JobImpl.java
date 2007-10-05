@@ -84,8 +84,8 @@ public class JobImpl<T> implements Job<T> {
     }
 
     // http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
-    for (Future<T> future : myFutures) {
-      ((FutureTask)future).run();
+    for (PrioritizedFutureTask<T> future : myFutures) {
+      future.run();
     }
 
     List<T> results = new ArrayList<T>(myFutures.size());
