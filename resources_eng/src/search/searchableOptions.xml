@@ -1059,8 +1059,8 @@
     <option name="description" hit="Description:" />
     <option name="action" hit="Edit Action Icon" />
     <option name="icon" hit="Edit Action Icon" />
-    <option name="name" hit="Schema Name:" />
-    <option name="schema" hit="Schema Name:" />
+    <option name="name" hit="Scheme Name:" />
+    <option name="scheme" hit="Scheme Name:" />
   </configurable>
   <configurable id="project.propLocalVCS" configurable_name="Local History">
     <option name="compilation" hit="File/package compilation" />
