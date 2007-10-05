@@ -22,7 +22,7 @@ SET IDEA_HOME=..
 SET JAVA_EXE=%IDEA_JDK%\jre\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" goto error
 
-IF "%IDEA_MAIN_CLASS_NAME%" == "" SET IDEA_MAIN_CLASS_NAME=com.intellij.codeInspection.InspectionDiff
+IF "%IDEA_INSPECT_DIFF_CLASS_NAME%" == "" SET IDEA_INSPECT_DIFF_CLASS_NAME=com.intellij.codeInspection.InspectionDiff
 
 IF NOT "%IDEA_PROPERTIES%" == "" set IDEA_PROPERTIES_PROPERTY=-Didea.properties.file=%IDEA_PROPERTIES%
 

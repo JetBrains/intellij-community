@@ -31,8 +31,8 @@ if [ -n "$IDEA_PROPERTIES" ]; then
 IDEA_PROPERTIES_PROPERTY=-Didea.properties.file=$IDEA_PROPERTIES
 fi
 
-if [ -z "$IDEA_MAIN_CLASS_NAME" ]; then
-IDEA_MAIN_CLASS_NAME="com.intellij.codeInspection.InspectionDiff"
+if [ -z "$IDEA_INSPECT_DIFF_CLASS_NAME" ]; then
+IDEA_INSPECT_DIFF_CLASS_NAME="com.intellij.codeInspection.InspectionDiff"
 fi
 
 if [ -z "$IDEA_VM_OPTIONS" ]; then
