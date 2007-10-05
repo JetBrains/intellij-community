@@ -501,7 +501,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       qName = aClass.getName();
       final PsiClass psiClass = getManager().getResolveHelper().resolveReferencedClass(qName, this);
       if (!getManager().areElementsEquivalent(psiClass, aClass)) {
-        throw new IncorrectOperationException();
+        throw cannotBindError(aClass);
       }
     }
     else {
@@ -512,9 +512,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified();
     final PsiManager manager = aClass.getManager();
-    ASTNode ref =
-    Parsing.parseJavaCodeReferenceText(manager, qName + getParameterList().getText(),
-                                       SharedImplUtil.findCharTableByTree(this));
+    ASTNode ref = Parsing.parseJavaCodeReferenceText(manager, qName + getParameterList().getText(), SharedImplUtil.findCharTableByTree(this));
     getTreeParent().replaceChildInternal(this, (TreeElement)ref);
     if (!preserveQualification /*&& (TreeUtil.findParent(ref, ElementType.DOC_COMMENT) == null)*/) {
       final CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)manager.getCodeStyleManager();
