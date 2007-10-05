@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.core.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,8 @@ import java.text.ParseException;
  * @author Vladislav.Kaznacheev
  */
 public class MavenId implements Comparable<MavenId>{
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.core.util.MavenId");
+
   @NonNls public String groupId;
   @NonNls public String artifactId;
   @NonNls public String version;
@@ -23,6 +26,14 @@ public class MavenId implements Comparable<MavenId>{
     this.groupId = groupId;
     this.artifactId = artifactId;
     this.version = version;
+
+    assertIsValid();
+  }
+
+  private void assertIsValid() {
+    // todo catch for IDEADEV-21389 exception
+    if (groupId != null && artifactId != null) return;
+    throw new RuntimeException("Invalid artifact " + toString());
   }
 
   public MavenId(Artifact artifact) {
