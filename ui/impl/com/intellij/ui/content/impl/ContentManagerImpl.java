@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -42,7 +44,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   private final Project myProject;
 
-  private MyComponent myComponent = new MyComponent();
+  private MyContentComponent myContentComponent;
+  private MyFocusProxy myFocusProxy;
+  private JPanel myComponent;
+
 
   private Set<Content> myContentWithChangedComponent = new HashSet<Content>();
 
@@ -69,19 +74,23 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public JComponent getComponent() {
-    if (myComponent.getComponentCount() == 0) {
-      myComponent.setContent(myUI.getComponent());
+    if (myComponent == null) {
+      myComponent = new NonOpaquePanel(new BorderLayout());
+
+      myFocusProxy = new MyFocusProxy();
+      myContentComponent = new MyContentComponent();
+      myContentComponent.setContent(myUI.getComponent());
+      myContentComponent.setFocusCycleRoot(true);
+
+      myComponent.add(myFocusProxy, BorderLayout.NORTH);
+      myComponent.add(myContentComponent, BorderLayout.CENTER);
     }
     return myComponent;
   }
 
-  private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
+  private class MyContentComponent extends NonOpaquePanel implements DataProvider {
+
     private List<DataProvider> myProviders = new ArrayList<DataProvider>();
-
-
-    public MyComponent() {
-      setOpaque(false);
-    }
 
     public void addProvider(final DataProvider provider) {
       myProviders.add(provider);
@@ -96,6 +105,19 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         if (data != null) return data;
       }
       return null;
+    }
+  }
+
+  private class MyFocusProxy extends Wrapper.FocusHolder implements DataProvider {
+
+    public MyFocusProxy() {
+      setOpaque(false);
+      setPreferredSize(new Dimension(0, 0));
+    }
+
+    @Nullable
+    public Object getData(@NonNls final String dataId) {
+      return myContentComponent.getData(dataId);
     }
   }
 
@@ -341,7 +363,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     };
 
     if (focused || requestFocus) {
-      myComponent.requestFocus(selection);
+      myFocusProxy.requestFocus(selection);
     }
     else {
       selection.run();
@@ -444,7 +466,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public void addDataProvider(final DataProvider provider) {
-    myComponent.addProvider(provider);
+    myContentComponent.addProvider(provider);
   }
 
   public void propertyChange(final PropertyChangeEvent evt) {

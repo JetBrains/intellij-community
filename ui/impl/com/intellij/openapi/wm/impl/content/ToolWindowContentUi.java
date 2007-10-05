@@ -67,7 +67,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
     myContent.setOpaque(false);
-    myContent.setFocusable(true);
+    myContent.setFocusable(false);
     setOpaque(false);
 
     setBorder(new EmptyBorder(0, 0, 0, 2));
