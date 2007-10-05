@@ -22,7 +22,14 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testTryFinallyFlow1() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("tryFinallyFlow/A.groovy");
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("tryFinallyFlow1/A.groovy");
+    final PsiType type = ref.getType();
+    assertNotNull(type);
+    assertTrue(type.equalsToText("java.lang.Integer"));
+  }
+
+  public void testTryFinallyFlow2() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("tryFinallyFlow2/A.groovy");
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertTrue(type.equalsToText("java.lang.Integer"));

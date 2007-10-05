@@ -85,9 +85,10 @@ public class DFAEngine<E> {
           final E oldE = info.get(num);
           E newE = join(curr, info, env);
           myDfa.fun(newE, curr);
+          final Iterable<? extends Instruction> succ = getNext(curr, env); //next should be taken regardless of lattice.eq
           if (!mySemilattice.eq(newE, oldE)) {
             info.set(num, newE);
-            for (Instruction next : getNext(curr, env)) {
+            for (Instruction next : succ) {
               worklist.add(next);
               visited[next.num()] = true;
             }
@@ -105,21 +106,22 @@ public class DFAEngine<E> {
 
   private int[] preorder() {
     int[] result = new int[myFlow.length];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = -1;
-    }
+    boolean[] visited = new boolean[myFlow.length];
+    for (int i = 0; i < result.length; i++) visited[i] = false;
 
     int M = 0;
     CallEnvironment env = new SimpleCallEnvironment();
     for (int i = 0; i < myFlow.length; i++) {
-      if (result[i] < 0) {
+      if (!visited[i]) {
         Queue<Instruction> worklist = new LinkedList<Instruction>();
         worklist.add(myFlow[i]);
         while (!worklist.isEmpty()) {
           final Instruction curr = worklist.remove();
-          result[M++] = curr.num();
+          final int num = curr.num();
+          result[M++] = num;
+          visited[num] = true;
           for (Instruction succ : curr.succ(env)) {
-            if (result[succ.num()] < 0) {
+            if (!visited[succ.num()]) {
               worklist.add(succ);
             }
           }
