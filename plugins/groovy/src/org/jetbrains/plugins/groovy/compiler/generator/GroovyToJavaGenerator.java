@@ -300,7 +300,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private void writeTypeDefinition(StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition, GrPackageDefinition packageDefinition) {
-    boolean isScript = typeDefinition == null;
+    final boolean isScript = typeDefinition == null;
 
     writePackageStatement(text, packageDefinition);
 
