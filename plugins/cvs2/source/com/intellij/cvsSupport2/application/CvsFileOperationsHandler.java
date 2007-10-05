@@ -77,10 +77,13 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
 
   private boolean doMoveRename(final VirtualFile file, final VirtualFile newParent, final String newName) throws IOException {
     if (!CvsUtil.fileIsUnderCvs(file)) return false;
-    if (!file.isDirectory()) return false;
     if (newParent == null) return false;
-    myComponent.getDeleteHandler().addDeletedRoot(file);
     File newFile = new File(newParent.getPath(), newName);
+    myComponent.getDeleteHandler().addDeletedRoot(file);
+    if (!file.isDirectory()) {
+      myComponent.getAddHandler().addFile(newFile);
+      return false;
+    }
     newFile.mkdir();
     copyDirectoryStructure(file, newFile);
     myComponent.getAddHandler().addFile(newFile);
