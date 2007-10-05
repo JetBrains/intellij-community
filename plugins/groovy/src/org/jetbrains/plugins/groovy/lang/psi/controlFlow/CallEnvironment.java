@@ -23,16 +23,4 @@ public interface CallEnvironment {
   Stack<CallInstruction> callStack(Instruction instruction);
 
   void update(Stack<CallInstruction> callStack, Instruction instruction);
-
-  class NoCallEnvironment implements CallEnvironment {
-    private Stack<CallInstruction> myEmptyStack = new Stack<CallInstruction>();
-
-    public Stack<CallInstruction> callStack(Instruction instruction) {
-      return myEmptyStack;
-    }
-
-    public void update(Stack<CallInstruction> callStack, Instruction instruction) {
-      //do nothing
-    }
-  }
 }

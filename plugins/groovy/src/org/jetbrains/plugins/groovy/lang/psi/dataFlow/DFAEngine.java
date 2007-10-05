@@ -69,8 +69,9 @@ public class DFAEngine<E> {
     boolean[] visited = new boolean[myFlow.length];
 
     final boolean forward = myDfa.isForward();
+    int[] order = preorder(); //todo for backward?
     for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0;) {
-      Instruction instr = myFlow[i];
+      Instruction instr = myFlow[order[i]];
 
       if (!visited[instr.num()]) {
         Queue<Instruction> worklist = new LinkedList<Instruction>();
@@ -102,6 +103,33 @@ public class DFAEngine<E> {
     return info;
   }
 
+  private int[] preorder() {
+    int[] result = new int[myFlow.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = -1;
+    }
+
+    int M = 0;
+    CallEnvironment env = new SimpleCallEnvironment();
+    for (int i = 0; i < myFlow.length; i++) {
+      if (result[i] < 0) {
+        Queue<Instruction> worklist = new LinkedList<Instruction>();
+        worklist.add(myFlow[i]);
+        while (!worklist.isEmpty()) {
+          final Instruction curr = worklist.remove();
+          result[M++] = curr.num();
+          for (Instruction succ : curr.succ(env)) {
+            if (result[succ.num()] < 0) {
+              worklist.add(succ);
+            }
+          }
+        }
+
+      }
+    }
+    return result;
+  }
+
   private E join(Instruction instruction, ArrayList<E> info, CallEnvironment env) {
     final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.pred(env) : instruction.succ(env);
     ArrayList<E> prevInfos = new ArrayList<E>();
@@ -113,5 +141,17 @@ public class DFAEngine<E> {
 
   private Iterable<? extends Instruction> getNext(Instruction curr, CallEnvironment env) {
     return myDfa.isForward() ? curr.succ(env) : curr.pred(env);
+  }
+
+  public static class SimpleCallEnvironment implements CallEnvironment {
+    private Stack<CallInstruction> myStack = new Stack<CallInstruction>();
+
+    public Stack<CallInstruction> callStack(Instruction instruction) {
+      return myStack;
+    }
+
+    public void update(Stack<CallInstruction> callStack, Instruction instruction) {
+      myStack = callStack;
+    }
   }
 }
