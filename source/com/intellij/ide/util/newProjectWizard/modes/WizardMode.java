@@ -54,4 +54,9 @@ public abstract class WizardMode implements Disposable {
   public void dispose() {
     myStepSequence = null;
   }
+
+  @Nullable
+  public String getFootnote(final WizardContext wizardContext) {
+    return null;
+  }
 }

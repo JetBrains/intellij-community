@@ -6,15 +6,12 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode;
-import com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -32,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -75,27 +71,13 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       }
     });
 
-    WizardMode selected = null;
-    final ArrayList<WizardMode> modes = new ArrayList<WizardMode>();
-    for (WizardMode mode : Extensions.getExtensions(WizardMode.MODES)) {
-      if (mode.isAvailable(myWizardContext)) {
-        modes.add(mode);
-        if (defaultPath != null) {
-          if (mode instanceof CreateFromSourcesMode) {
-            selected = mode;
-          }
-        } else if (mode instanceof CreateFromScratchMode) {
-          selected = mode;
-        }
-      }
-    }
-    myRootStep = new ProjectCreateModeStep(modes, selected, myWizardContext){
+    myRootStep = new ProjectCreateModeStep(defaultPath, myWizardContext){
       protected void update() {
         updateButtons();
       }
     };
     addStep(myRootStep);
-    for (WizardMode mode : modes) {
+    for (WizardMode mode : myRootStep.getModes()) {
       appendSteps(mode.getSteps(myWizardContext, modulesProvider));
     }
     init();

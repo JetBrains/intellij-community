@@ -71,4 +71,10 @@ public class ImportMode extends WizardMode {
   }
 
   public void onChosen(final boolean enabled) {}
+
+  @Nullable
+  public String getFootnote(final WizardContext wizardContext) {
+    if (wizardContext.isCreatingNewProject()) return null;
+    return ProjectBundle.message("project.new.wizard.import.footnote");
+  }
 }
