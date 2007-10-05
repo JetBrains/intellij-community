@@ -740,7 +740,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   protected void removeFromCache() {
-    DomManagerImpl.setCachedElement(myXmlTag, null);
+    if (myXmlTag != null && DomManagerImpl.getCachedElement(myXmlTag) == this) {
+      DomManagerImpl.setCachedElement(myXmlTag, null);
+    }
   }
 
   protected final void attach(final XmlTag tag) {
