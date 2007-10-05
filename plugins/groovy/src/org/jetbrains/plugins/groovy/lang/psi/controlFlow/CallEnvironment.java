@@ -14,23 +14,25 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Stack;
-import java.util.ArrayList;
 
 /**
  * @author ven
  */
-public interface Instruction {
-  Iterable<? extends Instruction> succ(CallEnvironment env);
-  Iterable<? extends Instruction> pred(CallEnvironment env);
+public interface CallEnvironment {
+  Stack<CallInstruction> callStack(Instruction instruction);
 
-  int num();
+  void update(Stack<CallInstruction> callStack, Instruction instruction);
 
-  @Nullable
-  PsiElement getElement();
+  class NoCallEnvironment implements CallEnvironment {
+    private Stack<CallInstruction> myEmptyStack = new Stack<CallInstruction>();
 
+    public Stack<CallInstruction> callStack(Instruction instruction) {
+      return myEmptyStack;
+    }
+
+    public void update(Stack<CallInstruction> callStack, Instruction instruction) {
+      //do nothing
+    }
+  }
 }

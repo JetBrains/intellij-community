@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -500,7 +501,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return super.toString() + " CALL " + myCallee.num();
     }
 
-    public Iterable<? extends Instruction> succ(ArrayList<Stack<CallInstruction>> env) {
+    public Iterable<? extends Instruction> succ(CallEnvironment env) {
       getStack(env, myCallee).push(this);
       return Collections.singletonList(myCallee);
     }
@@ -521,7 +522,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return super.toString() + "AFTER CALL " + myCall.num();
     }
 
-    public Iterable<? extends Instruction> pred(ArrayList<Stack<CallInstruction>> env) {
+    public Iterable<? extends Instruction> pred(CallEnvironment env) {
       getStack(env, myReturnInsn).push(myCall);
       return Collections.singletonList(myReturnInsn);
     }
@@ -550,14 +551,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     protected String getElementPresentation() { return ""; }
 
-    public Iterable<? extends Instruction> succ(ArrayList<Stack<CallInstruction>> env) {
+    public Iterable<? extends Instruction> succ(CallEnvironment env) {
       final Stack<CallInstruction> callStack = getStack(env, this);
       final CallInstruction callInstruction = callStack.peek();
       final List<InstructionImpl> succ = ((CallInstructionImpl) callInstruction).mySucc;
       final Stack<CallInstruction> copy = (Stack<CallInstruction>) callStack.clone();
       copy.pop();
       for (InstructionImpl instruction : succ) {
-        env.set(instruction.num(), copy);
+        env.update(copy, instruction);
       }
 
       return succ;

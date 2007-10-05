@@ -16,6 +16,7 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -33,21 +34,36 @@ public class DFAEngine<E> {
 
   public DFAEngine(Instruction[] flow,
                    DfaInstance<E> dfa,
-                   Semilattice<E> semilattice
-  ) {
+                   Semilattice<E> semilattice) {
     myFlow = flow;
     myDfa = dfa;
     mySemilattice = semilattice;
   }
 
-  private static final Stack<CallInstruction> ourEmptyCallStack = new Stack<CallInstruction>();
+  private static class MyCallEnvironment implements CallEnvironment {
+    ArrayList<Stack<CallInstruction>> myEnv;
+
+    private MyCallEnvironment(int instructionNum) {
+      myEnv = new ArrayList<Stack<CallInstruction>>(instructionNum);
+      for (int i = 0; i < instructionNum; i++) {
+        myEnv.add(new Stack<CallInstruction>());
+      }
+    }
+
+    public Stack<CallInstruction> callStack(Instruction instruction) {
+      return myEnv.get(instruction.num());
+    }
+
+    public void update(Stack<CallInstruction> callStack, Instruction instruction) {
+      myEnv.set(instruction.num(), callStack);
+    }
+  }
 
   public ArrayList<E> performDFA() {
     ArrayList<E> info = new ArrayList<E>(myFlow.length);
-    ArrayList<Stack<CallInstruction>> env = new ArrayList<Stack<CallInstruction>>(myFlow.length);
+    CallEnvironment env = new MyCallEnvironment(myFlow.length);
     for (int i = 0; i < myFlow.length; i++) {
       info.add(myDfa.initial());
-      env.add(new Stack<CallInstruction>());
     }
 
     boolean[] visited = new boolean[myFlow.length];
@@ -78,14 +94,15 @@ public class DFAEngine<E> {
         }
       }
 
-      if (forward) i++; else i--;
+      if (forward) i++;
+      else i--;
     }
 
 
     return info;
   }
 
-  private E join(Instruction instruction, ArrayList<E> info, ArrayList<Stack<CallInstruction>> env) {
+  private E join(Instruction instruction, ArrayList<E> info, CallEnvironment env) {
     final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.pred(env) : instruction.succ(env);
     ArrayList<E> prevInfos = new ArrayList<E>();
     for (Instruction i : prev) {
@@ -94,7 +111,7 @@ public class DFAEngine<E> {
     return mySemilattice.join(prevInfos);
   }
 
-  private Iterable<? extends Instruction> getNext(Instruction curr, ArrayList<Stack<CallInstruction>> env) {
+  private Iterable<? extends Instruction> getNext(Instruction curr, CallEnvironment env) {
     return myDfa.isForward() ? curr.succ(env) : curr.pred(env);
   }
 }
