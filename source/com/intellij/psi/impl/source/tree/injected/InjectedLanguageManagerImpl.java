@@ -288,7 +288,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
         collectOperands(binaryExpression.getLOperand(), operands);
         collectOperands(binaryExpression.getROperand(), operands);
       }
-      else {
+      else if (expression != null) {
         operands.add(expression);
       }
     }
