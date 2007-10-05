@@ -130,7 +130,9 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
 
   @NotNull
   public LogicalPosition offsetToLogicalPosition(final int offset) {
-    throw new UnsupportedOperationException("Not implemented");
+    int line = myDocument.getLineNumber(offset);
+    final int lineStartOffset = myDocument.getLineStartOffset(line);
+    return new LogicalPosition(line, offset - lineStartOffset);
   }
 
   @NotNull
