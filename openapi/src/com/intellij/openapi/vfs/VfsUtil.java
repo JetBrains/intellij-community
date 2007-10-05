@@ -507,7 +507,7 @@ public class VfsUtil {
 
   public static String fixURLforIDEA( String url ) {
     int idx = url.indexOf(":/");
-    if( idx >= 0 && url.charAt(idx+2) != '/' ) {
+    if( idx >= 0 && (idx+2) < url.length() && url.charAt(idx+2) != '/' ) {
       String prefix = url.substring(0, idx);
       String suffix = url.substring(idx+2);
 
