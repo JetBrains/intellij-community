@@ -757,7 +757,9 @@ public class GroovyAnnotator implements Annotator {
       String message = GroovyBundle.message("cannot.resolve", refElement.getReferenceName());
 
       // Register quickfix
-      final Annotation annotation = holder.createErrorAnnotation(refElement, message);
+      final PsiElement nameElement = refElement.getReferenceNameElement();
+      final PsiElement toHighlight = nameElement != null ? nameElement : refElement;
+      final Annotation annotation = holder.createErrorAnnotation(toHighlight, message);
       // todo implement for nested classes
       if (refElement.getQualifier() == null) {
         registerCreateClassByTypeFix(refElement, annotation, false);
