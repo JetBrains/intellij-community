@@ -193,7 +193,7 @@ public class MavenExternalParameters {
     if (mavenHomeBootAsFile.exists()) {
       if (mavenHomeBootAsFile.isDirectory()) {
         for (File file : mavenHomeBootAsFile.listFiles()) {
-          if (file.getName().startsWith("classworlds-")) {
+          if (file.getName().contains("classworlds")) {
             classpathEntries.add(file.getAbsolutePath());
           }
         }
