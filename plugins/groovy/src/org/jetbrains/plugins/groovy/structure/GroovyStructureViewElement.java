@@ -33,7 +33,7 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
   }
 
   public Object getValue() {
-    return myElement;
+    return myElement.isValid() ? myElement : null;
   }
 
   public ItemPresentation getPresentation() {
@@ -50,7 +50,7 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
 
       @Nullable
       public Icon getIcon(boolean open) {
-        return myElement.getIcon(Iconable.ICON_FLAG_OPEN);
+        return myElement.isValid() ? myElement.getIcon(Iconable.ICON_FLAG_OPEN) : null;
       }
 
       @Nullable
