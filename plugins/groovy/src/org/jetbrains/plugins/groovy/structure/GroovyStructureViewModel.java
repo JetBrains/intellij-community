@@ -1,14 +1,11 @@
 package org.jetbrains.plugins.groovy.structure;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.util.treeView.smartTree.Grouper;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.ide.util.treeView.smartTree.Filter;
+import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
+import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -16,15 +13,15 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  */
 
 public class GroovyStructureViewModel extends TextEditorBasedStructureViewModel {
-  private final GroovyPsiElement myRootElement;
+  private final GroovyFileBase myRootElement;
 
-  public GroovyStructureViewModel(GroovyPsiElement rootElement) {
-    super(rootElement.getContainingFile());
+  public GroovyStructureViewModel(GroovyFileBase rootElement) {
+    super(rootElement);
     myRootElement = rootElement;
   }
 
   protected PsiFile getPsiFile() {
-    return myRootElement.getContainingFile();
+    return myRootElement;
   }
 
   @NotNull

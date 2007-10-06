@@ -6,8 +6,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -28,22 +26,21 @@ import java.util.List;
  */
 
 public class GroovyStructureViewElement implements StructureViewTreeElement {
-  final private SmartPsiElementPointer<GroovyPsiElement> myElementPointer;
+  final private GroovyPsiElement myElement;
 
   public GroovyStructureViewElement(GroovyPsiElement element) {
-    myElementPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+    myElement = element;
   }
 
   public Object getValue() {
-    return myElementPointer;
+    return myElement;
   }
 
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
 
       public String getPresentableText() {
-        GroovyPsiElement element = myElementPointer.getElement();
-        return element == null ? "Invalid" : GroovyElementPresentation.getPresentableText(element);
+        return GroovyElementPresentation.getPresentableText(myElement);
       }
 
       @Nullable
@@ -53,8 +50,7 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
 
       @Nullable
       public Icon getIcon(boolean open) {
-        GroovyPsiElement element = myElementPointer.getElement();
-        return element == null ? null : element.getIcon(Iconable.ICON_FLAG_OPEN);
+        return myElement.getIcon(Iconable.ICON_FLAG_OPEN);
       }
 
       @Nullable
@@ -65,30 +61,23 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
   }
 
   public void navigate(boolean b) {
-    GroovyPsiElement element = myElementPointer.getElement();
-    if (element != null) {
-      ((Navigatable) element).navigate(b);
-    }
+    ((Navigatable) myElement).navigate(b);
   }
 
   public boolean canNavigate() {
-    GroovyPsiElement element = myElementPointer.getElement();
-    return element != null && ((Navigatable) element).canNavigate();
+    return ((Navigatable) myElement).canNavigate();
   }
 
   public boolean canNavigateToSource() {
-    GroovyPsiElement element = myElementPointer.getElement();
-    return element != null && ((Navigatable) element).canNavigateToSource();
+    return ((Navigatable) myElement).canNavigateToSource();
   }
 
   public TreeElement[] getChildren() {
     List<GroovyStructureViewElement> children = new ArrayList<GroovyStructureViewElement>();
 
-    GroovyPsiElement element = myElementPointer.getElement();
-    if (element instanceof GroovyFileBase) {
-      GrTopStatement[] topStatements = ((GroovyFileBase) element).getTopStatements();
+    if (myElement instanceof GroovyFileBase) {
 
-      for (GrTopStatement topStatement : topStatements) {
+      for (GrTopStatement topStatement : ((GroovyFileBase) myElement).getTopStatements()) {
         if (topStatement instanceof GrTypeDefinition || topStatement instanceof GrMethod) {
           addNewChild(children, topStatement);
 
@@ -97,10 +86,10 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
         }
       }
 
-    } else if (element instanceof GrTypeDefinition) {  //adding statements for type definition
-      GrMembersDeclaration[] declarations = ((GrTypeDefinition) element).getMemberDeclarations();
+    } else if (myElement instanceof GrTypeDefinition) {  //adding statements for type definition
+      GrMembersDeclaration[] declarations = ((GrTypeDefinition) myElement).getMemberDeclarations();
 
-      if (declarations == null) return children.toArray(StructureViewTreeElement.EMPTY_ARRAY);
+      if (declarations.length == 0) return children.toArray(StructureViewTreeElement.EMPTY_ARRAY);
 
       for (GrMembersDeclaration declaration : declarations) {
         if (declaration instanceof GrVariableDeclaration) {
@@ -111,13 +100,13 @@ public class GroovyStructureViewElement implements StructureViewTreeElement {
       }
     }
 
-    return children.toArray(StructureViewTreeElement.EMPTY_ARRAY);
+    return children.toArray(new StructureViewTreeElement[children.size()]);
   }
 
   private void addVariables(List<GroovyStructureViewElement> children, final GrVariableDeclaration variableDeclaration) {
-    GrVariable[] grVariables = variableDeclaration.getVariables();
+    GrVariable[] variables = variableDeclaration.getVariables();
 
-    for (final GrVariable variable : grVariables) {
+    for (final GrVariable variable : variables) {
       final Icon icon = variable.getIcon(Iconable.ICON_FLAG_OPEN);
 
       children.add(new GroovyStructureViewElement(variable) {
