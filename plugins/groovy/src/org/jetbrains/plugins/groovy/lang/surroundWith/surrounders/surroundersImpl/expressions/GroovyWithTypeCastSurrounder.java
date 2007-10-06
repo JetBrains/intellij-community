@@ -3,13 +3,9 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersIm
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrParenthesizedExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrTypeCast;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -22,10 +18,10 @@ public class GroovyWithTypeCastSurrounder extends GroovyExpressionSurrounder {
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
-    assert element instanceof GrParenthesizedExpr;
+    assert element instanceof GrParenthesizedExpression;
 
-    GrParenthesizedExpr grParenthesizedExpr = (GrParenthesizedExpr) element;
-    GrTypeCastExpression typeCast = (GrTypeCastExpression) grParenthesizedExpr.getOperand();
+    GrParenthesizedExpression grParenthesizedExpression = (GrParenthesizedExpression) element;
+    GrTypeCastExpression typeCast = (GrTypeCastExpression) grParenthesizedExpression.getOperand();
 
     GrTypeElement grTypeElement = typeCast.getCastTypeElement();
     int endOffset = grTypeElement.getTextRange().getStartOffset();

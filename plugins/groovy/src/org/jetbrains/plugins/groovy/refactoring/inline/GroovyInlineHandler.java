@@ -34,9 +34,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -167,8 +166,8 @@ public class GroovyInlineHandler implements InlineHandler {
         GrExpression initializerGroovy = variable.getInitializerGroovy();
         assert initializerGroovy != null;
         GrExpression tempExpr = initializerGroovy;
-        while (tempExpr instanceof GrParenthesizedExpr) {
-          tempExpr = ((GrParenthesizedExpr) tempExpr).getOperand();
+        while (tempExpr instanceof GrParenthesizedExpression) {
+          tempExpr = ((GrParenthesizedExpression) tempExpr).getOperand();
         }
         Project project = variable.getProject();
         GroovyElementFactory factory = GroovyElementFactory.getInstance(project);

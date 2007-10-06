@@ -15,9 +15,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author ilyas
  */
-public interface GrParenthesizedExpr extends GrExpression {
+public interface GrParenthesizedExpression extends GrExpression {
+  @NotNull
   GrExpression getOperand();
 }

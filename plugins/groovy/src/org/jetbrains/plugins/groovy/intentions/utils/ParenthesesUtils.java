@@ -72,9 +72,9 @@ public class ParenthesesUtils {
   public static GrExpression stripParentheses(
       @Nullable GrExpression expression) {
     GrExpression parenthesized = expression;
-    while (parenthesized instanceof GrParenthesizedExpr) {
-      final GrParenthesizedExpr parenthesizedExpression =
-          (GrParenthesizedExpr) parenthesized;
+    while (parenthesized instanceof GrParenthesizedExpression) {
+      final GrParenthesizedExpression parenthesizedExpression =
+          (GrParenthesizedExpression) parenthesized;
       parenthesized = parenthesizedExpression.getOperand();
     }
     return parenthesized;
@@ -120,7 +120,7 @@ public class ParenthesesUtils {
     if (expression instanceof GrAssignmentExpression) {
       return ASSIGNMENT_PRECEDENCE;
     }
-    if (expression instanceof GrParenthesizedExpr) {
+    if (expression instanceof GrParenthesizedExpression) {
       return PARENTHESIZED_PRECEDENCE;
     }
     return -1;

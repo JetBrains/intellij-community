@@ -4,10 +4,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 public class BoolUtils {
@@ -17,7 +15,7 @@ public class BoolUtils {
 
   public static boolean isNegated(GrExpression exp) {
     GrExpression ancestor = exp;
-    while (ancestor.getParent() instanceof GrParenthesizedExpr) {
+    while (ancestor.getParent() instanceof GrParenthesizedExpression) {
       ancestor = (GrExpression) ancestor.getParent();
     }
     if (ancestor.getParent() instanceof GrUnaryExpression) {
@@ -34,7 +32,7 @@ public class BoolUtils {
   @Nullable
   public static GrExpression findNegation(GrExpression exp) {
     GrExpression ancestor = exp;
-    while (ancestor.getParent() instanceof GrParenthesizedExpr) {
+    while (ancestor.getParent() instanceof GrParenthesizedExpression) {
       ancestor = (GrExpression) ancestor.getParent();
     }
     if (ancestor.getParent() instanceof GrUnaryExpression) {

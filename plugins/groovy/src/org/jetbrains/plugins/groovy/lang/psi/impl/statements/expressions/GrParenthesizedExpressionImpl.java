@@ -18,17 +18,16 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpr;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
  */
-public class GrParenthesizedExprImpl extends GrExpressionImpl implements GrParenthesizedExpr {
+public class GrParenthesizedExpressionImpl extends GrExpressionImpl implements GrParenthesizedExpression {
 
-  public GrParenthesizedExprImpl(@NotNull ASTNode node) {
+  public GrParenthesizedExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -44,7 +43,10 @@ public class GrParenthesizedExprImpl extends GrExpressionImpl implements GrParen
     return getOperand().getType();
   }
 
+  @NotNull
   public GrExpression getOperand() {
-    return findChildByClass(GrExpression.class);
+    final GrExpression expression = findChildByClass(GrExpression.class);
+    assert expression != null;
+    return expression;
   }
 }

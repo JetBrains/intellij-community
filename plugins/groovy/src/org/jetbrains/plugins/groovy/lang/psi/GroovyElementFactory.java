@@ -86,7 +86,7 @@ public abstract class GroovyElementFactory {
 
   public abstract GrTypeElement createTypeElement(PsiType type);
 
-  public abstract GrParenthesizedExpr createParenthesizedExpr(GrExpression newExpr);
+  public abstract GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr);
 
   public abstract PsiElement createStringLiteral(String text);
 

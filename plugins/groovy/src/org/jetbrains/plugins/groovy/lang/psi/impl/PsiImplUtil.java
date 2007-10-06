@@ -80,7 +80,7 @@ public class PsiImplUtil {
     }
     // Remove unnecessary parentheses
     if (removeUnnecessaryParentheses) {
-      if (oldExpr.getParent() instanceof GrParenthesizedExpr &&
+      if (oldExpr.getParent() instanceof GrParenthesizedExpression &&
           getExprPriorityLevel(newExpr) == 0) {
         return ((GrExpression) oldExpr.getParent()).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
       }

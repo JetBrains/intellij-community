@@ -172,7 +172,7 @@ public abstract class GroovyElementVisitor {
     visitExpression(expression);
   }
 
-  public void visitParenthesizedExpression(GrParenthesizedExpr expression) {
+  public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
     visitExpression(expression);
   }
 
