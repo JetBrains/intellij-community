@@ -179,6 +179,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     if (variables.size() > 0) parameterList.setSelectedIndex(0);
   }
 
+
   private static void doProcessing(JCheckBox checkBox, CompletionTextField textField) {
     checkBox.setEnabled( textField.getText().length() > 0);
     if (!checkBox.isEnabled()) checkBox.setSelected(false);
@@ -338,7 +339,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("find.structuredSearch");
+    HelpManager.getInstance().invokeHelp("reference.dialogs.search.replace.structural.editvariable");
   }
 
   private class MyChangeListener implements ChangeListener {
