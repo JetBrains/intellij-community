@@ -3,18 +3,22 @@
  */
 package com.intellij.compiler.ant.j2ee;
 
-import com.intellij.compiler.ant.*;
+import com.intellij.compiler.ant.BuildProperties;
+import com.intellij.compiler.ant.ExplodedAndJarTargetParameters;
+import com.intellij.compiler.ant.GenerationUtils;
+import com.intellij.compiler.ant.Tag;
 import com.intellij.compiler.ant.taskdefs.*;
-import com.intellij.compiler.make.MakeUtil;
-import com.intellij.openapi.compiler.DummyCompileContext;
+import com.intellij.compiler.make.ExplodedAndJarBuildGenerator;
 import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.util.PathUtil;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class BuildJarTarget extends Target {
@@ -32,79 +36,47 @@ public class BuildJarTarget extends Target {
     final String tempDirProperty = BuildProperties.getTempDirForModuleProperty(parameters.getContainingModule().getName());
     final boolean[] tempDirUsed = new boolean[] { false };
 
+    final ExplodedAndJarBuildGenerator[] generators = Extensions.getExtensions(DefaultExplodedAndJarBuildGenerator.EP_NAME);
     final List<ZipFileSet> zipFileSetTags = new ArrayList<ZipFileSet>();
-    final List<Tag> prepareTags = new ArrayList<Tag>();
     buildRecipe.visitInstructions(new BuildInstructionVisitor() {
-      public boolean visitFileCopyInstruction(FileCopyInstruction instruction) throws RuntimeException {
-        if (instruction.isExternalDependencyInstruction()) return true;
-        final File sourceFile = instruction.getFile();
-        final Module instructionModule = instruction.getModule();
-        final String sourceLocation = GenerationUtils.toRelativePath(sourceFile.getPath(), moduleBaseDir, instructionModule,
-                                                                     parameters.getGenerationOptions());
-        final ZipFileSet fileSet = new ZipFileSet(sourceLocation, instruction.getOutputRelativePath(), instruction.isDirectory());
-
-        zipFileSetTags.add(fileSet);
-        return true;
-      }
-
-      public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws RuntimeException {
-        if (instruction.isExternalDependencyInstruction()) return true;
-        tempDirUsed[0] = true;
-        final String jarName = new File(instruction.getOutputRelativePath()).getName();
-        final String destJarPath = BuildProperties.propertyRef(tempDirProperty)+"/"+jarName;
-        prepareTags.add(generateJarTag(instruction, destJarPath, moduleBaseDir, parameters.getGenerationOptions()));
-
-        zipFileSetTags.add(new ZipFileSet(destJarPath, instruction.getOutputRelativePath(), false));
-        return true;
-      }
-
-      public boolean visitCompoundBuildInstruction(CompoundBuildInstruction instruction) throws RuntimeException {
-        if (instruction.isExternalDependencyInstruction()) return true;
-        // gather child module dependencies
-        final BuildRecipe childModuleRecipe = instruction.getChildInstructions(DummyCompileContext.getInstance());
-        childModuleRecipe.visitInstructions(new BuildInstructionVisitor() {
-          public boolean visitFileCopyInstruction(FileCopyInstruction instruction) throws RuntimeException {
-            if (!instruction.isExternalDependencyInstruction()) return true;
-            final File file = instruction.getFile();
-            final Module instructionModule = instruction.getModule();
-            String sourceLocation = GenerationUtils.toRelativePath(file.getPath(), moduleBaseDir, instructionModule,
-                                                                   parameters.getGenerationOptions());
-            final String relPath = PathUtil.getCanonicalPath("/tmp/"+instruction.getOutputRelativePath()).substring(1);
-            final ZipFileSet zipFileSet = new ZipFileSet(sourceLocation, relPath, false);
-            zipFileSetTags.add(zipFileSet);
+      public boolean visitInstruction(final BuildInstruction instruction) throws Exception {
+        for (final ExplodedAndJarBuildGenerator generator : generators) {
+          final Ref<Boolean> ref = new Ref<Boolean>(false);
+          final ZipFileSet[] tags = generator.generateTagsForJarTarget(instruction, parameters, ref);
+          if (tags != null) {
+            if (ref.get() != null && ref.get()) {
+              tempDirUsed[0] = true;
+            }
+            zipFileSetTags.addAll(Arrays.asList(tags));
             return true;
           }
-
-          public boolean visitJarAndCopyBuildInstruction(JarAndCopyBuildInstruction instruction) throws RuntimeException {
-            if (!instruction.isExternalDependencyInstruction()) return true;
-            final String relPath = PathUtil.getCanonicalPath("/tmp/"+instruction.getOutputRelativePath()).substring(1);
-            tempDirUsed[0] = true;
-            final ZipFileSet zipFileSet = new ZipFileSet(BuildProperties.propertyRef(tempDirProperty) + "/" + relPath, relPath, false);
-            zipFileSetTags.add(zipFileSet);
-            return true;
-          }
-        }, false);
-
-        if (instruction.getBuildProperties().isJarEnabled()) {
-          final ZipFileSet zipFileSet = new ZipFileSet(BuildProperties.propertyRef(parameters.getCompoundBuildInstructionNaming().getJarPathProperty(instruction)), instruction.getOutputRelativePath(), false);
-          zipFileSetTags.add(zipFileSet);
         }
-        else {
-          final String jarName = new File(instruction.getOutputRelativePath()).getName();
-          final String destJarPath = BuildProperties.propertyRef(tempDirProperty)+"/"+jarName;
+        final Ref<Boolean> ref = Ref.create(false);
+        zipFileSetTags.addAll(Arrays.asList(DefaultExplodedAndJarBuildGenerator.INSTANCE.generateTagsForJarTarget(instruction, parameters, ref)));
+        if (ref.get() != null && ref.get()) {
           tempDirUsed[0] = true;
-          final AntCall makeJar = new AntCall(parameters.getCompoundBuildInstructionNaming().getBuildJarTargetName(instruction));
-          prepareTags.add(makeJar);
-          makeJar.add(new Param(parameters.getJarPathParameter(), destJarPath));
-          zipFileSetTags.add(new ZipFileSet(destJarPath, instruction.getOutputRelativePath(), false));
         }
-        return true;
+        return super.visitInstruction(instruction);
       }
     }, false);
     if (tempDirUsed[0]) {
       add(new Property(tempDirProperty, tempDir));
       add(new Mkdir(BuildProperties.propertyRef(tempDirProperty)));
     }
+    final List<Tag> prepareTags = new ArrayList<Tag>();
+    buildRecipe.visitInstructions(new BuildInstructionVisitor() {
+      public boolean visitInstruction(final BuildInstruction instruction) throws Exception {
+        for (final ExplodedAndJarBuildGenerator generator : generators) {
+          final Tag[] tags = generator.generateJarBuildPrepareTags(instruction, parameters);
+          if (tags != null) {
+            prepareTags.addAll(Arrays.asList(tags));
+            return true;
+          }
+        }
+        prepareTags.addAll(Arrays.asList(DefaultExplodedAndJarBuildGenerator.INSTANCE.generateJarBuildPrepareTags(instruction, parameters)));
+        return super.visitInstruction(instruction);
+      }
+    }, false);
     for (Tag tag : prepareTags) {
       add(tag);
     }
@@ -162,24 +134,10 @@ public class BuildJarTarget extends Target {
         @NonNls final String jarDir = "jar.dir" + myJarDirCount++;
         add(new Dirname(jarDir, pathToCreateJar));
         add(new Mkdir(BuildProperties.propertyRef(jarDir)));
-        add(generateJarTag(instruction, pathToCreateJar, moduleBaseDir, parameters.getGenerationOptions()));
+        add(DefaultExplodedAndJarBuildGenerator.generateJarTag(instruction, pathToCreateJar, moduleBaseDir, parameters.getGenerationOptions()));
         return true;
       }
     }, false);
   }
 
-  private static Tag generateJarTag(BuildInstruction instruction, final String destFile, File moduleBaseDir, final GenerationOptions genOptions) {
-    final Tag jarTag = new Jar(destFile, "preserve");
-
-    final Manifest manifestTag = new Manifest();
-    jarTag.add(manifestTag);
-    manifestTag.applyAttributes(new java.util.jar.Manifest());
-
-    final Module module = instruction.getModule();
-    final String moduleOutputDirPath = MakeUtil.getModuleOutputDirPath(module);
-    String sourceLocation = GenerationUtils.toRelativePath(moduleOutputDirPath, moduleBaseDir, module, genOptions);
-    final FileSet fileSet = new FileSet(sourceLocation);
-    jarTag.add(fileSet);
-    return jarTag;
-  }
 }

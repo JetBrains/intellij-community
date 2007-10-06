@@ -11,6 +11,7 @@ import java.io.IOException;
  *         Date: Mar 19, 2004
  */
 public class Tag extends CompositeGenerator {
+  public static final Tag[] EMPTY_ARRAY = new Tag[0];
   private final String myTagName;
   private final Pair[] myTagOptions;
 

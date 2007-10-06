@@ -13,6 +13,8 @@ import java.io.File;
  *         Date: Mar 19, 2004
  */
 public class ZipFileSet extends Tag{
+  public static final ZipFileSet[] EMPTY_ARRAY = new ZipFileSet[0];
+
   public ZipFileSet(@NonNls String fileOrDir, @NonNls final String relativePath, boolean isDir) {
     super("zipfileset", new Pair[] {
       pair(isDir ? "dir" : "file", fileOrDir),
