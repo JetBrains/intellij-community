@@ -6,6 +6,7 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.impl.AntOuterProjectElement;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.xml.XmlChangeVisitor;
 import com.intellij.pom.xml.events.*;
@@ -118,7 +119,11 @@ public class AntChangeVisitor implements XmlChangeVisitor {
       });
     }
     else {
-      final AntConfiguration antConfiguration = AntConfiguration.getInstance(file.getProject());
+      final Project project = file.getProject();
+      if (project.isDisposed()) {
+        return;
+      }
+      final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
       for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
         if (file.equals(buildFile.getAntFile())) {
           synchronized (myDirtyFiles) {
