@@ -252,7 +252,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       final String versionString = sdkType.getVersionString(sdk);
       try {
         final VirtualFile mainClassFile =
-          JarFileSystem.getInstance().findFileByPath(ideaSdk.getHomePath() + "/lib/bootstrap.jar!/com/intellij/idea/Main.class");
+          JarFileSystem.getInstance().findFileByPath(ideaSdk.getHomePath() + "/lib/openapi.jar!/com/intellij/openapi/project/Project.class");
         if (mainClassFile != null) {
           final BytePointer ptr = new BytePointer(mainClassFile.contentsToByteArray(), 6);
           int majorVersion = ClsUtil.readU2(ptr);
