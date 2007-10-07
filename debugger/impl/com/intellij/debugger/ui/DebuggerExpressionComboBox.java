@@ -1,6 +1,5 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
@@ -49,10 +48,12 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
 
     public void setItem(Object item) {
       super.setItem(createDocument((TextWithImports)item));
+      /* Causes PSI being modified from PSI events. See IDEADEV-22102 
       final Editor editor = getEditor();
       if (editor != null) {
         DaemonCodeAnalyzer.getInstance(getProject()).updateVisibleHighlighters(editor);
       }
+      */
     }
 
   }
