@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.parameterInfo.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,8 +67,21 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   private GroovyPsiElement getArgumentList(int offset, PsiFile file) {
-    final PsiElement element = file.findElementAt(offset);
-    return PsiTreeUtil.getParentOfType(element, GrArgumentList.class, GrCommandArgumentList.class);
+    PsiElement element = file.findElementAt(offset);
+    if (element != null) {
+      final ASTNode node = element.getNode();
+      if (node != null && node.getElementType() == GroovyTokenTypes.mNLS) {
+        element = file.findElementAt(offset - 1);
+      }
+    }
+    if (element instanceof PsiWhiteSpace) element = element.getNextSibling();
+    if (element == null) return null;
+    final GrCall call = PsiTreeUtil.getParentOfType(element, GrCall.class);
+    if (call != null) {
+      final GroovyPsiElement argList = call.getArgumentList();
+      if (argList.getTextRange().contains(element.getTextRange().getStartOffset())) return argList;
+    }
+    return null;
   }
 
   public void showParameterInfo(@NotNull GroovyPsiElement place, CreateParameterInfoContext context) {
