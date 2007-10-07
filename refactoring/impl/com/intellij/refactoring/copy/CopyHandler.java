@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.util.DeleteUtil;
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -52,7 +53,7 @@ public class CopyHandler {
     }
 
     if (elements.length == 1) {
-      if (elements[0] instanceof PsiClass && elements[0].getParent() instanceof PsiFile) {
+      if (elements[0] instanceof PsiClass && elements[0].getParent() instanceof PsiFile && elements[0].getLanguage() == StdLanguages.JAVA) {
         return CLASS;
       }
     }
