@@ -102,7 +102,11 @@ public class InspectionApplication {
       }
       myProject = ProjectUtil.openOrImport(myProjectPath, null, false);
 
-      VirtualFileManager.getInstance().refresh(false);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run(){
+              VirtualFileManager.getInstance().refresh(false);
+          }
+      });
 
       //fetch profile by name from project file (project profiles can be disabled)
       Profile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getProfiles().get(myProfileName);
