@@ -225,7 +225,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public boolean isTargetVisible(final AntBuildTarget target) {
-    TargetFilter filter = findFilter(target.getName());
+    final TargetFilter filter = findFilter(target.getName());
     if (filter == null) {
       return target.isDefault() || target.getNotEmptyDescription() != null;
     }
@@ -245,14 +245,14 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public void updateProperties() {
-    final Map<String, AntBuildTarget> targetByName =
-      ContainerUtil.assignKeys(Arrays.asList(getModel().getTargets()).iterator(), new Convertor<AntBuildTarget, String>() {
-        public String convert(AntBuildTarget target) {
-          return target.getName();
-        }
-      });
-    final ArrayList<TargetFilter> filters = TARGET_FILTERS.getModifiableList(myAllOptions);
     synchronized (this) {
+      final Map<String, AntBuildTarget> targetByName =
+        ContainerUtil.assignKeys(Arrays.asList(getModel().getTargets()).iterator(), new Convertor<AntBuildTarget, String>() {
+          public String convert(AntBuildTarget target) {
+            return target.getName();
+          }
+        });
+      final ArrayList<TargetFilter> filters = TARGET_FILTERS.getModifiableList(myAllOptions);
       for (Iterator<TargetFilter> iterator = filters.iterator(); iterator.hasNext();) {
         TargetFilter filter = iterator.next();
         String name = filter.getTargetName();
@@ -289,22 +289,30 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public void readWorkspaceProperties(final Element parentNode) throws InvalidDataException {
-    myWorkspaceOptions.readExternal(parentNode);
+    synchronized (this) {
+      myWorkspaceOptions.readExternal(parentNode);
+    }
   }
 
   public void writeWorkspaceProperties(final Element parentNode) throws WriteExternalException {
-    myWorkspaceOptions.writeExternal(parentNode);
+    synchronized (this) {
+      myWorkspaceOptions.writeExternal(parentNode);
+    }
   }
 
   public void readProperties(final Element parentNode) throws InvalidDataException {
-    myProjectOptions.readExternal(parentNode);
-    basicUpdateConfig();
-    readWorkspaceProperties(parentNode); // Compatibility with old Idea
-    updateProperties();
+    synchronized (this) {
+      myProjectOptions.readExternal(parentNode);
+      basicUpdateConfig();
+      readWorkspaceProperties(parentNode); // Compatibility with old Idea
+      updateProperties();
+    }
   }
 
   public void writeProperties(final Element parentNode) throws WriteExternalException {
-    myProjectOptions.writeExternal(parentNode);
+    synchronized (this) {
+      myProjectOptions.writeExternal(parentNode);
+    }
   }
 
   private void basicUpdateConfig() {
@@ -339,12 +347,13 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   @Nullable
   private TargetFilter findFilter(final String targetName) {
-    final List<TargetFilter> targetFilters = TARGET_FILTERS.get(myAllOptions);
+    final List<TargetFilter> filters;
     synchronized (this) {
-      for (TargetFilter targetFilter : targetFilters) {
-        if (Comparing.equal(targetName, targetFilter.getTargetName())) {
-          return targetFilter;
-        }
+      filters = TARGET_FILTERS.get(myAllOptions);
+    }
+    for (TargetFilter targetFilter : filters) {
+      if (Comparing.equal(targetName, targetFilter.getTargetName())) {
+        return targetFilter;
       }
     }
     return null;
