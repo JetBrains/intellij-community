@@ -54,7 +54,7 @@ SET CLASS_PATH=%CLASS_PATH%;%IDEA_JDK%\lib\tools.jar
 :: ---------------------------------------------------------------------
 IF NOT "%IDEA_CLASS_PATH%" == "" SET CLASS_PATH=%CLASS_PATH%;%IDEA_CLASS_PATH%
 
-"%JAVA_EXE%" %JVM_ARGS% -cp "%CLASS_PATH%" %IDEA_MAIN_CLASS_NAME% %*
+"%JAVA_EXE%" %JVM_ARGS% -cp "%CLASS_PATH%" %IDEA_INSPECT_DIFF_CLASS_NAME% %*
 
 SET PATH=%OLD_PATH%
 goto end
