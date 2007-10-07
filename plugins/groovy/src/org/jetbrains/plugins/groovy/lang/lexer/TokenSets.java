@@ -101,7 +101,9 @@ public abstract class TokenSets implements GroovyTokenTypes {
       kSWITCH,
       kTRY,
       kCATCH,
-      kFINALLY
+      kFINALLY,
+      kSTATIC,
+      kDEFAULT
   ), BUILT_IN_TYPE);
 
   public static TokenSet PROPERTY_NAMES = TokenSet.orSet(KEYWORD_PROPERTY_NAMES, TokenSet.create(mIDENT, mSTRING_LITERAL));
