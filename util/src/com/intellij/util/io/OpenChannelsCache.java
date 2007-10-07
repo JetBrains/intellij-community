@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,7 +25,7 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
     myCache = new LinkedHashMap<File, ChannelDescriptor>(cacheSizeLimit, 0.5f, true);
   }
 
-  public synchronized FileChannel getChannel(File ioFile) throws FileNotFoundException {
+  public synchronized RandomAccessFile getChannel(File ioFile) throws FileNotFoundException {
     ChannelDescriptor descriptor = myCache.get(ioFile);
     if (descriptor == null) {
       dropOvercache();
@@ -84,12 +83,11 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
 
   private static class ChannelDescriptor {
     private int lockCount = 0;
-    private final FileChannel myChannel;
+    private final RandomAccessFile myChannel;
 
     @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
     public ChannelDescriptor(File file, String accessMode) throws FileNotFoundException {
-      RandomAccessFile raf = new RandomAccessFile(file, accessMode);
-      myChannel = raf.getChannel();
+      myChannel = new RandomAccessFile(file, accessMode);
     }
 
     public void lock() {
@@ -104,7 +102,7 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
       return lockCount != 0;
     }
 
-    public FileChannel getChannel() {
+    public RandomAccessFile getChannel() {
       return myChannel;
     }
   }

@@ -5,12 +5,8 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 
 public class RandomAccessDataFile implements Forceable {
   private final static PagePool ourPool = new PagePool();
@@ -41,9 +37,10 @@ public class RandomAccessDataFile implements Forceable {
     if (len > Page.PAGE_SIZE) {
       try {
         ourPool.flushPagesInRange(this, addr, len);
-        final FileChannel channel = getChannel();
-        channel.write(ByteBuffer.wrap(bytes, off, len), addr);
-        releaseChannel();
+        final RandomAccessFile file = getFile();
+        file.seek(addr);
+        file.write(bytes, off, len);
+        releaseFile();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -66,9 +63,10 @@ public class RandomAccessDataFile implements Forceable {
       try {
         ourPool.flushPagesInRange(this, addr, len);
 
-        final FileChannel channel = getChannel();
-        channel.read(ByteBuffer.wrap(bytes, off, len), addr);
-        releaseChannel();
+        final RandomAccessFile file = getFile();
+        file.seek(addr);
+        file.read(bytes, off, len);
+        releaseFile();
 
         mySize = Math.max(mySize, addr + len);
       }
@@ -88,11 +86,11 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
-  private void releaseChannel() {
+  private void releaseFile() {
     ourCache.releaseChannel(myFile);
   }
 
-  private FileChannel getChannel() throws FileNotFoundException {
+  private RandomAccessFile getFile() throws FileNotFoundException {
     return ourCache.getChannel(myFile);
   }
 
@@ -193,14 +191,6 @@ public class RandomAccessDataFile implements Forceable {
   public void force() {
     if (isDirty()) {
       ourPool.flushPages(this);
-      try {
-        FileChannel channel = getChannel();
-        channel.force(false);
-        releaseChannel();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
       myIsDirty = false;
     }
   }
@@ -211,10 +201,11 @@ public class RandomAccessDataFile implements Forceable {
 
   public void loadPage(final Page page) {
     try {
-      page.getBuf().position(0);
-      final FileChannel channel = getChannel();
-      channel.read(page.getBuf(), page.getOffset());
-      releaseChannel();
+      final RandomAccessFile file = getFile();
+      file.seek(page.getOffset());
+      final ByteBuffer buf = page.getBuf();
+      file.read(buf.array(), 0, Page.PAGE_SIZE);
+      releaseFile();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -230,19 +221,15 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
-  private void flush(final ByteBuffer buf, final long offset, final int length) throws IOException {
-    final ByteBuffer flush;
+  private void flush(final ByteBuffer buf, final long offset, int length) throws IOException {
     if (offset + length > mySize) {
-      flush = ByteBuffer.wrap(buf.array(), 0, (int)(mySize - offset));
-    }
-    else {
-      flush = buf;
-      flush.position(0);
+      length = (int)(mySize - offset);
     }
 
-    final FileChannel channel = getChannel();
-    channel.write(flush, offset);
-    releaseChannel();
+    final RandomAccessFile file = getFile();
+    file.seek(offset);
+    file.write(buf.array(), 0, length);
+    releaseFile();
   }
 
   public int hashCode() {
