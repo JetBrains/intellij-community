@@ -48,7 +48,7 @@ public class FileElement extends RepositoryTreeElement{
       LOG.assertTrue(child.getElementType() == ElementType.IMPORT_LIST);
       if (newElement.getFirstChildNode() == null) { //empty import list
         ASTNode next = child.getTreeNext();
-        if (next.getElementType() == ElementType.WHITE_SPACE) {
+        if (next != null && next.getElementType() == ElementType.WHITE_SPACE) {
           removeChild(next);
         }
       }
