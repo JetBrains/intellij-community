@@ -5,7 +5,6 @@ import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -14,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -21,9 +21,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 public class AntSetPanel {
   private final Form myForm;
@@ -40,12 +38,12 @@ public class AntSetPanel {
 
   @Nullable
   public AntInstallation showDialog(JComponent parent) {
-    DialogBuilder builder = new DialogBuilder(parent);
-    builder.setCenterPanel(myForm.getComponent());
-    builder.setDimensionServiceKey("antSetDialogDimensionKey");
-    builder.setPreferedFocusComponent(myForm.getAntsList());
-    builder.setTitle(AntBundle.message("configure.ant.dialog.title"));
-    if (builder.show() != DialogWrapper.OK_EXIT_CODE) return null;
+    final DialogWrapper dialog = new MyDialog(parent);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return null;
+    }
+    
     apply();
     return myForm.getSelectedAnt();
   }
@@ -122,7 +120,7 @@ public class AntSetPanel {
       });
     }
 
-    public JComponent getAntsList() {
+    public JList getAntsList() {
       return myAnts.getList();
     }
 
@@ -187,9 +185,9 @@ public class AntSetPanel {
   }
 
   private static class NewAntFactory implements Factory<AntInstallation> {
-    private final JComponent myParent;
+    private final AnActionListEditor<AntInstallation> myParent;
 
-    public NewAntFactory(JComponent parent) {
+    public NewAntFactory(AnActionListEditor<AntInstallation> parent) {
       myParent = parent;
     }
 
@@ -198,12 +196,71 @@ public class AntSetPanel {
       if (files.length == 0) return null;
       VirtualFile homePath = files[0];
       try {
-        return AntInstallation.fromHome(homePath.getPresentableUrl());
+        final AntInstallation inst = AntInstallation.fromHome(homePath.getPresentableUrl());
+        adjustName(inst);
+        return inst;
       }
       catch (AntInstallation.ConfigurationException e) {
         Messages.showErrorDialog(myParent, e.getMessage(), AntBundle.message("ant.setup.dialog.title"));
         return null;
       }
+    }
+
+    private void adjustName(final AntInstallation justCreated) {
+      int nameIndex = 0;
+      String adjustedName = justCreated.getName();
+      final ListModel model = myParent.getList().getModel();
+      
+      int idx = 0;
+      while (idx < model.getSize()) {
+        final AntInstallation inst = (AntInstallation)model.getElementAt(idx++);
+        if (adjustedName.equals(inst.getName())) {
+          adjustedName = justCreated.getName() + " (" + (++nameIndex) + ")";
+          idx = 0; // search from beginning
+        }
+      }
+      
+      if (!adjustedName.equals(justCreated.getName())) {
+        justCreated.setName(adjustedName);
+      }
+    }
+  }
+
+  private class MyDialog extends DialogWrapper {
+    public MyDialog(final JComponent parent) {
+      super(parent, true);
+      setTitle(AntBundle.message("configure.ant.dialog.title"));
+      init();
+    }
+
+    @Nullable
+      protected JComponent createCenterPanel() {
+      return myForm.getComponent();
+    }
+
+    @NonNls
+      protected String getDimensionServiceKey() {
+      return "antSetDialogDimensionKey";
+    }
+
+    public JComponent getPreferredFocusedComponent() {
+      return myForm.getAntsList();
+    }
+
+    protected void doOKAction() {
+      final Set<String> names = new HashSet<String>();
+      final ListModel model = myForm.getAntsList().getModel();
+      for (int idx = 0; idx  < model.getSize(); idx++) {
+        final AntInstallation inst = (AntInstallation)model.getElementAt(idx);
+        final String name = AntInstallation.NAME.get(myForm.getProperties(inst));
+        if (names.contains(name)) {
+          Messages.showErrorDialog("Duplicate ant installation name: \"" + name+ "\"", getTitle());
+          return;
+        }
+        names.add(name);
+      }
+      
+      super.doOKAction();
     }
   }
 }

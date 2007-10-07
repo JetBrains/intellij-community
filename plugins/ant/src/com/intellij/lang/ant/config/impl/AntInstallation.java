@@ -94,6 +94,10 @@ public class AntInstallation {
     return NAME.get(myProperties);
   }
 
+  public void setName(final String name) {
+    NAME.set(myProperties, name);
+  }
+
   public String getVersion() {
     return VERSION.get(myProperties);
   }
@@ -125,8 +129,9 @@ public class AntInstallation {
       Properties properties = loadProperties(antJar);
       AntInstallation antInstallation = new AntInstallation();
       HOME_DIR.set(antInstallation.getProperties(), antHome.getAbsolutePath());
-      NAME.set(antInstallation.getProperties(),
-               AntBundle.message("apache.ant.with.version.string.presentation", properties.getProperty(PROPERTY_VERSION)));
+      final String versionProp = properties.getProperty(PROPERTY_VERSION);
+      NAME.set(antInstallation.getProperties(), AntBundle.message("apache.ant.with.version.string.presentation", versionProp));
+      VERSION.set(antInstallation.getProperties(), versionProp);
       antInstallation.addClasspathEntry(new AllJarsUnderDirEntry(lib));
       return antInstallation;
     }
