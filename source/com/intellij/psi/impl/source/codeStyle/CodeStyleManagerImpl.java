@@ -37,7 +37,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -263,37 +262,29 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
   }
 
   public void removeRedundantImports(@NotNull PsiJavaFile file) throws IncorrectOperationException {
+    if (PsiUtil.isInJspFile(file)) return;
+
     final PsiImportList importList = file.getImportList();
     if (importList == null) return;
     final PsiImportStatementBase[] imports = importList.getAllImportStatements();
     if( imports.length == 0 ) return;
 
-    Set<PsiImportStatementBase> allImports = new THashSet<PsiImportStatementBase>(Arrays.asList(imports));
-    final Collection<PsiImportStatementBase> redundants;
-    if (PsiUtil.isInJspFile(file)) {
-      // remove only duplicate imports
-      redundants = new THashSet<PsiImportStatementBase>(TObjectHashingStrategy.IDENTITY);
-      redundants.addAll(Arrays.asList(imports));
-      redundants.removeAll(allImports);
-    }
-    else {
-      redundants = allImports;
-      final PsiElement[] roots = file.getPsiRoots();
-      for (PsiElement root : roots) {
-        root.accept(new PsiRecursiveElementVisitor() {
-          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-            if (!reference.isQualified()) {
-              final JavaResolveResult resolveResult = reference.advancedResolve(false);
-              final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
-              if (resolveScope instanceof PsiImportStatementBase) {
-                final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)resolveScope;
-                redundants.remove(importStatementBase);
-              }
+    final Collection<PsiImportStatementBase> redundants = new THashSet<PsiImportStatementBase>(Arrays.asList(imports));
+    final PsiElement[] roots = file.getPsiRoots();
+    for (PsiElement root : roots) {
+      root.accept(new PsiRecursiveElementVisitor() {
+        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          if (!reference.isQualified()) {
+            final JavaResolveResult resolveResult = reference.advancedResolve(false);
+            final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
+            if (resolveScope instanceof PsiImportStatementBase) {
+              final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)resolveScope;
+              redundants.remove(importStatementBase);
             }
-            super.visitReferenceElement(reference);
           }
-        });
-      }
+          super.visitReferenceElement(reference);
+        }
+      });
     }
 
     for (final PsiImportStatementBase importStatement : redundants) {
