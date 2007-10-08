@@ -273,7 +273,12 @@ public class CopyReferenceAction extends AnAction {
       if (element == null) return;
     }
     if (element instanceof PsiJavaCodeReferenceElement && elementToInsert != null) {
-      element = ((PsiJavaCodeReferenceElement)element).bindToElement(elementToInsert);
+      try {
+        element = ((PsiJavaCodeReferenceElement)element).bindToElement(elementToInsert);
+      }
+      catch (IncorrectOperationException e) {
+        // failed to bind
+      }
     }
     final CodeStyleManagerEx codeStyleManagerEx = (CodeStyleManagerEx)CodeStyleManager.getInstance(element.getProject());
     codeStyleManagerEx.shortenClassReferences(element, CodeStyleManagerEx.UNCOMPLETE_CODE);
