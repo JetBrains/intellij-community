@@ -51,7 +51,11 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
   }
 
   public void rename(final Facet facet, final String newName) {
-    myFacet2NewName.put(facet, newName);
+    if (!newName.equals(facet.getName())) {
+      myFacet2NewName.put(facet, newName);
+    } else {
+      myFacet2NewName.remove(facet);
+    }
     facetsChanged();
   }
 
@@ -65,7 +69,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
   }
 
   public boolean isModified() {
-    return !new HashSet<Facet>(myFacets).equals(new HashSet<Facet>(Arrays.asList(myManager.getAllFacets())));
+    return !new HashSet<Facet>(myFacets).equals(new HashSet<Facet>(Arrays.asList(myManager.getAllFacets()))) || !myFacet2NewName.isEmpty();
   }
 
   public boolean isNewFacet(final Facet facet) {
