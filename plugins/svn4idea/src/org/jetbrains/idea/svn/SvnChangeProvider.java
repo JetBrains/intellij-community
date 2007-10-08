@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
@@ -228,8 +227,10 @@ public class SvnChangeProvider implements ChangeProvider {
     } catch (SVNException e) {
       if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
         final VirtualFile virtualFile = path.getVirtualFile();
-        if (virtualFile != null && myProjectRootManager.getFileIndex().isIgnored(virtualFile)) return;
-        context.getBuilder().processUnversionedFile(virtualFile);
+        if (virtualFile != null) {
+          if (myProjectRootManager.getFileIndex().isIgnored(virtualFile)) return;
+          context.getBuilder().processUnversionedFile(virtualFile);
+        }
         // process children recursively!
         if (recursively && path.isDirectory() && virtualFile != null) {
           VirtualFile[] children = virtualFile.getChildren();
@@ -277,7 +278,10 @@ public class SvnChangeProvider implements ChangeProvider {
       final SVNStatusType statusType = status.getContentsStatus();
       final SVNStatusType propStatus = status.getPropertiesStatus();
       if (statusType == SVNStatusType.STATUS_UNVERSIONED || statusType == SVNStatusType.UNKNOWN) {
-        builder.processUnversionedFile(filePath.getVirtualFile());
+        final VirtualFile file = filePath.getVirtualFile();
+        if (file != null) {
+          builder.processUnversionedFile(file);
+        }
       }
       else if (statusType == SVNStatusType.STATUS_CONFLICTED ||
                statusType == SVNStatusType.STATUS_MODIFIED ||
