@@ -393,7 +393,25 @@ public class TestNGUtil implements TestFramework
   public PsiMethod findSetUpMethod(final PsiClass psiClass) throws IncorrectOperationException {
     final PsiManager manager = psiClass.getManager();
     final PsiElementFactory factory = manager.getElementFactory();
-    final PsiMethod patternMethod = factory.createMethodFromText("@org.testng.annotations.BeforeMethod\n protected void setUp() throws Exception {}", null);
+    PsiMethod patternMethod = factory.createMethodFromText("@org.testng.annotations.BeforeMethod\n protected void setUp() throws Exception {}", null);
+
+    final PsiClass superClass = psiClass.getSuperClass();
+    if (superClass != null) {
+      final PsiMethod[] methods = superClass.findMethodsBySignature(patternMethod, false);
+      if (methods.length > 0) {
+        final PsiModifierList modifierList = methods[0].getModifierList();
+        if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) { //do not override private method
+          @NonNls String pattern = "@org.testng.annotations.BeforeMethod\n";
+          if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
+            pattern += "protected ";
+          } else if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
+            pattern +="public ";
+          }
+          patternMethod = factory.createMethodFromText(pattern + "void setUp() throws Exception {\nsuper.setUp();\n}", null);
+        }
+      }
+    }
+
     final PsiMethod[] psiMethods = psiClass.getMethods();
     PsiMethod inClass = null;
     for (PsiMethod psiMethod : psiMethods) {
