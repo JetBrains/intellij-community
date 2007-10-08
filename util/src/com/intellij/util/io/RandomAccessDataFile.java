@@ -38,9 +38,13 @@ public class RandomAccessDataFile implements Forceable {
       try {
         ourPool.flushPagesInRange(this, addr, len);
         final RandomAccessFile file = getFile();
-        file.seek(addr);
-        file.write(bytes, off, len);
-        releaseFile();
+        try {
+          file.seek(addr);
+          file.write(bytes, off, len);
+        }
+        finally {
+          releaseFile();
+        }
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -64,9 +68,13 @@ public class RandomAccessDataFile implements Forceable {
         ourPool.flushPagesInRange(this, addr, len);
 
         final RandomAccessFile file = getFile();
-        file.seek(addr);
-        file.read(bytes, off, len);
-        releaseFile();
+        try {
+          file.seek(addr);
+          file.read(bytes, off, len);
+        }
+        finally {
+          releaseFile();
+        }
 
         mySize = Math.max(mySize, addr + len);
       }
@@ -202,10 +210,14 @@ public class RandomAccessDataFile implements Forceable {
   public void loadPage(final Page page) {
     try {
       final RandomAccessFile file = getFile();
-      file.seek(page.getOffset());
-      final ByteBuffer buf = page.getBuf();
-      file.read(buf.array(), 0, Page.PAGE_SIZE);
-      releaseFile();
+      try {
+        file.seek(page.getOffset());
+        final ByteBuffer buf = page.getBuf();
+        file.read(buf.array(), 0, Page.PAGE_SIZE);
+      }
+      finally {
+        releaseFile();
+      }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -227,9 +239,13 @@ public class RandomAccessDataFile implements Forceable {
     }
 
     final RandomAccessFile file = getFile();
-    file.seek(offset);
-    file.write(buf.array(), 0, length);
-    releaseFile();
+    try {
+      file.seek(offset);
+      file.write(buf.array(), 0, length);
+    }
+    finally {
+      releaseFile();
+    }
   }
 
   public int hashCode() {
