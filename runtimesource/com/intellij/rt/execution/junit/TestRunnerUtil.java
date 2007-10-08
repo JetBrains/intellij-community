@@ -16,9 +16,7 @@ import java.util.ResourceBundle;
 import java.util.Vector;
 
 public class TestRunnerUtil {
-  /**
-   * @noinspection HardCodedStringLiteral
-   */
+  /** @noinspection HardCodedStringLiteral*/
   private static ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
 
   public static Test getTestSuite(IdeaTestRunner runner, String[] suiteClassNames){
@@ -160,9 +158,6 @@ public class TestRunnerUtil {
       Constructor constructor = testClass.getConstructor(new Class[]{String.class});
       TestCase test = (TestCase)constructor.newInstance(new Object[]{methodName});
       return test;
-      //TestSuite testSuite = new TestSuite();
-      //testSuite.addTest(test);
-      //return testSuite;
     }
     catch (NoSuchMethodException e) {
       try {
@@ -170,12 +165,22 @@ public class TestRunnerUtil {
         TestCase test = (TestCase)constructor.newInstance(new Object[0]);
         test.setName(methodName);
         return test;
-        //TestSuite testSuite = new TestSuite();
-        //testSuite.addTest(test);
-        //return testSuite;
       }
       catch(ClassCastException e1) {
-        runner.runFailed(MessageFormat.format(ourBundle.getString("junit.class.not.derived"), new Object[] {testClass.getName()}));
+        boolean methodExists;
+        try {
+          testClass.getMethod(methodName, new Class[0]);
+          methodExists = true;
+        }
+        catch (NoSuchMethodException e2) {
+          methodExists = false;
+        }
+        if (!methodExists) {
+          String error = MessageFormat.format(ourBundle.getString("junit.method.not.found"), new Object[]{methodName});
+          String message = MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[]{error});
+          return new FailedTestCase(testClass, methodName, message, null);
+        }
+        runner.runFailed(MessageFormat.format(ourBundle.getString("junit.class.not.derived"), new Object[]{testClass.getName()}));
         return null;
       }
       catch (Exception e1) {
@@ -207,6 +212,10 @@ public class TestRunnerUtil {
 
     public String getMethodName() {
       return myMethodName;
+    }
+
+    public String getMessage() {
+      return myMessage;
     }
 
     protected void runTest() throws Throwable {
