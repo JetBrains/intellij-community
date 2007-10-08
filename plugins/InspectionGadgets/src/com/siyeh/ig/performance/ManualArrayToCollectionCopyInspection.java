@@ -308,8 +308,12 @@ public class ManualArrayToCollectionCopyInspection
             if (declaration.getDeclaredElements().length != 1) {
                 return;
             }
-            final PsiLocalVariable variable = (PsiLocalVariable)
+            final PsiElement declaredElement =
                     declaration.getDeclaredElements()[0];
+            if (!(declaredElement instanceof PsiLocalVariable)) {
+                return;
+            }
+            final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
             final PsiExpression initialValue = variable.getInitializer();
             if (initialValue == null) {
                 return;
