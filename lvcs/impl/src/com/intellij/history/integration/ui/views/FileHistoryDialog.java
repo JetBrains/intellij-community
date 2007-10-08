@@ -1,11 +1,8 @@
 package com.intellij.history.integration.ui.views;
 
-import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryBundle;
-import static com.intellij.history.integration.LocalHistoryBundle.*;
-import static com.intellij.history.integration.LocalHistoryBundle.*;
+import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.openapi.diff.DiffManager;
@@ -52,8 +49,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected JComponent createDiffPanel() {
-    myCanNotShowDifferenceLabel =
-      new JLabel(getFormattedCanNotShowDiffMessage(), JLabel.CENTER);
+    myCanNotShowDifferenceLabel = new JLabel(getFormattedCanNotShowDiffMessage(), JLabel.CENTER);
 
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), getProject());
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
@@ -97,6 +93,6 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected String getHelpId() {
-    return "reference.dialogs.localHistory.show.file";
+    return "reference.dialogs.showhistory";
   }
 }
