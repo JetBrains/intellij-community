@@ -877,7 +877,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     private final String myLocalName;
     private final XmlAttribute myAttribute;
 
-    public RemoveAttributeIntentionFix(final String localName, final XmlAttribute attribute) {
+    public RemoveAttributeIntentionFix(final String localName, final @NotNull XmlAttribute attribute) {
       myLocalName = localName;
       myAttribute = attribute;
     }
@@ -893,7 +893,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
+      return myAttribute.isValid();
     }
 
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
