@@ -14,6 +14,10 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Comparator;
 
 public class ImportChooserStep extends ProjectImportWizardStep {
   private final StepSequence mySequence;
@@ -27,9 +31,11 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     myPanel = new JPanel(new BorderLayout());
     final DefaultListModel model = new DefaultListModel();
     myList = new JList(model);
-    for (ProjectImportProvider provider : providers) {
+
+    for (ProjectImportProvider provider : sorted(providers)) {
       model.addElement(provider);
     }
+    
     myList.setCellRenderer(new DefaultListCellRenderer(){
       public Component getListCellRendererComponent(final JList list,
                                                     final Object value,
@@ -51,6 +57,17 @@ public class ImportChooserStep extends ProjectImportWizardStep {
       }
     });
     myList.setSelectedIndex(0);
+  }
+
+  private static List<ProjectImportProvider> sorted(ProjectImportProvider[] providers) {
+    List<ProjectImportProvider> result = new ArrayList<ProjectImportProvider>();
+    Collections.addAll(result, providers);
+    Collections.sort(result, new Comparator<ProjectImportProvider>() {
+      public int compare(ProjectImportProvider l, ProjectImportProvider r) {
+        return l.getName().compareToIgnoreCase(r.getName());
+      }
+    });
+    return result;
   }
 
   public JComponent getComponent() {
