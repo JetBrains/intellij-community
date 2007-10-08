@@ -23,7 +23,7 @@ import com.intellij.openapi.ui.Messages;
 
 public class HelloWorldAction extends AnAction {
   public void actionPerformed(AnActionEvent event) {
-    Project project = DataKeys.PROJECT.getData(event.getDataContext());
+    Project project = event.getData(DataKeys.PROJECT);
     Messages.showMessageDialog(project, "Hello World!", "Information", Messages.getInformationIcon());
   }
 }
