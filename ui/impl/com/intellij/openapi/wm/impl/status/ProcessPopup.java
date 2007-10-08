@@ -115,6 +115,7 @@ public class ProcessPopup  {
     builder.setMinSize(getMinSize());
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(true);
+    builder.setBelongsToGlobalPopupStack(false);
 
     builder.setCancelButton(new MinimizeButton("Hide"));
 
