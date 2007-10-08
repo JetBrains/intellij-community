@@ -18,6 +18,7 @@ import com.intellij.openapi.fileChooser.impl.FileTreeStructure;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -290,17 +291,21 @@ public class FileSystemTreeImpl implements FileSystemTree {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 try {
-                  VirtualFile folder = parentDirectory.createChildDirectory(this, newFolderName);
-                  updateTree();
-                  FileElement folderDesc = new FileElement(folder, folder.getName());
-                  myTreeBuilder.buildNodeForElement(folderDesc);
-                  DefaultMutableTreeNode folderNode =
-                      myTreeBuilder.getNodeForElement(folderDesc);
-                  if (folderNode != null) {
-                    TreePath treePath = new TreePath(folderNode.getPath());
-                    myTree.setSelectionPath(treePath);
-                    myTree.scrollPathToVisible(treePath);
-                    myTree.expandPath(treePath);
+                  VirtualFile parent = parentDirectory;
+                  for (String name : StringUtil.tokenize(newFolderName, "\\/")) {
+                    VirtualFile folder = parent.createChildDirectory(this, name);
+                    updateTree();
+                    FileElement folderDesc = new FileElement(folder, folder.getName());
+                    myTreeBuilder.buildNodeForElement(folderDesc);
+                    DefaultMutableTreeNode folderNode =
+                        myTreeBuilder.getNodeForElement(folderDesc);
+                    if (folderNode != null) {
+                      TreePath treePath = new TreePath(folderNode.getPath());
+                      myTree.setSelectionPath(treePath);
+                      myTree.scrollPathToVisible(treePath);
+                      myTree.expandPath(treePath);
+                    }
+                    parent = folder;
                   }
                 }
                 catch (IOException e) {
