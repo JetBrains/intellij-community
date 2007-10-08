@@ -474,14 +474,18 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (tag == null) return null;
 
     DomInvocationHandler invocationHandler = getCachedElement(tag);
-    if (invocationHandler != null && invocationHandler.isValid()) {
+    if (invocationHandler != null && invocationHandler.isValid() && invocationHandler.getXmlTag() == tag) {
       return invocationHandler;
     }
 
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag == null) {
       final PsiFile psiFile = tag.getContainingFile();
-      return psiFile instanceof XmlFile ? getRootInvocationHandler((XmlFile)psiFile) : null;
+      if (psiFile instanceof XmlFile) {
+        final DomRootInvocationHandler handler = getRootInvocationHandler((XmlFile)psiFile);
+        return handler != null && handler.getXmlTag() == tag ? handler : null;
+      }
+      return null;
     }
 
     DomInvocationHandler parent = _getDomElement(parentTag);
@@ -492,7 +496,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     if (childDescription == null) return null;
 
     childDescription.getValues(parent.getProxy());
-    return getCachedElement(tag);
+    final DomInvocationHandler handler = getCachedElement(tag);
+    return handler != null && handler.getXmlTag() == tag ? handler : null;
   }
 
   public final boolean isDomFile(@Nullable PsiFile file) {
