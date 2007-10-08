@@ -21,6 +21,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.peer.PeerFactory;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,8 +68,10 @@ public class SimpleToolWindowPlugin implements ProjectComponent {
     myContentPanel.setBackground(UIUtil.getTreeTextBackground());
     myContentPanel.add(new JLabel("Hello World!", JLabel.CENTER), BorderLayout.CENTER);
 
-    myToolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, myContentPanel, ToolWindowAnchor.LEFT);
-    myToolWindow.setTitle("SimpleWindow");
+    myToolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.LEFT);
+    ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
+    Content content = contentFactory.createContent(myContentPanel, "SimpleWindow", false);
+    myToolWindow.getContentManager().addContent(content);
   }
 
   private void unregisterToolWindow() {
