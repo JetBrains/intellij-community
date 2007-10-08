@@ -312,7 +312,9 @@ public class CvsOperationExecutor {
           }, ModalityState.defaultModalityState());
         }
       }
-      return CvsTabbedWindow.getInstance(myProject);
+      if (!myProject.isDisposed()) {
+        return CvsTabbedWindow.getInstance(myProject);
+      }
     }
     return null;
   }
