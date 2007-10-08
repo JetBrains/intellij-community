@@ -694,12 +694,12 @@ public class GroovyAnnotator implements Annotator {
 
 
   private void registerUsedImport(GrReferenceElement referenceElement, GroovyResolveResult resolveResult) {
-    GrImportStatement importStatement = resolveResult.getImportStatementContext();
-    if (importStatement != null) {
+    GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
+    if (context instanceof GrImportStatement) {
       PsiFile file = referenceElement.getContainingFile();
       if (file instanceof GroovyFile) {
         GroovyImportsTracker importsTracker = GroovyImportsTracker.getInstance(referenceElement.getProject());
-        importsTracker.registerImportUsed(importStatement);
+        importsTracker.registerImportUsed((GrImportStatement) context);
       }
     }
   }
@@ -708,7 +708,7 @@ public class GroovyAnnotator implements Annotator {
     final PsiMethod method = (PsiMethod) methodResolveResult.getElement();
     assert method != null;
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor());
-    if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor())) {
+    if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(), methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
       PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
       if (elementToHighlight == null) {
         elementToHighlight = place;
@@ -830,9 +830,9 @@ public class GroovyAnnotator implements Annotator {
         !(parent instanceof GrImportStatement)) {
       Annotation annotation = holder.createInfoAnnotation(parent, null);
       annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
-      GrImportStatement importStatement = result.getImportStatementContext();
-      if (importStatement != null) {
-        annotation = holder.createInfoAnnotation(importStatement.getImportReference(), null);
+      GroovyPsiElement context = result.getCurrentFileResolveContext();
+      if (context instanceof GrImportStatement) {
+        annotation = holder.createInfoAnnotation(((GrImportStatement) context).getImportReference(), null);
         annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
       }
     }

@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
@@ -80,10 +81,15 @@ public class PsiUtil {
     return false;
   }
 
-  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, PsiMethod method, PsiSubstitutor substitutor) {
+  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, PsiMethod method, PsiSubstitutor substitutor, boolean isInUseCategory) {
     if (argumentTypes == null) return true;
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && parameters.length > 0) {
+      //do not check first parameter, it is 'this' inside categorized block
+      parameters = ArrayUtil.remove(parameters, 0);
+    }
+    
     PsiType[] parameterTypes = skipOptionalParametersAndSubstitute(argumentTypes.length, parameters, substitutor);
     if (parameterTypes.length - 1 > argumentTypes.length) return false; //one Map type might represent named arguments
     if (parameterTypes.length == 0 && argumentTypes.length > 0) return false;

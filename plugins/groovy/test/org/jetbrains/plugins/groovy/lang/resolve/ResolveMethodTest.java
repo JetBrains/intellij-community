@@ -325,6 +325,12 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertNotNull(ref.resolve());
   }
 
+  public void testUseOperator() throws Exception {
+    PsiReference ref = configureByFile("useOperator/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod && ((PsiMethod) resolved).hasModifierProperty(PsiModifier.STATIC));
+  }
+
   public void testExplicitGetter() throws Exception {
     PsiReference ref = configureByFile("explicitGetter/A.groovy");
     final PsiElement resolved = ref.resolve();

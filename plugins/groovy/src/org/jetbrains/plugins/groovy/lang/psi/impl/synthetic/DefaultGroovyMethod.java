@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -88,6 +89,11 @@ public class DefaultGroovyMethod extends LightMethod {
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  @NotNull
+  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+    return myModifiedMethod.getSignature(substitutor);
   }
 
   @NotNull

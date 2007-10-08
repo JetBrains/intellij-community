@@ -20,22 +20,18 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -89,10 +85,10 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     for (GroovyResolveResult classResult : classResults) {
       final PsiElement element = classResult.getElement();
       if (element instanceof PsiClass) {
-        final GrImportStatement statement = classResult.getImportStatementContext();
+        final GroovyPsiElement context = classResult.getCurrentFileResolveContext();
         String className = ((PsiClass) element).getName();
         final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, false, true, argTypes);
-        processor.setImportStatementContext(statement);
+        processor.setCurrentFileResolveContext(context);
         final boolean toBreak = element.processDeclarations(processor, PsiSubstitutor.EMPTY, null, ref);
         constructorResults.addAll(Arrays.asList(processor.getCandidates()));
         if (!toBreak) break;

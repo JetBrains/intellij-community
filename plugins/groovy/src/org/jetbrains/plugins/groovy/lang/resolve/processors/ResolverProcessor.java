@@ -19,8 +19,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -38,15 +38,15 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   protected Set<GroovyResolveResult> myCandidates = new LinkedHashSet<GroovyResolveResult>();
 
-  public GrImportStatement getImportStatementContext() {
-    return myImportStatementContext;
+  public GroovyPsiElement getCurrentFileResolveContext() {
+    return myCurrentFileResolveContext;
   }
 
-  public void setImportStatementContext(GrImportStatement importStatementContext) {
-    myImportStatementContext = importStatementContext;
+  public void setCurrentFileResolveContext(GroovyPsiElement currentFileResolveContext) {
+    myCurrentFileResolveContext = currentFileResolveContext;
   }
 
-  protected GrImportStatement myImportStatementContext;
+  protected GroovyPsiElement myCurrentFileResolveContext;
 
   public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
                            PsiElement place, boolean forCompletion,
@@ -68,7 +68,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       }
 
       boolean isAccessible = isAccessible(namedElement);
-      myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible, myImportStatementContext, substitutor));
+      myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible, myCurrentFileResolveContext, substitutor));
       return myForCompletion || !isAccessible;
     }
 
@@ -116,5 +116,9 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   public boolean hasCandidates() {
     return myCandidates.size() > 0;
+  }
+
+  public boolean isForCompletion() {
+    return myForCompletion;
   }
 }

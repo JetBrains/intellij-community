@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
 /**
  * @author ven
@@ -28,16 +28,16 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   private boolean myIsAccessible;
   private PsiSubstitutor mySubstitutor;
 
-  private GrImportStatement myImportStatementContext;
+  private GroovyPsiElement myCurrentFileResolveContext;
 
   public GroovyResolveResultImpl(PsiElement element, boolean isAccessible) {
     this(element, isAccessible, null, PsiSubstitutor.EMPTY);
   }
 
   public GroovyResolveResultImpl(PsiElement element, boolean isAccessible,
-                                 GrImportStatement importStatementContext,
+                                 GroovyPsiElement context,
                                  PsiSubstitutor substitutor) {
-    myImportStatementContext = importStatementContext;
+    myCurrentFileResolveContext = context;
     myElement = element;
     myIsAccessible = isAccessible;
     mySubstitutor = substitutor;
@@ -79,7 +79,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     return result;
   }
 
-  public GrImportStatement getImportStatementContext() {
-    return myImportStatementContext;
+  public GroovyPsiElement getCurrentFileResolveContext() {
+    return myCurrentFileResolveContext;
   }
 }

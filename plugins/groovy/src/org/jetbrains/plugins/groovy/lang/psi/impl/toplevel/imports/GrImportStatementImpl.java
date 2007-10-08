@@ -47,7 +47,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    if (processor instanceof ResolverProcessor) ((ResolverProcessor) processor).setImportStatementContext(this);
+    if (processor instanceof ResolverProcessor) ((ResolverProcessor) processor).setCurrentFileResolveContext(this);
     try {
       if (isOnDemand()) {
         GrCodeReferenceElement ref = getImportReference();
@@ -106,7 +106,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
 
       return true;
     } finally {
-      if (processor instanceof ResolverProcessor) ((ResolverProcessor) processor).setImportStatementContext(null);
+      if (processor instanceof ResolverProcessor) ((ResolverProcessor) processor).setCurrentFileResolveContext(null);
     }
   }
 

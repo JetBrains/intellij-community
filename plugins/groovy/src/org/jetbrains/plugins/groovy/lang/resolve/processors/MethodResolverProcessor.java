@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -38,7 +39,7 @@ import java.util.*;
  */
 public class MethodResolverProcessor extends ResolverProcessor {
   @Nullable
-  private final PsiType[] myArgumentTypes;
+  private PsiType[] myArgumentTypes;
 
   private Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private boolean myIsConstructor;
@@ -61,11 +62,11 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (!isAccessible((PsiNamedElement) element)) return true;
 
       substitutor = inferMethodTypeParameters(method, substitutor);
-      if (myForCompletion || PsiUtil.isApplicable(myArgumentTypes, method, substitutor)) { //do not use substitutor here!
-        myCandidates.add(new GroovyResolveResultImpl(method, true, myImportStatementContext, substitutor));
+      if (myForCompletion || PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression)) {
+        myCandidates.add(new GroovyResolveResultImpl(method, true, myCurrentFileResolveContext, substitutor));
       }
       else {
-        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, true, myImportStatementContext, substitutor));
+        myInapplicableCandidates.add(new GroovyResolveResultImpl(method, true, myCurrentFileResolveContext, substitutor));
       }
 
       return true;
@@ -236,5 +237,14 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   public boolean hasCandidates() {
     return super.hasCandidates() || myInapplicableCandidates.size() > 0;
+  }
+
+  @Nullable
+  public PsiType[] getArgumentTypes() {
+    return myArgumentTypes;
+  }
+
+  public void setArgumentTypes(@Nullable PsiType[] argumentTypes) {
+    myArgumentTypes = argumentTypes;
   }
 }

@@ -378,6 +378,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         if (qualifierClass != null) {
           if (!qualifierClass.processDeclarations(processor, qualifierResult.getSubstitutor(), null, refExpr)) return;
         }
+        if (!ResolveUtil.processCategoryMembers(refExpr, processor, (PsiClassType) qualifierType)) return;
       } else if (qualifierType instanceof PsiArrayType) {
         final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();
         if (!arrayClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;

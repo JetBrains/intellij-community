@@ -55,9 +55,11 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
         private void visitRefElement(GrReferenceElement refElement) {
           final GroovyResolveResult resolveResult = refElement.advancedResolve();
-          final GrImportStatement importStatement = resolveResult.getImportStatementContext();
-          if (importStatement != null) {
-            usedImports.add(importStatement);
+          final GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
+          if (context instanceof GrImportStatement) {
+          final GrImportStatement importStatement = (GrImportStatement) context;
+
+          usedImports.add(importStatement);
             if (!importStatement.isAliasedImport()) {
               String importedName = null;
               if (importStatement.isOnDemand()) {

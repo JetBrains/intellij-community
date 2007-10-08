@@ -17,28 +17,27 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspClass;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -179,5 +178,59 @@ public class ResolveUtil {
       if (place instanceof GrMember) break;
     }
     return null;
+  }
+
+  public static boolean processCategoryMembers(PsiElement place, ResolverProcessor processor, PsiClassType thisType) {
+    PsiElement prev = null;
+    while (place != null) {
+      if (place instanceof GrMethodCallExpression) {
+        final GrMethodCallExpression call = (GrMethodCallExpression) place;
+        final GrExpression invoked = call.getInvokedExpression();
+        if (invoked instanceof GrReferenceExpression && "use".equals(((GrReferenceExpression) invoked).getReferenceName())) {
+          final GrClosableBlock[] closures = call.getClosureArguments();
+          if (closures.length == 1 && closures[0].equals(prev)) {
+            if (useCategoryClass(call)) {
+              final GrArgumentList argList = call.getArgumentList();
+              if (argList != null) {
+                final GrExpression[] args = argList.getExpressionArguments();
+                if (args.length == 1 && args[0] instanceof GrReferenceExpression) {
+                  final PsiElement resolved = ((GrReferenceExpression) args[0]).resolve();
+                  if (resolved instanceof PsiClass) {
+                    try {
+                      processor.setCurrentFileResolveContext(call);
+                      if (!resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, null, place)) return false;
+                    } finally {
+                      processor.setCurrentFileResolveContext(null);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      prev = place;
+      place = place.getContext();
+    }
+
+    return true;
+  }
+
+  private static boolean useCategoryClass(GrMethodCallExpression call) {
+
+    final PsiMethod resolved = call.resolveMethod();
+    if (resolved instanceof DefaultGroovyMethod) {
+      final PsiElementFactory factory = call.getManager().getElementFactory();
+      final GlobalSearchScope scope = call.getResolveScope();
+      final PsiType[] parametersType = {
+                                          factory.createTypeByFQClassName("java.lang.Class", scope),
+                                          factory.createTypeByFQClassName("groovy.lang.Closure", scope)
+                                        };
+      final MethodSignature pattern = MethodSignatureUtil.createMethodSignature("use", parametersType, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+      return resolved.getSignature(PsiSubstitutor.EMPTY).equals(pattern);
+    }
+
+    return false;
   }
 }

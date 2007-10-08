@@ -4,7 +4,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author ven
@@ -15,7 +15,7 @@ public interface GroovyResolveResult extends ResolveResult {
   boolean isAccessible();
 
   @Nullable
-  GrImportStatement getImportStatementContext();
+  GroovyPsiElement getCurrentFileResolveContext();
 
   PsiSubstitutor getSubstitutor();
 
@@ -24,7 +24,7 @@ public interface GroovyResolveResult extends ResolveResult {
       return false;
     }
 
-    public GrImportStatement getImportStatementContext() {
+    public GroovyPsiElement getCurrentFileResolveContext() {
       return null;
     }
 

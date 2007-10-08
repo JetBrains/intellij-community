@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -127,7 +128,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
         final PsiType[] methodTypes = PsiUtil.getArgumentTypes(place, false);
         if (namedElement instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod) namedElement;
-          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          PsiParameter[] parameters = method.getParameterList().getParameters();
+          if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) parameters = ArrayUtil.remove(parameters, 0);
           PsiType[] argTypes = method.isConstructor() ? constructorTypes : methodTypes;
           if (argTypes == null) continue;
 
@@ -225,6 +227,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       final int currentParameter = context.getCurrentParameterIndex();
 
       PsiParameter[] parms = method.getParameterList().getParameters();
+      if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) parms = ArrayUtil.remove(parms, 0);
       int numParams = parms.length;
       if (numParams > 0) {
         for (int j = 0; j < numParams; j++) {
