@@ -66,7 +66,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     }
 
     return processor.getResult();
-  }
+    }
 
   public PsiClass resolveReferencedClass(String referenceText, PsiElement context) {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();

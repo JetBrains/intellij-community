@@ -50,7 +50,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private final ConcurrentMap<PsiJavaFile,ConcurrentMap<String, SoftReference<JavaResolveResult[]>>> myGuessCache;
 
   @NonNls private static final String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
-  private LanguageLevel myLanguageLevel;
+  private volatile LanguageLevel myLanguageLevel;
 
   protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
@@ -432,11 +432,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return ref != null ? ref.get() : null;
   }
 
-  private ConcurrentMap<String, SoftReference<JavaResolveResult[]>> preparedCleanMap = new ConcurrentHashMap<String, SoftReference<JavaResolveResult[]>>();
-  private void setGuess(final String name, final JavaResolveResult[] cached){
-    ConcurrentMap<String, SoftReference<JavaResolveResult[]>> guessForFile = ConcurrencyUtil.cacheOrGet(myGuessCache, this, preparedCleanMap);
-    if (guessForFile == preparedCleanMap) {
-      preparedCleanMap = new ConcurrentHashMap<String, SoftReference<JavaResolveResult[]>>();
+  private void setGuess(final String name, final JavaResolveResult[] cached) {
+    ConcurrentMap<String, SoftReference<JavaResolveResult[]>> guessForFile = myGuessCache.get(this);
+    if (guessForFile == null) {
+      guessForFile = ConcurrencyUtil.cacheOrGet(myGuessCache, this, new ConcurrentHashMap<String, SoftReference<JavaResolveResult[]>>());
     }
     guessForFile.putIfAbsent(name, new SoftReference<JavaResolveResult[]>(cached));
   }

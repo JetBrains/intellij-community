@@ -28,15 +28,15 @@ import java.util.List;
 public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMethod {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiMethodImpl");
 
-  private PsiModifierListImpl myRepositoryModifierList = null;
-  private PsiParameterListImpl myRepositoryParameterList = null;
-  private PsiReferenceListImpl myRepositoryThrowsList = null;
-  private PsiTypeParameterListImpl myRepositoryTypeParameterList;
+  private PsiModifierListImpl myRepositoryModifierList = null; //protected by PsiLock
+  private PsiParameterListImpl myRepositoryParameterList = null; //protected by PsiLock
+  private PsiReferenceListImpl myRepositoryThrowsList = null; //protected by PsiLock
+  private PsiTypeParameterListImpl myRepositoryTypeParameterList; //protected by PsiLock
 
-  @NonNls private String myCachedName = null;
-  private Boolean myCachedIsDeprecated = null;
-  private Boolean myCachedIsConstructor = null;
-  private Boolean myCachedIsVarargs = null;
+  @NonNls private volatile String myCachedName = null;
+  private volatile Boolean myCachedIsDeprecated = null;
+  private volatile Boolean myCachedIsConstructor = null;
+  private volatile Boolean myCachedIsVarargs = null;
   private PatchedSoftReference<PsiType> myCachedType = null;
 
   public PsiMethodImpl(PsiManagerEx manager, long repositoryId) {
@@ -358,14 +358,16 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public void treeElementSubTreeChanged() {
-    myCachedType = null;
-    myCachedName = null;
-    myCachedIsDeprecated = null;
-    myCachedIsConstructor = null;
-    myRepositoryThrowsList = null;
-    myRepositoryModifierList = null;
-    myRepositoryParameterList = null;
-    myRepositoryTypeParameterList = null;
+    synchronized (PsiLock.LOCK) {
+      myCachedType = null;
+      myCachedName = null;
+      myCachedIsDeprecated = null;
+      myCachedIsConstructor = null;
+      myRepositoryThrowsList = null;
+      myRepositoryModifierList = null;
+      myRepositoryParameterList = null;
+      myRepositoryTypeParameterList = null;
+    }
     super.treeElementSubTreeChanged();
   }
 

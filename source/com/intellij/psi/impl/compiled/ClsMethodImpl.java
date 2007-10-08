@@ -38,20 +38,20 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsMethodImpl");
 
   private final ClsClassImpl myParent;
-  private int myStartOffset;
+  private volatile int myStartOffset;
 
-  private String myName = null;
-  private PsiIdentifier myNameIdentifier = null;
-  private boolean myConstructorFlag;
-  private Boolean myIsVarArgs = null;
-  private PsiTypeElement myReturnType = null;
-  private ClsModifierListImpl myModifierList = null;
-  private PsiParameterList myParameterList = null;
-  private PsiReferenceList myThrowsList = null;
-  private PsiDocComment myDocComment = null;
-  private Boolean myIsDeprecated = null;
-  private PsiTypeParameterList myTypeParameters = null;
-  private PsiAnnotationMemberValue[] myDefaultValue = null;
+  private volatile String myName = null;
+  private PsiIdentifier myNameIdentifier = null; //protected by PsiLock
+  private volatile boolean myConstructorFlag;
+  private volatile Boolean myIsVarArgs = null;
+  private PsiTypeElement myReturnType = null; //protected by PsiLock
+  private volatile ClsModifierListImpl myModifierList = null;
+  private volatile PsiParameterList myParameterList = null;
+  private volatile PsiReferenceList myThrowsList = null;
+  private PsiDocComment myDocComment = null; //protected by PsiLock
+  private Boolean myIsDeprecated = null; //protected by PsiLock
+  private PsiTypeParameterList myTypeParameters = null; //protected by PsiLock
+  private PsiAnnotationMemberValue[] myDefaultValue = null; //protected by PsiLock
   private volatile ClsAnnotationImpl[] myAnnotations = null;
   private volatile ClsAnnotationImpl[][] myParameterAnnotations = null;
   @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
@@ -206,8 +206,9 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
         }
         else {
           MethodView methodView = getRepositoryManager().getMethodView();
-          myName = methodView.getName(repositoryId);
+          String name = methodView.getName(repositoryId);
           myConstructorFlag = methodView.getReturnTypeText(repositoryId) == null;
+          myName = name;
         }
       }
     }
@@ -413,72 +414,74 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   private ArrayList<String> calcParameterTypes() {
-      long repositoryId = getRepositoryId();
-      if (repositoryId < 0) {
-        try {
-          ClassFileData classFileData = myParent.getClassFileData();
-          byte[] data = classFileData.getData();
-          int offset = myStartOffset + 4;
-          int b1 = data[offset++] & 0xFF;
-          int b2 = data[offset++] & 0xFF;
-          int index = (b1 << 8) + b2;
-          offset = classFileData.getOffsetInConstantPool(index);
-          offset += 3; // skip tag and length
-          if (offset + 1 >= data.length) {
+    getName(); //initialize flags
+    long repositoryId = getRepositoryId();
+    if (repositoryId < 0) {
+      try {
+        ClassFileData classFileData = myParent.getClassFileData();
+        byte[] data = classFileData.getData();
+        int offset = myStartOffset + 4;
+        int b1 = data[offset++] & 0xFF;
+        int b2 = data[offset++] & 0xFF;
+        int index = (b1 << 8) + b2;
+        offset = classFileData.getOffsetInConstantPool(index);
+        offset += 3; // skip tag and length
+        if (offset + 1 >= data.length) {
+          throw new ClsFormatException();
+        }
+        if (data[offset++] != '(') {
+          throw new ClsFormatException();
+        }
+
+        if (myConstructorFlag &&
+            myParent.getParent() instanceof PsiClass &&
+            !myParent.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
+          //Then there is presumably a synthetic field in the class, that is instantiated in the constructor
+          //Skip the first parameter
+          // there is Sun generic compiler bug here, happens to throw...
+          if (data[offset] == ')') {
             throw new ClsFormatException();
           }
-          if (data[offset++] != '(') {
+          offset = ClsUtil.getTypeEndOffset(data, offset);
+          if (offset >= data.length) {
             throw new ClsFormatException();
           }
-
-          if (myConstructorFlag && myParent.getParent() instanceof PsiClass &&
-              !myParent.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
-            //Then there is presumably a synthetic field in the class, that is instantiated in the constructor
-            //Skip the first parameter
-            // there is Sun generic compiler bug here, happens to throw...
-            if (data[offset] == ')') {
-              throw new ClsFormatException();
-            }
-            offset = ClsUtil.getTypeEndOffset(data, offset);
-            if (offset >= data.length) {
-              throw new ClsFormatException();
-            }
-          }
-
-          ArrayList<String> types = null;
-          while (data[offset] != ')') {
-            String typeText = ClsUtil.getTypeText(data, offset);
-            offset = ClsUtil.getTypeEndOffset(data, offset);
-            if (offset >= data.length) {
-              throw new ClsFormatException();
-            }
-            if (types == null) {
-              types = new ArrayList<String>();
-            }
-            types.add(typeText);
-          }
-
-          if (types != null) {
-            patchVarargs(types);
-          }
-          return types;
         }
-        catch (ClsFormatException e) {
-          return new ArrayList<String>();
+
+        ArrayList<String> types = null;
+        while (data[offset] != ')') {
+          String typeText = ClsUtil.getTypeText(data, offset);
+          offset = ClsUtil.getTypeEndOffset(data, offset);
+          if (offset >= data.length) {
+            throw new ClsFormatException();
+          }
+          if (types == null) {
+            types = new ArrayList<String>();
+          }
+          types.add(typeText);
         }
-      }
-      else {
-        MethodView methodView = getRepositoryManager().getMethodView();
-        int count = methodView.getParameterCount(repositoryId);
-        if (count == 0) return null;
-        ArrayList<String> types = new ArrayList<String>(count);
-        for (int i = 0; i < count; i++) {
-          String text = methodView.getParameterTypeText(repositoryId, i);
-          types.add(text);
+
+        if (types != null) {
+          patchVarargs(types);
         }
         return types;
       }
+      catch (ClsFormatException e) {
+        return new ArrayList<String>();
+      }
     }
+    else {
+      MethodView methodView = getRepositoryManager().getMethodView();
+      int count = methodView.getParameterCount(repositoryId);
+      if (count == 0) return null;
+      ArrayList<String> types = new ArrayList<String>(count);
+      for (int i = 0; i < count; i++) {
+        String text = methodView.getParameterTypeText(repositoryId, i);
+        types.add(text);
+      }
+      return types;
+    }
+  }
 
   private void patchVarargs(ArrayList<String> types) {
     if (isVarArgs()) {
@@ -573,10 +576,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return myIsDeprecated.booleanValue();
   }
 
-  ClassFileData getClassFileData() {
-    return myParent.getClassFileData();
-  }
-
   public PsiAnnotationMemberValue getDefaultValue() {
     synchronized (PsiLock.LOCK) {
       if (myDefaultValue == null) {
@@ -645,7 +644,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     }
   }
 
-  public String getSignatureAttribute() {
+  private String getSignatureAttribute() {
     try {
       ClassFileData data = myParent.getClassFileData();
       return data.readUtf8Attribute(data.findAttribute(myStartOffset + 6, "Signature"));
