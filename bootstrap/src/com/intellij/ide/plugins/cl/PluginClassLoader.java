@@ -19,6 +19,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
 
+@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
 public class PluginClassLoader extends UrlClassLoader {
   private final ClassLoader[] myParents;
   private final PluginId myPluginId;
@@ -37,31 +38,44 @@ public class PluginClassLoader extends UrlClassLoader {
 
   // changed sequence in which classes are searched, this is essential if plugin uses library, a different version of which
   // is used in IDEA.
-  public synchronized Class _loadClass(final String name, final boolean resolve) {
-    Class c = findLoadedClass(name);
+  public Class _loadClass(final String name, final boolean resolve) {
+    Class c = loadClassInsideSelf(name);
+
     if (c == null) {
-      c = _findClass(name);
-      if (c == null) {
-        for (ClassLoader parent : myParents) {
-          try {
-            c = parent instanceof UrlClassLoader ? ((UrlClassLoader)parent)._loadClass(name, false) : parent.loadClass(name);
-            if (c != null) break;
-          }
-          catch (ClassNotFoundException ignoreAndContinue) {
-            // Ignore and continue
-          }
-        }
-        if (c == null) return null;
-      }
-      else {
-        PluginManager.addPluginClass(c.getName(), myPluginId);
-      }
+      c = loadClassFromParents(name);
     }
 
-    if (resolve) {
+    if (c != null && resolve) {
       resolveClass(c);
     }
 
+    return c;
+  }
+
+  @Nullable
+  private Class loadClassFromParents(final String name) {
+    for (ClassLoader parent : myParents) {
+      try {
+        Class c = parent instanceof UrlClassLoader ? ((UrlClassLoader)parent)._loadClass(name, false) : parent.loadClass(name);
+        if (c != null) return c;
+      }
+      catch (ClassNotFoundException ignoreAndContinue) {
+        // Ignore and continue
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private synchronized Class loadClassInsideSelf(final String name) {
+    Class c = findLoadedClass(name);
+    if (c != null) return c;
+
+    c = _findClass(name);
+    if (c != null) {
+      PluginManager.addPluginClass(c.getName(), myPluginId);
+    }
 
     return c;
   }
