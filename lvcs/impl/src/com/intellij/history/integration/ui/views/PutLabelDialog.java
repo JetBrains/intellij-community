@@ -1,10 +1,8 @@
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.core.ILocalVcs;
+import com.intellij.history.LocalHistory;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryBundle;
-import com.intellij.history.integration.LocalHistoryComponent;
-import static com.intellij.history.integration.LocalHistoryBundle.*;
+import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -100,12 +98,11 @@ public class PutLabelDialog extends DialogWrapper {
 
   @Override
   public void doOKAction() {
-    ILocalVcs vcs = LocalHistoryComponent.getLocalVcsFor(myGateway.getProject());
     if (canPutLabelOnSelectedFile() && myFileButton.isSelected()) {
-      vcs.putUserLabel(myFile.getPath(), getLabelName());
+      LocalHistory.putUserLabel(myGateway.getProject(), myFile, getLabelName());
     }
     else {
-      vcs.putUserLabel(getLabelName());
+      LocalHistory.putUserLabel(myGateway.getProject(), getLabelName());
     }
     close(0);
   }

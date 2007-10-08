@@ -9,6 +9,14 @@ public abstract class LocalHistory implements SettingsSavingComponent {
     return getInstance(p).startAction(name);
   }
 
+  public static void putUserLabel(Project p, String name) {
+    getInstance(p).putUserLabel(name);
+  }
+
+  public static void putUserLabel(Project p, VirtualFile f, String name) {
+    getInstance(p).putUserLabel(f, name);
+  }
+
   public static void putSystemLabel(Project p, String name) {
     getInstance(p).putSystemLabel(name, -1);
   }
@@ -38,6 +46,10 @@ public abstract class LocalHistory implements SettingsSavingComponent {
   }
 
   protected abstract LocalHistoryAction startAction(String name);
+
+  protected abstract void putUserLabel(String name);
+
+  protected abstract void putUserLabel(VirtualFile f, String name);
 
   protected abstract void putSystemLabel(String name, int color);
 

@@ -63,4 +63,14 @@ public class PutLabelDialogTest extends IntegrationTestCase {
     d = new PutLabelDialog(gateway, f);
     assertFalse(d.canPutLabelOnSelectedFile());
   }
+
+  public void testRegisterUnsavedDocumentsContentBeforeLabeling() throws Exception {
+    f.setBinaryContent(new byte[] {1});
+
+    setDocumentTextFor(f, new byte[] {2});
+    d = new PutLabelDialog(gateway, f);
+    d.doOKAction();
+
+    assertEquals(2, getVcsContentOf(f)[0]);
+  }
 }

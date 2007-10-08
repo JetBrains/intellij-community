@@ -65,7 +65,30 @@ public class BasicsTest extends IntegrationTestCase {
     assertFalse(hasVcsEntry(f));
   }
 
-  public void testPuttingLabel() throws IOException {
+  public void testPuttingUserLabel() throws Exception {
+    VirtualFile f = root.createChildData(null, "f.java");
+
+    LocalHistory.putUserLabel(myProject, "global");
+
+    assertEquals(2, getVcsRevisionsFor(f).size());
+    assertEquals(3, getVcsRevisionsFor(root).size());
+
+    LocalHistory.putUserLabel(myProject, f, "file");
+
+    List<Revision> rr = getVcsRevisionsFor(f);
+    assertEquals(3, rr.size());
+    assertEquals("file", rr.get(0).getName());
+    assertFalse(rr.get(0).getCauseChange().isSystemLabel());
+    assertEquals("global", rr.get(1).getName());
+    assertFalse(rr.get(1).getCauseChange().isSystemLabel());
+
+    rr = getVcsRevisionsFor(root);
+    assertEquals(3, rr.size());
+    assertEquals("global", rr.get(0).getName());
+    assertFalse(rr.get(0).getCauseChange().isSystemLabel());
+  }
+
+  public void testPuttingSystemLabel() throws IOException {
     VirtualFile f = root.createChildData(null, "file.java");
 
     assertEquals(1, getVcsRevisionsFor(f).size());
@@ -82,6 +105,26 @@ public class BasicsTest extends IntegrationTestCase {
     assertEquals(3, rr.size());
     assertEquals("label", rr.get(0).getName());
     assertTrue(rr.get(0).getCauseChange().isSystemLabel());
+  }
+
+  public void testPuttingLabelWithUnsavedDocuments() throws Exception {
+    VirtualFile f = root.createChildData(null, "f.java");
+    f.setBinaryContent(new byte[]{1});
+
+    setDocumentTextFor(f, new byte[] {2});
+    LocalHistory.putSystemLabel(myProject, "label");
+
+    assertEquals(2, getVcsContentOf(f)[0]);
+
+    setDocumentTextFor(f, new byte[] {3});
+    LocalHistory.putUserLabel(myProject, "label");
+
+    assertEquals(3, getVcsContentOf(f)[0]);
+
+    setDocumentTextFor(f, new byte[] {4});
+    LocalHistory.putUserLabel(myProject, f, "label");
+
+    assertEquals(4, getVcsContentOf(f)[0]);
   }
 
   public void testIsUnderControl() throws Exception {
