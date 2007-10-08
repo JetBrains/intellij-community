@@ -3,13 +3,14 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.LazyInstance;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -36,5 +37,13 @@ public class TooltipLinkHandlerEP extends AbstractExtensionPointBean {
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  public final String getDescription(@NotNull String description) {
+    if (description.startsWith(prefix)) {
+      return myHandler.getValue().getDescription(description.substring(prefix.length()));
+    }
+    return null;
   }
 }

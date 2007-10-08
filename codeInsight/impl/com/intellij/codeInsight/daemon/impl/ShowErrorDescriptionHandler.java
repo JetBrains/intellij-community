@@ -7,13 +7,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 public class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
+  private final int myWidth;
+
+  public ShowErrorDescriptionHandler(final int width) {
+    myWidth = width;
+  }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), offset, false);
     if (info != null) {
-      DaemonTooltipUtil.showInfoTooltip(info, editor, editor.getCaretModel().getOffset());
+      DaemonTooltipUtil.showInfoTooltip(info, editor, editor.getCaretModel().getOffset(), myWidth);
     }
   }
 

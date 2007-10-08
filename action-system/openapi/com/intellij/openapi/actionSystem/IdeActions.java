@@ -216,4 +216,5 @@ public interface IdeActions {
   @NonNls String ACTION_COPY_REFERENCE = "CopyReference";
 
   @NonNls String GROUP_ANALYZE = "AnalyzeMenu";
+  @NonNls String ACTION_SHOW_ERROR_DESCRIPTION = "ShowErrorDescription";
 }

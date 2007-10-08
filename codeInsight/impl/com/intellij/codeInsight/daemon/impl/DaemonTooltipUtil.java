@@ -14,6 +14,14 @@ public class DaemonTooltipUtil {
   private static final TooltipGroup DAEMON_INFO_GROUP = new TooltipGroup("DAEMON_INFO_GROUP", 0);
 
   public static void showInfoTooltip(HighlightInfo info, Editor editor, int defaultOffset) {
+    showInfoTooltip(info, editor, defaultOffset, -1);
+  }
+
+  public static void cancelTooltips() {
+    HintManager.getInstance().getTooltipController().cancelTooltip(DAEMON_INFO_GROUP);
+  }
+
+  public static void showInfoTooltip(final HighlightInfo info, final Editor editor, final int defaultOffset, final int currentWidth) {
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     int endOffset = info.highlighter.getEndOffset();
     int startOffset = info.highlighter.getStartOffset();
@@ -32,10 +40,6 @@ public class DaemonTooltipUtil {
       bestPoint,
       editor.getComponent().getRootPane().getLayeredPane()
     );
-    HintManager.getInstance().getTooltipController().showTooltip(editor, p, info, false, DAEMON_INFO_GROUP);
-  }
-
-  public static void cancelTooltips() {
-    HintManager.getInstance().getTooltipController().cancelTooltip(DAEMON_INFO_GROUP);
+    HintManager.getInstance().getTooltipController().showTooltip(editor, p, info, currentWidth, false, DAEMON_INFO_GROUP);
   }
 }

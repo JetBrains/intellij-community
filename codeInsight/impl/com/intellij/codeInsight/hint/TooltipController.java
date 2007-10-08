@@ -80,6 +80,11 @@ public class TooltipController {
   public void showTooltip(final Editor editor, Point p, HighlightInfo info, boolean alignToRight, TooltipGroup group) {
     showTooltip(editor, p, new LineTooltipRenderer(info), alignToRight, group);
   }
+
+  public void showTooltip(final Editor editor, Point p, HighlightInfo info, int currentWidth, boolean alignToRight, TooltipGroup group) {
+    showTooltip(editor, p, new LineTooltipRenderer(info, currentWidth), alignToRight, group);
+  }
+
   public void showTooltip(final Editor editor, Point p, TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group) {
     myTooltipAlarm.cancelAllRequests();
     if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {

@@ -5,6 +5,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -13,4 +14,8 @@ import javax.swing.*;
  */
 public abstract class TooltipLinkHandler {
   public abstract void handleLink(@NotNull String descriptionSuffix, @NotNull Editor editor, @NotNull JEditorPane tooltipComponent);
+  @Nullable
+  public String getDescription(String descriptionSuffix) {
+    return null;
+  }
 }
