@@ -36,6 +36,7 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SideBorder2;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public class LineStatusTracker {
     myProject = project;
   }
 
-  public synchronized void initialize(final String upToDateContent) {
+  public synchronized void initialize(@NotNull final String upToDateContent) {
     if (myIsReleased) return;
     LOG.assertTrue(!myIsInitialized);
     try {
