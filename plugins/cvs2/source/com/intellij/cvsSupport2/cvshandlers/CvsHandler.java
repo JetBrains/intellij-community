@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
+import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +73,16 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
 
   public List<VcsException> getErrors() {
     return myErrorMessageProcessor.getErrors();
+  }
+
+  public List<VcsException> getErrorsExceptAborted() {
+    List<VcsException> result = new ArrayList<VcsException>();
+    for(VcsException ex: myErrorMessageProcessor.getErrors()) {
+      if (!(ex.getCause() instanceof CommandAbortedException)) {
+        result.add(ex);
+      }
+    }
+    return result;
   }
 
   public List<VcsException> getWarnings() {

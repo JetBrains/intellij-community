@@ -180,9 +180,9 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     LOG.debug(e);
     String message = getMessageFrom(null, e);
     if (message == null) {
-      return new CvsException(CvsBundle.message("exception.text.unknown.error"), cvsRoot);
+      return new CvsException(CvsBundle.message("exception.text.unknown.error"), e, cvsRoot);
     }
-    return new CvsException(message, cvsRoot);
+    return new CvsException(message, e, cvsRoot);
   }
 
 

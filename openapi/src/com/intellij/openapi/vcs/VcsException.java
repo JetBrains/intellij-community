@@ -32,13 +32,22 @@ public class VcsException extends Exception {
 
   public VcsException(String message) {
     super(message);
+    initMessage(message);
+  }
+
+  private void initMessage(final String message) {
     String shownMessage = message == null ? VcsBundle.message("exception.text.unknown.error") : message;
     myMessages = Collections.singleton(shownMessage);
   }
 
   public VcsException(Throwable throwable) {
-    this(throwable.getMessage() != null ? throwable.getMessage() : throwable.getLocalizedMessage());
+    this(throwable.getMessage() != null ? throwable.getMessage() : throwable.getLocalizedMessage(), throwable);
     LOG.info(throwable);
+  }
+
+  public VcsException(final String message, final Throwable cause) {
+    super(message, cause);
+    initMessage(message);
   }
 
   public VcsException(Collection<String> messages) {

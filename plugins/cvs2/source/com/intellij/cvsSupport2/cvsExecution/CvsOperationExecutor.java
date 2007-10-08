@@ -34,7 +34,10 @@ import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * author: lesya
@@ -79,11 +82,11 @@ public class CvsOperationExecutor {
     final Runnable finish = new Runnable() {
       public void run() {
         try {
-          myResult.addAllErrors(handler.getErrors());
+          myResult.addAllErrors(handler.getErrorsExceptAborted());
           myResult.addAllWarnings(handler.getWarnings());
           handler.runComplitingActivities();
           if (myProject != null) {
-            showErrors(handler.getErrors(), handler.getWarnings(), tabbedWindow);
+            showErrors(handler.getErrorsExceptAborted(), handler.getWarnings(), tabbedWindow);
           }
         }
         finally {

@@ -19,6 +19,11 @@ public class CvsException extends VcsException{
     myCvsRoot = cvsRoot;
   }
 
+  public CvsException(final String message, final Throwable cause, final String cvsRoot) {
+    super(message, cause);
+    myCvsRoot = cvsRoot;
+  }
+
   public CvsException(Collection<String> messages, String cvsRoot) {
     super(messages);
     myCvsRoot = cvsRoot;
