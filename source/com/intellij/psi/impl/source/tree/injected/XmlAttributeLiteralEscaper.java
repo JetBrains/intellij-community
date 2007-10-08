@@ -21,7 +21,11 @@ public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeV
     TextRange valueTextRange = myXmlAttribute.getValueTextRange();
     int startInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getStartOffset() - valueTextRange.getStartOffset());
     int endInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getEndOffset() - valueTextRange.getStartOffset());
-    outChars.append(myXmlAttribute.getDisplayValue(), startInDecoded, endInDecoded);
+    String displayValue = myXmlAttribute.getDisplayValue();
+    //todo investigate IIOB http://www.jetbrains.net/jira/browse/IDEADEV-16796
+    startInDecoded = startInDecoded < 0 ? 0 : startInDecoded > displayValue.length() ? displayValue.length() : startInDecoded;
+    endInDecoded = endInDecoded < 0 ? 0 : endInDecoded > displayValue.length() ? displayValue.length() : startInDecoded > endInDecoded ? startInDecoded : endInDecoded;
+    outChars.append(displayValue, startInDecoded, endInDecoded);
     return true;
   }
 

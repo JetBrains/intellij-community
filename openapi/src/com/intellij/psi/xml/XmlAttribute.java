@@ -51,12 +51,12 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
 
   /**
    * @param offset in string returned by {@link #getText()} (with quotes stripped)
-   * @return offset in the string returned from {@link #getDisplayValue()}
+   * @return offset in the string returned from {@link #getDisplayValue()} or -1 if the offset is out of valid range
    */
   int physicalToDisplay(int offset);
   /**
    * @param offset in the string returned from {@link #getDisplayValue()}
-   * @return offset in string returned by {@link #getText()} (with quotes stripped)
+   * @return offset in string returned by {@link #getText()} (with quotes stripped) or -1 if the offset is out of valid range
    */
   int displayToPhysical(int offset);
 
