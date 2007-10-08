@@ -163,7 +163,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     loadApplicationComponents();
 
-    if (!isHeadless) {
+    if (myTestModeFlag) {
       registerShutdownHook();
     }
 
