@@ -97,15 +97,23 @@ public class JavaMethodSignature {
   public final synchronized <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
     addMethodsIfNeeded(startFrom);
     //noinspection ForLoopReplaceableByForEach
+    T result = null;
+    Class bestClass = null;
+
     final int size = myAllMethods.size();
     for (int i = 0; i < size; i++) {
       Method method = myAllMethods.get(i);
       final T annotation = method.getAnnotation(annotationClass);
-      if (annotation != null && ReflectionCache.isAssignable(method.getDeclaringClass(), startFrom)) {
-        return annotation;
+      if (annotation != null) {
+        final Class<?> declaringClass = method.getDeclaringClass();
+        if (ReflectionCache.isAssignable(declaringClass, startFrom) &&
+            (result == null || ReflectionCache.isAssignable(bestClass, declaringClass))) {
+          result = annotation;
+          bestClass = declaringClass;
+        }
       }
     }
-    return null;
+    return result;
   }
 
   public final synchronized List<Method> getAllMethods(final Class startFrom) {
