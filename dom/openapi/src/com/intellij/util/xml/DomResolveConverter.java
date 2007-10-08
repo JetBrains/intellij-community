@@ -111,7 +111,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
     final DomElement element = context.getInvocationElement();
     final GenericDomValue value = ((GenericDomValue)element).createStableCopy();
     final String newName = value.getStringValue();
-    assert newName != null;
+    if (newName == null) return LocalQuickFix.EMPTY_ARRAY;
     final DomElement scope = value.getManager().getResolvingScope(value);
     return ResolvingElementQuickFix.createFixes(newName, myClass, scope);
   }
