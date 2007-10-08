@@ -18,8 +18,10 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
@@ -51,6 +53,21 @@ public class SelectLocationDialog extends DialogWrapper {
   private boolean myIsShowFiles;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.common";
+
+  @Nullable
+  public static String selectLocation(Project project, String url) {
+    try {
+      SVNURL.parseURIEncoded(url);
+    } catch (SVNException e) {
+      Messages.showErrorDialog(project, SvnBundle.message("select.location.invalid.url.message", url),
+                               SvnBundle.message("dialog.title.select.repository.location"));
+      return null;
+    }
+    SelectLocationDialog dialog = new SelectLocationDialog(project, url);
+    dialog.show();
+    if (!dialog.isOK()) return null;
+    return dialog.getSelectedURL();
+  }
 
   public SelectLocationDialog(Project project, String url) {
     this(project, url, null, null, true);

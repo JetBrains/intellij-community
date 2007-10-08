@@ -101,13 +101,9 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   }
 
   private void chooseUrl() {
-    SelectLocationDialog dialog = new SelectLocationDialog(myVcs.getProject(), myURLText.getText());
-    dialog.show();
-    if (dialog.isOK()) {
-      String selected = dialog.getSelectedURL();
-      if (selected != null) {
-        myURLText.setText(selected);
-      }
+    String selected = SelectLocationDialog.selectLocation(myVcs.getProject(), myURLText.getText());
+    if (selected != null) {
+      myURLText.setText(selected);
     }
   }
 
