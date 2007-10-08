@@ -322,10 +322,7 @@ public class MoveClassesOrPackagesImpl {
     sourceRoots:
     for (final VirtualFile sourceRoot : sourceRoots) {
       PsiDirectory sourceRootDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);
-      if (sourceRootDirectory == null) {
-        LOG.error("Cannot find PsiDirectory for: " + sourceRoot.getPresentableUrl());
-        continue sourceRoots;
-      }
+      if (sourceRootDirectory == null) continue;
       final PsiPackage aPackage = sourceRootDirectory.getPackage();
       if (aPackage == null) continue;
       final String packagePrefix = aPackage.getQualifiedName();
