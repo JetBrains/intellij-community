@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.injected.DocumentWindow;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -58,6 +59,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.inspection");
   private List<HighlightInfo> myInfos = Collections.emptyList();
   static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
+  private final String myShortcutText;
 
   public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset) {
     super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME);
@@ -65,6 +67,20 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     setId(Pass.LOCAL_INSPECTIONS);
+
+    final KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager != null) {
+      final Keymap keymap = keymapManager.getActiveKeymap();
+      if (keymap != null) {
+        myShortcutText = "(" + KeymapUtil.getShortcutsText(keymap.getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)) + ")";
+      }
+      else {
+        myShortcutText = "";
+      }
+    }
+    else {
+      myShortcutText = "";
+    }
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
@@ -365,8 +381,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(psiElement), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? XmlUtil.unescape(message.replaceAll("<[^>]*>", "")) : message;
     @NonNls final String link = "<a href=\"#inspection/" + tool.getShortName() + "\"> " + DaemonBundle.message("inspection.extended.description") +
-                                "</a>" +
-                                "(" + KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)) + ")";
+                                "</a>" + myShortcutText;
+
     @NonNls String tooltip;
     if (message.startsWith("<html>")) {
       tooltip = message.contains("</body>") ? message.replace("</body>", link + "</body>") : message.replace("</html>", link + "</html>");
