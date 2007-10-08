@@ -257,7 +257,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
           }
         }
       }
-    });
+    }, ModalityState.NON_MODAL);
   }
 
   @NotNull
