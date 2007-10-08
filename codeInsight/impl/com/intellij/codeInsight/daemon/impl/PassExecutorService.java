@@ -1,10 +1,10 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,13 +19,10 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -269,6 +266,7 @@ public abstract class PassExecutorService {
 
       ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
         public void run() {
+ //         assert !ApplicationManager.getApplication().isReadAccessAllowed();
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               try {
@@ -279,22 +277,23 @@ public abstract class PassExecutorService {
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, myPass, "Canceled ");
               }
-              catch(RuntimeException e) {
+              catch (RuntimeException e) {
                 LOG.error(e);
                 throw e;
               }
-              catch(Error e) {
+              catch (Error e) {
                 LOG.error(e);
                 throw e;
               }
             }
           });
+//          assert !ApplicationManager.getApplication().isReadAccessAllowed();
         }
       },myUpdateProgress);
 
       boolean hasMoreWorkTodo = myThreadsToStartCountdown.decrementAndGet() != 0;
       if (!myUpdateProgress.isCanceled()) {
-        applyInformationToEditors(hasMoreWorkTodo);
+        applyInformationToEditors(myFileEditors, myPass, myUpdateProgress);
         for (ScheduledPass successor : mySuccessorsOnCompletion) {
           int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
           if (predecessorsToRun == 0) {
@@ -312,37 +311,30 @@ public abstract class PassExecutorService {
       log(myUpdateProgress, myPass, "Finished ");
     }
 
-    private void applyInformationToEditors(final boolean hasMoreWorkTodo) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      if (myUpdateProgress.isCanceled()) return;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (isDisposed() || myProject.isDisposed()) return;
-          boolean applied = false;
-          for (final FileEditor fileEditor : myFileEditors) {
-            LOG.assertTrue(fileEditor != null);
-            if (fileEditor.getComponent().isDisplayable()) {
-              if (!applied) {
-                applied = true;
-                myPass.applyInformationToEditor();
-                Document document = myPass.getDocument();
-                if (!hasMoreWorkTodo && document != null) {
-                  reportToWolf(document, myProject);
-                }
-              }
-              afterApplyInformationToEditor(myPass, fileEditor, myUpdateProgress);
-            }
-          }
-        }
-      }, ModalityState.stateForComponent(myFileEditors.get(0).getComponent()));
-    }
   }
 
-  public static void reportToWolf(@NotNull final Document document, @NotNull Project project) {
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (psiFile == null) return;
-    HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, project);
-    GeneralHighlightingPass.reportErrorsToWolf(errors, psiFile);
+  protected void applyInformationToEditors(final List<FileEditor> fileEditors, final TextEditorHighlightingPass pass, final DaemonProgressIndicator updateProgress) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (updateProgress.isCanceled()) return;
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (isDisposed() || myProject.isDisposed()) return;
+        boolean applied = false;
+        for (final FileEditor fileEditor : fileEditors) {
+          LOG.assertTrue(fileEditor != null);
+          if (fileEditor.getComponent().isDisplayable()) {
+            if (!applied) {
+              applied = true;
+              pass.applyInformationToEditor();
+              if (pass instanceof GeneralHighlightingPass && pass.getId() == Pass.UPDATE_ALL) {
+                ((GeneralHighlightingPass)pass).reportErrorsToWolf();
+              }
+            }
+            afterApplyInformationToEditor(pass, fileEditor, updateProgress);
+          }
+        }
+      }
+    }, ModalityState.stateForComponent(fileEditors.get(0).getComponent()));
   }
 
   protected boolean isDisposed() {

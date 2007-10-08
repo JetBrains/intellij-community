@@ -16,7 +16,6 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -536,15 +535,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
 
-  static void reportErrorsToWolf(final HighlightInfo[] infos, @NotNull PsiFile psiFile) {
-    if (!psiFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
-    Project project = psiFile.getProject();
-    if (!PsiManager.getInstance(project).isInProject(psiFile)) return; // do not report problems in libraries
-    VirtualFile file = psiFile.getVirtualFile();
+  public void reportErrorsToWolf() {
+    if (!myFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
+    Project project = myFile.getProject();
+    if (!PsiManager.getInstance(project).isInProject(myFile)) return; // do not report problems in libraries
+    VirtualFile file = myFile.getVirtualFile();
     if (file == null) return;
 
-    boolean hasErrorElement = Boolean.TRUE.equals(psiFile.getUserData(HAS_ERROR_ELEMENT));
-    List<Problem> problems = convertToProblems(infos, file, hasErrorElement);
+    boolean hasErrorElement = Boolean.TRUE.equals(myFile.getUserData(HAS_ERROR_ELEMENT));
+    List<Problem> problems = convertToProblems(getHighlights(), file, hasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
 
     wolf.reportProblems(file, problems);
@@ -557,7 +556,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return myUpdateAll ? super.getProgress() : -1;
   }
 
-  private static List<Problem> convertToProblems(final HighlightInfo[] infos, final VirtualFile file,
+  private static List<Problem> convertToProblems(final Collection<HighlightInfo> infos, final VirtualFile file,
                                                  final boolean hasErrorElement) {
     List<Problem> problems = new SmartList<Problem>();
     for (HighlightInfo info : infos) {
