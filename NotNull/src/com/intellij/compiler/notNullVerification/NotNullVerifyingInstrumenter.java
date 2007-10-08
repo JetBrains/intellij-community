@@ -22,8 +22,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter {
   }
 
   public boolean isModification() {
-    // workaround for javac bug (see http://forge.objectweb.org/tracker/index.php?func=detail&aid=307392&group_id=23&atid=100023)
-    return !mySuperName.equals(ENUM_CLASS_NAME) && myIsModification;
+    return myIsModification;
   }
 
   public void visit(final int version,
