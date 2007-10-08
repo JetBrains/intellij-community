@@ -13,6 +13,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -120,6 +121,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull
   public VirtualFile createChildData(final Object requestor, @NotNull final String name) throws IOException {
+    validateName(name);
     return ourPersistence.createChildFile(requestor, this, name);
   }
 
@@ -169,7 +171,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @NotNull
   public VirtualFile createChildDirectory(final Object requestor, final String name) throws IOException {
+    validateName(name);
     return ourPersistence.createChildDirectory(requestor, this, name);
+  }
+
+  private static void validateName(String name) throws IOException {
+    if (name == null || name.length() == 0) throw new IOException("File name cannot be empty");
+    if (name.indexOf('/') >= 0 || name.indexOf(File.separatorChar) >= 0) {
+      throw new IOException("File name cannot contain file path separators: '" + name + "'");
+    }
   }
 
   public boolean exists() {
