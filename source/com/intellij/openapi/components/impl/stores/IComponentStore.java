@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -36,6 +37,7 @@ public interface IComponentStore {
     SaveSession save() throws IOException;
     void finishSave();
 
+    @Nullable
     Set<String> analyzeExternalChanges(Set<Pair<VirtualFile,StateStorage>> changedFiles);
     List<IFile> getAllStorageFiles(final boolean includingSubStructures);
   }

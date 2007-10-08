@@ -63,6 +63,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
         return new DefaultSaveSession(externalizationSession);
       }
 
+      @NotNull
       protected StorageData createStorageData() {
         return new BaseStorageData(ROOT_TAG_NAME);
       }

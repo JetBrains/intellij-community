@@ -17,6 +17,7 @@ import com.intellij.util.messages.MessageBus;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
@@ -149,6 +150,7 @@ public class FileBasedStorage extends XmlElementStorage {
     super.loadState(result, element);
   }
 
+  @NotNull
   protected StorageData createStorageData() {
     return new FileStorageData(myRootElementName);
   }

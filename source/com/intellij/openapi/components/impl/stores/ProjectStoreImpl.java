@@ -752,7 +752,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return myStateStorageChooser;
   }
 
-  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, final Set<String> componentNames) throws StateStorage.StateStorageException {
+  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull final Set<String> componentNames) throws StateStorage.StateStorageException {
     super.doReload(changedFiles, componentNames);
 
     for (Module module : getPersistentModules()) {

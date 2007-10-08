@@ -400,7 +400,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, final Set<String> componentNames) throws StateStorage.StateStorageException {
+  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull final Set<String> componentNames) throws StateStorage.StateStorageException {
     getStateStorageManager().reload(changedFiles, componentNames);
   }
 }

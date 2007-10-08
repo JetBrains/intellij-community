@@ -81,6 +81,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     return myLoadedData;
   }
 
+  @NotNull
   private StorageData loadData() throws StateStorageException {
     StorageData result = createStorageData();
 
@@ -109,6 +110,7 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     }
   }
 
+  @NotNull
   protected StorageData createStorageData() {
     return new StorageData(myRootElementName);
   }
@@ -404,15 +406,17 @@ abstract class XmlElementStorage implements StateStorage, Disposable {
     }
   }
 
-  public void reload(final Set<String> changedComponents) throws StateStorageException {
+  public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
     final StorageData storageData = loadData();
 
     final StorageData oldLoadedData = myLoadedData;
 
-    Set<String> componentsToRetain = new HashSet<String>(oldLoadedData.myComponentStates.keySet());
-    componentsToRetain.addAll(changedComponents);
-
-    storageData.myComponentStates.keySet().retainAll(componentsToRetain);
+    if (oldLoadedData != null) {
+      Set<String> componentsToRetain = new HashSet<String>(oldLoadedData.myComponentStates.keySet());
+      componentsToRetain.addAll(changedComponents);
+      storageData.myComponentStates.keySet().retainAll(componentsToRetain);
+    }
+    
     myLoadedData = storageData;
   }
 }

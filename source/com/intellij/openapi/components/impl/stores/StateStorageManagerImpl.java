@@ -131,6 +131,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
     assert expandedFile.indexOf("$") < 0 : "Can't expand all macroses in: " + fileSpec;
 
     return new FileBasedStorage(getMacroSubstitutor(fileSpec), expandedFile, myRootTagName, this, myPicoContainer) {
+      @NotNull
       protected StorageData createStorageData() {
         return StateStorageManagerImpl.this.createStorageData(fileSpec);
       }
@@ -290,7 +291,7 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   public void dispose() {
   }
 
-  public void reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles, final Set<String> changedComponents) throws StateStorage.StateStorageException {
+  public void reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles, @NotNull final Set<String> changedComponents) throws StateStorage.StateStorageException {
     for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
       assert pair != null;
       final StateStorage storage = pair.second;
