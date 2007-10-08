@@ -147,10 +147,12 @@ public class CommitHelper {
       VirtualFileManager.getInstance().refresh(true, new Runnable() {
         public void run() {
           action.finish();
-          for (FilePath path : pathsToRefresh) {
-            myDirtyScopeManager.fileDirty(path);
+          if (!myProject.isDisposed()) {
+            for (FilePath path : pathsToRefresh) {
+              myDirtyScopeManager.fileDirty(path);
+            }
+            LocalHistory.putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
           }
-          LocalHistory.putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
         }
       });
       AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, myActionName);
