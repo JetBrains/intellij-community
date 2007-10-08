@@ -126,11 +126,13 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     List<VirtualFile> updatedFiles = new ArrayList<VirtualFile>();
     for (int i = 0; i < files.length; i++) {
       VirtualFile file = files[i];
-      if (!file.isWritable()) {
-        readOnlyFiles.add(file);
-      }
-      if (modificationStamps[i] != file.getModificationStamp()) {
-        updatedFiles.add(file);
+      if (file.exists()) {
+        if (!file.isWritable()) {
+          readOnlyFiles.add(file);
+        }
+        if (modificationStamps[i] != file.getModificationStamp()) {
+          updatedFiles.add(file);
+        }
       }
     }
 
