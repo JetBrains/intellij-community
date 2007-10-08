@@ -35,6 +35,8 @@ public abstract class StandardVcsGroup extends DefaultActionGroup {
 
   @NonNls
   public String getVcsName(Project project) {
-    return getVcs(project).getName();
+    final AbstractVcs vcs = getVcs(project);
+    assert vcs != null: getClass().getName() + " couldn't find VCS";
+    return vcs.getName();
   }
 }
