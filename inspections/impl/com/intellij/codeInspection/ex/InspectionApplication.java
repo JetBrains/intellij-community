@@ -104,7 +104,7 @@ public class InspectionApplication {
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run(){
-              VirtualFileManager.getInstance().refresh(false);
+              VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
           }
       });
 
