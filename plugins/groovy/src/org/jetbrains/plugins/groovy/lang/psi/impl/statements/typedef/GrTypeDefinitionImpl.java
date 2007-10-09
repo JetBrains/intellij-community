@@ -472,14 +472,23 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   @NotNull
   public PsiMethod[] getAllMethods() {
     List<PsiMethod> allMethods = new ArrayList<PsiMethod>();
-    allMethods.addAll(Arrays.asList(getMethods()));
+    getAllMethodsInner(this, allMethods, new HashSet<PsiClass>());
+
+    return allMethods.toArray(new PsiMethod[allMethods.size()]);
+  }
+
+  private void getAllMethodsInner(PsiClass clazz, List<PsiMethod> allMethods, HashSet<PsiClass> visited) {
+    if (visited.contains(clazz)) return;
+    visited.add(clazz);
+
+    for (GrMethod method : getMethods()) {
+      allMethods.add(method);
+    }
 
     final PsiClass[] supers = getSupers();
     for (PsiClass aSuper : supers) {
-      allMethods.addAll(Arrays.asList(aSuper.getAllMethods()));
+      getAllMethodsInner(aSuper, allMethods, visited);
     }
-
-    return allMethods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
