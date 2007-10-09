@@ -183,6 +183,8 @@ public class ResolveUtil {
   public static boolean processCategoryMembers(PsiElement place, ResolverProcessor processor, PsiClassType thisType) {
     PsiElement prev = null;
     while (place != null) {
+      if (place instanceof GrMember || place instanceof GrClosableBlock) break;
+
       if (place instanceof GrMethodCallExpression) {
         final GrMethodCallExpression call = (GrMethodCallExpression) place;
         final GrExpression invoked = call.getInvokedExpression();
