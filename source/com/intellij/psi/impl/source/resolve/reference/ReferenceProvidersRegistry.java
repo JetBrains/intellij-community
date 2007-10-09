@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.encoding.JspEncodingInAttri
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
 import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -126,8 +128,16 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
               new TextFilter("page"))),
           new NamespaceFilter(XmlUtil.JSP_URI)), 2)))), classListProvider);
 
-    registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class,
-                              classListProvider);
+    registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS) {
+      public boolean isAcceptable(final Object element, final PsiElement context) {
+        final boolean acceptable = super.isAcceptable(element, context);
+        if (acceptable) {
+          final Language language = ((XmlToken)element).getContainingFile().getLanguage();
+          return language != StdLanguages.JSP && language != StdLanguages.JSPX;
+        }
+        return false;
+      }
+    }, XmlToken.class, classListProvider);
 
     final IdReferenceProvider idReferenceProvider = new IdReferenceProvider();
 
