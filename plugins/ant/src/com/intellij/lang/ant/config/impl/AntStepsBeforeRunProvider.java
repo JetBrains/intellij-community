@@ -23,7 +23,17 @@ public class AntStepsBeforeRunProvider implements StepsBeforeRunProvider {
   }
 
   public boolean hasTask(RunConfiguration configuration) {
-    return AntConfiguration.getInstance(myProject).hasTasksToExecuteBeforeRun(configuration);
+    final AntConfiguration config = AntConfiguration.getInstance(myProject);
+    int attemptCount = 0; // need this in order to make sure we will not block swing thread forever
+    while (!config.isInitialized() && attemptCount < 6000) {
+      try {
+        Thread.sleep(10);
+      }
+      catch (InterruptedException ignored) {
+      }
+      attemptCount++;
+    }
+    return config.hasTasksToExecuteBeforeRun(configuration);
   }
 
   public boolean executeTask(DataContext context, RunConfiguration configuration) {

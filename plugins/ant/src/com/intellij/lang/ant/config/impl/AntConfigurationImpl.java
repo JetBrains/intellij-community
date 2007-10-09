@@ -648,7 +648,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           indicator.popState();
         }
       }
-    }.queueLater(null);
+    }.queue();
   }
 
   @Nullable
