@@ -120,12 +120,13 @@ public class LibraryLinkImpl extends LibraryLink {
   }
 
   public @Nullable Library getLibrary(@Nullable ModulesProvider provider) {
-    if (myLibraryInfo instanceof LibraryInfoBasedOnLibrary) {
-      return ((LibraryInfoBasedOnLibrary)myLibraryInfo).getLibrary();
+    final LibraryInfo libraryInfo = myLibraryInfo;
+    if (libraryInfo instanceof LibraryInfoBasedOnLibrary) {
+      return ((LibraryInfoBasedOnLibrary)libraryInfo).getLibrary();
     }
 
-    LOG.assertTrue(myLibraryInfo instanceof LibraryInfoImpl);
-    final LibraryInfoImpl info = ((LibraryInfoImpl)myLibraryInfo);
+    LOG.assertTrue(libraryInfo instanceof LibraryInfoImpl);
+    final LibraryInfoImpl info = ((LibraryInfoImpl)libraryInfo);
     final Library library = info.findLibrary(myProject, getParentModule(), provider);
     if (library != null) {
       myLibraryInfo = new LibraryInfoBasedOnLibrary(library);
