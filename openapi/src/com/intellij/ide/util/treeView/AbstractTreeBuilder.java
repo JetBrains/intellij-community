@@ -32,6 +32,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.WeakList;
 import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -91,6 +92,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
   private boolean myUpdateFromRootRequested;
   private boolean myWasEverShown;
   private final boolean myUpdateIfInactive;
+
+  private WeakList<Object> myLoadingParents = new WeakList<Object>();
 
   protected AbstractTreeNode createSearchingTreeNodeWrapper() {
     return new AbstractTreeNodeWrapper();
@@ -541,6 +544,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
     LoadingNode loadingNode = new LoadingNode(getLoadingNodeText());
     myTreeModel.insertNodeInto(loadingNode, node, node.getChildCount()); // 2 loading nodes - only one will be removed
 
+    myLoadingParents.add(descriptor.getElement());
+
     Runnable updateRunnable = new Runnable() {
       public void run() {
         updateNodeDescriptor(descriptor);
@@ -552,6 +557,8 @@ public abstract class AbstractTreeBuilder implements Disposable {
     };
     Runnable postRunnable = new Runnable() {
       public void run() {
+        myLoadingParents.remove(descriptor.getElement());
+
         updateNodeDescriptor(descriptor);
         Object element = descriptor.getElement();
         if (element != null) {
@@ -581,7 +588,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
 
   private void processNodeActionsIfReady(final DefaultMutableTreeNode node) {
-    if (isLoadingChildrenFor(node)) return;
+    if (isNodeBeingBuilt(node)) return;
 
     final Object o = node.getUserObject();
     if (!(o instanceof NodeDescriptor)) return;
@@ -619,6 +626,24 @@ public abstract class AbstractTreeBuilder implements Disposable {
       }
     }
     return areChuldrenLoading;
+  }
+
+  private boolean isParentLoading(Object nodeObject) {
+    if (!(nodeObject instanceof DefaultMutableTreeNode)) return false;
+
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodeObject;
+
+    TreeNode eachParent = node.getParent();
+
+    while(eachParent != null) {
+      eachParent = eachParent.getParent();
+      if (eachParent instanceof DefaultMutableTreeNode) {
+        final Object eachElement = getElementFor(((DefaultMutableTreeNode)eachParent));
+        if (myLoadingParents.contains(eachElement)) return true;
+      }
+    }
+
+    return false;
   }
 
   protected String getLoadingNodeText() {
@@ -936,10 +961,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
     DefaultMutableTreeNode firstVisible;
     while(true) {
       firstVisible = getNodeForElement(eachElement);
-      if (firstVisible != null) break;
       if (eachElement != element || !parentsOnly) {
         kidsToExpand.add(eachElement);
       }
+      if (firstVisible != null) break;
       eachElement = myTreeStructure.getParentElement(eachElement);
       if (eachElement == null) {
         firstVisible = null;
@@ -960,6 +985,10 @@ public abstract class AbstractTreeBuilder implements Disposable {
 
     addNodeAction(element, new NodeAction() {
       public void onReady(final DefaultMutableTreeNode node) {
+        if (node.getChildCount() >= 0 && !myTree.isExpanded(new TreePath(node.getPath()))) {
+          expand(node);
+        }
+
         if (expandIndex < 0) {
           onDone.run();
           return;
@@ -977,6 +1006,7 @@ public abstract class AbstractTreeBuilder implements Disposable {
     expand(toExpand);
   }
 
+
   @Nullable
   private static Object getElementFor(DefaultMutableTreeNode node) {
     if (node != null) {
@@ -990,7 +1020,11 @@ public abstract class AbstractTreeBuilder implements Disposable {
   }
 
   public final boolean isNodeBeingBuilt(final TreePath path) {
-    return isLoadingChildrenFor(path.getLastPathComponent());
+    return isNodeBeingBuilt(path.getLastPathComponent());
+  }
+
+  public final boolean isNodeBeingBuilt(Object nodeObject) {
+    return isParentLoading(nodeObject) || isLoadingChildrenFor(nodeObject);
   }
 
   private class MyExpansionListener implements TreeExpansionListener {

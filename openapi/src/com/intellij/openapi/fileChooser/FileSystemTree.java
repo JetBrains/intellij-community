@@ -31,7 +31,7 @@ public interface FileSystemTree extends Disposable {
   VirtualFile getSelectedFile();
 
   /**
-   * @deprecated
+   * @deprecated since tree updating is an asynchronous operation
    */
   boolean select(VirtualFile file);
 
@@ -41,7 +41,7 @@ public interface FileSystemTree extends Disposable {
 
 
   /**
-   * @deprecated
+   * @deprecated since tree updating is an asynchronous operation
    */
   boolean expand(VirtualFile file);
 

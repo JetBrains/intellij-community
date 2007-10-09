@@ -222,6 +222,9 @@ public class FileSystemTreeImpl implements FileSystemTree {
     }
   }
 
+  /**
+   * @deprecated since tree updating is an asynchronous operation
+   */
   public boolean select(final VirtualFile file) {
     DefaultMutableTreeNode node = getNodeForFile(file);
     if (node == null) return false;
@@ -295,16 +298,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
                   for (String name : StringUtil.tokenize(newFolderName, "\\/")) {
                     VirtualFile folder = parent.createChildDirectory(this, name);
                     updateTree();
-                    FileElement folderDesc = new FileElement(folder, folder.getName());
-                    myTreeBuilder.buildNodeForElement(folderDesc);
-                    DefaultMutableTreeNode folderNode =
-                        myTreeBuilder.getNodeForElement(folderDesc);
-                    if (folderNode != null) {
-                      TreePath treePath = new TreePath(folderNode.getPath());
-                      myTree.setSelectionPath(treePath);
-                      myTree.scrollPathToVisible(treePath);
-                      myTree.expandPath(treePath);
-                    }
+                    select(folder, null);
                     parent = folder;
                   }
                 }
@@ -330,19 +324,10 @@ public class FileSystemTreeImpl implements FileSystemTree {
               public void run() {
                 try {
                   final String newFileNameWithExtension = newFileName.endsWith('.'+fileType.getDefaultExtension())? newFileName : newFileName+'.'+fileType.getDefaultExtension();
-                  VirtualFile file = parentDirectory.createChildData(this, newFileNameWithExtension);
+                  final VirtualFile file = parentDirectory.createChildData(this, newFileNameWithExtension);
                   FileContentUtil.setFileText(myProject, file, initialContent);
                   updateTree();
-                  FileElement fileDesc = new FileElement(file, file.getName());
-                  myTreeBuilder.buildNodeForElement(fileDesc);
-                  DefaultMutableTreeNode fileNode =
-                      myTreeBuilder.getNodeForElement(fileDesc);
-                  if (fileNode != null) {
-                    TreePath treePath = new TreePath(fileNode.getPath());
-                    myTree.setSelectionPath(treePath);
-                    myTree.scrollPathToVisible(treePath);
-                    myTree.expandPath(treePath);
-                  }
+                  select(file, null);
                 }
                 catch (IOException e) {
                   failReason[0] = e;

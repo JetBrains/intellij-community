@@ -438,6 +438,13 @@ public final class TreeUtil {
     if (bottom >= size){
       bottom = size - 1;
     }
+
+    if (row >= tree.getRowCount()) return new ActionCallback.Done();
+
+    if (!tree.isValid()) {
+      tree.validate();
+    }
+
     final Rectangle rowBounds = tree.getRowBounds(row);
     if (rowBounds == null) return new ActionCallback.Done();
 
