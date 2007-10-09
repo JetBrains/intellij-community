@@ -134,8 +134,13 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     pomModel.addModelListener(new PomModelListener() {
       public void modelChanged(PomModelEvent event) {
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
-        if (changeSet != null && !myChanging) {
-          new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
+        if (changeSet != null) {
+          final XmlFile file = changeSet.getChangedFile();
+          if (file != null && getCachedFileElement(file) != null && processXmlFileChange(file, false)) return;
+
+          if (!myChanging) {
+            new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
+          }
         }
       }
 
@@ -228,14 +233,20 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
 
   private void processFileChange(final PsiFile file) {
     if (file != null && StdFileTypes.XML.equals(file.getFileType()) && file instanceof XmlFile) {
-      for (final DomEvent event : recomputeFileElement(file)) {
-        fireEvent(event);
-      }
+      processXmlFileChange(file, true);
     }
   }
 
-  final List<DomEvent> recomputeFileElement(final PsiFile file) {
-    return getOrCreateCachedValueProvider((XmlFile)file).computeFileElement(true);
+  private boolean processXmlFileChange(@NotNull final PsiFile file, boolean fireChanged) {
+    final List<DomEvent> list = recomputeFileElement(file, fireChanged);
+    for (final DomEvent event : list) {
+      fireEvent(event);
+    }
+    return !list.isEmpty();
+  }
+
+  final List<DomEvent> recomputeFileElement(final PsiFile file, boolean fireChanged) {
+    return getOrCreateCachedValueProvider((XmlFile)file).computeFileElement(true, fireChanged);
   }
 
   private void processDirectoryChange(final VirtualFile directory) {

@@ -66,7 +66,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
 
   private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
   private static final JBLock r = rwl.readLock();
-  protected static final JBLock w = rwl.writeLock();
+  private static final JBLock w = rwl.writeLock();
 
   public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;
@@ -96,7 +96,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
     w.lock();
     try {
       if (!myCachedValue.hasUpToDateValue()) {
-        _computeFileElement(false, rootTagName);
+        _computeFileElement(false, false, rootTagName);
       }
       return myLastResult;
     }
@@ -106,18 +106,18 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
   }
 
   @NotNull
-  public final List<DomEvent> computeFileElement(boolean fireEvents) {
+  public final List<DomEvent> computeFileElement(boolean fireEvents, boolean fireChanged) {
     final String rootTagName = getRootTag();
     w.lock();
     try {
-      return _computeFileElement(fireEvents, rootTagName);
+      return _computeFileElement(fireEvents, fireChanged, rootTagName);
     }
     finally {
       w.unlock();
     }
   }
 
-  private List<DomEvent> _computeFileElement(final boolean fireEvents, final String rootTagName) {
+  private List<DomEvent> _computeFileElement(final boolean fireEvents, boolean fireChanged, final String rootTagName) {
     if (myComputing.get() != null || myDomManager.getProject().isDisposed()) return Collections.emptyList();
     myComputing.set(Boolean.TRUE);
     try {
@@ -135,7 +135,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements Modifi
       final Module module = ModuleUtil.findModuleForPsiElement(myXmlFile);
       if (lastResultSuits(rootTagName, module)) {
         List<DomEvent> list = new SmartList<DomEvent>();
-        if (fireEvents) {
+        if (fireEvents && fireChanged) {
           list.add(new ElementChangedEvent(myLastResult));
         }
         myCachedValue.getValue();

@@ -86,7 +86,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
     myDocumentChanged = true;
     final DomFileElementImpl oldElement = myDomManager.getCachedFileElement(xmlFile);
     if (oldElement != null) {
-      final List<DomEvent> events = myDomManager.recomputeFileElement(xmlFile);
+      final List<DomEvent> events = myDomManager.recomputeFileElement(xmlFile, true);
       if (myDomManager.getFileElement(xmlFile) != oldElement) {
         for (final DomEvent event : events) {
           myDomManager.fireEvent(event);

@@ -19,6 +19,7 @@ import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.xml.events.XmlChange;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -31,5 +32,5 @@ public interface XmlChangeSet extends PomChangeSet {
 
   void clear();
 
-  XmlFile getChangedFile();
+  @Nullable XmlFile getChangedFile();
 }
