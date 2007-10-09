@@ -703,14 +703,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
         if (valueElement != null && getUnquotedValue(valueElement, tag).equals(unquotedValue)) {
           if (tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null) {
-            addToResults(HighlightInfo.createHighlightInfo(
-              HighlightInfoType.WRONG_REF,
-              value,
-              XmlErrorMessages.message("duplicate.id.reference")));
-            addToResults(HighlightInfo.createHighlightInfo(
-              HighlightInfoType.WRONG_REF,
-              valueElement,
-              XmlErrorMessages.message("duplicate.id.reference")));
+            refCountHolder.registerDuplicatedElement(value);
+            refCountHolder.registerDuplicatedElement(valueElement);
           }
           return true;
         } else {

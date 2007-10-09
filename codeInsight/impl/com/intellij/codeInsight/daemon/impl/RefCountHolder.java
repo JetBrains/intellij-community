@@ -29,7 +29,9 @@ public class RefCountHolder {
   private final Map<String, XmlAttribute> myXmlId2AttributeMap = new THashMap<String, XmlAttribute>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
   private final Set<PsiNamedElement> myUsedElements = new THashSet<PsiNamedElement>();
+  private final Set<PsiElement> myDuplicatedElements = new THashSet<PsiElement>();
   private final AtomicInteger myState = new AtomicInteger(State.VIRGIN);
+
   private interface State {
     int VIRGIN = 0;                   // just created or cleared
     int BEING_WRITTEN_BY_GHP = 1;     // general highlighting pass is storing references during analysis
@@ -48,11 +50,17 @@ public class RefCountHolder {
     myDclsUsedMap.clear();
     myXmlId2AttributeMap.clear();
     myUsedElements.clear();
+    myDuplicatedElements.clear();
   }
 
   public void registerLocallyReferenced(@NotNull PsiNamedElement result) {
     assertIsAnalyzing();
     myDclsUsedMap.put(result,Boolean.TRUE);
+  }
+
+  public void registerDuplicatedElement(@NotNull PsiElement result) {
+    assertIsAnalyzing();
+    myDuplicatedElements.add(result);
   }
 
   private static void addStatistics(final PsiNamedElement dcl) {
@@ -214,6 +222,11 @@ public class RefCountHolder {
       }
     }
     return false;
+  }
+
+  public Collection<PsiElement> getDuplicatedElements() {
+    assertIsRetrieving();
+    return myDuplicatedElements;
   }
 
   public List<PsiNamedElement> getUnusedDcls() {
