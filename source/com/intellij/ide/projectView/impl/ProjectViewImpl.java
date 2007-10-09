@@ -203,7 +203,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   public void projectOpened() {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        setupImpl();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            if (myProject.isDisposed()) return;
+            setupImpl();
+          }
+        }, ModalityState.NON_MODAL);
       }
     });
   }
