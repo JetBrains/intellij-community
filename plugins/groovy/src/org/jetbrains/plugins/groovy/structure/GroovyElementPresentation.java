@@ -37,8 +37,9 @@ public class GroovyElementPresentation {
       PsiParameter[] parameters = paramList.getParameters();
 
       presentableText.append("(");
-      for (PsiParameter parameter : parameters) {
-        presentableText.append(parameter.getType().getPresentableText());
+      for (int i = 0; i < parameters.length; i++) {
+        if (i > 0) presentableText.append(", ");
+        presentableText.append(parameters[i].getType().getPresentableText());
       }
       presentableText.append(")");
 
