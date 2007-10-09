@@ -47,7 +47,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable
-  private NewVirtualFile doFindChild(final String name, final boolean createIfNotFound) {
+  private NewVirtualFile doFindChild(String name, final boolean createIfNotFound) {
     if (name.length() == 0) {
       return null;
     }
@@ -73,6 +73,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     if (file != null) return (NewVirtualFile)file;
+
+    final NewVirtualFileSystem delegate = getFileSystem();
+    VirtualFile fake = new FakeVirtualFile(name, this);
+    name = delegate.getCanonicallyCasedName(fake);    
 
     int id = ourPersistence.getId(this, name);
     if (id > 0) {
