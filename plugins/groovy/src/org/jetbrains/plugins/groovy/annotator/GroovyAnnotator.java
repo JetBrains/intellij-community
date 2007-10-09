@@ -475,8 +475,9 @@ public class GroovyAnnotator implements Annotator {
     if (value != null) {
       final PsiType type = value.getType();
       if (type != null) {
-        final GrMethod method = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class);
-        if (method != null) {
+        final GrParametersOwner owner = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
+        if (owner instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod) owner;
           if (method.isConstructor()) {
             holder.createErrorAnnotation(value, GroovyBundle.message("cannot.return.from.constructor"));
           } else {
