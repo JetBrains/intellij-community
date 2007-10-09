@@ -648,6 +648,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
+        if (myFilter.getElementProblemCount(refElement) == 0) continue;
         psiElements.add(psiElement);
       }
 
@@ -714,6 +715,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
+        if (myFilter.getElementProblemCount(refElement) == 0) continue;
         commentOutDead(psiElement);
         RefUtil.getInstance().removeRefElement(refElement, deletedRefs);
       }
