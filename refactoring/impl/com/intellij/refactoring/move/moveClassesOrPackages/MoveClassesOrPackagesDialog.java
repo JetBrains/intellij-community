@@ -55,6 +55,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private JPanel myMoveClassPanel;
   private JPanel myMovePackagePanel;
   private boolean myHavePackages;
+  private boolean myTargetDirectoryFixed;
 
   public MoveClassesOrPackagesDialog(Project project,
                                      boolean searchTextOccurences,
@@ -105,7 +106,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   private void updateControlsEnabled() {
     myClassPackageChooser.setEnabled(myToPackageRadioButton.isSelected());
     myInnerClassChooser.setEnabled(myMakeInnerClassOfRadioButton.isSelected());
-    myCbMoveToAnotherSourceFolder.setEnabled(isMoveToPackage());
+    myCbMoveToAnotherSourceFolder.setEnabled(isMoveToPackage() && getSourceRoots().length > 1 && !myTargetDirectoryFixed);
     validateButtons();
   }
 
@@ -188,6 +189,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
                       boolean searchForTextOccurences,
                       String helpID) {
     myInitialTargetDirectory = initialTargetDirectory;
+    myTargetDirectoryFixed = isTargetDirectoryFixed;
     if (targetPackageName.length() != 0) {
       myWithBrowseButtonReference.prependItem(targetPackageName);
       myClassPackageChooser.prependItem(targetPackageName);
