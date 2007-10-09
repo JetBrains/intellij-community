@@ -46,6 +46,10 @@ public class CvsTabbedWindow {
           EditorFactory.getInstance().releaseEditor(myOutput);
           myOutput = null;
         }
+        if (myErrorsView != null) {
+          myErrorsView.dispose();
+          myErrorsView = null;
+        }
 
         LOG.assertTrue(!myIsDisposed);
         try {
