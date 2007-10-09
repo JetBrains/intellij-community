@@ -11,7 +11,7 @@ public class HelpID {
   private static final String RENAME_FIELD     = "refactoring.renameField";
   private static final String RENAME_VARIABLE  = "refactoring.renameVariable";
   private static final String RENAME_PARAMETER = "refactoring.renameParameter";
-  private static final String RENAME_DIRECTORY = "reference.refactoring.rename.dir";
+  private static final String RENAME_DIRECTORY = "refactoring.renameDirectory";
   private static final String RENAME_FILE      = "refactoring.renameFile";
 
   private static final String MOVE_PACKAGE = "refactoring.movePackage";
