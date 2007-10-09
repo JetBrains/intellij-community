@@ -5,6 +5,7 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.facet.impl.ui.FacetEditorContextBase;
+import com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider;
 import com.intellij.facet.impl.ui.libraries.LibraryDownloader;
 import com.intellij.facet.impl.ui.libraries.RequiredLibrariesInfo;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
@@ -243,16 +244,25 @@ public class AddSupportForFrameworksPanel {
   }
 
   public void addSupport(final Module module, final ModifiableRootModel rootModel) {
-    for (FrameworkSupportSettings settings : getSelectedFrameworks()) {
+    List<Library> addedLibraries = new ArrayList<Library>();
+    List<FrameworkSupportSettings> selectedFrameworks = getSelectedFrameworks();
+    for (FrameworkSupportSettings settings : selectedFrameworks) {
       Library library = null;
       FrameworkSupportConfigurable configurable = settings.getConfigurable();
       if (!settings.myAddedJars.isEmpty()) {
         VirtualFile[] roots = settings.myAddedJars.toArray(new VirtualFile[settings.myAddedJars.size()]);
         LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
         library = FacetEditorContextBase.createLibraryInTable(configurable.getLibraryName(), roots, VirtualFile.EMPTY_ARRAY, table);
+        addedLibraries.add(library);
         rootModel.addLibraryEntry(library);
       }
       configurable.addSupport(module, rootModel, library);
+    }
+    for (FrameworkSupportSettings settings : selectedFrameworks) {
+      FrameworkSupportProvider provider = settings.myProvider;
+      if (provider instanceof FacetTypeFrameworkSupportProvider) {
+        ((FacetTypeFrameworkSupportProvider)provider).processAddedLibraries(module, addedLibraries);
+      }
     }
   }
 

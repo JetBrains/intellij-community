@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -81,4 +83,7 @@ public abstract class FacetTypeFrameworkSupportProvider<F extends Facet> extends
   }
 
   protected abstract void setupConfiguration(final F facet, final ModifiableRootModel rootModel, final String version);
+
+  public void processAddedLibraries(final Module module, final List<Library> addedLibraries) {
+  }
 }
