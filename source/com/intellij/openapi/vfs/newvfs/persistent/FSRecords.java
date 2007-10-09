@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class FSRecords implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private final static int VERSION = 5;
+  private final static int VERSION = 6;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
