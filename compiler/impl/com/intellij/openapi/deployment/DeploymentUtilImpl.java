@@ -12,7 +12,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
@@ -20,15 +23,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.descriptors.ConfigFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -119,7 +121,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
           outputRelativePath = libraryLink.getURI();
         }
 
-        final List<String> urls = libraryLink.getUrls();
+        final List<String> urls = libraryLink.getClassesRootUrls();
 
         boolean isDestinationDirectory = true;
         if (LibraryLink.MODULE_LEVEL.equals(libraryLink.getLevel()) && urls.size() == 1 && outputRelativePath.endsWith(JAR_SUFFIX)) {

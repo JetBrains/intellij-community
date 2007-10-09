@@ -54,6 +54,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,20 @@ public class LibraryLinkImpl extends LibraryLink {
 
   }
 
+  public List<String> getClassesRootUrls() {
+    List<String> urls = getUrls();
+    Library library = getLibrary();
+    if (library == null) {
+      return urls;
+    }
+    VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+    ArrayList<String> classRoots = new ArrayList<String>(files.length);
+    for (VirtualFile file : files) {
+      classRoots.add(file.getUrl());
+    }
+    return classRoots;
+  }
+
   public @Nullable Library getLibrary() {
     return getLibrary(null);
   }
@@ -125,7 +140,7 @@ public class LibraryLinkImpl extends LibraryLink {
 
   public String getPresentableName() {
     if (getName() != null) return getName();
-    List<String> urls = myLibraryInfo.getUrls();
+    List<String> urls = getUrls();
     if (urls.size() == 0) return CompilerBundle.message("linrary.link.empty.library.presentable.name");
     final String url = urls.get(0);
     final String path = PathUtil.toPresentableUrl(url);
@@ -180,7 +195,7 @@ public class LibraryLinkImpl extends LibraryLink {
         }
       }
     } else {
-      final List<String> urls = getUrls();
+      final List<String> urls = getClassesRootUrls();
       for (final String url : urls) {
         VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
         if (file != null && !VfsUtil.virtualToIoFile(file).isDirectory()) {

@@ -42,6 +42,7 @@ public abstract class LibraryLink extends ContainerElement {
   public abstract void addUrl(String url);
 
   public abstract List<String> getUrls();
+  public abstract List<String> getClassesRootUrls();
 
   public abstract boolean hasDirectoriesOnly();
 
