@@ -15,6 +15,7 @@
  */
 package com.intellij.profile.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
@@ -24,9 +25,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.DefaultApplicationProfileManager;
 import com.intellij.profile.Profile;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -157,9 +158,7 @@ public class InspectionProfileManager extends DefaultApplicationProfileManager i
   private static String getProfileName(File file) throws JDOMException, IOException {
     String name = getRootElementAttribute(file, PROFILE_NAME_TAG);
     if (name != null) return name;
-    String fileName = file.getName();
-    int extensionIndex = fileName.lastIndexOf(CONFIG_FILE_EXTENSION);
-    return fileName.substring(0, extensionIndex);
+    return FileUtil.getNameWithoutExtension(file);
   }
 
   private static String getRootElementAttribute(final File file, @NonNls String name) throws JDOMException, IOException {
