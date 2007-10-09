@@ -1,11 +1,13 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.HelpID;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,5 +87,9 @@ public class InlineToAnonymousClassDialog extends InlineOptionsDialog {
 
     invokeRefactoring(new InlineToAnonymousClassProcessor(getProject(), myClass, myCallToInline, isInlineThisOnly(),
                                                           searchInComments, searchInNonJava));
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.INLINE_CLASS);
   }
 }

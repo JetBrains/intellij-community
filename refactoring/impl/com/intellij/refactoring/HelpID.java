@@ -32,6 +32,7 @@ public class HelpID {
   public static final String MOVE_INNER_UPPER   = "refactoring.moveInner";
   public static final String REPLACE_TEMP_WITH_QUERY = "refactoring.replaceTemp";
   public static final String MOVE_MEMBERS       = "refactoring.moveMembers";
+  public static final String INLINE_CLASS       = "refactoring.inlineClass";
   public static final String INLINE_METHOD      = "refactoring.inlineMethod";
   public static final String INLINE_CONSTRUCTOR = "refactoring.inlineConstructor";
   public static final String INLINE_VARIABLE    = "refactoring.inlineVariable";
@@ -55,7 +56,7 @@ public class HelpID {
   public static final String SAFE_DELETE_OVERRIDING           = "refactoring.safeDelete.overridingMethods";
   public static final String EJB_RENAME                 = "refactoring.rename.ejbRename";
   public static final String TYPE_COOK                  = "refactoring.generify";
-  public static final String TYPE_MIGRATION             = "refactoring.migrateType";   
+  public static final String TYPE_MIGRATION             = "refactoring.migrateType";
   public static final String CONVERT_TO_INSTANCE_METHOD = "refactoring.convertToInstanceMethod";
   public static final String METHOD_DUPLICATES          = "refactoring.replaceMethodCodeDuplicates";
   public static final String CHANGE_CLASS_SIGNATURE     = "refactoring.changeClassSignature";
