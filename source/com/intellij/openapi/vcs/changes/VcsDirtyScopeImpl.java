@@ -23,10 +23,7 @@ import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class VcsDirtyScopeImpl extends VcsDirtyScope {
   private final Set<FilePath> myDirtyFiles = new THashSet<FilePath>();
@@ -78,15 +75,21 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
   public synchronized void addDirtyDirRecursively(FilePath newcomer) {
     myAffectedContentRoots.add(myVcsManager.getVcsRootFor(newcomer));
 
-    for (FilePath oldBoy : myDirtyDirectoriesRecursively) {
+    for (Iterator<FilePath> it = myDirtyFiles.iterator(); it.hasNext();) {
+      FilePath oldBoy = it.next();
+      if (oldBoy.isUnder(newcomer, false)) {
+        it.remove();
+      }
+    }
+
+    for (Iterator<FilePath> it = myDirtyDirectoriesRecursively.iterator(); it.hasNext();) {
+      FilePath oldBoy = it.next();
       if (newcomer.isUnder(oldBoy, false)) {
         return;
       }
 
       if (oldBoy.isUnder(newcomer, false)) {
-        myDirtyDirectoriesRecursively.remove(oldBoy);
-        myDirtyDirectoriesRecursively.add(newcomer);
-        return;
+        it.remove();
       }
     }
     myDirtyDirectoriesRecursively.add(newcomer);
