@@ -671,10 +671,23 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   private static class EventElementComparator implements Comparator<Element> {
     static final Comparator<? super Element> INSTANCE = new EventElementComparator();
-
+    
+    private static final String[] COMPARABLE_ATTRIB_NAMES = new String[] {
+      EVENT_ELEMENT, 
+      TARGET_ELEMENT, 
+      ExecuteBeforeRunEvent.RUN_CONFIGURATION_TYPE_ATTR, 
+      ExecuteBeforeRunEvent.RUN_CONFIUGRATION_NAME_ATTR,
+      ExecuteCompositeTargetEvent.PRESENTABLE_NAME
+    };
+    
     public int compare(final Element o1, final Element o2) {
-      final int typesEqual = o1.getAttributeValue(EVENT_ELEMENT).compareTo(o2.getAttributeValue(EVENT_ELEMENT));
-      return typesEqual == 0 ? o1.getAttributeValue(TARGET_ELEMENT).compareTo(o2.getAttributeValue(TARGET_ELEMENT)) : typesEqual;
+      for (String attribName : COMPARABLE_ATTRIB_NAMES) {
+        final int valuesEqual = Comparing.compare(o1.getAttributeValue(attribName), o2.getAttributeValue(attribName));
+        if (valuesEqual != 0) {
+          return valuesEqual;
+        }
+      }
+      return 0;
     }
   }
 }
