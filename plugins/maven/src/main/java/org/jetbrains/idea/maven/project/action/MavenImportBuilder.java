@@ -39,7 +39,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   private VirtualFile importRoot;
   private Collection<VirtualFile> myFiles;
   private List<String> myProfiles;
-  MavenImportProcessor myImportProcessor;
+  private MavenImportProcessor myImportProcessor;
 
   private boolean openModulesConfigurator;
 
@@ -58,9 +58,12 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     projectToUpdate = null;
   }
 
-  public void commit(final Project project) {
-    myImportProcessor.resolve(project, myProfiles);
+  @Override
+  public boolean validate(Project current, Project dest) {
+    return myImportProcessor.resolve(dest, myProfiles);
+  }
 
+  public void commit(final Project project) {
     myImportProcessor.commit(project, myProfiles, getImporterPreferences().isAutoImportNew());
 
     final MavenImporterState importerState = project.getComponent(MavenImporter.class).getState();
