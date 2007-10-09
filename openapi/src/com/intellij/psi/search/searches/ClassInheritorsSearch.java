@@ -33,6 +33,9 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.Stack;
 
+import java.util.Set;
+import java.util.HashSet;
+
 /**
  * @author max
  */
@@ -147,6 +150,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
     final Ref<PsiClass> currentBase = Ref.create(null);
     final Stack<PsiClass> stack = new Stack<PsiClass>();
+    final Set<PsiClass> processed = new HashSet<PsiClass>();
     final Processor<PsiClass> processor = new Processor<PsiClass>() {
       public boolean process(final PsiClass candidate) {
         final Ref<Boolean> result = new Ref<Boolean>();
@@ -182,6 +186,9 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     final GlobalSearchScope scope = GlobalSearchScope.allScope(baseClass.getProject());
     while (!stack.isEmpty()) {
       final PsiClass psiClass = stack.pop();
+      if (processed.contains(psiClass)) continue;
+      processed.add(psiClass);
+      
       currentBase.set(psiClass);
       if (!DirectClassInheritorsSearch.search(psiClass, scope, includeAnonymous).forEach(processor)) return false;
     }
