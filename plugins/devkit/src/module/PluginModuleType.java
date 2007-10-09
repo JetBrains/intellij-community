@@ -103,13 +103,18 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
 
   @Nullable
   public static XmlFile getPluginXml(Module module) {
+    return getPluginXml(module, true);
+  }
+
+  @Nullable
+  public static XmlFile getPluginXml(Module module, boolean initialize) {
     if (module == null) return null;
     if (module.getModuleType() != ourInstance) return null;
 
     final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
     if (buildConfiguration == null) return null;
-    final VirtualFilePointer pluginXMLPointer = buildConfiguration.getPluginXmlPointer();
-    final VirtualFile vFile = pluginXMLPointer.getFile();
+    final VirtualFilePointer pluginXMLPointer = initialize ? buildConfiguration.getPluginXmlPointer() : buildConfiguration.getStoredPluginXmlPointer();
+    final VirtualFile vFile = pluginXMLPointer != null ? pluginXMLPointer.getFile() : null;
     if (vFile == null) return null;
     final PsiFile file = PsiManager.getInstance(module.getProject()).findFile(vFile);
     return file instanceof XmlFile ? (XmlFile)file : null;

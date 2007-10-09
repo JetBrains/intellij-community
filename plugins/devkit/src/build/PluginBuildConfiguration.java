@@ -21,6 +21,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.make.BuildConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -32,7 +33,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.descriptors.ConfigFile;
 import com.intellij.util.descriptors.ConfigFileContainer;
 import com.intellij.util.descriptors.ConfigFileFactory;
@@ -156,6 +156,11 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
     ConfigFileFactory.getInstance().createFile(myModule.getProject(), descriptor.getUrl(), PluginDescriptorConstants.META_DATA.getDefaultVersion(),
                                                false);
     return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
+  }
+
+  @Nullable
+  public VirtualFilePointer getStoredPluginXmlPointer() {
+    return myPluginXmlPointer;
   }
 
   public VirtualFilePointer getPluginXmlPointer() {

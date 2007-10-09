@@ -74,7 +74,7 @@ public abstract class DevKitInspectionBase extends LocalInspectionTool {
   }
 
   private static Set<PsiClass> checkModule(Module module, PsiClass psiClass, Set<PsiClass> types, boolean includeActions) {
-    final XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+    final XmlFile pluginXml = PluginModuleType.getPluginXml(module, false);
     if (!isPluginXml(pluginXml)) return types;
     assert pluginXml != null;
 
