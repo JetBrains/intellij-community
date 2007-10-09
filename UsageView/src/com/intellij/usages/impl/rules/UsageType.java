@@ -1,12 +1,5 @@
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 17, 2004
- * Time: 9:36:12 PM
- * To change this template use File | Settings | File Templates.
- */
 /*
- * Copyright 2000-2005 JetBrains s.r.o.
+ * Copyright 2000-2007 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
