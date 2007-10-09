@@ -2,8 +2,10 @@ package com.intellij.cvsSupport2.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,7 +39,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider {
       if (toolbarActions != null) {
         actionGroup.add(toolbarActions);
       }
-      actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
+      actionGroup.add(new HelpAction());
       add(ActionManager.getInstance().
           createActionToolbar("DefaultCvsComponentToolbar", actionGroup, false).getComponent(),
           BorderLayout.WEST);
@@ -74,4 +76,13 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider {
     }
   }
 
+  private class HelpAction extends AnAction {
+    public HelpAction() {
+      super(CommonBundle.getHelpButtonText(), null, IconLoader.getIcon("/actions/help.png"));
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      HelpManager.getInstance().invokeHelp(myHelpId);
+    }
+  }
 }
