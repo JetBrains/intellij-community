@@ -88,9 +88,11 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
 
   private int getDirectoriesToIgnore() {
     int result = 0;
-    for(VirtualFile f: myFilesToIgnore) {
-      if (f.isDirectory()) {
-        result++;
+    if (myFilesToIgnore != null) {
+      for(VirtualFile f: myFilesToIgnore) {
+        if (f.isDirectory()) {
+          result++;
+        }
       }
     }
     return result;
