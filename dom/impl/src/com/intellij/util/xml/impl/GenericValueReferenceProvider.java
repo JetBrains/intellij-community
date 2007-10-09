@@ -5,6 +5,7 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.javaee.web.PsiReferenceConverter;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -66,8 +67,10 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
       converter = ((ConverterManagerImpl)domManager.getConverterManager()).getInstance(clazz);
     }
     PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, converter);
-    for (PsiReference reference : references) {
-      assert reference.isSoft() : "dom reference should be soft: " + reference;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      for (PsiReference reference : references) {
+        assert reference.isSoft() : "dom reference should be soft: " + reference;
+      }
     }
     // creating "declaration" reference
     if (references.length == 0) {
