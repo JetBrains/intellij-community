@@ -39,6 +39,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private final MessageBus myEventsBus;
 
   private final Map<String, NewVirtualFile> myRoots = new HashMap<String, NewVirtualFile>();
+  private final Object INPUT_LOCK = new Object();
 
   public PersistentFS(MessageBus bus) {
     myEventsBus = bus;
@@ -322,41 +323,46 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   public InputStream getInputStream(final VirtualFile file) throws IOException {
-    InputStream contentStream = FILE_CONTENT.readAttribute(file);
-    if (contentStream == null || mustReloadContent(file)) {
-      if (contentStream != null) contentStream.close();
-      setFlag(file, MUST_RELOAD_CONTENT, false);
+    synchronized (INPUT_LOCK) {
+      InputStream contentStream = FILE_CONTENT.readAttribute(file);
+      if (contentStream == null || mustReloadContent(file)) {
+        if (contentStream != null) contentStream.close();
 
-      final NewVirtualFileSystem delegate = getDelegate(file);
-      final long len = delegate.getLength(file);
-      final InputStream nativeStream = delegate.getInputStream(file);
+        final NewVirtualFileSystem delegate = getDelegate(file);
+        final long len = delegate.getLength(file);
+        final InputStream nativeStream = delegate.getInputStream(file);
 
-      if (len > FILE_LENGTH_TO_CACHE_THRESHOULD) return nativeStream;
+        if (len > FILE_LENGTH_TO_CACHE_THRESHOULD) return nativeStream;
 
-      final ByteArrayOutputStream cache = new ByteArrayOutputStream((int)len);
-      return new ReplicatorInputStream(nativeStream, cache) {
-        public void close() throws IOException {
-          super.close();
+        final ByteArrayOutputStream cache = new ByteArrayOutputStream((int)len);
+        return new ReplicatorInputStream(nativeStream, cache) {
+          public void close() throws IOException {
+            super.close();
 
-          if (getBytesRead() == len) {
-            DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
-            try {
-              FileUtil.copy(new ByteArrayInputStream(cache.toByteArray()), sink);
+            synchronized (INPUT_LOCK) {
+              if (getBytesRead() == len) {
+                DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
+                try {
+                  FileUtil.copy(new ByteArrayInputStream(cache.toByteArray()), sink);
+                }
+                finally {
+                  sink.close();
+                }
+
+                myRecords.setLength(getFileId(file), len);
+
+                setFlag(file, MUST_RELOAD_CONTENT, false);
+              }
+              else {
+                setFlag(file, MUST_RELOAD_CONTENT, true);
+              }
             }
-            finally {
-              sink.close();
-            }
-
-            myRecords.setLength(getFileId(file), len);
           }
-          else {
-            setFlag(file, MUST_RELOAD_CONTENT, true);
-          }
-        }
-      };
-    }
-    else {
-      return contentStream;
+        };
+      }
+      else {
+        return contentStream;
+      }
     }
   }
 
