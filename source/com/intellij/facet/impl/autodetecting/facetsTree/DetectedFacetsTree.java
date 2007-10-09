@@ -16,6 +16,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -45,6 +46,12 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
 
   protected void checkNode(final CheckedTreeNode node, final boolean checked) {
     adjustParentsAndChildren(node, checked);
+  }
+
+  @Nullable
+  public CheckedTreeNode getSelectedNode() {
+    TreePath path = getSelectionPath();
+    return path != null ? (CheckedTreeNode)path.getLastPathComponent() : null;
   }
 
   private static class FacetsCheckboxTreeCellRenderer extends CheckboxTreeCellRendererBase {

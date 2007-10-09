@@ -9,7 +9,6 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.impl.autodetecting.ImplicitFacetInfo;
 import com.intellij.facet.impl.autodetecting.ImplicitFacetManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.ui.CheckedTreeNode;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,13 +64,7 @@ public class ImplicitFacetsTreeComponent {
     }
 
     myFacetTypeNodes = facetTypeNodes.values();
-    myTree = new DetectedFacetsTree(myFacetTypeNodes) {
-      protected void onDoubleClick(final CheckedTreeNode node) {
-        if (node instanceof FacetNodeImpl) {
-          ModulesConfigurator.showFacetSettingsDialog(((FacetNodeImpl)node).getImplicitFacetInfo().getFacet(), null);
-        }
-      }
-    };
+    myTree = new DetectedFacetsTree(myFacetTypeNodes);
   }
 
   public void createAndDeleteFacets() {
@@ -100,6 +93,16 @@ public class ImplicitFacetsTreeComponent {
       }
       processFacetNodes(facetNode.getChildren(), accept && facetNode.isChecked());
     }
+  }
+
+  @Nullable
+  public Facet getSelectedFacet() {
+    CheckedTreeNode selectedNode = myTree.getSelectedNode();
+    if (!(selectedNode instanceof FacetNodeImpl)) {
+      return null;
+    }
+
+    return ((FacetNodeImpl)selectedNode).getImplicitFacetInfo().getFacet();
   }
 
   private static void addUnderlying(final ImplicitFacetInfo facet, final Collection<ImplicitFacetInfo> sortedFacets,
