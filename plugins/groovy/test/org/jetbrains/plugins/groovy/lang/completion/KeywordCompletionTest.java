@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiReference;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 
@@ -39,7 +40,15 @@ public class KeywordCompletionTest extends CompletionTestBase {
   }
 
   protected LookupItem[] getAcceptableItems(CompletionData data) throws IncorrectOperationException {
-    return getAcceptableItemsImpl(data, true, false);
+    return getAcceptableItemsImpl(data);
+  }
+
+  protected boolean addKeywords(PsiReference ref) {
+    return true;
+  }
+
+  protected boolean addReferenceVariants(PsiReference ref) {
+    return false;
   }
 
   public static Test suite() {

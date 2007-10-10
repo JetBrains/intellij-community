@@ -22,6 +22,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiReference;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -44,7 +45,15 @@ public class ReferenceCompletionTest extends CompletionTestBase {
   }
 
   protected LookupItem[] getAcceptableItems(CompletionData data) throws IncorrectOperationException {
-    return getAcceptableItemsImpl(data, false, true);
+    return getAcceptableItemsImpl(data);
+  }
+
+  protected boolean addKeywords(PsiReference ref) {
+    return false;
+  }
+
+  protected boolean addReferenceVariants(PsiReference ref) {
+    return true;
   }
 
   public static Test suite() {
