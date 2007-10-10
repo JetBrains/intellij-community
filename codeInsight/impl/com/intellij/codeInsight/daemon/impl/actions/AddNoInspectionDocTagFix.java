@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -97,8 +98,9 @@ public class AddNoInspectionDocTagFix implements IntentionAction {
     } else {
       PsiDocTag noInspectionTag = docComment.findTagByName(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (noInspectionTag != null) {
+        final PsiDocTagValue valueElement = noInspectionTag.getValueElement();
         String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "
-                         + noInspectionTag.getValueElement().getText() + ","+ myID;
+                         + (valueElement != null ? valueElement.getText() + "," : "")+ myID;
         noInspectionTag.replace(manager.getElementFactory().createDocTagFromText(tagText, null));
       } else {
         String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
