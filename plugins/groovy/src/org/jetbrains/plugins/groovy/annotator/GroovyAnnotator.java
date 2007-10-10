@@ -706,8 +706,9 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkMethodApplicability(GroovyResolveResult methodResolveResult, PsiElement place, AnnotationHolder holder) {
-    final PsiMethod method = (PsiMethod) methodResolveResult.getElement();
-    assert method != null;
+    final PsiElement element = methodResolveResult.getElement();
+    if (!(element instanceof PsiMethod)) return;
+    final PsiMethod method = (PsiMethod) element;
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, method.isConstructor());
     if (argumentTypes != null && !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(), methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
       PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
