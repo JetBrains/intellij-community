@@ -566,9 +566,6 @@ public class GroovyAnnotator implements Annotator {
       holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), "Inner classes are not supported in Groovy");
     }
 
-    //TODO: add quickfix to change implements -> extends or class to interface 
-    Annotation annotation;
-
     final GrImplementsClause implementsClause = typeDefinition.getImplementsClause();
     final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();
 
