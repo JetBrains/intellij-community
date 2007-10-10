@@ -19,6 +19,7 @@ package com.intellij.openapi.util;
 public class SystemInfo {
   private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
   public static final String OS_VERSION = System.getProperty("os.version").toLowerCase();
+  public static final String OS_ARCH = System.getProperty("os.arch");
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
   public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
@@ -43,6 +44,7 @@ public class SystemInfo {
 
   public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
   public static final boolean is64Bit = !is32Bit;
+  public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
 
   /**
    * Whether IDEA is running under MacOS X version 10.4 or later.
