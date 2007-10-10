@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -125,6 +126,7 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
 
     assert newExtendsClause != null;
     myClass.getNode().addChild(newExtendsClause.getNode(), myClass.getBody().getNode());
+    PsiUtil.shortenReferences(newExtendsClause);
   }
 
   private void addNewImplementsClause(List<GrCodeReferenceElement> elements, Project project) throws IncorrectOperationException {
@@ -142,6 +144,7 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
 
     assert newImplementsClause != null;
     myClass.getNode().addChild(newImplementsClause.getNode(), myClass.getBody().getNode());
+    PsiUtil.shortenReferences(newImplementsClause);
   }
 
   public boolean startInWriteAction() {
