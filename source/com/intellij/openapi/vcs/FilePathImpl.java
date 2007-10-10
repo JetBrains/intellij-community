@@ -1,22 +1,23 @@
-package com.intellij.openapi.vcs;                             
+package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.lang.reflect.Constructor;
+import java.nio.charset.Charset;
 
 public class FilePathImpl implements FilePath {
   private VirtualFile myVirtualFile;
@@ -56,7 +57,7 @@ public class FilePathImpl implements FilePath {
   }
 
   public int hashCode() {
-    return myFile.hashCode();
+    return StringUtil.stringHashCodeInsensitive(myFile.getPath());
   }
 
   public boolean equals(Object o) {
