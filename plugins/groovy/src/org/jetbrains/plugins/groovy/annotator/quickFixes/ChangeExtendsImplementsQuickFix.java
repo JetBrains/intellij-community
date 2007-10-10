@@ -8,7 +8,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
@@ -27,19 +26,16 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
 
   final GrTypeDefinition myClass;
 
-  public ChangeExtendsImplementsQuickFix(@Nullable GrExtendsClause extendsClause, @Nullable GrImplementsClause implementsClause) {
+  public ChangeExtendsImplementsQuickFix(GrExtendsClause extendsClause, GrImplementsClause implementsClause) {
     myExtendsClause = extendsClause;
     myImplementsClause = implementsClause;
 
-    PsiElement myClassElement = null;
     if (myImplementsClause != null) {
-      myClassElement = myImplementsClause.getParent();
-    } else if (myExtendsClause != null) {
-      myClassElement = myExtendsClause.getParent();
+      myClass = (GrTypeDefinition) myImplementsClause.getParent();
+    } else {
+      assert myExtendsClause != null;
+      myClass = (GrTypeDefinition) myExtendsClause.getParent();
     }
-
-    assert myClassElement != null;
-    myClass = (GrTypeDefinition) myClassElement;
   }
 
   @NotNull
@@ -72,7 +68,7 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
 
     for (GrCodeReferenceElement extendsReferenceElement : extendsReferenceElements) {
       final PsiElement extendsElement = extendsReferenceElement.resolve();
-      if (extendsElement == null || !(extendsElement instanceof PsiClass)) continue;
+      if (!(extendsElement instanceof PsiClass)) continue;
 
       if (((PsiClass) extendsElement).isInterface()) {
         interfaces.add(extendsReferenceElement);
@@ -83,7 +79,7 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
 
     for (GrCodeReferenceElement implementsReferenceElement : implementsReferenceElements) {
       final PsiElement implementsElement = implementsReferenceElement.resolve();
-      if (implementsElement == null || !(implementsElement instanceof PsiClass)) continue;
+      if (!(implementsElement instanceof PsiClass)) continue;
 
       if (((PsiClass) implementsElement).isInterface()) {
         interfaces.add(implementsReferenceElement);
