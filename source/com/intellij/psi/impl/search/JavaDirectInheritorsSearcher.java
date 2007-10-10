@@ -90,7 +90,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
             if (!includeAnonymous && classView.isAnonymous(candidateId)) return null;
 
             final RepositoryPsiElement candidate = repositoryElementsManager.findOrCreatePsiElementById(candidateId);
-            LOG.assertTrue(candidate.isValid());
+            LOG.assertTrue(candidate == null || candidate.isValid());
             return (PsiClass)candidate;
           }
         });
