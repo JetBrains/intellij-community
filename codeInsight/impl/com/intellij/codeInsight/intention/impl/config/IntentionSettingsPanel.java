@@ -1,17 +1,18 @@
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -41,22 +42,11 @@ public class IntentionSettingsPanel {
       protected List<IntentionActionMetaData> filterModel(String filter, final boolean force) {
         final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) return list;
-        List<Set<String>> keySetList = new ArrayList<Set<String>>();
-        final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-        final Set<String> words = optionsRegistrar.getProcessedWords(filter);
-        for (String word : words) {
-          final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(word);
-          Set<String> keySet = new HashSet<String>();
-          if (descriptions != null) {
-            for (OptionDescription description : descriptions) {
-              keySet.add(description.getPath());
-            }
-          }
-          keySetList.add(keySet);
-        }
+        final HashSet<String> quoted = new HashSet<String>();
+        List<Set<String>> keySetList = SearchUtil.findKeys(filter, quoted);
         List<IntentionActionMetaData> result = new ArrayList<IntentionActionMetaData>();
         for (IntentionActionMetaData metaData : list) {
-          if (isIntentionAccepted(metaData, filter, force, keySetList)){
+          if (isIntentionAccepted(metaData, filter, force, keySetList, quoted)){
             result.add(metaData);
           }
         }
@@ -123,7 +113,7 @@ public class IntentionSettingsPanel {
   }
 
   private static boolean isIntentionAccepted(IntentionActionMetaData metaData, @NonNls String filter, boolean forceInclude,
-                                             final List<Set<String>> keySetList) {
+                                             final List<Set<String>> keySetList, final HashSet<String> quoted) {
     if (StringUtil.containsIgnoreCase(metaData.myFamily, filter)) {
       return true;
     }
@@ -132,7 +122,27 @@ public class IntentionSettingsPanel {
         return true;
       }
     }
-
+    for (String stripped : quoted) {
+      if (StringUtil.containsIgnoreCase(metaData.myFamily, stripped)) {
+        return true;
+      }
+      for (String category : metaData.myCategory) {
+        if (category != null && StringUtil.containsIgnoreCase(category, stripped)) {
+          return true;
+        }
+      }
+      try {
+        final URL description = metaData.getDescription();
+        if (description != null) {
+          if (StringUtil.containsIgnoreCase(ResourceUtil.loadText(description), stripped)){
+            if (!forceInclude) return true;
+          } else if (forceInclude) return false;
+        }
+      }
+      catch (IOException e) {
+        //skip then
+      }
+    }
     for (Set<String> keySet : keySetList) {
       if (keySet.contains(metaData.myFamily)) {
         if (!forceInclude) {

@@ -15,10 +15,8 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +29,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
@@ -256,11 +255,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (myTree.getSelectionPath() == null) {
         TreeUtil.selectFirstNode(myTree);
       }
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myTree.requestFocus();
-        }
-      });
     }
   }
 
@@ -286,7 +280,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     actions.add(new AnAction(InspectionsBundle.message("what.s.new.in.idea.7"),
                              InspectionsBundle.message("what.s.new.in.idea.7.description"), IconLoader.getIcon("/actions/lightning.png")) {
       public void actionPerformed(AnActionEvent e) {
-        setFilter("New in 7");
+        setFilter("\"New in 7\"");
         myProfileFilter.selectText();
         myProfileFilter.requestFocusInWindow();
       }
@@ -561,13 +555,29 @@ public class SingleInspectionProfilePanel extends JPanel {
   private static boolean isDescriptorAccepted(Descriptor descriptor,
                                               @NonNls String filter,
                                               final boolean forceInclude,
-                                              final List<Set<String>> keySetList) {
+                                              final List<Set<String>> keySetList, final Set<String> quoted) {
     filter = filter.toLowerCase();
-    if (descriptor.getText().toLowerCase().contains(filter)) {
+    if (StringUtil.containsIgnoreCase(descriptor.getText(), filter)) {
       return true;
     }
-    if (descriptor.getGroup().toLowerCase().contains(filter)) {
+    if (StringUtil.containsIgnoreCase(descriptor.getGroup(), filter)) {
       return true;
+    }
+    for (String stripped : quoted) {
+      if (StringUtil.containsIgnoreCase(descriptor.getText(),stripped)) {
+        return true;
+      }
+      if (StringUtil.containsIgnoreCase(descriptor.getGroup(),stripped)) {
+        return true;
+      }
+      try {
+        if (StringUtil.containsIgnoreCase(ResourceUtil.loadText(InspectionToolRegistrar.getDescriptionUrl(descriptor.getTool())).toLowerCase(), stripped)) {
+          if (!forceInclude) return true;
+        } else if (forceInclude) return false;
+      }
+      catch (IOException e) {
+        //skip then
+      }
     }
     for (Set<String> keySet : keySetList) {
       if (keySet.contains(descriptor.getKey().toString())) {
@@ -590,23 +600,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     myRoot.isEnabled = false;
     myRoot.isProperSetting = false;
     List<Set<String>> keySetList = new ArrayList<Set<String>>();
+    final Set<String> quated = new HashSet<String>();
     if (filter != null && filter.length() > 0) {
-      final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
-      final Set<String> words = optionsRegistrar.getProcessedWords(filter);
-      for (String word : words) {
-        final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(word);
-        Set<String> keySet = new HashSet<String>();
-        if (descriptions != null) {
-          for (OptionDescription description : descriptions) {
-            keySet.add(description.getPath());
-          }
-        }
-        keySetList.add(keySet);
-      }
+      keySetList.addAll(SearchUtil.findKeys(filter, quated));
     }
     for (Descriptor descriptor : myDescriptors) {
       if (descriptor.getTool() != null && !(descriptor.getTool()instanceof LocalInspectionToolWrapper) && !myShowInspections) continue;
-      if (filter != null && filter.length() > 0 && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList)) {
+      if (filter != null && filter.length() > 0 && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quated)) {
         continue;
       }
       final HighlightDisplayKey key = descriptor.getKey();

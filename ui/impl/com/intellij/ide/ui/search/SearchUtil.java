@@ -12,6 +12,7 @@ import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -30,6 +31,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -38,6 +40,7 @@ import java.util.regex.Pattern;
  */
 public class SearchUtil {
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
+  private static final Pattern QUOTED = Pattern.compile("\\\"([^\\\"]+)\\\"");
 
   private SearchUtil() {
   }
@@ -260,36 +263,40 @@ public class SearchUtil {
     }
     final Pattern insideHtmlTagPattern = Pattern.compile("[<[^<>]*>]*<[^<>]*");
     final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
+    final HashSet<String> quoted = new HashSet<String>();
+    filter = processFilter(filter, quoted);
     final Set<String> options = registrar.getProcessedWords(filter);
     final Set<String> words = registrar.getProcessedWords(textToMarkup);
     for (String option : options) {
       if (words.contains(option)) {
-        final String[] splittedText = textToMarkup.split(option);
-        if (splittedText != null && splittedText.length > 0) {
-          boolean endsWith = textToMarkup.endsWith(option);
-          textToMarkup = "";
-          for (int i = 0; i < splittedText.length; i++) {
-            String aPart = splittedText[i];
-            if (aPart == null || aPart.length() == 0) {
-              continue;
-            }
-            if (!endsWith && i == splittedText.length - 1) {
-              textToMarkup += aPart;
-            }
-            else if (insideHtmlTagPattern.matcher(aPart).matches()) {
-              textToMarkup += aPart + option;
-            }
-            else {
-              textToMarkup += aPart + "<font color='#ffffff' bgColor='#1d5da7'>" + option + "</font>";
-            }
-          }
-        }
+        textToMarkup = markup(textToMarkup, insideHtmlTagPattern, option);
       }
+    }
+    for (String stripped : quoted) {
+      textToMarkup = markup(textToMarkup, insideHtmlTagPattern, stripped);
     }
     return textToMarkup;
   }
 
-  public static void appendFragments(final String filter,
+  private static String markup(@NonNls String textToMarkup, final Pattern insideHtmlTagPattern, final String option) {
+    @NonNls String result = "";
+    int beg = 0;
+    int idx;
+    while ((idx = StringUtil.indexOfIgnoreCase(textToMarkup, option, beg)) != -1) {
+      final String prefix = textToMarkup.substring(beg, idx);
+      final String toMark = textToMarkup.substring(idx, idx + option.length());
+      if (insideHtmlTagPattern.matcher(prefix).matches()) {
+        result += prefix + toMark;
+      } else {
+        result += prefix + "<font color='#ffffff' bgColor='#1d5da7'>" + toMark + "</font>";
+      }
+      beg = idx + option.length();
+    }
+    result += textToMarkup.substring(beg);
+    return result;
+  }
+
+  public static void appendFragments(String filter,
                                      @NonNls String text,
                                      final int style,
                                      final Color foreground,
@@ -300,14 +307,30 @@ public class SearchUtil {
       textRenderer.append(text, new SimpleTextAttributes(style, foreground));
     }
     else { //markup
-      final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
-      String[] words = text.split("[\\W&&[^_-]]");
-      List<String> selectedWords = new ArrayList<String>();
-      for (String word : words) {
-        if (filters.contains(PorterStemmerUtil.stem(word.toLowerCase()))/* || word.toLowerCase().indexOf(filter.toLowerCase()) != -1*/) {
-          selectedWords.add(word);
+      final HashSet<String> quoted = new HashSet<String>();
+      filter = processFilter(filter, quoted);
+
+      final TreeMap<Integer, String> indx = new TreeMap<Integer, String>();
+      for (String stripped : quoted) {
+        int beg = 0;
+        int idx;
+        while ((idx = StringUtil.indexOfIgnoreCase(text, stripped, beg)) != -1) {
+          indx.put(idx, text.substring(idx, idx + stripped.length()));
+          beg = idx + stripped.length();
         }
       }
+
+      final List<String> selectedWords = new ArrayList<String>();
+      int pos = 0;
+      for (Integer index : indx.keySet()) {
+        final String stripped = indx.get(index);
+        final int start = index.intValue();
+        appendSelectedWords(text, selectedWords, pos, start, filter);
+        selectedWords.add(stripped);
+        pos = start + stripped.length();
+      }
+      appendSelectedWords(text, selectedWords, pos, text.length(), filter);
+
       int idx = 0;
       for (String word : selectedWords) {
         text = text.substring(idx);
@@ -321,6 +344,17 @@ public class SearchUtil {
     }
   }
 
+  private static void appendSelectedWords(final String text, final List<String> selectedWords, final int pos, int end, final String filter) {
+    if (pos < end) {
+      final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
+      final String[] words = text.substring(pos, end).split("[\\W&&[^_-]]");
+      for (String word : words) {
+        if (filters.contains(PorterStemmerUtil.stem(word.toLowerCase()))) {
+          selectedWords.add(word);
+        }
+      }
+    }
+  }
 
   @Nullable
   private static JBPopup createPopup(final SearchTextField searchField,
@@ -494,6 +528,37 @@ public class SearchUtil {
       }
     }
     return false;
+  }
+
+  public static List<Set<String>> findKeys(String filter, Set<String> quoted) {
+    filter = processFilter(filter.toLowerCase(), quoted);
+    final List<Set<String>> keySetList = new ArrayList<Set<String>>();
+    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    final Set<String> words = optionsRegistrar.getProcessedWords(filter);
+    for (String word : words) {
+      final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)optionsRegistrar).getAcceptableDescriptions(word);
+      Set<String> keySet = new HashSet<String>();
+      if (descriptions != null) {
+        for (OptionDescription description : descriptions) {
+          keySet.add(description.getPath());
+        }
+      }
+      keySetList.add(keySet);
+    }
+    return keySetList;
+  }
+
+  public static String processFilter(String filter, Set<String> quoted) {
+    String withoutQuoted = "";
+    int beg = 0;
+    final Matcher matcher = QUOTED.matcher(filter);
+    while (matcher.find()) {
+      final int start = matcher.start(1);
+      withoutQuoted += " " + filter.substring(beg, start);
+      beg = matcher.end(1);
+      quoted.add(filter.substring(start, beg));
+    }
+    return withoutQuoted + " " + filter.substring(beg);
   }
 
   //to process event
