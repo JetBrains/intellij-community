@@ -1,6 +1,7 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntBuildTargetBase;
+import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +31,8 @@ public final class BuildTask {
 
   @Nullable
   public OpenFileDescriptor getOpenFileDescriptor() {
-    final PsiFile file = myTarget.getAntFile();
+    final AntTarget antTarget = myTarget.getAntTarget();
+    final PsiFile file = antTarget != null? antTarget.getAntFile() : myTarget.getAntFile();
     final VirtualFile vFile = file.getVirtualFile();
     if( vFile == null) return null;
     return new OpenFileDescriptor(file.getProject(), vFile, getPsiElement().getTextOffset());

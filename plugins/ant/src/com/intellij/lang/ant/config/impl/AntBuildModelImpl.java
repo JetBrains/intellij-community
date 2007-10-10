@@ -5,6 +5,7 @@ import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,14 +103,12 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Nullable
   private static AntBuildTargetBase findTargetImpl(final String name, final AntBuildModelImpl model) {
-    final AntProject project = model.getAntProject();
-    final AntTarget antTarget = (project == null) ? null : project.getTarget(name);
-    if (antTarget != null) {
-      for (final AntBuildTargetBase buildTarget : model.getTargetsList()) {
-        if (buildTarget.getAntTarget() == antTarget) {
-          return buildTarget;
-        }
-      }                        
+    final List<AntBuildTargetBase> buildTargetBases = getTargetListImpl(model);
+    for (AntBuildTargetBase targetBase : buildTargetBases) {
+      final AntTarget antTarget = targetBase.getAntTarget();
+      if (antTarget != null && Comparing.strEqual(antTarget.getName(), name)) {
+        return targetBase;
+      }
     }
     return null;
   }
