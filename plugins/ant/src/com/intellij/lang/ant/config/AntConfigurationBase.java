@@ -44,4 +44,16 @@ public abstract class AntConfigurationBase extends AntConfiguration {
   public ExternalizablePropertyContainer getProperties() {
     return myProperties;
   }
+
+  public final void ensureInitialized() {
+    int attemptCount = 0; // need this in order to make sure we will not block swing thread forever
+    while (!isInitialized() && attemptCount < 6000) {
+      try {
+        Thread.sleep(10);
+      }
+      catch (InterruptedException ignored) {
+      }
+      attemptCount++;
+    }
+  }
 }

@@ -11,6 +11,7 @@ import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -575,7 +576,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       }
     }
     final String title = AntBundle.message("loading.ant.config.progress");
-    new Task.Backgroundable(getProject(), title, false) {
+    queueLater(new Task.Backgroundable(getProject(), title, false) {
       public void run(final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.pushState();
@@ -648,7 +649,20 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           indicator.popState();
         }
       }
-    }.queue();
+    });
+  }
+  
+  private void queueLater(final Task task) {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
+      task.queue();
+    } else {
+      app.invokeLater(new Runnable() {
+        public void run() {
+          task.queue();
+        }
+      });
+    }
   }
 
   @Nullable

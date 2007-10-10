@@ -5,6 +5,7 @@
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.actions.TargetActionStub;
 import com.intellij.lang.ant.config.explorer.AntExplorer;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -62,12 +63,16 @@ public class AntToolwindowRegistrar implements ProjectComponent {
     final DataContext dataContext = MapDataContext.singleData(DataConstants.PROJECT, myProject);
     compilerManager.addBeforeTask(new CompileTask() {
       public boolean execute(CompileContext context) {
-        return AntConfiguration.getInstance(myProject).executeTargetBeforeCompile(dataContext);
+        final AntConfiguration config = AntConfiguration.getInstance(myProject);
+        ((AntConfigurationBase)config).ensureInitialized();
+        return config.executeTargetBeforeCompile(dataContext);
       }
     });
     compilerManager.addAfterTask(new CompileTask() {
       public boolean execute(CompileContext context) {
-        return AntConfiguration.getInstance(myProject).executeTargetAfterCompile(dataContext);
+        final AntConfiguration config = AntConfiguration.getInstance(myProject);
+        ((AntConfigurationBase)config).ensureInitialized();
+        return config.executeTargetAfterCompile(dataContext);
       }
     });
 

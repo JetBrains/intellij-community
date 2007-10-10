@@ -4,6 +4,7 @@ import com.intellij.execution.StepsBeforeRunProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 
@@ -24,15 +25,7 @@ public class AntStepsBeforeRunProvider implements StepsBeforeRunProvider {
 
   public boolean hasTask(RunConfiguration configuration) {
     final AntConfiguration config = AntConfiguration.getInstance(myProject);
-    int attemptCount = 0; // need this in order to make sure we will not block swing thread forever
-    while (!config.isInitialized() && attemptCount < 6000) {
-      try {
-        Thread.sleep(10);
-      }
-      catch (InterruptedException ignored) {
-      }
-      attemptCount++;
-    }
+    ((AntConfigurationBase)config).ensureInitialized();
     return config.hasTasksToExecuteBeforeRun(configuration);
   }
 
