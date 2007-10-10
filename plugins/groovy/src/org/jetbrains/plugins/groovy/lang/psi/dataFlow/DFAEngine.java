@@ -85,10 +85,9 @@ public class DFAEngine<E> {
           final E oldE = info.get(num);
           E newE = join(curr, info, env);
           myDfa.fun(newE, curr);
-          final Iterable<? extends Instruction> succ = getNext(curr, env); //next should be taken regardless of lattice.eq
           if (!mySemilattice.eq(newE, oldE)) {
             info.set(num, newE);
-            for (Instruction next : succ) {
+            for (Instruction next : getNext(curr, env)) {
               worklist.add(next);
               visited[next.num()] = true;
             }
