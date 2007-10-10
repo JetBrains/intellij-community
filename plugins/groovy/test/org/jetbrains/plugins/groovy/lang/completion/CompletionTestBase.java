@@ -1,21 +1,15 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.CompletionData;
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.CompletionVariant;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.impl.gtag.reference.GrailsTagNameReference;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -124,12 +118,10 @@ public abstract class CompletionTestBase extends ActionTestCase {
     if (lookupSet.size() == 0) {
       final PsiReference ref = newFile.findReferenceAt(myOffset + 1);
       if (addKeywords) {
-        if (!(inGsp() && ref instanceof GrailsTagNameReference)) {
-          context.offset = offset1;
-          final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-          completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
-        }
+        context.offset = offset1;
+        final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+        completionData.addKeywordVariants(keywordVariants, context, insertedElement);
+        CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
       }
       if (addReferenceVariants) {
         if (ref != null) {
@@ -148,12 +140,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
       }
     }
 
-    return lookupItems.toArray(new LookupItem[0]);
-
-  }
-
-  protected boolean inGsp() {
-    return false;
+    return lookupItems.toArray(new LookupItem[lookupItems.size()]);
   }
 
   public String transform(String testName, String[] data) throws Exception {
