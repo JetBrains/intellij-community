@@ -52,6 +52,9 @@ public interface Sorter extends TreeAction {
         }
 
         private String toString(Object object) {
+          if (object instanceof SortableTreeElement) {
+            return ((SortableTreeElement) object).getAlphaSortKey();
+          }
           if (object instanceof TreeElement){
             return ((TreeElement)object).getPresentation().getPresentableText();
           } else if (object instanceof Group){

@@ -1,6 +1,7 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> {
+public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> implements SortableTreeElement {
   public PsiMethodTreeElement(PsiMethod method, boolean isInherited) {
     super(isInherited,method);
   }
@@ -58,5 +59,13 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> {
 
   public PsiMethod getMethod() {
     return getElement();
+  }
+
+  public String getAlphaSortKey() {
+    final PsiMethod method = getElement();
+    if (method != null) {
+      return method.getName();
+    }
+    return "";
   }
 }
