@@ -4,6 +4,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,14 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> {
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
-    getElement().accept(new PsiRecursiveElementVisitor(){
+    final PsiMethod element = getElement();
+    if (element == null) return result;
+
+    final TextRange range = element.getTextRange();
+    final PsiFile psiFile = element.getContainingFile();
+    if (!psiFile.getText().substring(range.getStartOffset(), range.getEndOffset()).contains(PsiKeyword.CLASS)) return result;
+
+    element.accept(new PsiRecursiveElementVisitor(){
       public void visitClass(PsiClass aClass) {
         if (!(aClass instanceof PsiAnonymousClass) && !(aClass instanceof PsiTypeParameter)) {
           result.add(new JavaClassTreeElement(aClass, isInherited()));
