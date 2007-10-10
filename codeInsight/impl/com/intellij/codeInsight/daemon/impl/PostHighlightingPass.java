@@ -4,7 +4,10 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -104,7 +107,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   public void doCollectInformation(ProgressIndicator progress) {
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    myRefCountHolder = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().getRefCountHolder(myFile);
+    final FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
+    myRefCountHolder = fileStatusMap.getRefCountHolder(myFile);
     Runnable doCollectInfo = new Runnable() {
       public void run() {
         List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
@@ -117,6 +121,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
           elementSet.addAll(elements);
         }
+
+        XmlHighlightVisitor.checkDuplicates(myRefCountHolder.getPossiblyDuplicatedElementsMap(), myRefCountHolder, highlights);
         collectHighlights(elementSet, highlights);
 
         boolean doubleCheckUsages = false;
@@ -141,17 +147,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           highlights.add(highlightInfo);
         }
 
-        Collection<PsiElement> duplicatedDcls = myRefCountHolder.getDuplicatedElements();
-        for (PsiElement dupe : duplicatedDcls) {
-          HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
-            HighlightInfoType.WRONG_REF,
-            dupe,
-            XmlErrorMessages.message("duplicate.id.reference")
-          );
-
-          highlights.add(highlightInfo);
-        }
         myHighlights = highlights;
+        for (HighlightInfo info : highlights) {
+          if (info.getSeverity() == HighlightSeverity.ERROR) {
+            fileStatusMap.setErrorFoundFlag(myDocument, true);
+            break;
+          }
+        }
       }
     };
     myRefCountHolder.retrieveUnusedReferencesInfo(doCollectInfo, progress);
@@ -163,7 +165,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
                                                    myHighlights, Pass.POST_UPDATE_ALL);
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, Pass.POST_UPDATE_ALL);
+    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, getId());
 
     if (timeToOptimizeImports() && myEditor != null) {
       optimizeImportsOnTheFly();
@@ -229,8 +231,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         }
       }
       else if (element instanceof XmlAttributeValue) {
-        final HighlightInfo highlightInfo = XmlHighlightVisitor.checkIdRefAttrValue((XmlAttributeValue)element, myRefCountHolder);
-        if (highlightInfo != null) array.add(highlightInfo);
+        final HighlightInfo info = XmlHighlightVisitor.checkIdRefAttrValue((XmlAttributeValue)element, myRefCountHolder);
+        if (info != null) {
+          array.add(info);
+        }
       }
     }
   }

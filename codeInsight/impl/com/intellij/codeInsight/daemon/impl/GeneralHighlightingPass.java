@@ -73,6 +73,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
   protected boolean myHasErrorElement;
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
+  private volatile boolean myErrorFound;
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -125,11 +126,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final HighlightVisitor[] highlightVisitors = createHighlightVisitors();
     final Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     final List<LineMarkerInfo> lineMarkers = new ArrayList<LineMarkerInfo>();
+    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
     try {
       final RefCountHolder refCountHolder;
       if (myUpdateAll) {
-        DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-        refCountHolder = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().getRefCountHolder(myFile);
+        refCountHolder = fileStatusMap.getRefCountHolder(myFile);
       }
       else {
         refCountHolder = null;
@@ -169,7 +171,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
             result.addAll(collectHighlights(elements, highlightVisitors));
             result.addAll(highlightTodos());
-            myInjectedPsiHighlights = highlightInjectedPsi(elements, refCountHolder);
+            addInjectedPsiHighlights(elements, refCountHolder, myInjectedPsiHighlights);
           }
         }
       };
@@ -178,6 +180,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
       else {
         doCollectInfo.run();
+      }
+      if (myUpdateAll) {
+        fileStatusMap.setErrorFoundFlag(myDocument, myErrorFound);
       }
     }
     finally {
@@ -188,9 +193,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myMarkers = lineMarkers;
   }
 
-  private Map<TextRange,Collection<HighlightInfo>> highlightInjectedPsi(final List<PsiElement> elements, RefCountHolder refCountHolder) {
-    Collection<PsiElement> hosts = new THashSet<PsiElement>();
+  private void addInjectedPsiHighlights(final List<PsiElement> elements, RefCountHolder refCountHolder,
+                                        Map<TextRange, Collection<HighlightInfo>> result) {
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(getDocument());
+    Collection<PsiElement> hosts = new THashSet<PsiElement>(elements.size() + injected.size());
 
     // rehighlight all injected PSI regardless the range,
     // since change in one place can lead to invalidation of injected PSI in (completely) other place.
@@ -207,8 +213,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     hosts.addAll(elements);
 
     final Collection<PsiFile> injectedFiles = new THashSet<PsiFile>();
-    final AnnotationHolderImpl annotationHolder = createAnnotationHolder();
-    final Map<TextRange,Collection<HighlightInfo>> result = new THashMap<TextRange, Collection<HighlightInfo>>(hosts.size());
     for (PsiElement element : hosts) {
       InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
@@ -216,7 +220,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       }, false);
     }
-
+    if (injectedFiles.isEmpty()) return;
+    AnnotationHolderImpl annotationHolder = createAnnotationHolder();
     for (PsiFile injectedPsi : injectedFiles) {
       highlightInjectedIn(injectedPsi, annotationHolder, refCountHolder);
       DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
@@ -225,15 +230,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         TextRange textRange = documentWindow.getHostRange(highlightInfo.startOffset);
         Collection<HighlightInfo> infos = result.get(textRange);
         if (infos == null) {
-          infos = new ArrayList<HighlightInfo>(10);
+          infos = new ArrayList<HighlightInfo>();
           result.put(textRange, infos);
         }
         infos.add(highlightInfo);
       }
       annotationHolder.clear();
     }
-
-    return result;
   }
 
   private static void highlightInjectedIn(PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final RefCountHolder refCountHolder) {
@@ -420,8 +423,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         HighlightInfo info = holder.get(j);
         // have to filter out already obtained highlights
         if (!gotHighlights.add(info)) continue;
-        if (!isAntFile && info.getSeverity() == HighlightSeverity.ERROR) {
-          skipParentsSet.add(element.getParent());
+        boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
+        if (isError) {
+          if (!isAntFile) {
+            skipParentsSet.add(element.getParent());
+          }
+          myErrorFound = true;
         }
       }
     }

@@ -666,12 +666,12 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (refCountHolder != null) {
       if (attributeDescriptor.hasIdType()) {
-        if (doAddValueWithIdType(value, attribute, tag, refCountHolder, false)) return;
+        if (doAddValueWithIdType(value, refCountHolder, false)) return;
       } else {
         refs = value.getReferences();
         for(PsiReference r:refs) {
           if (r instanceof IdReferenceProvider.GlobalAttributeValueSelfReference) {
-            if (doAddValueWithIdType(value, attribute, tag, refCountHolder, r.isSoft())) return;
+            if (doAddValueWithIdType(value, refCountHolder, r.isSoft())) return;
           }
         }
       }
@@ -684,35 +684,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     doCheckRefs(value, quickFixProvider, refs);
   }
 
-  private boolean doAddValueWithIdType(final XmlAttributeValue value, final XmlAttribute attribute, final XmlTag tag,
+  private static boolean doAddValueWithIdType(final XmlAttributeValue value,
                                        final RefCountHolder refCountHolder, boolean soft) {
-    final String unquotedValue = getUnquotedValue(value, tag);
+    refCountHolder.registerPossiblyDuplicatedElement(value, soft ? Boolean.TRUE: Boolean.FALSE);
 
-    if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue, value)) {
-      final XmlAttribute attributeById = refCountHolder.getAttributeById(unquotedValue);
-
-      if (attributeById == null ||
-          !attributeById.isValid() ||
-          attributeById == attribute ||
-          soft ||
-          isSoftContext(attributeById)
-         ) {
-        if (!soft || attributeById == null) refCountHolder.registerAttributeWithId(unquotedValue,attribute);
-      } else {
-        final XmlAttributeValue valueElement = attributeById.getValueElement();
-
-        if (valueElement != null && getUnquotedValue(valueElement, tag).equals(unquotedValue)) {
-          if (tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null) {
-            refCountHolder.registerDuplicatedElement(value);
-            refCountHolder.registerDuplicatedElement(valueElement);
-          }
-          return true;
-        } else {
-          // attributeById previously has that id so reregister new one
-          refCountHolder.registerAttributeWithId(unquotedValue,attribute);
-        }
-      }
-    }
     return false;
   }
 
@@ -865,6 +840,70 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     parent.putUserData(DO_NOT_VALIDATE_KEY, "");
+  }
+
+  private static void processAttributeValue(@NotNull XmlAttributeValue value, boolean soft, final @NotNull RefCountHolder refCountHolder,
+                                            final @NotNull List<HighlightInfo> highlights) {
+    final PsiElement parent = value.getParent();
+    if (!(parent instanceof XmlAttribute)) return;
+    XmlAttribute attribute = (XmlAttribute)parent;
+    XmlTag tag = attribute.getParent();
+    if (tag == null) return;
+
+    final String unquotedValue = getUnquotedValue(value, tag);
+
+    if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue, value)) {
+      final XmlAttribute attributeById = refCountHolder.getAttributeById(unquotedValue);
+
+      if (attributeById == null ||
+          !attributeById.isValid() ||
+          attributeById == attribute ||
+          soft ||
+          isSoftContext(attributeById)
+         ) {
+        if (!soft || attributeById == null) refCountHolder.registerAttributeWithId(unquotedValue,attribute);
+      } else {
+        final XmlAttributeValue valueElement = attributeById.getValueElement();
+
+        if (valueElement != null && getUnquotedValue(valueElement, tag).equals(unquotedValue)) {
+          if (tag.getParent().getUserData(DO_NOT_VALIDATE_KEY) == null) {
+            highlights.add(
+              HighlightInfo.createHighlightInfo(
+                HighlightInfoType.WRONG_REF,
+                value,
+                XmlErrorMessages.message("duplicate.id.reference")
+              )
+            );
+            highlights.add(
+              HighlightInfo.createHighlightInfo(
+                HighlightInfoType.WRONG_REF,
+                valueElement,
+                XmlErrorMessages.message("duplicate.id.reference")
+              )
+            );
+          }
+        } else {
+          // attributeById previously has that id so reregister new one
+          refCountHolder.registerAttributeWithId(unquotedValue,attribute);
+        }
+      }
+    }
+  }
+
+  public static void checkDuplicates(final @NotNull Map<PsiElement, Boolean> possiblyDuplicatedElementsMap,
+                                     final @NotNull RefCountHolder refCountHolder,
+                                     final @NotNull List<HighlightInfo> highlights) {
+    for (Iterator<Map.Entry<PsiElement, Boolean>> entryIterator = possiblyDuplicatedElementsMap.entrySet().iterator(); entryIterator.hasNext();) {
+      Map.Entry<PsiElement, Boolean> entry = entryIterator.next();
+      final XmlAttributeValue value = (XmlAttributeValue)entry.getKey();
+
+      if (value.isValid()) {
+        processAttributeValue(value, entry.getValue(), refCountHolder, highlights);
+      }
+      else {
+        entryIterator.remove();
+      }
+    }
   }
 
   private static class RemoveAttributeIntentionFix implements IntentionAction {

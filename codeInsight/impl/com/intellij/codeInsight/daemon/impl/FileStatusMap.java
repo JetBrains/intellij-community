@@ -55,6 +55,27 @@ public class FileStatusMap {
     return dirtyScope.getTextRange();
   }
 
+  public void setErrorFoundFlag(Document document, boolean errorFound) {
+    //GHP has found error. Flag is used by ExternalToolPass to decide whether to run itself or not
+    synchronized(myDocumentToStatusMap){
+      FileStatus status = myDocumentToStatusMap.get(document);
+      if (status == null){
+        if (!errorFound) return;
+        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        status = new FileStatus(file);
+        myDocumentToStatusMap.put(document, status);
+      }
+      status.errorFound = errorFound;
+    }
+  }
+  
+  public boolean wasErrorFound(Document document) {
+    synchronized(myDocumentToStatusMap){
+      FileStatus status = myDocumentToStatusMap.get(document);
+      return status != null && status.errorFound;
+    }
+  }
+
   private static class FileStatus {
     private PsiElement dirtyScope; //Q: use WeakReference?
     private PsiElement overridenDirtyScope;
@@ -62,6 +83,7 @@ public class FileStatusMap {
     public boolean defensivelyMarked; // file marked dirty without knowlesdge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
     private boolean wolfPassFinfished;
     private PsiElement externalDirtyScope;
+    private boolean errorFound;
 
     private FileStatus(PsiElement dirtyScope) {
       this.dirtyScope = dirtyScope;
@@ -165,7 +187,8 @@ public class FileStatusMap {
       status.dirtyScope = combined1 == null ? PsiDocumentManager.getInstance(myProject).getPsiFile(document) : combined1;
       final PsiElement combined2 = combineScopes(status.localInspectionsDirtyScope, scope);
       status.localInspectionsDirtyScope = combined2 == null ? PsiDocumentManager.getInstance(myProject).getPsiFile(document) : combined2;
-      //status.overridenDirtyScope = combineScopes(status.overridenDirtyScope, scope);
+      status.overridenDirtyScope = combineScopes(status.overridenDirtyScope, scope);
+      status.externalDirtyScope = combineScopes(status.externalDirtyScope, scope);
     }
   }
 

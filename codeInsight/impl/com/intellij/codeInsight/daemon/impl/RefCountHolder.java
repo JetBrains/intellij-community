@@ -29,7 +29,7 @@ public class RefCountHolder {
   private final Map<String, XmlAttribute> myXmlId2AttributeMap = new THashMap<String, XmlAttribute>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
   private final Set<PsiNamedElement> myUsedElements = new THashSet<PsiNamedElement>();
-  private final Set<PsiElement> myDuplicatedElements = new THashSet<PsiElement>();
+  private final THashMap<PsiElement,Boolean> myPossiblyDuplicatedElementsSoftMap = new THashMap<PsiElement,Boolean>();
   private final AtomicInteger myState = new AtomicInteger(State.VIRGIN);
 
   private interface State {
@@ -50,7 +50,7 @@ public class RefCountHolder {
     myDclsUsedMap.clear();
     myXmlId2AttributeMap.clear();
     myUsedElements.clear();
-    myDuplicatedElements.clear();
+    myPossiblyDuplicatedElementsSoftMap.clear();
   }
 
   public void registerLocallyReferenced(@NotNull PsiNamedElement result) {
@@ -58,9 +58,9 @@ public class RefCountHolder {
     myDclsUsedMap.put(result,Boolean.TRUE);
   }
 
-  public void registerDuplicatedElement(@NotNull PsiElement result) {
+  public void registerPossiblyDuplicatedElement(@NotNull PsiElement result, Boolean status) {
     assertIsAnalyzing();
-    myDuplicatedElements.add(result);
+    myPossiblyDuplicatedElementsSoftMap.put(result, status);
   }
 
   private static void addStatistics(final PsiNamedElement dcl) {
@@ -72,14 +72,10 @@ public class RefCountHolder {
   }
 
   public void registerAttributeWithId(@NotNull String id, XmlAttribute attr) {
-    assertIsAnalyzing();
     myXmlId2AttributeMap.put(id,attr);
   }
 
   public XmlAttribute getAttributeById(String id) {
-    /* TODO[cdr, maxim.mossienko]
-    LOG.assertTrue(myState);
-    */
     return myXmlId2AttributeMap.get(id);
   }
 
@@ -224,9 +220,9 @@ public class RefCountHolder {
     return false;
   }
 
-  public Collection<PsiElement> getDuplicatedElements() {
+  public Map<PsiElement, Boolean> getPossiblyDuplicatedElementsMap() {
     assertIsRetrieving();
-    return myDuplicatedElements;
+    return myPossiblyDuplicatedElementsSoftMap;
   }
 
   public List<PsiNamedElement> getUnusedDcls() {

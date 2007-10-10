@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.FileViewProvider;
@@ -47,13 +46,8 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
       final List<ExternalAnnotator> externalAnnotators = language.getExternalAnnotators();
 
       if (!externalAnnotators.isEmpty()) {
-        final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject, myStartOffset, myEndOffset);
-
-        for (HighlightInfo error : errors) {
-          if (error.group != Pass.EXTERNAL_TOOLS) {
-            return;
-          }
-        }
+        boolean errorFound = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().wasErrorFound(myDocument);
+        if (errorFound) return;
         for(ExternalAnnotator externalAnnotator: externalAnnotators) {
           externalAnnotator.annotate(psiRoot, myAnnotationHolder);
         }
@@ -63,7 +57,6 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
 
   public void doApplyInformationToEditor() {
     List<HighlightInfo> infos = getHighlights();
-
     // This should be done for any result for removing old highlights
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos, Pass.EXTERNAL_TOOLS);
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);

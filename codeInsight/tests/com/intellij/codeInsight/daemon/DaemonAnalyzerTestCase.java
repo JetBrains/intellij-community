@@ -198,6 +198,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
 
     if (isToLaunchExternal && doExternalValidation() || forceExternalValidation()) {
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().setErrorFoundFlag(getDocument(getFile()), false);
       ExternalToolPass action3 = new ExternalToolPass(file, editor, 0, editor.getDocument().getTextLength());
       action3.doCollectInformation(new MockProgressIndicator());
       result.addAll(action3.getHighlights());

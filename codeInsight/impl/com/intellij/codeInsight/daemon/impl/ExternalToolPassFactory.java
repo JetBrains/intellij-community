@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -20,7 +19,8 @@ import org.jetbrains.annotations.Nullable;
 public class ExternalToolPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   public ExternalToolPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL, Pass.UPDATE_VISIBLE}, new int[]{Pass.LOCAL_INSPECTIONS}, true, Pass.EXTERNAL_TOOLS);
+    // start after PostHighlightingPass completion since it could report errors that can prevent us to run
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.POST_UPDATE_ALL}, null, true, Pass.EXTERNAL_TOOLS);
   }
 
   @NonNls
