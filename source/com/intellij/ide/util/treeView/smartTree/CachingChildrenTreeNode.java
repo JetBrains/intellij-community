@@ -112,7 +112,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       processUngrouped(ungrouped, grouper);
     }
 
-    Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    Collection<AbstractTreeNode> result = new LinkedHashSet<AbstractTreeNode>();
     for (AbstractTreeNode child : children) {
       AbstractTreeNode parent = child.getParent();
       if (parent != this) {

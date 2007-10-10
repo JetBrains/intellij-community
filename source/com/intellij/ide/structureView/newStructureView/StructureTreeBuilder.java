@@ -73,7 +73,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
                 setupUpdateAlarm();
               }
             }
-          }, 300, ModalityState.stateForComponent(myTree));
+          }, 500, ModalityState.stateForComponent(myTree));
         }
       }
     };
