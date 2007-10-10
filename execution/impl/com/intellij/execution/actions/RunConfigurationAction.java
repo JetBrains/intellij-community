@@ -43,7 +43,7 @@ public class RunConfigurationAction extends ComboBoxAction {
       return;
     }
 
-    if (project == null) {
+    if (project == null || project.isDisposed()) {
       //if (ProjectManager.getInstance().getOpenProjects().length > 0) {
       //  // do nothing if frame is not active
       //  return;
