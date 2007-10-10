@@ -232,6 +232,9 @@ public abstract class ProjectLevelVcsManager {
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();
   public abstract List<VcsDirectoryMapping> getDirectoryMappings(AbstractVcs vcs);
 
+  @Nullable
+  public abstract VcsDirectoryMapping getDirectoryMappingFor(FilePath path);
+
   /**
    * This method can be used only when initially loading the project configuration!
    */

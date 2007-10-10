@@ -587,6 +587,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myDirectoryMappingList.getDirectoryMappings(vcs.getName());
   }
 
+  @Nullable
+  public VcsDirectoryMapping getDirectoryMappingFor(final FilePath path) {
+    VirtualFile vFile = ChangesUtil.findValidParent(path);
+    if (vFile != null) {
+      return myDirectoryMappingList.getMappingFor(vFile);
+    }
+    return null;
+  }
+
   public boolean hasExplicitMapping(final FilePath f) {
     VirtualFile vFile = ChangesUtil.findValidParent(f);
     if (vFile == null) return false;
