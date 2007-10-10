@@ -41,7 +41,7 @@ public class PluginInstaller {
     boolean result = false;
 
     for (PluginNode pluginNode : plugins) {
-      pi.setText(pluginNode.getName());
+      if (pi != null) pi.setText(pluginNode.getName());
 
       try {
         result |= prepareToInstall(pluginNode, true, count, total);
