@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.annotator.quickFixes;
+package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
