@@ -252,19 +252,26 @@ public class AntBuildFileImpl implements AntBuildFileBase {
             return target.getName();
           }
         });
+      targetByName.remove(null); // ensure there are no targets with 'null' name
       final ArrayList<TargetFilter> filters = TARGET_FILTERS.getModifiableList(myAllOptions);
       for (Iterator<TargetFilter> iterator = filters.iterator(); iterator.hasNext();) {
-        TargetFilter filter = iterator.next();
-        String name = filter.getTargetName();
-        AntBuildTarget target = targetByName.get(name);
-        if (target != null) {
-          filter.updateDescription(target);
-          targetByName.remove(name);
-        }
-        else {
+        final TargetFilter filter = iterator.next();
+        final String name = filter.getTargetName();
+        if (name == null) {
           iterator.remove();
         }
+        else {
+          AntBuildTarget target = targetByName.get(name);
+          if (target != null) {
+            filter.updateDescription(target);
+            targetByName.remove(name);
+          }
+          else {
+            iterator.remove();
+          }
+        }
       }
+      // handle the rest of targets with non-null names
       for (AntBuildTarget target : targetByName.values()) {
         filters.add(TargetFilter.fromTarget(target));
       }
