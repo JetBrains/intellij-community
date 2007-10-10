@@ -63,7 +63,7 @@
       <reference id="ChangesView.Browse"/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
-    <group id="SubversionUpdateActionGroup">
+    <group id="SubversionUpdateActionGroup" class="org.jetbrains.idea.svn.actions.SubversionGroup">
       <reference id="Subversion.Add"/>
       <reference id="ChangesView.Rollback"/>
       <reference id="Subversion.Resolve"/>
