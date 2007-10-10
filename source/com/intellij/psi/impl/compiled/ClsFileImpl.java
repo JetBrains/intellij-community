@@ -135,6 +135,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return getClasses(); // TODO : package statement?
   }
 
+  @Nullable
+  public ClsClassImpl getCachedClass() {
+    return myClass;
+  }
+
   @NotNull
   public PsiClass[] getClasses() {
     long id = getRepositoryId();

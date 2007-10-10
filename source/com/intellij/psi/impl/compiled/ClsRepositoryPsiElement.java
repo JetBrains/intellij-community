@@ -43,7 +43,6 @@ public abstract class ClsRepositoryPsiElement extends ClsElementImpl implements 
 
 
   public void prepareToRepositoryIdInvalidation() {
-    LOG.assertTrue(false);
   }
 
   public final PsiManager getManager() {
