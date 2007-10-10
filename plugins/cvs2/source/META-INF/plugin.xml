@@ -67,7 +67,7 @@
       </action>
     </group>
 
-    <group id="CvsActions">
+    <group id="CvsActions" class="com.intellij.cvsSupport2.actions.Cvs2Group">
       <reference id="CheckinFiles"/>
       <reference id="ChangesView.Rollback"/>
       <reference id="UpdateFiles"/>
