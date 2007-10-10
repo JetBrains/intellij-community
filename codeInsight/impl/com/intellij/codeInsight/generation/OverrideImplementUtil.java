@@ -442,24 +442,25 @@ public class OverrideImplementUtil {
       int offset = editor.getCaretModel().getOffset();
       int lbraceOffset = aClass.getLBrace().getTextOffset();
       if (offset <= lbraceOffset || aClass.isEnum()) {
-        ArrayList<PsiGenerationInfo<PsiMethod>> list = new ArrayList<PsiGenerationInfo<PsiMethod>>();
+        resultMembers = new ArrayList<PsiGenerationInfo<PsiMethod>>();
         for (PsiMethodMember candidate : candidates) {
           Collection<PsiMethod> prototypes = overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(),
                                                              copyJavadoc, insertAtOverride);
           for (PsiMethod prototype : prototypes) {
             PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, candidate.getElement(), candidate.getSubstitutor());
             PsiElement result = GenerateMembersUtil.insert(aClass, prototype, anchor, true);
-            list.add(new PsiGenerationInfo<PsiMethod>((PsiMethod)result));
+            resultMembers.add(new PsiGenerationInfo<PsiMethod>((PsiMethod)result));
           }
         }
-        resultMembers = list;
       }
       else{
         List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertAtOverride);
         resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
       }
 
-      GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), true);
+      if (!resultMembers.isEmpty()) {
+        GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), true);
+      }
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
