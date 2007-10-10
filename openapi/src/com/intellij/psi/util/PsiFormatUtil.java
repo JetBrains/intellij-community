@@ -433,10 +433,12 @@ public class PsiFormatUtil {
       }
       else if (owner instanceof PsiParameter) {
         final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
-        return builder.toString() + " " + formatMethod(psiMethod, PsiSubstitutor.EMPTY,
-                                                       SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
-                                                       SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES) + " " + formatVariable(
-          (PsiVariable)owner, SHOW_NAME, PsiSubstitutor.EMPTY);
+        if (psiMethod != null) {
+          return builder.toString() + " " + formatMethod(psiMethod, PsiSubstitutor.EMPTY,
+                                                         SHOW_NAME | SHOW_FQ_NAME | SHOW_TYPE | SHOW_PARAMETERS | SHOW_FQ_CLASS_NAMES,
+                                                         SHOW_NAME | SHOW_TYPE | SHOW_FQ_CLASS_NAMES) + " " + formatVariable(
+            (PsiVariable)owner, SHOW_NAME, PsiSubstitutor.EMPTY);
+        }
       }
     }
     finally {
