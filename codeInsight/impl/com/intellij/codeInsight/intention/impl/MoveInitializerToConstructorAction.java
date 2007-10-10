@@ -117,7 +117,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
       }
     }
     PsiElement newStatement = codeBlock.addBefore(statement,anchor);
-    replaceWithQualifiedReferences(newStatement);
+    replaceWithQualifiedReferences(newStatement, newStatement);
     return newStatement;
   }
 
@@ -134,11 +134,11 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     return result.get().booleanValue();
   }
 
-  private static void replaceWithQualifiedReferences(final PsiElement expression) throws IncorrectOperationException {
+  private static void replaceWithQualifiedReferences(final PsiElement expression, PsiElement root) throws IncorrectOperationException {
     PsiReference reference = expression.getReference();
     if (reference != null) {
       PsiElement resolved = reference.resolve();
-      if (resolved instanceof PsiVariable && !(resolved instanceof PsiField)) {
+      if (resolved instanceof PsiVariable && !(resolved instanceof PsiField) && !PsiTreeUtil.isAncestor(root, resolved, false)) {
         PsiVariable variable = (PsiVariable)resolved;
         PsiElementFactory factory = resolved.getManager().getElementFactory();
         PsiElement qualifiedExpr = factory.createExpressionFromText("this." + variable.getName(), expression);
@@ -147,7 +147,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     }
     else {
       for (PsiElement child : expression.getChildren()) {
-        replaceWithQualifiedReferences(child);
+        replaceWithQualifiedReferences(child, root);
       }
     }
   }
