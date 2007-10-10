@@ -15,13 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.control.additional;
 
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.filters.ElementFilter;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ilyas
@@ -31,6 +31,7 @@ public class CatchFinallyFilter implements ElementFilter {
     if (context != null &&
         GroovyCompletionUtil.nearestLeftSibling(context) instanceof GrTryCatchStatement) {
       GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context);
+      if (tryStatement == null) return false;
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }
@@ -39,14 +40,16 @@ public class CatchFinallyFilter implements ElementFilter {
         GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement &&
         GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling() instanceof GrTryCatchStatement) {
       GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling();
+      if (tryStatement == null) return false;
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }
     }
-    if (context.getParent() != null &&
-        context.getParent() instanceof GrReferenceExpression &&
+    if (context != null &&
+        (context.getParent() instanceof GrReferenceExpression || context.getParent() instanceof PsiErrorElement) &&
         GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof GrTryCatchStatement) {
       GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context.getParent());
+      if (tryStatement == null) return false;
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }

@@ -1,0 +1,4 @@
+try {}
+fin<caret>
+-----
+finally
