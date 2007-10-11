@@ -184,9 +184,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
             else {
               parent = FilePathImpl.create(path.getIOFile().getParentFile());
             }
-            for (FilePath filePath : myDirtyFiles) {
-              if (filePath.equals(parent) || filePath.equals(path)) return Boolean.TRUE;
-            }
+            if (myDirtyFiles.contains(parent) || myDirtyFiles.contains(path)) return Boolean.TRUE;
           }
 
           return Boolean.FALSE;
