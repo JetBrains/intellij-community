@@ -29,6 +29,7 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -508,6 +509,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(final AnActionEvent e) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
       showCompletionPopup(e, new JList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFindStrings())), "Recent Searches");
     }
   }
@@ -526,6 +528,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         return;
       }
 
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("find.completion");
       final JList list = new JList(array);
       list.setBackground(COMPLETION_BACKGROUND_COLOR);
       list.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));

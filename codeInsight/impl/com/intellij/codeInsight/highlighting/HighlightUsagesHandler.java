@@ -43,6 +43,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -379,6 +380,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (classTypes.length == 0) return EMPTY_HIGHLIGHT_RUNNABLE;
     return new ChooseClassAndDoHighlightRunnable(classTypes, editor, CodeInsightBundle.message("highlight.overridden.classes.chooser.title")) {
       protected void selected(PsiClass... classes) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.implements");
         List<PsiElement> toHighlight = new ArrayList<PsiElement>();
         for (PsiMethod method : aClass.getMethods()) {
           List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();

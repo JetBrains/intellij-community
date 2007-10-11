@@ -72,6 +72,12 @@
       first-show="2"
       successive-show="5"
       />
+    <feature
+      id="navigation.goto.usages"
+      tip-file="ShowUsages.html"
+      min-usage-count="3"
+      first-show="5"
+      successive-show="5"/>
   </group>
 
   <group id="completion">
@@ -137,6 +143,13 @@
       tip-file="CamelHumpsInCodeCompletion.html"
       min-usage-count="8"
       first-show="5"
+      successive-show="7"
+      />
+    <feature
+      id="editing.completion.completeStatement"
+      tip-file="CompleteMethod.html"
+      min-usage-count="5"
+      first-show="10"
       successive-show="7"
       />
   </group>
@@ -245,7 +258,15 @@
       successive-show="5"
       min-usage-count="10"
       />
+    <feature
+      id="codeassists.highlight.implements"
+      tip-file="HighlightImplements.html"
+      first-show="3"
+      successive-show="5"
+      min-usage-count="5"
+      />
   </group>
+
   <group id="refactoring">
     <feature 
       id="refactoring.move.moveInner" 
@@ -325,7 +346,18 @@
       first-show="7"
       successive-show="3"
       min-usage-count="1"/>
+    <feature id="find.recent.search"
+      tip-file="RecentSearch.html"
+      first-show="10"
+      successive-show="3"
+      min-usage-count="5"/>
+    <feature id="find.completion"
+      tip-file="CodeCompletionInSearch.html"
+      first-show="10"
+      successive-show="3"
+      min-usage-count="5"/>
   </group>
+
   <group id="ant">
     <feature
       id="ant.quickfix.CreateProperty"

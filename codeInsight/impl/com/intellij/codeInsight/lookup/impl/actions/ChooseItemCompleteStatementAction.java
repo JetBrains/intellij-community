@@ -2,6 +2,7 @@ package com.intellij.codeInsight.lookup.impl.actions;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
@@ -15,8 +16,7 @@ public class ChooseItemCompleteStatementAction extends EditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      // TODO: NEEEDS TIPS TOPIC!!!
-      // FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.replace");
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.completeStatement");
 
       LookupImpl lookup = editor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY);
       lookup.finishLookup(Lookup.COPMLETE_STATEMENT_SELECT_CHAR);

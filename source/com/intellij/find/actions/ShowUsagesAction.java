@@ -3,6 +3,7 @@ package com.intellij.find.actions;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -35,8 +36,9 @@ import com.intellij.util.Processor;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 public class ShowUsagesAction extends AnAction {
   public ShowUsagesAction() {
@@ -49,6 +51,7 @@ public class ShowUsagesAction extends AnAction {
       return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
 
     UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
     Editor editor = e.getData(DataKeys.EDITOR);
