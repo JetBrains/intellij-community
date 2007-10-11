@@ -54,5 +54,5 @@ public abstract class ManagingFS implements FileSystemInterface {
   public abstract VirtualFile[] getRoots(final NewVirtualFileSystem fs);
 
 
-  public abstract VirtualFile[] getRoots();
+  public abstract VirtualFile[] getLocalRoots();
 }

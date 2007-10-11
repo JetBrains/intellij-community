@@ -2,29 +2,32 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.FileContentProvider;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PendingEventDispatcher;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.io.File;
-import java.io.IOException;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
 
@@ -193,14 +196,14 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         ApplicationManager.getApplication().assertIsDispatchThread();
       }
 
-      //RefreshQueue.getInstance().refresh(asynchronous, true, postAction, ManagingFS.getInstance().getRoots()); // TODO: Get an idea how to deliver chnages from local FS to jar fs before they go refresh
+      RefreshQueue.getInstance().refresh(asynchronous, true, postAction, ManagingFS.getInstance().getLocalRoots()); // TODO: Get an idea how to deliver chnages from local FS to jar fs before they go refresh
 
-      final VirtualFile[] managedRoots = ManagingFS.getInstance().getRoots();
-      for (int i = 0; i < managedRoots.length; i++) {
-        VirtualFile root = managedRoots[i];
-        boolean last = i + 1 == managedRoots.length;
-        RefreshQueue.getInstance().refresh(asynchronous, true, last ? postAction : null, root);
-      }
+      //final VirtualFile[] managedRoots = ManagingFS.getInstance().getRoots();
+      //for (int i = 0; i < managedRoots.length; i++) {
+      //  VirtualFile root = managedRoots[i];
+      //  boolean last = i + 1 == managedRoots.length;
+      //  RefreshQueue.getInstance().refresh(asynchronous, true, last ? postAction : null, root);
+      //}
 
       for (VirtualFileSystem fileSystem : myFileSystems) {
         if (!(fileSystem instanceof NewVirtualFileSystem)) {

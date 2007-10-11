@@ -55,10 +55,9 @@ public class JarHandler implements FileSystemInterface {
     myFileSystem = fileSystem;
     myBasePath = path;
 
-    NewVirtualFile localJarFile = (NewVirtualFile)LocalFileSystem.getInstance().findFileByPath(path);
+    NewVirtualFile localJarFile = (NewVirtualFile)LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     if (localJarFile != null) {
       localJarFile.markDirty();
-      localJarFile.refresh(true, false); // Make sure local file system is aware of this file and will fire events if it changes
     }
   }
 

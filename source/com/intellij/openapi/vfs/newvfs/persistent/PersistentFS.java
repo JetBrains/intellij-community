@@ -513,20 +513,19 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     RefreshQueue.getInstance().refresh(asynchronous, true, null, roots);
   }
 
-  public VirtualFile[] getRoots() {
+  public VirtualFile[] getLocalRoots() {
     List<NewVirtualFile> roots;
     synchronized (LOCK) {
       roots = new ArrayList<NewVirtualFile>(myRoots.values());
-    }
 
-    Collections.sort(roots, new Comparator<NewVirtualFile>() {
-      public int compare(final NewVirtualFile f1, final NewVirtualFile f2) {
-        final NewVirtualFileSystem fs1 = f1.getFileSystem();
-        final NewVirtualFileSystem fs2 = f2.getFileSystem();
-
-        return fs1.getRank() - fs2.getRank();
+      final Iterator<NewVirtualFile> it = roots.iterator();
+      while (it.hasNext()) {
+        NewVirtualFile file = it.next();
+        if (!file.isInLocalFileSystem()) {
+          it.remove();
+        }
       }
-    });
+    }
 
     return roots.toArray(new VirtualFile[roots.size()]);
   }
