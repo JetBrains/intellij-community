@@ -801,6 +801,10 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   public void setWritable(final VirtualFile file, final boolean writableFlag) throws IOException {
     FileUtil.setReadOnlyAttribute(file.getPath(), !writableFlag);
+    final File ioFile = convertToIOFile(file);
+    if (!ioFile.canWrite()) {
+      throw new IOException("Failed to change read-only flag for " + ioFile.getPath());
+    }
   }
 
   @NonNls
