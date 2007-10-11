@@ -255,8 +255,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   }
 
   public boolean matchesEvent(final LocatableEvent event, final DebugProcessImpl process) throws EvaluateException {
+    if (myMethodName == null || mySignature == null) {
+      return false;
+    }
     final Method method = event.location().method();
-    return method != null && myMethodName.equals(method.name()) && mySignature.getName(process).equals(method.signature());
+    return method != null && method.name().equals(myMethodName) && method.signature().equals(mySignature.getName(process));
   }
 
   public static MethodBreakpoint create(Project project, Document document, int lineIndex) {
