@@ -225,7 +225,13 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       }
     }
     if (javaSdks.isEmpty()){
-      Messages.showErrorDialog("Please, configure Java SDK to be used as IDEA internal platform (1.5 or higher)", "No Java SDK found");
+      String requiredVer = getRequiredJdkVersion(sdk);
+      if (requiredVer != null) {
+        Messages.showErrorDialog(DevKitBundle.message("no.java.sdk.for.idea.sdk.found", requiredVer), "No Java SDK found");
+      }
+      else {
+        Messages.showErrorDialog(DevKitBundle.message("no.idea.sdk.version.found"), "No Java SDK found");
+      }
       return false;
     }
 
@@ -250,33 +256,43 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     final SdkType sdkType = sdk.getSdkType();
     if (sdkType instanceof JavaSdk) {
       final String versionString = sdkType.getVersionString(sdk);
-      try {
-        final VirtualFile mainClassFile =
-          JarFileSystem.getInstance().findFileByPath(ideaSdk.getHomePath() + "/lib/openapi.jar!/com/intellij/openapi/project/Project.class");
-        if (mainClassFile != null) {
-          final BytePointer ptr = new BytePointer(mainClassFile.contentsToByteArray(), 6);
-          int majorVersion = ClsUtil.readU2(ptr);
-          if (versionString != null) {
-            if (majorVersion == 48 && versionString.contains("1.4")) {
-              return true;
-            }
-            if (majorVersion == 49 && (versionString.contains("5.0") || versionString.contains("1.5"))) {
-              return true;
-            }
-            if (majorVersion == 50 && versionString.contains("1.6")) {
-              return true;
-            }
-          }
-        }
-      }
-      catch (IOException e) {
-        return false;
-      }
-      catch (ClsFormatException e) {
-        return false;
+      String requiredJdkVersion = getRequiredJdkVersion(ideaSdk);
+      if (versionString != null && requiredJdkVersion != null && versionString.contains(requiredJdkVersion)) {
+        return true;
       }
     }
     return false;
+  }
+
+  private static int getIdeaClassFileVersion(final Sdk ideaSdk) {
+    int result = -1;
+    final VirtualFile mainClassFile =
+      JarFileSystem.getInstance().findFileByPath(ideaSdk.getHomePath() + "/lib/openapi.jar!/com/intellij/openapi/project/Project.class");
+    if (mainClassFile != null) {
+      final BytePointer ptr;
+      try {
+        ptr = new BytePointer(mainClassFile.contentsToByteArray(), 6);
+        result = ClsUtil.readU2(ptr);
+      }
+      catch (IOException e) {
+        // ignore
+      }
+      catch (ClsFormatException e) {
+        // ignore
+      }
+    }
+    return result;
+  }
+
+  private static String getRequiredJdkVersion(final Sdk ideaSdk) {
+    int classFileVersion = getIdeaClassFileVersion(ideaSdk);
+    String requiredJdkVersion = null;
+    switch(classFileVersion) {
+      case 48: requiredJdkVersion = "1.4"; break;
+      case 49: requiredJdkVersion = "1.5"; break;
+      case 50: requiredJdkVersion = "1.6"; break;
+    }
+    return requiredJdkVersion;
   }
 
   public static void setupSdkPaths(final SdkModificator sdkModificator, final String sdkHome, final Sdk internalJava) {
