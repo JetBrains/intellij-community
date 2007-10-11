@@ -24,6 +24,8 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
@@ -39,6 +41,13 @@ public class ClassInterfaceEnumFilter implements ElementFilter, GroovyElementTyp
     if (context.getParent() != null &&
         (context.getParent() instanceof GrReferenceExpression) &&
         context.getParent().getParent() instanceof GroovyFile) {
+      return true;
+    }
+    if (context.getParent() != null &&
+        (context.getParent() instanceof GrReferenceExpression) &&
+        (context.getParent().getParent() instanceof GrApplicationStatement ||
+            context.getParent().getParent() instanceof GrCall) &&
+        context.getParent().getParent().getParent() instanceof GroovyFile) {
       return true;
     }
     final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
