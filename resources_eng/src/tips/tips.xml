@@ -82,4 +82,6 @@
   <tip file="MavenQuickOpen.html"/>
   <tip file="MoveToChangelist.html"/>
   <tip file="EclipseQuickOpen.html"/>
+    <tip file="ShowUsages.html"/>
+    <tip file="GoToAction.html"/>
 </tips>
