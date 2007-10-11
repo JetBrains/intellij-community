@@ -183,16 +183,19 @@ public class CompleteReferenceExpression {
   }
 
   private static void getVariantsFromQualifier(GrReferenceExpression refExpr, ResolverProcessor processor, GrExpression qualifier) {
+    Project project = qualifier.getProject();
     PsiType qualifierType = qualifier.getType();
     if (qualifierType == null) {
       if (qualifier instanceof GrReferenceExpression) {
         PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
         if (resolved instanceof PsiPackage) {
           resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
+          return;
         }
       }
+      final PsiClassType type = refExpr.getManager().getElementFactory().createTypeByFQClassName(GrTypeDefinition.DEFAULT_BASE_CLASS_NAME, refExpr.getResolveScope());
+      getVariantsFromQualifierType(refExpr, processor, type, project);
     } else {
-      Project project = qualifier.getProject();
       if (qualifierType instanceof PsiIntersectionType) {
         for (PsiType conjunct : ((PsiIntersectionType) qualifierType).getConjuncts()) {
           getVariantsFromQualifierType(refExpr, processor, conjunct, project);
