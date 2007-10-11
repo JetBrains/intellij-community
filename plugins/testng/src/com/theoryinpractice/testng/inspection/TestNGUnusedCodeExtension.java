@@ -4,7 +4,7 @@
  */
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInspection.deadCode.DeadCodeExtension;
+import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -13,8 +13,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
-public class TestNGDeadCodeExtension implements DeadCodeExtension{
+public class TestNGUnusedCodeExtension extends UnusedCodeExtension {
    public boolean ADD_TESTNG_TO_ENTRIES = true;
 
   public boolean isSelected() {
@@ -47,4 +48,8 @@ public class TestNGDeadCodeExtension implements DeadCodeExtension{
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  @Nullable
+  public String[] getIgnoreAnnotations() {
+    return TestNGUtil.CONFIG_ANNOTATIONS_FQN;
+  }
 }

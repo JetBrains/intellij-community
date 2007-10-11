@@ -21,7 +21,7 @@
 package com.intellij.execution.junit2.inspection;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.deadCode.DeadCodeExtension;
+import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefMethod;
@@ -35,7 +35,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jdom.Element;
 
-public class JUnitDeadCodeExtension implements DeadCodeExtension {
+public class JUnitUnusedCodeExtension extends UnusedCodeExtension {
   public boolean ADD_JUNIT_TO_ENTRIES = true;
 
   public String getDisplayName() {

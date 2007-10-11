@@ -53,7 +53,7 @@ public class TestNGUtil implements TestFramework
   public static final String TESTNG_GROUP_NAME = "TestNG";
 
   private static final String TEST_ANNOTATION_FQN = Test.class.getName();
-  private static final String[] CONFIG_ANNOTATIONS_FQN = {
+  public static final String[] CONFIG_ANNOTATIONS_FQN = {
       Configuration.class.getName(),
       BeforeClass.class.getName(),
       BeforeGroups.class.getName(),
