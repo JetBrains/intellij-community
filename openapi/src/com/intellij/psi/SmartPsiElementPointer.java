@@ -17,8 +17,20 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.Nullable;
 
-
+/**
+ * A pointer to a PSI element which can survive PSI reparse.
+ *
+ * @see com.intellij.psi.SmartPointerManager#createSmartPsiElementPointer(PsiElement)
+ * @see com.intellij.psi.SmartPointerManager#createLazyPointer(PsiElement)
+ */
 public interface SmartPsiElementPointer<E extends PsiElement> {
+  /**
+   * Returns the PSI element corresponding to the one from which the smart pointer was created in the
+   * current state of the PSI file.
+   *
+   * @return the PSI element, or null if the PSI reparse has completely invalidated the pointer (for example,
+   * the element referenced by the pointer has been deleted).
+   */
   @Nullable
   E getElement();
 }
