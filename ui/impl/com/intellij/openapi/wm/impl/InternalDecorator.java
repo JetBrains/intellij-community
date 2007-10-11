@@ -256,8 +256,9 @@ public final class InternalDecorator extends JPanel {
 
     if (myInfo.isFloating() && myInfo.isVisible()) {
       final FloatingDecorator floatingDecorator = (FloatingDecorator)SwingUtilities.getAncestorOfClass(FloatingDecorator.class, this);
-      LOG.assertTrue(floatingDecorator != null);
-      floatingDecorator.apply(myInfo);
+      if (floatingDecorator != null) {
+        floatingDecorator.apply(myInfo);
+      }
     }
   }
 
