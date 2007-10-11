@@ -33,10 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
@@ -198,8 +195,8 @@ public abstract class BaseRefactoringProcessor {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            Collection<Usage> usagesSet = Arrays.<Usage>asList(UsageInfo2UsageAdapter.convert(usages));
-            doRefactoring(usagesSet, new HashSet<Usage>());
+            List<UsageInfo> usageInfos = Arrays.asList(usages);
+            doRefactoring(usageInfos);
           }
         });
       }
@@ -252,11 +249,11 @@ public abstract class BaseRefactoringProcessor {
 
     final Runnable refactoringRunnable = new Runnable() {
       public void run() {
-        final Set<Usage> excludedUsageInfos = getExcludedUsages(usageView);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            if (ensureElementsWritable(usageInfos, viewDescriptor)) {
-              doRefactoring(usageView.getUsages(), excludedUsageInfos);
+            Set<UsageInfo> usagesToRefactor = getUsageInfosToRefactor(usageView);
+            if (ensureElementsWritable(usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]), viewDescriptor)) {
+              doRefactoring(usagesToRefactor);
             }
           }
         });
@@ -268,36 +265,27 @@ public abstract class BaseRefactoringProcessor {
     usageView.addPerformOperationAction(refactoringRunnable, getCommandName(), canNotMakeString, RefactoringBundle.message("usageView.doAction"));
   }
 
-  private static Set<Usage> getExcludedUsages(final UsageView usageView) {
-    Set<Usage> usages = usageView.getExcludedUsages();
+  private static Set<UsageInfo> getUsageInfosToRefactor(final UsageView usageView) {
+    Set<Usage> excludedUsages = usageView.getExcludedUsages();
 
-    Set<Usage> excludedUsageInfos = new HashSet<Usage>();
-    for (Usage usage : usages) {
-      if (usage instanceof UsageInfo2UsageAdapter) {
-        excludedUsageInfos.add(usage);
+    Set<UsageInfo> usageInfos = new HashSet<UsageInfo>();
+    for (Usage usage : usageView.getUsages()) {
+      if (usage instanceof UsageInfo2UsageAdapter && !excludedUsages.contains(usage)) {
+        UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
+        usageInfos.add(usageInfo);
       }
     }
-    return excludedUsageInfos;
+    return usageInfos;
   }
 
-  private void doRefactoring(Collection<Usage> usagesSet, Set<Usage> excludedUsages) {
+  private void doRefactoring(@NotNull Collection<UsageInfo> usageInfoSet) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    final Set<UsageInfo> usageInfoSet = new HashSet<UsageInfo>();
-    if (usagesSet != null) {
-      usagesSet.removeAll(excludedUsages);
-
-      for (final Usage usage : usagesSet) {
-        if (usage instanceof PsiElementUsage) {
-          final PsiElementUsage elementUsage = (PsiElementUsage)usage;
-          final PsiElement element = elementUsage.getElement();
-          if (element != null && element.isWritable()) {
-            usageInfoSet.add(((UsageInfo2UsageAdapter)elementUsage).getUsageInfo());
-          }
-        }
-        else {
-          LOG.error("Unknown usage!");
-        }
+    for (Iterator<UsageInfo> iterator = usageInfoSet.iterator(); iterator.hasNext();) {
+      UsageInfo usageInfo = iterator.next();
+      final PsiElement element = usageInfo.getElement();
+      if (element == null || !element.isWritable()) {
+        iterator.remove();
       }
     }
 
@@ -435,7 +423,7 @@ public abstract class BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected Collection<? extends PsiElement> getElementsToWrite(UsageViewDescriptor descriptor) {
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
     return Arrays.asList(descriptor.getElements());
   }
 }
