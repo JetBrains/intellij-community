@@ -2,7 +2,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -359,7 +358,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       if (!field.hasInitializer()) {
-        final boolean isInjected = isInjected(field, unusedSymbolInspection);
+        final boolean isInjected = UnusedSymbolLocalInspection.isInjected(field, unusedSymbolInspection);
         final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
         if (!writeReferenced && !isInjected && !isImplicitWrite(field)) {
           String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.assigned"), identifier.getText());
@@ -389,11 +388,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(false, true, field), key);
     QuickFixAction.registerQuickFixAction(highlightInfo, new CreateGetterOrSetterFix(true, true, field), key);
     return highlightInfo;
-  }
-
-  private static boolean isInjected(final PsiMember member, final UnusedSymbolLocalInspection unusedSymbolInspection) {
-    return AnnotationUtil.isAnnotated(member, UnusedSymbolLocalInspection.STANDARD_INJECTION_ANNOS) ||
-           AnnotationUtil.isAnnotated(member, unusedSymbolInspection.INJECTION_ANNOS);
   }
 
   private static boolean isOverriddenOrOverrides(PsiMethod method) {
@@ -445,7 +439,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private HighlightInfo processMethod(final PsiMethod method, final UnusedSymbolLocalInspection unusedSymbolInspection) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
       final boolean isSetter = PropertyUtil.isSimplePropertySetter(method);
-      final boolean isInjected = isSetter && isInjected(method, unusedSymbolInspection);
+      final boolean isInjected = UnusedSymbolLocalInspection.isInjected(method, unusedSymbolInspection);
       if (!myRefCountHolder.isReferenced(method)) {
         if (isInjected || HighlightMethodUtil.isSerializationRelatedMethod(method) ||
             isIntentionalPrivateConstructor(method) ||

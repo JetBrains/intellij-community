@@ -77,17 +77,17 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   @NonNls private static final String COMMENT = "comment";
   @NonNls private static final String [] HINTS = new String[] {COMMENT, DELETE};
 
-  public final DeadCodeExtension [] myExtensions;
+  public final UnusedCodeExtension[] myExtensions;
 
   public DeadCodeInspection() {
     myQuickFixActions = new QuickFixAction[]{new PermanentDeleteAction(), new CommentOutBin(), new MoveToEntries()};
     final Object[] deadCodeAddins = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL).getExtensions();
     Arrays.sort(deadCodeAddins, new Comparator<Object>() {
       public int compare(final Object o1, final Object o2) {
-        return ((DeadCodeExtension)o1).getDisplayName().compareToIgnoreCase(((DeadCodeExtension)o2).getDisplayName());
+        return ((UnusedCodeExtension)o1).getDisplayName().compareToIgnoreCase(((UnusedCodeExtension)o2).getDisplayName());
       }
     });
-    myExtensions = (DeadCodeExtension[])deadCodeAddins;
+    myExtensions = (UnusedCodeExtension[])deadCodeAddins;
   }
 
   public void initialize(@NotNull final GlobalInspectionContextImpl context) {
@@ -140,7 +140,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       gc.gridy++;
       add(myServletToEntries, gc);
 
-      for (final DeadCodeExtension extension : myExtensions) {
+      for (final UnusedCodeExtension extension : myExtensions) {
         final JCheckBox extCheckbox = new JCheckBox(extension.getDisplayName());
         extCheckbox.setSelected(extension.isSelected());
         extCheckbox.addActionListener(new ActionListener() {
@@ -211,14 +211,14 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   public void readSettings(Element node) throws InvalidDataException {
     super.readSettings(node);
-    for (DeadCodeExtension extension : myExtensions) {
+    for (UnusedCodeExtension extension : myExtensions) {
       extension.readExternal(node);
     }
   }
 
   public void writeSettings(Element node) throws WriteExternalException {
     super.writeSettings(node);
-    for (DeadCodeExtension extension : myExtensions) {
+    for (UnusedCodeExtension extension : myExtensions) {
       extension.writeExternal(node);
     }
   }
@@ -380,7 +380,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         && AnnotationUtil.isAnnotated((PsiModifierListOwner)element, ADDITIONAL_ANNOTATIONS)) {
       return true;
     }
-    for (DeadCodeExtension extension : myExtensions) {
+    for (UnusedCodeExtension extension : myExtensions) {
       if (extension.isEntryPoint(owner)) {
         return true;
       }

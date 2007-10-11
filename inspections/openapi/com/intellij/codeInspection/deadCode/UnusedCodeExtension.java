@@ -18,10 +18,16 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.Nullable;
 
-public interface DeadCodeExtension extends JDOMExternalizable {
-  String getDisplayName();
-  boolean isEntryPoint(RefElement refElement);
-  boolean isSelected();
-  void setSelected(boolean selected);
+public abstract class UnusedCodeExtension implements JDOMExternalizable {
+  public abstract String getDisplayName();
+  public abstract boolean isEntryPoint(RefElement refElement);
+  public abstract boolean isSelected();
+  public abstract void setSelected(boolean selected);
+
+  @Nullable
+  public String [] getIgnoreAnnotations() {
+    return null;
+  }
 }

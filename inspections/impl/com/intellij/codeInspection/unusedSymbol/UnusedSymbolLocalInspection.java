@@ -4,14 +4,21 @@
 
 package com.intellij.codeInspection.unusedSymbol;
 
+import com.intellij.ExtensionPoints;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,10 +27,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -33,6 +38,8 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
   public static final Collection<String> STANDARD_INJECTION_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList(
     "javax.annotation.Resource", "javax.ejb.EJB", "javax.xml.ws.WebServiceRef", "javax.persistence.PersistenceContext",
     "javax.persistence.PersistenceUnit", "javax.persistence.GeneratedValue")));
+
+  public static List<String> ANNOTATIONS = null;
 
   @NonNls public static final String SHORT_NAME = "UNUSED_SYMBOL";
   @NonNls public static final String DISPLAY_NAME = InspectionsBundle.message("unused.symbol");
@@ -124,5 +131,28 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
       QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
       INJECTION_ANNOS, qualifiedName, context);
+  }
+
+  public static List<String> getRegisteredAnnotations() {
+    if (ANNOTATIONS == null) {
+      ANNOTATIONS = new ArrayList<String>();
+      for (Object extension : Extensions.getExtensions(ExtensionPoints.DEAD_CODE_TOOL)) {
+        final String[] annotations = ((UnusedCodeExtension)extension).getIgnoreAnnotations();
+        if (annotations != null) {
+          ANNOTATIONS.addAll(Arrays.asList(annotations));
+        }
+      }
+    }
+    return ANNOTATIONS;
+  }
+
+  public static boolean isInjected(final PsiMember member, final UnusedSymbolLocalInspection unusedSymbolInspection) {
+    if (member instanceof PsiMethod && !PropertyUtil.isSimplePropertySetter(((PsiMethod)member))) {
+      return AnnotationUtil.isAnnotated(member, getRegisteredAnnotations()) ||
+             AnnotationUtil.isAnnotated(member, unusedSymbolInspection.INJECTION_ANNOS);
+    }
+    return AnnotationUtil.isAnnotated(member, getRegisteredAnnotations()) ||
+           AnnotationUtil.isAnnotated(member, unusedSymbolInspection.INJECTION_ANNOS) ||
+           AnnotationUtil.isAnnotated(member, STANDARD_INJECTION_ANNOS);
   }
 }
