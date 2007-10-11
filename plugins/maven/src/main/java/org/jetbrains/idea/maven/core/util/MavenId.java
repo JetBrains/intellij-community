@@ -26,14 +26,6 @@ public class MavenId implements Comparable<MavenId>{
     this.groupId = groupId;
     this.artifactId = artifactId;
     this.version = version;
-
-    assertIsValid();
-  }
-
-  private void assertIsValid() {
-    // todo catch for IDEADEV-21389 exception
-    if (groupId != null && artifactId != null) return;
-    throw new RuntimeException("Invalid artifact " + toString());
   }
 
   public MavenId(Artifact artifact) {
