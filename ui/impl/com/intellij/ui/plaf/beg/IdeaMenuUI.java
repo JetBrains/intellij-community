@@ -163,7 +163,13 @@ public class IdeaMenuUI extends BasicMenuUI{
         g.setColor(selectionForeground);
       }
       if (useCheckAndArrow()){
-        arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
+        try {
+          arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
+        }
+        catch (NullPointerException npe) {
+          // GTKIconFactory$MenuArrowIcon.paintIcon since it doesn't expect to be given a null instead of SynthContext
+          // http://www.jetbrains.net/jira/browse/IDEADEV-22360
+        }
       }
     }
     g.setColor(color2);
