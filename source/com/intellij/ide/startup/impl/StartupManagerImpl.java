@@ -2,6 +2,7 @@ package com.intellij.ide.startup.impl;
 
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -77,11 +78,12 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public synchronized void runPostStartupActivities() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    final Application app = ApplicationManager.getApplication();
+    app.assertIsDispatchThread();
     runActivities(myPostStartupActivities);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      VirtualFileManager.getInstance().refresh(true);
-    }
+
+    if (app.isUnitTestMode()) return;
+    VirtualFileManager.getInstance().refresh(!app.isHeadlessEnvironment());
   }
 
   private static void runActivities(final List<Runnable> activities) {
