@@ -84,4 +84,8 @@
   <tip file="EclipseQuickOpen.html"/>
     <tip file="ShowUsages.html"/>
     <tip file="GoToAction.html"/>
+    <tip file="CompleteMethod.html"/>
+    <tip file="HighlightImplements.html"/>
+    <tip file="RecentSearch.html"/>
+    <tip file="CodeCompletionInSearch.html"/>
 </tips>
