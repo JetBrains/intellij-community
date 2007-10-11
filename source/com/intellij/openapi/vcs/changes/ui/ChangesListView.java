@@ -234,7 +234,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   }
 
   private List<VirtualFile> getSelectedVirtualFiles(final Object tag) {
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    Set<VirtualFile> files = new HashSet<VirtualFile>();
     final TreePath[] paths = getSelectionPaths();
     if (paths != null) {
       for (TreePath path : paths) {
@@ -247,7 +247,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
         }
       }
     }
-    return files;
+    return new ArrayList<VirtualFile>(files);
   }
 
   private List<FilePath> getSelectedMissingFiles() {
