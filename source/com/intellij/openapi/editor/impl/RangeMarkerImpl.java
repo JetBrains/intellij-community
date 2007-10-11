@@ -27,10 +27,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   public RangeMarkerImpl(@NotNull Document document, int start, int end) {
     if (start < 0) {
-      LOG.error("Wrong start: " + start);
+      LOG.error("Wrong start: " + start+"; end="+end);
     }
     else if (end > document.getTextLength()) {
-      LOG.error("Wrong end: " + end+ "; document length="+document.getTextLength());
+      LOG.error("Wrong end: " + end+ "; document length="+document.getTextLength()+"; start="+start);
     }
     else if (start > end){
       LOG.error("start > end: start=" + start+"; end="+end);
