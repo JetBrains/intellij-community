@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -390,10 +391,13 @@ public class FindUtil {
     document.startGuardedBlockChecking();
     boolean isReplaced = false;
     int occurrences = 0;
+    FindManager findManager = FindManager.getInstance(project);
+    boolean toPrompt = model.isPromptOnReplace();
 
+    if (!toPrompt) {
+      ((DocumentEx) document).setInBulkUpdate(true);
+    }
     try {
-      FindManager findManager = FindManager.getInstance(project);
-      boolean toPrompt = model.isPromptOnReplace();
       model = (FindModel)model.clone();
       while (offset >= 0 && offset < editor.getDocument().getTextLength()) {
         caretOffset = offset;
@@ -414,6 +418,7 @@ public class FindUtil {
           }
           if (promptResult == FindManager.PromptResult.ALL) {
             toPrompt = false;
+            ((DocumentEx) document).setInBulkUpdate(true);
           }
         }
 
@@ -441,6 +446,9 @@ public class FindUtil {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
     }
     finally {
+      if (!toPrompt) {
+        ((DocumentEx) document).setInBulkUpdate(false);
+      }
       document.stopGuardedBlockChecking();
     }
 
