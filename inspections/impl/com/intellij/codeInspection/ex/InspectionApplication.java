@@ -98,9 +98,16 @@ public class InspectionApplication {
 
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
       if (!ProjectConversionUtil.convertSilently(myProjectPath, createConversionListener())) {
-        System.exit(1);
+        if (myErrorCodeRequired) System.exit(1);
+        return;
       }
       myProject = ProjectUtil.openOrImport(myProjectPath, null, false);
+
+      if (myProject == null) {
+        logError("Unable to open project");
+        if (myErrorCodeRequired) System.exit(1);
+        return;
+      }
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run(){
