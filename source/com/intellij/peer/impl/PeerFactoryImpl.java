@@ -279,6 +279,7 @@ public class PeerFactoryImpl extends PeerFactory {
         });
       }
 
+      @NotNull
       public FilePath createFilePathOnNonLocal(final String path, final boolean isDirectory) {
         return FilePathImpl.createNonLocal(path, isDirectory);
       }

@@ -37,6 +37,7 @@ public interface VcsContextFactory {
 
   FilePath createFilePathOn(File file, boolean isDirectory);
 
+  @NotNull
   FilePath createFilePathOnNonLocal(String path, boolean isDirectory);
 
   FilePath createFilePathOn(VirtualFile parent, String name);

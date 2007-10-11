@@ -237,6 +237,7 @@ public class FilePathImpl implements FilePath {
   private static Constructor<File> ourFileStringConstructor;
   private static boolean ourFileStringConstructorInitialized;
 
+  @NotNull
   public static FilePath createNonLocal(String path, final boolean directory) {
     path = path.replace('/', File.separatorChar);
     // avoid filename normalization (IDEADEV-10458)
