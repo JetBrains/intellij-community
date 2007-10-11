@@ -36,6 +36,8 @@ public class Page {
     buf = ByteBuffer.allocate(PAGE_SIZE);
     this.owner = owner;
     this.offset = offset;
+    assert offset >= 0;
+
     touch(false);
     owner.loadPage(this);
   }

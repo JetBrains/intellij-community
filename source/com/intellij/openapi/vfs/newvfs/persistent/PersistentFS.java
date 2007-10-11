@@ -324,10 +324,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   public InputStream getInputStream(final VirtualFile file) throws IOException {
     synchronized (INPUT_LOCK) {
-      InputStream contentStream = FILE_CONTENT.readAttribute(file);
-      if (contentStream == null || mustReloadContent(file)) {
-        if (contentStream != null) contentStream.close();
-
+      InputStream contentStream;
+      if (mustReloadContent(file) || (contentStream = FILE_CONTENT.readAttribute(file)) == null) {
         final NewVirtualFileSystem delegate = getDelegate(file);
         final long len = delegate.getLength(file);
         final InputStream nativeStream = delegate.getInputStream(file);

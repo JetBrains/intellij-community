@@ -55,8 +55,10 @@ public class RandomAccessDataFile implements Forceable {
         ourPool.flushPagesInRange(this, addr, len);
         final RandomAccessFile file = getFile();
         try {
-          file.seek(addr);
-          file.write(bytes, off, len);
+          synchronized (file) {
+            file.seek(addr);
+            file.write(bytes, off, len);
+          }
         }
         finally {
           releaseFile();
@@ -85,8 +87,10 @@ public class RandomAccessDataFile implements Forceable {
 
         final RandomAccessFile file = getFile();
         try {
-          file.seek(addr);
-          file.read(bytes, off, len);
+          synchronized (file) {
+            file.seek(addr);
+            file.read(bytes, off, len);
+          }
         }
         finally {
           releaseFile();
@@ -227,9 +231,11 @@ public class RandomAccessDataFile implements Forceable {
     try {
       final RandomAccessFile file = getFile();
       try {
-        file.seek(page.getOffset());
-        final ByteBuffer buf = page.getBuf();
-        file.read(buf.array(), 0, Page.PAGE_SIZE);
+        synchronized (file) {
+          file.seek(page.getOffset());
+          final ByteBuffer buf = page.getBuf();
+          file.read(buf.array(), 0, Page.PAGE_SIZE);
+        }
       }
       finally {
         releaseFile();
@@ -256,8 +262,10 @@ public class RandomAccessDataFile implements Forceable {
 
     final RandomAccessFile file = getFile();
     try {
-      file.seek(offset);
-      file.write(buf.array(), 0, length);
+      synchronized (file) {
+        file.seek(offset);
+        file.write(buf.array(), 0, length);
+      }
     }
     finally {
       releaseFile();

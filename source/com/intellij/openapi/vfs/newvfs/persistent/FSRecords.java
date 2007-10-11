@@ -17,10 +17,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -713,6 +710,8 @@ public class FSRecords implements Disposable, Forceable {
         int encodedAttId = DbConnection.getAttributeId(attId);
         int att_page = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
         while (att_page != 0) {
+          assert att_page >= 0 && att_page <= getAttributes().getRecordsCount();
+
           final DataInputStream page = getAttributes().readStream(att_page);
           int attIdOnPage;
           int next;
@@ -776,19 +775,38 @@ public class FSRecords implements Disposable, Forceable {
     return result;
   }
 
-  @NotNull
-  public DataOutputStream writeAttribute(final int id, final String attId) {
-    synchronized (lock) {
-      try {
-        DbConnection.markDirty();
-        final int encodedAttId = DbConnection.getAttributeId(attId);
-        final int headPage = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
-        return findPageToWrite(id, encodedAttId, headPage);
-      }
-      catch (IOException e) {
-        throw DbConnection.handleError(e);
+  private class AttributeOutputStream extends DataOutputStream {
+    private String myAttributeId;
+    private int myFileId;
+
+    private AttributeOutputStream(final int fileId, final String attributeId) {
+      super(new ByteArrayOutputStream());
+      myFileId = fileId;
+      myAttributeId = attributeId;
+    }
+
+    public void close() throws IOException {
+      super.close();
+
+      synchronized (lock) {
+        try {
+          DbConnection.markDirty();
+          final int encodedAttId = DbConnection.getAttributeId(myAttributeId);
+          final int headPage = getRecords().getInt(myFileId * RECORD_SIZE + ATTREF_OFFSET);
+          final DataOutputStream sinkStream = findPageToWrite(myFileId, encodedAttId, headPage);
+          sinkStream.write(((ByteArrayOutputStream)out).toByteArray());
+          sinkStream.close();
+        }
+        catch (IOException e) {
+          throw DbConnection.handleError(e);
+        }
       }
     }
+  }
+
+  @NotNull
+  public DataOutputStream writeAttribute(final int id, final String attId) {
+    return new AttributeOutputStream(id, attId);
   }
 
   public void disposeAndDeleteFiles() {

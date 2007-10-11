@@ -90,6 +90,10 @@ public class Storage implements Disposable, Forceable {
     }
   }
 
+  public int getRecordsCount() {
+    return myRecordsTable.getRecordsCount();
+  }
+
   private void compact(final String path) {
     synchronized (lock) {
       LOG.info("Space waste in " + path + " is " + myDataTable.getWaste() + " bytes. Compacting now.");
