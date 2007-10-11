@@ -1,5 +1,6 @@
 package com.intellij.ide.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
@@ -19,6 +20,8 @@ public class GotoActionAction extends GotoActionBase {
   public void gotoActionPerformed(final AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
     final Component component = e.getData(DataKeys.CONTEXT_COMPONENT);
+
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.action");
 
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoActionModel(project, component), getPsiContext(e));
     popup.invoke(new ChooseByNamePopupComponent.Callback() {

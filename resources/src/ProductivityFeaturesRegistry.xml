@@ -320,6 +320,11 @@
       min-usage-count="3"
       />
     -->
+    <feature id="navigation.popup.action"
+      tip-file="GoToAction.html"
+      first-show="7"
+      successive-show="3"
+      min-usage-count="1"/>
   </group>
   <group id="ant">
     <feature
