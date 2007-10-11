@@ -233,7 +233,9 @@ public class SvnChangeProvider implements ChangeProvider {
         final VirtualFile virtualFile = path.getVirtualFile();
         if (virtualFile != null) {
           if (myProjectRootManager.getFileIndex().isIgnored(virtualFile)) return;
-          context.getBuilder().processUnversionedFile(virtualFile);
+          if (parentStatus != FileStatus.IGNORED) {
+            context.getBuilder().processUnversionedFile(virtualFile);
+          }
         }
         // process children recursively!
         if (recursively && path.isDirectory() && virtualFile != null) {
