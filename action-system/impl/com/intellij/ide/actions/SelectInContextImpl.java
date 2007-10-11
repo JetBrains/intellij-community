@@ -208,7 +208,9 @@ abstract class SelectInContextImpl implements SelectInContext {
     public FileEditorProvider getFileEditorProvider() {
       return new FileEditorProvider() {
         public FileEditor openFileEditor() {
-          return FileEditorManager.getInstance(getProject()).openFile(myElementToSelect.getContainingFile().getVirtualFile(), false)[0];
+          final FileEditor[] fileEditors =
+            FileEditorManager.getInstance(getProject()).openFile(myElementToSelect.getContainingFile().getVirtualFile(), false);
+          return fileEditors.length > 0 ? fileEditors[0] : null;
         }
       };
     }
