@@ -45,6 +45,9 @@ public class DebuggerPanelsManager implements ProjectComponent{
 
   public DebuggerPanelsManager(Project project, EditorColorsManager colorsManager) {
     myProject = project;
+    
+    myEditorManager = new PositionHighlighter(myProject, getContextManager());
+    
     myColorsListener = new EditorColorsListener() {
       public void globalSchemeChange(EditorColorsScheme scheme) {
         myEditorManager.updateContextPointDescription();
@@ -52,7 +55,6 @@ public class DebuggerPanelsManager implements ProjectComponent{
     };
     colorsManager.addEditorColorsListener(myColorsListener);
     
-    myEditorManager = new PositionHighlighter(myProject, getContextManager());
     getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(final DebuggerContextImpl newContext, int event) {
         if(event == DebuggerSession.EVENT_PAUSE) {
