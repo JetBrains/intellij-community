@@ -253,43 +253,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     final PsiExpression[] expressions = foundExpr.toArray(new PsiExpression[foundExpr.size() + 1]);
     expressions[foundExpr.size()] = originalExpression;
 
-    return new LocalQuickFix() {
-      @NotNull
-      public String getName() {
-        return IntroduceConstantHandler.REFACTORING_NAME;
-      }
-
-      public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
-              protected OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
-                final OccurenceFilter filter = new OccurenceFilter() {
-                  public boolean isOK(PsiExpression occurence) {
-                    return true;
-                  }
-                };
-                return new BaseOccurenceManager(filter) {
-                  protected PsiExpression[] defaultOccurences() {
-                    return expressions;
-                  }
-
-                  protected PsiExpression[] findOccurences() {
-                    return expressions;
-                  }
-                };
-              }
-            };
-            handler.invoke(project, expressions);
-          }
-        });
-      }
-
-      @NotNull
-      public String getFamilyName() {
-        return getName();
-      }
-    };
+    return new IntroduceLiteralConstantFix(expressions);
   }
 
   @Nullable
@@ -314,5 +278,60 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     myIgnorePropertyKeyExpressions.setSelected(IGNORE_PROPERTY_KEYS);
     myMinStringLengthField.setText(Integer.toString(MIN_STRING_LENGTH));
     return myPanel;
+  }
+
+  private static class IntroduceLiteralConstantFix implements LocalQuickFix {
+    private final SmartPsiElementPointer[] myExpressions;
+
+    public IntroduceLiteralConstantFix(final PsiExpression[] expressions) {
+      myExpressions = new SmartPsiElementPointer[expressions.length];
+      for(int i=0; i<expressions.length; i++) {
+        myExpressions [i] = SmartPointerManager.getInstance(expressions [i].getProject()).createLazyPointer(expressions [i]);
+      }
+    }
+
+    @NotNull
+    public String getName() {
+      return InspectionsBundle.message("introduce.constant.across.the.project");
+    }
+
+    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
+          for(SmartPsiElementPointer ptr: myExpressions) {
+            final PsiElement element = ptr.getElement();
+            if (element != null) {
+              expressions.add((PsiExpression) element);
+            }
+          }
+          final PsiExpression[] expressionArray = expressions.toArray(new PsiExpression[expressions.size()]);
+          final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
+            protected OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
+              final OccurenceFilter filter = new OccurenceFilter() {
+                public boolean isOK(PsiExpression occurence) {
+                  return true;
+                }
+              };
+              return new BaseOccurenceManager(filter) {
+                protected PsiExpression[] defaultOccurences() {
+                  return expressionArray;
+                }
+
+                protected PsiExpression[] findOccurences() {
+                  return expressionArray;
+                }
+              };
+            }
+          };
+          handler.invoke(project, expressionArray);
+        }
+      });
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
   }
 }
