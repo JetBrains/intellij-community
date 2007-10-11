@@ -65,7 +65,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
         final RefFileImpl refFile = (RefFileImpl)getRefManager().getReference(PsiUtil.getJspFile(psiClass));
         LOG.assertTrue(refFile != null);
         refFile.add(this);
-      } else {
+      } else if (psiParent instanceof PsiJavaFile) {
         PsiJavaFile psiFile = (PsiJavaFile) psiParent;
         String packageName = psiFile.getPackageName();
         if (!"".equals(packageName)) {
