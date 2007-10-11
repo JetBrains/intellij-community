@@ -224,6 +224,10 @@ public class PluginRunConfiguration extends RunConfigurationBase {
   }
 
   public Module getModule() {
+    if (myModule != null && myModule.isDisposed()) {
+      myModuleName = myModule.getName();
+      myModule = null;
+    }
     if (myModule == null && myModuleName != null){
       myModule = ModuleManager.getInstance(getProject()).findModuleByName(myModuleName);
     }
