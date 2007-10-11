@@ -661,7 +661,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
-    boolean isStatic = member.hasModifierProperty(GroovyPsiModifier.STATIC);
+    boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC);
     Annotation annotation = holder.createInfoAnnotation(refExpr.getReferenceNameElement(), null);
     if (member instanceof PsiField && isStatic) {
       annotation.setTextAttributes(DefaultHighlighter.STATIC_FIELD);
@@ -799,7 +799,7 @@ public class GroovyAnnotator implements Annotator {
     if (member instanceof PsiField) {
       GrField field = (GrField) member;
       PsiElement identifier = field.getNameIdentifierGroovy();
-      if (field.hasModifierProperty(GroovyPsiModifier.STATIC)) {
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
         Annotation annotation = holder.createInfoAnnotation(identifier, null);
         annotation.setTextAttributes(DefaultHighlighter.STATIC_FIELD);
       }
