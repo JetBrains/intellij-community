@@ -101,16 +101,10 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
             outputRootDirectory = token;
           }
 
-          try {
-            myContext.getProgressIndicator().setText(sourceFile);
-            final TranslatingCompiler.OutputItem item = getOutputItem(outputPath, sourceFile, outputRootDirectory);
-            if (item != null) {
-              compiledFilesNames.add(item);
-            }
-          } catch (InvocationTargetException e) {
-            LOG.error(e);
-          } catch (InterruptedException e) {
-            LOG.error(e);
+          myContext.getProgressIndicator().setText(sourceFile);
+          final TranslatingCompiler.OutputItem item = getOutputItem(outputPath, sourceFile, outputRootDirectory);
+          if (item != null) {
+            compiledFilesNames.add(item);
           }
         }
 
@@ -213,7 +207,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
   }
 
   @Nullable
-  private TranslatingCompiler.OutputItem getOutputItem(final String outputPath, final String sourceFile, final String outputRootDir) throws InvocationTargetException, InterruptedException {
+  private TranslatingCompiler.OutputItem getOutputItem(final String outputPath, final String sourceFile, final String outputRootDir) {
 
     final VirtualFile sourceVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(sourceFile));
     if (sourceVirtualFile == null) return null; //the source might already have been deleted

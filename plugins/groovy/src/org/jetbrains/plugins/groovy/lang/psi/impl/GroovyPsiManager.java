@@ -189,11 +189,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
     myDefaultMethods = newMap;
 
-    try {
-      addSwingBuilderMethods();
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    addSwingBuilderMethods();
   }
 
   private void addDefaultMethod(PsiMethod method, HashMap<String, List<PsiMethod>> map, boolean isStatic) {
@@ -283,7 +279,7 @@ public class GroovyPsiManager implements ProjectComponent {
       "td", "groovy.swing.impl.TableLayoutCell",
   };
 
-  private void addSwingBuilderMethods() throws IncorrectOperationException {
+  private void addSwingBuilderMethods() {
     PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
 
     StringBuilder classText = new StringBuilder();

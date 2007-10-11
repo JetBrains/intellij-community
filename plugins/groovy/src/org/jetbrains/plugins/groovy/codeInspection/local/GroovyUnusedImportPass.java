@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
@@ -69,18 +70,14 @@ public class GroovyUnusedImportPass extends TextEditorHighlightingPass {
         return true;
       }
 
-      public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
         GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
         final Runnable runnable = optimizer.processFile(file);
-        try {
-          ActionRunner.runInsideWriteAction(new ActionRunner.InterruptibleRunnable() {
-            public void run() {
-              CommandProcessor.getInstance().executeCommand(project, runnable, "optimize imports", this);
-            }
-          });
-        } catch (Exception e) {
-          LOG.error(e);
-        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            CommandProcessor.getInstance().executeCommand(project, runnable, "optimize imports", this);
+          }
+        });
       }
 
       public boolean startInWriteAction() {
