@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Bas Leijdekkers
+ * Copyright 2005-2007 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,19 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 class StaticImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
 
     private List<PsiImportStaticStatement> importStatements;
 
     StaticImportsAreUsedVisitor(PsiImportStaticStatement[] importStatements) {
-        super();
         this.importStatements = new ArrayList(Arrays.asList(importStatements));
         Collections.reverse(this.importStatements);
     }
@@ -45,7 +48,7 @@ class StaticImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
 
     private void followReferenceToImport(
             PsiJavaCodeReferenceElement reference) {
-        if (reference.getQualifier()!=null) {
+        if (reference.getQualifier() != null) {
             //it's already fully qualified, so the import statement wasn't
             // responsible
             return;
@@ -68,7 +71,8 @@ class StaticImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
             final PsiClass targetClass =
                     importStatement.resolveTargetClass();
             if (referenceName == null) {
-                if (containingClass.equals(targetClass)) {
+                if (InheritanceUtil.isInheritorOrSelf(targetClass, 
+                        containingClass, true)) {
                     removeAll(importStatement);
                     break;
                 }
@@ -79,7 +83,8 @@ class StaticImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    private void removeAll(@NotNull PsiImportStaticStatement importStaticStatement) {
+    private void removeAll(
+            @NotNull PsiImportStaticStatement importStaticStatement) {
         for (int i = importStatements.size() - 1; i >= 0; i--) {
             final PsiImportStaticStatement statement = importStatements.get(i);
             final String text = statement.getText();
