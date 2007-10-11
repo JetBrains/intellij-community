@@ -207,12 +207,16 @@ public class SvnChangeProvider implements ChangeProvider {
         statusClient.doStatus(path.getIOFile(), recursively, false, false, true, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) throws SVNException {
             FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
+            final VirtualFile vFile = path.getVirtualFile();
+            if (vFile != null && myProjectRootManager.getFileIndex().isIgnored(vFile)) {
+              return;
+            }
             processStatusFirstPass(path, status, context, parentStatus);
             if (status.getContentsStatus() == SVNStatusType.STATUS_UNVERSIONED && path.isDirectory()) {
               // process children of this file with another client.
               SVNStatusClient client = myVcs.createStatusClient();
               if (recursively && path.isDirectory()) {
-                VirtualFile[] children = path.getVirtualFile().getChildren();
+                VirtualFile[] children = vFile.getChildren();
                 for (VirtualFile aChildren : children) {
                   FilePath filePath = VcsUtil.getFilePath(aChildren.getPath(), aChildren.isDirectory());
                   processFile(filePath, context, parentStatus, recursively, client);
