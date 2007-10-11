@@ -168,13 +168,17 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private PsiElement getAnchorToInsertImportAfter() {
     GrImportStatement[] importStatements = getImportStatements();
-    PsiElement psiElementAfter = null;
+    PsiElement anchorAfter = null;
     if (importStatements.length > 0) {
-      psiElementAfter = importStatements[importStatements.length - 1];
+      anchorAfter = importStatements[importStatements.length - 1];
     } else if (getPackageDefinition() != null) {
-      psiElementAfter = getPackageDefinition();
+      anchorAfter = getPackageDefinition();
+    } else {
+      PsiElement child = getFirstChild();
+      while (child instanceof PsiWhiteSpace || child instanceof PsiComment) child = child.getNextSibling();
+      anchorAfter = child;
     }
-    return psiElementAfter;
+    return anchorAfter;
   }
 
   public GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException {
