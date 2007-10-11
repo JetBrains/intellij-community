@@ -12,13 +12,13 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -70,6 +70,10 @@ public class ModuleConfigurable extends NamedConfigurable<Module> implements Pla
 
   public Icon getIcon() {
     return myModule.getModuleType().getNodeIcon(false);
+  }
+
+  public Icon getIcon(final boolean open) {
+    return myModule.getModuleType().getNodeIcon(open);
   }
 
   public Module getModule() {

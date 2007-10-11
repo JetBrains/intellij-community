@@ -48,6 +48,10 @@ public class ModuleGroupConfigurable extends NamedConfigurable<ModuleGroup> {
     return Icons.OPENED_MODULE_GROUP_ICON;
   }
 
+  public Icon getIcon(final boolean open) {
+    return open ? Icons.OPENED_MODULE_GROUP_ICON : Icons.CLOSED_MODULE_GROUP_ICON;
+  }
+
   @Nullable
   @NonNls
   public String getHelpTopic() {

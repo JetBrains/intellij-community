@@ -144,7 +144,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
           }
 
           final String displayName = node.getDisplayName();
-          final Icon icon = node.getConfigurable().getIcon();
+          final Icon icon = node.getConfigurable().getIcon(expanded);
           setIcon(icon);
           setToolTipText(null);
           setFont(UIUtil.getTreeFont());

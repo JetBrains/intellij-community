@@ -352,8 +352,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
                                         boolean hasFocus) {
         if (value instanceof MyNode) {
           final MyNode node = ((MyNode)value);
-          final Icon icon = node.getConfigurable().getIcon();
-          setIcon(icon);
+          setIcon(node.getConfigurable().getIcon(expanded));
           final Font font = UIUtil.getTreeFont();
           if (node.isDisplayInBold()) {
             setFont(font.deriveFont(Font.BOLD));

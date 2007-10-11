@@ -86,5 +86,9 @@ public abstract class NamedConfigurable<T> implements Configurable {
 
   public abstract JComponent createOptionsPanel();
 
+  @Nullable
+  public Icon getIcon(boolean open) {
+    return getIcon();
+  }
 
 }
