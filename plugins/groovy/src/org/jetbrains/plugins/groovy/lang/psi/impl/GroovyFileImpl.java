@@ -174,9 +174,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     } else if (getPackageDefinition() != null) {
       anchorAfter = getPackageDefinition();
     } else {
-      PsiElement child = getFirstChild();
+      final PsiElement first = getFirstChild();
+      PsiElement child = first;
       while (child instanceof PsiWhiteSpace || child instanceof PsiComment) child = child.getNextSibling();
-      anchorAfter = child;
+      if (child != first) anchorAfter = child;
     }
     return anchorAfter;
   }
