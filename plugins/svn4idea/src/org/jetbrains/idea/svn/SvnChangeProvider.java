@@ -323,15 +323,16 @@ public class SvnChangeProvider implements ChangeProvider {
       if (virtualFile == null) return;
       final String switchUrl = status.getURL().toString();
       final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(virtualFile);
-      LOG.assertTrue(vcsRoot != null, "couldn't find VCS root for virtual file " + virtualFile);
-      String baseUrl = null;
-      try {
-        baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
+      if (vcsRoot != null) {  // it will be null if we walked into an excluded directory
+        String baseUrl = null;
+        try {
+          baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
+        }
+        catch (VcsException e) {
+          LOG.error(e);
+        }
+        builder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl : baseUrl, true);
       }
-      catch (VcsException e) {
-        LOG.error(e);
-      }
-      builder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl : baseUrl, true);
     }
   }
 
@@ -416,8 +417,8 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private static class SvnChangedFile {
-    private FilePath myFilePath;
-    private SVNStatus myStatus;
+    private final FilePath myFilePath;
+    private final SVNStatus myStatus;
     private String myCopyFromURL;
 
     public SvnChangedFile(final FilePath filePath, final SVNStatus status) {
@@ -448,10 +449,10 @@ public class SvnChangeProvider implements ChangeProvider {
   }
 
   private static class SvnChangeProviderContext {
-    private ChangelistBuilder myChangelistBuilder;
-    private SVNStatusClient myStatusClient;
+    private final ChangelistBuilder myChangelistBuilder;
+    private final SVNStatusClient myStatusClient;
     private List<SvnChangedFile> myCopiedFiles = null;
-    private List<SvnChangedFile> myDeletedFiles = new ArrayList<SvnChangedFile>();
+    private final List<SvnChangedFile> myDeletedFiles = new ArrayList<SvnChangedFile>();
     private Map<FilePath, String> myCopyFromURLs = null;
 
     public SvnChangeProviderContext(SvnVcs vcs, final ChangelistBuilder changelistBuilder) {
