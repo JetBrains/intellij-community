@@ -143,6 +143,14 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         if (myContentRootDocListenerEnabled) {
           myContentRootChangedByUser = true;
         }
+        if (!myModuleNameChangedByUser) {
+          final String path = FileUtil.toSystemIndependentName(myModuleContentRoot.getText());
+          final int idx = path.lastIndexOf("/");
+          boolean f = myContentRootChangedByUser;
+          myContentRootChangedByUser = true;
+          setModuleName(idx >= 0 ? path.substring(idx + 1) : "");
+          myContentRootChangedByUser = f;
+        }
       }
     });
     myNamePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
