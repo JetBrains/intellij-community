@@ -64,14 +64,19 @@ public class ClasspathStorage implements StateStorage {
     final VirtualFileTracker virtualFileTracker = (VirtualFileTracker)module.getPicoContainer().getComponentInstanceOfType(VirtualFileTracker.class);
     if (virtualFileTracker != null && messageBus != null) {
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
-      myConverter.getFileSet().listFiles(files);
-      for (VirtualFile file : files) {
-        final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
-        virtualFileTracker.addTracker(VfsUtil.pathToUrl(file.getPath()), new VirtualFileAdapter() {
-          public void contentsChanged(final VirtualFileEvent event) {
-            listener.storageFileChanged(event, ClasspathStorage.this);
-          }
-        }, true, module);
+      try {
+        myConverter.getFileSet().listFiles(files);
+        for (VirtualFile file : files) {
+          final Listener listener = messageBus.syncPublisher(StateStorage.STORAGE_TOPIC);
+          virtualFileTracker.addTracker(VfsUtil.pathToUrl(file.getPath()), new VirtualFileAdapter() {
+            public void contentsChanged(final VirtualFileEvent event) {
+              listener.storageFileChanged(event, ClasspathStorage.this);
+            }
+          }, true, module);
+        }
+      }
+      catch (UnsupportedOperationException e) {
+        //UnsupportedStorageProvider doesn't mean any files
       }
     }
   }
@@ -103,10 +108,10 @@ public class ClasspathStorage implements StateStorage {
       return (T)moduleRootManagerState;
     }
     catch (InvalidDataException e) {
-      throw new StateStorageException(e);
+      throw new StateStorageException(e.getMessage());
     }
     catch (IOException e) {
-      throw new StateStorageException(e);
+      throw new StateStorageException(e.getMessage());
     }
   }
 
@@ -360,7 +365,7 @@ public class ClasspathStorage implements StateStorage {
     public ClasspathConverter createConverter(final Module module) {
       return new ClasspathConverter() {
         public FileSet getFileSet() {
-          throw new UnsupportedOperationException(getDescription());
+          throw new StateStorageException(getDescription());
         }
 
         public Classpath getClasspath(final Element element) throws IOException, InvalidDataException {

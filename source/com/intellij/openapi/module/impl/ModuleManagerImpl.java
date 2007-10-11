@@ -240,6 +240,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   private void fireError(final String message, final ModulePath modulePath) {
+    final Module module = myModuleModel.myPathToModule.remove(FileUtil.toSystemIndependentName(modulePath.getPath()));
+    if (module != null) {
+      Disposer.dispose(module);
+    }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         final int answer = Messages.showDialog(
@@ -251,10 +255,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         );
         if (answer == 0) { // yes
           myFailedModulePaths.remove(modulePath);
-          final Module module = myModuleModel.myPathToModule.remove(FileUtil.toSystemIndependentName(modulePath.getPath()));
-          if (module != null) {
-            Disposer.dispose(module);
-          }
         }
       }
     }, ModalityState.NON_MODAL);
