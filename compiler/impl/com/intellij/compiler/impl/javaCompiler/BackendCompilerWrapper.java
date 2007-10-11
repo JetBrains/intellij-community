@@ -20,10 +20,12 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -619,18 +621,27 @@ public class BackendCompilerWrapper {
 
   private void buildOutputItemsList(final String outputDir,
                                     VirtualFile from,
-                                    FileTypeManager typeManager,
-                                    Set<VirtualFile> compiledWithErrors,
+                                    final FileTypeManager typeManager,
+                                    final Set<VirtualFile> compiledWithErrors,
                                     final VirtualFile sourceRoot,
                                     final String packagePrefix) throws CacheCorruptedException {
-    final VirtualFile[] children = from.getChildren();
-    for (final VirtualFile child : children) {
-      if (child.isDirectory()) {
-        buildOutputItemsList(outputDir, child, typeManager, compiledWithErrors, sourceRoot, packagePrefix);
+    final Ref<CacheCorruptedException> exRef = new Ref<CacheCorruptedException>(null);
+    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContentUnderDirectory(from, new ContentIterator() {
+      public boolean processFile(final VirtualFile child) {
+        try {
+          if (!child.isDirectory() && StdFileTypes.JAVA.equals(typeManager.getFileTypeByFile(child))) {
+            updateOutputItemsList(outputDir, child, compiledWithErrors, sourceRoot, packagePrefix);
+          }
+          return true;
+        }
+        catch (CacheCorruptedException e) {
+          exRef.set(e);
+          return false;
+        }
       }
-      else if (StdFileTypes.JAVA.equals(typeManager.getFileTypeByFile(child))) {
-        updateOutputItemsList(outputDir, child, compiledWithErrors, sourceRoot, packagePrefix);
-      }
+    });
+    if (exRef.get() != null) {
+      throw exRef.get();
     }
   }
 
