@@ -187,7 +187,6 @@ public class FileStatusMap {
       status.dirtyScope = combined1 == null ? PsiDocumentManager.getInstance(myProject).getPsiFile(document) : combined1;
       final PsiElement combined2 = combineScopes(status.localInspectionsDirtyScope, scope);
       status.localInspectionsDirtyScope = combined2 == null ? PsiDocumentManager.getInstance(myProject).getPsiFile(document) : combined2;
-      status.overridenDirtyScope = combineScopes(status.overridenDirtyScope, scope);
       status.externalDirtyScope = combineScopes(status.externalDirtyScope, scope);
     }
   }
