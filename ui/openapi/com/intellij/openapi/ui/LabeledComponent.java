@@ -127,7 +127,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel {
   }
 
   public String getRawText() {
-    return myLabel.getText();
+    return myLabel.getText().replace("\u001B", "");
   }
 
   public JLabel getLabel() {
