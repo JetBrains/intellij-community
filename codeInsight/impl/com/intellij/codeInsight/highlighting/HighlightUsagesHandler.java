@@ -406,7 +406,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           Project project = target.getProject();
           highlightOtherOccurrences(toHighlight, project, editor, clearHighlights);
           setupFindModel(project);
-          String message = clearHighlights ? "" : CodeInsightBundle.message("status.bar.overridden.methods.highlighted.message", toHighlight.size(), getShortcutText());
+          final int methodCount = toHighlight.size()-1;  // exclude 'target' keyword
+          String message = clearHighlights ? "" : CodeInsightBundle.message("status.bar.overridden.methods.highlighted.message", methodCount, getShortcutText());
           WindowManager.getInstance().getStatusBar(project).setInfo(message);
         }
       }
