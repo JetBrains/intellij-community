@@ -91,8 +91,8 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
     scrollPane.setBorder(null);
-    int width = myCurrentWidth > 0 ? 3 * myCurrentWidth / 2 : pane.getPreferredSize().width;
-    int height = myCurrentWidth > 0 ? Math.max(pane.getPreferredSize().height, 150) : pane.getPreferredSize().height;
+    int width = expanded[0] ? 3 * myCurrentWidth / 2 : pane.getPreferredSize().width;
+    int height = expanded[0] ? Math.max(pane.getPreferredSize().height, 150) : pane.getPreferredSize().height;
 
     if (alignToRight) {
       p.x -= width;
@@ -186,25 +186,26 @@ public class LineTooltipRenderer implements TooltipRenderer {
   }
 
   private boolean dressDescription() {
-    boolean expanded = false;
     final String[] problems = getHtmlBody(myText).split(BORDER_LINE);
-    myText = "<html><body>";
+    String text = "";
     for (String problem : problems) {
       final String descriptionPrefix = getDescriptionPrefix(problem);
       if (descriptionPrefix != null) {
         for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
           final String description = handlerEP.getDescription(descriptionPrefix);
           if (description != null) {
-            myText += getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
+            text += getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
                                                    DaemonBundle.message("inspection.collapse.description")) + BORDER_LINE + getHtmlBody(description) + BORDER_LINE;
-            expanded = true;
             break;
           }
         }
       }
     }
-    myText = StringUtil.trimEnd(myText, BORDER_LINE) + "</body></html>";
-    return expanded;
+    if (text.length() > 0) { //otherwise do not change anything
+      myText = "<html><body>" +  StringUtil.trimEnd(text, BORDER_LINE) + "</body></html>";
+      return true;
+    }
+    return false;
   }
 
   private void stripDescription() {
