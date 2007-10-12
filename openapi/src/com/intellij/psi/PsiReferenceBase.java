@@ -16,17 +16,20 @@
 
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class PsiReferenceBase<T extends PsiElement> implements PsiReference {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiReferenceBase");
 
   protected final T myElement;
   private TextRange myRange;
@@ -58,7 +61,12 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   @NotNull
   public String getValue() {
     String text = myElement.getText();
-    return getRangeInElement().substring(text);
+    final TextRange range = getRangeInElement();
+    if (range.getEndOffset() > text.length() || range.getStartOffset() > text.length() || range.getStartOffset() < 0 || range.getEndOffset() < 0) {
+      LOG.error("Wrong range in reference " + this + ": " + range + ". Reference text: '" + text + "'");
+      return text;
+    }
+    return range.substring(text);
   }
 
 

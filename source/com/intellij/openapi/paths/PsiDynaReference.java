@@ -248,4 +248,9 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     }
     return list.toArray(new LocalQuickFix[list.size()]);
   }
+
+  public String toString() {
+    //noinspection HardCodedStringLiteral
+    return "PsiDynaReference containing " + myReferences.toString();
+  }
 }
