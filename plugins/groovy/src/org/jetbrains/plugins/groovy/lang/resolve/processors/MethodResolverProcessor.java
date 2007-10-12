@@ -85,7 +85,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length == 0) return partialSubstitutor;
     
-    if (myArgumentTypes != null) {
+    if (argumentsSupplied()) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final int max = Math.max(parameters.length, myArgumentTypes.length);
       PsiType[] parameterTypes = new PsiType[max];
@@ -212,9 +212,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   private boolean dominated(PsiMethod method1, PsiSubstitutor substitutor1, PsiMethod method2, PsiSubstitutor substitutor2, PsiManager manager, GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
     if (!method1.getName().equals(method2.getName())) return false;
-    
+
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
+    if (myArgumentTypes == null && params1.length != params2.length) return false;
 
     if (params1.length < params2.length) {
       if (params1.length == 0) return false;
@@ -225,13 +226,23 @@ public class MethodResolverProcessor extends ResolverProcessor {
     for (int i = 0; i < params2.length; i++) {
       PsiType type1 = substitutor1.substitute(params1[i].getType());
       PsiType type2 = substitutor2.substitute(params2[i].getType());
-      if (type1 instanceof PsiArrayType && !(type2 instanceof PsiArrayType)) {
-        type1 = ((PsiArrayType) type1).getComponentType();
-      }
-      if (!TypesUtil.isAssignable(type1, type2, manager, scope)) return false;
+      if (!typesAgree(manager, scope, type1, type2)) return false;
     }
 
     return true;
+  }
+
+  private boolean typesAgree(PsiManager manager, GlobalSearchScope scope, PsiType type1, PsiType type2) {
+    if (argumentsSupplied() && type1 instanceof PsiArrayType && !(type2 instanceof PsiArrayType)) {
+      type1 = ((PsiArrayType) type1).getComponentType();
+    }
+    return argumentsSupplied() ? //resolve, otherwise same_name_variants
+           TypesUtil.isAssignable(type1, type2, manager, scope) :
+           type1.equals(type2);
+  }
+
+  private boolean argumentsSupplied() {
+    return myArgumentTypes != null;
   }
 
 
