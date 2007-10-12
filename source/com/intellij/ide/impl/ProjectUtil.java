@@ -8,6 +8,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -146,13 +147,17 @@ public class ProjectUtil {
           // ensure the dialog is shown after all startup activities are done
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              final ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-              if (toolWindow != null) {
-                toolWindow.activate(null);
-              }
               if (need2OpenProjectStructure) {
                 ModulesConfigurator.showDialog(newProject, null, null, true);
               }
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  final ToolWindow toolWindow = ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+                  if (toolWindow != null) {
+                    toolWindow.activate(null);
+                  }
+                }
+              }, ModalityState.NON_MODAL);
             }
           });
         }
