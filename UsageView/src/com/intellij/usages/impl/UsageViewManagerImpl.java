@@ -260,11 +260,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
         }
       });
       if (getUsageView() != null) {
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             showToolWindow(true);
           }
-        });
+        }, myProject.getDisposed());
       }
     }
 

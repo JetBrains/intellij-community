@@ -6,6 +6,7 @@ package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -174,6 +175,8 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   protected abstract JComponent createContent();
 
   public void dispose() {
+    assert ApplicationManager.getApplication().isDispatchThread();
+
     myAutoSelectionTimer.stop();
 
     if (isDisposed()) return;
@@ -242,6 +245,8 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     if (myContainer == null) {
       throw new IllegalStateException("Wizard dialog was already disposed. Recreate a new instance to show the wizard again");
     }
+
+    assert ApplicationManager.getApplication().isDispatchThread();
 
     myFocusTrackback = new FocusTrackback(this, owner, true);
 

@@ -387,7 +387,10 @@ final class TextEditorComponent extends JPanel implements DataProvider{
         ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_POPUP);
         ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
         MouseEvent e = event.getMouseEvent();
-        popupMenu.getComponent().show(e.getComponent(), e.getX(), e.getY());
+        final Component c = e.getComponent();
+        if (c != null && c.isShowing()) {
+          popupMenu.getComponent().show(c, e.getX(), e.getY());
+        }
         e.consume();
       }
     }

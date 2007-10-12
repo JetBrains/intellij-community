@@ -254,7 +254,9 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
     if (oldInfo != newInfo) {
       for (TabsListener eachListener : myTabListeners) {
-        eachListener.selectionChanged(oldInfo, newInfo);
+        if (eachListener != null) {
+          eachListener.selectionChanged(oldInfo, newInfo);
+        }
       }
     }
 
