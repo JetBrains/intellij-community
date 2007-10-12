@@ -1,4 +1,4 @@
 a.foo
-a.<caret>
+a.fo<caret>
 -----
 foo
