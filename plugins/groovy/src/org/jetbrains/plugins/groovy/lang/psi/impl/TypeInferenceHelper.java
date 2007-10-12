@@ -57,13 +57,16 @@ public class TypeInferenceHelper {
     if (isInferenceInProgress()) {
       return getTypeBinding(refExpr);
     }
-    
-    GrControlFlowOwner scope = PsiTreeUtil.getParentOfType(refExpr, GrControlFlowOwner.class);
+
+    GroovyPsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrClosableBlock.class, GroovyFileBase.class);
+    if (scope instanceof GrMethod) {
+      scope = ((GrMethod) scope).getBlock();
+    }
 
     if (scope != null) {
       Map<GrReferenceExpression, PsiType> map = myCalculatedTypeInferences.get(scope);
       if (map == null) {
-        map = inferTypes(scope);
+        map = inferTypes((GrControlFlowOwner) scope);
         myCalculatedTypeInferences.put(scope, map);
       }
       return map.get(refExpr);
@@ -100,11 +103,11 @@ public class TypeInferenceHelper {
     return null;
   }
 
-  private Map<GrReferenceExpression, PsiType> inferTypes(GrControlFlowOwner scope) {
-    final Instruction[] flow = ((GrControlFlowOwner) scope).getControlFlow();
+  private Map<GrReferenceExpression, PsiType> inferTypes(GrControlFlowOwner owner) {
+    final Instruction[] flow = owner.getControlFlow();
 
     final TypeDfaInstance dfaInstance = new TypeDfaInstance();
-    final TypesSemilattice semilattice = new TypesSemilattice(scope.getManager());
+    final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     final DFAEngine<Map<String, PsiType>> engine = new DFAEngine<Map<String, PsiType>>(flow, dfaInstance, semilattice);
 
     final ArrayList<Map<String, PsiType>> infos = engine.performDFA();
