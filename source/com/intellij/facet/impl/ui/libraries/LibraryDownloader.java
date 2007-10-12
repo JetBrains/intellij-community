@@ -44,6 +44,8 @@ import java.util.List;
  * @author nik
  */
 public class LibraryDownloader {
+  private static final int CONNECTION_TIMEOUT = 60*1000;
+  private static final int READ_TIMEOUT = 60*1000;
   @NonNls private static final String LIB_SCHEMA = "lib://";
 
   private LibraryDownloadInfo[] myLibraryInfos;
@@ -247,6 +249,8 @@ public class LibraryDownloader {
       indicator.setText2(IdeBundle.message("progress.connecting.to.dowload.jar.text", presentableUrl));
       indicator.setIndeterminate(true);
       HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
+      connection.setConnectTimeout(CONNECTION_TIMEOUT);
+      connection.setReadTimeout(READ_TIMEOUT);
 
       InputStream input = null;
       BufferedOutputStream output = null;

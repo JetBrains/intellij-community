@@ -181,6 +181,8 @@ public class LibraryLinkImpl extends LibraryLink {
     if (!(otherElement instanceof LibraryLink)) return false;
     final LibraryLink otherLibraryLink = (LibraryLink)otherElement;
     if (!Comparing.strEqual(getName(), otherLibraryLink.getName())) return false;
+    if (!Comparing.strEqual(getLevel(), otherLibraryLink.getLevel())) return false;
+    if (getName() != null) return true;
     return getUrls().equals(otherLibraryLink.getUrls());
   }
 
