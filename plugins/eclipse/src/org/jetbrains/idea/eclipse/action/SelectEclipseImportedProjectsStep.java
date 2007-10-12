@@ -10,8 +10,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.SelectImportedProjectsStep;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseProjectModel;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
@@ -81,6 +81,6 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Eclip
 
   @NonNls
   public String getHelpId() {
-    return "reference.dialogs.new.project.import.eclipse.page1";
+    return "reference.dialogs.new.project.import.eclipse.page2";
   }
 }
