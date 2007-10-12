@@ -141,9 +141,11 @@ public class VariableInplaceRenamer {
   private void finish() {
     ourRenamersStack.pop();
 
-    final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-    for (RangeHighlighter highlighter : myHighlighters) {
-      highlightManager.removeSegmentHighlighter(myEditor, highlighter);
+    if (myHighlighters != null) {
+      final HighlightManager highlightManager = HighlightManager.getInstance(myProject);
+      for (RangeHighlighter highlighter : myHighlighters) {
+        highlightManager.removeSegmentHighlighter(myEditor, highlighter);
+      }
     }
   }
 
