@@ -328,6 +328,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       }
     });
     myRoot.removeAllChildren();
+    myCurrentConfigurable = null;
   }
 
   @Nullable
