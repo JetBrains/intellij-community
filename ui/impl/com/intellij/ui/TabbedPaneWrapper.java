@@ -494,7 +494,17 @@ public class TabbedPaneWrapper {
     }
 
     public void setSelectedIndex(final int index){
-      super.setSelectedIndex(index);
+      if (index >= getTabCount()) return;
+
+      try {
+        super.setSelectedIndex(index);
+      }
+      catch (ArrayIndexOutOfBoundsException e) {
+        //http://www.jetbrains.net/jira/browse/IDEADEV-22331
+        //may happen on Mac OSX 10.5
+        return;
+      }
+
       scrollTabToVisible(index);
       doLayout();
     }
