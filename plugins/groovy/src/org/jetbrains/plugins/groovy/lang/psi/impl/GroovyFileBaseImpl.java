@@ -29,9 +29,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 /**
  * @author ilyas
  */
-public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase {
+public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
 
   protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
@@ -120,5 +120,21 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   @NotNull
   public PsiClass[] getClasses() {
     return getTypeDefinitions();
+  }
+
+  public void clearCaches() {
+    super.clearCaches();
+    myControlFlow = null;
+  }
+
+
+  private Instruction[] myControlFlow = null;
+
+  public Instruction[] getControlFlow() {
+    if (myControlFlow == null) {
+      myControlFlow = new ControlFlowBuilder().buildControlFlow(this, null, null);
+    }
+
+    return myControlFlow;
   }
 }

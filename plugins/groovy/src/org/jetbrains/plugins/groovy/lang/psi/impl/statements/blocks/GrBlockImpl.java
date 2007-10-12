@@ -30,12 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author ven
  */
-public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCodeBlock {
+public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCodeBlock, GrControlFlowOwner {
   private Instruction[] myControlFlow = null;
 
   public void subtreeChanged() {
