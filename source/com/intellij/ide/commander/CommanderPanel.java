@@ -28,6 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -243,7 +244,10 @@ public class CommanderPanel extends JPanel {
   }
 
   protected boolean shouldDrillDownOnEmptyElement(final Object value) {
-    return value instanceof PsiClass || value instanceof PsiJavaFile || value instanceof PsiDirectory;
+    return value instanceof PsiClass ||
+           (value instanceof PsiJavaFile && ((PsiJavaFile) value).getFileType() != StdFileTypes.JSP &&
+                                            ((PsiJavaFile) value).getFileType() != StdFileTypes.JSPX) ||
+           value instanceof PsiDirectory;
   }
 
   private boolean topElementIsSelected() {
