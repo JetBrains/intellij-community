@@ -54,7 +54,10 @@ public class BuildFilePropertiesPanel {
     builder.setDimensionServiceKey(DIMENSION_SERVICE_KEY);
     builder.setPreferedFocusComponent(myForm.getPreferedFocusComponent());
     builder.setTitle(AntBundle.message("build.file.properties.dialog.title"));
-    builder.setHelpId("ant.buildDialog");
+    builder.removeAllActions();
+    builder.addOkAction();
+    builder.addCancelAction();
+    builder.setHelpId("reference.dialogs.buildfileproperties");
 
     boolean isOk = builder.show() == DialogWrapper.OK_EXIT_CODE;
     if (isOk) {
