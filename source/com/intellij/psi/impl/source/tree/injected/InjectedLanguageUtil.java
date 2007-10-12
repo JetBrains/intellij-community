@@ -211,7 +211,7 @@ public class InjectedLanguageUtil {
     @Nullable
     protected PsiFile getPsiInner(Language target) {
       PsiFile file = super.getPsiInner(target);
-      if (file == null || file.getContext() == null) return null;
+      //if (file == null || file.getContext() == null) return null;
       return file;
     }
 
@@ -670,8 +670,7 @@ public class InjectedLanguageUtil {
   public static List<DocumentWindow> getCachedInjectedDocuments(@NotNull Document hostDocument) {
     List<DocumentWindow> injected = hostDocument.getUserData(INJECTED_DOCS_KEY);
     if (injected == null) {
-      injected = new CopyOnWriteArrayList<DocumentWindow>();
-      ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(INJECTED_DOCS_KEY, injected);
+      injected = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(INJECTED_DOCS_KEY, new CopyOnWriteArrayList<DocumentWindow>());
     }
     return injected;
   }
