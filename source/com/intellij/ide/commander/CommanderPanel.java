@@ -23,14 +23,16 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
@@ -241,11 +243,7 @@ public class CommanderPanel extends JPanel {
   }
 
   protected boolean shouldDrillDownOnEmptyElement(final Object value) {
-    return !(value instanceof PsiMethod || value instanceof PsiField || isForm(value));
-  }
-
-  private static boolean isForm(final Object value) {
-    return value instanceof PsiFile && ((PsiFile)value).getVirtualFile().getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
+    return value instanceof PsiClass || value instanceof PsiJavaFile || value instanceof PsiDirectory;
   }
 
   private boolean topElementIsSelected() {
