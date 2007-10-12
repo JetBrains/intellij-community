@@ -1,37 +1,37 @@
 package org.jetbrains.groovy.compiler.rt;
 
 public class CompilerMessage {
-  String cathegory;
-  String message;
-  String url;
-  int linenum;
-  int colomnnum;
+  private String myCategory;
+  private String myMessage;
+  private String myUrl;
+  private int myLineNum;
+  private int myColumnNum;
 
-  public CompilerMessage(String cathegory, String message, String url, int linenum, int colomnnum) {
-    this.cathegory = cathegory;
-    this.message = message;
-    this.url = url;
-    this.linenum = linenum;
-    this.colomnnum = colomnnum;
+  public CompilerMessage(String category, String message, String url, int lineNum, int columnNum) {
+    myCategory = category;
+    myMessage = message;
+    myUrl = url;
+    myLineNum = lineNum;
+    myColumnNum = columnNum;
   }
 
-  public String getCathegory() {
-    return cathegory;
+  public String getCategory() {
+    return myCategory;
   }
 
   public String getMessage() {
-    return message;
+    return myMessage;
   }
 
   public String getUrl() {
-    return url;
+    return myUrl;
   }
 
-  public int getLinenum() {
-    return linenum;
+  public int getLineNum() {
+    return myLineNum;
   }
 
-  public int getColomnnum() {
-    return colomnnum;
+  public int getColumnNum() {
+    return myColumnNum;
   }
 }

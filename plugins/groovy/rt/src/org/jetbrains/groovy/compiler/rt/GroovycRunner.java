@@ -182,15 +182,15 @@ public class GroovycRunner {
     for (CompilerMessage message : compilerMessages) {
       System.out.print(MESSAGES_START);
 
-      System.out.print(message.getCathegory());
+      System.out.print(message.getCategory());
       System.out.print(SEPARATOR);
       System.out.print(message.getMessage());
       System.out.print(SEPARATOR);
       System.out.print(message.getUrl());
       System.out.print(SEPARATOR);
-      System.out.print(message.getLinenum());
+      System.out.print(message.getLineNum());
       System.out.print(SEPARATOR);
-      System.out.print(message.getColomnnum());
+      System.out.print(message.getColumnNum());
       System.out.print(SEPARATOR);
 
       System.out.print(MESSAGES_END);

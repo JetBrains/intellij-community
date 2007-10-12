@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
@@ -36,7 +37,7 @@ import org.jetbrains.groovy.compiler.rt.*;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -129,33 +130,24 @@ public class GroovyCompiler implements TranslatingCompiler {
           final CompilerMessageCategory category;
           category = getMessageCategory(compilerMessage);
 
-          String url = compilerMessage.getUrl();
+          final String url = compilerMessage.getUrl();
 
-
-          final GroovyFileBase[] myPsiFile = new GroovyFileBase[1];
-          final VirtualFile myFile;
-
-          try {
-            myFile = VfsUtil.findFileByURL(new URL("file://" + url));
-            assert myFile != null;
-
-
-            final Project project = VfsUtil.guessProjectForFile(myFile);
-            assert project != null;
-
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              public void run() {
-                myPsiFile[0] = (GroovyFileBase) PsiManager.getInstance(project).findFile(myFile);
+          final GroovyFile groovyFile = ApplicationManager.getApplication().runReadAction(new Computable<GroovyFile>() {
+            public GroovyFile compute() {
+              try {
+                final VirtualFile vFile = VfsUtil.findFileByURL(new URL("file://" + url));
+                assert vFile != null;
+                return (GroovyFile) PsiManager.getInstance(myProject).findFile(vFile);
+              } catch (MalformedURLException e) {
+                LOG.error(e);
+                return null;
               }
-            });
-          } catch (MalformedURLException e) {
-            LOG.error(e);
-          } finally {
-            assert myPsiFile[0] != null;
-          }
+            }
+          });
 
-          url = url.replace('\\', '/');
-          compileContext.addMessage(category, compilerMessage.getMessage(), url, compilerMessage.getLinenum(), compilerMessage.getColomnnum());
+          compileContext.addMessage(category, compilerMessage.getMessage(),
+              url.replace('\\', '/'),
+              compilerMessage.getLineNum(), compilerMessage.getColumnNum());
         }
 
         StringBuffer unparsedBuffer = processHandler.getUnparsedOutput();
@@ -201,13 +193,13 @@ public class GroovyCompiler implements TranslatingCompiler {
   }
 
   private CompilerMessageCategory getMessageCategory(CompilerMessage compilerMessage) {
-    String cathegory;
-    cathegory = compilerMessage.getCathegory();
+    String category;
+    category = compilerMessage.getCategory();
 
-    if (MessageCollector.ERROR.equals(cathegory)) return CompilerMessageCategory.ERROR;
-    if (MessageCollector.INFORMATION.equals(cathegory)) return CompilerMessageCategory.INFORMATION;
-    if (MessageCollector.STATISTICS.equals(cathegory)) return CompilerMessageCategory.STATISTICS;
-    if (MessageCollector.WARNING.equals(cathegory)) return CompilerMessageCategory.WARNING;
+    if (MessageCollector.ERROR.equals(category)) return CompilerMessageCategory.ERROR;
+    if (MessageCollector.INFORMATION.equals(category)) return CompilerMessageCategory.INFORMATION;
+    if (MessageCollector.STATISTICS.equals(category)) return CompilerMessageCategory.STATISTICS;
+    if (MessageCollector.WARNING.equals(category)) return CompilerMessageCategory.WARNING;
 
     return CompilerMessageCategory.ERROR;
   }
