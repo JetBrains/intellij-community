@@ -13,6 +13,8 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 abstract class StateStorageManagerImpl implements StateStorageManager, Disposable {
   private Map<String, String> myMacros = new HashMap<String, String>();
@@ -26,12 +28,14 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   public StateStorageManagerImpl(
     @Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
     final String rootTagName,
-    Disposable parentDisposable,
+    @Nullable Disposable parentDisposable,
     PicoContainer picoContainer) {
     myPicoContainer = picoContainer;
     myRootTagName = rootTagName;
     myPathMacroSubstitutor = pathMacroSubstitutor;
-    Disposer.register(parentDisposable, this);
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, this);
+    }
   }
 
   public synchronized void addMacro(String macro, String expansion) {
@@ -121,14 +125,12 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
   }
 
   @Nullable
-  private StateStorage createFileStateStorage(@NotNull final String fileSpec) {
+  StateStorage createFileStateStorage(@NotNull final String fileSpec) {
     String expandedFile = expandMacroses(fileSpec);
     if (expandedFile == null) {
       myStorages.put(fileSpec, null);
       return null;
     }
-
-    assert expandedFile.indexOf("$") < 0 : "Can't expand all macroses in: " + fileSpec;
 
     return new FileBasedStorage(getMacroSubstitutor(fileSpec), expandedFile, myRootTagName, this, myPicoContainer) {
       @NotNull
@@ -145,8 +147,19 @@ abstract class StateStorageManagerImpl implements StateStorageManager, Disposabl
 
   protected abstract XmlElementStorage.StorageData createStorageData(String storageSpec);
 
+  private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
+
   @Nullable
   private String expandMacroses(final String file) {
+    final Matcher matcher = MACRO_PATTERN.matcher(file);
+    while (matcher.find()) {
+      String m = matcher.group(1);
+      if (!myMacros.containsKey(m)) {
+        throw new IllegalArgumentException("Unknown macro: " + m + " in storage spec: " + file);
+      }
+    }
+
+
     String actualFile = file;
 
     for (String macro : myMacros.keySet()) {

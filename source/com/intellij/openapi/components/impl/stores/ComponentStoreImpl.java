@@ -1,6 +1,7 @@
 package com.intellij.openapi.components.impl.stores;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
@@ -56,7 +57,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
       mySettingsSavingComponents.add(settingsSavingComponent);
     }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    final Runnable r = new Runnable() {
       public void run() {
         if (component instanceof PersistentStateComponent) {
           initPersistentComponent((PersistentStateComponent<?>)component);
@@ -65,7 +66,10 @@ abstract class ComponentStoreImpl implements IComponentStore {
           initJdomExternalizable((JDOMExternalizable)component);
         }
       }
-    });
+    };
+
+    final ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+    if (applicationEx.isUnitTestMode()) r.run(); else applicationEx.runReadAction(r);
   }
 
 
