@@ -6,6 +6,8 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -19,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.ArrayUtil;
@@ -29,6 +32,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -58,6 +63,7 @@ final class FindDialog extends DialogWrapper {
   private ComboBox myFileFilter;
   private JCheckBox myCbToSkipResultsWhenOneUsage;
   private final Project myProject;
+  private Map<EditorTextField, DocumentAdapter> myComboBoxListeners = new HashMap<EditorTextField, DocumentAdapter>();
 
   private Action myFindAllAction;
   private JRadioButton myRbCustomScope;
@@ -89,6 +95,15 @@ final class FindDialog extends DialogWrapper {
     setOKButtonIcon(IconLoader.getIcon("/actions/find.png"));
     init();
     initByModel();
+  }
+
+  @Override
+  protected void dispose() {
+    for(Map.Entry<EditorTextField, DocumentAdapter> e: myComboBoxListeners.entrySet()) {
+      e.getKey().removeDocumentListener(e.getValue());
+    }
+    myComboBoxListeners.clear();
+    super.dispose();
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -188,19 +203,35 @@ final class FindDialog extends DialogWrapper {
     });
 
     Component editorComponent = comboBox.getEditor().getEditorComponent();
-    editorComponent.addKeyListener(
-      new KeyAdapter() {
-        public void keyReleased(KeyEvent e) {
-          Object item = comboBox.getEditor().getItem();
-          if (item != null && !item.equals(comboBox.getSelectedItem())){
-            int caretPosition = getCaretPosition(comboBox);
-            comboBox.setSelectedItem(item);
-            setCaretPosition(comboBox, caretPosition);
-          }
-          validateFindButton();
+    if (editorComponent instanceof EditorTextField) {
+      EditorTextField etf = (EditorTextField) editorComponent;
+      DocumentAdapter listener = new DocumentAdapter() {
+        public void documentChanged(final DocumentEvent e) {
+          handleComboBoxValueChanged(comboBox);
         }
-      }
-    );
+      };
+      etf.addDocumentListener(listener);
+      myComboBoxListeners.put(etf, listener);
+    }
+    else {
+      editorComponent.addKeyListener(
+        new KeyAdapter() {
+          public void keyReleased(KeyEvent e) {
+            handleComboBoxValueChanged(comboBox);
+          }
+        }
+      );
+    }
+  }
+
+  private void handleComboBoxValueChanged(final ComboBox comboBox) {
+    Object item = comboBox.getEditor().getItem();
+    if (item != null && !item.equals(comboBox.getSelectedItem())){
+      int caretPosition = getCaretPosition(comboBox);
+      comboBox.setSelectedItem(item);
+      setCaretPosition(comboBox, caretPosition);
+    }
+    validateFindButton();
   }
 
   private static int getCaretPosition(JComboBox comboBox) {
