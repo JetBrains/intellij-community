@@ -504,36 +504,35 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     }
 
     char[] fileText = psiFile.textToCharArray();
-    @NonNls StringBuilder error = new StringBuilder();
-    error.append("File text mismatch after reparse. File length="+fileText.length+"; Doc length="+documentLength+"\n");
+    @NonNls String error = "File text mismatch after reparse. File length=" + fileText.length + "; Doc length=" + documentLength + "\n";
     int i = 0;
     for(; i < documentLength; i++){
       if (i >= fileText.length){
-        error.append("editorText.length > psiText.length i=" + i+"\n");
+        error += "editorText.length > psiText.length i=" + i + "\n";
         break;
       }
       if (editorText.charAt(i) != fileText[i]){
-        error.append("first unequal char i=" + i+"\n");
+        error += "first unequal char i=" + i + "\n";
         break;
       }
     }
-    error.append("*********************************************"+"\n");
-    if (i <= 500){
-      error.append("Equal part:" + editorText.subSequence(0, i)+"\n");
-    }
-    else{
-      error.append("Equal part start:\n" + editorText.subSequence(0, 200)+"\n");
-      error.append("................................................"+"\n");
-      error.append("................................................"+"\n");
-      error.append("................................................"+"\n");
-      error.append("Equal part end:\n" + editorText.subSequence(i - 200, i)+"\n");
-    }
-    error.append("*********************************************"+"\n");
-    error.append("Editor Text tail:("+(documentLength-i)+")\n" + editorText.subSequence(i, Math.min(i + 300, documentLength))+"\n");
-    error.append("*********************************************"+"\n");
-    error.append("Psi Text tail:("+(fileText.length-i)+")\n" + new String(fileText, i, Math.min(i + 300, fileText.length) - i)+"\n");
-    error.append("*********************************************"+"\n");
-    LOG.error(error.toString());
+    //error += "*********************************************" + "\n";
+    //if (i <= 500){
+    //  error += "Equal part:" + editorText.subSequence(0, i) + "\n";
+    //}
+    //else{
+    //  error += "Equal part start:\n" + editorText.subSequence(0, 200) + "\n";
+    //  error += "................................................" + "\n";
+    //  error += "................................................" + "\n";
+    //  error += "................................................" + "\n";
+    //  error += "Equal part end:\n" + editorText.subSequence(i - 200, i) + "\n";
+    //}
+    error += "*********************************************" + "\n";
+    error += "Editor Text tail:(" + (documentLength - i) + ")\n";// + editorText.subSequence(i, Math.min(i + 300, documentLength)) + "\n";
+    error += "*********************************************" + "\n";
+    error += "Psi Text tail:(" + (fileText.length - i) + ")\n";// + new String(fileText, i, Math.min(i + 300, fileText.length) - i) + "\n";
+    error += "*********************************************" + "\n";
+    LOG.error(error);
     document.replaceString(0, documentLength, psiFile.getText());
     return false;
   }

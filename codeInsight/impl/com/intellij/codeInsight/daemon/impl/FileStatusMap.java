@@ -45,9 +45,8 @@ public class FileStatusMap {
                 "file length:" + file.getTextLength(),
                 "document length:" + document.getTextLength(),
                 "file stamp:" + file.getModificationStamp(),
-                "document stamp:" + document.getModificationStamp(),
-                "file text     :" + file.getText(),
-                "document text:" + document.getText());
+                "document stamp:" + document.getModificationStamp()
+                );
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Dirty block optimization works");
