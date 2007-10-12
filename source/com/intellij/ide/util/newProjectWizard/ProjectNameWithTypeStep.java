@@ -121,13 +121,6 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       }
     });
 
-    myModuleName.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (myModuleNameDocListenerEnabled) {
-          myModuleNameChangedByUser = true;
-        }
-      }
-    });
     myNamePathComponent.getNameComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         if (!myModuleNameChangedByUser) {
@@ -138,21 +131,7 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
     myModuleContentRoot.addBrowseFolderListener(ProjectBundle.message("project.new.wizard.module.content.root.chooser.title"), ProjectBundle.message("project.new.wizard.module.content.root.chooser.description"),
                                                 myWizardContext.getProject(), BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-    myModuleContentRoot.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (myContentRootDocListenerEnabled) {
-          myContentRootChangedByUser = true;
-        }
-        if (!myModuleNameChangedByUser) {
-          final String path = FileUtil.toSystemIndependentName(myModuleContentRoot.getText());
-          final int idx = path.lastIndexOf("/");
-          boolean f = myContentRootChangedByUser;
-          myContentRootChangedByUser = true;
-          setModuleName(idx >= 0 ? path.substring(idx + 1) : "");
-          myContentRootChangedByUser = f;
-        }
-      }
-    });
+
     myNamePathComponent.getPathComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         if (!myContentRootChangedByUser) {
@@ -162,12 +141,43 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
     });
     myModuleName.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
+        if (myModuleNameDocListenerEnabled) {
+          myModuleNameChangedByUser = true;
+        }
         if (!myContentRootChangedByUser) {
           final String path = myModuleContentRoot.getText();
           final int lastSeparatorIndex = path.lastIndexOf(File.separator);
           if (lastSeparatorIndex >= 0) {
+            final boolean f = myModuleNameChangedByUser;
+            myModuleNameChangedByUser = true;
             setModuleContentRoot(path.substring(0, lastSeparatorIndex + 1) + myModuleName.getText());
+            myModuleNameChangedByUser = f;
           }
+        }
+        if (!myImlLocationChangedByUser) {
+          final String path = myModuleFileLocation.getText();
+          final int lastSeparatorIndex = path.lastIndexOf(File.separator);
+          if (lastSeparatorIndex >= 0) {
+            setImlFileLocation(path.substring(0, lastSeparatorIndex + 1) + myModuleName.getText());
+          }
+        }
+      }
+    });
+    myModuleContentRoot.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(final DocumentEvent e) {
+        if (myContentRootDocListenerEnabled) {
+          myContentRootChangedByUser = true;
+        }
+        if (!myImlLocationChangedByUser) {
+          setImlFileLocation(myModuleContentRoot.getText());
+        }
+        if (!myModuleNameChangedByUser) {
+          final String path = FileUtil.toSystemIndependentName(myModuleContentRoot.getText());
+          final int idx = path.lastIndexOf("/");
+          boolean f = myContentRootChangedByUser;
+          myContentRootChangedByUser = true;
+          setModuleName(idx >= 0 ? path.substring(idx + 1) : "");
+          myContentRootChangedByUser = f;
         }
       }
     });
@@ -185,24 +195,6 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       protected void textChanged(final DocumentEvent e) {
         if (!myImlLocationChangedByUser) {
           setImlFileLocation(myNamePathComponent.getPath());
-        }
-      }
-    });
-    myModuleContentRoot.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (!myImlLocationChangedByUser) {
-          setImlFileLocation(myModuleContentRoot.getText());
-        }
-      }
-    });
-    myModuleName.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
-        if (!myImlLocationChangedByUser) {
-          final String path = myModuleFileLocation.getText();
-          final int lastSeparatorIndex = path.lastIndexOf(File.separator);
-          if (lastSeparatorIndex >= 0) {
-            setImlFileLocation(path.substring(0, lastSeparatorIndex + 1) + myModuleName.getText());
-          }
         }
       }
     });
