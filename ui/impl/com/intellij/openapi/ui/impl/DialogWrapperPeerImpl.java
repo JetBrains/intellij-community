@@ -99,7 +99,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
    */
   protected DialogWrapperPeerImpl(DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     myWrapper = wrapper;
-    if (!parent.isShowing()) {
+    if (!parent.isShowing() && parent != JOptionPane.getRootFrame()) {
       throw new IllegalArgumentException("parent must be showing: " + parent);
     }
     myWindowManager = null;
