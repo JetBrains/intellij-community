@@ -45,6 +45,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     final HighlightSeverity severity = info.getType().getSeverity(null);
     ourMap.put(severity, info);
     ourRendererColors.put(severity, renderColor);
+    myOrder.clear();
     HighlightDisplayLevel.registerSeverity(severity, renderColor);
   }
 
