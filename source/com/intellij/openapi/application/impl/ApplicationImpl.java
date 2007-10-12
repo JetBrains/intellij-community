@@ -160,6 +160,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myIsInternal = isInternal;
     myTestModeFlag = isUnitTestMode;
     myHeadlessMode = isHeadless;
+    myCommandLineMode = isCommandLine;
 
     loadApplicationComponents();
 
