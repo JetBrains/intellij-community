@@ -46,7 +46,12 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
   }
 
   public boolean isValid() {
-    return super.isValid() && myParent.isValid();
+    if (!super.isValid() || !myParent.isValid()) return false;
+    final XmlTag tag = getXmlTag();
+    if (tag != null) {
+      LOG.assertTrue(tag.isValid());
+    }
+    return true;
   }
 
   @NotNull

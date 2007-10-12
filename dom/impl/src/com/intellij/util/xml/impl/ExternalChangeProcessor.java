@@ -14,6 +14,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.events.ElementChangedEvent;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.Map;
  * @author peter
  */
 public class ExternalChangeProcessor implements XmlChangeVisitor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.ExternalChangeProcessor");
   private static final TagChangeSet NULL_CHANGE_SET = new TagChangeSet(null){
     protected XmlTag getXmlTag(final DomInvocationHandler handler) {
       return null;
@@ -98,6 +100,7 @@ public class ExternalChangeProcessor implements XmlChangeVisitor {
       rootHandler.detach(false);
       final XmlTag rootTag = oldElement.getRootTag();
       if (rootTag != null) {
+        LOG.assertTrue(rootTag.isValid());
         rootHandler.attach(rootTag);
       }
       myDomManager.fireEvent(new ElementChangedEvent(oldElement.getRootElement()));

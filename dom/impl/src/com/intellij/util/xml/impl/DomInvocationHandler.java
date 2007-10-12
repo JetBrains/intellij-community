@@ -633,9 +633,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   final void _checkInitialized(final AbstractDomChildDescriptionImpl description) {
-    if (myInitializedChildren.contains(description)) return;
-
     checkIsValid();
+    if (myInitializedChildren.contains(description)) return;
 
     r.unlock();
     w.lock();
