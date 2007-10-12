@@ -130,7 +130,7 @@ class XmlMover extends LineMover {
           final TextRange tagValueRange = tag.getValue().getTextRange();
 
           // We need to update destination range to jump over tag start
-          if (tagValueRange.contains(movedLineStart) ||
+          if ((tagValueRange.contains(movedLineStart) && tag.getSubTags()[0] == movedParent) ||
               ( tagValueRange.getLength() == 0 && tag.getTextRange().intersects(moveDestinationRange))
              ) {
             final int line = document.getLineNumber(tag.getTextRange().getStartOffset());
