@@ -33,7 +33,7 @@ import java.util.*;
  */
 public class CompleteReferenceExpression {
   public static Object[] getVariants(GrReferenceExpressionImpl refExpr) {
-    Object[] propertyVariants = getVariantsImpl(refExpr, GrReferenceExpressionImpl.getMethodOrPropertyResolveProcessor(refExpr, null, true, true));
+    Object[] propertyVariants = getVariantsImpl(refExpr, GrReferenceExpressionImpl.getMethodOrPropertyResolveProcessor(refExpr, null, true, false));
     PsiType type = null;
     final GrExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
