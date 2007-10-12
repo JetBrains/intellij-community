@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -265,7 +266,7 @@ public class MavenToIdeaConverter {
     Map<String, Artifact> projectIdToArtifact = new TreeMap<String, Artifact>();
     for (Object o : mavenProject.getArtifacts()) {
       Artifact newArtifact = (Artifact)o;
-      if (newArtifact.getType().equalsIgnoreCase(JAR_TYPE)) {
+      if (isSupportedArtifact(newArtifact)) {
         String projectId = newArtifact.getGroupId() + ":" + newArtifact.getArtifactId();
         Artifact oldArtifact = projectIdToArtifact.get(projectId);
         if (oldArtifact == null ||
@@ -277,6 +278,16 @@ public class MavenToIdeaConverter {
     return new ArrayList<Artifact>(projectIdToArtifact.values());
   }
 
+  private static boolean isSupportedArtifact(final Artifact newArtifact) {
+    String t = newArtifact.getType();
+    return t.equalsIgnoreCase(JAR_TYPE)
+           || t.equalsIgnoreCase("ejb")
+           || t.equalsIgnoreCase("ear")
+           || t.equalsIgnoreCase("sar")
+           || t.equalsIgnoreCase("war")
+           || t.equalsIgnoreCase("ejb-client");
+  }
+
   private static String getUrl(final String artifactPath, final String classifier) {
     String path = artifactPath;
     if (classifier != null) {
@@ -285,7 +296,8 @@ public class MavenToIdeaConverter {
         return null;
       }
     }
-    return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, path) + JarFileSystem.JAR_SEPARATOR;
+    String normalizedPath = FileUtil.toSystemIndependentName(path);
+    return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, normalizedPath) + JarFileSystem.JAR_SEPARATOR;
   }
 
   public static LanguageLevel getLanguageLevel(final String level) {
