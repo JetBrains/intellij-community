@@ -11,12 +11,17 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.util.Function;
 import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -439,6 +444,7 @@ public class PluginManagerMain {
   }
 
   public void apply() {
+    if (!canApply()) return;
     setRequireShutdown(true);
     for (int i = 0; i< installedPluginTable.getRowCount(); i++) {
       final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
@@ -457,6 +463,45 @@ public class PluginManagerMain {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private boolean canApply() {
+    final StringBuilder buf = new StringBuilder();
+    for (int i = 0; i < installedPluginTable.getRowCount(); i++) {
+      final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)installedPluginsModel.getObjectAt(i);
+      if (((Boolean)installedPluginsModel.getValueAt(i, InstalledPluginsTableModel.getCheckboxColumn())).booleanValue()) {
+        final Set<PluginId> absent = new HashSet<PluginId>();
+        PluginManager.checkDependants(pluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
+          @Nullable
+          public IdeaPluginDescriptor fun(final PluginId pluginId) {
+            return PluginManager.getPlugin(pluginId);
+          }
+        }, new Condition<PluginId>() {
+          public boolean value(final PluginId pluginId) {
+            if (!installedPluginsModel.isEnabled(pluginId)) {
+              absent.add(pluginId);
+            }
+            return false;
+          }
+        });
+        if (!absent.isEmpty()) {
+          buf.append(IdeBundle.message("disabled.plugins.warning.message", pluginDescriptor.getName(),
+                                       StringUtil.join(absent, new Function<PluginId, String>() {
+                                         public String fun(final PluginId pluginId) {
+                                           final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(pluginId);
+                                           LOG.assertTrue(ideaPluginDescriptor != null);
+                                           return "\"" + ideaPluginDescriptor.getName() + "\"";
+                                         }
+                                       }, ", "), absent.size()));
+        }
+      }
+    }
+    if (buf.length() > 0) {
+      @NonNls final String message = "<html><body><ul>" + buf.toString() + "</ul></body></html>";
+      Messages.showErrorDialog(main, message);
+      return false;
+    }
+    return true;
   }
 
   private static class MyHyperlinkListener implements HyperlinkListener {

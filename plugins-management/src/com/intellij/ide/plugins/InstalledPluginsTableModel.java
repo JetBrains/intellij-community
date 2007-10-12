@@ -2,13 +2,13 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
+import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +97,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public static boolean hasNewerVersion(PluginId descr) {
     return NewVersions2Plugins.containsKey(descr);
+  }
+
+  public boolean isEnabled(final PluginId pluginId) {
+    return myEnabled.get(pluginId).booleanValue();
   }
 
   private class EnabledPluginInfo extends ColumnInfo<IdeaPluginDescriptorImpl, Boolean> {
