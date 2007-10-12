@@ -45,6 +45,7 @@ public class CacheUtil {
       else {
         fileCopy = new ClsFileImpl((PsiManagerImpl)psiFile.getManager(), psiFile.getViewProvider());
         fileCopy.putUserData(CACHE_COPY_KEY, Boolean.TRUE);
+        ((ClsFileImpl)fileCopy).setContent(content);
         ((ClsFileImpl)fileCopy).setRepositoryId(-1);
       }
     }

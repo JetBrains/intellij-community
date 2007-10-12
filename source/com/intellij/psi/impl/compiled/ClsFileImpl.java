@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.ide.startup.FileContent;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 
 public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile, PsiFileEx {
@@ -43,6 +45,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   private volatile LanguageLevel myLanguageLevel = null;
   private volatile boolean myContentsUnloaded;
   private static final int MAX_CLASS_FILE_MAJOR_VERSION = 50;
+  private FileContent myContent = null; // For copies created by CacheUtil only
 
   private ClsFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(manager, -2);
@@ -54,6 +57,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     this(manager, viewProvider, false);
   }
 
+  public void setContent(final FileContent content) {
+    myContent = content;
+  }
 
   public boolean isContentsLoaded() {
     return myClass != null && myClass.isContentsLoaded();
@@ -150,7 +156,18 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
         myClass = (ClsClassImpl)getRepositoryElementsManager().findOrCreatePsiElementById(classIds[0]);
       }
       else {
-        myClass = new ClsClassImpl(myManager, this, new ClassFileData(getVirtualFile()));
+        byte[] bytes = null;
+        if (myContent != null) {
+          try {
+            bytes = myContent.getBytes();
+          }
+          catch (IOException e) {
+            // ignore
+          }
+        }
+
+        final ClassFileData fileData = bytes != null ? new ClassFileData(bytes, getVirtualFile()) : new ClassFileData(getVirtualFile());
+        myClass = new ClsClassImpl(myManager, this, fileData);
         myContentsUnloaded = false;
       }
     }
@@ -217,12 +234,23 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   private LanguageLevel getLanguageLevelInner() {
-    return getLanguageLevel(getVirtualFile(), getManager().getEffectiveLanguageLevel());
+    final LanguageLevel defaultLevel = getManager().getEffectiveLanguageLevel();
+    if (myClass != null) {
+      final ClassFileData data = myClass.getClassFileData();
+      if (data != null) {
+        return getLanguageLevelFromClassFileData(data, defaultLevel);
+      }
+    }
+    return getLanguageLevel(getVirtualFile(), defaultLevel);
   }
 
   public static LanguageLevel getLanguageLevel(VirtualFile vFile, LanguageLevel defaultLanguageLevel) {
+    final ClassFileData classFileData = new ClassFileData(vFile);
+    return getLanguageLevelFromClassFileData(classFileData, defaultLanguageLevel);
+  }
+
+  private static LanguageLevel getLanguageLevelFromClassFileData(final ClassFileData classFileData, final LanguageLevel defaultLanguageLevel) {
     try {
-      final ClassFileData classFileData = new ClassFileData(vFile);
       final BytePointer ptr = new BytePointer(classFileData.getData(), 6);
       int majorVersion = ClsUtil.readU2(ptr);
       if (majorVersion < MAX_CLASS_FILE_MAJOR_VERSION) {
