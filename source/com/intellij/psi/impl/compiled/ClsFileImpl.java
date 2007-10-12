@@ -235,7 +235,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
   private LanguageLevel getLanguageLevelInner() {
     final LanguageLevel defaultLevel = getManager().getEffectiveLanguageLevel();
-    if (myClass != null) {
+    if (myClass != null && myClass.isContentsLoaded()) {
       final ClassFileData data = myClass.getClassFileData();
       if (data != null) {
         return getLanguageLevelFromClassFileData(data, defaultLevel);
