@@ -22,16 +22,7 @@ public class GrDefaultAnnotationMemberImpl extends GroovyPsiElementImpl implemen
     visitor.visitDefaultAnnotationMember(this);
   }
 
-  //TODO: NIY
-  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    return null;
-  }
-
   public String toString() {
     return "Default annotation member";
-  }
-
-  public String getElementToCompare() {
-    return getName();
   }
 }
