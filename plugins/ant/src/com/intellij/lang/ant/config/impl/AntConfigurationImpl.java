@@ -124,10 +124,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
   }
 
-  private volatile boolean myIsInitialized = false;
+  private volatile Boolean myIsInitialized = null;
   
   public boolean isInitialized() {
-    return myIsInitialized;
+    final Boolean initialized = myIsInitialized;
+    return initialized == null || initialized.booleanValue();
   }
 
   public AntBuildFile[] getBuildFiles() {
@@ -298,6 +299,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private void readExternal(final Element parentNode) throws InvalidDataException {
+    myIsInitialized = Boolean.FALSE;
     myAntWorkspaceConfiguration.loadFromProjectSettings(parentNode);
     getProperties().readExternal(parentNode);
     runWhenInitialized(new Runnable() {
@@ -635,7 +637,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
               }
               finally {
                 updateRegisteredActions();
-                myIsInitialized = true;
+                myIsInitialized = Boolean.TRUE;
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {
                     myEventDispatcher.getMulticaster().configurationLoaded();
