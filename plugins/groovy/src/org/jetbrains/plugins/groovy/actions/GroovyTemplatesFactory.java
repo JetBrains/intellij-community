@@ -25,7 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.Icons;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import java.util.Properties;
 
@@ -46,7 +46,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
 
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
     final FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor(GroovyBundle.message("file.template.group.title.groovy"),
-        Icons.SMALLEST);
+        GroovyIcons.SMALLEST);
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (String template : TEMPLATES) {
       group.addTemplate(new FileTemplateDescriptor(template, fileTypeManager.getFileTypeByFileName(template).getIcon()));

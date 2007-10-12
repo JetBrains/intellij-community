@@ -22,7 +22,7 @@ import javax.swing.*;
 /**
  * @author ilyas
  */
-public interface Icons {
+public interface GroovyIcons {
 
   public static final Icon FILE_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_fileType.png");
   public static final Icon SMALLEST = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/groovy_16x16.png");
@@ -33,7 +33,6 @@ public interface Icons {
   public static final Icon ANNOTAION = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/annotationtype.png");
   public static final Icon ENUM = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/enum.png");
   public static final Icon PROPERTY = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/property.png");
-  public static final Icon GSP_FILE_TYPE = IconLoader.findIcon("/org/jetbrains/plugins/groovy/images/gsp_logo.png");
 
 
 }

@@ -26,7 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.Icons;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import javax.swing.*;
@@ -58,7 +58,7 @@ public class GroovyScriptRunConfigurationType implements LocatableConfigurationT
   }
 
   public Icon getIcon() {
-    return Icons.FILE_TYPE;
+    return GroovyIcons.FILE_TYPE;
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {

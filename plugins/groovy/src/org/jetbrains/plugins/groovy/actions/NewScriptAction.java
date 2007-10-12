@@ -19,13 +19,13 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.Icons;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 
 public class NewScriptAction extends NewActionBase {
   public NewScriptAction() {
     super(GroovyBundle.message("newscript.menu.action.text"),
-            GroovyBundle.message("newscript.menu.action.description"),
-            Icons.FILE_TYPE);
+        GroovyBundle.message("newscript.menu.action.description"),
+        GroovyIcons.FILE_TYPE);
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {

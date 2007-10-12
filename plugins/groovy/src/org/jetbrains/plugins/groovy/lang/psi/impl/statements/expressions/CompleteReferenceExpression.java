@@ -6,9 +6,12 @@ import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.plugins.groovy.Icons;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -26,7 +29,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
 /**
  * @author ven
@@ -81,7 +86,7 @@ public class CompleteReferenceExpression {
       if (PsiUtil.isSimplePropertySetter(method)) {
         String prop = PropertyUtil.getPropertyName(method);
         if (prop != null) {
-          props.add(factory.createLookupElement(prop).setIcon(Icons.PROPERTY));
+          props.add(factory.createLookupElement(prop).setIcon(GroovyIcons.PROPERTY));
         }
       } else if (eventListener != null) {
         addListenerProperties(method, eventListener, props, factory);
@@ -103,7 +108,7 @@ public class CompleteReferenceExpression {
           final PsiMethod[] listenerMethods = listenerClass.getMethods();
           if (InheritanceUtil.isInheritorOrSelf(listenerClass, eventListenerClass, true)) {
             for (PsiMethod listenerMethod : listenerMethods) {
-              result.add(factory.createLookupElement(listenerMethod.getName()).setIcon(Icons.PROPERTY));
+              result.add(factory.createLookupElement(listenerMethod.getName()).setIcon(GroovyIcons.PROPERTY));
             }
           }
         }
@@ -173,7 +178,7 @@ public class CompleteReferenceExpression {
             if (!PsiUtil.isValidReferenceName(propName)) {
               propName = "'" + propName + "'";
             }
-            result.add(factory.createLookupElement(propName).setIcon(Icons.PROPERTY));
+            result.add(factory.createLookupElement(propName).setIcon(GroovyIcons.PROPERTY));
           }
         }
       }

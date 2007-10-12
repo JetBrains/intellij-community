@@ -29,7 +29,7 @@ import javax.swing.*;
 public class GroovyFileType extends LanguageFileType {
 
   public static final GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
-  public static final Icon GROOVY_LOGO = Icons.FILE_TYPE;
+  public static final Icon GROOVY_LOGO = GroovyIcons.FILE_TYPE;
 
   private GroovyFileType() {
     super(new GroovyLanguage());
