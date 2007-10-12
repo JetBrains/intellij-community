@@ -25,7 +25,7 @@ public class OpenProjectAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = DataKeys.PROJECT.getData(e.getDataContext());
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
       public boolean isFileSelectable(final VirtualFile file) {
         return isProjectDirectory(file) || isProjectFile(file);
       }
