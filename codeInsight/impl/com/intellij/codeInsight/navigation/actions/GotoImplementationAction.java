@@ -6,7 +6,6 @@ import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 
 public class GotoImplementationAction extends BaseCodeInsightAction {
   protected CodeInsightActionHandler getHandler(){
@@ -14,6 +13,6 @@ public class GotoImplementationAction extends BaseCodeInsightAction {
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file instanceof PsiJavaFile;
+    return true;
   }
 }
