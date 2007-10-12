@@ -55,6 +55,7 @@ public class TodoPattern implements Cloneable, JDOMExternalizable {
     try{
       TodoAttributes attributes = myAttributes.clone();
       TodoPattern pattern = (TodoPattern)super.clone();
+      pattern.myIndexPattern = new IndexPattern(myIndexPattern.getPatternString(), myIndexPattern.isCaseSensitive());
       pattern.myAttributes = attributes;
 
       return pattern;
