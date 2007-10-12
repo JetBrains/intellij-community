@@ -240,6 +240,7 @@ public class HighlightableComponent extends JComponent {
 
     // paint text
 
+    UIUtil.applyRenderingHints(g);
     FontMetrics defFontMetrics = getFontMetrics(getFont());
 
     if (myText == null) {
