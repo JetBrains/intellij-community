@@ -77,9 +77,11 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     }
     if (element instanceof PsiWhiteSpace) element = element.getNextSibling();
     if (element == null) return null;
+    GroovyPsiElement argList = PsiTreeUtil.getParentOfType(element, GrArgumentList.class);
+    if (argList != null) return argList;
     final GrCall call = PsiTreeUtil.getParentOfType(element, GrCall.class);
     if (call != null) {
-      final GroovyPsiElement argList = call.getArgumentList();
+      argList = call.getArgumentList();
       if (argList.getTextRange().contains(element.getTextRange().getStartOffset())) return argList;
     }
     return null;
