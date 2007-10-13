@@ -25,8 +25,15 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     if (element == null) return result;
 
     final TextRange range = element.getTextRange();
+    if (range == null) return result;
+
     final PsiFile psiFile = element.getContainingFile();
-    if (!psiFile.getText().substring(range.getStartOffset(), range.getEndOffset()).contains(PsiKeyword.CLASS)) return result;
+    if (psiFile == null) return result;
+
+    final String fileText = psiFile.getText();
+    if (fileText == null) return result;
+    
+    if (!fileText.substring(range.getStartOffset(), range.getEndOffset()).contains(PsiKeyword.CLASS)) return result;
 
     element.accept(new PsiRecursiveElementVisitor(){
       public void visitClass(PsiClass aClass) {
