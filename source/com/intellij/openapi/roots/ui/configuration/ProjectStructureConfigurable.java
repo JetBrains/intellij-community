@@ -142,10 +142,16 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myComponent = new MyPanel();
 
     mySplitter = new Splitter(false, .15f);
+    mySplitter.setHonorComponentsMinimumSize(true);
 
     initSidePanel();
 
-    final JPanel left = new JPanel(new BorderLayout());
+    final JPanel left = new JPanel(new BorderLayout()) {
+      public Dimension getMinimumSize() {
+        final Dimension original = super.getMinimumSize();
+        return new Dimension(Math.max(original.width, 100), original.height);
+      }
+    };
 
     final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(new BackAction(myComponent));

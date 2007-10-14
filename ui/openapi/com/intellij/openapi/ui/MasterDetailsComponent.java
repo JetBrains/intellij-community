@@ -127,9 +127,16 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       }
     };
     mySplitter = new Splitter(false, .2f);
+    mySplitter.setHonorComponentsMinimumSize(true);
     myWholePanel.add(mySplitter, BorderLayout.CENTER);
 
-    JPanel left = new JPanel(new BorderLayout());
+    JPanel left = new JPanel(new BorderLayout()) {
+      public Dimension getMinimumSize() {
+        final Dimension original = super.getMinimumSize();
+        return new Dimension(Math.max(original.width, 100), original.height);
+      }
+    };
+      
     left.add(myNorthPanel, BorderLayout.NORTH);
     left.add(new JScrollPane(myTree), BorderLayout.CENTER);
     mySplitter.setFirstComponent(left);
