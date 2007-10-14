@@ -181,7 +181,7 @@ public class FrameWrapper {
       myPreferedFocus = null;
 
       myFocusTrackback.restoreFocus();
-      if (myComponent != null) {
+      if (myComponent != null && myFocusWatcher != null) {
         myFocusWatcher.deinstall(myComponent);
       }
       myFocusWatcher = null;
