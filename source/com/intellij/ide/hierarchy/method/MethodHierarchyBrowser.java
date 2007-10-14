@@ -45,7 +45,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.MethodHierarchyBrowser");
 
   @NonNls
-  private final static String HELP_ID = "viewingStructure.methodHierarchy";
+  private final static String HELP_ID = "reference.toolWindows.hierarchy";
 
   private Content myContent;
   private final Project myProject;

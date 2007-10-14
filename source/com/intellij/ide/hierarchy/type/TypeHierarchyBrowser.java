@@ -48,7 +48,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.TypeHierarchyBrowser");
 
   @NonNls
-  private final static String HELP_ID = "viewingStructure.classHierarchy";
+  private final static String HELP_ID = "reference.toolWindows.hierarchy";
   @NonNls
   static final String TYPE_HIERARCHY_BROWSER_ID = "TYPE_HIERARCHY_BROWSER_ID";
 

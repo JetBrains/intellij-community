@@ -50,7 +50,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
   static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
   static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
 
-  @NonNls private static final String HELP_ID = "viewingStructure.callHierarchy";
+  @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";
 
   private Content myContent;
   private final Project myProject;
