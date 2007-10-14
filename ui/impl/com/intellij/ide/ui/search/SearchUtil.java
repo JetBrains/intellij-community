@@ -556,7 +556,10 @@ public class SearchUtil {
       final int start = matcher.start(1);
       withoutQuoted += " " + filter.substring(beg, start);
       beg = matcher.end(1);
-      quoted.add(filter.substring(start, beg));
+      final String trimmed = filter.substring(start, beg).trim();
+      if (trimmed.length() > 0) {
+        quoted.add(trimmed);
+      }
     }
     return withoutQuoted + " " + filter.substring(beg);
   }
