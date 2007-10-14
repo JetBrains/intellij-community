@@ -79,7 +79,9 @@ public class LineTooltipRenderer implements TooltipRenderer {
       }
 
       public void mouseExited(final MouseEvent e) {
-        hintManager.hideAllHints();
+        if (!expanded[0]) {
+          hintManager.hideAllHints();
+        }
       }
     });
 
