@@ -174,14 +174,20 @@ public class PluginManager {
     Collections.sort(result, getPluginDescriptorComparator(idToDescriptorMap));
 
     for (final IdeaPluginDescriptorImpl pluginDescriptor : result) {
-      final List<File> classPath = pluginDescriptor.getClassPath();
-      final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
-      final ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, dependentPluginIds);
+      if (pluginDescriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID)) {
+        pluginDescriptor.setLoader(parentLoader);
+      }
+      else {
+        final List<File> classPath = pluginDescriptor.getClassPath();
+        final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
+        final ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, dependentPluginIds);
 
-      final ClassLoader pluginClassLoader = createPluginClassLoader(classPath.toArray(new File[classPath.size()]),
-                                                                    parentLoaders.length > 0 ? parentLoaders : new ClassLoader[] {parentLoader},
-                                                                    pluginDescriptor);
-      pluginDescriptor.setLoader(pluginClassLoader);
+        final ClassLoader pluginClassLoader = createPluginClassLoader(classPath.toArray(new File[classPath.size()]),
+                                                                      parentLoaders.length > 0 ? parentLoaders : new ClassLoader[] {parentLoader},
+                                                                      pluginDescriptor);
+        pluginDescriptor.setLoader(pluginClassLoader);
+      }
+
       pluginDescriptor.registerExtensions();
     }
 
@@ -512,6 +518,7 @@ public class PluginManager {
     }
   }
 
+  @SuppressWarnings({"EmptyCatchBlock"})
   private static Collection<URL> getClassLoaderUrls() {
     final ClassLoader classLoader = PluginManager.class.getClassLoader();
     final Class<? extends ClassLoader> aClass = classLoader.getClass();
