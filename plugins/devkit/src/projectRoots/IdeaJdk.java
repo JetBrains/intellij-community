@@ -421,8 +421,8 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(entry);
       if (virtualFile != null) {
         toModificator.addRoot(virtualFile, projectRootType);
+        wasSmthAdded = true;
       }
-      wasSmthAdded = true;
     }
     return wasSmthAdded;
   }
