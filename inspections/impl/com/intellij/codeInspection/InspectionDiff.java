@@ -14,14 +14,14 @@ import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class InspectionDiff {
-  private static HashMap ourFileToProblem;
+  private static HashMap<String, ArrayList<Element>> ourFileToProblem;
     @NonNls
     private static final String FILE_ELEMENT = "file";
     @NonNls
@@ -80,45 +80,42 @@ public class InspectionDiff {
 
       OutputStream outStream = System.out;
       if (outPath != null) {
-        outStream = new BufferedOutputStream(new FileOutputStream(outPath + File.separator + new File(oldPath).getName()));
+        outStream = new BufferedOutputStream(new FileOutputStream(outPath + File.separator + new File(newPath).getName()));
       }
 
       Document delta = createDelta(oldDoc, newDoc);
       JDOMUtil.writeDocument(delta, outStream, "\n");
     } catch (Exception e) {
-      System.out.println(e);
       e.printStackTrace();
     }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static Document createDelta(Document oldDoc, Document newDoc) {
-    Element oldRoot = oldDoc.getRootElement();
+  private static Document createDelta(@Nullable Document oldDoc, Document newDoc) {
     Element newRoot = newDoc.getRootElement();
 
-
-    ourFileToProblem = new HashMap();
+    ourFileToProblem = new HashMap<String, ArrayList<Element>>();
     List newProblems = newRoot.getChildren("problem");
-    for (Iterator iterator = newProblems.iterator(); iterator.hasNext();) {
-      Element newProblem = (Element) iterator.next();
+    for (final Object o : newProblems) {
+      Element newProblem = (Element)o;
       addProblem(newProblem);
     }
 
-    List oldProblems = oldRoot.getChildren("problem");
-    for (Iterator iterator = oldProblems.iterator(); iterator.hasNext();) {
-      Element oldProblem = (Element) iterator.next();
-      removeIfEquals(oldProblem);
+    if (oldDoc != null) {
+      List oldProblems = oldDoc.getRootElement().getChildren("problem");
+      for (final Object o : oldProblems) {
+        Element oldProblem = (Element)o;
+        removeIfEquals(oldProblem);
+      }
     }
 
     Element root = new Element("problems");
     Document delta = new Document(root);
 
-    for (Iterator iterator = ourFileToProblem.values().iterator(); iterator.hasNext();) {
-      ArrayList fileList = (ArrayList) iterator.next();
+    for (ArrayList<Element> fileList : ourFileToProblem.values()) {
       if (fileList != null) {
-        for (int i = 0; i < fileList.size(); i++) {
-          Element element = (Element) fileList.get(i);
-          root.addContent((Element) element.clone());
+        for (Element element : fileList) {
+          root.addContent((Element)element.clone());
         }
       }
     }
@@ -128,11 +125,10 @@ public class InspectionDiff {
 
   private static void removeIfEquals(Element problem) {
     String fileName = problem.getChildText(FILE_ELEMENT);
-    ArrayList problemList = (ArrayList) ourFileToProblem.get(fileName);
+    ArrayList<Element> problemList = ourFileToProblem.get(fileName);
     if (problemList != null) {
-      Element[] problems = (Element[]) problemList.toArray(new Element[problemList.size()]);
-      for (int i = 0; i < problems.length; i++) {
-        Element toCheck = problems[i];
+      Element[] problems = problemList.toArray(new Element[problemList.size()]);
+      for (Element toCheck : problems) {
         if (equals(problem, toCheck)) problemList.remove(toCheck);
       }
     }
@@ -140,9 +136,9 @@ public class InspectionDiff {
 
   private static void addProblem(Element problem) {
     String fileName = problem.getChildText(FILE_ELEMENT);
-    ArrayList problemList = (ArrayList) ourFileToProblem.get(fileName);
+    ArrayList<Element> problemList = ourFileToProblem.get(fileName);
     if (problemList == null) {
-      problemList = new ArrayList();
+      problemList = new ArrayList<Element>();
       ourFileToProblem.put(fileName, problemList);
     }
     problemList.add(problem);
