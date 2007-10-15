@@ -160,6 +160,8 @@ public class IdeEventQueue extends EventQueue {
 
 
   private void addIdleTimeCounterRequest() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     myIdleTimeCounterAlarm.cancelAllRequests();
     myLastActiveTime = System.currentTimeMillis();
     myIdleTimeCounterAlarm.addRequest(new Runnable() {
