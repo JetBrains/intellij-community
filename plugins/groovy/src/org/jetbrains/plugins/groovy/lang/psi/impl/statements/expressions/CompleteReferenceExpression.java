@@ -49,6 +49,9 @@ public class CompleteReferenceExpression {
           GrExpression call = (GrExpression) pparent; //add named argument label variants
           type = call.getType();
         }
+      } else {
+        Object[] specificVariants = GroovyCompletionUtil.getContextSpecificVariants(refExpr);
+        return ArrayUtil.mergeArrays(propertyVariants, specificVariants, Object.class);
       }
     } else {
       type = qualifier.getType();
@@ -73,7 +76,6 @@ public class CompleteReferenceExpression {
       final Object[] classVariants = getVariantsImpl(refExpr, classVariantsCollector);
       return ArrayUtil.mergeArrays(propertyVariants, classVariants, Object.class);
     }
-
 
     return propertyVariants;
   }

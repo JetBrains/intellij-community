@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -8,11 +9,14 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GspGroovyFile;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -212,4 +216,48 @@ public class TypesUtil {
 
     return null;
   }
+
+  @Nullable
+  public static PsiType getTypeForContextSpecificReferenceExpression(GrReferenceExpression expr) {
+    if (expr.getQualifierExpression() == null && expr.getContainingFile() instanceof GspGroovyFile) {
+      return getTypeForGspSpecificReferenceExpr(expr);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getTypeForGspSpecificReferenceExpr(GrReferenceExpression expr) {
+    String name = expr.getName();
+    if (name == null) return null;
+    Project project = expr.getProject();
+    PsiManager manager = PsiManager.getInstance(project);
+    PsiElementFactory factory = manager.getElementFactory();
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    if ("application".equals(name)) {
+      return factory.createTypeByFQClassName("javax.servlet.ServletContext", scope);
+    }
+    if ("flash".equals(name)) {
+      return factory.createTypeByFQClassName("org.codehaus.groovy.grails.web.servlet.FlashScope", scope);
+    }
+    if ("out".equals(name)) {
+      return factory.createTypeByFQClassName("java.io.Writer", scope);
+    }
+    if ("params".equals(name)) {
+      return factory.createTypeByFQClassName("java.util.Map", scope);
+    }
+    if ("request".equals(name)) {
+      return factory.createTypeByFQClassName("javax.servlet.http.HttpServletRequest", scope);
+    }
+    if ("response".equals(name)) {
+      return factory.createTypeByFQClassName("javax.servlet.http.HttpServletResponse", scope);
+    }
+    if ("session".equals(name)) {
+      return factory.createTypeByFQClassName("javax.servlet.http.HttpSession", scope);
+    }
+    if ("grailsApplication".equals(name)) {
+      return factory.createTypeByFQClassName("org.codehaus.groovy.grails.commons.GrailsApplication", scope);
+    }
+    return null;
+  }
+
 }
