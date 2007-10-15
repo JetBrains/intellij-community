@@ -525,21 +525,19 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
   
   @Nullable
   private ClassLoader getClassLoader(final List<URL> urls) {
+    final AntFile file = getAntFile();
+    final ClassLoader parentLoader = file != null ? file.getClassLoader() : null;
+    if (urls.size() == 0) {
+      return parentLoader;
+    }
+    
     final ClassLoader cached = LOADERS_CACHE.getClassLoader(urls);
-    if (cached != null) {
+    if (cached != null && parentLoader == cached.getParent()) {
       return cached;
     }
-    ClassLoader loader = null;
-    final AntFile file = getAntFile();
-    if (file != null) {
-      loader = file.getClassLoader();
-      if (urls.size() > 0) {
-        loader = new UrlClassLoader(urls, loader, false, true);
-      }
-    }
-    if (loader != null) {
-      LOADERS_CACHE.setClassLoader(urls, loader);
-    }
+    
+    final ClassLoader loader = new UrlClassLoader(urls, parentLoader, false, true);
+    LOADERS_CACHE.setClassLoader(urls, loader);
     return loader;
   }
 

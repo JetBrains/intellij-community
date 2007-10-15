@@ -28,10 +28,8 @@ public abstract class ClassLoaderHolder {
   }
 
   public void updateClasspath() {
-    if (myLoader != null) {
-      myLoader = buildClasspath();
-    }
+    myLoader = null;
   }
-
+    
   protected abstract ClassLoader buildClasspath();
 }

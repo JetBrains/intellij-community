@@ -114,6 +114,10 @@ public class AntInstallation {
     return myClassLoaderHolder.getClassloader();
   }
 
+  public void updateClasspath() {
+    myClassLoaderHolder.updateClasspath();
+  }
+  
   public static AntInstallation fromHome(String homePath) throws ConfigurationException {
     File antHome = new File(homePath);
     String antPath = "'" + antHome.getAbsolutePath() + "'";

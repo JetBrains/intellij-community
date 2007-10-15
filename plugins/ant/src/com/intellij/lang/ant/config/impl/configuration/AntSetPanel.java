@@ -2,6 +2,7 @@ package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.impl.AntInstallation;
+import com.intellij.lang.ant.config.impl.AntReference;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -56,6 +57,12 @@ public class AntSetPanel {
     for (AntInstallation ant : myForm.getRemovedAnts()) {
       myAntConfiguration.removeConfiguration(ant);
     }
+    
+    final Map<AntReference, AntInstallation> currentAnts = myAntConfiguration.getConfiguredAnts();
+    for (AntInstallation installation : currentAnts.values()) {
+      installation.updateClasspath();
+    }
+    
     for (AntInstallation ant : myForm.getAddedAnts()) {
       myAntConfiguration.addConfiguration(ant);
     }
