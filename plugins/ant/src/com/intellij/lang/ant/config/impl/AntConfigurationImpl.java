@@ -132,7 +132,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   public AntBuildFile[] getBuildFiles() {
-    return myBuildFiles.toArray(new AntBuildFile[myBuildFiles.size()]);
+    synchronized (myBuildFiles) {
+      return myBuildFiles.toArray(new AntBuildFile[myBuildFiles.size()]);
+    }
   }
 
   public AntBuildFile addBuildFile(final VirtualFile file) throws AntNoFileException {
@@ -236,8 +238,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       return null;
     }
     final AntBuildFileBase buildFile = (AntBuildFileBase)pair.first;
-    if (!myBuildFiles.contains(buildFile)) {
-      return null; // file was removed
+    synchronized (myBuildFiles) {
+      if (!myBuildFiles.contains(buildFile)) {
+        return null; // file was removed
+      }
     }
     final String targetName = (String)pair.second;
 
@@ -290,7 +294,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   @Nullable
   public AntBuildModel getModelIfRegistered(final AntBuildFile buildFile) {
-    if (!myBuildFiles.contains(buildFile)) return null;
+    synchronized (myBuildFiles) {
+      if (!myBuildFiles.contains(buildFile)) return null;
+    }
     return getModel(buildFile);
   }
 
@@ -330,7 +336,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     getProperties().writeExternal(parentNode);
     final ActionRunner.InterruptibleRunnable action = new ActionRunner.InterruptibleRunnable() {
       public void run() throws WriteExternalException {
-        for (final AntBuildFile buildFile : myBuildFiles) {
+        for (final AntBuildFile buildFile : getBuildFiles()) {
           Element element = new Element(BUILD_FILE);
           element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
           ((AntBuildFileBase)buildFile).writeProperties(element);
@@ -445,7 +451,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final AntFile antFile = (AntFile)psiFile;
     final AntBuildFileImpl buildFile = new AntBuildFileImpl(antFile, this);
     antFile.getSourceElement().putCopyableUserData(XmlFile.ANT_BUILD_FILE, buildFile);
-    myBuildFiles.add(buildFile);
+    synchronized (myBuildFiles) {
+      myBuildFiles.add(buildFile);
+    }
     return buildFile;
   }
 
@@ -504,7 +512,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final XmlFile xmlFile = ((AntFile)buildFile.getAntFile()).getSourceElement();
     xmlFile.putCopyableUserData(XmlFile.ANT_BUILD_FILE, null);
     AntSupport.markFileAsAntFile(xmlFile.getVirtualFile(), xmlFile.getViewProvider(), false);
-    myBuildFiles.remove(buildFile);
+    synchronized (myBuildFiles) {
+      myBuildFiles.remove(buildFile);
+    }
     myModelToBuildFileMap.remove(buildFile);
     myEventDispatcher.getMulticaster().buildFileRemoved(buildFile);
   }
