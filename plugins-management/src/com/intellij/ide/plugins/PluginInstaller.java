@@ -1,5 +1,6 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.extensions.PluginId;
@@ -40,16 +41,20 @@ public class PluginInstaller {
     long count = 0;
     boolean result = false;
 
-    for (PluginNode pluginNode : plugins) {
+    for (final PluginNode pluginNode : plugins) {
       if (pi != null) pi.setText(pluginNode.getName());
 
       try {
         result |= prepareToInstall(pluginNode, true, count, total);
+        count += Integer.valueOf(pluginNode.getSize()).intValue();
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
+      catch (final IOException e) {
+        SwingUtilities.invokeLater(new Runnable(){
+          public void run() {
+            Messages.showErrorDialog(pluginNode.getName() + ": " + e.getMessage(), CommonBundle.message("title.error"));
+          }
+        });
       }
-      count += Integer.valueOf(pluginNode.getSize()).intValue();
     }
     return result;
   }
