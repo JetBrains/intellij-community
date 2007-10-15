@@ -34,18 +34,16 @@ public class OutputEditor extends ModuleElementsEditor {
   protected JComponent createComponentImpl() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc =
-      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
+      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
     panel.add(myCompilerOutputEditor.createComponentImpl(), gc);
     final JPanel javadocPanel = (JPanel)myJavadocEditor.createComponentImpl();
     javadocPanel.setBorder(BorderFactory.createTitledBorder(myJavadocEditor.getDisplayName()));
-    gc.gridy++;
     panel.add(javadocPanel, gc);
     final JPanel annotationsPanel = (JPanel)myAnnotationsEditor.createComponentImpl();
     annotationsPanel.setBorder(BorderFactory.createTitledBorder(myAnnotationsEditor.getDisplayName()));
-    gc.gridy++;
-    gc.weighty = 1.0;
-    gc.fill = GridBagConstraints.BOTH;
     panel.add(annotationsPanel, gc);
+    panel.add(Box.createVerticalBox(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.CENTER,
+                                                              GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0));
     panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     return panel;
   }

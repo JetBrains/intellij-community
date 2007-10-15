@@ -73,6 +73,7 @@ public class JavadocEditor extends ModuleElementsEditor {
   public JComponent createComponentImpl() {
     final JPanel mainPanel = new JPanel(new BorderLayout());
     mainPanel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+    mainPanel.setPreferredSize(new Dimension(-1, 200));
     final DefaultTableModel tableModel = createModel();
     myTable = new Table(tableModel);
     myTable.setIntercellSpacing(new Dimension(0, 0));
