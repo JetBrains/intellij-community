@@ -34,7 +34,7 @@
     <key>CFBundleGetInfoString</key>
     <string>IntelliJ IDEA @@major@@.@@minor@@, build @@@@. Copyright JetBrains s.r.o., (c) 2000-2007</string>
     <key>CFBundleShortVersionString</key>
-    <string>Selena</string>
+    <string>@@major@@.@@minor@@</string>
     <key>CFBundleVersion</key>
     <string>@@@@</string>
     <key>Java</key>
@@ -67,7 +67,7 @@
         <string>true</string>
       </dict>
       <key>VMOptions</key>
-      <string>-Xms16m -Xmx192m -XX:MaxPermSize=92m -Xbootclasspath/p:../lib/boot.jar -ea</string>
+      <string>-Xms16m -Xmx192m -XX:MaxPermSize=120m -Xbootclasspath/p:../lib/boot.jar -ea</string>
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/bin</string>
    </dict>
