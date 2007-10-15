@@ -284,26 +284,27 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     myHasDeletedItems = false;
     ((DefaultTreeModel)myTree.getModel()).reload();
     myTree.requestFocus();
+    myState.proportions.restoreSplitterProportions(myWholePanel);
 
-    if (myState.lastEditedConfigurable == null) {
-      TreeUtil.selectFirstNode(myTree);
-      return;
-    }
     final Enumeration enumeration = myRoot.breadthFirstEnumeration();
+    boolean selected = false;
     while (enumeration.hasMoreElements()) {
       final MyNode node = (MyNode)enumeration.nextElement();
+      if (node instanceof MyRootNode) continue;
       final Object userObject = node.getUserObject();
       if (userObject instanceof Configurable) {
         final Configurable configurable = (Configurable)userObject;
-        if (Comparing.strEqual(configurable.getDisplayName(), myState.lastEditedConfigurable)) {
+        final String displayName = configurable.getDisplayName();
+        myState.order.add(displayName);
+        if (!selected && Comparing.strEqual(displayName, myState.lastEditedConfigurable)) {
           TreeUtil.selectInTree(node, true, myTree);
-          return;
+          selected = true;
         }
       }
     }
-    TreeUtil.selectFirstNode(myTree);
-
-    myState.proportions.restoreSplitterProportions(myWholePanel);
+    if (!selected) {
+      TreeUtil.selectFirstNode(myTree);
+    }
   }
 
 
