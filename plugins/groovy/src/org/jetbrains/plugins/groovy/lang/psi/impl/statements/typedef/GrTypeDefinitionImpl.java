@@ -575,14 +575,23 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
-    final ArrayList<Pair<PsiMethod, PsiSubstitutor>> pairArrayList = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
+    final ArrayList<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
 
-    final PsiMethod[] methods = findMethodsByName(name, checkBases);
-    for (PsiMethod method : methods) {
-      pairArrayList.add(new Pair<PsiMethod, PsiSubstitutor>(method, PsiSubstitutor.EMPTY));
+    if (!checkBases) {
+      final PsiMethod[] methods = findMethodsByName(name, false);
+      for (PsiMethod method : methods) {
+        result.add(new Pair<PsiMethod, PsiSubstitutor>(method, PsiSubstitutor.EMPTY));
+      }
+    } else {
+      final Map<String, List<CandidateInfo>> map = CollectClassMembersUtil.getAllMethods(this);
+      final List<CandidateInfo> candidateInfos = map.get(name);
+      for (CandidateInfo info : candidateInfos) {
+        final PsiElement element = info.getElement();
+        result.add(new Pair<PsiMethod, PsiSubstitutor>((PsiMethod) element, info.getSubstitutor()));
+      }
     }
 
-    return pairArrayList;
+    return result;
   }
 
   @NotNull

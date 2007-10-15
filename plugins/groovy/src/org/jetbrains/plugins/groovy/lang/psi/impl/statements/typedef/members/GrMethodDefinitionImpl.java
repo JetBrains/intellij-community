@@ -165,7 +165,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
-    return MethodSignatureUtil.createMethodSignature(getName(), getParameterList(), null, PsiSubstitutor.EMPTY);
+    return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
   @Nullable
