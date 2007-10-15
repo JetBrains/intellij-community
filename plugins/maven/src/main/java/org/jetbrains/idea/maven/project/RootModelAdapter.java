@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -9,6 +10,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -111,7 +113,22 @@ class RootModelAdapter {
   }
 
   void createModuleDependency(String moduleName) {
-    modifiableRootModel.addInvalidModuleEntry(moduleName).setExported(true);
+    Module m = findModuleByName(moduleName);
+
+    ModuleOrderEntry e;
+    if (m != null) {
+      e = modifiableRootModel.addModuleOrderEntry(m);
+    } else {
+      e = modifiableRootModel.addInvalidModuleEntry(moduleName);
+    }
+
+    e.setExported(true);
+  }
+
+  @Nullable
+  private Module findModuleByName(String moduleName) {
+    ModuleManager mm = ModuleManager.getInstance(modifiableRootModel.getModule().getProject());
+    return mm.findModuleByName(moduleName);
   }
 
   void createModuleLibrary(String libraryName, String urlClasses, String urlSources, String urlJavadoc) {
