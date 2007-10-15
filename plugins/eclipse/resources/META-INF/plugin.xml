@@ -1,8 +1,8 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
-<idea-plugin url="http://www.jetbrains.com/idea">
+<idea-plugin>
   <name>Eclipse Integration</name>
   <id>org.jetbrains.idea.eclipse</id>
-  <description>Eclipse Integration plugin</description>
+  <description>Provides possibility to import, export and synchronize Eclipse project files</description>
   <version>2.0</version>
   <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains s.r.o.</vendor>
   <change-notes>
