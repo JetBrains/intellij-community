@@ -30,9 +30,9 @@ import java.io.IOException;
  * Date: Dec 3, 2004
  */
 public class IdeaLicenseHelper {
-  @NonNls private static final String LICENSE_PATH_PREFERRED = "idea60.key";
+  @NonNls private static final String LICENSE_PATH_PREFERRED = "idea70.key";
+  @NonNls private static final String LICENSE_PATH_60 = "idea60.key";
   @NonNls private static final String LICENSE_PATH_50 = "idea50.key";
-  @NonNls private static final String LICENSE_PATH_60BETA = "idea60beta.key";
   @NonNls private static final String LICENSE_PATH_40 = "idea40.key";
   @NonNls private static final String LICENSE_PATH_SYSTEM = "idea.license";
 
@@ -46,9 +46,9 @@ public class IdeaLicenseHelper {
     if (config.exists()){
       return config;
     }
-    final File idea60beta = new File(configPath, LICENSE_PATH_60BETA);
-    if (idea60beta.exists()){
-      return idea60beta;
+    final File idea60 = new File(configPath, LICENSE_PATH_60);
+    if (idea60.exists()){
+      return idea60;
     }    
     final File idea5 = new File(configPath, LICENSE_PATH_50);
     if (idea5.exists()){
