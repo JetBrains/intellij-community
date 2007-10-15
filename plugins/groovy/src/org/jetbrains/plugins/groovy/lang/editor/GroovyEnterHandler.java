@@ -84,7 +84,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
 
   private void executeWriteActionInner(Editor editor, DataContext dataContext) throws IncorrectOperationException {
     if (!handleEnter(editor, dataContext) &&
-        myOriginalHandler != null) {
+        myOriginalHandler != null &&
+        myOriginalHandler.isEnabled(editor, dataContext)) {
       myOriginalHandler.execute(editor, dataContext);
     }
   }
