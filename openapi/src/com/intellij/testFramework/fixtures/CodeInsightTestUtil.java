@@ -45,7 +45,7 @@ public class CodeInsightTestUtil {
     final List<IntentionAction> list = fixture.getAvailableIntentions(file + ".xml");
     assert list.size() > 0;
     final IntentionAction intentionAction = findIntentionByText(list, actionText);
-    assert intentionAction != null;
+    assert intentionAction != null : "Action not found: " + actionText;
     fixture.launchAction(intentionAction);
     fixture.checkResultByFile(file + "_after.xml");
   }
