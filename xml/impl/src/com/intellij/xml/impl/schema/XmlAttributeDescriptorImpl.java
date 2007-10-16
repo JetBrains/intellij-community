@@ -1,7 +1,9 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.meta.PsiWritableMetaData;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -11,6 +13,7 @@ import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 
@@ -91,9 +94,11 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     return myTag.getAttributeValue("default");
   }
 
-  //todo: refactor to hierarchy of value descriptor?
-  public boolean isEnumerated() {
-    final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(myTag);
+  public boolean isEnumerated(@Nullable XmlElement context) {
+    final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(
+      myTag,
+      context != null ?PsiTreeUtil.getContextOfType(context, XmlTag.class, true):null
+    );
 
     if (elementDescriptor != null &&
         elementDescriptor.getType() instanceof ComplexTypeDescriptor) {
@@ -104,8 +109,19 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     return false;
   }
 
+  public boolean isEnumerated() {
+    return isEnumerated(null);
+  }
+
   public String[] getEnumeratedValues() {
-    final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(myTag);
+    return getEnumeratedValues(null);
+  }
+
+  public String[] getEnumeratedValues(XmlElement context) {
+    final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(
+      myTag,
+      context != null ?PsiTreeUtil.getContextOfType(context, XmlTag.class, true):null
+    );
 
     if (elementDescriptor!=null && elementDescriptor.getType() instanceof ComplexTypeDescriptor) {
       final EnumerationData data = getEnumeratedValuesImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration());

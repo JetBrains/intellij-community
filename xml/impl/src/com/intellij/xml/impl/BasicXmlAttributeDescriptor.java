@@ -12,10 +12,11 @@ import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescriptor {
   public String validateValue(XmlElement context, String value) {
@@ -27,8 +28,8 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
       }
     }
 
-    if (isEnumerated() && XmlUtil.isSimpleXmlAttributeValue(value, (XmlAttributeValue)context)) {
-      String[] values = getEnumeratedValues();
+    if (isEnumerated(context) && XmlUtil.isSimpleXmlAttributeValue(value, (XmlAttributeValue)context)) {
+      String[] values = getEnumeratedValues(context);
       boolean valueWasFound = false;
 
       for (int i = 0; i < values.length; i++) {
@@ -54,5 +55,13 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
 
   public String getName(PsiElement context){
     return getName();
+  }
+
+  public String[] getEnumeratedValues(@Nullable XmlElement context) {
+    return getEnumeratedValues();
+  }
+
+  public boolean isEnumerated(@Nullable XmlElement context) {
+    return isEnumerated();
   }
 }

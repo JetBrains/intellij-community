@@ -830,6 +830,10 @@ public class XmlUtil {
   }
 
   public static XmlElementDescriptor findXmlDescriptorByType(final XmlTag xmlTag) {
+    return findXmlDescriptorByType(xmlTag, null);
+  }
+
+  public static XmlElementDescriptor findXmlDescriptorByType(final XmlTag xmlTag, @Nullable XmlTag context) {
     XmlElementDescriptor elementDescriptor = null;
     String type = xmlTag.getAttributeValue("type", XML_SCHEMA_INSTANCE_URI);
 
@@ -842,7 +846,10 @@ public class XmlUtil {
 
     if (type != null) {
       final String namespaceByPrefix = findNamespaceByPrefix(findPrefixByQualifiedName(type), xmlTag);
-      final XmlNSDescriptor typeDecr = xmlTag.getNSDescriptor(namespaceByPrefix, true);
+      XmlNSDescriptor typeDecr = xmlTag.getNSDescriptor(namespaceByPrefix, true);
+      if (typeDecr == null && namespaceByPrefix.length() == 0 && context != null) {
+        typeDecr = context.getNSDescriptor("", true);
+      }
 
       if (typeDecr instanceof XmlNSDescriptorImpl) {
         final XmlNSDescriptorImpl schemaDescriptor = (XmlNSDescriptorImpl)typeDecr;

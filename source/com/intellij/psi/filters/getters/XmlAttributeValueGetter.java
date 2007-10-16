@@ -7,8 +7,10 @@ import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,7 +40,8 @@ public class XmlAttributeValueGetter implements ContextGetter {
       final XmlAttributeDescriptor descriptor = ((XmlAttribute)context).getDescriptor();
 
       if(descriptor != null) {
-        String[] values = descriptor.getEnumeratedValues();
+        String[] values = descriptor instanceof BasicXmlAttributeDescriptor ?
+                          ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues((XmlElement)context):descriptor.getEnumeratedValues();
 
         final String[] strings = addSpecificCompletions(context);
 
