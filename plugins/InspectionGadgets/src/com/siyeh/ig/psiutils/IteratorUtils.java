@@ -19,6 +19,8 @@ import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Pattern;
+
 public class IteratorUtils {
 
     private IteratorUtils() {}
@@ -33,7 +35,16 @@ public class IteratorUtils {
                                                      PsiVariable target,
                                                      boolean checkTarget) {
         final CallsIteratorNextVisitor visitor =
-                new CallsIteratorNextVisitor(target, checkTarget);
+                new CallsIteratorNextVisitor(target, checkTarget, false);
+        context.accept(visitor);
+        return visitor.callsIteratorNext();
+    }
+
+    public static boolean containsCallToScannerNext(PsiElement context,
+                                                    PsiVariable target,
+                                                    boolean checkTarget) {
+        final CallsIteratorNextVisitor visitor =
+                new CallsIteratorNextVisitor(target, checkTarget, true);
         context.accept(visitor);
         return visitor.callsIteratorNext();
     }
@@ -51,13 +62,18 @@ public class IteratorUtils {
     private static class CallsIteratorNextVisitor
             extends PsiRecursiveElementVisitor {
 
-        private boolean doesCallIteratorNext = false;
-        private boolean checkTarget;
-        private PsiVariable target;
+        private static final Pattern SCANNER_PATTERN = Pattern.compile("next.*");
 
-        CallsIteratorNextVisitor(PsiVariable target, boolean checkTarget) {
+        private final boolean checkTarget;
+        private final boolean checkScanner;
+        private final PsiVariable target;
+        private boolean doesCallIteratorNext = false;
+
+        CallsIteratorNextVisitor(PsiVariable target, boolean checkTarget,
+                                 boolean checkScanner) {
             this.checkTarget = checkTarget;
             this.target = target;
+            this.checkScanner = checkScanner;
         }
 
         public void visitElement(@NotNull PsiElement element){
@@ -73,9 +89,17 @@ public class IteratorUtils {
                 return;
             }
             super.visitMethodCallExpression(expression);
-            if (!MethodCallUtils.isCallToMethod(expression, "java.util.Iterator",
-                    null, HardcodedMethodConstants.NEXT)) {
-                return;
+            if (checkScanner) {
+                if (!MethodCallUtils.isCallToMethod(expression,
+                        "java.util.Iterator", null, SCANNER_PATTERN)) {
+                    return;
+                }
+            } else {
+                if (!MethodCallUtils.isCallToMethod(expression,
+                        "java.util.Iterator", null,
+                        HardcodedMethodConstants.NEXT)) {
+                    return;
+                }
             }
             if (checkTarget) {
                 final PsiReferenceExpression methodExpression =

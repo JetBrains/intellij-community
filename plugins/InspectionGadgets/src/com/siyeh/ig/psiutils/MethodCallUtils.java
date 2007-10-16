@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class MethodCallUtils {
 
@@ -97,6 +99,42 @@ public class MethodCallUtils {
         return isCallToMethod(expression, calledOnClassName, returnType,
                 methodName, parameterTypes);
     }
+
+    public static boolean isCallToMethod(
+            @NotNull PsiMethodCallExpression expression,
+            @NonNls @Nullable String calledOnClassName,
+            @Nullable PsiType returnType,
+            @Nullable Pattern methodNamePattern,
+            @Nullable PsiType... parameterTypes) {
+        final PsiReferenceExpression methodExpression =
+                expression.getMethodExpression();
+        if (methodNamePattern != null) {
+            final String referenceName = methodExpression.getReferenceName();
+            final Matcher matcher = methodNamePattern.matcher(referenceName);
+            if (!matcher.matches()) {
+                return false;
+            }
+        }
+        final PsiMethod method = expression.resolveMethod();
+        if (method == null) {
+            return false;
+        }
+        if (calledOnClassName != null) {
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier != null) {
+                if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                        calledOnClassName)) {
+                    return false;
+                }
+                return MethodUtils.methodMatches(method, null, returnType,
+                        methodNamePattern, parameterTypes);
+            }
+        }
+        return MethodUtils.methodMatches(method, calledOnClassName, returnType,
+                methodNamePattern, parameterTypes);
+    }
+
 
     public static boolean isCallToMethod(
             @NotNull PsiMethodCallExpression expression,

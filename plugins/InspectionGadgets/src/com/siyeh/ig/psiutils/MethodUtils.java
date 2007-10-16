@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
 public class MethodUtils{
 
     private MethodUtils(){
-        super();
     }
 
     public static boolean isCompareTo(@Nullable PsiMethod method){
@@ -59,6 +61,65 @@ public class MethodUtils{
                 manager, GlobalSearchScope.allScope(project));
         return methodMatches(method, null, PsiType.BOOLEAN,
                 HardcodedMethodConstants.EQUALS, objectType);
+    }
+
+    /**
+     * @param method  the method to compare to.
+     * @param containingClassName  the name of the class which contiains the
+     * method.
+     * @param returnType  the return type, specify null if any type matches
+     * @param methodNamePattern  the name the method should have
+     * @param parameterTypes  the type of the parameters of the method, specify
+     *  null if any number and type of parameters match or an empty array
+     * to match zero parameters.
+     * @return true, if the specified method matches the specified constraints,
+     *  false otherwise
+     */
+    public static boolean methodMatches(
+            @NotNull PsiMethod method,
+            @NonNls @Nullable String containingClassName,
+            @Nullable PsiType returnType,
+            @Nullable Pattern methodNamePattern,
+            @Nullable PsiType... parameterTypes) {
+        if (methodNamePattern != null) {
+            final String name = method.getName();
+            final Matcher matcher = methodNamePattern.matcher(name);
+            if (!matcher.matches()) {
+                return false;
+            }
+        }
+        if (parameterTypes != null) {
+            final PsiParameterList parameterList = method.getParameterList();
+            if (parameterList.getParametersCount() != parameterTypes.length) {
+                return false;
+            }
+            final PsiParameter[] parameters = parameterList.getParameters();
+            for (int i = 0; i < parameters.length; i++) {
+                final PsiParameter parameter = parameters[i];
+                final PsiType type = parameter.getType();
+                final PsiType parameterType = parameterTypes[i];
+                if (PsiType.NULL.equals(parameterType)) {
+                    continue;
+                }
+                if (parameterType != null &&
+                        !EquivalenceChecker.typesAreEquivalent(type,
+                                parameterType)) {
+                    return false;
+                }
+            }
+        }
+        if (returnType != null) {
+            final PsiType methodReturnType = method.getReturnType();
+            if (!EquivalenceChecker.typesAreEquivalent(returnType,
+                    methodReturnType)) {
+                return false;
+            }
+        }
+        if (containingClassName != null) {
+            final PsiClass containingClass = method.getContainingClass();
+            return ClassUtils.isSubclass(containingClass, containingClassName);
+        }
+        return true;
     }
 
     /**

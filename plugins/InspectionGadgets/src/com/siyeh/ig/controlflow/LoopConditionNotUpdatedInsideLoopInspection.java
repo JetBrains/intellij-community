@@ -234,13 +234,13 @@ public class LoopConditionNotUpdatedInsideLoopInspection
                         return false;
                     }
                     final PsiVariable variable = (PsiVariable) element;
-                    if (!IteratorUtils.containsCallToIteratorNext(context,
+                    if (!IteratorUtils.containsCallToScannerNext(context,
                             variable, true)) {
                         notUpdated.add(qualifierExpression);
                         return true;
                     }
                 } else {
-                    if (!IteratorUtils.containsCallToIteratorNext(context,
+                    if (!IteratorUtils.containsCallToScannerNext(context,
                             null, true)) {
                         notUpdated.add(methodCallExpression);
                         return true;
