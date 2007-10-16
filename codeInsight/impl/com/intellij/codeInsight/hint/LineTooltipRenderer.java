@@ -106,7 +106,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     if (p.x + width >= widthLimit) {
       p.x = widthLimit - width;
-      width = widthLimit;
+      width = Math.min(width, widthLimit);
     }
 
     if (p.x < 3) {
@@ -115,7 +115,11 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
     if (p.y + height > heightLimit) {
       p.y = heightLimit - height;
-      height = heightLimit;
+      height = Math.min(heightLimit, height);
+    }
+
+    if (p.y < 3) {
+      p.y = 3;
     }
 
     //in order to restrict tooltip size
@@ -148,7 +152,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
         if (myCurrentWidth > 0) {
           stripDescription();
         }
-        new LineTooltipRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()).show(editor, new Point(p.x -3, p.y -3), alignToRight, group);
+        new LineTooltipRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()).show(editor, new Point(p.x -3, p.y -3), false, group);
       }
     });
 
@@ -176,7 +180,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
           } else { //less -> more
             stripDescription();
             hint.hide();
-            new LineTooltipRenderer(myText, 0).show(editor, p, alignToRight, group);
+            new LineTooltipRenderer(myText, 0).show(editor, new Point(p.x - 3, p.y - 3), false, group);
           }
         }
       }
