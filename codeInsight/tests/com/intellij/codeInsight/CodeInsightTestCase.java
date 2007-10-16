@@ -1,7 +1,6 @@
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -28,6 +27,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -530,5 +530,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE);
 
     actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+  }
+
+  protected void ctrlShiftF7() {
+    new HighlightUsagesHandler().invoke(getProject(), getEditor(), getFile());
+  }
+  protected static void ctrlW() {
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
+    AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", action.getTemplatePresentation(),
+                                            ActionManager.getInstance(), 0);
+    event.setInjectedContext(true);
+    action.actionPerformed(event);
   }
 }
