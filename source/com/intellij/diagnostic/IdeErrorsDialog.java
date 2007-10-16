@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -477,7 +478,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return null;
     }
     final PluginId pluginId = findPluginId(throwable);
-    final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER).getExtensions();
+    final ExtensionPoint point;
+    try {
+      point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER);
+    }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
+    final Object[] reporters = point.getExtensions();
     ErrorReportSubmitter submitter = null;
     for (Object reporter1 : reporters) {
       ErrorReportSubmitter reporter = (ErrorReportSubmitter)reporter1;
