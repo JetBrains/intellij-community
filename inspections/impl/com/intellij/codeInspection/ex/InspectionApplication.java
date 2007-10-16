@@ -158,6 +158,10 @@ public class InspectionApplication {
 
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
+      if (!myRunWithEditorSettings) {
+        logMessageLn(1, InspectionsBundle.message("inspection.application.chosen.profile.log message", inspectionProfile.getName()));
+      }
+
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
           PsiClass psiObjectClass = PsiManager.getInstance(myProject).findClass("java.lang.Object", GlobalSearchScope.allScope(myProject));
