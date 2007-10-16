@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -1160,6 +1161,8 @@ public final class PsiUtil {
     for (PsiFile psiRoot : root.getPsiRoots()) {
       if (containingFile == psiRoot) return true;
     }
+    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(root.getProject()).getInjectionHost(element);
+    if (host != null) return isUnderPsiRoot(root, host);
     return false;
   }
 

@@ -171,7 +171,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       myRefs = refs;
       myProject = project;
       myTarget = target;
-      myEditor = editor;
+      myEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
       myFile = file;
       myClearHighlights = clearHighlights;
     }
@@ -263,7 +263,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     // in case of injected file, use host file to highlight all occurences of the target in each injected file
-    PsiElement context = InjectedLanguageUtil.getTopLevelFile(file);
+    PsiFile context = InjectedLanguageUtil.getTopLevelFile(file);
     SearchScope searchScope = new LocalSearchScope(context);
     Collection<PsiReference> refs;
     if (target instanceof PsiMethod) {
@@ -273,7 +273,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       refs = ReferencesSearch.search(target, searchScope, false).findAll();
     }
 
-    return new DoHighlightRunnable(new ArrayList<PsiReference>(refs), project, target, editor, file, clearHighlights);
+    return new DoHighlightRunnable(new ArrayList<PsiReference>(refs), project, target, editor, context, clearHighlights);
   }
 
   private static Runnable highlightKeyword(PsiKeyword target, Editor editor, PsiFile file, boolean clearHighlights) {
@@ -567,14 +567,25 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                           boolean clearHighlights) {
     List<TextRange> textRanges = new ArrayList<TextRange>(elements.length);
     for (PsiElement element : elements) {
-      textRanges.add(element.getTextRange());
+      TextRange range = element.getTextRange();
+      // injection occurs
+      range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
+      textRanges.add(range);
     }
+    highlightRanges(highlightManager, editor, attributes, clearHighlights, textRanges);
+  }
+
+  private static void highlightRanges(HighlightManager highlightManager, Editor editor, TextAttributes attributes,
+                                      boolean clearHighlights,
+                                      List<TextRange> textRanges) {
     if (clearHighlights) {
       clearHighlights(editor, highlightManager, textRanges, attributes);
       return;
     }
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    highlightManager.addOccurrenceHighlights(editor, elements, attributes, false, highlighters);
+    for (TextRange range : textRanges) {
+      highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, false, highlighters);
+    }
     for (RangeHighlighter highlighter : highlighters) {
       setLineTextErrorStripeTooltip(highlighter);
     }
@@ -640,16 +651,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
       textRanges.add(range);
     }
-    if (clearHighlights) {
-      clearHighlights(editor, highlightManager, textRanges, attributes);
-      return;
-    }
-    ArrayList<RangeHighlighter> outHighlighters = new ArrayList<RangeHighlighter>();
-    PsiReference[] refArray = refs.toArray(new PsiReference[refs.size()]);
-    highlightManager.addOccurrenceHighlights(editor, refArray, attributes, false, outHighlighters);
-    for (RangeHighlighter highlighter : outHighlighters) {
-      setLineTextErrorStripeTooltip(highlighter);
-    }
+    highlightRanges(highlightManager, editor, attributes, clearHighlights, textRanges);
   }
 
   public static PsiElement getNameIdentifier(@NotNull PsiElement element) {
