@@ -46,4 +46,6 @@ public interface FileReferenceHelper<T extends PsiFileSystemItem> {
 
   @NotNull
   Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file);
+
+  boolean isMine(final Project project, final @NotNull VirtualFile file);
 }

@@ -60,7 +60,7 @@ public class FileReferenceHelperRegistrar {
     final Project project = psiFileSystemItem.getProject();
     return (FileReferenceHelper<T>)ContainerUtil.find(getHelpers(), new Condition<FileReferenceHelper>() {
       public boolean value(final FileReferenceHelper fileReferenceHelper) {
-        return fileReferenceHelper.getPsiFileSystemItem(project, file) != null;
+        return fileReferenceHelper.isMine(project, file);
       }
     });
   }
@@ -109,6 +109,10 @@ public class FileReferenceHelperRegistrar {
     @NotNull
     public Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file) {
       return Collections.emptyList();
+    }
+
+    public boolean isMine(final Project project, final @NotNull VirtualFile file) {
+      return false;
     }
   }
 }

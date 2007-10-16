@@ -89,6 +89,10 @@ public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory>
     return Collections.emptyList();
   }
 
+  public boolean isMine(final Project project, final @NotNull VirtualFile file) {
+    return getPsiFileSystemItem(project, file) != null;
+  }
+
   @NotNull
   public String trimUrl(@NotNull String url) {
     return url.trim();
