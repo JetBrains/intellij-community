@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
@@ -278,6 +279,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   private void processStatus(final FilePath filePath, final SVNStatus status, final ChangelistBuilder builder,
                              final FileStatus parentStatus) throws SVNException {
+    loadEntriesFile(filePath);
     if (status != null) {
       FileStatus fStatus = convertStatus(status, filePath.getIOFile());
 
@@ -420,6 +422,32 @@ public class SvnChangeProvider implements ChangeProvider {
         }
     }
     return FileStatus.NOT_CHANGED;
+  }
+
+  /**
+   * Ensures that the contents of the 'entries' file is cached in the VFS, so that the VFS will send
+   * correct events when the 'entries' file is changed externally (to be received by SvnEntriesFileListener)
+   *
+   * @param filePath the path of a changed file.
+   */
+  private static void loadEntriesFile(final FilePath filePath) {
+    final FilePath parentPath = filePath.getParentPath();
+    if (parentPath == null) {
+      return;
+    }
+    File svnSubdirectory = new File(parentPath.getIOFile(), SvnUtil.SVN_ADMIN_DIR_NAME);
+    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    VirtualFile file = localFileSystem.refreshAndFindFileByIoFile(svnSubdirectory);
+    if (file != null) {
+      localFileSystem.refreshAndFindFileByIoFile(new File(svnSubdirectory, SvnUtil.ENTRIES_FILE_NAME));
+    }
+    if (filePath.isDirectory()) {
+      svnSubdirectory = new File(filePath.getPath(), SvnUtil.SVN_ADMIN_DIR_NAME);
+      file = localFileSystem.refreshAndFindFileByIoFile(svnSubdirectory);
+      if (file != null) {
+        localFileSystem.refreshAndFindFileByIoFile(new File(svnSubdirectory, SvnUtil.ENTRIES_FILE_NAME));
+      }
+    }
   }
 
   private static class SvnChangedFile {
