@@ -30,13 +30,19 @@ import org.jetbrains.annotations.NotNull;
 public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFix {
 
   protected final T myElement;
+  protected final String myName;
 
   public AddDomElementQuickFix(@NotNull T element) {
     myElement = (T)element.createStableCopy();
+    myName = computeName();
   }
 
   @NotNull
   public String getName() {
+    return myName;
+  }
+
+  private String computeName() {
     final String name = myElement.getXmlElementName();
     return isTag() ?
            DomBundle.message("add.element.fix.name", name) :
