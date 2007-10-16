@@ -15,8 +15,11 @@
  */
 package com.intellij.ui.treeStructure;
 
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+
 /**
  * @author kir
+ * @see SimpleTree#accept(AbstractTreeBuilder, SimpleNodeVisitor) 
  */
 public interface SimpleNodeVisitor {
   /** return true if no further recursive processing is required */
