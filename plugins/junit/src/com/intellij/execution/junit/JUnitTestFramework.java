@@ -33,6 +33,16 @@ public class JUnitTestFramework implements TestFramework {
     final PsiManager manager = psiClass.getManager();
     final PsiElementFactory factory = manager.getElementFactory();
     final PsiMethod patternMethod = factory.createMethodFromText("protected void setUp() throws Exception {\nsuper.setUp();\n}", null);
+
+    final PsiClass baseClass = psiClass.getSuperClass();
+    if (baseClass != null) {
+      final PsiMethod baseMethod = baseClass.findMethodBySignature(patternMethod, false);
+      if (baseMethod != null && baseMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+        patternMethod.getModifierList().setModifierProperty(PsiModifier.PROTECTED, false);
+        patternMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
+      }
+    }
+
     PsiMethod inClass = psiClass.findMethodBySignature(patternMethod, false);
     if (inClass == null) {
       return (PsiMethod)psiClass.add(patternMethod);
