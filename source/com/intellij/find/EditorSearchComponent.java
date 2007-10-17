@@ -5,6 +5,7 @@ package com.intellij.find;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -21,6 +22,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
@@ -29,7 +31,6 @@ import com.intellij.ui.LightColors;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -433,8 +434,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       highlightManager.addRangeHighlight(myEditor, result.getStartOffset(), result.getEndOffset(), attributes, false, myHighlighters);
     }
 
+    final String escapedText = StringUtil.escapeXml(text);
     for (RangeHighlighter highlighter : myHighlighters) {
-      highlighter.setErrorStripeTooltip(text);
+      highlighter.setErrorStripeTooltip(escapedText);
     }
   }
 
