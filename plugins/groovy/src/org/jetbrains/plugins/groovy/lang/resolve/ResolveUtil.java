@@ -20,9 +20,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspClass;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
+import org.jetbrains.plugins.grails.lang.gsp.resolve.taglib.GspTagLibUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -34,10 +37,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
@@ -226,13 +233,22 @@ public class ResolveUtil {
       final PsiElementFactory factory = call.getManager().getElementFactory();
       final GlobalSearchScope scope = call.getResolveScope();
       final PsiType[] parametersType = {
-                                          factory.createTypeByFQClassName("java.lang.Class", scope),
-                                          factory.createTypeByFQClassName("groovy.lang.Closure", scope)
-                                        };
+          factory.createTypeByFQClassName("java.lang.Class", scope),
+          factory.createTypeByFQClassName("groovy.lang.Closure", scope)
+      };
       final MethodSignature pattern = MethodSignatureUtil.createMethodSignature("use", parametersType, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       return resolved.getSignature(PsiSubstitutor.EMPTY).equals(pattern);
     }
 
+    return false;
+  }
+
+  public static boolean isGspTagField(PsiMember member) {
+    for (PsiClass psiClass : GspTagLibUtil.getDynamicTagLibClasses(member.getProject())) {
+      if (member.getContainingClass() == psiClass) {
+        return true;
+      }
+    }
     return false;
   }
 }

@@ -31,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GspGroovyFile;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodOrGspTagResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -402,7 +404,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     ResolverProcessor processor;
     if (kind == Kind.METHOD_OR_PROPERTY) {
       final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(refExpr, false) : null;
-      processor = new MethodResolverProcessor(name, refExpr, forCompletion, false, argTypes);
+      if (refExpr.getContainingFile() instanceof GspGroovyFile) {
+        processor = new MethodOrGspTagResolverProcessor(name, refExpr, forCompletion, false, argTypes);
+      } else {
+        processor = new MethodResolverProcessor(name, refExpr, forCompletion, false, argTypes);
+      }
     } else {
       processor = new PropertyResolverProcessor(name, refExpr, forCompletion);
     }
