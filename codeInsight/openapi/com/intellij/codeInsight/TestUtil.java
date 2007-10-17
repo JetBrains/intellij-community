@@ -46,15 +46,17 @@ public class TestUtil {
   public static PsiMethod findSetUpMethod(final PsiClass psiClass) {
     final TestFramework[] testFrameworks = Extensions.getExtensions(TEST_FRAMEWORK);
     for (TestFramework framework : testFrameworks) {
-      final PsiMethod setUpMethod;
-      try {
-        setUpMethod = framework.findSetUpMethod(psiClass);
-        if (setUpMethod != null) {
-          return setUpMethod;
+      if (framework.isTestKlass(psiClass)) {
+        final PsiMethod setUpMethod;
+        try {
+          setUpMethod = framework.findSetUpMethod(psiClass);
+          if (setUpMethod != null) {
+            return setUpMethod;
+          }
         }
-      }
-      catch (IncorrectOperationException e) {
-        //skip
+        catch (IncorrectOperationException e) {
+          //skip
+        }
       }
     }
     return null;
