@@ -17,6 +17,8 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,8 +49,8 @@ public abstract class JavaSdk extends SdkType implements ApplicationComponent {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f) {
         if (f.isDirectory()) return false;
-        if (f.getName().startsWith("javac")) return true;
-        if (f.getName().startsWith("javah")) return true;
+        if (Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "javac")) return true;
+        if (Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "javah")) return true;
         return false;
       }
     };
@@ -63,7 +65,7 @@ public abstract class JavaSdk extends SdkType implements ApplicationComponent {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f) {
         if (f.isDirectory()) return false;
-        if (f.getName().startsWith("java")) return true;
+        if (Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "java")) return true;
         return false;
       }
     };
