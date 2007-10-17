@@ -570,27 +570,33 @@ public class GroovyAnnotator implements Annotator {
     final GrExtendsClause extendsClause = typeDefinition.getExtendsClause();
 
     if (implementsClause != null) {
-      checkForImplementingClass(holder, extendsClause, implementsClause);
+      checkForImplementingClass(holder, extendsClause, implementsClause, ((GrTypeDefinition) implementsClause.getParent()));
     }
 
     if (extendsClause != null) {
-      checkForExtendingInterface(holder, extendsClause, implementsClause);
+      checkForExtendingInterface(holder, extendsClause, implementsClause, ((GrTypeDefinition) extendsClause.getParent()));
     }
   }
 
-  private void checkForExtendingInterface(AnnotationHolder holder, GrExtendsClause extendsClause, GrImplementsClause implementsClause) {
+  private void checkForExtendingInterface(AnnotationHolder holder, GrExtendsClause extendsClause, GrImplementsClause implementsClause, GrTypeDefinition myClass) {
     for (GrCodeReferenceElement ref : extendsClause.getReferenceElements()) {
       final PsiElement clazz = ref.resolve();
       if (clazz == null) continue;
 
-      if (((PsiClass) clazz).isInterface()) {
-        final Annotation annotation = holder.createErrorAnnotation(ref, GroovyBundle.message("interface.is.not.expected.here"));
+      if (myClass.isInterface() && !((PsiClass) clazz).isInterface()) {
+        final Annotation annotation = holder.createErrorAnnotation(ref, GroovyBundle.message("class.is.not.expected.here"));
         annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
       }
     }
   }
 
-  private void checkForImplementingClass(AnnotationHolder holder, GrExtendsClause extendsClause, GrImplementsClause implementsClause) {
+  private void checkForImplementingClass(AnnotationHolder holder, GrExtendsClause extendsClause, GrImplementsClause implementsClause, GrTypeDefinition myClass) {
+    if (myClass.isInterface()) {
+      final Annotation annotation = holder.createErrorAnnotation(implementsClause, GroovyBundle.message("interface.cannot.contain.implements.clause"));
+      annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
+      return;
+    }
+
     for (GrCodeReferenceElement ref : implementsClause.getReferenceElements()) {
       final PsiElement clazz = ref.resolve();
       if (clazz == null) continue;

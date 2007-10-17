@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ImplementsClause;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.SuperClassClause;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ExtendsClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks.ClassBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeParameters;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -40,7 +40,6 @@ public class ClassDefinition implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-
     String name;
     if (!mIDENT.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("identifier.expected"));
@@ -55,7 +54,7 @@ public class ClassDefinition implements GroovyElementTypes {
     TypeParameters.parse(builder);
 
     if (kEXTENDS.equals(builder.getTokenType())) {
-      SuperClassClause.parse(builder);
+      ExtendsClause.parse(builder);
     }
 
     if (kIMPLEMENTS.equals(builder.getTokenType())) {

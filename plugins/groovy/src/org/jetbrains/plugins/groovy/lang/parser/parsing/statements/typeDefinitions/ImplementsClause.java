@@ -26,8 +26,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ImplementsClause implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
-    //see also InterfaceExtends
-
     PsiBuilder.Marker isMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, kIMPLEMENTS)) {

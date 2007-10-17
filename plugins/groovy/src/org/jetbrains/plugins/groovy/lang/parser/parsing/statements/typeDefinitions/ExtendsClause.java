@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @autor: Dmitry.Krasilschikov
  * @date: 16.03.2007
  */
-public class SuperClassClause implements GroovyElementTypes {
+public class ExtendsClause implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
     PsiBuilder.Marker sccMarker = builder.mark();
 
@@ -38,11 +38,17 @@ public class SuperClassClause implements GroovyElementTypes {
 
     if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
       sccMarker.rollbackTo();
-      builder.error(GroovyBundle.message("class.or.interface.type.expected"));
       return WRONGWAY;
     }
 
-    ParserUtils.getToken(builder, mNLS);
+    while (ParserUtils.getToken(builder, mCOMMA)) {
+      ParserUtils.getToken(builder, mNLS);
+
+      if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
+        sccMarker.rollbackTo();
+        return WRONGWAY;
+      }
+    }
 
     sccMarker.done(EXTENDS_CLAUSE);
     return EXTENDS_CLAUSE;

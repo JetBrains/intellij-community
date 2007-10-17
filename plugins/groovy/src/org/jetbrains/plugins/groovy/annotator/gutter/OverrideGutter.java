@@ -9,14 +9,14 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiClass;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.structure.GroovyElementPresentation;
 
 import javax.swing.*;
@@ -94,9 +94,9 @@ public class OverrideGutter extends GutterIconRenderer {
 
   class GrMethodsListCellRenderer extends PsiElementListCellRenderer {
     public String getElementText(PsiElement element) {
-      assert element instanceof GrMethod;
+//      assert element instanceof GrMethod;
 
-      return GroovyElementPresentation.getPresentableText((GrMethod) element);
+      return GroovyElementPresentation.getPresentableText((GroovyPsiElement) element);
     }
 
     protected String getContainerText(PsiElement psiElement, String s) {
