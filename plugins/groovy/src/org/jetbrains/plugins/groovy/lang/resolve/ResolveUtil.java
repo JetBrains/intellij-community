@@ -244,6 +244,11 @@ public class ResolveUtil {
   }
 
   public static boolean isGspTagField(PsiMember member) {
+    for (PsiClass clazz : GspTagLibUtil.getCustomTagLibClasses(member.getContainingFile(), GspTagLibUtil.DEFAULT_TAGLIB_PREFIX)) {
+      if (member.getContainingClass() == clazz) {
+        return true;
+      }
+    }
     for (PsiClass psiClass : GspTagLibUtil.getDynamicTagLibClasses(member.getProject())) {
       if (member.getContainingClass() == psiClass) {
         return true;
