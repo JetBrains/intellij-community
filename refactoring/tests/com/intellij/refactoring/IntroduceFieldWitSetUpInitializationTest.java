@@ -46,7 +46,15 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
   }
 
   public void testInSetUp() throws Exception {
-    configureByFile("/refactoring/introduceField/before2.java");
+    doTest();
+  }
+
+  public void testPublicBaseClassSetUp() throws Exception {
+    doTest();
+  }
+
+  private void doTest() throws Exception {
+    configureByFile("/refactoring/introduceField/before" + getTestName(false) + ".java");
     final PsiLocalVariable local =
       PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiLocalVariable.class);
     new LocalToFieldHandler(getProject(), false) {
@@ -59,6 +67,6 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
                                                          PsiModifier.PRIVATE, local, local.getType(), true, null, false);
       }
     }.convertLocalToField(local, myEditor);
-    checkResultByFile("/refactoring/introduceField/after2.java");
+    checkResultByFile("/refactoring/introduceField/after" + getTestName(false)+ ".java");
   }
 }
