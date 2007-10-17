@@ -246,7 +246,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
       Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
       if (map != null) {
         final Object textAA = map.get(RenderingHints.KEY_TEXT_ANTIALIASING);
-        if (textAA.equals(RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT)) {
+        if (RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT.equals(textAA)) {
           g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         }
         else {
