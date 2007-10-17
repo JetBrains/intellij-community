@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
@@ -100,6 +101,9 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
       protected void elementChanged(DomElement element) {
         if (element.isValid()) {
           queueUpdate(element.getRoot().getFile().getVirtualFile());
+        } else if (element instanceof DomFileElement) {
+          final XmlFile xmlFile = ((DomFileElement)element).getFile();
+          queueUpdate(xmlFile.getVirtualFile());
         }
       }
     }, this);
@@ -127,7 +131,7 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (getProject().isDisposed()) return;
-        if (file.isValid() && isRightFile(file)) {
+        if (!file.isValid() || isRightFile(file)) {
           myBuilder.queueUpdate();
         }
       }
