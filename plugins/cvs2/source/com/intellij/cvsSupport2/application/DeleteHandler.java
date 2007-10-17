@@ -23,7 +23,6 @@ import java.util.HashSet;
 class DeleteHandler {
 
   private final Collection<String> myDeletedFiles = new HashSet<String>();
-  private final DeletedCVSDirectoryStorage myDeletedStorage;
   private final Collection<VirtualFile> myDeletedFilesParents = new HashSet<VirtualFile>();
   private final Collection<String> myDeletedFilesPaths = new HashSet<String>();
   private final Project myProject;
@@ -31,9 +30,7 @@ class DeleteHandler {
   private final Collection<File> myFilesToDeleteEntry = new ArrayList<File>();
 
 
-  public DeleteHandler(DeletedCVSDirectoryStorage deletedStorage,
-                       Project project, CvsStorageComponent cvsStorageComponent) {
-    myDeletedStorage = deletedStorage;
+  public DeleteHandler(Project project, CvsStorageComponent cvsStorageComponent) {
     myProject = project;
     myCvsStorageComponent = cvsStorageComponent;
   }
@@ -104,6 +101,13 @@ class DeleteHandler {
       }
     }
 
+  }
+
+  public void removeDeletedRoot(VirtualFile file) {
+    myDeletedFilesParents.remove(file.getParent());
+    myDeletedFilesPaths.remove(file.getPath());
+    myDeletedFiles.remove(file.getPath());
+    myFilesToDeleteEntry.remove(CvsVfsUtil.getFileFor(file));
   }
 
   private void addFile(VirtualFile file) {

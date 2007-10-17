@@ -89,7 +89,7 @@ public class DeletedCVSDirectoryStorage {
   }
 
   public DeleteHandler createDeleteHandler(Project project, CvsStorageComponent cvsStorageComponent) {
-    return new DeleteHandler(this, project, cvsStorageComponent);
+    return new DeleteHandler(project, cvsStorageComponent);
   }
 
   private static class DirectoryFilter implements FileFilter {
