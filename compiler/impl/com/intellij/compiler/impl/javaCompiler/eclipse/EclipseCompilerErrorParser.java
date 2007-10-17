@@ -42,7 +42,7 @@ public class EclipseCompilerErrorParser extends OutputParser {
     final String problem = problemText.toString();
     if (problem.trim().length() == 0) return;
 
-    @NonNls final String problemTemplate = "(\\d*)\\. (\\w*) in (.*)\n" +
+    @NonNls final String problemTemplate = "(\\d*)\\. (\\w*) in (.*)" +
                                            "\\s*\\(at line (\\d*)\\)\n" +
                                            "\\s*(.*)\n" +
                                            "(\\s*)\\^+\n" +
@@ -52,11 +52,11 @@ public class EclipseCompilerErrorParser extends OutputParser {
     if (matcher.matches()) {
       //String seqN = matcher.group(1);
       @NonNls String problemType = matcher.group(2);
-      String path = matcher.group(3);
+      String path = matcher.group(3).trim();
       String lineNum = matcher.group(4);
       String codeSnippet = matcher.group(5);
       String indentWhiteSpace = matcher.group(6);
-      String message = matcher.group(7);
+      String message = matcher.group(7).trim();
 
       CompilerMessageCategory messageCategory;
       if ("WARNING".equals(problemType)) {
