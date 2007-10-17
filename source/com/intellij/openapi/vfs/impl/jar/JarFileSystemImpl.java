@@ -224,7 +224,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   public boolean isWritable(final VirtualFile file) {
-    return getHandler(file).isDirectory(file);
+    return false;
   }
 
   public String[] list(final VirtualFile file) {
