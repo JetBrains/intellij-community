@@ -3,7 +3,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.lang.*;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -860,14 +860,14 @@ public class TypedHandler implements TypedActionHandler {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.AUTOINDENT_CLOSING_BRACE) return;
 
-    indentBrace(project, editor, '}', JavaTokenType.RBRACE);
+    indentBrace(project, editor, '}');
   }
 
   private static void indentOpenedBrace(final Project project, final Editor editor){
-    indentBrace(project, editor, '{', JavaTokenType.LBRACE);
+    indentBrace(project, editor, '{');
   }
 
-  private static void indentBrace(final Project project, final Editor editor, final char braceChar, final IElementType braceTokenType) {
+  private static void indentBrace(final Project project, final Editor editor, final char braceChar) {
     final int offset = editor.getCaretModel().getOffset() - 1;
     final Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
@@ -880,7 +880,29 @@ public class TypedHandler implements TypedActionHandler {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (file == null || !file.isWritable()) return;
       PsiElement element = file.findElementAt(offset);
-      if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == braceTokenType){
+      if (element == null) return;
+      IElementType braceTokenType = braceChar == '{' ? JavaTokenType.LBRACE:JavaTokenType.RBRACE;
+
+      final Language language = element.getLanguage();
+      final PairedBraceMatcher matcher = language.getPairedBraceMatcher();
+      
+      if (matcher != null) {
+        final BracePair[] pairs = matcher.getPairs();
+
+        if (pairs != null) {
+          for(BracePair pair:pairs) {
+            if (pair.isStructural()) {
+              if (pair.getLeftBraceChar() == braceChar) {
+                braceTokenType = pair.getLeftBraceType(); break;
+              } else if (pair.getRightBraceChar() == braceChar) {
+                braceTokenType = pair.getRightBraceType(); break;
+              }
+            }
+          }
+        }
+      }
+
+      if (element.getNode() != null && element.getNode().getElementType() == braceTokenType){
         final Runnable action = new Runnable() {
           public void run(){
             try{
