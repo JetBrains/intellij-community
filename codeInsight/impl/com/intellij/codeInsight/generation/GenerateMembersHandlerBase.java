@@ -51,14 +51,22 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     LOG.assertTrue(aClass.isValid());
     LOG.assertTrue(aClass.getContainingFile() != null);
 
-    final ClassMember[] members = chooseOriginalMembers(aClass, project);
-    if (members == null) return;
+    try {
+      final ClassMember[] members = chooseOriginalMembers(aClass, project);
+      if (members == null) return;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        doGenerate(project, editor, aClass, members);
-      }
-    });
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          doGenerate(project, editor, aClass, members);
+        }
+      });
+    }
+    finally {
+      cleanup();
+    }
+  }
+
+  protected void cleanup() {
   }
 
   private void doGenerate(final Project project, final Editor editor, PsiClass aClass, ClassMember[] members) {

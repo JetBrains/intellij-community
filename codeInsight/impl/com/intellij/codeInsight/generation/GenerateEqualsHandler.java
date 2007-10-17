@@ -114,4 +114,10 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     return null;
   }
 
+  protected void cleanup() {
+    super.cleanup();
+    myEqualsFields = null;
+    myHashCodeFields = null;
+    myNonNullFields = null;
+  }
 }
