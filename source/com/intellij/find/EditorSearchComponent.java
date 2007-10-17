@@ -484,11 +484,16 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      searchForward();
+      if (mySearchField.getText().length() > 0) {
+        searchForward();
+      }
+      else {
+        showHistory(e);
+      }
     }
 
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(isOkToSearch());
+      e.getPresentation().setEnabled(isOkToSearch() || mySearchField.getText().length() == 0);
     }
   }
 
@@ -499,9 +504,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       getTemplatePresentation().setText("Search History");
 
       ArrayList<Shortcut> shortcuts = new ArrayList<Shortcut>();
+      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts()));
       shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_H, KeyEvent.CTRL_DOWN_MASK), null));
       shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction("IncrementalSearch").getShortcutSet().getShortcuts()));
-      shortcuts.addAll(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts()));
 
       registerCustomShortcutSet(
         new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])),
@@ -509,9 +514,13 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
-      showCompletionPopup(e, new JList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFindStrings())), "Recent Searches");
+      showHistory(e);
     }
+  }
+
+  private void showHistory(final AnActionEvent e) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
+    showCompletionPopup(e, new JList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFindStrings())), "Recent Searches");
   }
 
   private class VariantsCompletionAction extends AnAction {
