@@ -78,7 +78,7 @@ public class CompilerUtil {
    * @param files
    */
   public static void refreshIOFiles(@NotNull final Collection<File> files) {
-    if (files.size() == 0) {
+    if (files.isEmpty()) {
       return;
     }
 
@@ -146,18 +146,18 @@ public class CompilerUtil {
     }
   }
 
-  public static @NotNull LanguageLevel getApplicableLanguageLevel(String versionString, @NotNull LanguageLevel languageLevel) {
-    final boolean isVersion1_5 = isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0") || isOfVersion(versionString, "1.6.");
-    if (LanguageLevel.JDK_1_5.equals(languageLevel)) {
-      if (!isVersion1_5) {
-        languageLevel = LanguageLevel.JDK_1_4;
-      }
+  @NotNull
+  public static LanguageLevel getApplicableLanguageLevel(String versionString, @NotNull LanguageLevel languageLevel) {
+    final boolean is5OrNewer = isOfVersion(versionString, "1.5")
+                                 || isOfVersion(versionString, "5.0")
+                                 || isOfVersion(versionString, "1.6.")
+                                 || isOfVersion(versionString, "1.7.");
+    if (LanguageLevel.JDK_1_5.equals(languageLevel) && !is5OrNewer) {
+      languageLevel = LanguageLevel.JDK_1_4;
     }
 
-    if (LanguageLevel.JDK_1_4.equals(languageLevel)) {
-      if (!isOfVersion(versionString, "1.4") && !isVersion1_5) {
-        languageLevel = LanguageLevel.JDK_1_3;
-      }
+    if (LanguageLevel.JDK_1_4.equals(languageLevel) && !isOfVersion(versionString, "1.4") && !is5OrNewer) {
+      languageLevel = LanguageLevel.JDK_1_3;
     }
 
     return languageLevel;
