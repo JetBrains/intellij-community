@@ -11,7 +11,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,30 +39,30 @@ import java.awt.event.FocusListener;
 import java.util.ArrayList;
 
 public class ScopeEditorPanel {
-  public static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
+  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
   private JPanel myButtonsPanel;
   private JTextField myPatternField;
   private JPanel myTreeToolbar;
-  private Tree myPackageTree;
+  private final Tree myPackageTree;
   private JPanel myPanel;
   private JPanel myTreePanel;
   private JLabel myMatchingCountLabel;
   private JPanel myLegendPanel;
 
   private final Project myProject;
-  private TreeExpansionMonitor myTreeExpansionMonitor;
-  private TreeModelBuilder.Marker myTreeMarker;
+  private final TreeExpansionMonitor myTreeExpansionMonitor;
+  private final TreeModelBuilder.Marker myTreeMarker;
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
   private String myErrorMessage;
-  private Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   private JLabel myCaretPositionLabel;
   private int myCaretPosition = 0;
   private boolean myTextChanged = false;
   private JPanel myMatchingCountPanel;
   private PanelProgressIndicator myCurrentProgress;
-  private NamedScopesHolder myHolder;
+  private final NamedScopesHolder myHolder;
 
   public ScopeEditorPanel(Project project) {
     this(project, null);
@@ -117,7 +116,7 @@ public class ScopeEditorPanel {
 
   private void updateCaretPositionText() {
     if (myErrorMessage != null) {
-      myCaretPositionLabel.setText(IdeBundle.message("label.scope.editor.caret.position", (myCaretPosition + 1)));
+      myCaretPositionLabel.setText(IdeBundle.message("label.scope.editor.caret.position", myCaretPosition + 1));
     }
     else {
       myCaretPositionLabel.setText("");
@@ -355,7 +354,7 @@ public class ScopeEditorPanel {
     return toolbar.getComponent();
   }
 
-  public void rebuild(final boolean updateText, final Runnable runnable){
+  private void rebuild(final boolean updateText, final Runnable runnable){
     myUpdateAlarm.cancelAllRequests();
     final Runnable request = new Runnable() {
       public void run() {
@@ -366,7 +365,9 @@ public class ScopeEditorPanel {
               myPatternField.setText(myCurrentScope.getText());
             }
             try {
-              updateTreeModel();
+              if (!myProject.isDisposed()) {
+                updateTreeModel();
+              }
             }
             catch (ProcessCanceledException e) {
               return;
@@ -382,7 +383,7 @@ public class ScopeEditorPanel {
     myUpdateAlarm.addRequest(request, 1000);
   }
 
-  public void rebuild(final boolean updateText) {
+  private void rebuild(final boolean updateText) {
     rebuild(updateText, null);
   }
 
@@ -470,28 +471,10 @@ public class ScopeEditorPanel {
     ProgressManager.getInstance().runProcess(updateModel, progress);
   }
 
-  public int getMarkedFileCount(){
-    if (myErrorMessage == null) {
-      return ((TreeModelBuilder.TreeModel)myPackageTree.getModel()).getMarkedFileCount();
-    }
-    return -1;
-  }
-
   public void cancelCurrentProgress(){
     if (myCurrentProgress != null && myCurrentProgress.isRunning()){
       myCurrentProgress.cancel();
     }
-  }
-
-  public boolean checkCurrentScopeValid(boolean showMessage) {
-    if (myCurrentScope == null) {
-      if (showMessage) {
-        Messages.showErrorDialog(myPanel, IdeBundle.message("error.correct.pattern.syntax.errors.first"),
-                                 IdeBundle.message("title.syntax.error"));
-      }
-      return false;
-    }
-    return true;
   }
 
   public void apply() throws ConfigurationException {
