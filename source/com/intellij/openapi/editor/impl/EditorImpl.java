@@ -3124,7 +3124,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  public void setColorsScheme(EditorColorsScheme scheme) {
+  public void setColorsScheme(@NotNull EditorColorsScheme scheme) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myScheme = scheme;
     reinitSettings();

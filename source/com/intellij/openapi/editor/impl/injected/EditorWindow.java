@@ -490,7 +490,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return myDelegate.getDeleteProvider();
   }
 
-  public void setColorsScheme(final EditorColorsScheme scheme) {
+  public void setColorsScheme(@NotNull final EditorColorsScheme scheme) {
     myDelegate.setColorsScheme(scheme);
   }
 

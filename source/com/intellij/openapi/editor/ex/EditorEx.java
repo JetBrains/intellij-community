@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,7 @@ public interface EditorEx extends Editor {
 
   void setHighlighter(EditorHighlighter highlighter);
 
-  void setColorsScheme(EditorColorsScheme scheme);
+  void setColorsScheme(@NotNull EditorColorsScheme scheme);
 
   void setInsertMode(boolean val);
 
