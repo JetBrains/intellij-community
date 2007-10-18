@@ -6,6 +6,7 @@ package com.intellij.find;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -53,6 +54,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private final Color GRADIENT_C2;
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
   public static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
+  private static final Color FOCUS_CATCHER_COLOR = new Color(0x9999ff);
   private final JComponent myToolbarComponent;
   private com.intellij.openapi.editor.event.DocumentAdapter myDocumentListener;
   private ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
@@ -79,7 +81,29 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     JPanel leadPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
     add(leadPanel, BorderLayout.WEST);
 
-    mySearchField = new JTextField();
+    mySearchField = new JTextField() {
+      protected void paintBorder(final Graphics g) {
+        super.paintBorder(g);
+
+        final LafManager lafManager = LafManager.getInstance();
+        if (!(lafManager.isUnderAquaLookAndFeel() || lafManager.isUnderQuaquaLookAndFeel()) && isFocusOwner()) {
+          final Rectangle bounds = getBounds();
+          g.setColor(FOCUS_CATCHER_COLOR);
+          g.drawRect(0, 0, bounds.width - 1, bounds.height - 1);
+        }
+      }
+    };
+
+    mySearchField.addFocusListener(new FocusListener() {
+      public void focusGained(final FocusEvent e) {
+        mySearchField.repaint();
+      }
+
+      public void focusLost(final FocusEvent e) {
+        mySearchField.repaint();
+      }
+    });
+
     mySearchField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
     leadPanel.add(mySearchField);
 
