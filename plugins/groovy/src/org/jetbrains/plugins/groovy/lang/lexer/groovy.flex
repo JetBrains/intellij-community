@@ -237,8 +237,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
   {mSL_COMMENT}                             {  return mSL_COMMENT; }
   {mML_COMMENT}                             {  return mML_COMMENT; }
 
-  ({mNLS}|{mWS})+                           {  yybegin(afterComment);
-                                               return mWS; }
+  ({mNLS}|{mWS})+                           {  return mWS; }
 
   [^]                                       { yypushback(yytext().length());
                                               yybegin(afterComment);  }
