@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -960,6 +961,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
         string = sb.append("...").toString();
       }
 
+      UIUtil.applyRenderingHints(g2);
       g2.drawString(string, offset + ROUND_VALUE, height - fm.getDescent() - 2);
 
       g2.setFont(oldFont);
