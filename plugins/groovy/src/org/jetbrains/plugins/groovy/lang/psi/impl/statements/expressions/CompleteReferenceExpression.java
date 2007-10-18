@@ -143,6 +143,8 @@ public class CompleteReferenceExpression {
     PsiElement[] elements = ResolveUtil.mapToElements(candidates);
     LookupElement[] propertyLookupElements = addPretendedProperties(elements);
     Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
+
+    variants = GroovyCompletionUtil.filterSpecificVariants(variants, refExpr);
     variants = ArrayUtil.mergeArrays(variants, propertyLookupElements, Object.class);
     return ArrayUtil.mergeArrays(variants, sameQualifier, Object.class);
   }
