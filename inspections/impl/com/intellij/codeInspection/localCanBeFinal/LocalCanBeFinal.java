@@ -36,27 +36,28 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     myQuickFix = new AcceptSuggested();
   }
 
-  public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
-    return checkCodeBlock(method.getBody(), manager, isOnTheFly);
+  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    List<ProblemDescriptor> list = checkCodeBlock(method.getBody(), manager);
+    return list == null ? null : list.toArray(new ProblemDescriptor[list.size()]);
   }
 
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> allProblems = null;
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] problems = checkCodeBlock(initializer.getBody(), manager, isOnTheFly);
+      final List<ProblemDescriptor> problems = checkCodeBlock(initializer.getBody(), manager);
       if (problems != null) {
         if (allProblems == null) {
           allProblems = new ArrayList<ProblemDescriptor>(1);
         }
-        allProblems.addAll(Arrays.asList(problems));
+        allProblems.addAll(problems);
       }
     }
     return allProblems == null ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
   }
 
   @Nullable
-  public ProblemDescriptor[] checkCodeBlock(final PsiCodeBlock body, InspectionManager manager, boolean isOnTheFly) {
+  private List<ProblemDescriptor> checkCodeBlock(final PsiCodeBlock body, InspectionManager manager) {
     if (body == null) return null;
     final ControlFlow flow;
     try {
@@ -183,26 +184,26 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       }
     }
 
-    if (result.size() == 0) return null;
+    if (result.isEmpty()) return null;
     for (Iterator<PsiVariable> iterator = result.iterator(); iterator.hasNext();) {
       final PsiVariable variable = iterator.next();
       if (!variable.isPhysical()){
         iterator.remove();
       }
     }
-    ProblemDescriptor[] problems = new ProblemDescriptor[result.size()];
-    for (int i = 0; i < problems.length; i++) {
-      PsiVariable problemVariable = result.get(i);
-      final PsiIdentifier nameIdenitier = problemVariable.getNameIdentifier();
-      PsiElement problemElement = nameIdenitier != null ? nameIdenitier : problemVariable;
-      if (problemVariable instanceof PsiParameter && ! (((PsiParameter)problemVariable).getDeclarationScope() instanceof PsiForeachStatement )){
-        problems[i] = manager.createProblemDescriptor(problemElement,
-                                                      InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
-                                                      myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-      } else {
-        problems[i] = manager.createProblemDescriptor(problemElement,
-                                                      InspectionsBundle.message("inspection.can.be.local.variable.problem.descriptor"),
-                                                      myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(result.size());
+    for (PsiVariable variable : result) {
+      final PsiIdentifier nameIdenitier = variable.getNameIdentifier();
+      PsiElement problemElement = nameIdenitier != null ? nameIdenitier : variable;
+      if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement)) {
+        problems.add(manager.createProblemDescriptor(problemElement,
+                                                     InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
+                                                     myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+      }
+      else {
+        problems.add(manager.createProblemDescriptor(problemElement,
+                                                     InspectionsBundle.message("inspection.can.be.local.variable.problem.descriptor"),
+                                                     myQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
 
