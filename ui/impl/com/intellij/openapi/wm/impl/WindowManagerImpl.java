@@ -238,7 +238,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public void resetWindow(final Window window) {
     try {
-      if (!isAlphaModeEnabled(window)) return;
+      if (!isAlphaModeSupported()) return;
 
       WindowUtils.setWindowMask(window, (Shape)null);
       setAlphaMode(window, 0f);
