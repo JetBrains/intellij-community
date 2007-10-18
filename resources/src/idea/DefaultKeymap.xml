@@ -303,9 +303,6 @@
     <action id="ActivateMessagesToolWindow">
       <keyboard-shortcut first-keystroke="alt 0"/>
     </action>
-    <action id="ShowProcessWindow">
-      <keyboard-shortcut first-keystroke="control alt 0"/>
-    </action>
     <action id="CloseEditor">
       <keyboard-shortcut first-keystroke="control F4"/>
     </action>
