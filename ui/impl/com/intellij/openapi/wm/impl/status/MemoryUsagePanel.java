@@ -8,12 +8,14 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.concurrency.JobScheduler;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ScheduledFuture;
 
 //Made public for Fabrique
 public class MemoryUsagePanel extends JPanel {
@@ -24,17 +26,15 @@ public class MemoryUsagePanel extends JPanel {
   private static final Icon ourRunGCButtonIcon = IconLoader.getIcon("/actions/gc.png");
 
   private final JPanel myIndicatorPanel;
-  private final Alarm myAlarm;
   private long myLastTotal = -1;
   private long myLastUsed = -1;
+  private ScheduledFuture<?> myFuture;
 
   public MemoryUsagePanel() {
     setLayout(new BorderLayout());
     setOpaque(false);
     myIndicatorPanel = new IndicatorPanel();
     
-    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-
     add(myIndicatorPanel, BorderLayout.CENTER);
 
     final RunCGAction gcAction = new RunCGAction();
@@ -48,28 +48,21 @@ public class MemoryUsagePanel extends JPanel {
    * Invoked when enclosed frame is being shown.
    */
   public void addNotify() {
-    final Runnable runnable = new Runnable() {
+    myFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
       public void run() {
-        SwingUtilities.invokeLater(
-          new Runnable() {
-            public void run() {
-              if (!isDisplayable()) return; // This runnable may be posted in event queue while calling removeNotify.
-              try {
-                updateState();
-              }
-              finally {
-                myAlarm.addRequest(this, 1000);
-              }
-            }
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (!isDisplayable()) return; // This runnable may be posted in event queue while calling removeNotify.
+            updateState();
           }
-        );
+        });
       }
-    };
-    myAlarm.addRequest(runnable, 1000);
+    }, 1, 1, TimeUnit.SECONDS);
     super.addNotify();
   }
 
   private void updateState() {
+    assert SwingUtilities.isEventDispatchThread();
     if (!isShowing()) {
       return;
     }
@@ -88,7 +81,8 @@ public class MemoryUsagePanel extends JPanel {
    * Invoked when enclosed frame is being disposed.
    */
   public void removeNotify() {
-    myAlarm.cancelAllRequests();
+    myFuture.cancel(true);
+    myFuture = null;
     super.removeNotify();
   }
 
