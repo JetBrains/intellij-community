@@ -100,7 +100,7 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
     if (psiField != null) {
       final RefUtilImpl refUtil = (RefUtilImpl)RefUtil.getInstance();
       refUtil.addReferences(psiField, this, psiField.getInitializer());
-
+      refUtil.addReferences(psiField, this, psiField.getModifierList());
       if (psiField instanceof PsiEnumConstant) {
         refUtil.addReferences(psiField, this, psiField);
       }

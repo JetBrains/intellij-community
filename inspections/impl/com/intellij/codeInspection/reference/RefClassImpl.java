@@ -217,6 +217,8 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
         ((RefUtilImpl)RefUtil.getInstance()).addReferences(psiClass, this, classInitializer.getBody());
       }
 
+      ((RefUtilImpl)RefUtil.getInstance()).addReferences(psiClass, this, psiClass.getModifierList());
+
       PsiField[] psiFields = psiClass.getFields();
       for (PsiField psiField : psiFields) {
         ((RefManagerImpl)getRefManager()).getFieldReference(this, psiField);

@@ -240,6 +240,7 @@ public class RefMethodImpl extends RefElementImpl implements RefMethod {
       PsiCodeBlock body = method.getBody();
       final RefUtilImpl refUtil = (RefUtilImpl)RefUtil.getInstance();
       refUtil.addReferences(method, this, body);
+      refUtil.addReferences(method, this, method.getModifierList());
       checkForSuperCall(method);
       setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
