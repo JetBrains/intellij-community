@@ -9,8 +9,8 @@ import com.intellij.testFramework.InspectionTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 public class UndeclaredTestsInspectionTest extends InspectionTestCase {
 
@@ -31,7 +31,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
 
   @DataProvider
   public Object[][] data() {
-    return new Object[][]{{"declared"}, {"undeclared"}, {"packageDeclared"}, {"commented"}, {"commented1"}};
+    return new Object[][]{{"declared"}, {"undeclared"}, {"packageDeclared"}, {"packageNonDeclared"}, {"commented"}, {"commented1"}};
   }
 
   @Test(dataProvider = "data")

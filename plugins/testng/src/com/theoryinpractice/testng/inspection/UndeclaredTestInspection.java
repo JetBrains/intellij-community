@@ -10,10 +10,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
@@ -56,38 +56,29 @@ public class UndeclaredTestInspection extends LocalInspectionTool {
                                         @NotNull final InspectionManager manager,
                                         final boolean isOnTheFly) {
     if (TestNGUtil.hasTest(aClass)) {
-      final boolean[] found = new boolean[]{false};
       final Project project = aClass.getProject();
       final String qName = aClass.getQualifiedName();
       if (qName == null) return null;
-      final String[] names = new String[]{qName, ((PsiJavaFile)aClass.getContainingFile()).getPackageName()};
-      for (String name : names) {
+      final String packageName = ((PsiJavaFile)aClass.getContainingFile()).getPackageName();
+      final String[] names = new String[]{qName, packageName};
+      for (final String name : names) {
+        final boolean[] found = new boolean[]{false};
         PsiManager.getInstance(project).getSearchHelper()
           .processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
             public boolean process(final PsiFile file, final int startOffset, final int endOffset) {
               if (file.findReferenceAt(startOffset) != null) {
+                if (name.equals(packageName)) { //special package tag required
+                  final XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), XmlTag.class);
+                  if (tag == null || !tag.getName().equals("package")){
+                    return true;
+                  }
+                }
                 found[0] = true;
                 return false;
               }
               return true;
             }
-          }, new GlobalSearchScope(){
-            public boolean contains(VirtualFile file) {
-              return TestNGUtil.isTestngXML(file);
-            }
-
-            public int compare(VirtualFile file1, VirtualFile file2) {
-              return 0;
-            }
-
-            public boolean isSearchInModuleContent(@NotNull Module aModule) {
-              return true;
-            }
-
-            public boolean isSearchInLibraries() {
-              return false;
-            }
-          });
+          }, new TestNGSearchScope());
         if (found[0]) return null;
       }
       final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
@@ -202,6 +193,24 @@ public class UndeclaredTestInspection extends LocalInspectionTool {
           }
         }
       });
+    }
+  }
+
+  private static class TestNGSearchScope extends GlobalSearchScope {
+    public boolean contains(VirtualFile file) {
+      return TestNGUtil.isTestngXML(file);
+    }
+
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      return 0;
+    }
+
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return true;
+    }
+
+    public boolean isSearchInLibraries() {
+      return false;
     }
   }
 }
