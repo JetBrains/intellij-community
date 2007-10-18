@@ -100,7 +100,16 @@ public abstract class DeploymentUtil {
                                             @NotNull ModuleLink[] containingModules,
                                             @NotNull BuildRecipe instructions,
                                             @NotNull CompileContext context,
-                                            String explodedPath);
+                                            String explodedPath, final String linkContainerDescription);
+  @Deprecated
+  /**@deprecated
+   * use {@link DeploymentUtil.addJavaModuleOutputs()}
+   */
+  public abstract void addJavaModuleOutputs(@NotNull Module module,
+                                   @NotNull ModuleLink[] containingModules,
+                                   @NotNull BuildRecipe instructions,
+                                   @NotNull CompileContext context,
+                                   String explodedPath);
 
   public static boolean checkFileExists(final File file, CompileContext context) {
     if (!file.exists()) {
@@ -193,4 +202,5 @@ public abstract class DeploymentUtil {
   public abstract @Nullable File findUserSuppliedManifestFile(@NotNull BuildRecipe buildRecipe);
 
   public abstract void checkConfigFile(final ConfigFile descriptor, final CompileContext compileContext, final Module module);
+
 }

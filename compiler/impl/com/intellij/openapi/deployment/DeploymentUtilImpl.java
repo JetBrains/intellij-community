@@ -374,6 +374,14 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                    @NotNull BuildRecipe instructions,
                                    @NotNull CompileContext context,
                                    String explodedPath) {
+    addJavaModuleOutputs(module, containingModules, instructions, context, explodedPath, "");
+  }
+
+  public void addJavaModuleOutputs(@NotNull final Module module,
+                                   @NotNull ModuleLink[] containingModules,
+                                   @NotNull BuildRecipe instructions,
+                                   @NotNull CompileContext context,
+                                   String explodedPath, final String linkContainerDescription) {
     for (ModuleLink moduleLink : containingModules) {
       Module childModule = moduleLink.getModule();
       if (childModule != null && ModuleType.JAVA.equals(childModule.getModuleType())) {
@@ -382,11 +390,11 @@ public class DeploymentUtilImpl extends DeploymentUtil {
           continue;
         }
         if (PackagingMethod.JAR_AND_COPY_FILE.equals(packagingMethod)) {
-          addJarJavaModuleOutput(instructions, childModule, moduleLink.getURI(), context);
+          addJarJavaModuleOutput(instructions, childModule, moduleLink.getURI(), context, linkContainerDescription);
         }
         else if (PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST.equals(packagingMethod)) {
           String relativePath = getRelativePathForManifestLinking(moduleLink.getURI());
-          addJarJavaModuleOutput(instructions, childModule, relativePath, context);
+          addJarJavaModuleOutput(instructions, childModule, relativePath, context, linkContainerDescription);
         }
         else if (PackagingMethod.COPY_FILES.equals(packagingMethod)) {
           addModuleOutputContents(context, instructions, childModule, module, moduleLink.getURI(), explodedPath, null);
@@ -394,7 +402,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
         else if (PackagingMethod.COPY_FILES_AND_LINK_VIA_MANIFEST.equals(packagingMethod)) {
           moduleLink.setPackagingMethod(PackagingMethod.JAR_AND_COPY_FILE_AND_LINK_VIA_MANIFEST);
           String relativePath = getRelativePathForManifestLinking(moduleLink.getURI());
-          addJarJavaModuleOutput(instructions, childModule, relativePath, context);
+          addJarJavaModuleOutput(instructions, childModule, relativePath, context, linkContainerDescription);
           context.addMessage(CompilerMessageCategory.WARNING,
                              CompilerBundle.message("message.text.packaging.method.for.module.reset.to.method",
                                                 ModuleUtil.getModuleNameInReadAction(childModule),
@@ -411,13 +419,18 @@ public class DeploymentUtilImpl extends DeploymentUtil {
   private static void addJarJavaModuleOutput(BuildRecipe instructions,
                                              Module module,
                                              String relativePath,
-                                             CompileContext context) {
+                                             CompileContext context, final String linkContainerDescription) {
     final String[] sourceUrls = getSourceRootUrlsInReadAction(module);
     if (sourceUrls.length > 0) {
       final File outputPath = getModuleOutputPath(module);
       checkModuleOutputExists(outputPath, module, context);
       if (outputPath != null) {
-        instructions.addInstruction(new JarAndCopyBuildInstructionImpl(module, outputPath, relativePath));
+        if ("/".equals(relativePath) || "".equals(relativePath) || getRelativePathForManifestLinking("/").equals(relativePath)) {
+          context.addMessage(CompilerMessageCategory.ERROR, CompilerBundle.message("message.text.invalid.output.path.for.module.jar", relativePath, module.getName(), linkContainerDescription), null, -1, -1);
+        }
+        else {
+          instructions.addInstruction(new JarAndCopyBuildInstructionImpl(module, outputPath, relativePath));
+        }
       }
     }
   }

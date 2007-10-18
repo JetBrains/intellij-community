@@ -278,7 +278,7 @@ public class BuildJarProjectSettings implements PersistentStateComponent<Element
       DeploymentUtil.getInstance().addLibraryLink(compileContext, buildRecipe, libraryLink, module, null);
     }
     ModuleLink[] modules = packagingConfiguration.getContainingModules();
-    DeploymentUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null);
+    DeploymentUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null, IdeBundle.message("jar.build.module.presentable.name", module.getName()));
     return buildRecipe;
   }
 
