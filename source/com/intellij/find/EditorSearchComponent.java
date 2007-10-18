@@ -57,6 +57,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private com.intellij.openapi.editor.event.DocumentAdapter myDocumentListener;
   private ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
   private boolean myOkToSearch = false;
+  private boolean myHasMatches = false;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -91,6 +92,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     group.add(new ShowHistoryAction());
     group.add(new PrevOccurenceAction());
     group.add(new NextOccurenceAction());
+    group.add(new FindAllAction());
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("SearchBar", group, true);
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -177,6 +179,14 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
         close();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_FOCUSED);
+
+    mySearchField.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        if (getTextInField().length() == 0) {
+          showHistory(false);
+        }
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED);
 
     mySearchField.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -381,10 +391,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private void setRegularBackground() {
+    myHasMatches = true;
     mySearchField.setBackground(myDefaultBackground);
   }
 
   private void setNotFoundBackground() {
+    myHasMatches = false;
     mySearchField.setBackground(LightColors.RED);
   }
 
@@ -469,7 +481,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private boolean isOkToSearch() {
-    return myOkToSearch;
+    return myOkToSearch && myHasMatches;
   }
 
   private class NextOccurenceAction extends AnAction {
@@ -486,16 +498,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      if (mySearchField.getText().length() > 0) {
-        searchForward();
-      }
-      else {
-        showHistory(e);
-      }
+      searchForward();
     }
 
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(isOkToSearch() || mySearchField.getText().length() == 0);
+      e.getPresentation().setEnabled(isOkToSearch());
     }
   }
 
@@ -516,13 +523,35 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      showHistory(e);
+      showHistory(e.getInputEvent() instanceof MouseEvent);
     }
   }
 
-  private void showHistory(final AnActionEvent e) {
+  private class FindAllAction extends AnAction {
+    private FindAllAction() {
+      getTemplatePresentation().setIcon(IconLoader.findIcon("/actions/export.png"));
+      getTemplatePresentation().setDescription("Export matches to Find tool window");
+      getTemplatePresentation().setText("Find All");
+      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), mySearchField);
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(isOkToSearch());
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final FindModel model = FindManager.getInstance(myProject).getFindInFileModel();
+      final FindModel realModel = (FindModel)model.clone();
+      realModel.setStringToFind(getTextInField());
+      FindUtil.findAll(myProject, myEditor, realModel);
+    }
+  }
+
+  private void showHistory(final boolean byClickingToolbarButton) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
-    showCompletionPopup(e, new JList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFindStrings())), "Recent Searches");
+    showCompletionPopup(new JList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFindStrings())), "Recent Searches",
+                        byClickingToolbarButton);
   }
 
   private class VariantsCompletionAction extends AnAction {
@@ -544,7 +573,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       list.setBackground(COMPLETION_BACKGROUND_COLOR);
       list.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
-      showCompletionPopup(e, list, null);
+      showCompletionPopup(list, null, e.getInputEvent() instanceof MouseEvent);
     }
 
     private String getPrefix() {
@@ -576,7 +605,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
   }
 
-  private void showCompletionPopup(final AnActionEvent e, final JList list, String title) {
+  private void showCompletionPopup(final JList list, String title, final boolean byClickingToolbarButton) {
 
     final Runnable callback = new Runnable() {
       public void run() {
@@ -595,8 +624,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     final JBPopup popup = builder.setMovable(false).setResizable(false)
       .setRequestFocus(true).setItemChoosenCallback(callback).createPopup();
 
-    final InputEvent event = e.getInputEvent();
-    if (event instanceof MouseEvent) {
+    if (byClickingToolbarButton) {
       popup.showUnderneathOf(myToolbarComponent);
     }
     else {

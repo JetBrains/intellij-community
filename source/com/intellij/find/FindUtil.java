@@ -127,7 +127,7 @@ public class FindUtil {
 
     if (model.isFindAll()) {
       findManager.setFindNextModel(model);
-      doFindAll(project, editor, model);
+      findAll(project, editor, model);
       return;
     }
 
@@ -175,7 +175,7 @@ public class FindUtil {
     doSearch(project, editor, offset, true, model, true);
   }
 
-  private static void doFindAll(final Project project, final Editor editor, final FindModel findModel) {
+  public static void findAll(final Project project, final Editor editor, final FindModel findModel) {
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     CharSequence text = document.getCharsSequence();
