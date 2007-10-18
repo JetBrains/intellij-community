@@ -122,7 +122,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   private void completeVariable(Editor editor) {
-    String prefix = myNameSuggestionsField.getName();
+    String prefix = myNameSuggestionsField.getEnteredName();
     PsiVariable var = (PsiVariable)myPsiElement;
     VariableKind kind = CodeStyleManager.getInstance(myProject).getVariableKind(var);
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
@@ -255,7 +255,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   public String getNewName() {
-    return myNameSuggestionsField.getName().trim();
+    return myNameSuggestionsField.getEnteredName().trim();
   }
 
   public boolean isSearchInComments() {

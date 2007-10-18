@@ -79,7 +79,7 @@ public class MoveInnerDialog extends RefactoringDialog {
 
   public String getParameterName() {
     if (myParameterField != null) {
-      return myParameterField.getName();
+      return myParameterField.getEnteredName();
     }
     else {
       return null;

@@ -47,7 +47,7 @@ public class NameSuggestionsManager {
   }
 
   private void completeVariable(Editor editor) {
-    String prefix = myNameField.getName();
+    String prefix = myNameField.getEnteredName();
     Pair<LookupItemPreferencePolicy, Set<LookupItem>> pair = myGenerator.completeVariableName(prefix, myTypeSelector.getSelectedType());
     LookupItem[] lookupItems = pair.second.toArray(new LookupItem[pair.second.size()]);
     editor.getCaretModel().moveToOffset(prefix.length());
@@ -65,7 +65,7 @@ public class NameSuggestionsManager {
     SuggestedNameInfo nameInfo = myTypesToSuggestions.get(myTypeSelector.getSelectedType());
 
     if (nameInfo != null) {
-      nameInfo.nameChoosen(myNameField.getName());
+      nameInfo.nameChoosen(myNameField.getEnteredName());
     }
   }
 

@@ -108,7 +108,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   }
 
   private void completeVariable(final Editor editor) {
-    String prefix = myNameSuggestionsField.getName();
+    String prefix = myNameSuggestionsField.getEnteredName();
 
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     final PsiReference reference = myTag.getReference();
@@ -179,7 +179,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   }
 
   public String getNewName() {
-    return myNameSuggestionsField.getName().trim();
+    return myNameSuggestionsField.getEnteredName().trim();
   }
 
   protected void validateButtons() {

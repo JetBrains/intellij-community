@@ -138,7 +138,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   }
 
   private String getParameterName() {
-    return  myParameterNameField.getName();
+    return  myParameterNameField.getEnteredName();
   }
 
   private int getReplaceFieldsWithGetters() {

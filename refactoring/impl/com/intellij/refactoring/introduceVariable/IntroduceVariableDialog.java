@@ -85,7 +85,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   }
 
   public String getEnteredName() {
-    return myNameField.getName();
+    return myNameField.getEnteredName();
   }
 
   public boolean isReplaceAllOccurrences() {

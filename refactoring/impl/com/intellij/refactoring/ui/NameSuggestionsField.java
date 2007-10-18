@@ -77,7 +77,7 @@ public class NameSuggestionsField extends JPanel {
           if (myEditor == null) return;
           for (TextRange wordRange : ranges) {
             String word = editor.getDocument().getText().substring(wordRange.getStartOffset(), wordRange.getEndOffset());
-            if (word.equals(getName())) {
+            if (word.equals(getEnteredName())) {
               final SelectionModel selectionModel = editor.getSelectionModel();
               final TextRange selected = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()).shiftRight(-wordRange.getStartOffset());
               myEditor.getSelectionModel().removeSelection();
@@ -125,7 +125,7 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
-  public String getName() {
+  public String getEnteredName() {
     if (myComponent instanceof JComboBox) {
       return (String)((JComboBox)myComponent).getEditor().getItem();
     } else {

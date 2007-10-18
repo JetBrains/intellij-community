@@ -154,7 +154,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   }
 
   public String getEnteredName() {
-    return myNameField.getName();
+    return myNameField.getEnteredName();
   }
 
   public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {

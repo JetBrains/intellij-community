@@ -52,7 +52,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   }
 
   public String getName() {
-    return myNameField.getName();
+    return myNameField.getEnteredName();
   }
 
   protected boolean hasHelpAction() { return false; }
@@ -181,7 +181,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
   }
 
   protected boolean areButtonsValid() {
-    final String name = myNameField.getName();
+    final String name = myNameField.getEnteredName();
     final PsiNameHelper nameHelper = myContainingClass.getManager().getNameHelper();
     return nameHelper.isIdentifier(name);
   }

@@ -65,12 +65,12 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
   @NotNull
   public String getFieldName() {
-    return myFieldNameField.getName();
+    return myFieldNameField.getEnteredName();
   }
 
   public String getInnerClassName() {
     if (myInnerClassNameField != null) {
-      return myInnerClassNameField.getName();
+      return myInnerClassNameField.getEnteredName();
     }
     else {
       return null;
@@ -86,7 +86,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     final PsiNameHelper helper = PsiManager.getInstance(myProject).getNameHelper();
     if (!helper.isIdentifier(fieldName)) return false;
     if (myInnerClassNameField != null) {
-      final String className = myInnerClassNameField.getName();
+      final String className = myInnerClassNameField.getEnteredName();
       if (!helper.isIdentifier(className)) return false;
     }
     return true;
