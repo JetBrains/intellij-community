@@ -354,6 +354,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
           if (resolved instanceof PsiPackage) {
             if (!resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
+          } else {
+            ResolveUtil.collectContextSpecificVariants(processor, refExpr);
           }
         }
       } else {
