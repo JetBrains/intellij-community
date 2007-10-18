@@ -14,6 +14,7 @@ import com.intellij.openapi.deployment.LibraryLink;
 import com.intellij.openapi.deployment.ModuleLink;
 import com.intellij.openapi.deployment.PackagingMethod;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
@@ -121,7 +122,8 @@ public class PluginBuildParticipant extends BuildParticipantBase {
     makeUtil.addModuleOutputContents(context, instructions, getModule(), getModule(), CLASSES, explodedPath, null);
 
     // child Java utility modules
-    makeUtil.addJavaModuleOutputs(getModule(), containingModules, instructions, context, explodedPath);
+    makeUtil.addJavaModuleOutputs(getModule(), containingModules, instructions, context, explodedPath, DevKitBundle.message("presentable.plugin.module.name",
+                                                                                                                            ModuleUtil.getModuleNameInReadAction(getModule())));
 
     HashSet<Library> libs = new HashSet<Library>();
     PluginBuildUtil.getLibraries(getModule(), libs);
