@@ -40,7 +40,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   private String myExtension;
   private File myTemplateFile;      // file to save in
   private String myTemplateURL;
-  boolean myRenamed = false;
+  private boolean myRenamed = false;
   private boolean myModified = false;
   private boolean myReadOnly = false;
   private boolean myAdjust = true;
@@ -77,8 +77,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
 
   public Object clone(){
     try{
-      FileTemplate clon = (FileTemplate)super.clone();
-      return clon;
+      return super.clone();
     }
     catch (CloneNotSupportedException e){
       // Should not be here
@@ -172,7 +171,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   }
 
   /** Read template from URL. */
-  private String readExternal(VirtualFile url) throws IOException{
+  private static String readExternal(VirtualFile url) throws IOException{
     final Document content = FileDocumentManager.getInstance().getDocument(url);
     return content != null ? content.getText() : new String(url.contentsToByteArray(), ourEncoding);
   }
@@ -189,10 +188,8 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
    *  If template was not modified, it is not saved.
    */
   void writeExternal(File defaultDir) throws IOException{
-    if(!myModified){
-      if(!myRenamed){
-        return;
-      }
+    if (!myModified && !myRenamed) {
+      return;
     }
     if(myRenamed){
       LOG.assertTrue(myTemplateFile != null);
@@ -288,12 +285,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   }
 
   public void setName(@NotNull String name){
-    if(name == null){
-      name = "";
-    }
-    else {
-      name = replaceFileSeparatorChar(name.trim());
-    }
+    name = replaceFileSeparatorChar(name.trim());
     if(!myName.equals(name)){
       LOG.assertTrue(!myReadOnly);
       myName = name;
@@ -303,9 +295,6 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
   }
 
   public void setExtension(@NotNull String extension){
-    if(extension == null){
-      extension = "";
-    }
     extension = extension.trim();
     if(!myExtension.equals(extension)){
       LOG.assertTrue(!myReadOnly);
@@ -336,17 +325,17 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
     }
   }
 
-   private static String replaceFileSeparatorChar(String s) {
-    StringBuffer buffer = new StringBuffer();
+  private static String replaceFileSeparatorChar(String s) {
+    StringBuilder buffer = new StringBuilder();
     char[] chars = s.toCharArray();
-     for (char aChar : chars) {
-       if (aChar == File.separatorChar) {
-         buffer.append("$");
-       }
-       else {
-         buffer.append(aChar);
-       }
-     }
+    for (char aChar : chars) {
+      if (aChar == File.separatorChar) {
+        buffer.append("$");
+      }
+      else {
+        buffer.append(aChar);
+      }
+    }
     return buffer.toString();
   }
 

@@ -32,7 +32,6 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author MYakovlev
@@ -42,7 +41,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class FileTemplateManagerImpl extends FileTemplateManager implements ExportableApplicationComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");
   @NonNls private static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
-  @NonNls private static final String DEFAULT_TEMPLATES_TOP_DIR = "fileTemplates";
+  @NonNls private static final String TEMPLATES_DIR = "fileTemplates";
+  @NonNls private static final String DEFAULT_TEMPLATES_TOP_DIR = TEMPLATES_DIR;
   @NonNls private static final String INTERNAL_DIR = "internal";
   @NonNls private static final String INCLUDES_DIR = "includes";
   @NonNls private static final String CODETEMPLATES_DIR = "code";
@@ -52,11 +52,12 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   @NonNls private final String myTemplatesDir;
   private MyTemplates myTemplates;
   private final RecentTemplatesManager myRecentList = new RecentTemplatesManager();
-  private boolean myInvalidated = true;
-  private FileTemplateManagerImpl myInternalTemplatesManager;
-  private FileTemplateManagerImpl myPatternsManager;
-  private FileTemplateManagerImpl myCodeTemplatesManager;
-  private FileTemplateManagerImpl myJ2eeTemplatesManager;
+  private boolean myLoaded = false;
+  private final FileTemplateManagerImpl myInternalTemplatesManager;
+  private final FileTemplateManagerImpl myPatternsManager;
+  private final FileTemplateManagerImpl myCodeTemplatesManager;
+  private final FileTemplateManagerImpl myJ2eeTemplatesManager;
+  private final MyDeletedTemplatesManager myDeletedTemplatesManager = new MyDeletedTemplatesManager();
   private VirtualFile myDefaultDescription;
 
   private static VirtualFile[] ourTopDirs;
@@ -71,23 +72,19 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_REFORMAT = "reformat";
 
-  private Map<String, String> myLocalizedTemplateNames = new HashMap<String, String>();
+  private final Map<String, String> myLocalizedTemplateNames = new HashMap<String, String>();
+  private final Object LOCK = new Object();
 
   public static FileTemplateManagerImpl getInstance() {
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
   }
 
-  public FileTemplateManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull FileTypeManagerEx fileTypeManagerEx, MessageBus bus) {
-    this(".", "fileTemplates", virtualFileManager, fileTypeManagerEx);
-
-    myInternalTemplatesManager =
-      new FileTemplateManagerImpl(INTERNAL_DIR, myTemplatesDir + File.separator + INTERNAL_DIR, myVirtualFileManager, myTypeManager);
-    myPatternsManager =
-      new FileTemplateManagerImpl(INCLUDES_DIR, myTemplatesDir + File.separator + INCLUDES_DIR, myVirtualFileManager, myTypeManager);
-    myCodeTemplatesManager = new FileTemplateManagerImpl(CODETEMPLATES_DIR, myTemplatesDir + File.separator + CODETEMPLATES_DIR,
-                                                         myVirtualFileManager, myTypeManager);
-    myJ2eeTemplatesManager = new FileTemplateManagerImpl(J2EE_TEMPLATES_DIR, myTemplatesDir + File.separator + J2EE_TEMPLATES_DIR,
-                                                         myVirtualFileManager, myTypeManager);
+  public FileTemplateManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull FileTypeManagerEx typeManager, MessageBus bus) {
+    this(".", TEMPLATES_DIR, virtualFileManager, typeManager,
+         new FileTemplateManagerImpl(INTERNAL_DIR, TEMPLATES_DIR + File.separator + INTERNAL_DIR, virtualFileManager, typeManager, null, null, null, null),
+         new FileTemplateManagerImpl(INCLUDES_DIR, TEMPLATES_DIR + File.separator + INCLUDES_DIR, virtualFileManager, typeManager, null, null, null, null),
+         new FileTemplateManagerImpl(CODETEMPLATES_DIR, TEMPLATES_DIR + File.separator + CODETEMPLATES_DIR, virtualFileManager, typeManager, null, null, null, null),
+         new FileTemplateManagerImpl(J2EE_TEMPLATES_DIR, TEMPLATES_DIR + File.separator + J2EE_TEMPLATES_DIR, virtualFileManager, typeManager, null, null, null, null));
 
     myLocalizedTemplateNames.put(TEMPLATE_CATCH_BODY, IdeBundle.message("template.catch.statement.body"));
     myLocalizedTemplateNames.put(TEMPLATE_IMPLEMENTED_METHOD_BODY, IdeBundle.message("template.implemented.method.body"));
@@ -122,11 +119,17 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   private FileTemplateManagerImpl(@NotNull @NonNls String defaultTemplatesDir,
                                   @NotNull @NonNls String templatesDir,
                                   @NotNull VirtualFileManager virtualFileManager,
-                                  @NotNull FileTypeManagerEx fileTypeManagerEx) {
+                                  @NotNull FileTypeManagerEx fileTypeManagerEx, FileTemplateManagerImpl internalTemplatesManager,
+                                  FileTemplateManagerImpl patternsManager, FileTemplateManagerImpl codeTemplatesManager,
+                                  FileTemplateManagerImpl j2eeTemplatesManager) {
     myDefaultTemplatesDir = defaultTemplatesDir;
     myTemplatesDir = templatesDir;
     myVirtualFileManager = virtualFileManager;
     myTypeManager = fileTypeManagerEx;
+    myInternalTemplatesManager = internalTemplatesManager;
+    myPatternsManager = patternsManager;
+    myCodeTemplatesManager = codeTemplatesManager;
+    myJ2eeTemplatesManager = j2eeTemplatesManager;
   }
 
   @NotNull
@@ -141,50 +144,61 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   @NotNull
   public FileTemplate[] getAllTemplates() {
-    revalidate();
-    ensureTemplatesAreLoaded();
-    return myTemplates.getAllTemplates();
+    synchronized (LOCK) {
+      ensureTemplatesAreLoaded();
+      return myTemplates.getAllTemplates();
+    }
   }
 
   public FileTemplate getTemplate(@NotNull @NonNls String templateName) {
-    ensureTemplatesAreLoaded();
-    return myTemplates.findByName(templateName);
+    synchronized (LOCK) {
+      ensureTemplatesAreLoaded();
+      return myTemplates.findByName(templateName);
+    }
   }
 
   @NotNull
   public FileTemplate addTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension) {
-    revalidate();
-    ensureTemplatesAreLoaded();
-    LOG.assertTrue(name.length() > 0);
-    if (myTemplates.findByName(name) != null) {
-      LOG.error("Duplicate template " + name);
-    }
+    synchronized (LOCK) {
+      invalidate();
+      ensureTemplatesAreLoaded();
 
-    FileTemplate fileTemplate = new FileTemplateImpl("", name, extension);
-    myTemplates.addTemplate(fileTemplate);
-    return fileTemplate;
+      LOG.assertTrue(name.length() > 0);
+      if (myTemplates.findByName(name) != null) {
+        LOG.error("Duplicate template " + name);
+      }
+
+      FileTemplate fileTemplate = new FileTemplateImpl("", name, extension);
+      myTemplates.addTemplate(fileTemplate);
+      return fileTemplate;
+    }
   }
 
   public void removeTemplate(@NotNull FileTemplate template, boolean fromDiskOnly) {
-    ensureTemplatesAreLoaded();
-    myTemplates.removeTemplate(template);
-    try {
-      ((FileTemplateImpl)template).removeFromDisk();
-    }
-    catch (Exception e) {
-      LOG.error("Unable to remove template", e);
-    }
+    synchronized (LOCK) {
+      ensureTemplatesAreLoaded();
+      myTemplates.removeTemplate(template);
+      try {
+        ((FileTemplateImpl)template).removeFromDisk();
+      }
+      catch (Exception e) {
+        LOG.error("Unable to remove template", e);
+      }
 
-    if (!fromDiskOnly) {
-      myDeletedTemplatesManager.addName(template.getName() + "." + template.getExtension() + "." + DEFAULT_TEMPLATE_EXTENSION);
-    }
+      if (!fromDiskOnly) {
+        myDeletedTemplatesManager.addName(template.getName() + "." + template.getExtension() + "." + DEFAULT_TEMPLATE_EXTENSION);
+      }
 
-    revalidate();
+      invalidate();
+    }
   }
 
   public void removeInternal(@NotNull FileTemplate template) {
     LOG.assertTrue(myInternalTemplatesManager != null);
     myInternalTemplatesManager.removeTemplate(template, true);
+  }
+  public FileTemplate addInternal(@NotNull @NonNls String name, @NotNull @NonNls String extension) {
+    return myInternalTemplatesManager.addTemplate(name, extension);
   }
 
   @NotNull
@@ -221,12 +235,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   private void ensureTemplatesAreLoaded() {
-    if (!myInvalidated) {
+    if (myLoaded) {
       return;
     }
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         loadTemplates();
+        myLoaded = true;
       }
     });
   }
@@ -318,8 +333,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
         }
       }
     }
-
-    myInvalidated = false;
   }
 
 
@@ -353,13 +366,17 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   @NotNull
   public Collection<String> getRecentNames() {
-    ensureTemplatesAreLoaded();
-    validateRecentNames();
-    return myRecentList.getRecentNames(RECENT_TEMPLATES_SIZE);
+    synchronized (LOCK) {
+      ensureTemplatesAreLoaded();
+      validateRecentNames();
+      return myRecentList.getRecentNames(RECENT_TEMPLATES_SIZE);
+    }
   }
 
   public void addRecentName(@NotNull @NonNls String name) {
-    myRecentList.addName(name);
+    synchronized (LOCK) {
+      myRecentList.addName(name);
+    }
   }
 
   public void disposeComponent() {
@@ -372,8 +389,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   public String getComponentName() {
     return "FileTemplateManager";
   }
-
-  private MyDeletedTemplatesManager myDeletedTemplatesManager = new MyDeletedTemplatesManager();
 
   public void readExternal(Element element) throws InvalidDataException {
     Element deletedTemplatesElement = element.getChild(ELEMENT_DELETED_TEMPLATES);
@@ -393,7 +408,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
     Element templatesElement = element.getChild(ELEMENT_TEMPLATES);
     if (templatesElement != null) {
-      revalidate();
+      invalidate();
       FileTemplate[] internals = getInternalTemplates();
       List children = templatesElement.getChildren();
       for (final Object aChildren : children) {
@@ -433,7 +448,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
     Element templatesElement = new Element(ELEMENT_TEMPLATES);
     element.addContent(templatesElement);
-    revalidate();
+    invalidate();
     FileTemplate[] internals = getInternalTemplates();
     for (FileTemplate internal : internals) {
       templatesElement.addContent(createElement(internal, true));
@@ -463,9 +478,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     }
   }
 
-  private void revalidate() {
+  private void invalidate() {
     saveAll();
-    myInvalidated = true;
+    myLoaded = false;
     if (myTemplates != null) {
       FileTemplate[] allTemplates = myTemplates.getAllTemplates();
       for (FileTemplate template : allTemplates) {
@@ -475,58 +490,63 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   public void saveAll() {
-    saveTemplates();
+    synchronized (LOCK) {
+      saveTemplates();
+    }
   }
 
   @NotNull
   public FileTemplate[] getInternalTemplates() {
-    FileTemplate[] result = new FileTemplate[6];
-    result[0] = getInternalTemplate(INTERNAL_CLASS_TEMPLATE_NAME);
-    result[1] = getInternalTemplate(INTERNAL_INTERFACE_TEMPLATE_NAME);
-    result[2] = getInternalTemplate(INTERNAL_ENUM_TEMPLATE_NAME);
-    result[3] = getInternalTemplate(INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
-    result[4] = getInternalTemplate(INTERNAL_HTML_TEMPLATE_NAME);
-    result[5] = getInternalTemplate(INTERNAL_XHTML_TEMPLATE_NAME);
-    return result;
+    return new FileTemplate[] {
+    getInternalTemplate(INTERNAL_CLASS_TEMPLATE_NAME),
+    getInternalTemplate(INTERNAL_INTERFACE_TEMPLATE_NAME),
+    getInternalTemplate(INTERNAL_ENUM_TEMPLATE_NAME),
+    getInternalTemplate(INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME),
+    getInternalTemplate(INTERNAL_HTML_TEMPLATE_NAME),
+    getInternalTemplate(INTERNAL_XHTML_TEMPLATE_NAME),
+    };
   }
 
   public FileTemplate getInternalTemplate(@NotNull @NonNls String templateName) {
-    LOG.assertTrue(myInternalTemplatesManager != null);
-    //noinspection HardCodedStringLiteral
-    String actualTemplateName = ApplicationManager.getApplication().isUnitTestMode() ? templateName + "ForTest" : templateName;
-    FileTemplateImpl template = (FileTemplateImpl)myInternalTemplatesManager.getTemplate(actualTemplateName);
+    synchronized (LOCK) {
+      LOG.assertTrue(myInternalTemplatesManager != null);
+      //noinspection HardCodedStringLiteral
+      String actualTemplateName = ApplicationManager.getApplication().isUnitTestMode() ? templateName + "ForTest" : templateName;
+      FileTemplateImpl template = (FileTemplateImpl)myInternalTemplatesManager.getTemplate(actualTemplateName);
 
-    if (template == null) {
-      template = (FileTemplateImpl)getTemplate(actualTemplateName);
-    }
-    if (template == null) {
-      template = (FileTemplateImpl)getJ2eeTemplate(actualTemplateName); // Hack to be able to register class templates from the plugin.
-      if (template != null) {
-        template.setAdjust(true);
+      if (template == null) {
+        template = (FileTemplateImpl)getTemplate(actualTemplateName);
       }
-      else {
-        String text;
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          text = getDefaultClassTemplateText(templateName);
+      if (template == null) {
+        template = (FileTemplateImpl)getJ2eeTemplate(actualTemplateName); // Hack to be able to register class templates from the plugin.
+        if (template != null) {
+          template.setAdjust(true);
         }
         else {
-          text = getTestClassTemplateText(templateName);
+          String text;
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            text = getTestClassTemplateText(templateName);
+          }
+          else {
+            text = getDefaultClassTemplateText(templateName);
+          }
+
+          text = StringUtil.convertLineSeparators(text);
+          text = StringUtil.replace(text, "$NAME$", "${NAME}");
+          text = StringUtil.replace(text, "$PACKAGE_NAME$", "${PACKAGE_NAME}");
+          text = StringUtil.replace(text, "$DATE$", "${DATE}");
+          text = StringUtil.replace(text, "$TIME$", "${TIME}");
+          text = StringUtil.replace(text, "$USER$", "${USER}");
+
+          template = (FileTemplateImpl)myInternalTemplatesManager.addTemplate(actualTemplateName, "java");
+          template.setText(text);
         }
-
-        text = StringUtil.convertLineSeparators(text);
-        text = StringUtil.replace(text, "$NAME$", "${NAME}");
-        text = StringUtil.replace(text, "$PACKAGE_NAME$", "${PACKAGE_NAME}");
-        text = StringUtil.replace(text, "$DATE$", "${DATE}");
-        text = StringUtil.replace(text, "$TIME$", "${TIME}");
-        text = StringUtil.replace(text, "$USER$", "${USER}");
-
-        template = (FileTemplateImpl)myInternalTemplatesManager.addTemplate(actualTemplateName, "java");
-        template.setText(text);
       }
-    }
 
-    template.setInternal(true);
-    return template;
+      template.setInternal(true);
+      System.out.println("get internal template = " + template +"; isNew="+ ((FileTemplateImpl)template).isNew());
+      return template;
+    }
   }
 
   @NonNls
@@ -824,7 +844,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   }
 
   private static class MyTemplates {
-    private List<FileTemplate> myTemplatesList = new CopyOnWriteArrayList<FileTemplate>();
+    private final List<FileTemplate> myTemplatesList = new ArrayList<FileTemplate>();
 
     public int size() {
       return myTemplatesList.size();

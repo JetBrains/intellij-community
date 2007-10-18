@@ -83,4 +83,6 @@ public abstract class FileTemplateManager{
   public abstract FileTemplate getPattern(@NotNull @NonNls String name);
 
   public abstract FileTemplate getDefaultTemplate(@NotNull @NonNls String name);
+
+  public abstract FileTemplate addInternal(@NotNull @NonNls String name, @NotNull @NonNls String extension);
 }
