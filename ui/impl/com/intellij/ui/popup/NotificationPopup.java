@@ -6,6 +6,7 @@ package com.intellij.ui.popup;
 
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -31,7 +32,7 @@ public class NotificationPopup {
   private final static int SHOW_TIME_TICKS = FADE_IN_TICKS + 300;
   private final static int FADE_OUT_TICKS = SHOW_TIME_TICKS + 60;
 
-  private final Timer myFadeInTimer = new Timer(10, new ActionListener() {
+  private ActionListener myFadeTracker = new ActionListener() {
     public void actionPerformed(ActionEvent e) {
       Window popupWindow = SwingUtilities.windowForComponent(myContent);
       if (popupWindow != null) {
@@ -48,7 +49,8 @@ public class NotificationPopup {
         }
       }
     }
-  });
+  };
+  private final Timer myFadeInTimer = new Timer(10, myFadeTracker);
 
   public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
     this(owner, content, backgroud, true);
@@ -64,7 +66,14 @@ public class NotificationPopup {
       .setResizable(false)
       .setMovable(true)
       .setLocateWithinScreenBounds(false)
-      .setAlpha(0.2f)
+      .setAlpha(0.2f).addListener(new JBPopupListener() {
+      public void onClosed(final JBPopup popup) {
+        if (myFadeInTimer.isRunning()) {
+          myFadeInTimer.stop();
+        }
+        myFadeInTimer.removeActionListener(myFadeTracker);
+      }
+    })
       .createPopup();
     final Point p = RelativePoint.getSouthEastOf(owner).getScreenPoint();
     Rectangle screen = ScreenUtil.getScreenRectangle(p.x, p.y);
@@ -124,4 +133,6 @@ public class NotificationPopup {
       return super.getPreferredSize();
     }   
   }
+
+
 }
