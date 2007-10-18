@@ -2,6 +2,7 @@ package com.intellij.ui;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -13,8 +14,6 @@ import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NonNls;
 
 public abstract class MultilineTreeCellRenderer extends JComponent implements javax.swing.tree.TreeCellRenderer {
 
@@ -134,6 +133,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
     currBaseLine += myTextInsets.top;
     g.setFont(getFont());
     g.setColor(fgColor);
+    UIUtil.applyRenderingHints(g);
 
     if (myPrefix != null) {
       g.drawString(myPrefix, myTextInsets.left - myPrefixWidth + 1, currBaseLine);
