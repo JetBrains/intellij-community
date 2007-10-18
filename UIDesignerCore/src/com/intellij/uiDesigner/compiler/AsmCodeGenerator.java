@@ -392,7 +392,7 @@ public class AsmCodeGenerator {
 
       if (myIgnoreCustomCreation) {
         boolean creatable = true;
-        if ((componentClass.getModifiers() & Modifier.PRIVATE) != 0) {
+        if ((componentClass.getModifiers() & (Modifier.PRIVATE | Modifier.ABSTRACT)) != 0) {
           creatable = false;
         }
         else {
