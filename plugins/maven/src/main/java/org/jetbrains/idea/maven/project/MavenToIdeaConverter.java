@@ -122,7 +122,7 @@ public class MavenToIdeaConverter {
     this.ignorePattern = Pattern.compile(Strings.translateMasks(preferences.getIgnoredDependencies()));
   }
 
-  public void convert(MavenProjectModel.Node node, Collection<String> profiles) {
+  private void convert(MavenProjectModel.Node node, Collection<String> profiles) {
     final MavenProject mavenProject = node.getMavenProject();
 
     Module module = mavenToIdeaMapping.getModule(node);
