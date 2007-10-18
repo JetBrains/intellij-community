@@ -132,6 +132,8 @@ public class VisibilityInspection extends GlobalInspectionTool {
       //ignore implicit constructors. User should not be able to see them.
       if (refElement instanceof RefImplicitConstructor) return null;
 
+      if (refElement instanceof RefField && ((RefField)refElement).getElement() instanceof PsiEnumConstant) return null;
+
       //ignore library override methods.
       if (refElement instanceof RefMethod) {
         RefMethod refMethod = (RefMethod) refElement;
