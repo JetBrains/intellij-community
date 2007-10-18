@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.MoveDestination;
@@ -46,13 +47,13 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     myDirectory = directory;
     myElementsToMove = elementsToMove;
     myMoveCallback = moveCallback;
-    myDestDirectoryField.setText(directory.getVirtualFile().getPath());
+    myDestDirectoryField.setText(FileUtil.toSystemDependentName(directory.getVirtualFile().getPath()));
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
     myDestDirectoryField.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final VirtualFile[] files = FileChooser.chooseFiles(myDirectory.getProject(), descriptor, directory.getVirtualFile());
         if (files.length == 1) {
-          myDestDirectoryField.setText(files[0].getPath());
+          myDestDirectoryField.setText(FileUtil.toSystemDependentName(files[0].getPath()));
         }
       }
     });
@@ -99,7 +100,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    final String path = myDestDirectoryField.getText();
+    final String path = FileUtil.toSystemIndependentName(myDestDirectoryField.getText());
     final Project project = myDirectory.getProject();
     PsiDirectory directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
       public PsiDirectory compute() {
