@@ -144,13 +144,20 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
                         thenRhs.getText() + ';';
             }
         } else {
+            final String conditionText;
+            if (ParenthesesUtils.getPrecedence(condition) >
+                ParenthesesUtils.AND_PRECEDENCE) {
+                conditionText = '(' + condition.getText() + ')';
+            } else {
+                conditionText = condition.getText();
+            }
             if (ParenthesesUtils.getPrecedence(thenRhs) >
                     ParenthesesUtils.AND_PRECEDENCE) {
                 return lhs.getText() + ' ' + token.getText() + ' ' +
-                        condition.getText() + " && (" + thenRhs.getText() + ");";
+                       conditionText + " && (" + thenRhs.getText() + ");";
             } else {
                 return lhs.getText() + ' ' + token.getText() + ' ' +
-                        condition.getText() + " && " + thenRhs.getText() + ';';
+                       conditionText + " && " + thenRhs.getText() + ';';
             }
         }
     }
@@ -206,12 +213,19 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
                         " || " + thenReturnValue.getText() + ';';
             }
         } else {
+            final String conditionText;
+            if (ParenthesesUtils.getPrecedence(condition) >
+                ParenthesesUtils.AND_PRECEDENCE) {
+                conditionText = '(' + condition.getText() + ')';
+            } else {
+                conditionText = condition.getText();
+            }
             if (ParenthesesUtils.getPrecedence(thenReturnValue) >
                     ParenthesesUtils.AND_PRECEDENCE) {
-                return "return " + condition.getText() + " && (" +
+                return "return " + conditionText + " && (" +
                         thenReturnValue.getText() + ");";
             } else {
-                return "return " + condition.getText() + " && " +
+                return "return " + conditionText + " && " +
                         thenReturnValue.getText() + ';';
             }
         }
