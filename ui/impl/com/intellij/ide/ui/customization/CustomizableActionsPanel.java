@@ -461,8 +461,10 @@ public class CustomizableActionsPanel {
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : openProjects) {
       final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
-      frame.updateToolbar();
-      frame.updateMenuBar();
+      if (frame != null) {
+        frame.updateToolbar();
+        frame.updateMenuBar();
+      }
 
       //final FavoritesManager favoritesView = FavoritesManager.getInstance(project);
       //final String[] availableFavoritesLists = favoritesView.getAvailableFavoritesLists();

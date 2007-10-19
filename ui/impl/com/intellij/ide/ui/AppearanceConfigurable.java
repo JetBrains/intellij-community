@@ -132,7 +132,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       update = shouldRepaintUI = true;
     }
 
-    if (!myComponent.myLafComboBox.getSelectedItem().equals(lafManager.getCurrentLookAndFeel())) {
+    if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
       update = shouldUpdateUI = true;
       lafManager.setCurrentLookAndFeel((UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem());
     }
@@ -225,7 +225,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     isModified |= myComponent.myAntialiasingInEditorCheckBox.isSelected() != settings.ANTIALIASING_IN_EDITOR;
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.MOVE_MOUSE_ON_DEFAULT_BUTTON;
-    isModified |= !myComponent.myLafComboBox.getSelectedItem().equals(LafManager.getInstance().getCurrentLookAndFeel());
+    isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
       isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.ENABLE_ALPHA_MODE;
       int delay = -1;
@@ -316,7 +316,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     public void updateCombo() {
       UIManager.LookAndFeelInfo selectedLAF = (UIManager.LookAndFeelInfo)myLafComboBox.getSelectedItem();
       //noinspection HardCodedStringLiteral
-      boolean isIdeaLAFSelected = selectedLAF.getName().startsWith("IDEA");
+      boolean isIdeaLAFSelected = selectedLAF != null && selectedLAF.getName().startsWith("IDEA");
 
       myIDEALafFont.setVisible(isIdeaLAFSelected);
       myOverrideLAFFonts.setVisible(!isIdeaLAFSelected);

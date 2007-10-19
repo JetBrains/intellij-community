@@ -35,6 +35,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -61,7 +62,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     return false;
   }
 
-  public EditorColorsScheme selectScheme(String name) {
+  public EditorColorsScheme selectScheme(@NotNull String name) {
     mySelectedScheme = getScheme(name);
     return mySelectedScheme;
   }
@@ -184,6 +185,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
     }
 
     mySelectedScheme = mySchemes.get(EditorColorsManager.getInstance().getGlobalScheme().getName());
+    assert mySelectedScheme != null : EditorColorsManager.getInstance().getGlobalScheme().getName() + "; myschemes=" + mySchemes;
   }
 
   private static void initScheme(MyColorScheme scheme) {
