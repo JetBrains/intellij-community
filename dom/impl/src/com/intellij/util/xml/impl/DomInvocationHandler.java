@@ -585,6 +585,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final AttributeChildDescriptionImpl description) {
+    checkIsValid();
     r.lock();
     try {
       _checkInitialized(description);
@@ -633,7 +634,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   final void _checkInitialized(final AbstractDomChildDescriptionImpl description) {
-    checkIsValid();
     if (myInitializedChildren.contains(description)) return;
 
     r.unlock();
@@ -783,6 +783,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   final void checkInitialized(final DomChildDescriptionImpl description) {
+    checkIsValid();
     r.lock();
     try {
       _checkInitialized(description);
@@ -857,6 +858,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();
 
+    checkIsValid();
     r.lock();
     try {
       _checkInitialized(description);

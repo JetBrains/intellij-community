@@ -75,6 +75,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     final List<DomElement> result = new SmartList<DomElement>();
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
+      handler.checkIsValid();
       DomInvocationHandler.r.lock();
       try {
         handler._checkInitialized(this);

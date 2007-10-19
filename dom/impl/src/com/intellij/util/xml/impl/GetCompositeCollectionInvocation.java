@@ -23,6 +23,7 @@ class GetCompositeCollectionInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+    handler.checkIsValid();
     DomInvocationHandler.r.lock();
     try {
       for (final CollectionChildDescriptionImpl qname : myQnames) {
