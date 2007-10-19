@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Base DOM class to convert objects of a definite type into {@ink String} and back. Most often used with
- * {@link @com.intellij.util.xml.Convert()} annotation with methods returning {@link com.intellij.util.xml.GenericDomValue}<T>.
+ * Base DOM class to convert objects of a definite type into {@link String} and back. Most often used with
+ * {@link com.intellij.util.xml.Convert} annotation with methods returning {@link com.intellij.util.xml.GenericDomValue}&lt;T&gt;.
  *
  * @see com.intellij.util.xml.ResolvingConverter
  * @see com.intellij.util.xml.CustomReferenceConverter

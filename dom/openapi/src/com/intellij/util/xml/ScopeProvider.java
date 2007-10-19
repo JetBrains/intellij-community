@@ -21,14 +21,16 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Should be stateless, since its instances are cached.
  * @author peter
+ * @see Scope
  */
 public abstract class ScopeProvider {
 
   /**
    * @param element element
    * @return scope to search within.
-   * For uniqueness checking should return element, whose direct children names will be compared. Basically it's parameter element's parent: ParentScopeProvider.
-   * For resolving should return element, whose all children will be searched  
+   * For uniqueness checking should return element, whose direct children names will be compared.
+   * Basically it's parameter element's parent: {@link ParentScopeProvider}.
+   * Searches within all children of returned element.
    */
   @Nullable
   public abstract DomElement getScope(@NotNull DomElement element);

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
+ * @see com.intellij.util.xml.DomManager#getConverterManager()
  */
 public interface ConverterManager {
 
@@ -32,5 +33,11 @@ public interface ConverterManager {
   @Nullable
   Converter getConverterByClass(Class<?> convertingClass);
 
+  /**
+   * Registers the given {@link Converter} implementation at runtime.
+   *
+   * @param converterInterface Interface defined in {@link DomElement} definition.
+   * @param converterImpl      Implementation to use.
+   */
   <T extends Converter> void registerConverterImplementation(Class<T> converterInterface, T converterImpl);
 }
