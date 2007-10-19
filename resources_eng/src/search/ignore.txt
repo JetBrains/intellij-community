@@ -60,10 +60,8 @@ can
 can't
 cannot
 cant
-class
 co
 co.
-condition
 could
 couldn't
 crap
@@ -118,7 +116,6 @@ from
 further
 g
 getting
-global
 go
 going
 gone
@@ -154,7 +151,6 @@ i'm
 i've
 i.e.
 ie
-if
 im
 in
 inc
@@ -186,8 +182,6 @@ let
 let's
 like
 likely
-line
-local
 look
 ltd
 m
@@ -408,7 +402,6 @@ wherein
 whereupon
 wherever
 whether
-while
 whither
 who'd
 who'll
