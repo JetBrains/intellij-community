@@ -15,12 +15,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
@@ -71,7 +73,12 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
       boolean needToDeleteHierarchy = false;
       if (refMethod.isOnlyCallsSuper() && !refMethod.isFinal()) {
         RefMethod refSuper = findSuperWithBody(refMethod);
-        if (refSuper == null || RefUtil.getInstance().compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
+        final RefUtil refUtil = RefUtil.getInstance();
+        if (refSuper != null && Comparing.strEqual(refMethod.getAccessModifier(), refSuper.getAccessModifier())){
+          if (Comparing.strEqual(refSuper.getAccessModifier(), PsiModifier.PROTECTED) //protected modificator gives access to method in another package
+              && !Comparing.strEqual(refUtil.getPackageName(refSuper), refUtil.getPackageName(refMethod))) return null;
+        }
+        if (refSuper == null || refUtil.compareAccess(refMethod.getAccessModifier(), refSuper.getAccessModifier()) <= 0) {
           message = InspectionsBundle.message("inspection.empty.method.problem.descriptor");
         }
       }

@@ -36,4 +36,8 @@ public class EmptyMethodTest extends InspectionTestCase {
   public void testInAnonymous() throws Exception {
     doTest(true);
   }
+
+  public void testsuperFromAnotherPackageCall() throws Exception {
+    doTest();
+  }
 }
