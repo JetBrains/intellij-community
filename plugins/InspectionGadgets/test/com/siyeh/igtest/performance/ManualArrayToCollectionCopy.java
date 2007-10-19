@@ -42,4 +42,11 @@ public class ManualArrayToCollectionCopy {
         }
         return list;
     }
+
+    void replaceWithSubList(List<String> parameters, String[] args) {
+        for (int i = 2; i < args.length; ++i)
+        {
+            parameters.add(args[i]);
+        }
+    }
 }

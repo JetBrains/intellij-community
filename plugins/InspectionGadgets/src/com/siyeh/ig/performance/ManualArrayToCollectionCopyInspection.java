@@ -205,7 +205,7 @@ public class ManualArrayToCollectionCopyInspection
             buffer.append(".addAll(java.util.Arrays.asList(");
             buffer.append(arrayText);
             buffer.append(')');
-            if (!fromOffsetText.equals("0") &&
+            if (!fromOffsetText.equals("0") ||
                     !toOffsetText.equals(arrayText + ".length")) {
                 buffer.append(".subList(");
                 buffer.append(fromOffsetText);
