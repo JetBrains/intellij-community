@@ -71,8 +71,8 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
       implementsReferenceElements = myImplementsClause.getReferenceElements();
     }
 
-    Set<String> classes = new HashSet<String>();
-    Set<String> interfaces = new HashSet<String>();
+    Set<String> classes = new TreeSet<String>();
+    Set<String> interfaces = new TreeSet<String>();
 
     for (GrCodeReferenceElement extendsReferenceElement : extendsReferenceElements) {
       final PsiElement extendsElement = extendsReferenceElement.resolve();
@@ -143,6 +143,7 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
     String classText = "class A " + (isExtends ? "extends " : "implements ");
 
     boolean first = true;
+
     for (String str : elements) {
       if (!first) classText += ", ";
       classText += str;
