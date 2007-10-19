@@ -103,7 +103,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   public int[] getWeight(final LookupItem<?> item) {
     if (item.getAttribute(LookupItem.WEIGHT) != null) return item.getAttribute(LookupItem.WEIGHT);
 
-    final int[] result = new int[13];
+    final int[] result = new int[12];
 
     String item1StringCap = capitalsOnly(item.getLookupString());
     result[0] = item1StringCap.startsWith(myPrefixCapitals) ? 1 : 0;
@@ -124,30 +124,29 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       }
     }
 
-    result[1] = item1StringCap.startsWith(capitalsOnly(myPrefix) + myPrefixCapitals) ? 1 : 0;
-    result[2] = item.getLookupString().startsWith(myPrefix) ? 1 : 0;
-    result[3] = item.getLookupString().toLowerCase().startsWith(myPrefixLowered) ? 1 : 0;
-    result[4] = getExpectedTypeMatchingDegree(object, item);
+    result[1] = item.getLookupString().startsWith(myPrefix) ? 1 : 0;
+    result[2] = item.getLookupString().toLowerCase().startsWith(myPrefixLowered) ? 1 : 0;
+    result[3] = getExpectedTypeMatchingDegree(object, item);
 
 
-    result[5] = object instanceof PsiLocalVariable || object instanceof PsiParameter ? 2 : object instanceof PsiEnumConstant ? 1 : 0;
+    result[4] = object instanceof PsiLocalVariable || object instanceof PsiParameter ? 2 : object instanceof PsiEnumConstant ? 1 : 0;
 
-    result[6] = getRecursiveCallWeight(object);
+    result[5] = getRecursiveCallWeight(object);
 
     final String name = getName(object);
     final int nameEndMatchingDegree = getNameEndMatchingDegree(object, name);
-    result[7] = nameEndMatchingDegree;
+    result[6] = nameEndMatchingDegree;
 
     if (object instanceof PsiMember) {
       final PsiType qualifierType1 = CompletionUtil.getQualifierType(item);
       if (qualifierType1 != null){
-        result[8] = StatisticsManager.getInstance().getMemberUseCount(qualifierType1, (PsiMember)object);
+        result[7] = StatisticsManager.getInstance().getMemberUseCount(qualifierType1, (PsiMember)object);
       }
     }
 
     if (object instanceof PsiElement) {
       final PsiProximity proximity = myProximityComparator.getProximity((PsiElement)object);
-      result[9] = proximity ==null ? -1 : 239 - proximity.ordinal();
+      result[8] = proximity ==null ? -1 : 239 - proximity.ordinal();
     }
 
     if (name != null && myExpectedInfos != null) {
@@ -161,24 +160,24 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
           max = Math.max(max, set.size());
         }
       }
-      result[10] = max;
+      result[9] = max;
     }
 
     if (SmartCodeCompletionAction.isDoingSmartCodeCompleteAction()) {
       if (object instanceof PsiLocalVariable || object instanceof PsiParameter) {
-        result[11] = 5;
+        result[10] = 5;
       }
       else if (object instanceof PsiField) {
-        result[11] = 4;
+        result[10] = 4;
       }
       else if (object instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)object;
-        result[11]= PropertyUtil.isSimplePropertyGetter(method) ? 3 : 2;
+        result[10]= PropertyUtil.isSimplePropertyGetter(method) ? 3 : 2;
       }
     }
 
     if (name != null && myExpectedInfos != null && nameEndMatchingDegree != 0) {
-      result[12] = 239 - NameUtil.nameToWords(name).length;
+      result[11] = 239 - NameUtil.nameToWords(name).length;
     }
 
     item.setAttribute(LookupItem.WEIGHT, result);
