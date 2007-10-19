@@ -25,6 +25,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
   private static final JavaClassReferenceProvider REFERENCE_PROVIDER = new JavaClassReferenceProvider();
   @NonNls private static final String[] PRIMITIVES = new String[]{"boolean", "byte",
     "char", "double", "float", "int", "long", "short"};
+  @NonNls private static final String ARRAY_PREFIX = "[L";
 
   public PsiType fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
@@ -47,8 +48,16 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
       final ElementManipulator<PsiElement> manipulator =
         PsiManager.getInstance(element.getProject()).getElementManipulatorsRegistry().getManipulator(element);
       assert manipulator != null;
-      final String trimmed = str.trim();
-      final int offset = manipulator.getRangeInElement(element).getStartOffset() + str.indexOf(trimmed);
+      String trimmed = str.trim();
+      int offset = manipulator.getRangeInElement(element).getStartOffset() + str.indexOf(trimmed);
+      if (trimmed.startsWith(ARRAY_PREFIX)) {
+        offset += ARRAY_PREFIX.length();
+        if (trimmed.endsWith(";")) {
+          trimmed = trimmed.substring(ARRAY_PREFIX.length(), trimmed.length() - 1);
+        } else {
+          trimmed = trimmed.substring(ARRAY_PREFIX.length());          
+        }
+      }
       return new JavaClassReferenceSet(trimmed, element, offset, false, REFERENCE_PROVIDER) {
         protected JavaClassReference createReference(final int referenceIndex, final String subreferenceText, final TextRange textRange,
                                                      final boolean staticImport) {
