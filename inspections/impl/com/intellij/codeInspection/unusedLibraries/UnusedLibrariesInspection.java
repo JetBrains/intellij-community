@@ -17,6 +17,7 @@ import com.intellij.codeInspection.reference.RefProject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -77,6 +78,8 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
     analysisScope.setSearchInLibraries(true);
     final BackwardDependenciesBuilder builder = new BackwardDependenciesBuilder(project, analysisScope);
 
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+
     BACKWARD_ANALYSIS.setTotalAmount(builder.getTotalFileCount());
     ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
       public void run() {
@@ -87,6 +90,10 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
         super.setFraction(fraction);
         BACKWARD_ANALYSIS.setDoneAmount(((int)fraction * BACKWARD_ANALYSIS.getTotalAmount()));
         getContext().incrementJobDoneAmount(BACKWARD_ANALYSIS, getText2());
+      }
+
+      public boolean isCanceled() {
+        return progressIndicator != null && progressIndicator.isCanceled() || super.isCanceled();
       }
     });
     final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
