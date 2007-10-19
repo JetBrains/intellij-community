@@ -349,11 +349,6 @@ public class VcsUtil {
     });
   }
 
-  public static String getFileContent(final File file) throws IOException {
-    byte[] content = getFileByteContent(file);
-    return new String(content);
-  }
-
   public static boolean isPathUnderProject(Project project, final String path) {
     VirtualFile vfPath = getVirtualFile(path);
     return isPathUnderProject(project, vfPath);
