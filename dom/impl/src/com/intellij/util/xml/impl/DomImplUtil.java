@@ -109,7 +109,7 @@ public class DomImplUtil {
     return null;
   }
 
-  public static List<XmlTag> findSubTags(XmlTag tag, final EvaluatedXmlName name, final DomInvocationHandler handler) {
+  public static List<XmlTag> findSubTags(@NotNull XmlTag tag, final EvaluatedXmlName name, final DomInvocationHandler handler) {
     return ContainerUtil.findAll(tag.getSubTags(), new Condition<XmlTag>() {
       public boolean value(XmlTag childTag) {
         return isNameSuitable(name, childTag, handler);

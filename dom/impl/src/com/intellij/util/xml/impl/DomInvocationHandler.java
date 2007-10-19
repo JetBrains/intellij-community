@@ -637,6 +637,17 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (myInitializedChildren.contains(description)) return;
 
     r.unlock();
+
+    final List<XmlTag> subTags;
+    final XmlTag tag = getXmlTag();
+    if (tag != null && description instanceof FixedChildDescriptionImpl) {
+      subTags = DomImplUtil.findSubTags(tag, createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName()), this);
+    } else if (tag != null && description instanceof AbstractCollectionChildDescription) {
+      subTags = ((AbstractCollectionChildDescription) description).getSubTags(this);
+    } else {
+      subTags = Collections.emptyList();
+    }
+    
     w.lock();
     try {
       if (myInitializedChildren.contains(description)) return;
@@ -652,14 +663,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(fixedChildDescription.getXmlName());
         final int count = fixedChildDescription.getCount();
         for (int i = 0; i < count; i++) {
-          getOrCreateIndexedChild(findSubTag(myXmlTag, evaluatedXmlName, i), evaluatedXmlName, Pair.create(fixedChildDescription, i));
+          getOrCreateIndexedChild(findSubTag(subTags, i), evaluatedXmlName, Pair.create(fixedChildDescription, i));
         }
       }
       else if (myXmlTag != null && description instanceof AbstractCollectionChildDescription) {
         final AbstractCollectionChildDescription childDescription = (AbstractCollectionChildDescription)description;
-        for (XmlTag subTag : childDescription.getSubTags(this)) {
-          new CollectionElementInvocationHandler(description.getType(), subTag,
-                                                 childDescription, this);
+        for (XmlTag subTag : subTags) {
+          new CollectionElementInvocationHandler(description.getType(), subTag, childDescription, this);
         }
       }
       myInitializedChildren.add(description);
@@ -696,9 +706,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @Nullable
-  private XmlTag findSubTag(final XmlTag tag, final EvaluatedXmlName qname, final int index) {
-    if (tag == null) return null;
-    final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, qname, this);
+  private static XmlTag findSubTag(@NotNull List<XmlTag> subTags, final int index) {
     return subTags.size() <= index ? null : subTags.get(index);
   }
 
