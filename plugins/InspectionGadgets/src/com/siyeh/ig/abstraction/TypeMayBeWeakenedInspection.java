@@ -456,6 +456,9 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 if (!checkType(type, weakestTypeClasses)) {
                     return Collections.EMPTY_LIST;
                 }
+            } else if (referenceParent instanceof PsiSwitchStatement) {
+                // only enums and primitives can be a switch expression
+                return Collections.EMPTY_LIST;
             }
             if (weakestTypeClasses.contains(variableOrMethodClass) ||
                     weakestTypeClasses.isEmpty()) {
