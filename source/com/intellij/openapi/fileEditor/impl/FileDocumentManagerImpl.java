@@ -2,7 +2,6 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,16 +54,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
-  public static final Key<Reference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
+  public  static final Key<Reference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
 
-  private Set<Document> myUnsavedDocuments = new HashSet<Document>();
-  private EditReadOnlyListener myReadOnlyListener = new MyEditReadOnlyListener();
+  private final Set<Document> myUnsavedDocuments = new HashSet<Document>();
+  private final EditReadOnlyListener myReadOnlyListener = new MyEditReadOnlyListener();
 
-  private EventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = EventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
+  private final EventDispatcher<FileDocumentSynchronizationVetoListener> myVetoDispatcher = EventDispatcher.create(FileDocumentSynchronizationVetoListener.class);
 
-  private VirtualFileManager myVirtualFileManager;
-  private MessageBus myBus;
+  private final VirtualFileManager myVirtualFileManager;
+  private final MessageBus myBus;
 
   private static final Object lock = new Object();
 
@@ -120,9 +119,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
           );
           document.addEditReadOnlyListener(myReadOnlyListener);
         }
-
-        fireFileContentLoaded(file, document);
       }
+
+      fireFileContentLoaded(file, document);
     }
 
     return document;
@@ -335,7 +334,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myVetoDispatcher.removeListener(vetoer);
   }
 
-  private Map<FileDocumentManagerListener, MessageBusConnection> myAdapters = new HashMap<FileDocumentManagerListener, MessageBusConnection>();
+  private final Map<FileDocumentManagerListener, MessageBusConnection> myAdapters = new HashMap<FileDocumentManagerListener, MessageBusConnection>();
   public void addFileDocumentManagerListener(@NotNull FileDocumentManagerListener listener) {
     final MessageBusConnection connection = myBus.connect();
     myAdapters.put(listener, connection);
@@ -552,17 +551,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private void fireFileContentLoaded(final VirtualFile file, final DocumentEx document) {
-    final Runnable fireRunnable = new Runnable() {
-      public void run() {
-        myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentLoaded(file, document);
-      }
-    };
-
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() || (ApplicationManager.getApplication().isDispatchThread() && ModalityState.current() == ModalityState.NON_MODAL)) {
-      fireRunnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(fireRunnable, ModalityState.NON_MODAL);
-    }
+    myBus.asyncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentLoaded(file, document);
   }
 }
