@@ -544,7 +544,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       }
 
       template.setInternal(true);
-      System.out.println("get internal template = " + template +"; isNew="+ ((FileTemplateImpl)template).isNew());
       return template;
     }
   }
