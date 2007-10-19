@@ -362,6 +362,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static void appendModifierList(final StringBuilder buffer, final PsiModifierList list) {
+    if (list == null) return;
     int lastSize = buffer.length();
     for(PsiAnnotation a: list.getAnnotations()) {
       if (lastSize != buffer.length()) buffer.append(" ");
