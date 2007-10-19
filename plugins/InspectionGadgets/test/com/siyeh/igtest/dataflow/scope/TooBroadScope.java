@@ -2,6 +2,7 @@ package com.siyeh.igtest.dataflow.scope;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class TooBroadScope
 {
@@ -47,6 +48,19 @@ public class TooBroadScope
             flim = 24;
         }
         return flim;
+    }
+
+    void foo(String a, String b, List c) {
+        for (int d = 0, cannotNarrowMyScope; d < a.length(); d = cannotNarrowMyScope + b.length()) {
+            cannotNarrowMyScope = a.indexOf(b, d);
+
+            if (cannotNarrowMyScope < 0) {
+                c.add(a.substring(d));
+                break;
+            } else {
+                c.add(a.substring(d, cannotNarrowMyScope));
+            }
+        }
     }
 
 }

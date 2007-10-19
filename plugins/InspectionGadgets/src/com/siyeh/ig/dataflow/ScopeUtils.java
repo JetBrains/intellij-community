@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import java.util.Comparator;
 
 class ScopeUtils
 {
-
     private ScopeUtils() {}
 
     @Nullable
@@ -119,7 +118,6 @@ class ScopeUtils
                             commonParent = PsiTreeUtil.getParentOfType(
                                     commonParent, PsiCodeBlock.class);
                         }
-
                     }
                     else
                     {
@@ -140,7 +138,8 @@ class ScopeUtils
         if (commonParent != null)
         {
             final PsiElement parent = commonParent.getParent();
-            if (parent instanceof PsiSwitchStatement && referenceElements.length > 1)
+            if (parent instanceof PsiSwitchStatement &&
+                referenceElements.length > 1)
             {
                 commonParent = PsiTreeUtil.getParentOfType(parent,
                         PsiCodeBlock.class, false);
@@ -202,22 +201,22 @@ class ScopeUtils
         return scope;
     }
 
-	private static class PsiElementOrderComparator implements Comparator<PsiElement>
-	{
+    private static class PsiElementOrderComparator implements Comparator<PsiElement>
+    {
 
-		private static final PsiElementOrderComparator INSTANCE =
-				new PsiElementOrderComparator();
+        private static final PsiElementOrderComparator INSTANCE =
+                new PsiElementOrderComparator();
 
-		public int compare(PsiElement element1, PsiElement element2)
-		{
-			final int offset1 = element1.getTextOffset();
-			final int offset2 = element2.getTextOffset();
-			return offset1 - offset2;
-		}
+        public int compare(PsiElement element1, PsiElement element2)
+        {
+            final int offset1 = element1.getTextOffset();
+            final int offset2 = element2.getTextOffset();
+            return offset1 - offset2;
+        }
 
-		public static PsiElementOrderComparator getInstance()
-		{
-			return INSTANCE;
-		}
-	}
+        public static PsiElementOrderComparator getInstance()
+        {
+            return INSTANCE;
+        }
+    }
 }

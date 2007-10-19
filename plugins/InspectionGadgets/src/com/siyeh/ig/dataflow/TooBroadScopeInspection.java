@@ -115,15 +115,15 @@ public class TooBroadScopeInspection extends BaseInspection
                     ReferencesSearch.search(variable, variable.getUseScope());
             final Collection<PsiReference> referenceCollection =
                     query.findAll();
-	        final PsiElement[] referenceElements =
+            final PsiElement[] referenceElements =
                     new PsiElement[referenceCollection.size()];
-	        int index = 0;
-	        for (PsiReference reference : referenceCollection)
-	        {
-		        final PsiElement referenceElement = reference.getElement();
-		        referenceElements[index] = referenceElement;
-		        index++;
-	        }
+            int index = 0;
+            for (PsiReference reference : referenceCollection)
+            {
+                final PsiElement referenceElement = reference.getElement();
+                referenceElements[index] = referenceElement;
+                index++;
+            }
             PsiElement commonParent =
                     ScopeUtils.getCommonParent(referenceElements);
             assert commonParent != null;
@@ -199,11 +199,11 @@ public class TooBroadScopeInspection extends BaseInspection
         {
             final PsiManager manager = variable.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
-	        String name = variable.getName();
-	        if (name == null)
-	        {
-		        name = "";
-	        }
+            String name = variable.getName();
+            if (name == null)
+            {
+                name = "";
+            }
             final String comment = getCommentText(variable);
             final PsiType type = variable.getType();
             final String statementText;
@@ -441,18 +441,18 @@ public class TooBroadScopeInspection extends BaseInspection
             {
                 return;
             }
-	        final PsiElement[] referenceElements =
+            final PsiElement[] referenceElements =
                     new PsiElement[referencesCollection.size()];
-	        int index = 0;
-	        for (PsiReference reference : referencesCollection)
-	        {
-		        final PsiElement referenceElement = reference.getElement();
-		        referenceElements[index] = referenceElement;
-		        index++;
-	        }
+            int index = 0;
+            for (PsiReference reference : referencesCollection)
+            {
+                final PsiElement referenceElement = reference.getElement();
+                referenceElements[index] = referenceElement;
+                index++;
+            }
             PsiElement commonParent =
                     ScopeUtils.getCommonParent(referenceElements);
-	        if (commonParent == null)
+            if (commonParent == null)
             {
                 return;
             }
@@ -464,6 +464,10 @@ public class TooBroadScopeInspection extends BaseInspection
                 {
                     return;
                 }
+            }
+            if (PsiTreeUtil.isAncestor(commonParent, variableScope, true))
+            {
+                return;
             }
             if (PsiTreeUtil.isAncestor(variableScope, commonParent, true))
             {
@@ -512,21 +516,21 @@ public class TooBroadScopeInspection extends BaseInspection
                     return;
                 }
             }
-	        if (insertionPoint != null && PsiUtil.isInJspFile(insertionPoint))
-	        {
-		        PsiElement elementBefore = insertionPoint.getPrevSibling();
-		        elementBefore = PsiTreeUtil.skipSiblingsBackward(elementBefore,
-				        PsiWhiteSpace.class);
-		        if (elementBefore instanceof PsiDeclarationStatement)
-		        {
-			        final PsiElement variableParent = variable.getParent();
-			        if (elementBefore.equals(variableParent))
-			        {
-				        return;
-			        }
-		        }
-	        }
-	        registerVariableError(variable);
+            if (insertionPoint != null && PsiUtil.isInJspFile(insertionPoint))
+            {
+                PsiElement elementBefore = insertionPoint.getPrevSibling();
+                elementBefore = PsiTreeUtil.skipSiblingsBackward(elementBefore,
+                        PsiWhiteSpace.class);
+                if (elementBefore instanceof PsiDeclarationStatement)
+                {
+                    final PsiElement variableParent = variable.getParent();
+                    if (elementBefore.equals(variableParent))
+                    {
+                        return;
+                    }
+                }
+            }
+            registerVariableError(variable);
         }
     }
 }
