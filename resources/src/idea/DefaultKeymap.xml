@@ -1477,7 +1477,7 @@
     <action id="Resume">
       <keyboard-shortcut first-keystroke="F5"/>
     </action>
-    <action id="EvaluateExpression">
+    <action id="QuickEvaluateExpression">
       <keyboard-shortcut first-keystroke="shift F9"/>
     </action>
     <action id="EditorDeleteLine">
