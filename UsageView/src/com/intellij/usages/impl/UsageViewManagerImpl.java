@@ -19,7 +19,7 @@ import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -331,7 +331,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
     Editor editor = usageInfo.openTextEditor(true);
     if (editor == null) return;
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
+
     RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6);
     rangeBlinker.resetMarkers(usageInfo.getRangeMarkers());
     rangeBlinker.startBlinking();
