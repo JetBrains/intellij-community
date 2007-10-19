@@ -233,12 +233,19 @@ public class BlockSupportImpl extends BlockSupport {
       if (data != null) fileImpl.putUserData(DO_NOT_REPARSE_INCREMENTALLY, null);
 
       if (data != null && data.booleanValue()) { // TODO: Just to switch off incremental tree patching for certain conditions (like languages) if necessary.
-        replaceFileElement(fileImpl, oldFileElement, newFileElement, manager);
+        replaceFileElementWithEvents(fileImpl, oldFileElement, newFileElement, manager);
       }
       else {
         mergeTrees(fileImpl, oldFileElement, newFileElement);
       }
     }
+  }
+
+  static void replaceFileElementWithEvents(final PsiFileImpl fileImpl, final FileElement fileElement,
+                                         final FileElement newFileElement,
+                                         final PsiManagerEx manager) {
+    fileImpl.getTreeElement().setCharTable(newFileElement.getCharTable());
+    ChangeUtil.replaceAllChildren(fileElement, newFileElement);
   }
 
   static void replaceFileElement(final PsiFileImpl fileImpl, final FileElement fileElement,
