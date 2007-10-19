@@ -317,6 +317,9 @@ public class CompareWithBranchAction extends AnAction {
               wcAccess.close();
             }
           }
+          catch(SVNCancelException ex) {
+            changes.clear();
+          }
           catch (SVNException ex) {
             reportException(ex, baseUrl);
           }
