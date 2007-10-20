@@ -636,16 +636,19 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   final void _checkInitialized(final AbstractDomChildDescriptionImpl description) {
     if (myInitializedChildren.contains(description)) return;
 
-    r.unlock();
-
     final List<XmlTag> subTags;
-    final XmlTag tag = getXmlTag();
-    if (tag != null && description instanceof FixedChildDescriptionImpl) {
-      subTags = DomImplUtil.findSubTags(tag, createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName()), this);
-    } else if (tag != null && description instanceof AbstractCollectionChildDescription) {
-      subTags = ((AbstractCollectionChildDescription) description).getSubTags(this);
-    } else {
-      subTags = Collections.emptyList();
+    try {
+      final XmlTag tag = getXmlTag();
+      if (tag != null && description instanceof FixedChildDescriptionImpl) {
+        subTags = DomImplUtil.findSubTags(tag, createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName()), this);
+      } else if (tag != null && description instanceof AbstractCollectionChildDescription) {
+        subTags = ((AbstractCollectionChildDescription) description).getSubTags(this);
+      } else {
+        subTags = Collections.emptyList();
+      }
+    }
+    finally {
+      r.unlock();
     }
     
     w.lock();
