@@ -143,6 +143,11 @@ public class JavaDocCompletionData extends CompletionData {
     }
   }
 
+  public String findPrefix(final PsiElement insertedElement, final int offsetInFile) {
+    return WordCompletionData.findPrefixSimple(insertedElement, offsetInFile);
+  }
+
+
   private class InlineInsertHandler extends BasicInsertHandler {
     public void handleInsert(CompletionContext context,
                              int startOffset,
