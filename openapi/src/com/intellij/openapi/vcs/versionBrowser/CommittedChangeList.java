@@ -28,5 +28,12 @@ public interface CommittedChangeList extends ChangeList {
   String getCommitterName();
   Date getCommitDate();
   long getNumber();
+
+  /**
+   * Returns the VCS by which the changelist was generated. This method must return a not null
+   * value for changelists returned by {@link com.intellij.openapi.vcs.CachingCommittedChangesProvider}.
+   *
+   * @return the VCS instance.
+   */
   AbstractVcs getVcs();
 }
