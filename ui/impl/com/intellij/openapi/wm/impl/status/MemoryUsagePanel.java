@@ -152,6 +152,7 @@ public class MemoryUsagePanel extends JPanel {
       final FontMetrics fontMetrics = g.getFontMetrics();
       final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
       final int infoHeight = fontMetrics.getHeight() - fontMetrics.getDescent();
+      UIUtil.applyRenderingHints(g);
       g.drawString(info, x + (totalBarLength - infoWidth) / 2, y + (barHeight + infoHeight) / 2);
     }
 
