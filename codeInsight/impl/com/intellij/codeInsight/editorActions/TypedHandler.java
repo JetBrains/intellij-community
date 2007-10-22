@@ -3,7 +3,10 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.BracePair;
+import com.intellij.lang.Language;
+import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -45,6 +48,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +63,7 @@ public class TypedHandler implements TypedActionHandler {
     String getStringConcatenationOperatorRepresentation();
 
     TokenSet getStringTokenTypes();
+    boolean isAppropriateElementTypeForLiteral(final @NotNull IElementType tokenType);
   }
 
   public interface QuoteHandler {
@@ -684,16 +689,8 @@ public class TypedHandler implements TypedActionHandler {
       iterator.advance();
 
       IElementType tokenType = !iterator.atEnd() ? iterator.getTokenType() : null;
-      if (tokenType instanceof IJavaElementType) {
-        if (!TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
-            && tokenType != JavaTokenType.SEMICOLON
-            && tokenType != JavaTokenType.COMMA
-            && tokenType != JavaTokenType.RPARENTH
-            && tokenType != JavaTokenType.RBRACKET
-            && tokenType != JavaTokenType.RBRACE
-        ) {
-          return;
-        }
+      if (!BraceMatchingUtil.isAppropriateElementTypeForBracketOrParenInFileType(braceTokenType, tokenType, fileType)) {
+        return;
       }
 
       iterator.retreat();
@@ -780,18 +777,12 @@ public class TypedHandler implements TypedActionHandler {
       IElementType tokenType = iterator.getTokenType();
       if (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.JSP){
         if (tokenType instanceof IJavaElementType){
-          if (!TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
-              && tokenType != JavaTokenType.SEMICOLON
-              && tokenType != JavaTokenType.COMMA
-              && tokenType != JavaTokenType.RPARENTH
-              && tokenType != JavaTokenType.RBRACKET
-              && tokenType != JavaTokenType.RBRACE
-              && tokenType != JavaTokenType.STRING_LITERAL
-              && tokenType != JavaTokenType.CHARACTER_LITERAL
-          ) {
-            return false;
-          }
+          if (!JavaQuoteHandler.isAppropriateElementTypeForLiteralStatic(tokenType)) return false;
         }
+      } else if (quoteHandler instanceof JavaLikeQuoteHandler) {
+        try {
+          if (!((JavaLikeQuoteHandler)quoteHandler).isAppropriateElementTypeForLiteral(tokenType)) return false;
+        } catch (AbstractMethodError incompatiblePluginErrorThatDoesNotInterestUs) {}
       }
     }
 

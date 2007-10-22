@@ -5,6 +5,8 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -62,5 +64,9 @@ class CustomFileTypeBraceMatcher implements BraceMatchingUtil.BraceMatcher {
     if (ch == '(') return CustomHighlighterTokenType.L_PARENTH;
 
     return null;
+  }
+
+  public boolean isLBraceAllowedAfterType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
+    return true;
   }
 }

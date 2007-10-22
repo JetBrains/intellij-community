@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -24,6 +25,8 @@ import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -66,6 +69,23 @@ public class BraceMatchingUtil {
            tokenType == JavaTokenType.RBRACE;
   }
 
+  public static boolean isAppropriateElementTypeForBracketOrParenInJava(final IElementType tokenType) {
+    return TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
+            || tokenType == JavaTokenType.SEMICOLON
+            || tokenType == JavaTokenType.COMMA
+            || tokenType == JavaTokenType.RPARENTH
+            || tokenType == JavaTokenType.RBRACKET
+            || tokenType == JavaTokenType.RBRACE;
+  }
+
+  public static boolean isAppropriateElementTypeForBracketOrParenInFileType(final IElementType lbraceType, final IElementType tokenType, final FileType fileType) {
+    if (tokenType instanceof IJavaElementType) return isAppropriateElementTypeForBracketOrParenInJava(tokenType);
+    try {
+      return getBraceMatcher(fileType).isLBraceAllowedAfterType(lbraceType, tokenType);
+    } catch (AbstractMethodError incompatiblePluginThatWeDoNotCare) {}
+    return true;
+  }
+
   public interface BraceMatcher {
     int getTokenGroup(IElementType tokenType);
 
@@ -74,6 +94,7 @@ public class BraceMatchingUtil {
     boolean isPairBraces(IElementType tokenType,IElementType tokenType2);
     boolean isStructuralBrace(HighlighterIterator iterator,CharSequence text, FileType fileType);
     IElementType getTokenType(char ch, HighlighterIterator iterator);
+    boolean isLBraceAllowedAfterType(@NotNull IElementType lbraceType, @Nullable IElementType contextType);
   }
 
   private static class PairedBraceMatcherAdapter implements BraceMatcher {
@@ -142,6 +163,10 @@ public class BraceMatchingUtil {
         if (ch == pair.getLeftBraceChar()) return pair.getLeftBraceType();
       }
       return null;
+    }
+
+    public boolean isLBraceAllowedAfterType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
+      return myMatcher.isLBraceAllowedAfterType(lbraceType, contextType);
     }
   }
 
@@ -325,6 +350,10 @@ public class BraceMatchingUtil {
       }
 
       return null;  //TODO: add more here!
+    }
+
+    public boolean isLBraceAllowedAfterType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
+      return true;
     }
   }
 

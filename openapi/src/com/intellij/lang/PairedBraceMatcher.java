@@ -15,6 +15,10 @@
  */
 package com.intellij.lang;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.tree.IElementType;
+
 /**
  * Defines the brace matching support required for a custom language. For paired
  * brace matching to work, the language must also provide a
@@ -33,4 +37,12 @@ public interface PairedBraceMatcher {
    * @return the array of brace pair definitions.
    */
   BracePair[] getPairs();
+
+  /**
+   * Returns true if lbrace of given type is allowed to appear before contextType. It is ok to return true
+   * @param lbraceType context element type
+   * @param type context element type
+   * @return true / false as described
+   */
+  boolean isLBraceAllowedAfterType(@NotNull IElementType lbraceType, @Nullable IElementType contextType);
 }

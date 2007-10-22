@@ -6,8 +6,10 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -64,5 +66,20 @@ public class JavaQuoteHandler extends TypedHandler.SimpleTokenSetQuoteHandler im
 
   public TokenSet getStringTokenTypes() {
     return myLiteralTokenSet;
+  }
+
+  public boolean isAppropriateElementTypeForLiteral(final @NotNull IElementType tokenType) {
+    return isAppropriateElementTypeForLiteralStatic(tokenType);
+  }
+
+  public static boolean isAppropriateElementTypeForLiteralStatic(final IElementType tokenType) {
+    return TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
+              || tokenType == JavaTokenType.SEMICOLON
+              || tokenType == JavaTokenType.COMMA
+              || tokenType == JavaTokenType.RPARENTH
+              || tokenType == JavaTokenType.RBRACKET
+              || tokenType == JavaTokenType.RBRACE
+              || tokenType == JavaTokenType.STRING_LITERAL
+              || tokenType == JavaTokenType.CHARACTER_LITERAL;
   }
 }
