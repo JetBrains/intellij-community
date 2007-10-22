@@ -23,6 +23,7 @@ public interface IdeaXml {
   @NonNls String CLASSES_TAG = "CLASSES";
   @NonNls String SOURCES_TAG = "SOURCES";
   @NonNls String JAVADOC_TAG = "JAVADOC";
+  @NonNls String JAR_DIR = "jarDirectory";
   @NonNls String URL_ATTR = "url";
   @NonNls String LIBRARY_TYPE = "library";
   @NonNls String LEVEL_ATTR = "level";
