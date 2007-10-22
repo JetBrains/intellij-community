@@ -58,54 +58,60 @@ public class ColorPreviewComponent extends JComponent {
         if (reference != null) {
           final PsiElement psiElement = reference.resolve();
           if (psiElement instanceof PsiClass && "java.awt.Color".equals(((PsiClass)psiElement).getQualifiedName())) {
-            final PsiExpression[] expressions = psiNewExpression.getArgumentList().getExpressions();
-            int[] values = new int[expressions.length];
-            float[] values2 = new float[expressions.length];
-            int i = 0;
-            int j = 0;
-            for (final PsiExpression each : expressions) {
-              if (each instanceof PsiLiteralExpression) {
-                final Object o = ((PsiLiteralExpression)each).getValue();
-                if (o instanceof Integer) {
-                  values[i] = ((Integer)o).intValue();
-                  i++;
-                } else if (o instanceof Float) {
-                  values2[j] = ((Float)o).floatValue();
-                  j++;
+            final PsiExpressionList argumentList = psiNewExpression.getArgumentList();
+            if (argumentList != null) {
+              final PsiExpression[] expressions = argumentList.getExpressions();
+              int[] values = new int[expressions.length];
+              float[] values2 = new float[expressions.length];
+              int i = 0;
+              int j = 0;
+              for (final PsiExpression each : expressions) {
+                if (each instanceof PsiLiteralExpression) {
+                  final Object o = ((PsiLiteralExpression)each).getValue();
+                  if (o instanceof Integer) {
+                    values[i] = ((Integer)o).intValue();
+                    i++;
+                  }
+                  else if (o instanceof Float) {
+                    values2[j] = ((Float)o).floatValue();
+                    j++;
+                  }
                 }
               }
-            }
 
-            Color c = null;
-            if (i == expressions.length) {
-              switch (values.length) {
-                case 1:
-                  c = new Color(values[0]);
-                  break;
-                case 3:
-                  c = new Color(values[0], values[1], values[2]);
-                  break;
-                case 4:
-                  c = new Color(values[0], values[1], values[2], values[3]);
-                  break;
-                default:
-                  break;
-              }
-            } else if (j == expressions.length) {
-              switch (values2.length) {
-                case 3:
-                  c = new Color(values2[0], values2[1], values2[2]);
-                  break;
-                case 4:
-                  c = new Color(values2[0], values2[1], values2[2], values2[3]);
-                  break;
-                default:
-                  break;
-              }
-            }
 
-            if (c != null) {
-              return new ColorPreviewComponent(null, c);
+              Color c = null;
+              if (i == expressions.length) {
+                switch (values.length) {
+                  case 1:
+                    c = new Color(values[0]);
+                    break;
+                  case 3:
+                    c = new Color(values[0], values[1], values[2]);
+                    break;
+                  case 4:
+                    c = new Color(values[0], values[1], values[2], values[3]);
+                    break;
+                  default:
+                    break;
+                }
+              }
+              else if (j == expressions.length) {
+                switch (values2.length) {
+                  case 3:
+                    c = new Color(values2[0], values2[1], values2[2]);
+                    break;
+                  case 4:
+                    c = new Color(values2[0], values2[1], values2[2], values2[3]);
+                    break;
+                  default:
+                    break;
+                }
+              }
+
+              if (c != null) {
+                return new ColorPreviewComponent(null, c);
+              }
             }
           }
         }
@@ -133,8 +139,11 @@ public class ColorPreviewComponent extends JComponent {
       if (parentParent instanceof XmlAttribute) {
         XmlAttribute attribute = (XmlAttribute)parentParent;
         String attrName = attribute.getName();
-        if ("alink".equals(attrName) || "link".equals(attrName) | "text".equals(attrName) || "vlink".equals(attrName) ||
-            "bgcolor".equals(attrName) || "color".equals(attrName)) {
+        if ("alink".equals(attrName) ||
+            "link".equals(attrName) | "text".equals(attrName) ||
+            "vlink".equals(attrName) ||
+            "bgcolor".equals(attrName) ||
+            "color".equals(attrName)) {
           String s = element.getText();
           if (s.length() > 0) {
             final String hexColor = (s.charAt(0) == '#') ? s : ColorSampleLookupValue.getHexCodeForColorName(s.toLowerCase());
