@@ -87,7 +87,9 @@ public class AllClassesGetter implements ContextGetter{
           }
         }
       }
-      document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
+      if (toDelete.isValid()) {
+        document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
+      }
 
       if (insertFqn) {
         int i = endOffset - 1;
@@ -130,6 +132,7 @@ public class AllClassesGetter implements ContextGetter{
         document.insertString(endOffset, "(");
         endOffset++;
       }
+      editor.getCaretModel().moveToOffset(endOffset);
 
       return endOffset;
     }

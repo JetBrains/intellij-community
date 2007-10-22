@@ -694,7 +694,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       }
     }
 
-    document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
+    if (toDelete.isValid()) {
+      document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
+    }
 
     return newStartOffset;
   }
