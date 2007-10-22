@@ -237,7 +237,7 @@ public class PluginManagerMain {
   }
 
   public void setRequireShutdown(boolean val) {
-    requireShutdown = val;
+    requireShutdown |= val;
   }
 
   public ArrayList<IdeaPluginDescriptorImpl> getDependentList(IdeaPluginDescriptorImpl pluginDescriptor) {

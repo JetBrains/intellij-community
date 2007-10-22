@@ -89,7 +89,7 @@ public class ActionUninstallPlugin extends AnAction {
 
     try {
       PluginInstaller.prepareToUninstall(pluginId);
-      host.setRequireShutdown(true);
+      host.setRequireShutdown(descriptor.isEnabled());
       pluginTable.updateUI();
     }
     catch (IOException e1) {
