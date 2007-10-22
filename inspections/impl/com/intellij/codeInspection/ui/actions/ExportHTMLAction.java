@@ -230,9 +230,14 @@ public class ExportHTMLAction extends AnAction {
       content.putAll(tool.getPackageContent());
     }
 
+    final Set<RefEntity> defaultPackageEntities = content.remove(null);
+    if (defaultPackageEntities != null) {
+      content.put("default package" , defaultPackageEntities);
+    }
+
     ArrayList<String> packageNames = new ArrayList<String>(content.keySet());
 
-    Collections.sort(packageNames, RefEntityAlphabeticalComparator.getInstance());
+    Collections.sort(packageNames);
     for (String packageName : packageNames) {
       appendPackageReference(packageIndex, packageName);
       final ArrayList<RefEntity> packageContent = new ArrayList<RefEntity>(content.get(packageName));
