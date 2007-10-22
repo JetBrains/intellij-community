@@ -551,6 +551,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private void fireFileContentLoaded(final VirtualFile file, final DocumentEx document) {
-    myBus.asyncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentLoaded(file, document);
+    //myBus.asyncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentLoaded(file, document);
   }
 }
