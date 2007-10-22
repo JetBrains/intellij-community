@@ -240,13 +240,17 @@ public class BackendCompilerWrapper {
               if (testsOutputDir == null) {
                 LOG.error("Tests output dir is null for module \"" + module.getName() + "\"");
               }
-              pairs.add(new OutputDir(testsOutputDir, ModuleChunk.TEST_SOURCES));
+              else {
+                pairs.add(new OutputDir(testsOutputDir, ModuleChunk.TEST_SOURCES));
+              }
             }
             else { // both sources and test sources go into the same output
               if (sourcesOutputDir == null) {
                 LOG.error("Sources output dir is null for module \"" + module.getName() + "\"");
               }
-              pairs.add(new OutputDir(sourcesOutputDir, ModuleChunk.ALL_SOURCES));
+              else {
+                pairs.add(new OutputDir(sourcesOutputDir, ModuleChunk.ALL_SOURCES));
+              }
             }
           }
         });
