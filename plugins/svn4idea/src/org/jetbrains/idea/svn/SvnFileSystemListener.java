@@ -400,7 +400,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
   private boolean isPendingAdd(final VirtualFile dir) {
     for(AddedFileInfo i: myAddedFiles) {
-      if (i.myDir == dir.getParent() && i.myName == dir.getName()) {
+      if (i.myDir == dir.getParent() && i.myName.equals(dir.getName())) {
         return true;
       }
     }
@@ -432,7 +432,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
           for(VirtualFile f: toRefresh) {
             if (!f.isValid()) continue;
             if (f.isDirectory()) {
-              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(f, true);
+              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(f);
             }
             else {
               VcsDirtyScopeManager.getInstance(project).fileDirty(f);
@@ -572,7 +572,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
             wcClient.doDelete(ioFile, true, false);
             if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
               vFile.refresh(true, true);
-              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(vFile, true);
+              VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(vFile);
             }
             else {
               VcsDirtyScopeManager.getInstance(project).fileDirty(file);
