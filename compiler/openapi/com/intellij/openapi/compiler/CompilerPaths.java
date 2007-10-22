@@ -18,6 +18,7 @@ package com.intellij.openapi.compiler;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -32,6 +33,7 @@ import java.io.File;
  * A set of utility methods for working with paths
  */
 public class CompilerPaths {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.CompilerPaths");
   /**
    * Returns a directory
    * @param project
@@ -103,7 +105,11 @@ public class CompilerPaths {
     else {
       outPath = moduleRootManager.getCompilerOutputPath();
     }
-    if (outPath != null && !outPath.isValid()) {
+    if (outPath == null) {
+      return null;
+    }
+    if (!outPath.isValid()) {
+      LOG.info("Requested output path for module " + module.getName() + " is not valid");
       return null;
     }
     return outPath;
