@@ -5,9 +5,10 @@ import com.intellij.find.FindModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 
 /**
- * Author: msk
+ * @author msk
  */
 public abstract class HighlightHandlerBase {
   protected static void setupFindModel(final Project project) {
@@ -25,6 +26,6 @@ public abstract class HighlightHandlerBase {
     Document document = highlighter.getDocument();
     final int lineNumber = document.getLineNumber(highlighter.getStartOffset());
     final String lineText = document.getText().substring(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber));
-    highlighter.setErrorStripeTooltip("  " + lineText.trim () + "  ");
+    highlighter.setErrorStripeTooltip("  " + StringUtil.escapeXml(lineText.trim()) + "  ");
   }
 }
