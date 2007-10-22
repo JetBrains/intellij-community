@@ -212,6 +212,9 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
       return 0;
     }
 
+    if (item1.getAllLookupStrings().contains(myPrefix)) return -1;
+    if (item2.getAllLookupStrings().contains(myPrefix)) return 1;
+
     return doCompare(item1.getPriority(), item2.getPriority(), getWeight(item1), getWeight(item2));
   }
 
