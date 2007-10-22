@@ -8,12 +8,15 @@ class Derived extends Base {
   }
 }
 -----
-class Base {
-  Base(java.lang.String s, int i) {}
-}
----
-class Derived extends Base {
-  Derived() {
-    super((java.lang.String)null, (int)0)
+public class Base extends groovy.lang.GroovyObjectSupport {
+  public Base(String s, int i) {
+
   }
 }
+---
+public class Derived extends Base {
+  public Derived() {
+    super("", (int)0);
+  }
+}
+---

@@ -2,15 +2,14 @@ package org.jetbrains.plugins.groovy.compiler.generator;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.containers.HashSet;
@@ -18,24 +17,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
 import java.io.*;
@@ -47,7 +40,7 @@ import java.util.*;
  */
 public class GroovyToJavaGenerator implements SourceGeneratingCompiler, CompilationStatusListener {
   private static final Map<String, String> typesToInitialValues = new HashMap<String, String>();
-    private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator");
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator");
 
   static {
     typesToInitialValues.put("boolean", "false");
@@ -313,7 +306,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (typeDefinition != null) {
       PsiModifierList modifierList = typeDefinition.getModifierList();
 
-      boolean wasAddedModifiers = writeTypeDefinitionMethodModifiers(text, modifierList, JAVA_TYPE_DEFINITION_MODIFIERS);
+      boolean wasAddedModifiers = writeTypeDefinitionMethodModifiers(text, modifierList, JAVA_TYPE_DEFINITION_MODIFIERS, typeDefinition.isInterface());
       if (!wasAddedModifiers) {
         text.append("public ");
       }
@@ -369,8 +362,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     boolean wasRunMethodPresent = false;
 
-    Map<String, String> gettersNames = new HashMap<String, String>();
-    Map<String, String> settersNames = new HashMap<String, String>();
+//    Map<String, String> gettersNames = new HashMap<String, String>();
+//    Map<String, String> settersNames = new HashMap<String, String>();
+    List<String> gettersNames = new ArrayList<String>();
+    List<String> settersNames = new ArrayList<String>();
 
     List<Pair<String, MethodSignature>> methods = new ArrayList<Pair<String, MethodSignature>>();
 
@@ -378,7 +373,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       if (declaration instanceof GrMethod) {
         final GrMethod method = (GrMethod) declaration;
         if (method instanceof GrConstructor) {
-          writeConstructor(text, (GrConstructor)method);
+          writeConstructor(text, (GrConstructor) method);
+          continue;
         }
 
         Pair<String, MethodSignature> methodNameSignature = new Pair<String, MethodSignature>(method.getName(), method.getSignature(PsiSubstitutor.EMPTY));
@@ -387,6 +383,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           writeMethod(text, method);
         }
 
+//        getDefinedGetters(gettersNames, method);
+//        getDefinedSetters(settersNames, method);
         getDefinedGetters(gettersNames, method);
         getDefinedSetters(settersNames, method);
 
@@ -399,7 +397,21 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     for (GrMembersDeclaration decl : membersDeclarations) {
       if (decl instanceof GrVariableDeclaration) {
-        writeGetterAndSetter(text, (GrVariableDeclaration) decl, gettersNames, settersNames);
+        final GrVariable[] variables = ((GrVariableDeclaration) decl).getVariables();
+
+        for (GrVariable variable : variables) {
+          if (variable instanceof GrField) {
+            if (!gettersNames.contains(variable.getName())) {
+              writeMethod(text, ((GrField) variable).getGetter());
+            }
+
+            if (!settersNames.contains(variable.getName())) {
+              writeMethod(text, ((GrField) variable).getSetter());
+            }
+          }
+        }
+
+        //        writeGetterAndSetter(text, (GrVariableDeclaration) decl, gettersNames, settersNames);
       }
     }
 
@@ -410,49 +422,62 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append("}");
   }
 
-  private Map<String, String> getDefinedGetters(Map<String, String> gettersNames, GrMethod method) {
-    String getVariable;
-    String methodName = method.getName();
-    if (methodName.startsWith("get")) {
-      String var = methodName.substring(methodName.indexOf("get") + "get".length());
+  private void getDefinedGetters(List<String> gettersNames, GrMethod method) {
+    final String nameByGetter = PsiUtil.getPropertyNameByGetter(method);
 
-      if (var.length() != 0) {
-        getVariable = Character.toLowerCase(var.charAt(0)) + var.substring(1);
-        GrTypeElement type = method.getReturnTypeElementGroovy();
-        if (type != null) {
-          gettersNames.put(getVariable, computeTypeText(type.getType()));
-        } else {
-          gettersNames.put(getVariable, "java.lang.Object");
-        }
-      }
+    if (!nameByGetter.equals(method.getName())) {
+      gettersNames.add(nameByGetter);
     }
-    return gettersNames;
+//    String getVariable;
+//    String methodName = method.getName();
+//    if (methodName.startsWith("get")) {
+//      String var = methodName.substring(methodName.indexOf("get") + "get".length());
+//
+//      if (var.length() != 0) {
+//        getVariable = Character.toLowerCase(var.charAt(0)) + var.substring(1);
+//        GrTypeElement type = method.getReturnTypeElementGroovy();
+//        if (type != null) {
+//          gettersNames.put(getVariable, computeTypeText(type.getType()));
+//        } else {
+//          gettersNames.put(getVariable, "java.lang.Object");
+//        }
+//      }
+//    }
+//    return gettersNames;
   }
 
-  private Map<String, String> getDefinedSetters(Map<String, String> settersNames, GrMethod method) {
-    String setVariable;
-    String methodName = method.getName();
-    if (methodName.startsWith("set")) {
-      String var = methodName.substring(methodName.indexOf("set") + "set".length());
+  private void getDefinedSetters(List<String> settersNames, GrMethod method) {
+    final String nameBySetter = PsiUtil.getPropertyNameBySetter(method);
 
-      if (var.length() != 0) {
-        setVariable = Character.toLowerCase(var.charAt(0)) + var.substring(1);
-        GrParameter[] parameters = method.getParameters();
-
-        if (parameters.length == 1) {
-          GrParameter parameter = parameters[0];
-          GrTypeElement type = parameter.getTypeElementGroovy();
-
-          if (type != null) {
-            settersNames.put(setVariable, computeTypeText(type.getType()));
-          } else {
-            settersNames.put(setVariable, "java.lang.Object");
-          }
-        }
-      }
+    if (!nameBySetter.equals(method.getName())) {
+      settersNames.add(nameBySetter);
     }
-    return settersNames;
   }
+
+//  private Map<String, String> getDefinedSetters(Map<String, String> settersNames, GrMethod method) {
+//    String setVariable;
+//    String methodName = method.getName();
+//    if (methodName.startsWith("set")) {
+//      String var = methodName.substring(methodName.indexOf("set") + "set".length());
+//
+//      if (var.length() != 0) {
+//        setVariable = Character.toLowerCase(var.charAt(0)) + var.substring(1);
+//        GrParameter[] parameters = method.getParameters();
+//
+//        if (parameters.length == 1) {
+//          GrParameter parameter = parameters[0];
+//          GrTypeElement type = parameter.getTypeElementGroovy();
+//
+//          if (type != null) {
+//            settersNames.put(setVariable, computeTypeText(type.getType()));
+//          } else {
+//            settersNames.put(setVariable, "java.lang.Object");
+//          }
+//        }
+//      }
+//    }
+//    return settersNames;
+//  }
 
   private boolean wasRunMethod(GrMethod method) {
     boolean runMethodPresent = false;
@@ -474,103 +499,103 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     }
   }
 
-  private void writeGetterAndSetter(final StringBuffer text, final GrVariableDeclaration variableDeclaration, final Map<String, String> gettersNames, final Map<String, String> settersNames) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        writeGetter(text, variableDeclaration, gettersNames);
-        writeSetter(text, variableDeclaration, settersNames);
-      }
-    });
-  }
+//  private void writeGetterAndSetter(final StringBuffer text, final GrVariableDeclaration variableDeclaration, final Map<String, String> gettersNames, final Map<String, String> settersNames) {
+//    ApplicationManager.getApplication().runReadAction(new Runnable() {
+//      public void run() {
+//        writeGetter(text, variableDeclaration, gettersNames);
+//        writeSetter(text, variableDeclaration, settersNames);
+//      }
+//    });
+//  }
 
-  private void writeGetter(StringBuffer text, GrVariableDeclaration variableDeclaration, Map<String, String> gettersNames) {
-    GrModifierList list = variableDeclaration.getModifierList();
-
-    GrTypeElement element = variableDeclaration.getTypeElementGroovy();
-    String type;
-    if (element == null) {
-      type = "java.lang.Object";
-    } else {
-      type = computeTypeText(element.getType());
-    }
-
-    for (GrVariable variable : variableDeclaration.getVariables()) {
-      String name = variable.getName();
-
-      if (name == null) continue;
-
-      if (gettersNames.containsKey(name)) {
-        continue;
-      }
-
-      text.append("\n");
-      text.append("  ");
-      writeMethodModifiers(text, list, JAVA_MODIFIERS);
-      text.append(type);
-      text.append(" ");
-      text.append("get").append(StringUtil.capitalize(name));
-
-      text.append("()");
-      text.append(" ");
-      text.append("{\n");
-
-      String returnValue = getDefaultValueText(type);
-
-      text.append("    return ");
-      text.append(returnValue);
-      text.append(";");
-      text.append("\n  }");
-      text.append("\n");
-    }
-
-//    if (wasGetter) text.append("\n");
-  }
-
-  private void writeSetter(StringBuffer text, GrVariableDeclaration variableDeclaration, Map<String, String> settersNames) {
-    GrModifierList modifierList = variableDeclaration.getModifierList();
-    if (modifierList.hasModifierProperty(PsiModifier.FINAL)) return;
-
-    GrTypeElement element = variableDeclaration.getTypeElementGroovy();
-    String type;
-    if (element == null) {
-      type = "java.lang.Object";
-    } else {
-      type = computeTypeText(element.getType());
-    }
-
-    for (GrVariable variable : variableDeclaration.getVariables()) {
-      String name = variable.getName();
-
-      if (name == null) continue;
-
-      if (settersNames.containsKey(name)) {
-        String setterType = settersNames.get(name);
-        if (setterType.equals(type)) {
-          continue;
-        }
-      }
-
-      text.append("\n");
-      text.append("  ");
-      writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
-
-      text.append("void ");
-      text.append("set").append(StringUtil.capitalize(name));
-
-      text.append("(");
-      text.append(type);
-      text.append(" ");
-      text.append("new").append(StringUtil.capitalize(name));
-      text.append(")");
-      text.append(" ");
-      text.append("{\n");
-      text.append("    return;");
-      text.append("\n  }");
-      text.append("\n");
-    }
-
-//    if (wasSetter) text.append("\n");
-  }
+//  private void writeGetter(StringBuffer text, GrVariableDeclaration variableDeclaration, Map<String, String> gettersNames) {
+//    GrModifierList list = variableDeclaration.getModifierList();
+//
+//    GrTypeElement element = variableDeclaration.getTypeElementGroovy();
+//    String type;
+//    if (element == null) {
+//      type = "java.lang.Object";
+//    } else {
+//      type = computeTypeText(element.getType());
+//    }
+//
+//    for (GrVariable variable : variableDeclaration.getVariables()) {
+//      String name = variable.getName();
+//
+//      if (name == null) continue;
+//
+//      if (gettersNames.containsKey(name)) {
+//        continue;
+//      }
+//
+//      text.append("\n");
+//      text.append("  ");
+//      writeMethodModifiers(text, list, JAVA_MODIFIERS);
+//      text.append(type);
+//      text.append(" ");
+//      text.append("get").append(StringUtil.capitalize(name));
+//
+//      text.append("()");
+//      text.append(" ");
+//      text.append("{\n");
+//
+//      String returnValue = getDefaultValueText(type);
+//
+//      text.append("    return ");
+//      text.append(returnValue);
+//      text.append(";");
+//      text.append("\n  }");
+//      text.append("\n");
+//    }
+//
+////    if (wasGetter) text.append("\n");
+//  }
+//
+//  private void writeSetter(StringBuffer text, GrVariableDeclaration variableDeclaration, Map<String, String> settersNames) {
+//    GrModifierList modifierList = variableDeclaration.getModifierList();
+//    if (modifierList.hasModifierProperty(PsiModifier.FINAL)) return;
+//
+//    GrTypeElement element = variableDeclaration.getTypeElementGroovy();
+//    String type;
+//    if (element == null) {
+//      type = "java.lang.Object";
+//    } else {
+//      type = computeTypeText(element.getType());
+//    }
+//
+//    for (GrVariable variable : variableDeclaration.getVariables()) {
+//      String name = variable.getName();
+//
+//      if (name == null) continue;
+//
+//      if (settersNames.containsKey(name)) {
+//        String setterType = settersNames.get(name);
+//        if (setterType.equals(type)) {
+//          continue;
+//        }
+//      }
+//
+//      text.append("\n");
+//      text.append("  ");
+//      writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
+//
+//      text.append("void ");
+//      text.append("set").append(StringUtil.capitalize(name));
+//
+//      text.append("(");
+//      text.append(type);
+//      text.append(" ");
+//      text.append("new").append(StringUtil.capitalize(name));
+//      text.append(")");
+//      text.append(" ");
+//      text.append("{\n");
+//      text.append("    return;");
+//      text.append("\n  }");
+//      text.append("\n");
+//    }
+//
+////    if (wasSetter) text.append("\n");
+//  }
 
   private void writeRunMethod(StringBuffer text) {
     text.append("\n  public java.lang.Object run() {\n" +
@@ -579,10 +604,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private void writeConstructor(final StringBuffer text, GrConstructor constructor) {
+    text.append("\n");
+    text.append("  ");
     writeMethodModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
 
     /************* name **********/
-    text.append("\n");
     //append constructor name
     text.append(constructor.getName());
 
@@ -621,14 +647,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
               text.append(" throws ");
               for (int i = 0; i < throwsTypes.length; i++) {
                 if (i > 0) text.append(", ");
-                text.append(throwsTypes[i].getCanonicalText());
+                text.append(getTypeText(throwsTypes[i]));
               }
             }
           }
 
           text.append("{\n");
 
-          text.append("  ");
+          text.append("    ");
           text.append("super");
           text.append("(");
 
@@ -676,7 +702,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("{\n");
     }
 
-    text.append("\n}");
+    text.append("\n  }");
     text.append("\n");
   }
 
@@ -719,12 +745,13 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     }
   }
 
-  private void writeMethod(StringBuffer text, GrMethod method) {
+  private void writeMethod(StringBuffer text, PsiMethod method) {
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
     /************* type and name **********/
-    GrTypeElement typeElement = method.getReturnTypeElementGroovy();
-    String qualifiedTypeName = getTypeText(typeElement);
+//    GrTypeElement typeElement = method.getReturnTypeElementGroovy();
+//    String qualifiedTypeName = getTypeText(typeElement);
+    String qualifiedTypeName = getTypeText(method.getReturnType());
 
     PsiModifierList modifierList = method.getModifierList();
 
@@ -740,22 +767,22 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append(method.getName());
 
     /************* parameters **********/
-    GrParameter[] parameterList = method.getParameters();
+    PsiParameter[] parameterList = method.getParameterList().getParameters();
 
     text.append("(");
-    String paramType;
-    GrTypeElement paramTypeElement;
+//    String paramType;
+//    GrTypeElement paramTypeElement;
 
     //writes parameters
     int i = 0;
     while (i < parameterList.length) {
       if (i > 0) text.append(", ");  //append ','
 
-      GrParameter parameter = parameterList[i];
-      paramTypeElement = parameter.getTypeElementGroovy();
-      paramType = getTypeText(paramTypeElement);
+      PsiParameter parameter = parameterList[i];
+//      paramTypeElement = parameter.getTypeElement();
+//      paramType = getTypeText(paramTypeElement);
 
-      text.append(paramType);
+      text.append(getTypeText(parameter.getType()));
       text.append(" ");
       text.append(parameter.getName());
 
@@ -804,10 +831,13 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return wasAddedModifiers;
   }
 
-  private boolean writeTypeDefinitionMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
+  private boolean writeTypeDefinitionMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers, boolean isInterface) {
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
       if (modifierList.hasModifierProperty(modifierType)) {
+        if (PsiModifier.ABSTRACT.equals(modifierType) && isInterface) {
+          continue;
+        }
         text.append(modifierType);
         text.append(" ");
         wasAddedModifiers = true;
@@ -821,6 +851,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       return "java.lang.Object";
     } else {
       return computeTypeText(typeElement.getType());
+    }
+  }
+
+  private String getTypeText(PsiType type) {
+    if (type == null) {
+      return "java.lang.Object";
+    } else {
+      return computeTypeText(type);
     }
   }
 
