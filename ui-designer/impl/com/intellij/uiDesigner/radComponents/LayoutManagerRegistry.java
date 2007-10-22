@@ -9,6 +9,7 @@ import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.openapi.project.Project;
 import com.jgoodies.forms.layout.FormLayout;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,10 +79,13 @@ public class LayoutManagerRegistry {
     return cls.newInstance();
   }
 
+  @Nullable
   public static RadLayoutManager createFromLayout(LayoutManager layout) {
+    if (layout == null) return null;
     return createFromLayoutClass(layout.getClass());
   }
 
+  @Nullable
   private static RadLayoutManager createFromLayoutClass(final Class aClass) {
     // we can't use isInstance() because the class in our map and aClass may have been loaded with
     // different classloaders
