@@ -67,7 +67,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private final boolean myUpdateAll;
 
   private volatile Collection<HighlightInfo> myHighlights = Collections.emptyList();
-  private volatile Map<TextRange,Collection<HighlightInfo>> myInjectedPsiHighlights = new THashMap<TextRange, Collection<HighlightInfo>>();
+  private final Map<TextRange,Collection<HighlightInfo>> myInjectedPsiHighlights = new THashMap<TextRange, Collection<HighlightInfo>>();
   private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
@@ -176,7 +176,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       };
       if (refCountHolder != null) {
-        refCountHolder.analyzeAndStoreReferences(doCollectInfo, progress);
+        if (!refCountHolder.analyzeAndStoreReferences(doCollectInfo, progress)) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              DaemonCodeAnalyzer.getInstance(myProject).restart();
+            }
+          }, myProject.getDisposed());
+        }
       }
       else {
         doCollectInfo.run();

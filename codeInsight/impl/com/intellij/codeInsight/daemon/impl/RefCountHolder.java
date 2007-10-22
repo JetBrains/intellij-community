@@ -237,11 +237,10 @@ public class RefCountHolder {
     return result;
   }
 
-  public void analyzeAndStoreReferences(Runnable analyze, ProgressIndicator progress) {
+  public boolean analyzeAndStoreReferences(Runnable analyze, ProgressIndicator progress) {
     myState.compareAndSet(State.READY, State.VIRGIN);
     if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) {
-      progress.cancel();
-      return;
+      return false;
     }
     int newState = State.VIRGIN;
     try {
@@ -252,12 +251,12 @@ public class RefCountHolder {
       boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, newState);
       assert set : myState.get();
     }
+    return true;
   }
 
-  public void retrieveUnusedReferencesInfo(Runnable analyze, ProgressIndicator progress) {
+  public boolean retrieveUnusedReferencesInfo(Runnable analyze, ProgressIndicator progress) {
     if (!myState.compareAndSet(State.READY, State.BEING_USED_BY_PHP)) {
-      progress.cancel();
-      return;
+      return false;
     }
     try {
       analyze.run();
@@ -266,7 +265,9 @@ public class RefCountHolder {
       boolean set = myState.compareAndSet(State.BEING_USED_BY_PHP, State.READY);
       assert set : myState.get();
     }
+    return true;
   }
+
   private void assertIsAnalyzing() {
     assert myState.get() == State.BEING_WRITTEN_BY_GHP : myState.get();
   }
