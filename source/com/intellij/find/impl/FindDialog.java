@@ -410,6 +410,7 @@ final class FindDialog extends DialogWrapper {
     }
 
     validateModel.setFileFilter( null );
+    FindSettings.getInstance().setFileMask(null);
 
     if (useFileFilter!=null && useFileFilter.isSelected() &&
         myFileFilter.getSelectedItem()!=null
@@ -420,6 +421,7 @@ final class FindDialog extends DialogWrapper {
         try {
           Pattern.compile(PatternUtil.convertToRegex(mask));
           validateModel.setFileFilter(mask);
+          FindSettings.getInstance().setFileMask(mask);
         }
         catch (PatternSyntaxException ex) {
           Messages.showMessageDialog(myProject, FindBundle.message("find.filter.invalid.file.mask.error", myFileFilter.getSelectedItem()),
@@ -837,13 +839,6 @@ final class FindDialog extends DialogWrapper {
         model.setCustomScopeName(customScopeName);
         model.setCustomScope(selectedScope == null ? null : selectedScope);
         findSettings.setCustomScope(customScopeName);
-      }
-
-      if (useFileFilter.isSelected()) {
-        findSettings.setFileMask(model.getFileFilter());
-      }
-      else {
-        findSettings.setFileMask(null);
       }
     }
   }
