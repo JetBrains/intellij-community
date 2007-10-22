@@ -149,6 +149,11 @@ public class DnDEnabler implements Activatable, Disposable {
     return e.getClickCount() == 1 && myDnDSource.isOverSelection(e.getPoint());
   }
 
+  @SuppressWarnings({"SimplifiableIfStatement"})
+  public boolean isPopupToSelection(MouseEvent e) {
+    return e.isPopupTrigger() && myDnDSource.isOverSelection(e.getPoint());
+  }
+
   private static boolean isPureButton1Event(MouseEvent event) {
     int button1 = MouseEvent.BUTTON1_MASK | MouseEvent.BUTTON1_DOWN_MASK;
     return (event.getModifiersEx() | button1) == button1;
@@ -182,6 +187,7 @@ public class DnDEnabler implements Activatable, Disposable {
             }
           }
           else {
+            final boolean popupToSelection = isPopupToSelection(e);
             if (!e.isConsumed()) {
               assert e.getComponent() != null : "component is null! IDEADEV-6339";
               final EventListener[][] eventListeners = myMouseListeners.toArray(new EventListener[myMouseListeners.size()][]);
@@ -190,6 +196,11 @@ public class DnDEnabler implements Activatable, Disposable {
                   if (!shouldProcessTooltipManager) {
                     if (each == myTooltipListener1 || each == myTooltipListener2) continue;
                   }
+
+                  if (popupToSelection) {
+                    if (each != null && each.getClass().getName().indexOf("BasicTreeUI$DragFixHandler") >= 0) continue;
+                  }
+
                   dispatchMouseEvent((MouseListener)each, e);
                   if (e.isConsumed()) break;
                 }
