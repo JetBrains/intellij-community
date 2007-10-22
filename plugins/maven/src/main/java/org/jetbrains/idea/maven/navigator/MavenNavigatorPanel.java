@@ -57,9 +57,9 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
           .SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(-1, 20), null));
 
     add(new JScrollPane(myTree), new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_SOUTH, GridConstraints.FILL_BOTH,
-                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
-                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
-                                                               null, null, null));
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null,
+                                                     null, null));
 
     myTree.addMouseListener(new PopupHandler() {
       public void invokePopup(final Component comp, final int x, final int y) {
@@ -94,6 +94,10 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   @Nullable
   public Object getData(@NonNls String dataId) {
+    if (dataId.equals(DataKeys.HELP_ID.getName())) {
+      return "reference.toolWindows.mavenProjects";
+    }
+
     if (dataId.equals(DataKeys.PROJECT.getName())) {
       return myProject;
     }
@@ -101,7 +105,7 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
       final List<Navigatable> navigatables = new ArrayList<Navigatable>();
       for (PomTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
         final Navigatable navigatable = pomNode.getNavigatable();
-        if(navigatable!=null){
+        if (navigatable != null) {
           navigatables.add(navigatable);
         }
       }
@@ -137,7 +141,7 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
       }
       else {
         final List<PomTreeStructure.GoalNode> nodes = getSelectedNodes(PomTreeStructure.GoalNode.class);
-        if(PomTreeStructure.getCommonParent(nodes)==null) {
+        if (PomTreeStructure.getCommonParent(nodes) == null) {
           return null;
         }
         final List<String> goals = new ArrayList<String>();
@@ -150,7 +154,7 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
     }
     if (dataId.equals(MavenDataKeys.MAVEN_PROFILES_KEY.getName())) {
       final List<PomTreeStructure.ProfileNode> nodes = getSelectedNodes(PomTreeStructure.ProfileNode.class);
-      if(PomTreeStructure.getCommonParent(nodes)==null) {
+      if (PomTreeStructure.getCommonParent(nodes) == null) {
         return null;
       }
       final List<String> profiles = new ArrayList<String>();
@@ -161,14 +165,15 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
     }
     if (dataId.equals(MavenDataKeys.MAVEN_IDS.getName())) {
       final List<PomTreeStructure.PluginNode> nodes = getSelectedNodes(PomTreeStructure.PluginNode.class);
-      if(PomTreeStructure.getCommonParent(nodes)==null) {
+      if (PomTreeStructure.getCommonParent(nodes) == null) {
         return null;
       }
       final List<MavenId> ids = new ArrayList<MavenId>();
       for (PomTreeStructure.PluginNode node : nodes) {
-        if(node.isDetachable()){
+        if (node.isDetachable()) {
           ids.add(node.getId());
-        } else {
+        }
+        else {
           return null;
         }
       }

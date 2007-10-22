@@ -99,6 +99,9 @@
               description="Toggle 'Skip tests' mode for Maven"
               icon="/nodes/exceptionClass.png">
       </action>
+
+      <action id="Maven.Help"
+              class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
     </group>
 
     <group id="Maven.OutputToolbar" description="Output toolbar">
@@ -217,6 +220,8 @@
       <separator/>
       <reference id="Maven.Synchronize"/>
       <reference id="Maven.DownloadArtifacts"/>
+      <separator/>
+      <reference id="Maven.Help"/>
     </group>
 
     <group id="Maven.PomMenu" popup="true">
