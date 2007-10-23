@@ -108,6 +108,15 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
       final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(canonicalText, true);
       if (nsDescriptor != null) return nsDescriptor.getDescriptorFile();
 
+      if (tag == rootTag && tag.getNamespace().equals(com.intellij.xml.util.XmlUtil.XML_SCHEMA_URI)) {
+        for(XmlTag t:tag.getSubTags()) {
+          final String name = t.getLocalName();
+          if ("import".equals(name)) {
+            if (canonicalText.equals(t.getAttributeValue("namespace"))) return t;
+          } else if (!"include".equals(name) && !"redefine".equals(name) && !"annotation".equals(name)) break;
+        }
+      }
+
       final PsiElement[] result = new PsiElement[1];
       processWsdlSchemas(rootTag,new Processor<XmlTag>() {
         public boolean process(final XmlTag t) {
