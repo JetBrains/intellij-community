@@ -142,6 +142,7 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_CUT, new CutHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_CUT)));
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES, new JoinLinesHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES)));
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)));
+      actionManager.setActionHandler(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START)));
 
       TypedAction typedAction = actionManager.getTypedAction();
       typedAction.setupHandler(new TypedHandler(typedAction.getHandler()));
