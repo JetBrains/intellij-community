@@ -22,6 +22,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
@@ -106,6 +107,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    */
   long testHighlighting(@NonNls String... filePaths) throws Throwable;
 
+  long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, VirtualFile file) throws Throwable;
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
    *

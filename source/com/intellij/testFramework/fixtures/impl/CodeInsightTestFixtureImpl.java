@@ -173,6 +173,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return testHighlighting(true, true, true, filePaths);
   }
 
+  public long testHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings, final VirtualFile file) throws Throwable {
+    final Ref<Long> duration = new Ref<Long>();
+    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+      protected void run() throws Throwable {
+        myFile = myPsiManager.findFile(file);
+        myEditor = createEditor(file);
+        collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
+      }
+    }.execute().throwException();
+    return duration.get().longValue();
+  }
+
   @Nullable
   public PsiReference getReferenceAtCaretPosition(final String filePath) throws Throwable {
     final RunResult<PsiReference> runResult = new WriteCommandAction<PsiReference>(myProjectFixture.getProject()) {
