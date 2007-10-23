@@ -514,7 +514,12 @@ public class TabbedPaneWrapper {
       //This event should be fired necessarily because when swing fires an event
       // page to be removed is still in the tabbed pane. There can be a situation when
       // event fired according to swing event contains invalid information about selected page.
-      fireStateChanged();
+      try {
+        fireStateChanged();
+      }
+      catch (Exception e) {
+        // Causes exceptions under Aqua LnF...
+      }
     }
 
     private void _requestDefaultFocus() {
