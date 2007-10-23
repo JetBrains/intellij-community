@@ -1018,7 +1018,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   protected void dispose() {
     super.dispose();
     myDualView.dispose();
-    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.dispose();
   }
 
   abstract class AbstractActionForSomeSelection extends AnAction {
