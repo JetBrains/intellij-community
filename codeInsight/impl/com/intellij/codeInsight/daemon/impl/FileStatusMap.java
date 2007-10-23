@@ -182,21 +182,18 @@ public class FileStatusMap {
       if (status.defensivelyMarked) {
         status.defensivelyMarked = false;
       }
-      final PsiElement combined1 = combineScopes(status.dirtyScope, scope);
-      status.dirtyScope = combined1 == null ? PsiDocumentManager.getInstance(myProject).getPsiFile(document) : combined1;
-      final PsiElement combined2 = combineScopes(status.localInspectionsDirtyScope, scope);
-      status.localInspectionsDirtyScope = combined2 == null ? PsiDocumentManager.getInstance(myProject).getPsiFile(document) : combined2;
-      status.externalDirtyScope = combineScopes(status.externalDirtyScope, scope);
+      status.dirtyScope = combineScopes(status.dirtyScope, scope, document, myProject);
+      status.localInspectionsDirtyScope = combineScopes(status.localInspectionsDirtyScope, scope, document, myProject);
+      status.externalDirtyScope = combineScopes(status.externalDirtyScope, scope, document, myProject);
     }
   }
 
-  private static PsiElement combineScopes(PsiElement scope1, PsiElement scope2) {
+  private static PsiElement combineScopes(PsiElement scope1, PsiElement scope2, Document document, Project project) {
     if (scope1 == null) return scope2;
     if (scope2 == null) return scope1;
-    if (!scope1.isValid() || !scope2.isValid()) return null;
+    if (!scope1.isValid() || !scope2.isValid()) return PsiDocumentManager.getInstance(project).getPsiFile(document);
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(scope1, scope2);
-    if (commonParent instanceof PsiDirectory) return null;
-    return commonParent;
+    return commonParent == null || commonParent instanceof PsiDirectory ? PsiDocumentManager.getInstance(project).getPsiFile(document) : commonParent;
   }
 
   @NotNull

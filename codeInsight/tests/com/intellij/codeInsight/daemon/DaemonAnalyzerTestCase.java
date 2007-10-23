@@ -218,11 +218,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     action2.doCollectInformation(new MockProgressIndicator());
     result.addAll(action2.getHighlights());
 
-    LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(file, document, 0, file.getTextLength()) {
-      protected boolean shouldInspect() {
-        return true;
-      }
-    };
+    LocalInspectionsPass inspectionsPass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
     inspectionsPass.doCollectInformation(new MockProgressIndicator());
     result.addAll(inspectionsPass.getHighlights());
     return result;

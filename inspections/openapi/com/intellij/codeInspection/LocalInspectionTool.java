@@ -121,4 +121,15 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @NonNls @NotNull public String getID() {
     return getShortName();
   }
+
+  /**
+   * Override this method and return true if your inspection (unlike almost all others)
+   * must be re-run for the whole file for each change, whatever small it was.
+   *
+   * Please note that re-scanning whole file can take considerable time and thus seriously impact the responsiveness, so
+   * beg please use this mechanism once in a blue moon.
+   */
+  public boolean runForWholeFile() {
+    return false;
+  }
 }

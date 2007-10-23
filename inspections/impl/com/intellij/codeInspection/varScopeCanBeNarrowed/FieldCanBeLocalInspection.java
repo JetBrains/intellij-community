@@ -117,7 +117,8 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
               final PsiField usedField = (PsiField)usedVariable;
               if (usedFields.contains(usedField)) {
                 candidates.remove(usedField); //used in more than one code block
-              } else {
+              }
+              else {
                 usedFields.add(usedField);
               }
             }
@@ -307,5 +308,8 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       }
       return result;
     }
+  }
+  public boolean runForWholeFile() {
+    return true;
   }
 }

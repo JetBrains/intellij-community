@@ -57,7 +57,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
   @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.inspection");
-  private List<HighlightInfo> myInfos = Collections.emptyList();
+  private volatile List<HighlightInfo> myInfos = Collections.emptyList();
   static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
   private final String myShortcutText;
 
@@ -91,16 +91,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void inspectRoot(final ProgressIndicator progress) {
-    if (!shouldInspect()) return;
+    if (!HighlightUtil.shouldInspect(myFile)) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
-    final LocalInspectionTool[] tools = profile.getHighlightingLocalInspectionTools();
+    final LocalInspectionTool[] tools = getInspectionTools(profile);
 
     inspect(tools, progress, iManager, true);
-  }
-
-  protected boolean shouldInspect() {
-    return HighlightUtil.shouldInspect(myFile);
   }
 
   public void doInspectInBatch(final InspectionManagerEx iManager, InspectionTool[] toolWrappers, final ProgressIndicator progress) {
@@ -169,6 +165,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void inspect(final LocalInspectionTool[] tools, final ProgressIndicator progress, final InspectionManagerEx iManager, final boolean isOnTheFly) {
+    if (tools.length == 0) return;
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
     final Job<?> job = JobScheduler.getInstance().createJob("Inspection tools", Job.DEFAULT_PRIORITY); // TODO: Better name, handle priority
@@ -234,7 +231,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     addHighlightsFromInjectedPsiProblems(myInfos);
   }
 
-  private void inspectInjectedPsi(final PsiElement[] elements, LocalInspectionTool[] tools) {
+  void inspectInjectedPsi(final PsiElement[] elements, LocalInspectionTool[] tools) {
     myInjectedPsiInspectionResults = new SmartList<InjectedPsiInspectionUtil.InjectedPsiInspectionResult>();
     final Set<PsiFile> injected = new THashSet<PsiFile>();
     PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
@@ -318,7 +315,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   protected void applyInformationWithProgress() {
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, Pass.LOCAL_INSPECTIONS);
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, getId());
   }
 
   private void addHighlightsFromDescriptors(final List<HighlightInfo> toInfos) {
@@ -445,5 +442,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
     }
     return result.toArray(new PsiElement[result.size()]);
+  }
+
+  LocalInspectionTool[] getInspectionTools(InspectionProfileWrapper profile) {
+    return profile.getHighlightingLocalInspectionTools();
   }
 }
