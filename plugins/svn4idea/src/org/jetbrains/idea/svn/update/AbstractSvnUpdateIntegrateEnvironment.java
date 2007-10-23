@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -62,7 +63,8 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
   public void fillGroups(UpdatedFiles updatedFiles) {
   }
 
-  public UpdateSession updateDirectories(final FilePath[] contentRoots,
+  @NotNull
+  public UpdateSession updateDirectories(@NotNull final FilePath[] contentRoots,
                                          final UpdatedFiles updatedFiles,
                                          final ProgressIndicator progressIndicator)
     throws ProcessCanceledException {
