@@ -48,7 +48,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
   private final MavenRepository myRepository;
   protected final MavenEventsHandler myEventsHandler;
 
-  final RootNode root = new RootNode();
+  protected final RootNode root = new RootNode();
 
   // TODO : update tree after local repository location change
 
@@ -255,9 +255,9 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     protected abstract void displayChildren(DisplayList displayList);
   }
 
-  class RootNode extends PomGroupNode {
+  public class RootNode extends PomGroupNode {
 
-    final List<ModuleNode> moduleNodes = new ArrayList<ModuleNode>();
+    public final List<ModuleNode> moduleNodes = new ArrayList<ModuleNode>();
 
     public RootNode() {
       super(null);
@@ -311,9 +311,9 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
   }
 
-  abstract class PomGroupNode extends ListNode {
+  public abstract class PomGroupNode extends ListNode {
 
-    final List<PomNode> pomNodes = new ArrayList<PomNode>();
+    public final List<PomNode> pomNodes = new ArrayList<PomNode>();
 
     public PomGroupNode(CustomNode parent) {
       super(parent);
@@ -425,7 +425,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     protected abstract CustomNode getVisibleParent();
   }
 
-  class ModuleNode extends PomGroupNode {
+  public class ModuleNode extends PomGroupNode {
     private final Module module;
 
     public ModuleNode(RootNode parent, Module module) {
@@ -471,12 +471,12 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     private String savedPath = "";
     private String actionIdPrefix = "";
 
-    private MavenProject mavenProject;
+    public MavenProject mavenProject;
 
     final LifecycleNode lifecycleNode;
     final ProfilesNode profilesNode;
-    final NestedPomsNode modulePomsNode;
-    final NestedPomsNode nonModulePomsNode;
+    public final NestedPomsNode modulePomsNode;
+    public final NestedPomsNode nonModulePomsNode;
 
     final List<PluginNode> pomPluginNodes = new ArrayList<PluginNode>();
     final List<PluginNode> extraPluginNodes = new ArrayList<PluginNode>();
@@ -719,6 +719,8 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
       if (mavenProject != null) {
         String relPath =
           FileUtil.getRelativePath(new File(virtualFile.getPath()).getParentFile(), new File(node.virtualFile.getPath()).getParentFile());
+        relPath = FileUtil.toSystemIndependentName(relPath);
+
         if (relPath != null) {
           for (String moduleName : ProjectUtil
             .collectRelativeModulePaths(mavenProject, myProjectsState.getProfiles(virtualFile), new HashSet<String>())) {
@@ -801,7 +803,7 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
     }
   }
 
-  class NestedPomsNode extends PomGroupNode {
+  public class NestedPomsNode extends PomGroupNode {
 
     private PomGroupNode sibling;
 
