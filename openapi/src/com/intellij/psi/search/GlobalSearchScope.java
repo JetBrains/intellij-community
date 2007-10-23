@@ -191,7 +191,7 @@ public abstract class GlobalSearchScope extends SearchScope {
   private static class IntersectionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
-    private String myDisplayName;
+    private final String myDisplayName;
 
     public IntersectionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2, String displayName) {
       myScope1 = scope1;
@@ -239,7 +239,7 @@ public abstract class GlobalSearchScope extends SearchScope {
   private static class UnionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
-    private String myDisplayName;
+    private final String myDisplayName;
 
     public UnionScope(GlobalSearchScope scope1, GlobalSearchScope scope2, String displayName) {
       myScope1 = scope1;
@@ -288,8 +288,8 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   private static class ProductionScopeFilter extends GlobalSearchScope {
-    private ProjectFileIndex myFileIndex;
-    private boolean myIncludeNonJavaFiles;
+    private final ProjectFileIndex myFileIndex;
+    private final boolean myIncludeNonJavaFiles;
 
     public ProductionScopeFilter(Project project, boolean includeNonJavaFiles) {
       myIncludeNonJavaFiles = includeNonJavaFiles;
@@ -319,8 +319,8 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   private static class TestScopeFilter extends GlobalSearchScope {
-    private ProjectFileIndex myFileIndex;
-    private boolean myIncludeNonJavaFiles;
+    private final ProjectFileIndex myFileIndex;
+    private final boolean myIncludeNonJavaFiles;
 
     public TestScopeFilter(Project project, boolean includeNonJavaFiles) {
       myIncludeNonJavaFiles = includeNonJavaFiles;
@@ -460,7 +460,7 @@ public abstract class GlobalSearchScope extends SearchScope {
   private static class FilterScopeAdapter extends GlobalSearchScope {
     private final NamedScope mySet;
     private final PsiManager myManager;
-    private Project myProject;
+    private final Project myProject;
 
     public FilterScopeAdapter(Project project, NamedScope set) {
       mySet = set;
@@ -500,8 +500,8 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   private static class FileTypeRestrictionScope extends GlobalSearchScope {
-    private GlobalSearchScope myScope;
-    private FileType[] myFileTypes;
+    private final GlobalSearchScope myScope;
+    private final FileType[] myFileTypes;
 
     public FileTypeRestrictionScope(final GlobalSearchScope scope, final FileType[] fileTypes) {
       myFileTypes = fileTypes;
@@ -559,5 +559,5 @@ public abstract class GlobalSearchScope extends SearchScope {
     }
   }
 
-  public static GlobalSearchScope EMPTY_SCOPE = new EmptyScope();
+  public static final GlobalSearchScope EMPTY_SCOPE = new EmptyScope();
 }

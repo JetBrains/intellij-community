@@ -164,6 +164,7 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
     return super.getSecondaryElements();
   }
 
+  @NotNull
   public FindUsagesOptions getFindUsagesOptions() {
     PsiElement element = getPsiElement();
     if (element instanceof PsiPackage) {

@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 public class NamedScope {
-  private String myName;
-  private PackageSet myValue;
+  private final String myName;
+  private final PackageSet myValue;
 
   public NamedScope(@NotNull String name, @Nullable PackageSet value) {
     myName = name;

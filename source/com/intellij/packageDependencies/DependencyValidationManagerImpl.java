@@ -27,7 +27,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
-  private List<DependencyRule> myRules = new ArrayList<DependencyRule>();
+  private final List<DependencyRule> myRules = new ArrayList<DependencyRule>();
 
   public boolean SKIP_IMPORT_STATEMENTS = false;
 
@@ -45,7 +45,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   private NamedScope myProblemsScope;
   private static final Icon SHARED_SCOPES = IconLoader.getIcon("/ide/sharedScope.png");
 
-  private Map<String, PackageSet> myUnnamedScopes = new HashMap<String, PackageSet>();
+  private final Map<String, PackageSet> myUnnamedScopes = new HashMap<String, PackageSet>();
 
   public DependencyValidationManagerImpl(Project project) {
     myProject = project;

@@ -20,7 +20,7 @@ import java.awt.event.ActionListener;
 import java.util.Map;
 
 public class PackageSetChooserCombo extends ComboboxWithBrowseButton {
-  private Project myProject;
+  private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#" + PackageSetChooserCombo.class.getName());
 
   public PackageSetChooserCombo(final Project project, String preselect) {
@@ -117,7 +117,7 @@ public class PackageSetChooserCombo extends ComboboxWithBrowseButton {
 
   private class EditUnnamedScopesDialog extends DialogWrapper {
     private PackageSet myScope;
-    private ScopeEditorPanel myPanel;
+    private final ScopeEditorPanel myPanel;
 
     public EditUnnamedScopesDialog(final NamedScope scope) {
       super(PackageSetChooserCombo.this, false);

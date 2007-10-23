@@ -7,6 +7,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
@@ -32,7 +34,6 @@ import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,48 +71,29 @@ public class ShowUsagesAction extends AnAction {
     UsageViewPresentation presentation = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().processUsages(element, collect);
     if (presentation == null) return;
     if (usages.isEmpty()) {
-      HintManager.getInstance().showInformationHint(editor, FindBundle.message("find.usage.view.no.usages.text"));
+      HintManager.getInstance().showInformationHint(editor, FindBundle.message("no.usages.found.in", searchScopePresentableName(element)));
     }
     else if (usages.size() == 1) {
       Usage usage = usages.iterator().next();
-      usage.navigate(true);
-      FileEditorLocation location = usage.getLocation();
-      FileEditor newFileEditor = location == null ? null :location.getEditor();
-      final Editor newEditor = newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
-      if (newEditor != null) {
-        //opening editor is performing in invokeLater
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            newEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-              public void run() {
-                // after new editor created, some editor resizing events are still bubbling. To prevent hiding hint, invokeLater this
-                SwingUtilities.invokeLater(new Runnable() {
-                  public void run() {
-                    HintManager.getInstance().showInformationHint(newEditor, FindBundle.message("show.usages.only.usage"));
-                  }
-                });
-              }
-            });
-          }
-        });
-      }
+      navigateAndHint(usage, FindBundle.message("show.usages.only.usage", searchScopePresentableName(element)));
     }
     else {
-      Processor<Usage> doNavigate = new Processor<Usage>() {
-        public boolean process(final Usage usage) {
-          usage.navigate(true);
-          return false;
-        }
-      };
       final String title = presentation.getTabText();
-      JBPopup popup = getUsagePopup(usages, title, doNavigate, project);
+      JBPopup popup = getUsagePopup(usages, title, project, element);
       if (popup != null) {
         popup.showInBestPositionFor(editor);
       }
     }
   }
 
-  private static JBPopup getUsagePopup(List<Usage> usages, final String title, final Processor<Usage> processor, final Project project) {
+  private static String searchScopePresentableName(PsiElement element) {
+    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
+    SearchScope searchScope = findUsagesManager.getCurrentSearchScope(element);
+    if (searchScope == null) searchScope = element.getProject().getAllScope();
+    return searchScope.getDisplayName();
+  }
+
+  private static JBPopup getUsagePopup(List<Usage> usages, final String title, final Project project, PsiElement element) {
     Usage[] arr = usages.toArray(new Usage[usages.size()]);
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setDetachedMode(true);
@@ -121,10 +103,10 @@ public class ShowUsagesAction extends AnAction {
     List<UsageNode> nodes = new ArrayList<UsageNode>();
 
     addUsageNodes(root, nodes);
-    if (usages.size() == 1) {
+    if (nodes.size() == 1) {
       // usage view can filter usages down to one
       Usage usage = nodes.get(0).getUsage();
-      processor.process(usage);
+      navigateAndHint(usage, FindBundle.message("all.usages.are.in.this.line", usages.size(), searchScopePresentableName(element)));
       return null;
     }
 
@@ -187,7 +169,7 @@ public class ShowUsagesAction extends AnAction {
         for (Object element : list.getSelectedValues()) {
           UsageNode node = (UsageNode)element;
           Usage usage = node.getUsage();
-          processor.process(usage);
+          navigateAndHint(usage, null);
         }
       }
     };
@@ -257,6 +239,31 @@ public class ShowUsagesAction extends AnAction {
     Editor editor = e.getData(DataKeys.EDITOR);
     if (editor == null) {
       e.getPresentation().setEnabled(false);
+    }
+  }
+
+  private static void navigateAndHint(Usage usage, final String hint) {
+    usage.navigate(true);
+    if (hint == null) return;
+    FileEditorLocation location = usage.getLocation();
+    FileEditor newFileEditor = location == null ? null : location.getEditor();
+    final Editor newEditor = newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
+    if (newEditor != null) {
+      //opening editor is performing in invokeLater
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          newEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
+            public void run() {
+              // after new editor created, some editor resizing events are still bubbling. To prevent hiding hint, invokeLater this
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  HintManager.getInstance().showInformationHint(newEditor, hint);
+                }
+              });
+            }
+          });
+        }
+      });
     }
   }
 }

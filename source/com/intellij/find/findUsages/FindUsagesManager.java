@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -283,6 +284,14 @@ public class FindUsagesManager implements JDOMExternalizable {
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
       findUsagesInEditor(descriptor, scopeFile, FileSearchScope.FROM_START, findUsagesOptions, editor);
     }
+  }
+
+  public SearchScope getCurrentSearchScope(@NotNull PsiElement element) {
+    final FindUsagesHandler handler = findHandler(element);
+    if (handler == null) return null;
+
+    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
+    return findUsagesOptions.searchScope;
   }
 
   // return null on failure or cancel

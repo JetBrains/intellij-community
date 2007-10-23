@@ -52,6 +52,7 @@ public abstract class FindUsagesHandler {
     return findUsagesOptions;
   }
 
+  @NotNull
   public FindUsagesOptions getFindUsagesOptions() {
     FindUsagesOptions options = createFindUsagesOptions(getProject());
     options.isSearchForTextOccurences &= FindUsagesUtil.isSearchForTextOccurencesAvailable(getPsiElement(), false);
