@@ -33,7 +33,7 @@ public abstract class XmlSchemaProvider {
   public final static ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<XmlSchemaProvider>("com.intellij.xml.schemaProvider");
 
   @Nullable
-  public static XmlFile findSchema(@NotNull @NonNls String url, @NotNull Module module, @NotNull PsiFile file) {
+  public static XmlFile findSchema(@NotNull @NonNls String url, @Nullable Module module, @NotNull PsiFile file) {
     for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
       final XmlFile schema = provider.getSchema(url, module, file);
       if (schema != null) {
@@ -44,5 +44,5 @@ public abstract class XmlSchemaProvider {
   }
 
   @Nullable
-  public abstract XmlFile getSchema(@NotNull @NonNls String url, @NotNull Module module,@NotNull final PsiFile baseFile);
+  public abstract XmlFile getSchema(@NotNull @NonNls String url, @Nullable Module module, @NotNull final PsiFile baseFile);
 }

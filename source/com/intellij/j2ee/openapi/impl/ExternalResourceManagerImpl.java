@@ -6,23 +6,23 @@ import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import com.intellij.xml.util.XmlUtil;
-import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.containers.HashMap;
+import com.intellij.xml.XmlSchemaProvider;
+import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -177,13 +177,15 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   public PsiFile getResourceLocation(@NotNull @NonNls final String url, @NotNull final PsiFile baseFile, final String version) {
     VirtualFile file = baseFile.getVirtualFile();
-    if (file == null && baseFile.getOriginalFile() != null) {
-      file = baseFile.getOriginalFile().getVirtualFile();
+    if (file == null) {
+      final PsiFile originalFile = baseFile.getOriginalFile();
+      if (originalFile != null)
+        file = originalFile.getVirtualFile();
     }
-    
+
     final Module moduleForFile =
       file != null ? ProjectRootManager.getInstance(baseFile.getProject()).getFileIndex().getModuleForFile(file):null;
-    final XmlFile schema = moduleForFile != null ? XmlSchemaProvider.findSchema(url, moduleForFile,baseFile):null;
+    final XmlFile schema = XmlSchemaProvider.findSchema(url, moduleForFile,baseFile);
     if (schema != null) {
       return schema;
     }
