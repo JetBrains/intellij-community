@@ -10,15 +10,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.*;
 
 /**
  * @author peter
@@ -54,7 +55,11 @@ public abstract class UsefulTestCase extends TestCase {
 
     final StringBuilder builder = new StringBuilder();
     for (final Object o : collection) {
-      builder.append(o);
+      if (o instanceof THashSet) {
+        builder.append(new TreeSet((Collection)o));
+      } else {
+        builder.append(o);
+      }
       builder.append("\n");
     }
     return builder.toString();
@@ -70,7 +75,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(Arrays.asList(expected), actual);
   }
 
-  public static <T> void assertOrderedEquals(final Collection<? extends T> expected, final Collection<? extends T> actual) {
+  public static <T> void assertOrderedEquals(final Collection<? extends T> actual, final Collection<? extends T> expected) {
     if (!new ArrayList<T>(actual).equals(expected)) {
       assertEquals(toString(expected), toString(actual));
       fail();

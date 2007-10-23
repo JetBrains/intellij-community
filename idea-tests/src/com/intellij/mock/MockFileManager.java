@@ -9,7 +9,6 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +73,8 @@ public class MockFileManager implements FileManager {
 
   @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
-    return findCachedViewProvider(vFile).getPsi(Language.ANY);
+    final FileViewProvider provider = findCachedViewProvider(vFile);
+    return provider.getPsi(provider.getBaseLanguage());
   }
 
   @NotNull
