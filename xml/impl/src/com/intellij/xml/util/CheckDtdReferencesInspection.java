@@ -153,7 +153,7 @@ public class CheckDtdReferencesInspection extends LocalInspectionTool {
 
       }
 
-      assert anchorOffset != UNDEFINED_OFFSET;
+      if(anchorOffset == UNDEFINED_OFFSET) anchorOffset = element.getTextRange().getStartOffset();
 
       OpenFileDescriptor openDescriptor = new OpenFileDescriptor(project, containingFile.getVirtualFile(), anchorOffset);
       final Editor editor = FileEditorManager.getInstance(project).openTextEditor(openDescriptor, true);
