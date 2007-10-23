@@ -16,9 +16,14 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * A default implementation of the {@link UpdateSession} interface. This implementation can
+ * be used if no post-update processing is required. 
+ */
 public class UpdateSessionAdapter implements UpdateSession{
   private final List<VcsException> myExceptions;
   private final boolean myIsCanceled;
@@ -28,6 +33,7 @@ public class UpdateSessionAdapter implements UpdateSession{
     myIsCanceled = isCanceled;
   }
 
+  @NotNull
   public List<VcsException> getExceptions() {
     return myExceptions;
   }

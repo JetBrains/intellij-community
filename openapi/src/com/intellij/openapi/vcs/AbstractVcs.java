@@ -144,6 +144,11 @@ public abstract class AbstractVcs {
     return getDisplayName();
   }
 
+  /**
+   * Returns the interface for performing update/sync operations.
+   *
+   * @return the update interface, or null if the updates are not supported by the VCS.
+   */
   @Nullable
   public UpdateEnvironment getUpdateEnvironment() {
     return null;
@@ -177,6 +182,12 @@ public abstract class AbstractVcs {
     return true;
   }
 
+  /**
+   * Returns the interface for performing "check status" operations (operations which show the differences between
+   * the local working copy state and the latest server state).
+   *
+   * @return the status interface, or null if the check status operation is not supported or required by the VCS.
+   */
   @Nullable
   public UpdateEnvironment getStatusEnvironment() {
     return null;
@@ -228,6 +239,12 @@ public abstract class AbstractVcs {
     return null;
   }
 
+  /**
+   * Returns the interface for performing integrate operations (merging changes made in another branch of
+   * the project into the current working copy).
+   *
+   * @return the update interface, or null if the integrate operations are not supported by the VCS.
+   */
   @Nullable
   public UpdateEnvironment getIntegrateEnvironment() {
     return null;

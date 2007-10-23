@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdateSessionAdapter;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -32,7 +33,8 @@ public class CvsStatusEnvironment implements UpdateEnvironment {
     CvsUpdatePolicy.fillGroups(updatedFiles);
   }
 
-  public UpdateSession updateDirectories(FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator) {
+  @NotNull
+  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator) {
     final UpdateSettings updateSettings = UpdateSettings.DONT_MAKE_ANY_CHANGES;
     final UpdateHandler handler = CommandCvsHandler.createUpdateHandler(contentRoots,
                                                                         updateSettings, myProject, updatedFiles);
