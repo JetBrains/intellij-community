@@ -59,7 +59,7 @@ public class MismatchedCollectionQueryUpdateInspection
         return new MismatchedCollectionQueryUpdateVisitor();
     }
 
-    static boolean isEmptyCollectionInitializer(
+    private static boolean isEmptyCollectionInitializer(
             PsiExpression initializer){
         if(!(initializer instanceof PsiNewExpression)){
             return false;
@@ -216,7 +216,7 @@ public class MismatchedCollectionQueryUpdateInspection
         }
     }
 
-    public static boolean collectionQueriedByAssignment(
+    private static boolean collectionQueriedByAssignment(
             @NotNull PsiVariable variable, @NotNull PsiElement context) {
         final CollectionQueriedByAssignmentVisitor visitor =
                 new CollectionQueriedByAssignmentVisitor(variable);
@@ -263,4 +263,8 @@ public class MismatchedCollectionQueryUpdateInspection
             return mayBeQueried;
         }
     }
+
+  public boolean runForWholeFile() {
+    return true;
+  }
 }

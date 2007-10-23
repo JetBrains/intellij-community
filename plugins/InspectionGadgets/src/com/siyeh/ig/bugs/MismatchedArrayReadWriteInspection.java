@@ -164,4 +164,8 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
             return newExpression.getArrayInitializer() == null;
         }
     }
+
+  public boolean runForWholeFile() {
+    return true;
+  }
 }
