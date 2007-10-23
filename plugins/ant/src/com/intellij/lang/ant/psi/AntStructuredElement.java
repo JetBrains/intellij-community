@@ -44,7 +44,7 @@ public interface AntStructuredElement extends AntElement, PsiNamedElement {
   PsiFile findFileByName(final String name, @Nullable final String baseDir);
 
   @Nullable
-  String computeAttributeValue(String value);
+  String computeAttributeValue(@NonNls String value);
 
   boolean hasNameElement();
 

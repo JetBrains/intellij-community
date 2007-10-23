@@ -69,23 +69,20 @@ public class AntFileReferenceSet extends FileReferenceSetBase {
   @NotNull
   public Collection<PsiFileSystemItem> computeDefaultContexts() {
     final AntStructuredElement element = getElement();
-    final AntFile file = element.getAntFile();
-    if (file != null) {
-      final AntProject project = file.getAntProject();
-      if (project != null) {
-        final String path = project.getBaseDir();
-        VirtualFile vFile = file.getContainingPath();
-        if (vFile != null) {
-          if (path != null && !(element instanceof AntImport)) {
-            vFile = LocalFileSystem.getInstance()
-              .findFileByPath((new File(vFile.getPath(), path)).getAbsolutePath().replace(File.separatorChar, '/'));
-          }
-          if (vFile != null) {
-            final PsiDirectory directory = file.getViewProvider().getManager().findDirectory(vFile);
-            if (directory != null) {
-              return Collections.<PsiFileSystemItem>singleton(directory);
-            }
-          }
+    final AntFile antFile = element.getAntFile();
+    if (antFile != null) {
+      VirtualFile vFile = antFile.getContainingPath();
+
+      if (!(element instanceof AntImport)) {
+        final String basedir = element.computeAttributeValue("${basedir}");
+        assert basedir != null;
+        vFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(basedir));
+      }
+
+      if (vFile != null) {
+        final PsiDirectory directory = antFile.getViewProvider().getManager().findDirectory(vFile);
+        if (directory != null) {
+          return Collections.<PsiFileSystemItem>singleton(directory);
         }
       }
     }

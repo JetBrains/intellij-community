@@ -14,26 +14,19 @@ import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public class AntFileReference extends FileReferenceBase implements AntReference {
-  @NonNls private static final String BASEDIR_PROPERTY_REFERENCE = "${basedir}";
-
   public AntFileReference(final AntFileReferenceSet set, final TextRange range, final int index, final String text) {
     super(set, range, index, text);
   }
 
   @Nullable
   public String getText() {
-    final String path = super.getText();
-    if (getIndex() == 0 && path != null && path.equals(BASEDIR_PROPERTY_REFERENCE) && getFileReferenceSet().isAbsolutePathReference()) {
-      return ".";
-    }
-    final String _path = getElement().computeAttributeValue(path);
+    final String _path = getElement().computeAttributeValue(super.getText());
     return _path != null? FileUtil.toSystemIndependentName(_path) : null;
   }
 
