@@ -124,9 +124,12 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   /**
    * Override this method and return true if your inspection (unlike almost all others)
-   * must be re-run for the whole file for each change, whatever small it was.
+   * must be called for every element in the whole file for each change, whatever small it was.
    *
-   * Please note that re-scanning whole file can take considerable time and thus seriously impact the responsiveness, so
+   * For example, 'Field can be local' inspection can report the field declaration when reference to it was added inside method hundreds lines below.
+   * Hence, this inspection must be rerun on every change.
+   *
+   * Please note that re-scanning the whole file can take considerable time and thus seriously impact the responsiveness, so
    * beg please use this mechanism once in a blue moon.
    */
   public boolean runForWholeFile() {
