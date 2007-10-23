@@ -4,6 +4,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.components.PathMacroManager;
@@ -31,7 +32,13 @@ public class JavaParametersUtil {
   public static void configureConfiguration(final JavaParameters parameters, final RunJavaConfiguration configuration) {
     final Project project = configuration.getProject();
     parameters.getProgramParametersList().addParametersString(configuration.getProperty(RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY));
-    final PathMacroManager macroManager = PathMacroManager.getInstance(project);
+    PathMacroManager macroManager = PathMacroManager.getInstance(project);
+    if (configuration instanceof ModuleBasedConfiguration) {
+      final Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
+      if (module != null) {
+        macroManager = PathMacroManager.getInstance(module);
+      }
+    }
     String vmParameters = configuration.getProperty(RunJavaConfiguration.VM_PARAMETERS_PROPERTY);
     if (vmParameters != null) {
       vmParameters = macroManager.expandPath(vmParameters);
@@ -52,7 +59,7 @@ public class JavaParametersUtil {
     if (workingDirectory == null || workingDirectory.trim().length() == 0) {
       workingDirectory = PathUtil.getLocalPath(project.getBaseDir());
     }
-    parameters.setWorkingDirectory(workingDirectory);
+    parameters.setWorkingDirectory(macroManager.expandPath(workingDirectory));
   }
 
   public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,
