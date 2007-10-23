@@ -103,17 +103,13 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           }
 
           if (!activeProviders.isEmpty()) {
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              public void run() {
-                final DataContext dataContext = SimpleDataContext.getProjectContext(myProject);
-                for (StepsBeforeRunProvider provider : activeProviders) {
-                  if(!provider.executeTask(dataContext, runConfiguration)) {
-                    return;
-                  }
-                }
-                ApplicationManager.getApplication().invokeLater(startRunnable);
+            final DataContext dataContext = SimpleDataContext.getProjectContext(myProject);
+            for (StepsBeforeRunProvider provider : activeProviders) {
+              if(!provider.executeTask(dataContext, runConfiguration)) {
+                return;
               }
-            });
+            }
+            ApplicationManager.getApplication().invokeLater(startRunnable);
           }
           else {
             startRunnable.run();

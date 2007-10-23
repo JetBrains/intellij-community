@@ -414,8 +414,14 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   public boolean executeTaskBeforeRun(final DataContext context, final RunConfiguration configuration) {
-    final ExecuteBeforeRunEvent foundEvent = findExecuteBeforeRunEvent(configuration);
-    return runTargetSynchronously(context, foundEvent);
+    final boolean[] result = new boolean[]{false};
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        final ExecuteBeforeRunEvent foundEvent = findExecuteBeforeRunEvent(configuration);
+        result[0] = runTargetSynchronously(context, foundEvent);
+      }
+    });
+    return result[0];
   }
 
   public AntBuildTarget getTargetForBeforeRunEvent(ConfigurationType type, String runConfigurationName) {
