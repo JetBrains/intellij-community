@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.events;
 import com.intellij.execution.StepsBeforeRunProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 
 import java.util.Arrays;
@@ -25,9 +27,15 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
     return getState().getTask(configuration.getType(), configuration.getName()) != null;
   }
 
-  public boolean executeTask(DataContext context, RunConfiguration configuration) {
-    final MavenTask task = getState().getTask(configuration.getType(), configuration.getName());
-    return task != null && getEventsHandler().execute(Arrays.asList(task));
+  public boolean executeTask(DataContext context, final RunConfiguration configuration) {
+    final boolean [] result = new boolean[]{false};
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final MavenTask task = getState().getTask(configuration.getType(), configuration.getName());
+        result [0] = task != null && getEventsHandler().execute(Arrays.asList(task));
+      }
+    }, EventsBundle.message("execute.before.launch.steps.title"), true, DataKeys.PROJECT.getData(context));
+    return result[0];
   }
 
   public void copyTaskData(final RunConfiguration from, final RunConfiguration to) {
