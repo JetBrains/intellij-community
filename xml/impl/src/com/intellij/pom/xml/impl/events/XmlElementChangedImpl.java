@@ -18,4 +18,8 @@ public class XmlElementChangedImpl implements XmlElementChanged {
   public void accept(XmlChangeVisitor visitor) {
     visitor.visitXmlElementChanged(this);
   }
+
+  public String toString() {
+    return "Xml element changed: " + myElement;
+  }
 }
