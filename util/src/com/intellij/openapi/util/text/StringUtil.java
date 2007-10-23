@@ -1166,6 +1166,21 @@ public class StringUtil {
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
 
+  public static String escapeToRegexp(String text) {
+    StringBuilder result = StringBuilderSpinAllocator.alloc();
+    for (int i = 0; i < text.length(); i++) {
+      final char c = text.charAt(i);
+      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c)) {
+        result.append(c);
+      }
+      else {
+        result.append('\\').append(c);
+      }
+    }
+
+    return result.toString();
+  }
+
   @SuppressWarnings({"AssignmentToForLoopParameter"})
   private static String replace(final String text, final String[] from, final String[] to) {
     final StringBuilder result = StringBuilderSpinAllocator.alloc();

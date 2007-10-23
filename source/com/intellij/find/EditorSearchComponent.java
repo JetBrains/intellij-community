@@ -53,13 +53,15 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   private final Color GRADIENT_C1;
   private final Color GRADIENT_C2;
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
-  public static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
+  private static final Color COMPLETION_BACKGROUND_COLOR = new Color(235, 244, 254);
   private static final Color FOCUS_CATCHER_COLOR = new Color(0x9999ff);
   private final JComponent myToolbarComponent;
   private com.intellij.openapi.editor.event.DocumentAdapter myDocumentListener;
   private ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
   private boolean myOkToSearch = false;
   private boolean myHasMatches = false;
+  private final JCheckBox myCbRegexp;
+  private JCheckBox myCbWholeWords;
 
   @Nullable
   public Object getData(@NonNls final String dataId) {
@@ -126,24 +128,24 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     leadPanel.add(myToolbarComponent);
 
     final JCheckBox cbMatchCase = new NonFocusableCheckBox("Case sensitive");
-    final JCheckBox cbWholeWords = new NonFocusableCheckBox("Match whole words only");
-    final JCheckBox cbRegexp = new NonFocusableCheckBox("Regex");
+    myCbWholeWords = new NonFocusableCheckBox("Match whole words only");
+    myCbRegexp = new NonFocusableCheckBox("Regex");
 
     leadPanel.add(cbMatchCase);
-    leadPanel.add(cbWholeWords);
-    leadPanel.add(cbRegexp);
+    leadPanel.add(myCbWholeWords);
+    leadPanel.add(myCbRegexp);
 
     cbMatchCase.setSelected(isCaseSensitive());
-    cbWholeWords.setSelected(isWholeWords());
-    cbRegexp.setSelected(isRegexp());
+    myCbWholeWords.setSelected(isWholeWords());
+    myCbRegexp.setSelected(isRegexp());
 
     cbMatchCase.setMnemonic('C');
-    cbWholeWords.setMnemonic('M');
-    cbRegexp.setMnemonic('R');
+    myCbWholeWords.setMnemonic('M');
+    myCbRegexp.setMnemonic('R');
 
-    setSmallerFontAndOpaque(cbWholeWords);
+    setSmallerFontAndOpaque(myCbWholeWords);
     setSmallerFontAndOpaque(cbMatchCase);
-    setSmallerFontAndOpaque(cbRegexp);
+    setSmallerFontAndOpaque(myCbRegexp);
 
     cbMatchCase.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -154,20 +156,20 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       }
     });
 
-    cbWholeWords.addActionListener(new ActionListener() {
+    myCbWholeWords.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final boolean b = cbWholeWords.isSelected();
+        final boolean b = myCbWholeWords.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setWholeWordsOnly(b);
         FindSettings.getInstance().setLocalWholeWordsOnly(b);
         updateResults(true);
       }
     });
 
-    cbRegexp.addActionListener(new ActionListener() {
+    myCbRegexp.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        final boolean b = cbRegexp.isSelected();
-        cbWholeWords.setEnabled(!b);
+        final boolean b = myCbRegexp.isSelected();
         FindManager.getInstance(myProject).getFindInFileModel().setRegularExpressions(b);
+        myCbWholeWords.setEnabled(!b);
         updateResults(true);
       }
     });
@@ -250,7 +252,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private void searchBackward() {
-    if (isOkToSearch()) {
+    if (hasMatches()) {
       final SelectionModel model = myEditor.getSelectionModel();
       if (model.hasSelection()) {
         if (Comparing.equal(mySearchField.getText(), model.getSelectedText(), isCaseSensitive()) && myEditor.getCaretModel().getOffset() == model.getSelectionEnd()) {
@@ -264,7 +266,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
   }
 
   private void searchForward() {
-    if (isOkToSearch()) {
+    if (hasMatches()) {
       final SelectionModel model = myEditor.getSelectionModel();
       if (model.hasSelection()) {
         if (Comparing.equal(mySearchField.getText(), model.getSelectedText(), isCaseSensitive()) && myEditor.getCaretModel().getOffset() == model.getSelectionStart()) {
@@ -436,8 +438,18 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     return FindManager.getInstance(myProject).getFindInFileModel().isCaseSensitive();
   }
 
-  private boolean isRegexp() {
-    return FindManager.getInstance(myProject).getFindInFileModel().isRegularExpressions();
+  public boolean isRegexp() {
+    return myCbRegexp.isSelected() || FindManager.getInstance(myProject).getFindInFileModel().isRegularExpressions();
+  }
+
+  public void setRegexp(boolean r) {
+    myCbRegexp.setSelected(r);
+    myCbWholeWords.setEnabled(!r);
+    updateResults(false);
+  }
+
+  public void setSearchText(String text) {
+    mySearchField.setText(text);
   }
 
   private void removeCurrentHighlights() {
@@ -500,11 +512,11 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(isOkToSearch());
+      e.getPresentation().setEnabled(hasMatches());
     }
   }
 
-  private boolean isOkToSearch() {
+  public boolean hasMatches() {
     return myOkToSearch && myHasMatches;
   }
 
@@ -526,7 +538,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     }
 
     public void update(final AnActionEvent e) {
-      e.getPresentation().setEnabled(isOkToSearch());
+      e.getPresentation().setEnabled(hasMatches());
     }
   }
 
@@ -561,7 +573,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     public void update(final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(isOkToSearch());
+      e.getPresentation().setEnabled(hasMatches());
     }
 
     public void actionPerformed(final AnActionEvent e) {

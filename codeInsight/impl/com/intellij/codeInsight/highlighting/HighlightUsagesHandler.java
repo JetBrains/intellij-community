@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.lang.LangBundle;
@@ -27,6 +28,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -43,7 +45,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -124,10 +125,31 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   private static void doRangeHighlighting(Editor editor, Project project) {
     if (!editor.getSelectionModel().hasSelection()) return;
+
+    final String text = editor.getSelectionModel().getSelectedText();
+    if (text == null || text.indexOf('\n') >= 0) return;
+
     if (editor instanceof EditorWindow) {
       // highlight selection in the whole editor, not injected fragment only  
       editor = ((EditorWindow)editor).getDelegate();
     }
+
+    final JComponent oldHeader = editor.getHeaderComponent();
+    if (oldHeader instanceof EditorSearchComponent) {
+      final EditorSearchComponent oldSearch = (EditorSearchComponent)oldHeader;
+      if (oldSearch.hasMatches()) {
+        String oldText = oldSearch.getTextInField();
+        if (!oldSearch.isRegexp()) {
+          oldText = StringUtil.escapeToRegexp(oldText);
+          oldSearch.setRegexp(true);
+        }
+
+        String newText = oldText + '|' + StringUtil.escapeToRegexp(text);
+        oldSearch.setTextInField(newText);
+        return;
+      }
+    }
+
     final EditorSearchComponent header = new EditorSearchComponent(editor, project);
     editor.setHeaderComponent(header);
   }
