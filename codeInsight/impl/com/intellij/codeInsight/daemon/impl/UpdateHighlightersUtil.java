@@ -253,6 +253,7 @@ public class UpdateHighlightersUtil {
     }
 
     for (LineMarkerInfo info : markers) {
+      if (startOffset > info.startOffset || info.startOffset > endOffset) continue;
       RangeHighlighter marker = document.getMarkupModel(project).addRangeHighlighter(info.startOffset,
                                                                                      info.startOffset,
                                                                                      HighlighterLayer.ADDITIONAL_SYNTAX,
