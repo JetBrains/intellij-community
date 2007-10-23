@@ -717,11 +717,12 @@ public abstract class PomTreeStructure extends SimpleTreeStructure {
 
     public boolean containsAsModule(final PomNode node) {
       if (mavenProject != null) {
-        String relPath =
-          FileUtil.getRelativePath(new File(virtualFile.getPath()).getParentFile(), new File(node.virtualFile.getPath()).getParentFile());
-        relPath = FileUtil.toSystemIndependentName(relPath);
+        File myParent = new File(virtualFile.getPath()).getParentFile();
+        File itsParent = new File(node.virtualFile.getPath()).getParentFile();
+        String relPath = FileUtil.getRelativePath(myParent, itsParent);
 
         if (relPath != null) {
+          relPath = FileUtil.toSystemIndependentName(relPath);
           for (String moduleName : ProjectUtil
             .collectRelativeModulePaths(mavenProject, myProjectsState.getProfiles(virtualFile), new HashSet<String>())) {
             if (relPath.equals(moduleName)) {
