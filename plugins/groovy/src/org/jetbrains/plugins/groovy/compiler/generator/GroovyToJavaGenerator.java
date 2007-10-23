@@ -400,7 +400,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         final GrVariable[] variables = ((GrVariableDeclaration) decl).getVariables();
 
         for (GrVariable variable : variables) {
-          if (variable instanceof GrField) {
+          if (variable instanceof GrField && ((GrField) variable).isProperty()) {
             if (!gettersNames.contains(variable.getName())) {
               writeMethod(text, ((GrField) variable).getGetter());
             }
