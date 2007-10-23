@@ -1,10 +1,10 @@
 package com.intellij.ide.favoritesTreeView.actions;
 
+import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
+import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.ClassSmartPointerNode;
 import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.FieldSmartPointerNode;
 import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.MethodSmartPointerNode;
-import com.intellij.ide.favoritesTreeView.FavoritesManager;
-import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -40,7 +40,7 @@ public class AddToFavoritesAction extends AnAction {
   private String myFavoritesListName;
 
   public AddToFavoritesAction(String choosenList) {
-    super(choosenList);
+    super(choosenList.replaceAll("_", "__"));
     myFavoritesListName = choosenList;
   }
 
