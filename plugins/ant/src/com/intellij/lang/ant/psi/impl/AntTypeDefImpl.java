@@ -536,7 +536,7 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       return cached;
     }
     
-    final ClassLoader loader = new UrlClassLoader(urls, parentLoader, false, true);
+    final ClassLoader loader = new UrlClassLoader(urls, parentLoader, false, false);
     LOADERS_CACHE.setClassLoader(urls, loader);
     return loader;
   }
