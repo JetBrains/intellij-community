@@ -24,6 +24,15 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     return TestUtils.getTestDataPath() + "/resolve/method/";
   }
 
+
+  public void testStaticImport2() throws Exception {
+    PsiReference ref = configureByFile("staticImport2/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertEquals(((GrMethod) resolved).getParameters().length, 1);
+    assertEquals(((GrMethod) resolved).getName(), "isShrimp");
+  }
+
   public void testSimple() throws Exception {
     PsiReference ref = configureByFile("simple/A.groovy");
     PsiElement resolved = ref.resolve();
@@ -114,11 +123,11 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
   public void testScriptMethod() throws Exception {
-   PsiReference ref = configureByFile("scriptMethod/A.groovy");
-   PsiElement resolved = ref.resolve();
-   assertTrue(resolved instanceof PsiMethod);
-   assertEquals("groovy.lang.Script", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
- }
+    PsiReference ref = configureByFile("scriptMethod/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertEquals("groovy.lang.Script", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
+  }
 
   public void testArrayDefault() throws Exception {
     PsiReference ref = configureByFile("arrayDefault/A.groovy");

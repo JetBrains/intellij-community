@@ -35,7 +35,7 @@ import java.util.*;
 
 /**
  * @author ven
- * Resolves methods from call expression or function application.
+ *         Resolves methods from call expression or function application.
  */
 public class MethodResolverProcessor extends ResolverProcessor {
   @Nullable
@@ -62,17 +62,18 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (!isAccessible((PsiNamedElement) element)) return true;
 
       substitutor = inferMethodTypeParameters(method, substitutor);
-      if (myForCompletion || PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression)) {
+      if (myForCompletion ||
+          (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression)) &&
+              myName != null && myName.equals(method.getName())) {
         myCandidates.add(new GroovyResolveResultImpl(method, true, myCurrentFileResolveContext, substitutor));
-      }
-      else {
+      } else {
         myInapplicableCandidates.add(new GroovyResolveResultImpl(method, true, myCurrentFileResolveContext, substitutor));
       }
 
       return true;
     } else if (element instanceof PsiVariable) {
       if (myForCompletion ||
-          element instanceof GrField && ((GrField)element).isProperty() ||
+          element instanceof GrField && ((GrField) element).isProperty() ||
           ((PsiVariable) element).getType().equalsToText("groovy.lang.Closure")) {
         return super.execute(element, substitutor);
       }
@@ -84,7 +85,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private PsiSubstitutor inferMethodTypeParameters(PsiMethod method, PsiSubstitutor partialSubstitutor) {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length == 0) return partialSubstitutor;
-    
+
     if (argumentsSupplied()) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final int max = Math.max(parameters.length, myArgumentTypes.length);
@@ -100,8 +101,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
           } else {
             parameterTypes[i] = type;
           }
-        }
-        else {
+        } else {
           if (parameters.length > 0) {
             final PsiType lastParameterType = parameters[parameters.length - 1].getType();
             if (myArgumentTypes.length > parameters.length && lastParameterType instanceof PsiEllipsisType) {
@@ -146,7 +146,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
     if (parent instanceof GrReturnStatement) {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class);
       if (method != null) rType = method.getDeclaredReturnType();
-    } else if (parent instanceof GrAssignmentExpression && myPlace.equals(((GrAssignmentExpression) parent).getRValue())) {
+    } else
+    if (parent instanceof GrAssignmentExpression && myPlace.equals(((GrAssignmentExpression) parent).getRValue())) {
       rType = ((GrAssignmentExpression) parent).getLValue().getType();
     } else if (parent instanceof GrVariable) {
       rType = ((GrVariable) parent).getDeclaredType();
@@ -170,7 +171,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
     PsiManager manager = myPlace.getManager();
     GlobalSearchScope scope = myPlace.getResolveScope();
-    
+
     boolean methodsPresent = array[0].getElement() instanceof PsiMethod;
     boolean propertiesPresent = !methodsPresent;
     Outer:
@@ -186,7 +187,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
             PsiMethod method = (PsiMethod) element;
             if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor(), manager, scope)) {
               continue Outer;
-            } else if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor(), manager, scope)) {
+            } else
+            if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor(), manager, scope)) {
               iterator.remove();
             }
           }
@@ -201,7 +203,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     if (!myForCompletion) {
       if (methodsPresent && propertiesPresent) {
         for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
-          GroovyResolveResult resolveResult =  iterator.next();
+          GroovyResolveResult resolveResult = iterator.next();
           if (!(resolveResult.getElement() instanceof PsiMethod)) iterator.remove();
         }
       }
@@ -237,8 +239,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
       type1 = ((PsiArrayType) type1).getComponentType();
     }
     return argumentsSupplied() ? //resolve, otherwise same_name_variants
-           TypesUtil.isAssignable(type1, type2, manager, scope) :
-           type1.equals(type2);
+        TypesUtil.isAssignable(type1, type2, manager, scope) :
+        type1.equals(type2);
   }
 
   private boolean argumentsSupplied() {
