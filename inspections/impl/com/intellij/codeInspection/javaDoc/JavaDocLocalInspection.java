@@ -396,6 +396,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       }
     }
     checkForPeriodInDoc(docComment, problems, manager);
+    checkInlineTags(manager, problems, docComment.getDescriptionElements(), docComment.getManager().getJavadocManager());
 
     for (PsiDocTag tag : tags) {
       for (int i = 0; i < tagsToCheck.length; i++) {
@@ -450,6 +451,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
+    checkInlineTags(manager, problems, docComment.getDescriptionElements(), docComment.getManager().getJavadocManager());
     checkForPeriodInDoc(docComment, problems, manager);
     checkDuplicateTags(docComment.getTags(), problems, manager);
     return problems.isEmpty()
@@ -493,6 +495,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
+
+    checkInlineTags(manager, problems, descriptionElements, docComment.getManager().getJavadocManager());
 
     final PsiDocTag tagByName = docComment.findTagByName("inheritDoc");
     if (tagByName != null) {
@@ -853,9 +857,24 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           problems.add(createDescriptor(valueElement, message, inspectionManager));
         }
       }
+      checkInlineTags(inspectionManager, problems, tag.getDataElements(), manager);
     }
 
     return problems.isEmpty() ? null : problems;
+  }
+
+  private void checkInlineTags(final InspectionManager inspectionManager,
+                               final ArrayList<ProblemDescriptor> problems,
+                               final PsiElement[] dataElements,
+                               final JavadocManager manager) {
+    for (PsiElement dataElement : dataElements) {
+      if (dataElement instanceof PsiInlineDocTag) {
+        final PsiInlineDocTag inlineDocTag = (PsiInlineDocTag)dataElement;
+        if (manager.getTagInfo(inlineDocTag.getName()) == null) {
+          problems.add(createDescriptor(inlineDocTag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.wrong.tag", "<code>" + inlineDocTag.getName() + "</code>"), new AddUnknownTagToCustoms(inlineDocTag), inspectionManager));
+        }
+      }
+    }
   }
 
   @SuppressWarnings({"SimplifiableIfStatement"})
