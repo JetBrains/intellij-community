@@ -119,7 +119,7 @@ public abstract class NewActionBase extends CreateElementActionBase {
     return GroovyBundle.message("newclass.progress.text", newName);
   }
 
-  protected final void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
+  protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
     directory.checkCreateClass(newName);
   }
 }
