@@ -427,7 +427,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myFile = null;
     myEditor = null;
     int offset = -1;
-    for (String filePath : filePaths) {
+    for (int i = filePaths.length - 1; i >= 0; i--) {
+      String filePath = filePaths[i];
       int fileOffset = configureByFileInner(filePath);
       if (fileOffset > 0) {
         offset = fileOffset;
@@ -462,18 +463,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    if (myFile == null) myFile = myPsiManager.findFile(copy);
+    myFile = myPsiManager.findFile(copy);
     int offset = -1;
-    if (myEditor == null) {
-      myEditor = createEditor(copy);
-      assert myEditor != null;
-      if (loader.caretMarker != null) {
-        offset = loader.caretMarker.getStartOffset();
-        myEditor.getCaretModel().moveToOffset(offset);
-      }
-      if (loader.selStartMarker != null && loader.selEndMarker != null) {
-        myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
-      }
+    myEditor = createEditor(copy);
+    assert myEditor != null;
+    if (loader.caretMarker != null) {
+      offset = loader.caretMarker.getStartOffset();
+      myEditor.getCaretModel().moveToOffset(offset);
+    }
+    if (loader.selStartMarker != null && loader.selEndMarker != null) {
+      myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
     }
     return offset;
   }
@@ -584,7 +583,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public static List<IntentionAction> getAvailableIntentions(final Project project, final Collection<HighlightInfo> infos, final int offset,
-                                                       final Editor editor, final PsiFile file) {
+                                                             final Editor editor, final PsiFile file) {
     final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
 
     for (HighlightInfo info :infos) {
@@ -654,8 +653,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   }
   private void checkResultByFile(@NonNls String expectedFile,
-                                   @NotNull PsiFile originalFile,
-                                   boolean stripTrailingSpaces) throws IOException {
+                                 @NotNull PsiFile originalFile,
+                                 boolean stripTrailingSpaces) throws IOException {
 
     Project project = myProjectFixture.getProject();
 
