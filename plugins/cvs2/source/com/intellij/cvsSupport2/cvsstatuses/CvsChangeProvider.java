@@ -46,7 +46,7 @@ import java.util.Date;
 public class CvsChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider");
 
-  private CvsVcs2 myVcs;
+  private final CvsVcs2 myVcs;
   private final CvsEntriesManager myEntriesManager;
 
   public CvsChangeProvider(final CvsVcs2 vcs, CvsEntriesManager entriesManager) {
@@ -55,6 +55,9 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, final ProgressIndicator progress) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Processing changes for scope " + dirtyScope);
+    }
     for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
       final VirtualFile dir = path.getVirtualFile();
       if (dir != null) {
@@ -125,7 +128,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
     if (recursively) {
       for (VirtualFile file : dir.getChildren()) {
-        if (file.isDirectory()) {
+        if (file.isDirectory() && !ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex().isIgnored(file)) {
           processEntriesIn(file, scope, builder, true);
         }
       }
@@ -248,6 +251,9 @@ public class CvsChangeProvider implements ChangeProvider {
                              final VcsRevisionNumber number,
                              final boolean isBinary,
                              final ChangelistBuilder builder) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("processStatus: filePath=" + filePath + " status=" + status);
+    }
     if (status == FileStatus.NOT_CHANGED) {
       if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
         builder.processChange(
@@ -313,6 +319,9 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private static DirectoryContent getDirectoryContent(VirtualFile directory) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Retrieving directory content for " + directory);
+    }
     CvsInfo cvsInfo = CvsEntriesManager.getInstance().getCvsInfoFor(directory);
     DirectoryContent result = new DirectoryContent(cvsInfo);
 
@@ -377,8 +386,8 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private class CvsUpToDateRevision implements ContentRevision {
-    protected FilePath myPath;
-    private VcsRevisionNumber myRevisionNumber;
+    protected final FilePath myPath;
+    private final VcsRevisionNumber myRevisionNumber;
     private String myContent;
 
     protected CvsUpToDateRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
@@ -404,7 +413,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     @Nullable
-    protected byte[] getUpToDateBinaryContent() throws VcsException, CannotFindCvsRootException {
+    protected byte[] getUpToDateBinaryContent() throws CannotFindCvsRootException {
       VirtualFile virtualFile = myPath.getVirtualFile();
       byte[] result = null;
       if (virtualFile != null) {

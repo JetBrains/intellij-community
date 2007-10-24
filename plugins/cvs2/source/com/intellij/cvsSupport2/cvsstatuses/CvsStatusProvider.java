@@ -68,8 +68,12 @@ public class CvsStatusProvider {
       return FileStatus.MODIFIED;
     }
 
-    return (timeStampsAreEqual(revisionDate.getTime(), CvsVfsUtil.getTimeStamp(file))) ?
-                                                                                       FileStatus.NOT_CHANGED : FileStatus.MODIFIED;
+    final long entryDate = revisionDate.getTime();
+    final long fileDate = CvsVfsUtil.getTimeStamp(file);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getStatus() for " + file.getPath() + ": entry date " + entryDate + ", file date " + fileDate);
+    }
+    return (timeStampsAreEqual(entryDate, fileDate)) ? FileStatus.NOT_CHANGED : FileStatus.MODIFIED;
 
   }
 
