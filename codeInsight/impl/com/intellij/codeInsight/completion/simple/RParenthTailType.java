@@ -46,8 +46,8 @@ public abstract class RParenthTailType extends TailType {
       return moveCaret(editor, tailOffset, 1);
     }
     if (spaceWithinParens && tailOffset == existingRParenthOffset) {
-      insertChar(editor, tailOffset, ' ');
-    }
+      existingRParenthOffset = insertChar(editor, tailOffset, ' ');
+    }                        
     return moveCaret(editor, existingRParenthOffset, 1);
   }
 
