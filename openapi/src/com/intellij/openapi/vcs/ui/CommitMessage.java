@@ -55,7 +55,12 @@ public class CommitMessage extends JPanel implements Disposable {
   }
 
   public String getComment() {
-    return myCommentArea.getText().trim();
+    final String s = myCommentArea.getText();
+    int end = s.length();
+    while(end > 0 && Character.isSpaceChar(s.charAt(end-1))) {
+      end--;
+    }
+    return s.substring(0, end);
   }
 
   public void init() {
