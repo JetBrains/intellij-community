@@ -281,6 +281,7 @@ public class MavenToIdeaConverter {
   private static boolean isSupportedArtifact(final Artifact newArtifact) {
     String t = newArtifact.getType();
     return t.equalsIgnoreCase(JAR_TYPE)
+           || t.equalsIgnoreCase("test-jar")
            || t.equalsIgnoreCase("ejb")
            || t.equalsIgnoreCase("ear")
            || t.equalsIgnoreCase("sar")
