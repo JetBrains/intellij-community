@@ -20,19 +20,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
@@ -57,7 +52,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   }
 
   public boolean isEnabled(Editor editor, DataContext dataContext) {
-    return myOriginalHandler.isEnabled(editor, dataContext);
+//    return myOriginalHandler.isEnabled(editor, dataContext);
+    return HandlerUtils.isEnabled(editor, dataContext, myOriginalHandler);
   }
 
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
@@ -93,6 +89,9 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   private boolean handleEnter(Editor editor, DataContext dataContext) throws IncorrectOperationException {
     final Project project = DataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
+    if (!HandlerUtils.canBeInvoked(editor, dataContext)) {
+      return false;
+    }
     int caretOffset = editor.getCaretModel().getOffset();
     if (caretOffset < 1) return false;
 
