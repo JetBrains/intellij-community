@@ -318,6 +318,7 @@ public class PluginManagerMain {
           setDownloadStatus(false);
         }
         else if (error != null) {
+          LOG.info(error);
           setDownloadStatus(false);
           if (0==Messages.showDialog(
             IdeBundle.message("error.list.of.plugins.was.not.loaded", error.getMessage()),
