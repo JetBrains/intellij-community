@@ -75,11 +75,6 @@ public class IndentSelectionAction extends EditorAction {
     try {
       for(int i=startIndex; i<=endIndex; i++) {
         EditorActionUtil.indentLine(project, editor, i, blockIndent);
-
-        if (bulkMode && i == endIndex) {
-          ((DocumentEx)document).setInBulkUpdate(false);
-          bulkMode = false;
-        }
       }
     }
     finally {

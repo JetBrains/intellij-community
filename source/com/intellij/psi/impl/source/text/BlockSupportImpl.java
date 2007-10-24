@@ -233,7 +233,7 @@ public class BlockSupportImpl extends BlockSupport {
       if (data != null) fileImpl.putUserData(DO_NOT_REPARSE_INCREMENTALLY, null);
 
       if (data != null && data.booleanValue()) { // TODO: Just to switch off incremental tree patching for certain conditions (like languages) if necessary.
-        replaceFileElementWithEvents(fileImpl, oldFileElement, newFileElement, manager);
+        replaceFileElementWithEvents(fileImpl, oldFileElement, newFileElement);
       }
       else {
         mergeTrees(fileImpl, oldFileElement, newFileElement);
@@ -241,9 +241,7 @@ public class BlockSupportImpl extends BlockSupport {
     }
   }
 
-  static void replaceFileElementWithEvents(final PsiFileImpl fileImpl, final FileElement fileElement,
-                                         final FileElement newFileElement,
-                                         final PsiManagerEx manager) {
+  private static void replaceFileElementWithEvents(final PsiFileImpl fileImpl, final FileElement fileElement, final FileElement newFileElement) {
     fileImpl.getTreeElement().setCharTable(newFileElement.getCharTable());
     ChangeUtil.replaceAllChildren(fileElement, newFileElement);
   }
@@ -280,14 +278,14 @@ public class BlockSupportImpl extends BlockSupport {
         try {
           ChameleonTransforming.transformChildren(newRoot);
         }
-        catch (BlockSupport.ReparsedSuccessfullyException e) {
+        catch (ReparsedSuccessfullyException e) {
           return; // Successfully merged in PsiBuilderImpl
         }
         
         ChameleonTransforming.transformChildren(oldRoot, true);
 
         model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
-          public PomModelEvent runInner() throws IncorrectOperationException {
+          public PomModelEvent runInner() {
             final ASTDiffBuilder builder = new ASTDiffBuilder(file);
             DiffTree.diff(new ASTStructure(oldRoot), new ASTStructure(newRoot), new ASTShallowComparator(), builder);
             file.subtreeChanged();

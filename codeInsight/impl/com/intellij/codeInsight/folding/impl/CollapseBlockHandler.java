@@ -1,15 +1,13 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.JavaTokenType;
 
 /**
  * @author ven
@@ -29,7 +27,8 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
         }
         if (element == null) return;
         PsiCodeBlock block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
-        FoldRegion previous = null, myPrevious = null;
+        FoldRegion previous = null;
+        FoldRegion myPrevious = null;
         while (block != null) {
           int start = block.getTextRange().getStartOffset();
           int end = block.getTextRange().getEndOffset();

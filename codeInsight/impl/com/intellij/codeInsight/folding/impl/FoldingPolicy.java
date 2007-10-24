@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -19,8 +20,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.util.HtmlUtil;
 import com.intellij.util.ReflectionCache;
+import com.intellij.xml.util.HtmlUtil;
 
 import java.util.*;
 
@@ -36,8 +37,7 @@ class FoldingPolicy {
     TreeMap<PsiElement, TextRange> map = new TreeMap<PsiElement, TextRange>(new Comparator<PsiElement>() {
       public int compare(PsiElement element, PsiElement element1) {
         int startOffsetDiff = element.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
-        return startOffsetDiff != 0 ? startOffsetDiff :
-               element.getTextRange().getEndOffset() - element1.getTextRange().getEndOffset();
+        return startOffsetDiff == 0 ? element.getTextRange().getEndOffset() - element1.getTextRange().getEndOffset() : startOffsetDiff;
       }
     });
     final Language lang = file.getLanguage();
@@ -83,8 +83,8 @@ class FoldingPolicy {
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
       if (child instanceof PsiAnnotation) {
-        int j;
         addToFold(foldElements, child, document, false);
+        int j;
         for (j = i + 1; j < children.length; j++) {
           PsiElement nextChild = children[j];
           if (nextChild instanceof PsiModifier) break;
@@ -172,10 +172,10 @@ class FoldingPolicy {
       if (body == null) return null;
       return body.getTextRange();
     }
-    else if (element instanceof PsiClassInitializer) {
+    if (element instanceof PsiClassInitializer) {
       return ((PsiClassInitializer)element).getBody().getTextRange();
     }
-    else if (element instanceof PsiClass) {
+    if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
       PsiJavaToken lBrace = aClass.getLBrace();
       if (lBrace == null) return null;
@@ -183,10 +183,10 @@ class FoldingPolicy {
       if (rBrace == null) return null;
       return new TextRange(lBrace.getTextOffset(), rBrace.getTextOffset() + 1);
     }
-    else if (element instanceof PsiJavaFile) {
+    if (element instanceof PsiJavaFile) {
       return getFileHeader((PsiJavaFile)element);
     }
-    else if (element instanceof PsiImportList) {
+    if (element instanceof PsiImportList) {
       PsiImportList list = (PsiImportList)element;
       PsiImportStatementBase[] statements = list.getAllImportStatements();
       if (statements.length == 0) return null;
@@ -196,19 +196,20 @@ class FoldingPolicy {
       int endOffset = statements[statements.length - 1].getTextRange().getEndOffset();
       return new TextRange(startOffset, endOffset);
     }
-    else if (element instanceof PsiDocComment) {
+    if (element instanceof PsiDocComment) {
       return element.getTextRange();
     }
-    else if (element instanceof XmlTag) {
+    if (element instanceof XmlTag) {
       final FoldingBuilder foldingBuilder = element.getLanguage().getFoldingBuilder();
 
       if (foldingBuilder instanceof XmlFoldingBuilder) {
         return ((XmlFoldingBuilder)foldingBuilder).getRangeToFold(element);
       }
-    } else if (element instanceof PsiAnnotation) {
+    }
+    else if (element instanceof PsiAnnotation) {
       int startOffset = element.getTextRange().getStartOffset();
       PsiElement last = element;
-      while(element instanceof PsiAnnotation) {
+      while (element instanceof PsiAnnotation) {
         last = element;
         element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class, PsiComment.class);
       }
@@ -348,7 +349,7 @@ class FoldingPolicy {
         T namedChild = (T)child;
         final String childName = namedChild.getName();
 
-        if ((name != null && name.equals(childName)) || name == childName) {
+        if (Comparing.equal(name, childName)) {
           if (namedChild.equals(element)) {
             return index;
           }
@@ -371,11 +372,11 @@ class FoldingPolicy {
         return null;
       }
     }
-    else if (element instanceof PsiMethod) {
+    if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       PsiElement parent = method.getParent();
 
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append("method#");
       String name = method.getName();
       buffer.append(name);
@@ -391,11 +392,11 @@ class FoldingPolicy {
 
       return buffer.toString();
     }
-    else if (element instanceof PsiClass) {
+    if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
       PsiElement parent = aClass.getParent();
 
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append("class#");
       if (parent instanceof PsiClass || parent instanceof PsiFile) {
         String name = aClass.getName();
@@ -418,11 +419,11 @@ class FoldingPolicy {
 
       return buffer.toString();
     }
-    else if (element instanceof PsiClassInitializer) {
+    if (element instanceof PsiClassInitializer) {
       PsiClassInitializer initializer = (PsiClassInitializer)element;
       PsiElement parent = initializer.getParent();
 
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append("initializer#");
 
       int index = 0;
@@ -445,11 +446,11 @@ class FoldingPolicy {
 
       return buffer.toString();
     }
-    else if (element instanceof PsiField) { // needed for doc-comments only
+    if (element instanceof PsiField) { // needed for doc-comments only
       PsiField field = (PsiField)element;
       PsiElement parent = field.getParent();
 
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append("field#");
       String name = field.getName();
       buffer.append(name);
@@ -466,8 +467,8 @@ class FoldingPolicy {
 
       return buffer.toString();
     }
-    else if (element instanceof PsiDocComment) {
-      StringBuffer buffer = new StringBuffer();
+    if (element instanceof PsiDocComment) {
+      StringBuilder buffer = new StringBuilder();
       buffer.append("docComment;");
 
       PsiElement parent = element.getParent();
@@ -480,11 +481,11 @@ class FoldingPolicy {
 
       return buffer.toString();
     }
-    else if (element instanceof XmlTag) {
+    if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
       PsiElement parent = tag.getParent();
 
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       buffer.append("tag#");
       String name = tag.getName();
       buffer.append(name.length() == 0 ? "<unnamed>" : name);
@@ -500,9 +501,6 @@ class FoldingPolicy {
 
       return buffer.toString();
     }
-    else if (element instanceof PsiJavaFile) {
-      return null;
-    }
     return null;
   }
 
@@ -514,7 +512,7 @@ class FoldingPolicy {
         T namedChild = (T)child;
         final String childName = namedChild.getName();
 
-        if ((name != null && name.equals(childName)) || name == childName) {
+        if (Comparing.equal(name, childName)) {
           if (index == 0) {
             return namedChild;
           }
@@ -528,7 +526,7 @@ class FoldingPolicy {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static PsiElement restoreBySignature(PsiFile file, String signature) {
-    int semicolonIndex = signature.indexOf(";");
+    int semicolonIndex = signature.indexOf(';');
     PsiElement parent;
 
     if (semicolonIndex >= 0) {
@@ -573,21 +571,19 @@ class FoldingPolicy {
 
         return restoreElementInternal(parent, name, index, PsiClass.class);
       }
-      else {
-        StringTokenizer tok1 = new StringTokenizer(name, ":");
-        int start = Integer.parseInt(tok1.nextToken());
-        int end = Integer.parseInt(tok1.nextToken());
-        PsiElement element = file.findElementAt(start);
-        if (element != null) {
-          TextRange range = element.getTextRange();
-          while (range != null && range.getEndOffset() < end) {
-            element = element.getParent();
-            range = element.getTextRange();
-          }
+      StringTokenizer tok1 = new StringTokenizer(name, ":");
+      int start = Integer.parseInt(tok1.nextToken());
+      int end = Integer.parseInt(tok1.nextToken());
+      PsiElement element = file.findElementAt(start);
+      if (element != null) {
+        TextRange range = element.getTextRange();
+        while (range != null && range.getEndOffset() < end) {
+          element = element.getParent();
+          range = element.getTextRange();
+        }
 
-          if (range != null && range.getEndOffset() == end && element instanceof PsiClass) {
-            return element;
-          }
+        if (range != null && range.getEndOffset() == end && element instanceof PsiClass) {
+          return element;
         }
       }
 

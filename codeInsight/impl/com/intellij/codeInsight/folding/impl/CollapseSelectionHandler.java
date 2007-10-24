@@ -31,7 +31,7 @@ public class CollapseSelectionHandler implements CodeInsightActionHandler {
                   int end = editor.getSelectionModel().getSelectionEnd();
                   Document doc = editor.getDocument();
                   if (start < end && doc.getCharsSequence().charAt(end-1) == '\n') end--;
-                  FoldRegion region = null;
+                  FoldRegion region;
                   if ((region = FoldingUtil.findFoldRegion(editor, start, end)) != null) {
                     if (info.getPsiElement(region) == null) {
                       editor.getFoldingModel().removeFoldRegion(region);

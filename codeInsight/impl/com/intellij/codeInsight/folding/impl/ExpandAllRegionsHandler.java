@@ -1,12 +1,13 @@
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 
 public class ExpandAllRegionsHandler implements CodeInsightActionHandler {
   public void invoke(Project project, final Editor editor, PsiFile file){
@@ -19,18 +20,17 @@ public class ExpandAllRegionsHandler implements CodeInsightActionHandler {
     Runnable processor = new Runnable() {
         public void run() {
           boolean anythingDone = false;
-          for (int i = 0; i < regions.length; i++) { // try to restore to default state at first
-            FoldRegion region = regions[i];
+          for (FoldRegion region : regions) {
+            // try to restore to default state at first
             PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
-            if (!region.isExpanded() && (element == null || !FoldingPolicy.isCollapseByDefault(element))){
+            if (!region.isExpanded() && (element == null || !FoldingPolicy.isCollapseByDefault(element))) {
               region.setExpanded(true);
               anythingDone = true;
             }
           }
 
           if (!anythingDone){
-            for(int i = 0; i < regions.length; i++){
-              FoldRegion region = regions[i];
+            for (FoldRegion region : regions) {
               region.setExpanded(true);
             }
           }

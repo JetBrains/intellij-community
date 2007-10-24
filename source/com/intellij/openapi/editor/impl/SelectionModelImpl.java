@@ -40,9 +40,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.SelectionModelImpl");
 
-  private CopyOnWriteArrayList<SelectionListener> mySelectionListeners = new CopyOnWriteArrayList<SelectionListener>();
+  private final CopyOnWriteArrayList<SelectionListener> mySelectionListeners = new CopyOnWriteArrayList<SelectionListener>();
   private MyRangeMarker mySelectionMarker = null;
-  private EditorImpl myEditor;
+  private final EditorImpl myEditor;
   private int myLastSelectionStart;
   private LogicalPosition myBlockStart;
   private LogicalPosition myBlockEnd;
@@ -498,7 +498,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
   }
 
-  private static ClipboardOwner defaultClipboardOwner = new ClipboardObserver();
+  private static final ClipboardOwner defaultClipboardOwner = new ClipboardObserver();
 
   public void copySelectionToClipboard() {
     validateContext();

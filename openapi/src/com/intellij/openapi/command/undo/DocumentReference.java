@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author max
  */
 public abstract class DocumentReference {
-  public static DocumentReference[] EMPTY_ARRAY = new DocumentReference[0];
+  public static final DocumentReference[] EMPTY_ARRAY = new DocumentReference[0];
   public int hashCode() {
     VirtualFile file = getFile();
     return file != null ? file.hashCode() : getDocument().hashCode();
@@ -50,7 +50,7 @@ public abstract class DocumentReference {
     if (file == null) return false;
     if (file.isValid()) return false;
     String url1 = getUrl();
-    if ((url1 == null) || (url == null)) return false;
+    if (url1 == null || url == null) return false;
     if (SystemInfo.isFileSystemCaseSensitive)
       return url.equals(url1);
     else

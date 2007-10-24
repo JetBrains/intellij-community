@@ -145,7 +145,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         }
 
         public DocumentReference[] getAffectedDocuments() {
-          return new DocumentReference[0];
+          return DocumentReference.EMPTY_ARRAY;
         }
 
         public boolean isComplex() {

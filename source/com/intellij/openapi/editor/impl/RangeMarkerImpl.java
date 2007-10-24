@@ -3,16 +3,15 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.UserDataHolderBase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx, DocumentListener {
+public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx/*, DocumentListener*/ {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
   protected final Document myDocument;

@@ -32,9 +32,9 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   private final Project myProject;
   private final VirtualFile myFile;
 
-  private ArrayList<Object> myPsiElementsOrRangeMarkers = new ArrayList<Object>();
-  private ArrayList<Boolean> myExpandedStates = new ArrayList<Boolean>();
-  private Map<RangeMarker, String> myPlaceholderTexts = new HashMap<RangeMarker,String>();
+  private final ArrayList<Object> myPsiElementsOrRangeMarkers = new ArrayList<Object>();
+  private final ArrayList<Boolean> myExpandedStates = new ArrayList<Boolean>();
+  private final Map<RangeMarker, String> myPlaceholderTexts = new HashMap<RangeMarker,String>();
   private static final String DEFAULT_PLACEHOLDER = "...";
   @NonNls private static final String ELEMENT_TAG = "element";
   @NonNls private static final String SIGNATURE_ATT = "signature";
@@ -68,7 +68,6 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         else if (region.isValid()) {
           myPsiElementsOrRangeMarkers.add(region);
           String placeholderText = region.getPlaceholderText();
-          if (placeholderText == null) placeholderText = DEFAULT_PLACEHOLDER;
           myPlaceholderTexts.put(region, placeholderText);
         }
         myExpandedStates.add(expanded ? Boolean.TRUE : Boolean.FALSE);
@@ -120,7 +119,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   public void writeExternal(Element element) throws WriteExternalException {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    if (myPsiElementsOrRangeMarkers.size() == 0){
+    if (myPsiElementsOrRangeMarkers.isEmpty()){
       throw new WriteExternalException();
     }
 
@@ -154,7 +153,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
 
         e.setAttribute(DATE_ATT, date);
         e.setAttribute(EXPANDED_ATT, state.toString());
-        String signature = new Integer (marker.getStartOffset()) + ":" + new Integer (marker.getEndOffset());
+        String signature = Integer.valueOf(marker.getStartOffset()) + ":" + Integer.valueOf(marker.getEndOffset());
         e.setAttribute(SIGNATURE_ATT, signature);
         String placeHolderText = myPlaceholderTexts.get(marker);
         e.setAttribute(PLACEHOLDER_ATT, placeHolderText);
@@ -210,7 +209,6 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         }
         catch (NoSuchElementException exc) {
           LOG.error(exc);
-          continue;
         }
       }
       else {
@@ -220,9 +218,7 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   }
 
   private String getTimeStamp() {
-    String date;
     if (!myFile.isValid()) return "";
-    date = new Long(myFile.getTimeStamp()).toString();
-    return date;
+    return Long.toString(myFile.getTimeStamp());
   }
 }

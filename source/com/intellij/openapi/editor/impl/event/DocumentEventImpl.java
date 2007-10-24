@@ -172,7 +172,7 @@ public class DocumentEventImpl extends DocumentEvent {
     return newLine;
   }
 
-  public void buildDiff() {
+  private void buildDiff() {
     final String[] strings1 = LineTokenizer.tokenize(myOldString, false);
     final String[] strings2 = LineTokenizer.tokenize(myNewString, false);
 
@@ -188,7 +188,7 @@ public class DocumentEventImpl extends DocumentEvent {
       if (myOldLength == 0) {
         int lineShift = countNewLines(myNewString);
 
-        myOptimizedLineShift = lineShift != 0 ? lineShift:-1;
+        myOptimizedLineShift = lineShift == 0 ? -1 : lineShift;
       }
     }
     return myOptimizedLineShift;
@@ -214,7 +214,7 @@ public class DocumentEventImpl extends DocumentEvent {
       if (myNewLength == 0) {
         int lineShift = countNewLines(myOldString);
 
-        myOptimizedOldLineShift = lineShift != 0 ? lineShift:-1;
+        myOptimizedOldLineShift = lineShift == 0 ? -1 : lineShift;
       }
     }
     return myOptimizedOldLineShift;

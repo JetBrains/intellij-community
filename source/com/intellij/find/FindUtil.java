@@ -45,7 +45,7 @@ import java.util.List;
  *
  */
 public class FindUtil {
-  private static Key<Direction> KEY = Key.create("FindUtil.KEY");
+  private static final Key<Direction> KEY = Key.create("FindUtil.KEY");
   private static enum Direction {
     UP, DOWN
   }
@@ -389,14 +389,14 @@ public class FindUtil {
     }
 
     document.startGuardedBlockChecking();
-    boolean isReplaced = false;
-    int occurrences = 0;
     FindManager findManager = FindManager.getInstance(project);
     boolean toPrompt = model.isPromptOnReplace();
 
     if (!toPrompt) {
       ((DocumentEx) document).setInBulkUpdate(true);
     }
+    boolean isReplaced = false;
+    int occurrences = 0;
     try {
       model = (FindModel)model.clone();
       while (offset >= 0 && offset < editor.getDocument().getTextLength()) {
@@ -537,8 +537,8 @@ public class FindUtil {
   }
 
   private static class MyListener implements FocusListener, CaretListener {
-    private Editor myEditor;
-    private RangeHighlighter mySegmentHighlighter;
+    private final Editor myEditor;
+    private final RangeHighlighter mySegmentHighlighter;
 
     public MyListener(Editor editor, RangeHighlighter segmentHighlighter) {
       myEditor = editor;

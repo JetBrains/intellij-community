@@ -16,13 +16,13 @@ import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 
 class EditorChangeAction implements UndoableAction {
-  private final DocumentEx myDocument; // DocumentEx or WeakReference<DocumentEx> or null
+  private final DocumentEx myDocument;
   private final VirtualFile myDocumentFile;
-  private int myOffset;
-  private CharSequence myOldString;
-  private CharSequence myNewString;
-  private long myTimeStamp;
-  private boolean myBulkUpdate;
+  private final int myOffset;
+  private final CharSequence myOldString;
+  private final CharSequence myNewString;
+  private final long myTimeStamp;
+  private final boolean myBulkUpdate;
 
   public EditorChangeAction(DocumentEx document, int offset,
                             CharSequence oldString, CharSequence newString,
@@ -36,14 +36,8 @@ class EditorChangeAction implements UndoableAction {
     }
 
     myOffset = offset;
-    myOldString = oldString;
-    if (myOldString == null) {
-      myOldString = "";
-    }
-    myNewString = newString;
-    if (myNewString == null) {
-      myNewString = "";
-    }
+    myOldString = oldString == null ? "" : oldString;
+    myNewString = newString == null ? "" : newString;
     myTimeStamp = oldTimeStamp;
     myBulkUpdate = document.isInBulkUpdate();
   }
@@ -96,7 +90,7 @@ class EditorChangeAction implements UndoableAction {
     return false;
   }
 
-  public DocumentEx getDocument() {
+  private DocumentEx getDocument() {
     if (myDocument != null) return myDocument;
     return (DocumentEx)FileDocumentManager.getInstance().getDocument(myDocumentFile);
   }

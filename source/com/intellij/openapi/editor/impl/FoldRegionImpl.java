@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private boolean myIsExpanded;
-  private EditorImpl myEditor;
-  private String myPlaceholderText;
+  private final EditorImpl myEditor;
+  private final String myPlaceholderText;
 
   public FoldRegionImpl(EditorImpl editor, int startOffset, int endOffset, String placeholder) {
     super(editor.getDocument(), startOffset, endOffset);

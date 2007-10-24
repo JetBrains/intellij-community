@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 class CodeFoldingPass extends TextEditorHighlightingPass {
   private Runnable myRunnable;
-  private Editor myEditor;
+  private final Editor myEditor;
 
   public CodeFoldingPass(@NotNull Project project, @NotNull Editor editor) {
     super(project, editor.getDocument());

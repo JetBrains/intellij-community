@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.progress.ProgressManager;
@@ -26,16 +25,6 @@ class FoldingUpdate {
   private static final Key<Object> LAST_UPDATE_STAMP_KEY = Key.create("LAST_UPDATE_STAMP_KEY");
 
   private FoldingUpdate() {
-  }
-
-  public static void updateFoldRegions(Document document, PsiFile file) {
-    Editor[] editors = EditorFactory.getInstance().getEditors(document, file.getProject());
-    for (Editor editor : editors) {
-      Runnable runnable = updateFoldRegions(editor, file, false);
-      if (runnable != null) {
-        runnable.run();
-      }
-    }
   }
 
   public static Runnable updateFoldRegions(final Editor editor, PsiElement file, boolean applyDefaultState) {

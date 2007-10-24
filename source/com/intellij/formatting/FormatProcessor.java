@@ -8,8 +8,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import gnu.trove.TIntObjectHashMap;
-import org.jdom.Element;
-import org.jdom.Text;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +25,7 @@ class FormatProcessor {
   private TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
 
   private final CodeStyleSettings.IndentOptions myIndentOption;
-  private CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
 
   private final Collection<AlignmentImpl> myAlignedAlignments = new HashSet<AlignmentImpl>();
 
@@ -52,7 +50,7 @@ class FormatProcessor {
   private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   private WhiteSpace myLastWhiteSpace;
   private boolean myDisposed;
-  private int myInterestingOffset;
+  private final int myInterestingOffset;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -106,75 +104,6 @@ class FormatProcessor {
     return result;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public Element saveToXml(Block root) {
-    final Element result = new Element("Block");
-    final TextRange textRange = root.getTextRange();
-    result.setAttribute("start", String.valueOf(textRange.getStartOffset()));
-    result.setAttribute("stop", String.valueOf(textRange.getEndOffset()));
-    final Alignment alignment = root.getAlignment();
-    if (alignment != null) {
-      result.addContent(save((AlignmentImpl)alignment));
-    }
-    final Indent indent = root.getIndent();
-    if (indent != null) {
-      result.addContent(save((IndentImpl)indent));
-    }
-
-    final Wrap wrap = root.getWrap();
-    if (wrap != null) {
-      result.addContent(save((WrapImpl)wrap));
-    }
-
-    final List<Block> subBlocks = root.getSubBlocks();
-    Block prev = null;
-    for (Block block : subBlocks) {
-      if (prev != null) {
-        final Spacing spacing = root.getSpacing(prev, block);
-        if (spacing != null) {
-          result.addContent(save((SpacingImpl)spacing));
-        }
-      }
-      result.addContent(saveToXml(block));
-
-      prev = block;
-    }
-    result.addContent(new Text(root.toString()));
-    return result;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private Element save(final SpacingImpl spaceProperty) {
-    final Element result = new Element("Space");
-    spaceProperty.refresh(this);
-    result.setAttribute("minspace", String.valueOf(spaceProperty.getMinSpaces()));
-    result.setAttribute("maxspace", String.valueOf(spaceProperty.getMaxSpaces()));
-    result.setAttribute("minlf", String.valueOf(spaceProperty.getMinLineFeeds()));
-    return result;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static Element save(final WrapImpl wrap) {
-    final Element result = new Element("Wrap");
-    result.setAttribute("type", wrap.getType().toString());
-    result.setAttribute("id", wrap.getId());
-    return result;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static Element save(final IndentImpl indent) {
-    final Element element = new Element("Indent");
-    element.setAttribute("type", indent.getType().toString());
-    return element;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static Element save(final AlignmentImpl alignment) {
-    final Element result = new Element("Alignment");
-    result.setAttribute("id", alignment.getId());
-    return result;
-  }
-
   public void format(FormattingModel model) {
     formatWithoutRealModifications();
     performModifications(model);
@@ -223,32 +152,17 @@ class FormatProcessor {
 
   private static void doModify(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
                                CodeStyleSettings.IndentOptions indentOption, CodeStyleSettings.IndentOptions javaOptions) {
-    int shift = 0;
-    boolean bulkReformat = false;
-    boolean bulkReformatFinished = false;
-    DocumentEx updatedDocument = null;
-
+    final int blocksToModifyCount = blocksToModify.size();
+    final boolean bulkReformat = blocksToModifyCount > 50;
+    final DocumentEx updatedDocument = bulkReformat ? getAffectedDocument(model) : null;
+    if(updatedDocument != null) {
+      updatedDocument.setInBulkUpdate(true);
+    }
     try {
-      final int blocksToModifyCount = blocksToModify.size();
-      bulkReformat = blocksToModifyCount > 50;
-
-      if (bulkReformat) {
-        updatedDocument = getAffectedDocument(model);
-
-        if(updatedDocument != null) updatedDocument.setInBulkUpdate(true);
-      }
-
-      int index = 0;
-
+      int shift = 0;
       for (int i = 0; i < blocksToModifyCount; ++i) {
         final LeafBlockWrapper block = blocksToModify.get(i);
         shift = replaceWhiteSpace(model, block, shift, block.getWhiteSpace().generateWhiteSpace(indentOption),javaOptions);
-        ++index;
-
-        if (index + 1 == blocksToModifyCount) {
-          if(updatedDocument != null) updatedDocument.setInBulkUpdate(false);
-          bulkReformatFinished = true;
-        }
 
         // block could be gc'd
         block.getParent().dispose();
@@ -257,10 +171,8 @@ class FormatProcessor {
       }
     }
     finally {
-      if (bulkReformat && updatedDocument != null) {
-        if (!bulkReformatFinished) {   // emergency clean up
-          updatedDocument.setInBulkUpdate(false);
-        }
+      if (updatedDocument != null) {
+        updatedDocument.setInBulkUpdate(false);
       }
       model.commitChanges();
     }
@@ -274,7 +186,7 @@ class FormatProcessor {
     return null;
   }
 
-  protected static int replaceWhiteSpace(final FormattingModel model,
+  private static int replaceWhiteSpace(final FormattingModel model,
                                   @NotNull final LeafBlockWrapper block,
                                   int shift,
                                   final CharSequence _newWhiteSpace,
@@ -286,7 +198,7 @@ class FormatProcessor {
     final String newWhiteSpace = _newWhiteSpace.toString();
     TextRange newWhiteSpaceRange = model.replaceWhiteSpace(wsRange, newWhiteSpace);
 
-    shift += (newWhiteSpaceRange.getLength() - (textRange.getLength()));
+    shift += newWhiteSpaceRange.getLength() - textRange.getLength();
 
     if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
       final TextRange currentBlockRange = shiftRange(block.getTextRange(), shift);
@@ -388,7 +300,7 @@ class FormatProcessor {
   }
 
   private void saveDependancy(final SpacingImpl spaceProperty) {
-    final DependantSpacingImpl dependantSpaceProperty = ((DependantSpacingImpl)spaceProperty);
+    final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
     final TextRange dependancy = dependantSpaceProperty.getDependancy();
     if (dependantSpaceProperty.wasLFUsed()) {
       myPreviousDependancies.put(dependancy,new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
@@ -398,8 +310,7 @@ class FormatProcessor {
       if (value) {
         dependantSpaceProperty.setLFWasUsed(true);
       }
-      myPreviousDependancies.put(dependancy,
-                                 new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, value));
+      myPreviousDependancies.put(dependancy, new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, value));
     }
   }
 
@@ -441,17 +352,13 @@ class FormatProcessor {
         myCurrentBlock = myWrapCandidate;
         return true;
       }
-      else {
-        if (wrap != null && wrap.getFirstEntry() != null) {
-          myCurrentBlock = wrap.getFirstEntry();
-          wrap.markAsUsed();
-          return true;
-        }
-        else {
-          if (wrap != null && wrapCanBeUsedInTheFuture(wrap)) {
-            wrap.markAsUsed();
-          }
-        }
+      if (wrap != null && wrap.getFirstEntry() != null) {
+        myCurrentBlock = wrap.getFirstEntry();
+        wrap.markAsUsed();
+        return true;
+      }
+      if (wrap != null && wrapCanBeUsedInTheFuture(wrap)) {
+        wrap.markAsUsed();
       }
 
       if (!whiteSpace.containsLineFeeds()) {
@@ -532,7 +439,7 @@ class FormatProcessor {
   }
 
   private boolean wrapCanBeUsedInTheFuture(final WrapImpl wrap) {
-    return wrap != null && wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && (isSuitableInTheCurrentPosition(wrap));
+    return wrap != null && wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && isSuitableInTheCurrentPosition(wrap);
   }
 
   private boolean isSuitableInTheCurrentPosition(final WrapImpl wrap) {
@@ -552,11 +459,11 @@ class FormatProcessor {
   }
 
   private boolean positionAfterWrappingIsSutable() {
-    boolean result = true;
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
     if (whiteSpace.containsLineFeeds()) return true;
     final int spaces = whiteSpace.getSpaces();
     int indentSpaces = whiteSpace.getIndentSpaces();
+    boolean result = true;
     try {
       final int offsetBefore = getOffsetBefore(myCurrentBlock);
       whiteSpace.ensureLineFeed();
@@ -601,10 +508,9 @@ class FormatProcessor {
            getOffsetBefore(myCurrentBlock) + myCurrentBlock.getLength() > mySettings.RIGHT_MARGIN;
   }
 
-  private int getOffsetBefore(LeafBlockWrapper info) {
-    int result = 0;
-
+  private static int getOffsetBefore(LeafBlockWrapper info) {
     if (info != null) {
+      int result = 0;
       while (true) {
         final WhiteSpace whiteSpace = info.getWhiteSpace();
         result += whiteSpace.getTotalSpaces();
@@ -625,7 +531,7 @@ class FormatProcessor {
   private void setAlignOffset(final LeafBlockWrapper block) {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
-      final AlignmentImpl alignment = (AlignmentImpl)current.getAlignment();
+      final AlignmentImpl alignment = current.getAlignment();
       if (alignment != null && !myAlignedAlignments.contains(alignment)) {
         alignment.setOffsetRespBlock(block);
         myAlignedAlignments.add(alignment);
@@ -728,9 +634,9 @@ class FormatProcessor {
   }
 
   static class ChildAttributesInfo {
-    public AbstractBlockWrapper parent;
-    ChildAttributes attributes;
-    int index;
+    public final AbstractBlockWrapper parent;
+    final ChildAttributes attributes;
+    final int index;
 
     public ChildAttributesInfo(final AbstractBlockWrapper parent, final ChildAttributes attributes, final int index) {
       this.parent = parent;
@@ -747,7 +653,7 @@ class FormatProcessor {
     final Block block = myInfos.get(parent);
     
     if (block == null) {
-      final @NonNls StringBuilder message = new StringBuilder(100);
+      @NonNls final StringBuilder message = new StringBuilder(100);
       for(AbstractBlockWrapper blockWrapper = myCurrentBlock; blockWrapper != null; blockWrapper = blockWrapper.getParent()) {
         if (message.length() > 0) message.append(',');
         message.append(myInfos.get(blockWrapper)).append(" (").append(blockWrapper.getStartOffset()).append(',').append(blockWrapper.getEndOffset()).append(')');
@@ -805,7 +711,7 @@ class FormatProcessor {
     }
   }
 
-  private int getAlignOffsetBefore(final Alignment alignment, final LeafBlockWrapper blockAfter) {
+  private static int getAlignOffsetBefore(final Alignment alignment, final LeafBlockWrapper blockAfter) {
     if (alignment == null) return -1;
     final LeafBlockWrapper alignRespBlock = ((AlignmentImpl)alignment).getOffsetRespBlockBefore(blockAfter);
     if (alignRespBlock != null) {
@@ -851,7 +757,7 @@ class FormatProcessor {
       return previous;
     }
     else {
-      return getParentFor(offset, ((AbstractBlockWrapper)block));
+      return getParentFor(offset, (AbstractBlockWrapper)block);
     }
   }
 
@@ -957,17 +863,4 @@ class FormatProcessor {
   }
 
 
-  public static boolean previousBlockIsComplete(final LeafBlockWrapper blockAfterOffset) {
-
-    AbstractBlockWrapper current = blockAfterOffset.getPreviousBlock();
-
-    if (current == null) return true;
-
-    while (current.getParent() != null && current.getParent().getEndOffset() == current.getEndOffset()) {
-      if (current.isIncomplete()) return false;
-      current = current.getParent();
-    }
-
-    return true;
-  }
 }

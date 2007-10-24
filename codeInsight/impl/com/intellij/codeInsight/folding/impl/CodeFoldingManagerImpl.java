@@ -35,7 +35,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   private EditorFactoryListener myEditorFactoryListener;
   private EditorMouseMotionAdapter myMouseMotionListener;
 
-  private WeakList<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
+  private final WeakList<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
 
   private final Key<DocumentFoldingInfo> FOLDING_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private static final Key<Boolean> FOLDING_STATE_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_STATE_IN_DOCUMENT");
@@ -69,7 +69,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         final Document document = editor.getDocument();
         //Do not save/restore folding for code fragments
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (file == null || !file.getViewProvider().isPhysical()) return;
+        if (file == null || !file.getViewProvider().isPhysical() && !ApplicationManager.getApplication().isUnitTestMode()) return;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -128,13 +128,12 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       public void mouseMoved(EditorMouseEvent e) {
         if (e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) return;
         LightweightHint hint = null;
-        FoldRegion fold;
         try {
           Editor editor = e.getEditor();
           if (PsiDocumentManager.getInstance(myProject).isUncommited(editor.getDocument())) return;
 
           MouseEvent mouseEvent = e.getMouseEvent();
-          fold = ((EditorEx)editor).getGutterComponentEx().findFoldingAnchorAt(mouseEvent.getX(), mouseEvent.getY());
+          FoldRegion fold = ((EditorEx)editor).getGutterComponentEx().findFoldingAnchorAt(mouseEvent.getX(), mouseEvent.getY());
 
           if (fold == null) return;
           if (fold == myCurrentFold && myCurrentHint != null) {
@@ -251,7 +250,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     return info;
   }
 
-  public static void resetFoldingInfo(final @NotNull Document document) {
+  public static void resetFoldingInfo(@NotNull final Document document) {
     final Boolean foldingInfoStatus = document.getUserData(FOLDING_STATE_INFO_IN_DOCUMENT_KEY);
     if (Boolean.TRUE.equals(foldingInfoStatus)) {
       final Editor[] editors = EditorFactory.getInstance().getEditors(document);
