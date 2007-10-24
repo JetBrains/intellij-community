@@ -107,6 +107,7 @@ public class ShowUsagesAction extends AnAction {
       // usage view can filter usages down to one
       Usage usage = nodes.get(0).getUsage();
       navigateAndHint(usage, FindBundle.message("all.usages.are.in.this.line", usages.size(), searchScopePresentableName(element)));
+      usageView.dispose();
       return null;
     }
 
@@ -164,13 +165,12 @@ public class ShowUsagesAction extends AnAction {
 
     final Runnable runnable = new Runnable() {
       public void run() {
-        int[] ids = list.getSelectedIndices();
-        if (ids == null || ids.length == 0) return;
-        for (Object element : list.getSelectedValues()) {
-          UsageNode node = (UsageNode)element;
-          Usage usage = node.getUsage();
-          navigateAndHint(usage, null);
-        }
+        Object element = list.getSelectedValue();
+        if (element == null) return;
+        UsageNode node = (UsageNode)element;
+        Usage usage = node.getUsage();
+        navigateAndHint(usage, null);
+        usageView.dispose();
       }
     };
 
@@ -201,7 +201,7 @@ public class ShowUsagesAction extends AnAction {
 
     PopupChooserBuilder builder = new PopupChooserBuilder(list);
     if (title != null) {
-      builder.setTitle(title);
+      builder.setTitle(title + " " +FindBundle.message("some.usages.found", usages.size()));
     }
     return builder.setItemChoosenCallback(runnable).createPopup();
   }
