@@ -13,6 +13,10 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     return TestUtils.getTestDataPath() + "/resolve/class/";
   }
 
+  public void testInnerJavaClass() throws Exception {
+    doTest("innerJavaClass/B.groovy");
+  }
+
   public void testSamePackage() throws Exception {
     doTest("samePackage/B.groovy");
   }

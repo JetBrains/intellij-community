@@ -32,7 +32,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
@@ -41,7 +43,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -66,7 +70,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
   public void setQualifier(@Nullable GrCodeReferenceElement newQualifier) {
     final GrCodeReferenceElement qualifier = getQualifier();
-    if(newQualifier == null) {
+    if (newQualifier == null) {
       if (qualifier == null) return;
       getNode().removeRange(getNode().getFirstChildNode(), getReferenceNameElement().getNode());
     } else {
@@ -182,16 +186,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         final LookupElement<PsiClass> lookupElement = LookupElementFactory.getInstance().createLookupElement(clazz);
         GroovyCompletionUtil.setTailTypeForConstructor(clazz, lookupElement);
         result.add(lookupElement);
-      }
-      else if (variant instanceof LookupElement) {
+      } else if (variant instanceof LookupElement) {
         final LookupElement lookupElement = (LookupElement) variant;
         final Object obj = lookupElement.getObject();
         if (obj instanceof PsiClass) {
           GroovyCompletionUtil.setTailTypeForConstructor((PsiClass) obj, lookupElement);
         }
         result.add(lookupElement);
-      }
-      else {
+      } else {
         result.add(variant);
       }
     }
@@ -201,8 +203,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   private Object[] getVariantsImpl(ReferenceKind kind) {
     PsiManager manager = getManager();
     switch (kind) {
-      case STATIC_MEMBER_FQ:
-      {
+      case STATIC_MEMBER_FQ: {
         final GrCodeReferenceElement qualifier = getQualifier();
         if (qualifier != null) {
           final PsiElement resolve = qualifier.resolve();
@@ -293,7 +294,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
     private GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager,
                                            ReferenceKind kind) {
-      final String refName=ref.getReferenceName();
+      final String refName = ref.getReferenceName();
       switch (kind) {
         case CLASS_OR_PACKAGE_FQ: {
           PsiClass aClass = manager.findClass(PsiUtil.getQualifiedReferenceText(ref), ref.getResolveScope());
@@ -330,6 +331,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
                     return new GroovyResolveResult[]{new GroovyResolveResultImpl(subpackage, true)};
                 }
               }
+            } else if (kind == CLASS && qualifierResolved instanceof PsiClass) {
+              PsiClass[] classes = ((PsiClass) qualifierResolved).getInnerClasses();
+              for (final PsiClass aClass : classes) {
+                if (refName.equals(aClass.getName())) {
+                  boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(aClass, ref, null);
+                  return new GroovyResolveResult[]{new GroovyResolveResultImpl(aClass, isAccessible)};
+                }
+              }
             }
           } else {
             ResolverProcessor processor =
@@ -352,8 +361,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
           break;
         }
 
-        case STATIC_MEMBER_FQ:
-        {
+        case STATIC_MEMBER_FQ: {
           final GrCodeReferenceElement qualifier = ref.getQualifier();
           if (qualifier != null) {
             final PsiElement resolve = qualifier.resolve();
