@@ -54,7 +54,7 @@ public class ChangeList {
 
   public void endChangeSet(String name) {
     assert myChangeSetDepth > 0;
-    
+
     myChangeSetDepth--;
     if (myChangeSetDepth == 0) {
       if (myCurrentChangeSet.getChanges().isEmpty()) {
@@ -233,9 +233,14 @@ public class ChangeList {
     @Override
     public void visit(DeleteChange c) {
       if (skippedDueToNonexistence(c)) {
-        if (c.isDeletionOf(myIdPath)) myExists = true;
-        myDoNotAddAnythingElseFromCurrentChangeSet = true;
-        if (myExists) myEntry = myRoot.getEntry(myIdPath);
+        if (c.isDeletionOf(myIdPath)) {
+          Entry e = myRoot.findEntry(myIdPath);
+          if (e != null) {
+            myEntry = e;
+            myExists = true;
+            myDoNotAddAnythingElseFromCurrentChangeSet = true;
+          }
+        }
         return;
       }
 

@@ -294,6 +294,27 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     assertEquals(array(cs3, cs2, cs1), getChangesFor("dir"));
   }
 
+  @Test
+  public void testChangesForRestoredFileWhenTHereWereDeletionOfParentAfterDeletionOfTheFile() {
+    Change cs1 = cs(new CreateDirectoryChange(1, "dir1"));
+    Change cs2 = cs(new CreateDirectoryChange(2, "dir1/dir2"));
+    Change cs3 = cs(new CreateFileChange(3, "dir1/dir2/file", null, -1, false));
+
+    Change cs4 = cs(new DeleteChange("dir1/dir2/file"));
+    Change cs5 = cs(new DeleteChange("dir1/dir2"));
+    Change cs6 = cs(new DeleteChange("dir1"));
+
+    Change cs7 = cs(new CreateDirectoryChange(1, "dir1"),
+                    new CreateDirectoryChange(2, "dir1/dir2"),
+                    new CreateFileChange(3, "dir1/dir2/file", null, -1, false));
+
+    applyAndAdd(cs1, cs2, cs3, cs4, cs5, cs6, cs7);
+
+    assertEquals(array(cs7, cs3), getChangesFor("dir1/dir2/file"));
+    assertEquals(array(cs7, cs4, cs3, cs2), getChangesFor("dir1/dir2"));
+    assertEquals(array(cs7, cs5, cs4, cs3, cs2, cs1), getChangesFor("dir1"));
+  }
+
   private List<Change> getChangesFor(String path) {
     return cl.getChangesFor(r, path);
   }
