@@ -179,11 +179,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     } else {
       final PsiElement first = getFirstChild();
       PsiElement child = first;
-      while (child instanceof PsiWhiteSpace || child instanceof PsiComment) child = child.getNextSibling();
-      if (child != first && !(child instanceof PsiWhiteSpace)) anchorAfter = child;
+      while (child instanceof PsiWhiteSpace) {
+        child = child.getNextSibling();
+      }
+      if (child != first) anchorAfter = child;
     }
     return anchorAfter;
   }
+
 
   public GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException {
     PsiElement anchor = getAnchorToInsertImportAfter();

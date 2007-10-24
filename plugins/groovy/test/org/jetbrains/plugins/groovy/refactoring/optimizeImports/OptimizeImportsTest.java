@@ -55,6 +55,10 @@ public class OptimizeImportsTest extends IdeaTestCase {
     GroovyPsiManager.getInstance(getProject()).buildGDK();
   }
 
+  public void testCommented() throws Throwable {
+    doTest("commented", "A.groovy");
+  }
+
   public void testSimpleOptimize() throws Throwable {
     doTest("simpleOptimize", "A.groovy");
   }
