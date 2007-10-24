@@ -1,3 +1,3 @@
 import org.*
 
-MyJClass.<ref> MyInnerJClass innerJClass = new MyJClass.MyInnerJClass()
+MyJClass.<ref>MyInnerJClass innerJClass = new MyJClass.MyInnerJClass()
