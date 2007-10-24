@@ -142,10 +142,40 @@ public class FrameDebuggerTree extends DebuggerTree {
     return vars;
   }
 
-  private static boolean isLineEmpty(Document doc, int line) {
-    int start = doc.getLineStartOffset(line);
-    int end = doc.getLineEndOffset(line);
-    return CharArrayUtil.shiftForward(doc.getCharsSequence(), start, " \n\t") >= end;
+  private static boolean shouldSkipLine(final PsiFile file, Document doc, int line) {
+    final int start = doc.getLineStartOffset(line);
+    final int end = doc.getLineEndOffset(line);
+    final int _start = CharArrayUtil.shiftForward(doc.getCharsSequence(), start, " \n\t");
+    if (_start >= end) {
+      return true;
+    }
+    
+    TextRange alreadyChecked = null;
+    for (PsiElement elem = file.findElementAt(_start); 
+         elem != null && elem.getTextOffset() <= end && (alreadyChecked == null || !alreadyChecked .contains(elem.getTextRange())); 
+         elem = elem.getNextSibling()) {
+      
+      for (PsiElement _elem = elem; _elem.getTextOffset() >= _start; _elem = _elem.getParent()) {
+        alreadyChecked = _elem.getTextRange();
+        
+        if (_elem instanceof PsiDeclarationStatement) {
+          final PsiElement[] declared = ((PsiDeclarationStatement)_elem).getDeclaredElements();
+          for (PsiElement declaredElement : declared) {
+            if (declaredElement instanceof PsiVariable) {
+              return false;
+            }
+          }
+        }
+        
+        if (_elem instanceof PsiJavaCodeReferenceElement) {
+          final PsiElement resolved = ((PsiJavaCodeReferenceElement)_elem).resolve();
+          if (resolved instanceof PsiVariable) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 
   private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(final Set<String> visibleVars, final SourcePosition position) {
@@ -153,27 +183,32 @@ public class FrameDebuggerTree extends DebuggerTree {
     if (line < 0) {
       return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
     }
-    final VirtualFile vFile = position.getFile().getVirtualFile();
+    final PsiFile positionFile = position.getFile();
+    final VirtualFile vFile = positionFile.getVirtualFile();
     final Document doc = vFile != null? FileDocumentManager.getInstance().getDocument(vFile) : null;
     if (doc == null || doc.getLineCount() == 0 || line > (doc.getLineCount() - 1)) {
       return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
     }
-
-    final int lastLine = doc.getLineCount() - 1;
     
-    int startLine = Math.max(0, line - 1);
-    startLine = Math.min(startLine, lastLine);
-    while (startLine > 0 && isLineEmpty(doc, startLine)) startLine--;
+    final TextRange limit = calculateLimitRange(positionFile, doc, line);
+
+    int startLine = Math.max(limit.getStartOffset(), line - 1);
+    startLine = Math.min(startLine, limit.getEndOffset());
+    while (startLine > limit.getStartOffset() && shouldSkipLine(positionFile, doc, startLine)) {
+      startLine--;
+    }
     final int startOffset = doc.getLineStartOffset(startLine);
 
-    int endLine = Math.min(line + 2, lastLine);
-    while (endLine < lastLine && isLineEmpty(doc, endLine)) endLine++;
+    int endLine = Math.min(line + 2, limit.getEndOffset());
+    while (endLine < limit.getEndOffset() && shouldSkipLine(positionFile, doc, endLine)) {
+      endLine++;
+    }
     final int endOffset = doc.getLineEndOffset(endLine);
 
     final TextRange lineRange = new TextRange(startOffset, endOffset);
     if (!lineRange.isEmpty()) {
       final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), doc.getLineStartOffset(line), " \t");
-      PsiElement element = position.getFile().findElementAt(offset);
+      PsiElement element = positionFile.findElementAt(offset);
       if (element != null) {
         PsiMethod method = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class);
         if (method != null) {
@@ -202,6 +237,19 @@ public class FrameDebuggerTree extends DebuggerTree {
       }
     }
     return new Pair<Set<String>, Set<TextWithImports>>(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+  }
+
+  private static TextRange calculateLimitRange(final PsiFile file, final Document doc, final int line) {
+    final int offset = doc.getLineStartOffset(line);
+    if (offset > 0) {
+      for (PsiElement elem = file.findElementAt(offset); elem != null; elem = elem.getParent()) {
+        if (elem instanceof PsiMethod) {
+          final TextRange elemRange = elem.getTextRange();
+          return new TextRange(doc.getLineNumber(elemRange.getStartOffset()), doc.getLineNumber(elemRange.getEndOffset()));
+        }
+      }
+    }
+    return new TextRange(0, doc.getLineCount() - 1);
   }
 
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
