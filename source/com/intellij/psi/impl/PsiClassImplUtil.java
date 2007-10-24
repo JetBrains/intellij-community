@@ -251,8 +251,7 @@ public class PsiClassImplUtil {
       value = aClass.getManager().getCachedValuesManager().createCachedValue(provider, false);
       //Do not cache for nonphysical elements
       if (aClass.isPhysical()) {
-        UserDataHolderEx dataHolder = (UserDataHolderEx)aClass;
-        value = dataHolder.putUserDataIfAbsent(MAP_IN_CLASS_KEY, value);
+        value = ((UserDataHolderEx)aClass).putUserDataIfAbsent(MAP_IN_CLASS_KEY, value);
       }
     }
     return (Map<String, List<Pair<T, PsiSubstitutor>>>)value.getValue().get(memberClazz);
