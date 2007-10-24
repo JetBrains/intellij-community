@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.Function;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
@@ -197,6 +198,15 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     }
   }
 
+  @Override
+  public void projectOpened() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+      public void run() {
+        subscribe();
+      }
+    });
+  }
+
   private void subscribe() {
     RunManager.getInstance(myProject).registerStepBeforeRun(RUN_MAVEN_STEP, new Function<RunConfiguration, String>() {
       public String fun(RunConfiguration runConfiguration) {
@@ -292,7 +302,6 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
     }
 
     public void activate() {
-      subscribe();
       requestKeymapUpdate();
     }
 
