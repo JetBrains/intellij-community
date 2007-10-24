@@ -27,7 +27,7 @@ public class MavenApplicationComponent implements ApplicationComponent, IconProv
   }
 
   public void initComponent() {
-    ExternalResourceManager.getInstance().addStdResource("http://maven.apache.org/POM/4.0.0","maven-v4_0_0.xsd",getClass());
+    ExternalResourceManager.getInstance().addStdResource("http://maven.apache.org/maven-v4_0_0.xsd","maven-v4_0_0.xsd",getClass());
   }
 
   public void disposeComponent() {
