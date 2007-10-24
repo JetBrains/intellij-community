@@ -378,8 +378,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // expr in definition intiialiZer
     assertEquals(
       "expr in def initializer",
-      findMatchesCount(s53,s54),
-      3
+      3,
+      findMatchesCount(s53,s54)
     );
 
     // a.class expression search
@@ -1302,6 +1302,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       "typed symbol",
       findMatchesCount(s81_4,s82_8),
       6
+    );
+
+    String s81_5 = "class A { HashMap<String, Integer> variable = new HashMap<String, Integer>(\"aaa\");}";
+    String s82_9 = "'_Type<'_GType, '_GType2> '_instance = new '_Type<'_GType, '_GType2>('_Param);";
+    assertEquals(
+      "generic vars in new",
+      findMatchesCount(s81_5,s82_9),
+      1
     );
 
     // @todo typed vars constrains (super),
