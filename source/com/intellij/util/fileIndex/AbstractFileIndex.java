@@ -33,13 +33,14 @@ import java.util.*;
  */
 public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.fileIndex.AbstractFileIndex");
-  private Map<String, IndexEntry> myFileUrl2IndexEntry = new HashMap<String, IndexEntry>();
+  private final Map<String, IndexEntry> myFileUrl2IndexEntry = new HashMap<String, IndexEntry>();
   private ProjectFileIndex myProjectFileIndex;
   private boolean myFormatChanged;
   private final Project myProject;
   private AbstractFileIndex.FileIndexCacheUpdater myRootsChangeCacheUpdater;
   private StartupManagerEx myStartupManager;
   private FileIndexRefreshCacheUpdater myRefreshCacheUpdater;
+  private final Object myIndexLock = new Object();
 
   protected AbstractFileIndex(final Project project) {
     myProject = project;
@@ -107,10 +108,12 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
       output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(cacheFile)));
       output.writeByte(getCurrentVersion());
       writeHeader(output);
-      output.writeInt(myFileUrl2IndexEntry.size());
-      for (final Map.Entry<String, IndexEntry> entry : myFileUrl2IndexEntry.entrySet()) {
-        output.writeUTF(entry.getKey());
-        entry.getValue().write(output);
+      synchronized (myIndexLock) {
+        output.writeInt(myFileUrl2IndexEntry.size());
+        for (final Map.Entry<String, IndexEntry> entry : myFileUrl2IndexEntry.entrySet()) {
+          output.writeUTF(entry.getKey());
+          entry.getValue().write(output);
+        }
       }
       output.close();
     }
@@ -194,17 +197,24 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
   }
 
   public final void putIndexEntry(final String url, final IndexEntry entry) {
-    myFileUrl2IndexEntry.put(url, entry);
+    synchronized (myIndexLock) {
+      myFileUrl2IndexEntry.put(url, entry);
+    }
     onEntryAdded(url, entry);
   }
 
   public final IndexEntry getIndexEntry(final String url) {
-    return myFileUrl2IndexEntry.get(url);
+    synchronized (myIndexLock) {
+      return myFileUrl2IndexEntry.get(url);
+    }
   }
 
   @Nullable
   public final IndexEntry removeIndexEntry(final String url) {
-    final IndexEntry entry = myFileUrl2IndexEntry.remove(url);
+    final IndexEntry entry;
+    synchronized (myIndexLock) {
+      entry = myFileUrl2IndexEntry.remove(url);
+    }
     if (entry != null) {
       onEntryRemoved(url, entry);
     }
@@ -212,7 +222,9 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
   }
 
   protected void clearMaps() {
-    myFileUrl2IndexEntry.clear();
+    synchronized (myIndexLock) {
+      myFileUrl2IndexEntry.clear();
+    }
   }
 
   public void initialize() {
@@ -300,18 +312,21 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
     });
 
     List<VirtualFile> toUpdate = new ArrayList<VirtualFile>();
-    Set<String> toRemove = new THashSet<String>(myFileUrl2IndexEntry.keySet());
+    Set<String> toRemove;
+    synchronized (myIndexLock) {
+      toRemove = new THashSet<String>(myFileUrl2IndexEntry.keySet());
 
-    final int size = files.size();
-    for (int i = 0; i < size; i++) {
-      final VirtualFile file = files.get(i);
-      final String url = file.getUrl();
-      final IndexEntry entry = myFileUrl2IndexEntry.get(url);
-      toRemove.remove(url);
-      if (entry == null
-          || includeChangedFiles && entry.getTimeStamp() != file.getTimeStamp()
-          || fileTypesToRefresh != null && fileTypesToRefresh.contains(file.getFileType())) {
-        toUpdate.add(file);
+      final int size = files.size();
+      for (int i = 0; i < size; i++) {
+        final VirtualFile file = files.get(i);
+        final String url = file.getUrl();
+        final IndexEntry entry = myFileUrl2IndexEntry.get(url);
+        toRemove.remove(url);
+        if (entry == null
+            || includeChangedFiles && entry.getTimeStamp() != file.getTimeStamp()
+            || fileTypesToRefresh != null && fileTypesToRefresh.contains(file.getFileType())) {
+          toUpdate.add(file);
+        }
       }
     }
 
