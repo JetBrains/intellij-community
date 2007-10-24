@@ -189,6 +189,14 @@ public class PluginManagerMain {
     return availablePluginsTable;
   }
 
+  public InstalledPluginsTableModel getInstalledPluginsModel() {
+    return installedPluginsModel;
+  }
+
+  public AvailablePluginsTableModel getAvailablePluginsModel() {
+    return availablePluginsModel;
+  }
+
   private void installTableActions(final PluginTable pluginTable) {
     pluginTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {

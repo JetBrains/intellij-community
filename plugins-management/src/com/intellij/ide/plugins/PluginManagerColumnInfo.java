@@ -217,6 +217,9 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
           } else if (InstalledPluginsTableModel.hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
             setForeground(FileStatus.COLOR_MODIFIED);
             setToolTipText(IdeBundle.message("plugin.outdated.version.status.tooltip"));
+          } else if (InstalledPluginsTableModel.wasUpdated(ideaPluginDescriptor.getPluginId())) {
+            setForeground(FileStatus.COLOR_MODIFIED);
+            setToolTipText(IdeBundle.message("plugin.updated.status.tooltip"));
           }
         } else if (descriptor instanceof PluginNode) {
           final PluginNode pluginNode = (PluginNode)descriptor;

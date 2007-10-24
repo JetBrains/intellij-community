@@ -27,6 +27,7 @@ import java.util.*;
  */
 public class InstalledPluginsTableModel extends PluginTableModel {
   public static Map<PluginId, Integer> NewVersions2Plugins = new HashMap<PluginId, Integer>();
+  public static Set<PluginId> updatedPlugins = new HashSet<PluginId>();
   private Map<PluginId, Boolean> myEnabled = new HashMap<PluginId, Boolean>();
 
   public InstalledPluginsTableModel(SortableProvider sortableProvider) {
@@ -79,12 +80,17 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   public void clearData() {
     view.clear();
     NewVersions2Plugins.clear();
+    updatedPlugins.clear();
   }
 
   private static void updateExistingPluginInfo(IdeaPluginDescriptor descr, IdeaPluginDescriptor existing) {
     int state = IdeaPluginDescriptorImpl.compareVersion(descr.getVersion(), existing.getVersion());
     if (state > 0) {
       NewVersions2Plugins.put(existing.getPluginId(), 1);
+    } else {
+      if (NewVersions2Plugins.remove(existing.getPluginId()) != null) {
+        updatedPlugins.add(existing.getPluginId());
+      }
     }
 
     final IdeaPluginDescriptorImpl plugin = (IdeaPluginDescriptorImpl)existing;
@@ -97,6 +103,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   public static boolean hasNewerVersion(PluginId descr) {
     return NewVersions2Plugins.containsKey(descr);
+  }
+
+  public static boolean wasUpdated(PluginId descr) {
+    return updatedPlugins.contains(descr);
   }
 
   public boolean isEnabled(final PluginId pluginId) {

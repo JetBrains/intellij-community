@@ -76,6 +76,7 @@ public class ActionInstallPlugin extends AnAction {
       }
       try {
         if (PluginManagerMain.downloadPlugins(list)) {
+          host.getInstalledPluginsModel().modifyData(new ArrayList<IdeaPluginDescriptor>(list));
           host.setRequireShutdown(true);
         }
       }
