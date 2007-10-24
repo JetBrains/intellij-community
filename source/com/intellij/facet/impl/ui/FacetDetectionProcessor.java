@@ -196,7 +196,7 @@ public class FacetDetectionProcessor {
       while (typeId != null) {
         myLevel++;
         FacetType<?,?> underlying = FacetTypeRegistry.getInstance().findFacetType(typeId);
-        LOG.assertTrue(underlying != null, "Cannot find facet type by id: " + typeId);
+        LOG.assertTrue(underlying != null, "Cannot find underlying facet type by id: " + typeId + " (for facet " + facetType.getId() + ")");
         typeId = underlying.getUnderlyingFacetType();
         if (!parentTypes.add(typeId)) {
           LOG.error("Circular dependency between facets: " + parentTypes);
