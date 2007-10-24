@@ -28,6 +28,12 @@ public abstract class RParenthTailType extends TailType {
   private static TextRange getRangeToCheckParensBalance(PsiFile file, final Document document, int startOffset){
     PsiElement element = file.findElementAt(startOffset);
     element = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
+    if (element != null) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiLoopStatement) {
+        element = parent;
+      }
+    }
     return element == null ? new TextRange(0, document.getTextLength()) : element.getTextRange();
   }
 
