@@ -26,7 +26,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
 
   public void testStaticImport2() throws Exception {
-    PsiReference ref = configureByFile("staticImport2/A.groovy");
+    PsiReference ref = configureByFile("staticImport3/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
     assertEquals(((GrMethod) resolved).getParameters().length, 1);
