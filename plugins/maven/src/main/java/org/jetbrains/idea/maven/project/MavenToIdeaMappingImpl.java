@@ -50,10 +50,13 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
   }
 
   private void resolveModuleNames(final MavenProjectModel mavenProjectModel) {
+    final List<String> duplicateNames = collectDuplicateModuleNames(mavenProjectModel);
+
     mavenProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
         final MavenId projectId = node.getId();
-        final String name = node.getLinkedModule() != null ? node.getLinkedModule().getName() : generateModuleName(projectId);
+        final String name =
+          node.getLinkedModule() != null ? node.getLinkedModule().getName() : generateModuleName(projectId, duplicateNames);
 
         projectIdToModuleName.put(projectId, name);
 
@@ -72,6 +75,21 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
         projects.add(node);
       }
     });
+  }
+
+  private List<String> collectDuplicateModuleNames(MavenProjectModel m) {
+    final List<String> allNames = new ArrayList<String>();
+    final List<String> result = new ArrayList<String>();
+
+    m.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
+      public void visit(MavenProjectModel.Node node) {
+        String name = node.getId().artifactId;
+        if (allNames.contains(name)) result.add(name);
+        allNames.add(name);
+      }
+    });
+
+    return result;
   }
 
   private void resolveModulePaths(final MavenProjectModel mavenProjectModel, final String dedicatedModuleDir) {
@@ -116,8 +134,10 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
     }
   }
 
-  private String generateModuleName(final MavenId id) {
-    return id.artifactId;
+  private String generateModuleName(MavenId id, List<String> duplicateNames) {
+    String name = id.artifactId;
+    if (duplicateNames.contains(name)) name = name + " (" + id.groupId + ")";
+    return name;
   }
 
   private String generateModulePath(final MavenProjectModel.Node node, final String dedicatedModuleDir) {

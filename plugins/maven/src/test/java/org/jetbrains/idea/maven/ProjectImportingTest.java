@@ -1,6 +1,4 @@
-package org.jetbrains.idea.maven;/*
- * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
- */
+package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -193,6 +191,50 @@ public class ProjectImportingTest extends IdeaTestCase {
     assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
   }
 
+  public void testModulesWithSameArtifactId() throws Exception {
+    createProjectPom("<?xml version=\"1.0\"?>\n" +
+                     "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                     "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+                     "\n" +
+                     "  <modelVersion>4.0.0</modelVersion>\n" +
+                     "  <groupId>mvn</groupId>\n" +
+                     "  <artifactId>project</artifactId>\n" +
+                     "  <packaging>pom</packaging>\n" +
+                     "  <version>1</version>\n" +
+                     "\n" +
+                     "    <modules>\n" +
+                     "        <module>dir1/m</module>\n" +
+                     "        <module>dir2/m</module>\n" +
+                     "    </modules>\n" +
+                     "\n" +
+                     "</project>");
+
+    createModulePom("dir1/m", "<?xml version=\"1.0\"?>\n" +
+                              "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                              "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+                              "  \n" +
+                              "  <modelVersion>4.0.0</modelVersion>\n" +
+                              "  <groupId>mvn.group1</groupId>\n" +
+                              "  <artifactId>m</artifactId>\n" +
+                              "  <version>1</version>\n" +
+                              "\n" +
+                              "</project>");
+
+    createModulePom("dir2/m", "<?xml version=\"1.0\"?>\n" +
+                              "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                              "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+                              "  \n" +
+                              "  <modelVersion>4.0.0</modelVersion>\n" +
+                              "  <groupId>mvn.group2</groupId>\n" +
+                              "  <artifactId>m</artifactId>\n" +
+                              "  <version>1</version>\n" +
+                              "\n" +
+                              "</project>");
+
+    importProject();
+    assertModules("project", "m (mvn.group1)", "m (mvn.group2)");
+  }
+
   private PomTreeStructure.RootNode createMavenTree() {
     PomTreeStructure s = new PomTreeStructure(myProject, myProject.getComponent(MavenProjectsState.class),
                                               myProject.getComponent(MavenRepository.class),
@@ -215,9 +257,16 @@ public class ProjectImportingTest extends IdeaTestCase {
 
   private void assertModules(String... names) {
     Module[] actual = ModuleManager.getInstance(myProject).getModules();
-    assertEquals(names.length, actual.length);
+    List<String> actualNames = new ArrayList<String>();
     for (Module m : actual) {
-      assertTrue(Arrays.asList(names).contains(m.getName()));
+      actualNames.add(m.getName());
+    }
+
+    assertEquals(actualNames.size(), names.length);
+
+    for (String name : names) {
+      String s = "\nexpected: " + Arrays.asList(names) + "\nactual: " + actualNames;
+      assertTrue(s, actualNames.contains(name));
     }
   }
 
