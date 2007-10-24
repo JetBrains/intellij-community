@@ -637,20 +637,17 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (myInitializedChildren.contains(description)) return;
 
     final List<XmlTag> subTags;
-    try {
-      final XmlTag tag = getXmlTag();
-      if (tag != null && description instanceof FixedChildDescriptionImpl) {
-        subTags = DomImplUtil.findSubTags(tag, createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName()), this);
-      } else if (tag != null && description instanceof AbstractCollectionChildDescription) {
-        subTags = ((AbstractCollectionChildDescription) description).getSubTags(this);
-      } else {
-        subTags = Collections.emptyList();
-      }
+
+    final XmlTag tag = getXmlTag();
+    if (tag != null && description instanceof FixedChildDescriptionImpl) {
+      subTags = DomImplUtil.findSubTags(tag, createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName()), this);
+    } else if (tag != null && description instanceof AbstractCollectionChildDescription) {
+      subTags = ((AbstractCollectionChildDescription) description).getSubTags(this);
+    } else {
+      subTags = Collections.emptyList();
     }
-    finally {
-      r.unlock();
-    }
-    
+
+    r.unlock();
     w.lock();
     try {
       if (myInitializedChildren.contains(description)) return;
@@ -659,7 +656,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         final AttributeChildDescriptionImpl attributeChildDescription = (AttributeChildDescriptionImpl)description;
         final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(attributeChildDescription.getXmlName());
         myAttributeChildren.put(attributeChildDescription, new AttributeChildInvocationHandler(description.getType(), myXmlTag, this,
-                                                                                      evaluatedXmlName, attributeChildDescription, myManager));
+                                                                                               evaluatedXmlName, attributeChildDescription, myManager));
       }
       else if (description instanceof FixedChildDescriptionImpl) {
         final FixedChildDescriptionImpl fixedChildDescription = (FixedChildDescriptionImpl)description;
