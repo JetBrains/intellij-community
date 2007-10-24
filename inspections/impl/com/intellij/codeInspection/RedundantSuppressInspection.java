@@ -186,18 +186,22 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
           }
           if (!hasErrorInsideSuppressedScope) {
             PsiMember psiMember;
+            String problemLine = null;
             if (suppressedScope instanceof PsiMember) {
               psiMember = (PsiMember)suppressedScope;
             } else {
               psiMember = PsiTreeUtil.getParentOfType(suppressedScope, PsiDocCommentOwner.class);
+              final PsiStatement statement = PsiTreeUtil.getNextSiblingOfType(suppressedScope, PsiStatement.class);
+              problemLine = statement != null ? statement.getText() : null;
             }
             if (psiMember != null && psiMember.isValid()) {
               String description = InspectionsBundle.message("inspection.redundant.suppression.description");
               if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<String, QuickFix>();
-              QuickFix fix = myQuickFixes.get(toolId);
+              final String key = toolId + (problemLine != null ? ";" + problemLine : "");
+              QuickFix fix = myQuickFixes.get(key);
               if (fix == null) {
-                fix = new RemoveSuppressWarningAction(toolId);
-                myQuickFixes.put(toolId, fix);
+                fix = new RemoveSuppressWarningAction(toolId, problemLine);
+                myQuickFixes.put(key, fix);
               }
               PsiElement identifier = null;
               if (psiMember instanceof PsiMethod) {
