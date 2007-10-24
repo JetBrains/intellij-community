@@ -65,22 +65,30 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
   }
 
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+    applyFixInner(project);
+  }
+
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    return true;
+  }
+
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+    applyFixInner(project);
+  }
+
+  private void applyFixInner(final Project project) {
     final PsiFile file = myClass.getContainingFile();
     final Editor editor = CodeInsightUtil.positionCursor(project, myClass.getContainingFile(), myClass.getLBrace());
-    if (isAvailable(project, editor, file)) {
+    if (editor != null) {
       new WriteCommandAction(project, file) {
         protected void run(Result result) throws Throwable {
-          invoke(project, editor, file);
+          generateMembers(project, editor, file);
         }
       }.execute();
     }
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return editor != null;
-  }
-
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  private void generateMembers(final Project project, final Editor editor, final PsiFile file) {
     CommandProcessor.getInstance().markCurrentCommandAsComplex(project);
     try {
       List<? extends GenerationInfo> prototypes = new GenerateFieldOrPropertyHandler(myName, myType, myMemberType, myAnnotations).generateMemberPrototypes(myClass, ClassMember.EMPTY_ARRAY);
