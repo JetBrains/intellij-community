@@ -244,6 +244,11 @@ public class UsageNodeTreeBuilderTest extends TestCase {
           return new TextChunk[0];
         }
 
+        @NotNull
+        public String getPlainText() {
+          return "";
+        }
+
         public Icon getIcon() {
           return null;
         }

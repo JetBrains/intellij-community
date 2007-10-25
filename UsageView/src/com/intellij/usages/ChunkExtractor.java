@@ -75,7 +75,7 @@ public class ChunkExtractor {
     myColumnNumber = absoluteStartOffset - myDocument.getLineStartOffset(myLineNumber);
   }
 
-  private static int getStartOffset(final List<RangeMarker> rangeMarkers) {
+  public static int getStartOffset(final List<RangeMarker> rangeMarkers) {
     LOG.assertTrue(!rangeMarkers.isEmpty());
     int minStart = Integer.MAX_VALUE;
     for (RangeMarker rangeMarker : rangeMarkers) {

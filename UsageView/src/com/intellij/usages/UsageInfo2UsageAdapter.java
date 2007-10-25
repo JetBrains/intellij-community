@@ -39,8 +39,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -56,6 +55,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
   private TextChunk[] myTextChunks;
   private final UsagePresentation myUsagePresentation;
+  private String myPlainText;
 
   public UsageInfo2UsageAdapter(final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
@@ -310,6 +310,22 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
         }
       }
       return myTextChunks;
+    }
+
+    @NotNull
+    public String getPlainText() {
+      int startOffset = ChunkExtractor.getStartOffset(myRangeMarkers);
+      final PsiElement element = getElement();
+      if (element != null) {
+        final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
+        if (document != null) {
+          int lineNumber = document.getLineNumber(startOffset);
+          int lineStart = document.getLineStartOffset(lineNumber);
+          int lineEnd = document.getLineEndOffset(lineNumber);
+          return document.getCharsSequence().subSequence(lineStart, lineEnd).toString();
+        }
+      }
+      return "";
     }
 
     public Icon getIcon() {

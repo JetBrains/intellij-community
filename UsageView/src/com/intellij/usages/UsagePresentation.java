@@ -25,6 +25,10 @@ import javax.swing.*;
 public interface UsagePresentation {
   @NotNull
   TextChunk[] getText();
+
+  @NotNull
+  String getPlainText();
+
   Icon getIcon();
 
   String getTooltipText();

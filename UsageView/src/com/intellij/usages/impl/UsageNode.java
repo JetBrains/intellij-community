@@ -81,7 +81,12 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
   }
 
   protected String getText(final UsageView view) {
-    return Arrays.asList(myUsage.getPresentation().getText()).toString();
+    try {
+      return myUsage.getPresentation().getPlainText();
+    }
+    catch(AbstractMethodError e) {
+      return Arrays.asList(myUsage.getPresentation().getText()).toString();
+    }
   }
 
   public void setUsageExcluded(boolean usageExcluded) {
