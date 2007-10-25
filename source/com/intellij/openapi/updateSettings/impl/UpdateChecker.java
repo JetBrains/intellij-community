@@ -114,6 +114,16 @@ public final class UpdateChecker {
           final String pluginUrl = pluginElement.getAttributeValue("url");
           final String pluginVersion = pluginElement.getAttributeValue("version");
 
+          if (pluginId == null) {
+            LOG.info("plugin id should not be null");
+            continue;
+          }
+
+          if (pluginUrl == null) {
+            LOG.info("plugin url should not be null");
+            continue;
+          }
+
           ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
             public void run() {
               try {
