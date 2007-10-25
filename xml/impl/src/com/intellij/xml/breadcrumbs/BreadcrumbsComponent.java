@@ -6,6 +6,9 @@ package com.intellij.xml.breadcrumbs;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -57,8 +60,27 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     myEditor = editor;
     myLoaderComponent = loaderComponent;
 
+    final Project project = editor.getProject();
+    assert project != null;
+
     Document document = myEditor.getDocument();
-    myFile = PsiDocumentManager.getInstance(myEditor.getProject()).getPsiFile(document);
+    myFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+
+    if (myFile != null) {
+      final FileStatusManager manager = FileStatusManager.getInstance(project);
+      manager.addFileStatusListener(new FileStatusListener() {
+        public void fileStatusesChanged() {
+          if (myLine != null) {
+            final Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
+            myLine.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
+            updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
+          }
+        }
+
+        public void fileStatusChanged(@NotNull final VirtualFile virtualFile) {
+        }
+      }, this);
+    }
 
     myInfoProvider = findInfoProvider(myFile, loaderComponent);
 
@@ -80,9 +102,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
     });
 
-    final Project project = editor.getProject();
-    assert project != null;
-
     project.getModel().addModelListener(new PomModelListener() {
       public void modelChanged(final PomModelEvent event) {
         final PomChangeSet set = event.getChangeSet(event.getSource().getModelAspect(XmlAspect.class));
@@ -93,7 +112,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
 
       public boolean isAspectChangeInteresting(final PomModelAspect aspect) {
-        return aspect instanceof XmlAspect; // PsiAspect???!
+        return aspect instanceof XmlAspect;
       }
     }, this);
 
@@ -104,7 +123,6 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
     myLine.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
 
     setLayout(new BorderLayout());
-
     add(myLine);
 
     final ComponentAdapter resizeListener = new ComponentAdapter() {
@@ -135,7 +153,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
   @Nullable
   private static BreadcrumbsInfoProvider findInfoProvider(@Nullable final PsiFile file,
-                                                                          @NotNull BreadcrumbsLoaderComponentImpl loaderComponent) {
+                                                          @NotNull BreadcrumbsLoaderComponentImpl loaderComponent) {
     BreadcrumbsInfoProvider provider = null;
     if (file != null) {
       final FileViewProvider viewProvider = file.getViewProvider();
@@ -385,7 +403,8 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
           myBuffer.paintPage(g2, crumbList, DEFAULT_PAINTER, d.height);
           myCrumbs = crumbList;
         }
-      } else {
+      }
+      else {
         super.paint(g2);
       }
     }
@@ -945,18 +964,18 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
 
       String string = c.getString();
       if (fm.stringWidth(string) > width) {
-      final int dotsWidth = fm.stringWidth("...");
-      final StringBuffer sb = new StringBuffer();
-      int length = 0;
-      for (int i = 0; i < string.length(); i++) {
-        final int charWidth = fm.charWidth(string.charAt(i));
-        if (length + charWidth + dotsWidth > width) {
-          break;
-        }
+        final int dotsWidth = fm.stringWidth("...");
+        final StringBuffer sb = new StringBuffer();
+        int length = 0;
+        for (int i = 0; i < string.length(); i++) {
+          final int charWidth = fm.charWidth(string.charAt(i));
+          if (length + charWidth + dotsWidth > width) {
+            break;
+          }
 
-        length += charWidth;
-        sb.append(string.charAt(i));
-      }
+          length += charWidth;
+          sb.append(string.charAt(i));
+        }
 
         string = sb.append("...").toString();
       }
