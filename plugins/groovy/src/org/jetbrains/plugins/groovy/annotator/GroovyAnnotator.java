@@ -588,7 +588,7 @@ public class GroovyAnnotator implements Annotator {
       final PsiElement clazz = ref.resolve();
       if (clazz == null) continue;
 
-      if (myClass.isInterface() && !((PsiClass) clazz).isInterface()) {
+      if (myClass.isInterface() && clazz instanceof PsiClass  && !((PsiClass) clazz).isInterface()) {
         final Annotation annotation = holder.createErrorAnnotation(ref, GroovyBundle.message("class.is.not.expected.here"));
         annotation.registerFix(new ChangeExtendsImplementsQuickFix(extendsClause, implementsClause));
       }
