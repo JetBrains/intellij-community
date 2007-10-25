@@ -4,6 +4,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -33,6 +34,7 @@ public class DfaBoxedValue extends DfaValue {
       myFactory = factory;
     }
 
+    @Nullable
     public DfaValue createBoxed(DfaValue valueToWrap) {
       if (valueToWrap instanceof DfaUnboxedValue) return ((DfaUnboxedValue)valueToWrap).getVariable();
       Object o = valueToWrap instanceof DfaConstValue

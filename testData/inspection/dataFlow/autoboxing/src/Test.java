@@ -95,3 +95,25 @@ class aaa {
     }
 
 }
+class UsesDoubleAndFloat {
+    void f() {
+        double dd = 10.0;
+        Double r = dd;
+        Double r1 = dd;
+        System.out.println("(r==r1) is "+(r==r1));
+
+        Double r2 = 10.0;
+        Double r3 = 10.0;
+        System.out.println("(r2==r3) is "+(r2==r3));
+
+        float fd = 10.0f;
+        Float fr = fd;
+        Float fr1 = fd;
+        System.out.println("(r==r1) is "+(fr==fr1));
+
+        Float fr2 = 10.0f;
+        Float fr3 = 10.0f;
+        System.out.println("(r2==r3) is "+(fr2==fr3));
+    
+    }
+}

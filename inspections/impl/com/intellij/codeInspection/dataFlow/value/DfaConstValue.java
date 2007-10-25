@@ -12,16 +12,17 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 public class DfaConstValue extends DfaValue {
   public static class Factory {
-    private DfaConstValue dfaNull;
-    private DfaConstValue dfaFalse;
-    private DfaConstValue dfaTrue;
+    private final DfaConstValue dfaNull;
+    private final DfaConstValue dfaFalse;
+    private final DfaConstValue dfaTrue;
+    private final DfaValueFactory myFactory;
     private final Map<Object, DfaConstValue> myValues;
-    private DfaValueFactory myFactory;
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
@@ -31,6 +32,7 @@ public class DfaConstValue extends DfaValue {
       dfaTrue = new DfaConstValue(Boolean.TRUE, factory);
     }
 
+    @Nullable
     public DfaValue create(PsiLiteralExpression expr) {
       PsiType type = expr.getType();
       if (type == PsiType.NULL) return dfaNull;
@@ -39,6 +41,7 @@ public class DfaConstValue extends DfaValue {
       return createFromValue(value, type);
     }
 
+    @Nullable
     public DfaValue create(PsiVariable variable) {
       Object value = variable.computeConstantValue();
       PsiType type = variable.getType();
@@ -46,14 +49,14 @@ public class DfaConstValue extends DfaValue {
         Boolean boo = computeJavaLangBooleanFieldReference(variable);
         if (boo != null) {
           DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN);
-          DfaValue boxed = myFactory.getBoxedFactory().createBoxed(unboxed);
-          return boxed;
+          return myFactory.getBoxedFactory().createBoxed(unboxed);
         }
         return null;
       }
       return createFromValue(value, type);
     }
 
+    @Nullable
     private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
       if (!(variable instanceof PsiField)) return null;
       PsiClass psiClass = ((PsiField)variable).getContainingClass();
@@ -68,9 +71,9 @@ public class DfaConstValue extends DfaValue {
 
       if (TypeConversionUtil.isNumericType(type)) {
         if (type == PsiType.DOUBLE || type == PsiType.FLOAT) {
-          double dbVal = type == PsiType.DOUBLE ? ((Double)value).doubleValue() : ((Float)value).doubleValue();
-          // 5.0f == 5
-          if (Math.floor(dbVal) == dbVal) value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
+          //double dbVal = type == PsiType.DOUBLE ? ((Double)value).doubleValue() : ((Float)value).doubleValue();
+          //// 5.0f == 5
+          //if (Math.floor(dbVal) == dbVal) value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);
         }
         else {
           value = TypeConversionUtil.computeCastTo(value, PsiType.LONG);

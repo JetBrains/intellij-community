@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,12 +32,19 @@ public class MethodCallInstruction extends Instruction {
   @NotNull private final PsiExpression myContext;
   private final MethodType myMethodType;
   public static enum MethodType {
-    BOXING, UNBOXING, REGULAR_METHOD_CALL
+    BOXING, UNBOXING, REGULAR_METHOD_CALL, CAST
   }
 
   public MethodCallInstruction(@NotNull PsiCallExpression callExpression, DfaValueFactory factory) {
     this(callExpression, factory, MethodType.REGULAR_METHOD_CALL);
   }
+
+  public MethodCallInstruction(@NotNull PsiExpression context, DfaValueFactory factory, MethodType methodType, PsiType resultType) {
+    this(context, factory, methodType);
+    myType = resultType;
+    myShouldFlushFields = false;
+  }
+
   public MethodCallInstruction(@NotNull PsiExpression context, DfaValueFactory factory, MethodType methodType) {
     myContext = context;
     myMethodType = methodType;
@@ -125,6 +133,25 @@ public class MethodCallInstruction extends Instruction {
     }
     else if (myMethodType == MethodType.BOXING) {
       dfaValue = myFactory.getBoxedFactory().createBoxed(oldValue);
+    }
+    else if (myMethodType == MethodType.CAST) {
+      if (oldValue instanceof DfaConstValue) {
+        final DfaConstValue constValue = (DfaConstValue)oldValue;
+        Object o = constValue.getValue();
+        if (o instanceof Double || o instanceof Float) {
+          double dbVal = o instanceof Double ? ((Double)o).doubleValue() : ((Float)o).doubleValue();
+          // 5.0f == 5
+          if (Math.floor(dbVal) == dbVal) o = TypeConversionUtil.computeCastTo(o, PsiType.LONG);
+        }
+        else {
+          o = TypeConversionUtil.computeCastTo(o, PsiType.LONG);
+        }
+
+        dfaValue = myFactory.getConstFactory().createFromValue(o, myType);
+      }
+      else {
+        dfaValue = oldValue;
+      }
     }
     else {
       dfaValue = DfaUnknownValue.getInstance();

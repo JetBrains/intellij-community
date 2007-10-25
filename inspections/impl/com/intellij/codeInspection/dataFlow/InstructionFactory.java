@@ -4,15 +4,15 @@
 
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.psi.*;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
@@ -67,6 +67,10 @@ public class InstructionFactory {
   }
   public MethodCallInstruction createMethodCallInstruction(@NotNull PsiExpression context, DfaValueFactory factory, MethodCallInstruction.MethodType methodType) {
     return new MethodCallInstruction(context, factory, methodType);
+  }
+
+  public MethodCallInstruction createCastInstruction(@NotNull PsiExpression context, DfaValueFactory factory, PsiType castType) {
+    return new MethodCallInstruction(context, factory, MethodCallInstruction.MethodType.CAST, castType);
   }
 
   public NotInstruction createNotInstruction() {

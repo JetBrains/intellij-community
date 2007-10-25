@@ -3,12 +3,12 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -855,15 +855,28 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
         }
         else {
           lExpr.accept(this);
-          boolean comparingRef = (op == JavaTokenType.EQEQ || op == JavaTokenType.NE)
-                                 && !TypeConversionUtil.isPrimitiveAndNotNull(lExpr.getType())
-                                 && !TypeConversionUtil.isPrimitiveAndNotNull(rExpr.getType());
+          boolean comparing = (op == JavaTokenType.EQEQ || op == JavaTokenType.NE);
+          PsiType lType = lExpr.getType();
+          PsiType rType = rExpr.getType();
+
+          boolean comparingRef = comparing
+                                 && !TypeConversionUtil.isPrimitiveAndNotNull(lType)
+                                 && !TypeConversionUtil.isPrimitiveAndNotNull(rType);
+
+          boolean comparingPrimitiveNumerics = comparing &&
+                                               TypeConversionUtil.isPrimitiveAndNotNull(lType) &&
+                                               TypeConversionUtil.isPrimitiveAndNotNull(rType) &&
+                                               TypeConversionUtil.isNumericType(lType) &&
+                                               TypeConversionUtil.isNumericType(rType);
+
+          PsiType castType = comparingPrimitiveNumerics ? PsiType.LONG : type;
+
           if (!comparingRef) {
-            generateBoxingUnboxingInstructionFor(lExpr,type);
+            generateBoxingUnboxingInstructionFor(lExpr,castType);
           }
           rExpr.accept(this);
           if (!comparingRef) {
-            generateBoxingUnboxingInstructionFor(rExpr,type);
+            generateBoxingUnboxingInstructionFor(rExpr,castType);
           }
 
           String opSign = expression.getOperationSign().getText();
@@ -888,8 +901,15 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(exprType)) {
       addInstruction(myInstructionFactory.createMethodCallInstruction(expression, myFactory, MethodCallInstruction.MethodType.UNBOXING));
     }
-    if (TypeConversionUtil.isPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(exprType)) {
+    else if (TypeConversionUtil.isPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(exprType)) {
       addInstruction(myInstructionFactory.createMethodCallInstruction(expression, myFactory, MethodCallInstruction.MethodType.BOXING));
+    }
+    else if (exprType != expectedType &&
+             TypeConversionUtil.isPrimitiveAndNotNull(exprType) &&
+             TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
+             TypeConversionUtil.isNumericType(exprType) &&
+             TypeConversionUtil.isNumericType(expectedType)) {
+      addInstruction(myInstructionFactory.createCastInstruction(expression, myFactory, expectedType));
     }
   }
 

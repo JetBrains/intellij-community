@@ -311,4 +311,35 @@
     <problem_class>Constant conditions &amp; exceptions</problem_class>
     <description>Condition &lt;code&gt;i1 == i2&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt;</description>
   </problem>
+
+  <!--
+  <problem>
+    <file>Test.java</file>
+    <line>103</line>
+    <description>'r==r1' is always false</description>
+  </problem>
+  -->
+
+  <problem>
+    <file>Test.java</file>
+    <line>107</line>
+    <description>'r2==r3' is always false</description>
+  </problem>
+
+
+  <!--
+  <problem>
+    <file>Test.java</file>
+    <line>112</line>
+    <description>'fr==fr1' is always false</description>
+  </problem>
+  -->
+
+
+  <problem>
+    <file>Test.java</file>
+    <line>116</line>
+    <description>'fr2==fr3' is always false</description>
+  </problem>
+
 </problems>

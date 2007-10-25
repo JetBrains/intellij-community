@@ -17,19 +17,21 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl");
+  private final DfaValueFactory myFactory;
+
   private ArrayList<SortedIntSet> myEqClasses;
   private int myStateSize;
   private Stack<DfaValue> myStack;
   private TIntStack myOffsetStack;
   private TLongHashSet myDistinctClasses;
   private Map<DfaVariableValue,DfaVariableState> myVariableStates;
-  private DfaValueFactory myFactory;
 
   public DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
@@ -335,6 +337,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return box(value) == box(value);
   }
 
+  @SuppressWarnings({"UnnecessaryBoxing"})
   private static Object box(final Object value) {
     Object newBoxedValue;
     if (value instanceof Integer) newBoxedValue = Integer.valueOf(((Integer)value).intValue());
@@ -620,6 +623,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return checkNotNullable(value) && applyCondition(compareToNull(value, true));
   }
 
+  @Nullable
   private DfaRelationValue compareToNull(DfaValue dfaVar, boolean negated) {
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
     return myFactory.getRelationFactory().create(dfaVar, dfaNull, "==", negated);
