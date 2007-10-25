@@ -20,7 +20,7 @@ public class CheckForUpdateAction extends AnAction {
   public static void actionPerformed(final boolean enableLink) {
     try {
       final UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
-      final String updatedPlugins = UpdateChecker.updatePlugins();
+      final String updatedPlugins = UpdateChecker.updatePlugins(true);
       if (newVersion != null) {
         UpdateSettingsConfigurable.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
         UpdateChecker.showUpdateInfoDialog(enableLink, newVersion, updatedPlugins);

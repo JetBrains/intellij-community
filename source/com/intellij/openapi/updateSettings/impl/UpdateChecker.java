@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -29,7 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -98,8 +101,9 @@ public final class UpdateChecker {
     return settings.CHECK_NEEDED;
   }
 
-  public static String updatePlugins() throws ConnectionException {
+  public static String updatePlugins(final boolean showErrorDialog) throws ConnectionException {
     final List<String> downloaded = new ArrayList<String>();
+    final Set<String> failed = new HashSet<String>();
     for (String host : UpdateSettingsConfigurable.getInstance().getPluginHosts()) {
       try {
         final Document document = loadVersionInfo(host);
@@ -119,7 +123,7 @@ public final class UpdateChecker {
                 }
               }
               catch (IOException e) {
-                //bad url
+                LOG.info(e);
               }
             }
           }, IdeBundle.message("update.uploading.plugin.progress.title", pluginUrl), true, null);
@@ -127,7 +131,15 @@ public final class UpdateChecker {
         }
       }
       catch (Exception e) {
-        //bad url
+        failed.add(host);
+      }
+    }
+    if (!failed.isEmpty()) {
+      final String failedMessage = IdeBundle.message("connection.failed.message", StringUtil.join(failed, ","));
+      if (showErrorDialog) {
+        Messages.showErrorDialog(failedMessage, IdeBundle.message("title.connection.error"));
+      } else {
+        LOG.info(failedMessage);
       }
     }
     if (downloaded.isEmpty()) return null;
