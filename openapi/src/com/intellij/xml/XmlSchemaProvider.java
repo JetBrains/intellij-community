@@ -19,6 +19,8 @@ package com.intellij.xml;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
@@ -41,6 +43,18 @@ public abstract class XmlSchemaProvider {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static XmlFile findSchema(@NotNull @NonNls String url, @NotNull PsiFile baseFile) {
+    VirtualFile file = baseFile.getVirtualFile();
+    if (file == null) {
+      final PsiFile originalFile = baseFile.getOriginalFile();
+      if (originalFile != null)
+        file = originalFile.getVirtualFile();
+    }
+    final Module module = file != null ? ProjectRootManager.getInstance(baseFile.getProject()).getFileIndex().getModuleForFile(file) : null;
+    return findSchema(url, module, baseFile);
   }
 
   @Nullable

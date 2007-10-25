@@ -1065,7 +1065,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             pi.setText2(url);
             ++i;
           }
-          final XmlFile xmlFile = XmlUtil.findXmlFile(file, url);
+          final XmlFile xmlFile = XmlUtil.findNamespace(file, url);
 
           if (xmlFile != null) {
             final boolean wordFound = checkIfGivenXmlHasTheseWords(localName, xmlFile);

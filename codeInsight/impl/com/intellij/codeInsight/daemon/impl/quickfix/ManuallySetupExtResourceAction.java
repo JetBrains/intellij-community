@@ -26,7 +26,7 @@ public class ManuallySetupExtResourceAction extends BaseIntentionAction {
 
     if (uri == null) return false;
 
-    XmlFile xmlFile = XmlUtil.findXmlFile(file, uri);
+    XmlFile xmlFile = XmlUtil.findNamespace(file, uri);
     if (xmlFile != null) return false;
 
     setText(QuickFixBundle.message("manually.setup.external.resource"));

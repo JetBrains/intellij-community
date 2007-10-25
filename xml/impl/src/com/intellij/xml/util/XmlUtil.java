@@ -39,6 +39,7 @@ import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -195,6 +196,11 @@ public class XmlUtil {
   }
 
   private static final Key<String> findXmlFileInProgressKey = Key.create("find.xml.file.in.progress");
+
+  public static XmlFile findNamespace(PsiFile base, @NotNull String uri) {
+    final XmlFile xmlFile = XmlSchemaProvider.findSchema(uri, base);
+    return xmlFile == null ? findXmlFile(base, uri) : xmlFile;
+  }
 
   public static XmlFile findXmlFile(PsiFile base, @NotNull String uri) {
     PsiFile result = null;

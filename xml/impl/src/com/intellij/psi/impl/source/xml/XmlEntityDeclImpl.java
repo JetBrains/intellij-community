@@ -231,14 +231,14 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     if (attributeValue != null) {
       final String value = attributeValue.getValue();
       if (value != null) {
-        XmlFile xmlFile = XmlUtil.findXmlFile(baseFile, value);
+        XmlFile xmlFile = XmlUtil.findNamespace(baseFile, value);
         if (xmlFile != null) {
           return xmlFile;
         }
 
         final int i = URIReferenceProvider.getPrefixLength(value);
         if (i > 0) {
-          return XmlUtil.findXmlFile(baseFile, value.substring(i));
+          return XmlUtil.findNamespace(baseFile, value.substring(i));
         }
       }
     }

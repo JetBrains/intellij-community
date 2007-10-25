@@ -11,8 +11,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -176,16 +174,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   }
 
   public PsiFile getResourceLocation(@NotNull @NonNls final String url, @NotNull final PsiFile baseFile, final String version) {
-    VirtualFile file = baseFile.getVirtualFile();
-    if (file == null) {
-      final PsiFile originalFile = baseFile.getOriginalFile();
-      if (originalFile != null)
-        file = originalFile.getVirtualFile();
-    }
-
-    final Module moduleForFile =
-      file != null ? ProjectRootManager.getInstance(baseFile.getProject()).getFileIndex().getModuleForFile(file):null;
-    final XmlFile schema = XmlSchemaProvider.findSchema(url, moduleForFile,baseFile);
+    final XmlFile schema = XmlSchemaProvider.findSchema(url, baseFile);
     if (schema != null) {
       return schema;
     }

@@ -162,7 +162,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
 
         final XmlFile xmlFile = documentIsSchemaThatDefinesNs
                                 ? containingFile
-                                : XmlUtil.findXmlFile(containingFile, ExternalResourceManager.getInstance().getResourceLocation(namespace));
+                                : XmlUtil.findNamespace(containingFile, ExternalResourceManager.getInstance().getResourceLocation(namespace));
         if (xmlFile != null) {
           return (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
         }
@@ -214,7 +214,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
 
     final String dtdUri = doctype.getDtdUri();
     if (dtdUri != null && dtdUri.length() > 0){
-      final XmlFile xmlFile = XmlUtil.findXmlFile(containingFile, dtdUri);
+      final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
       final XmlNSDescriptor descr1 = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
       if (descr != null && descr1 != null){
         descr = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descr, descr1});

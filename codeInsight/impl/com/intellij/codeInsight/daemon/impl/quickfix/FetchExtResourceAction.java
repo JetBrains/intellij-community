@@ -57,7 +57,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
     if (uri == null) return false;
 
-    XmlFile xmlFile = XmlUtil.findXmlFile(file, uri);
+    XmlFile xmlFile = XmlUtil.findNamespace(file, uri);
     if (xmlFile != null) return false;
 
     if (!uri.startsWith(HTTP_PROTOCOL) && !uri.startsWith(FTP_PROTOCOL) && !uri.startsWith(HTTPS_PROTOCOL)) return false;
