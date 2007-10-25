@@ -140,14 +140,32 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   public static abstract class Poly<T extends PsiElement> extends PsiReferenceBase<T> implements PsiPolyVariantReference {
 
-  public Poly(final T psiElement) {
-    super(psiElement);
-  }
+    public Poly(final T psiElement) {
+      super(psiElement);
+    }
 
-  @Nullable
-  public PsiElement resolve() {
-    ResolveResult[] resolveResults = multiResolve(false);
-    return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
+    public Poly(final T element, final boolean soft) {
+      super(element, soft);
+    }
+
+    public Poly(final T element, final TextRange range, final boolean soft) {
+      super(element, range, soft);
+    }
+
+    public boolean isReferenceTo(PsiElement element) {
+      final ResolveResult[] results = multiResolve(false);
+      for (ResolveResult result : results) {
+        if (element.getManager().areElementsEquivalent(result.getElement(), element)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Nullable
+    public PsiElement resolve() {
+      ResolveResult[] resolveResults = multiResolve(false);
+      return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
+    }
   }
-}
 }
