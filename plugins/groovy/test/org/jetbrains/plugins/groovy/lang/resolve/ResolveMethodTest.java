@@ -25,13 +25,20 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
 
-  public void testStaticImport2() throws Exception {
+  public void testStaticImport3() throws Exception {
     PsiReference ref = configureByFile("staticImport3/A.groovy");
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof PsiMethod);
     assertEquals(((GrMethod) resolved).getParameters().length, 1);
     assertEquals(((GrMethod) resolved).getName(), "isShrimp");
   }
+
+  public void testStaticImport() throws Exception {
+    PsiReference ref = configureByFile("staticImport/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+  }
+
 
   public void testSimple() throws Exception {
     PsiReference ref = configureByFile("simple/A.groovy");
@@ -230,12 +237,6 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertNotNull(method);
     assertTrue(method.isConstructor());
     assertEquals(0, method.getParameterList().getParameters().length);
-  }
-
-  public void testStaticImport() throws Exception {
-    PsiReference ref = configureByFile("staticImport/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
   }
 
   public void testPartiallyDeclaredType() throws Exception {

@@ -21,6 +21,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -62,9 +64,17 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (!isAccessible((PsiNamedElement) element)) return true;
 
       substitutor = inferMethodTypeParameters(method, substitutor);
+      String name = myName;
+      if (myCurrentFileResolveContext instanceof GrImportStatement){
+        GrImportStatement importStatement = (GrImportStatement) myCurrentFileResolveContext;
+        GrCodeReferenceElement reference = ((GrImportStatement) myCurrentFileResolveContext).getImportReference();
+        if (reference != null && importStatement.isAliasedImport()) {
+          name = reference.getReferenceName();
+        }
+      }
       if (myForCompletion ||
-          (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression)) &&
-              myName != null && myName.equals(method.getName())) {
+          (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression))
+           && name != null && name.equals(method.getName())) {
         myCandidates.add(new GroovyResolveResultImpl(method, true, myCurrentFileResolveContext, substitutor));
       } else {
         myInapplicableCandidates.add(new GroovyResolveResultImpl(method, true, myCurrentFileResolveContext, substitutor));
