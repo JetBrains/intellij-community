@@ -1,3 +1,8 @@
++ When possible, JNA library is used for most of native calls instead of Runtime.exec(...)
++ HTTP Digest authentications works better.
++ Bug in keywords expansion code fixed.
++ Other bugfixes.
+
 = version 1.1.4
 
 + Connections pool closes inactive connections on timeout.
