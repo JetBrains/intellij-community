@@ -80,8 +80,8 @@ public class EqualsBetweenInconvertibleTypesInspection
             if (comparisonType == null) {
                 return;
             }
-            if (TypeConversionUtil.areTypesConvertible(comparedType,
-                    comparisonType)) {
+            if (TypeConversionUtil.areTypesConvertible(TypeConversionUtil.erasure(comparedType),
+                                                       TypeConversionUtil.erasure(comparisonType))) {
                 return;
             }
             registerMethodCallError(expression, comparedType, comparisonType);
