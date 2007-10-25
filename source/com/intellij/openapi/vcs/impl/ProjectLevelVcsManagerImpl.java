@@ -120,12 +120,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final List<CheckinHandlerFactory> myRegisteredBeforeCheckinHandlers = new ArrayList<CheckinHandlerFactory>();
   private boolean myHaveEmptyContentRevisions = true;
-  private EventDispatcher<VcsListener> myEventDispatcher = EventDispatcher.create(VcsListener.class);
+  private final EventDispatcher<VcsListener> myEventDispatcher = EventDispatcher.create(VcsListener.class);
   private final VcsDirectoryMappingList myDirectoryMappingList;
-  private Set<AbstractVcs> myActiveVcss = new HashSet<AbstractVcs>();
+  private final Set<AbstractVcs> myActiveVcss = new HashSet<AbstractVcs>();
   private boolean myMappingsLoaded = false;
   private boolean myHaveLegacyVcsConfiguration = false;
   private boolean myCheckinHandlerFactoriesLoaded = false;
+  private final VirtualFile myBaseDir;
 
   private volatile int myBackgroundOperationCounter = 0;
 
@@ -138,6 +139,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myMessageBus = bus;
     myDirectoryMappingList = new VcsDirectoryMappingList(project);
     myVcss = new ArrayList<AbstractVcs>(Arrays.asList(vcses));
+    myBaseDir = project.getBaseDir();
   }
 
   private final Map<String, VcsShowOptionsSettingImpl> myOptions = new LinkedHashMap<String, VcsShowOptionsSettingImpl>();
@@ -348,9 +350,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
     final String directory = mapping.getDirectory();
     if (directory.length() == 0) {
-      final VirtualFile baseDir = myProject.getBaseDir();
-      if (baseDir != null && VfsUtil.isAncestor(baseDir, file, false)) {
-        return baseDir;
+      if (myBaseDir != null && VfsUtil.isAncestor(myBaseDir, file, false)) {
+        return myBaseDir;
       }
       final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file);
       if (contentRoot != null) {
