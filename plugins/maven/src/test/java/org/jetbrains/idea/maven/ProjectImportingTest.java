@@ -180,7 +180,26 @@ public class ProjectImportingTest extends IdeaTestCase {
 
     importProject();
     assertModules("project");
-    assertModuleLibraries("project", "group:artifact:1");
+    assertModuleLibraries("project", "group:artifact:1:tests");
+  }
+
+  public void testDependencyWithClassifier() throws IOException {
+    createProjectPom("  <groupId>mvn</groupId>\n" +
+                     "  <artifactId>project</artifactId>\n" +
+                     "  <version>1</version>\n" +
+
+                     "  <dependencies>\n" +
+                     "     <dependency>\n" +
+                     "      <groupId>group</groupId>\n" +
+                     "      <artifactId>artifact</artifactId>\n" +
+                     "      <classifier>bar</classifier>\n" +
+                     "      <version>1</version>\n" +
+                     "    </dependency>\n" +
+                     "  </dependencies>\n");
+
+    importProject();
+    assertModules("project");
+    assertModuleLibraries("project", "group:artifact:1:bar");
   }
 
   private PomTreeStructure.RootNode createMavenTree() {

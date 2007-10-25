@@ -264,14 +264,14 @@ public class MavenToIdeaConverter {
 
   private static List<Artifact> extractDependencies(final MavenProject mavenProject) {
     Map<String, Artifact> projectIdToArtifact = new TreeMap<String, Artifact>();
-    for (Object o : mavenProject.getArtifacts()) {
-      Artifact newArtifact = (Artifact)o;
-      if (isSupportedArtifact(newArtifact)) {
-        String projectId = newArtifact.getGroupId() + ":" + newArtifact.getArtifactId();
-        Artifact oldArtifact = projectIdToArtifact.get(projectId);
-        if (oldArtifact == null ||
-            new DefaultArtifactVersion(oldArtifact.getVersion()).compareTo(new DefaultArtifactVersion(newArtifact.getVersion())) < 0) {
-          projectIdToArtifact.put(projectId, newArtifact);
+
+    for (Artifact artifact : (Collection<Artifact>)mavenProject.getArtifacts()) {
+      if (isSupportedArtifact(artifact)) {
+        String projectId = artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getClassifier();
+
+        Artifact existing = projectIdToArtifact.get(projectId);
+        if (existing == null || new DefaultArtifactVersion(existing.getVersion()).compareTo(new DefaultArtifactVersion(artifact.getVersion())) < 0) {
+          projectIdToArtifact.put(projectId, artifact);
         }
       }
     }

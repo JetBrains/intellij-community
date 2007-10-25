@@ -17,6 +17,7 @@ public class MavenId implements Comparable<MavenId>{
   @NonNls public String groupId;
   @NonNls public String artifactId;
   @NonNls public String version;
+  @NonNls public String classifier;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MavenId() {
@@ -30,6 +31,7 @@ public class MavenId implements Comparable<MavenId>{
 
   public MavenId(Artifact artifact) {
     this(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+    this.classifier = artifact.getClassifier();
   }
 
   public boolean equals(final Object o) {
@@ -55,9 +57,10 @@ public class MavenId implements Comparable<MavenId>{
   }
 
   public String toString() {
-    return version != null
-           ? MessageFormat.format("{0}:{1}:{2}", groupId, artifactId, version)
-           : MessageFormat.format("{0}:{1}", groupId, artifactId);
+    String result = version != null
+                    ? MessageFormat.format("{0}:{1}:{2}", groupId, artifactId, version)
+                    : MessageFormat.format("{0}:{1}", groupId, artifactId);
+    return classifier == null ? result : result + ":" + classifier;
   }
 
   public static MavenId parse(final String text) throws ParseException {
