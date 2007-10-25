@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -124,10 +123,7 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
       final RefProject refProject = refManager.getRefProject();
       for (OrderEntry orderEntry : unusedLibs.keySet()) {
         if (orderEntry instanceof LibraryOrderEntry) {
-          RefEntity problemEntity = refProject;
-          if (((LibraryOrderEntry)orderEntry).getLibraryLevel() == LibraryTableImplUtil.MODULE_LEVEL) {
-            problemEntity = refManager.getRefModule(orderEntry.getOwnerModule());
-          }
+          RefEntity problemEntity = refManager.getRefModule(orderEntry.getOwnerModule());
           final Set<VirtualFile> files = unusedLibs.get(orderEntry);
           if (files.size() < orderEntry.getFiles(OrderRootType.CLASSES).length) {
             final String unusedLibraryRoots = StringUtil.join(files, new Function<VirtualFile, String>() {
