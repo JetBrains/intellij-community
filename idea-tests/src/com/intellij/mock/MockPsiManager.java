@@ -1,5 +1,6 @@
 package com.intellij.mock;
 
+import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -29,11 +30,10 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LiteFixture;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.ide.startup.CacheUpdater;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +49,7 @@ public class MockPsiManager extends PsiManagerEx {
   private ResolveCache myResolveCache;
   private PsiElementFactory myElementFactory;
   private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<VirtualFile, PsiDirectory>();
+  private final Map<VirtualFile,PsiFile> myFiles = new THashMap<VirtualFile, PsiFile>();
   private CachedValuesManagerImpl myCachedValuesManager;
   private MockFileManager myMockFileManager;
   private PsiModificationTrackerImpl myPsiModificationTracker;
@@ -81,7 +82,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public PsiFile findFile(@NotNull VirtualFile file) {
-    return null;
+    return myFiles.get(file);
   }
 
   public
@@ -431,6 +432,7 @@ public class MockPsiManager extends PsiManagerEx {
   }
 
   public void addFileToCacheManager(final PsiFile file) {
+    myFiles.put(file.getViewProvider().getVirtualFile(), file);
     myCompositeCacheManager.addCacheManager(new CacheManager() {
       public void initialize() {
       }

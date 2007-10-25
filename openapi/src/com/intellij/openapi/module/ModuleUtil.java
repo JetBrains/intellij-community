@@ -124,8 +124,15 @@ public class ModuleUtil {
       }
       return fileIndex.getModuleForFile(vFile);
     }
-    final PsiFile containingFile = element.getContainingFile();
+    PsiFile containingFile = element.getContainingFile();
     if (containingFile != null) {
+      PsiElement context;
+      while ((context = containingFile.getContext()) != null) {
+        final PsiFile file = context.getContainingFile();
+        if (file == null) break;
+        containingFile = file;
+      }
+
       if (containingFile.getUserData(KEY_MODULE) != null) {
         return containingFile.getUserData(KEY_MODULE);
       }

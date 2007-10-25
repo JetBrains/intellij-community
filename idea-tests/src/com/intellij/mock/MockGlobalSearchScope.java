@@ -13,18 +13,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MockGlobalSearchScope extends GlobalSearchScope {
   public boolean contains(final VirtualFile file) {
-    throw new UnsupportedOperationException("Method contains is not yet implemented in " + getClass().getName());
+    return true;
   }
 
   public int compare(final VirtualFile file1, final VirtualFile file2) {
-    throw new UnsupportedOperationException("Method compare is not yet implemented in " + getClass().getName());
+    return 0;
   }
 
   public boolean isSearchInModuleContent(@NotNull final Module aModule) {
-    throw new UnsupportedOperationException("Method isSearchInModuleContent is not yet implemented in " + getClass().getName());
+    return true;
   }
 
   public boolean isSearchInLibraries() {
-    throw new UnsupportedOperationException("Method isSearchInLibraries is not yet implemented in " + getClass().getName());
+    return true;
   }
 }
