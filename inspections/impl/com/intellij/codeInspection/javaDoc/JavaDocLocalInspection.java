@@ -872,7 +872,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       if (dataElement instanceof PsiInlineDocTag) {
         final PsiInlineDocTag inlineDocTag = (PsiInlineDocTag)dataElement;
         if (manager.getTagInfo(inlineDocTag.getName()) == null) {
-          problems.add(createDescriptor(inlineDocTag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.wrong.tag", "<code>" + inlineDocTag.getName() + "</code>"), new AddUnknownTagToCustoms(inlineDocTag), inspectionManager));
+          final PsiElement nameElement = inlineDocTag.getNameElement();
+          if (nameElement != null) {
+            problems.add(createDescriptor(nameElement, InspectionsBundle.message("inspection.javadoc.problem.wrong.tag", "<code>" + inlineDocTag.getName() + "</code>"), new AddUnknownTagToCustoms(inlineDocTag), inspectionManager));
+          }
         }
       }
     }
