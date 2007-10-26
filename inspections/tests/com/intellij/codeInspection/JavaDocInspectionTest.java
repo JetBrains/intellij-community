@@ -46,4 +46,8 @@ public class JavaDocInspectionTest extends InspectionTestCase {
   public void testMisorderedThrowsTag() throws Exception {
     doTest();
   }
+
+  public void testGenericsParams() throws Exception {
+    doTest();
+  }
 }

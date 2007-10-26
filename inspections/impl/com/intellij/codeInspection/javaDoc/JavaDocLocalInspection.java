@@ -347,6 +347,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (psiClass instanceof PsiAnonymousClass) return null;
     if (psiClass instanceof JspClass) return null;
+    if (psiClass instanceof PsiTypeParameter) return null;
     if (IGNORE_DEPRECATED && psiClass.isDeprecated()) {
       return null;
     }
