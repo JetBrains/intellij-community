@@ -19,7 +19,6 @@ import java.util.List;
  */
 public class DialogAppender extends AppenderSkeleton {
   private static final DefaultIdeaErrorLogger DEFAULT_LOGGER = new DefaultIdeaErrorLogger();
-  static final boolean RELEASE_BUILD = false;
 
   private Runnable myDialogRunnable = null;
 
@@ -52,7 +51,8 @@ public class DialogAppender extends AppenderSkeleton {
       return;
     }
 
-    final IdeaLoggingEvent ideaEvent = new IdeaLoggingEvent(event.getMessage().toString(), throwable.getThrowable());
+    final Object message = event.getMessage();
+    final IdeaLoggingEvent ideaEvent = new IdeaLoggingEvent(message == null ? "<null> " : message.toString(), throwable.getThrowable());
     for (int i = errorLoggers.length - 1; i >= 0; i--) {
 
       final ErrorLogger logger = errorLoggers[i];
