@@ -80,7 +80,7 @@ public abstract class BaseRefactoringAction extends AnAction {
           disableAction(e);
           return;
         }
-        final int offset = editor.getCaretModel().getOffset();
+        final int offset = getElementAtCaret(editor);
         element = file.findElementAt(offset);
         if (element == null && offset == file.getTextLength()) {
           element = file.findElementAt(offset - 1);
@@ -108,6 +108,17 @@ public abstract class BaseRefactoringAction extends AnAction {
         disableAction(e);
       }
     }
+  }
+
+  private static int getElementAtCaret(final Editor editor) {
+    final int caret = editor.getCaretModel().getOffset();
+    if (editor.getSelectionModel().hasSelection() && !editor.getSelectionModel().hasBlockSelection()) {
+      if (caret == editor.getSelectionModel().getSelectionEnd()) {
+        return Math.max(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd() - 1);
+      }
+    }
+
+    return caret;
   }
 
   private static void disableAction(final AnActionEvent e) {
