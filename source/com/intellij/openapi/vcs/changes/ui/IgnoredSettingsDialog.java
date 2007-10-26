@@ -62,7 +62,7 @@ public class IgnoredSettingsDialog extends DialogWrapper {
     return myPanel;
   }
 
-  public void setItems(final IgnoredFileBean[] filesToIgnore) {
+  private void setItems(final IgnoredFileBean[] filesToIgnore) {
     myModel = new DefaultListModel();
     for(IgnoredFileBean bean: filesToIgnore) {
       myModel.addElement(bean);
@@ -70,7 +70,7 @@ public class IgnoredSettingsDialog extends DialogWrapper {
     myList.setModel(myModel);
   }
 
-  public IgnoredFileBean[] getItems() {
+  private IgnoredFileBean[] getItems() {
     final int count = myList.getModel().getSize();
     IgnoredFileBean[] result = new IgnoredFileBean[count];
     for(int i=0; i<count; i++) {
@@ -105,9 +105,23 @@ public class IgnoredSettingsDialog extends DialogWrapper {
   }
 
   private void deleteItems() {
-    final Object[] selection = myList.getSelectedValues();
-    for(Object item: selection) {
-      myModel.removeElement(item);
+    boolean contigiousSelection = true;    
+    int minSelectionIndex = myList.getSelectionModel().getMinSelectionIndex();
+    int maxSelectionIndex = myList.getSelectionModel().getMaxSelectionIndex();
+    for(int i=minSelectionIndex; i<=maxSelectionIndex; i++) {
+      if (!myList.getSelectionModel().isSelectedIndex(i)) {
+        contigiousSelection = false;
+        break;
+      }
+    }
+    if (contigiousSelection) {
+      myModel.removeRange(minSelectionIndex, maxSelectionIndex);
+    }
+    else {
+      final Object[] selection = myList.getSelectedValues();
+      for(Object item: selection) {
+        myModel.removeElement(item);
+      }
     }
   }
 
