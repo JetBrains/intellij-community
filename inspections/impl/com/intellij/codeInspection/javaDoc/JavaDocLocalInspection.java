@@ -799,7 +799,18 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (IGNORE_JAVADOC_PERIOD) return;
     PsiDocTag[] tags = docComment.getTags();
     int dotIndex = docComment.getText().indexOf('.');
-    int tagOffset = tags.length == 0 ? 0 : tags[0].getTextOffset();
+    int tagOffset = 0;
+    if (dotIndex >= 0) {      //need to find first valid tag
+      final PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(docComment, PsiDocCommentOwner.class);
+      for (PsiDocTag tag : tags) {
+        final String tagName = tag.getName();
+        final JavadocTagInfo tagInfo = tag.getManager().getJavadocManager().getTagInfo(tagName);
+        if (tagInfo != null && tagInfo.isValidInContext(owner) && !tagInfo.isInline()) {
+          tagOffset = tag.getTextOffset();
+          break;
+        }
+      }
+    }
 
     if (dotIndex == -1 || tagOffset > 0 && dotIndex + docComment.getTextOffset() > tagOffset) {
       problems.add(manager.createProblemDescriptor(docComment.getFirstChild(),
