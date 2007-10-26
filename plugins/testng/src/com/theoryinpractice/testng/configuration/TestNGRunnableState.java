@@ -6,12 +6,6 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import java.io.*;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.UnknownHostException;
-import java.util.*;
-
 import com.intellij.ExtensionPoints;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
@@ -40,7 +34,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
@@ -50,7 +47,19 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
 import org.testng.annotations.AfterClass;
-import org.testng.xml.*;
+import org.testng.xml.LaunchSuite;
+import org.testng.xml.Parser;
+import org.testng.xml.SuiteGenerator;
+import org.testng.xml.XmlSuite;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
+import java.util.*;
 
 public class TestNGRunnableState extends JavaCommandLineState
 {
@@ -346,7 +355,13 @@ public class TestNGRunnableState extends JavaCommandLineState
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
       classes.putAll(calculateDependencies(data, true, psiClass));
-
+      final Set<PsiMethod> testMethods = new HashSet<PsiMethod>();
+      for (PsiMethod method : psiClass.getMethods()) {
+        if (TestNGUtil.hasTest(method)) {
+          testMethods.add(method);
+        }
+      }
+      classes.put(psiClass, testMethods);
     } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
       PsiClass psiClass = psiManager.findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
