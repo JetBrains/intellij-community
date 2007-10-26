@@ -3,8 +3,8 @@ package com.intellij.xml.util.documentation;
 import com.intellij.codeInsight.completion.XmlCompletionData;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.MetaDataDocumentationProvider;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
+import com.intellij.lang.documentation.MetaDataDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -18,10 +18,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
-import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
-import com.intellij.xml.impl.schema.TypeDescriptor;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
+import com.intellij.xml.impl.schema.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +53,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
       XmlUtil.processXmlElements(tag,processor, true);
 
       if (processor.url == null) {
-        XmlTag declaration = getComplexTypeDefinition(element, originalElement);
+        XmlTag declaration = getComplexOrSimpleTypeDefinition(element, originalElement);
 
         if (declaration != null) {
           XmlUtil.processXmlElements(declaration,processor, true);
@@ -84,7 +81,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
       String typeName = null;
 
       if (processor.result == null) {
-        XmlTag declaration = getComplexTypeDefinition(element, originalElement);
+        XmlTag declaration = getComplexOrSimpleTypeDefinition(element, originalElement);
 
         if (declaration != null) {
           XmlUtil.processXmlElements(declaration,processor, true);
@@ -155,10 +152,31 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
     return generateDoc(text, name,null);
   }
 
-  private XmlTag getComplexTypeDefinition(PsiElement element, PsiElement originalElement) {
+  private XmlTag getComplexOrSimpleTypeDefinition(PsiElement element, PsiElement originalElement) {
     XmlElementDescriptor descriptor = element.getUserData(DESCRIPTOR_KEY);
 
     XmlTag contextTag = null;
+
+    XmlAttribute contextAttribute;
+
+    if (descriptor == null &&
+        originalElement != null &&
+        (contextAttribute = PsiTreeUtil.getParentOfType(originalElement, XmlAttribute.class)) != null) {
+      final XmlAttributeDescriptor attributeDescriptor = contextAttribute.getDescriptor();
+
+      if (attributeDescriptor instanceof XmlAttributeDescriptorImpl) {
+        final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(
+          (XmlTag)attributeDescriptor.getDeclaration(),
+          contextAttribute.getParent()
+        );
+
+        TypeDescriptor type = elementDescriptor != null ? elementDescriptor.getType(contextAttribute) : null;
+
+        if (type instanceof ComplexTypeDescriptor) {
+          return ((ComplexTypeDescriptor)type).getDeclaration();
+        }
+      }
+    }
 
     if (descriptor == null &&
         originalElement != null &&
