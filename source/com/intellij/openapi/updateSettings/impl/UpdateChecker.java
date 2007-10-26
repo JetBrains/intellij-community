@@ -141,6 +141,7 @@ public final class UpdateChecker {
         }
       }
       catch (Exception e) {
+        LOG.info(e);
         failed.add(host);
       }
     }
