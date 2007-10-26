@@ -1,10 +1,12 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -15,14 +17,15 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -53,6 +56,51 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
                                           
   public XmlNSDescriptorImpl() {
+  }
+
+  private PsiFile[] dependencies;
+
+  private void collectDependencies(Set<PsiFile> visited) {
+    if (myTag == null) return;
+    XmlTag[] tags = myTag.getSubTags();
+    visited.add( myTag.getContainingFile() );
+
+    for (final XmlTag tag : tags) {
+      if (equalsToSchemaName(tag, INCLUDE_TAG_NAME) ||
+          equalsToSchemaName(tag, IMPORT_TAG_NAME)
+        ) {
+        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", tag.getNamespace());
+        if (schemaLocation != null) {
+          final XmlFile xmlFile = XmlUtil.findNamespace(myFile, schemaLocation.getValue());
+          if (xmlFile != null) {
+            visited.add(xmlFile);
+          }
+        }
+      } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
+        final XmlFile file = getRedefinedElementDescriptorFile(tag);
+        if (file != null) {
+          visited.add(file);
+        }
+      }
+    }
+
+    final String schemaLocationDeclaration = myTag.getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
+    if(schemaLocationDeclaration != null) {
+      final StringTokenizer tokenizer = new StringTokenizer(schemaLocationDeclaration);
+
+      while(tokenizer.hasMoreTokens()){
+        final String uri = tokenizer.nextToken();
+
+        if(tokenizer.hasMoreTokens()){
+          PsiFile resourceLocation = ExternalResourceManager.getInstance().getResourceLocation(tokenizer.nextToken(), myFile, null);
+          if (resourceLocation == null && uri != null) resourceLocation = ExternalResourceManager.getInstance().getResourceLocation(uri, myFile, null);
+
+          if (resourceLocation != null) {
+            visited.add(resourceLocation);
+          }
+        }
+      }
+    }
   }
 
   public XmlFile getDescriptorFile() {
@@ -810,10 +858,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       myTargetNamespace = myTag.getAttributeValue("targetNamespace");
     }
 
+    THashSet<PsiFile> dependenciesSet = new THashSet<PsiFile>();
+    collectDependencies(dependenciesSet);
+    dependencies = dependenciesSet.toArray(PsiFile.EMPTY_ARRAY);
   }
 
-  public Object[] getDependences(){
-    return new Object[]{myFile, };
+  public Object[] getDependences() {
+    return dependencies;
   }
 
   static {
@@ -875,6 +926,16 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   }
 
   public static XmlNSDescriptorImpl getRedefinedElementDescriptor(final XmlTag parentTag) {
+    XmlFile file = getRedefinedElementDescriptorFile(parentTag);
+    if (file != null) {
+      final XmlDocument document = file.getDocument();
+      final PsiMetaDataBase metaData = document != null ? document.getMetaData():null;
+      if (metaData instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)metaData;
+    }
+    return null;
+  }
+
+  public static XmlFile getRedefinedElementDescriptorFile(final XmlTag parentTag) {
     final String schemaL = parentTag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
 
     if (schemaL != null) {
@@ -884,11 +945,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         final PsiElement psiElement = references[references.length - 1].resolve();
 
         if (psiElement instanceof XmlFile) {
-          final PsiMetaDataBase metaData = ((XmlFile)psiElement).getDocument().getMetaData();
-          if (metaData instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)metaData;
+          return ((XmlFile)psiElement);
         }
       }
     }
     return null;
   }
+
 }
