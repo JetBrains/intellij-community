@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
+ */
+
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class ProjectImportingTest extends IdeaTestCase {
+public abstract class ProjectImportingTest extends IdeaTestCase {
   private VirtualFile root;
   private VirtualFile projectPom;
   private List<VirtualFile> poms = new ArrayList<VirtualFile>();
@@ -50,159 +54,7 @@ public class ProjectImportingTest extends IdeaTestCase {
   protected void setUpModule() {
   }
 
-  public void testSimpleProject() throws IOException {
-    importProject("  <groupId>mvn</groupId>\n" +
-                  "  <artifactId>project</artifactId>\n" +
-                  "  <version>1</version>\n");
-
-    assertModules("project");
-  }
-
-  public void testProjectWithDependency() throws IOException {
-    importProject("  <groupId>mvn</groupId>\n" +
-                  "  <artifactId>project</artifactId>\n" +
-                  "  <version>1</version>\n" +
-
-                  "  <dependencies>\n" +
-                  "    <dependency>\n" +
-                  "      <groupId>junit</groupId>\n" +
-                  "      <artifactId>junit</artifactId>\n" +
-                  "      <version>4.0</version>\n" +
-                  "    </dependency>\n" +
-                  "  </dependencies>\n");
-
-    assertModules("project");
-  }
-
-  public void testProjectWithProperty() throws IOException {
-    importProject("  <groupId>mvn</groupId>\n" +
-                  "  <artifactId>project</artifactId>\n" +
-                  "  <version>1</version>\n" +
-
-                  "  <dependencies>\n" +
-                  "    <dependency>\n" +
-                  "      <groupId>direct-system-dependency</groupId>\n" +
-                  "      <artifactId>direct-system-dependency</artifactId>\n" +
-                  "      <version>1.0</version>\n" +
-                  "      <scope>system</scope>\n" +
-                  "      <systemPath>${java.home}/lib/tools.jar</systemPath>" +
-                  "    </dependency>\n" +
-                  "  </dependencies>\n");
-
-    assertModules("project");
-  }
-
-  public void testProjectWithEnvProperty() throws IOException {
-    importProject("  <groupId>mvn</groupId>\n" +
-                  "  <artifactId>env-properties</artifactId>\n" +
-                  "  <version>1</version>\n" +
-
-                  "  <dependencies>\n" +
-                  "    <dependency>\n" +
-                  "      <groupId>direct-system-dependency</groupId>\n" +
-                  "      <artifactId>direct-system-dependency</artifactId>\n" +
-                  "      <version>1.0</version>\n" +
-                  "      <scope>system</scope>\n" +
-                  "      <systemPath>${env.JAVA_HOME}/lib/tools.jar</systemPath>" +
-                  "    </dependency>\n" +
-                  "  </dependencies>\n");
-
-    // This should fail when embedder will be able to handle env.XXX properties
-    assertModules();
-  }
-
-  public void testModulesWithSlashesRegularAndBack() throws IOException {
-    createProjectPom("  <groupId>mvn.modules-with-slashes</groupId>\n" +
-                     "  <artifactId>project</artifactId>\n" +
-                     "  <packaging>pom</packaging>\n" +
-                     "  <version>1</version>\n" +
-
-                     "  <modules>\n" +
-                     "    <module>dir\\m1</module>\n" +
-                     "    <module>dir/m2</module>\n" +
-                     "  </modules>\n");
-
-    createModulePom("dir/m1", "  <groupId>mvn.modules-with-slashes</groupId>\n" +
-                              "  <artifactId>m1</artifactId>\n" +
-                              "  <version>1</version>\n");
-
-    createModulePom("dir/m2", "  <groupId>mvn.modules-with-slashes</groupId>\n" +
-                              "  <artifactId>m2</artifactId>\n" +
-                              "  <version>1</version>\n");
-
-    importProject();
-    assertModules("project", "m1", "m2");
-
-    PomTreeStructure.RootNode r = createMavenTree();
-
-    assertEquals(1, r.pomNodes.size());
-    assertEquals("project", r.pomNodes.get(0).mavenProject.getArtifactId());
-
-    assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
-  }
-
-  public void testModulesWithSameArtifactId() throws Exception {
-    createProjectPom("  <groupId>mvn</groupId>\n" +
-                     "  <artifactId>project</artifactId>\n" +
-                     "  <packaging>pom</packaging>\n" +
-                     "  <version>1</version>\n" +
-
-                     "  <modules>\n" +
-                     "    <module>dir1/m</module>\n" +
-                     "    <module>dir2/m</module>\n" +
-                     "  </modules>\n");
-
-    createModulePom("dir1/m", "  <groupId>mvn.group1</groupId>\n" +
-                              "  <artifactId>m</artifactId>\n" +
-                              "  <version>1</version>\n");
-
-    createModulePom("dir2/m", "  <groupId>mvn.group2</groupId>\n" +
-                              "  <artifactId>m</artifactId>\n" +
-                              "  <version>1</version>\n");
-
-    importProject();
-    assertModules("project", "m (mvn.group1)", "m (mvn.group2)");
-  }
-
-  public void testTestJarDependencies() throws Exception {
-    createProjectPom("  <groupId>mvn</groupId>\n" +
-                     "  <artifactId>project</artifactId>\n" +
-                     "  <version>1</version>\n" +
-
-                     "  <dependencies>\n" +
-                     "     <dependency>\n" +
-                     "      <groupId>group</groupId>\n" +
-                     "      <artifactId>artifact</artifactId>\n" +
-                     "      <type>test-jar</type>\n" +
-                     "      <version>1</version>\n" +
-                     "    </dependency>\n" +
-                     "  </dependencies>\n");
-
-    importProject();
-    assertModules("project");
-    assertModuleLibraries("project", "group:artifact:1:tests");
-  }
-
-  public void testDependencyWithClassifier() throws IOException {
-    createProjectPom("  <groupId>mvn</groupId>\n" +
-                     "  <artifactId>project</artifactId>\n" +
-                     "  <version>1</version>\n" +
-
-                     "  <dependencies>\n" +
-                     "     <dependency>\n" +
-                     "      <groupId>group</groupId>\n" +
-                     "      <artifactId>artifact</artifactId>\n" +
-                     "      <classifier>bar</classifier>\n" +
-                     "      <version>1</version>\n" +
-                     "    </dependency>\n" +
-                     "  </dependencies>\n");
-
-    importProject();
-    assertModules("project");
-    assertModuleLibraries("project", "group:artifact:1:bar");
-  }
-
-  private PomTreeStructure.RootNode createMavenTree() {
+  protected PomTreeStructure.RootNode createMavenTree() {
     PomTreeStructure s = new PomTreeStructure(myProject, myProject.getComponent(MavenProjectsState.class),
                                               myProject.getComponent(MavenRepository.class),
                                               myProject.getComponent(MavenEventsHandler.class)) {
@@ -222,7 +74,7 @@ public class ProjectImportingTest extends IdeaTestCase {
     return (PomTreeStructure.RootNode)s.getRootElement();
   }
 
-  private void assertModules(String... expectedNames) {
+  protected void assertModules(String... expectedNames) {
     Module[] actual = ModuleManager.getInstance(myProject).getModules();
     List<String> actualNames = new ArrayList<String>();
 
@@ -230,15 +82,15 @@ public class ProjectImportingTest extends IdeaTestCase {
       actualNames.add(m.getName());
     }
 
-    assertEquals(actualNames.size(), expectedNames.length);
+    assertEquals(expectedNames.length, actualNames.size());
     assertElementsAreEqual(expectedNames, actualNames);
   }
 
-  private void assertModuleLibraries(String moduleName, String... expectedLibraries) {
-    Module m = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
+  protected void assertModuleLibraries(String moduleName, String... expectedLibraries) {
+    Module m = getModule(moduleName);
     List<String> actual = new ArrayList<String>();
 
-    for (OrderEntry e : ModuleRootManager.getInstance(m).getOrderEntries()){
+    for (OrderEntry e : ModuleRootManager.getInstance(m).getOrderEntries()) {
       if (e instanceof LibraryOrderEntry) {
         actual.add(e.getPresentableName());
       }
@@ -254,11 +106,15 @@ public class ProjectImportingTest extends IdeaTestCase {
     }
   }
 
-  private void createProjectPom(String xml) throws IOException {
+  protected Module getModule(String name) {
+    return ModuleManager.getInstance(myProject).findModuleByName(name);
+  }
+
+  protected void createProjectPom(String xml) throws IOException {
     projectPom = createPomFile(root, xml);
   }
 
-  private void createModulePom(String relativePath, String xml) throws IOException {
+  protected void createModulePom(String relativePath, String xml) throws IOException {
     File externalDir = new File(root.getPath(), relativePath);
     externalDir.mkdirs();
 
@@ -274,22 +130,20 @@ public class ProjectImportingTest extends IdeaTestCase {
   }
 
   private String createValidPom(String xml) {
-    return "<?xml version=\"1.0\"?>\n" +
-           "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-           "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-           "\n" +
-           "  <modelVersion>4.0.0</modelVersion>\n" +
+    return "<?xml version=\"1.0\"?>" +
+           "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
+           "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
+           "  <modelVersion>4.0.0</modelVersion>" +
            xml +
-           "\n" +
            "</project>";
   }
 
-  private void importProject(String xml) throws IOException {
+  protected void importProject(String xml) throws IOException {
     createProjectPom(xml);
     importProject();
   }
 
-  private void importProject() {
+  protected void importProject() {
     ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
     files.add(projectPom);
     ArrayList<String> profiles = new ArrayList<String>();
