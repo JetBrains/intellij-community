@@ -28,7 +28,10 @@ import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
 import com.intellij.util.xml.events.TagValueChangeEvent;
-import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -106,7 +109,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
     final Type concreteInterface = manager.getTypeChooserManager().getTypeChooser(type).chooseType(tag);
     final StaticGenericInfo staticInfo = manager.getStaticGenericInfo(concreteInterface);
-    myGenericInfo = this instanceof AttributeChildInvocationHandler ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
+    myGenericInfo = ((DomInvocationHandler)this) instanceof AttributeChildInvocationHandler ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
     myType = concreteInterface;
 
     final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), Factory.NULL_FACTORY);
