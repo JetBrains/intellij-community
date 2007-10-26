@@ -15,6 +15,8 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -217,12 +219,12 @@ public class DomImplUtil {
   }
 
   public static List<XmlTag> getCustomSubTags(final XmlTag tag, final DomInvocationHandler handler) {
-    final DynamicGenericInfo info = handler.getGenericInfo();
+    final DomGenericInfoEx info = handler.getGenericInfo();
     final Set<XmlName> usedNames = new THashSet<XmlName>();
-    for (final CollectionChildDescriptionImpl description : info.getCollectionChildrenDescriptions()) {
+    for (final DomCollectionChildDescription description : info.getCollectionChildrenDescriptions()) {
       usedNames.add(description.getXmlName());
     }
-    for (final FixedChildDescriptionImpl description : info.getFixedChildrenDescriptions()) {
+    for (final DomFixedChildDescription description : info.getFixedChildrenDescriptions()) {
       usedNames.add(description.getXmlName());
     }
     return ContainerUtil.findAll(tag.getSubTags(), new Condition<XmlTag>() {

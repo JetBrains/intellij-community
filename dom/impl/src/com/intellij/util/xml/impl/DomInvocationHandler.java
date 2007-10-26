@@ -28,9 +28,7 @@ import com.intellij.util.xml.events.CollectionElementAddedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.util.xml.events.ElementUndefinedEvent;
 import com.intellij.util.xml.events.TagValueChangeEvent;
-import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
-import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.util.xml.reflect.*;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -69,8 +67,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private final Map<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler> myFixedChildren =
     new THashMap<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler>();
   private final Map<AttributeChildDescriptionImpl, AttributeChildInvocationHandler> myAttributeChildren = new THashMap<AttributeChildDescriptionImpl, AttributeChildInvocationHandler>();
-  private final StaticGenericInfo myStaticGenericInfo;
-  private final DynamicGenericInfo myDynamicGenericInfo;
+  private final DomGenericInfoEx myGenericInfo;
   private final Map<FixedChildDescriptionImpl, Class> myFixedChildrenClasses = new THashMap<FixedChildDescriptionImpl, Class>();
   private Throwable myInvalidated;
   private final InvocationCache myInvocationCache;
@@ -108,8 +105,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myAbstractType = type;
 
     final Type concreteInterface = manager.getTypeChooserManager().getTypeChooser(type).chooseType(tag);
-    myStaticGenericInfo = manager.getStaticGenericInfo(concreteInterface);
-    myDynamicGenericInfo = new DynamicGenericInfo(this, myStaticGenericInfo, myManager.getProject());
+    final StaticGenericInfo staticInfo = manager.getStaticGenericInfo(concreteInterface);
+    myGenericInfo = this instanceof AttributeChildInvocationHandler ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
     myType = concreteInterface;
 
     final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), Factory.NULL_FACTORY);
@@ -189,11 +186,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     }
 
     ensureXmlElementExists();
-    final DynamicGenericInfo genericInfo = getGenericInfo();
+    final DomGenericInfoEx genericInfo = getGenericInfo();
     for (final AttributeChildDescriptionImpl description : genericInfo.getAttributeChildrenDescriptions()) {
       description.getDomAttributeValue(this).setStringValue(description.getDomAttributeValue(other).getStringValue());
     }
-    for (final FixedChildDescriptionImpl description : genericInfo.getFixedChildrenDescriptions()) {
+    for (final DomFixedChildDescription description : genericInfo.getFixedChildrenDescriptions()) {
       final List<? extends DomElement> list = description.getValues(getProxy());
       final List<? extends DomElement> otherValues = description.getValues(other);
       for (int i = 0; i < list.size(); i++) {
@@ -206,7 +203,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         }
       }
     }
-    for (final CollectionChildDescriptionImpl description : genericInfo.getCollectionChildrenDescriptions()) {
+    for (final DomCollectionChildDescription description : genericInfo.getCollectionChildrenDescriptions()) {
       for (final DomElement value : description.getValues(getProxy())) {
         value.undefine();
       }
@@ -327,9 +324,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @NotNull
-  public final DynamicGenericInfo getGenericInfo() {
-    myDynamicGenericInfo.checkInitialized();
-    return myDynamicGenericInfo;
+  public final DomGenericInfoEx getGenericInfo() {
+    myGenericInfo.checkInitialized();
+    return myGenericInfo;
   }
 
   protected abstract void undefineInternal();
@@ -561,7 +558,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       return new SetInvocation(getScalarConverter(method));
     }
 
-    return myStaticGenericInfo.createInvocation(method);
+    return myGenericInfo.createInvocation(method);
   }
 
   @NotNull

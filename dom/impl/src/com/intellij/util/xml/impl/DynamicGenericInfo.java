@@ -17,7 +17,7 @@ import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.reflect.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class DynamicGenericInfo implements DomGenericInfo {
+public class DynamicGenericInfo extends DomGenericInfoEx {
   private final StaticGenericInfo myStaticGenericInfo;
   private final DomInvocationHandler myInvocationHandler;
   private final CachedValue<Object> myCachedValue;
@@ -62,6 +62,10 @@ public class DynamicGenericInfo implements DomGenericInfo {
     } finally {
       r.unlock();
     }
+  }
+
+  public Invocation createInvocation(final JavaMethod method) {
+    return myStaticGenericInfo.createInvocation(method);
   }
 
   private void _checkInitialized() {
@@ -133,13 +137,7 @@ public class DynamicGenericInfo implements DomGenericInfo {
 
   @Nullable
   public CustomDomChildrenDescriptionImpl getCustomNameChildrenDescription() {
-    r.lock();
-    try {
-      checkInitialized();
-      return myStaticGenericInfo.getCustomDescription();
-    } finally{
-      r.unlock();
-    }
+    return myStaticGenericInfo.getCustomNameChildrenDescription();
   }
 
   public String getElementName(DomElement element) {
@@ -155,7 +153,7 @@ public class DynamicGenericInfo implements DomGenericInfo {
       list.addAll(myAttributes.getDescriptions());
       list.addAll(myFixeds.getDescriptions());
       list.addAll(myCollections.getDescriptions());
-      ContainerUtil.addIfNotNull(myStaticGenericInfo.getCustomDescription(), list);
+      ContainerUtil.addIfNotNull(myStaticGenericInfo.getCustomNameChildrenDescription(), list);
       return list;
     }
     finally {
@@ -209,18 +207,6 @@ public class DynamicGenericInfo implements DomGenericInfo {
     }
   }
 
-  @Nullable
-  public FixedChildDescriptionImpl getFixedChildDescription(XmlName tagName) {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myFixeds.getDescription(tagName);
-    }
-    finally {
-      r.unlock();
-    }
-  }
-
   public CollectionChildDescriptionImpl getCollectionChildDescription(String tagName) {
     r.lock();
     try {
@@ -237,18 +223,6 @@ public class DynamicGenericInfo implements DomGenericInfo {
     try {
       _checkInitialized();
       return myCollections.getDescription(tagName, namespace);
-    }
-    finally {
-      r.unlock();
-    }
-  }
-
-  @Nullable
-  public CollectionChildDescriptionImpl getCollectionChildDescription(XmlName tagName) {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myCollections.getDescription(tagName);
     }
     finally {
       r.unlock();
@@ -278,18 +252,6 @@ public class DynamicGenericInfo implements DomGenericInfo {
     }
   }
 
-  @Nullable
-  public AttributeChildDescriptionImpl getAttributeChildDescription(XmlName attributeName) {
-    r.lock();
-    try {
-      _checkInitialized();
-      return myAttributes.getDescription(attributeName);
-    }
-    finally {
-      r.unlock();
-    }
-  }
-
   public Type[] getConcreteInterfaceVariants() {
     return myStaticGenericInfo.getConcreteInterfaceVariants();
   }
@@ -308,21 +270,6 @@ public class DynamicGenericInfo implements DomGenericInfo {
     finally {
       r.unlock();
     }
-  }
-
-  @Nullable
-  public final AbstractDomChildDescriptionImpl findChildrenDescription(DomInvocationHandler handler, final String localName, String namespace,
-                                                               boolean attribute,
-                                                               final String qName) {
-    for (final AbstractDomChildDescriptionImpl description : getChildrenDescriptions()) {
-      if (description instanceof DomChildDescriptionImpl && description instanceof AttributeChildDescriptionImpl == attribute) {
-        final EvaluatedXmlName xmlName = handler.createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName());
-        if (DomImplUtil.isNameSuitable(xmlName, localName, qName, namespace, handler)) {
-          return description;
-        }
-      }
-    }
-    return attribute ? null : getCustomNameChildrenDescription();
   }
 
   private static class MyCachedValueProvider implements CachedValueProvider<Object> {

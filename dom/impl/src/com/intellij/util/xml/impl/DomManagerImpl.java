@@ -502,7 +502,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     DomInvocationHandler parent = _getDomElement(parentTag);
     if (parent == null) return null;
 
-    final DynamicGenericInfo info = parent.getGenericInfo();
+    final DomGenericInfoEx info = parent.getGenericInfo();
     final AbstractDomChildrenDescription childDescription = info.findChildrenDescription(parent, tag.getLocalName(), tag.getNamespace(), false, tag.getName());
     if (childDescription == null) return null;
 
