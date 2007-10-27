@@ -17,6 +17,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -58,12 +59,14 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   public XmlNSDescriptorImpl() {
   }
 
-  private PsiFile[] dependencies;
+  private Object[] dependencies;
 
-  private void collectDependencies(Set<PsiFile> visited) {
+  private static void collectDependencies(@Nullable XmlTag myTag, @NotNull XmlFile myFile, @NotNull Set<PsiFile> visited) {
+    if (visited.contains(myFile)) return;
+    visited.add( myFile );
+
     if (myTag == null) return;
     XmlTag[] tags = myTag.getSubTags();
-    visited.add( myTag.getContainingFile() );
 
     for (final XmlTag tag : tags) {
       if (equalsToSchemaName(tag, INCLUDE_TAG_NAME) ||
@@ -72,15 +75,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", tag.getNamespace());
         if (schemaLocation != null) {
           final XmlFile xmlFile = XmlUtil.findNamespace(myFile, schemaLocation.getValue());
-          if (xmlFile != null) {
-            visited.add(xmlFile);
-          }
+          addDependency(xmlFile, visited);
         }
       } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
         final XmlFile file = getRedefinedElementDescriptorFile(tag);
-        if (file != null) {
-          visited.add(file);
-        }
+        addDependency(file, visited);
       }
     }
 
@@ -95,11 +94,16 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           PsiFile resourceLocation = ExternalResourceManager.getInstance().getResourceLocation(tokenizer.nextToken(), myFile, null);
           if (resourceLocation == null && uri != null) resourceLocation = ExternalResourceManager.getInstance().getResourceLocation(uri, myFile, null);
 
-          if (resourceLocation != null) {
-            visited.add(resourceLocation);
-          }
+          if (resourceLocation instanceof XmlFile) addDependency((XmlFile)resourceLocation, visited);
         }
       }
+    }
+  }
+
+  private static void addDependency(final XmlFile file, final Set<PsiFile> visited) {
+    if (file != null) {
+      final XmlDocument document = file.getDocument();
+      collectDependencies(document != null ? document.getRootTag():null, file, visited);
     }
   }
 
@@ -858,12 +862,13 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       myTargetNamespace = myTag.getAttributeValue("targetNamespace");
     }
 
-    THashSet<PsiFile> dependenciesSet = new THashSet<PsiFile>();
-    collectDependencies(dependenciesSet);
-    dependencies = dependenciesSet.toArray(PsiFile.EMPTY_ARRAY);
+    final THashSet<PsiFile> dependenciesSet = new THashSet<PsiFile>();
+    collectDependencies(myTag, myFile, dependenciesSet);
+    dependencies = dependenciesSet.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
   public Object[] getDependences() {
+    if (dependencies == null) dependencies = new Object[] {myFile}; // init was not called
     return dependencies;
   }
 
