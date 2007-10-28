@@ -383,8 +383,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           writeMethod(text, method);
         }
 
-//        getDefinedGetters(gettersNames, method);
-//        getDefinedSetters(settersNames, method);
         getDefinedGetters(gettersNames, method);
         getDefinedSetters(settersNames, method);
 
@@ -410,8 +408,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
             }
           }
         }
-
-        //        writeGetterAndSetter(text, (GrVariableDeclaration) decl, gettersNames, settersNames);
       }
     }
 
@@ -428,22 +424,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (!nameByGetter.equals(method.getName())) {
       gettersNames.add(nameByGetter);
     }
-//    String getVariable;
-//    String methodName = method.getName();
-//    if (methodName.startsWith("get")) {
-//      String var = methodName.substring(methodName.indexOf("get") + "get".length());
-//
-//      if (var.length() != 0) {
-//        getVariable = Character.toLowerCase(var.charAt(0)) + var.substring(1);
-//        GrTypeElement type = method.getReturnTypeElementGroovy();
-//        if (type != null) {
-//          gettersNames.put(getVariable, computeTypeText(type.getType()));
-//        } else {
-//          gettersNames.put(getVariable, "java.lang.Object");
-//        }
-//      }
-//    }
-//    return gettersNames;
   }
 
   private void getDefinedSetters(List<String> settersNames, GrMethod method) {
@@ -453,31 +433,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       settersNames.add(nameBySetter);
     }
   }
-
-//  private Map<String, String> getDefinedSetters(Map<String, String> settersNames, GrMethod method) {
-//    String setVariable;
-//    String methodName = method.getName();
-//    if (methodName.startsWith("set")) {
-//      String var = methodName.substring(methodName.indexOf("set") + "set".length());
-//
-//      if (var.length() != 0) {
-//        setVariable = Character.toLowerCase(var.charAt(0)) + var.substring(1);
-//        GrParameter[] parameters = method.getParameters();
-//
-//        if (parameters.length == 1) {
-//          GrParameter parameter = parameters[0];
-//          GrTypeElement type = parameter.getTypeElementGroovy();
-//
-//          if (type != null) {
-//            settersNames.put(setVariable, computeTypeText(type.getType()));
-//          } else {
-//            settersNames.put(setVariable, "java.lang.Object");
-//          }
-//        }
-//      }
-//    }
-//    return settersNames;
-//  }
 
   private boolean wasRunMethod(GrMethod method) {
     boolean runMethodPresent = false;
@@ -498,104 +453,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("\n");
     }
   }
-
-//  private void writeGetterAndSetter(final StringBuffer text, final GrVariableDeclaration variableDeclaration, final Map<String, String> gettersNames, final Map<String, String> settersNames) {
-//    ApplicationManager.getApplication().runReadAction(new Runnable() {
-//      public void run() {
-//        writeGetter(text, variableDeclaration, gettersNames);
-//        writeSetter(text, variableDeclaration, settersNames);
-//      }
-//    });
-//  }
-
-//  private void writeGetter(StringBuffer text, GrVariableDeclaration variableDeclaration, Map<String, String> gettersNames) {
-//    GrModifierList list = variableDeclaration.getModifierList();
-//
-//    GrTypeElement element = variableDeclaration.getTypeElementGroovy();
-//    String type;
-//    if (element == null) {
-//      type = "java.lang.Object";
-//    } else {
-//      type = computeTypeText(element.getType());
-//    }
-//
-//    for (GrVariable variable : variableDeclaration.getVariables()) {
-//      String name = variable.getName();
-//
-//      if (name == null) continue;
-//
-//      if (gettersNames.containsKey(name)) {
-//        continue;
-//      }
-//
-//      text.append("\n");
-//      text.append("  ");
-//      writeMethodModifiers(text, list, JAVA_MODIFIERS);
-//      text.append(type);
-//      text.append(" ");
-//      text.append("get").append(StringUtil.capitalize(name));
-//
-//      text.append("()");
-//      text.append(" ");
-//      text.append("{\n");
-//
-//      String returnValue = getDefaultValueText(type);
-//
-//      text.append("    return ");
-//      text.append(returnValue);
-//      text.append(";");
-//      text.append("\n  }");
-//      text.append("\n");
-//    }
-//
-////    if (wasGetter) text.append("\n");
-//  }
-//
-//  private void writeSetter(StringBuffer text, GrVariableDeclaration variableDeclaration, Map<String, String> settersNames) {
-//    GrModifierList modifierList = variableDeclaration.getModifierList();
-//    if (modifierList.hasModifierProperty(PsiModifier.FINAL)) return;
-//
-//    GrTypeElement element = variableDeclaration.getTypeElementGroovy();
-//    String type;
-//    if (element == null) {
-//      type = "java.lang.Object";
-//    } else {
-//      type = computeTypeText(element.getType());
-//    }
-//
-//    for (GrVariable variable : variableDeclaration.getVariables()) {
-//      String name = variable.getName();
-//
-//      if (name == null) continue;
-//
-//      if (settersNames.containsKey(name)) {
-//        String setterType = settersNames.get(name);
-//        if (setterType.equals(type)) {
-//          continue;
-//        }
-//      }
-//
-//      text.append("\n");
-//      text.append("  ");
-//      writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
-//
-//      text.append("void ");
-//      text.append("set").append(StringUtil.capitalize(name));
-//
-//      text.append("(");
-//      text.append(type);
-//      text.append(" ");
-//      text.append("new").append(StringUtil.capitalize(name));
-//      text.append(")");
-//      text.append(" ");
-//      text.append("{\n");
-//      text.append("    return;");
-//      text.append("\n  }");
-//      text.append("\n");
-//    }
-//
-////    if (wasSetter) text.append("\n");
-//  }
 
   private void writeRunMethod(StringBuffer text) {
     text.append("\n  public java.lang.Object run() {\n" +
