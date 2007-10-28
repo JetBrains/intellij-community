@@ -377,7 +377,12 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
-    if (parent instanceof GrTypeDefinitionBody) return (PsiClass) parent.getParent();
+    if (parent instanceof GrTypeDefinitionBody) {
+      final PsiElement pparent = parent.getParent();
+      if (pparent instanceof PsiClass) {
+        return (PsiClass) pparent;
+      }
+    }
 
     if (parent instanceof GrGspDeclarationHolder) {
       return ((GrGspDeclarationHolder) parent).getContainingClass();

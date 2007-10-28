@@ -19,17 +19,23 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConsta
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
-public class GrEnumConstantImpl extends GroovyPsiElementImpl {
+public class GrEnumConstantImpl extends GroovyPsiElementImpl implements GrEnumConstant {
   public GrEnumConstantImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
     return "Enumeration constant";
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitEnumConstant(this);
   }
 }

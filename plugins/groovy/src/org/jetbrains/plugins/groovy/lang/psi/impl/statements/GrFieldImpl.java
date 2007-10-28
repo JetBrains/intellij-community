@@ -63,9 +63,12 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
   public PsiClass getContainingClass() {
     PsiElement parent = getParent().getParent();
     if (parent instanceof GrTypeDefinitionBody) {
-      return (PsiClass) parent.getParent();
+      final PsiElement pparent = parent.getParent();
+      if (pparent instanceof PsiClass) {
+        return (PsiClass) pparent;
+      }
     }
-
+    
     if (parent instanceof GrGspDeclarationHolder) {
       return ((GrGspDeclarationHolder) parent).getContainingClass();
     }
