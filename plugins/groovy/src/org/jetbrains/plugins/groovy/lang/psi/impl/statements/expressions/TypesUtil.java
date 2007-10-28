@@ -29,9 +29,7 @@ public class TypesUtil {
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
 
-  public static PsiType getNumericResultType(GrBinaryExpression binaryExpression) {
-    final GrExpression lop = binaryExpression.getLeftOperand();
-    PsiType lType = lop == null ? null : lop.getType();
+  public static PsiType getNumericResultType(GrBinaryExpression binaryExpression, PsiType lType) {
     final GrExpression rop = binaryExpression.getRightOperand();
     PsiType rType = rop == null ? null : rop.getType();
     if (lType == null || rType == null) return null;

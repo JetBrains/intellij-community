@@ -27,22 +27,20 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 /**
  * @author ilyas
  */
-public class GrAdditiveExprImpl extends GrBinaryExpressionImpl {
+public class GrAdditiveExpressionImpl extends GrBinaryExpressionImpl {
 
-  public GrAdditiveExprImpl(@NotNull ASTNode node) {
+  public GrAdditiveExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public PsiType getType() {
-    final PsiType numeric = TypesUtil.getNumericResultType(this);
-    if (numeric != null) {
-      return numeric;
-    }
+    final GrExpression lop = getLeftOperand();
+    final PsiType lType = lop.getType();
+    final PsiType numeric = TypesUtil.getNumericResultType(this, lType);
+    if (numeric != null) return numeric;
 
     IElementType tokenType = getOperationTokenType();
     if (tokenType == GroovyTokenTypes.mPLUS) {
-      final GrExpression lop = getLeftOperand();
-      final PsiType lType = lop.getType();
       if (lType != null && lType.equalsToText("java.lang.String")) {
         return getTypeByFQName("java.lang.String");
       }

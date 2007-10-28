@@ -45,10 +45,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrPowerExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrShiftExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrExclusiveOrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrInclusiveOrExpressionImpl;
@@ -114,10 +112,10 @@ public class PsiImplUtil {
   }
 
   private static boolean isNotAssociative(GrBinaryExpression binaryExpression) {
-    if (binaryExpression instanceof GrMultiplicativeExprImpl) {
+    if (binaryExpression instanceof GrMultiplicativeExpressionImpl) {
       return binaryExpression.getOperationTokenType() != GroovyTokenTypes.mSTAR;
     }
-    if (binaryExpression instanceof GrAdditiveExprImpl) {
+    if (binaryExpression instanceof GrAdditiveExpressionImpl) {
       return binaryExpression.getOperationTokenType() == GroovyTokenTypes.mMINUS;
     }
     return binaryExpression instanceof GrEqualityExprImpl
@@ -240,8 +238,8 @@ public class PsiImplUtil {
     if (expr instanceof GrUnaryExpression ||
         expr instanceof GrTypeCastExpression) priority = 6;
     if (expr instanceof GrPowerExprImpl) priority = 7;
-    if (expr instanceof GrMultiplicativeExprImpl) priority = 8;
-    if (expr instanceof GrAdditiveExprImpl) priority = 9;
+    if (expr instanceof GrMultiplicativeExpressionImpl) priority = 8;
+    if (expr instanceof GrAdditiveExpressionImpl) priority = 9;
     if (expr instanceof GrShiftExprImpl) priority = 10;
     if (expr instanceof GrRelationalExpression) priority = 11;
     if (expr instanceof GrEqualityExprImpl) priority = 12;

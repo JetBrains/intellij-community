@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
@@ -37,6 +38,7 @@ public class GrInclusiveOrExpressionImpl extends GrBinaryExpressionImpl {
 
   @Nullable
   public PsiType getType() {
-    return TypesUtil.getNumericResultType(this);
+    final GrExpression lop = getLeftOperand();
+    return TypesUtil.getNumericResultType(this, lop == null ? null : lop.getType());
   }
 }

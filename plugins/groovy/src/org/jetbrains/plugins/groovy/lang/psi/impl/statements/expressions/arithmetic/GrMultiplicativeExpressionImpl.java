@@ -27,11 +27,11 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 /**
  * @author ilyas
  */
-public class GrMultiplicativeExprImpl extends GrBinaryExpressionImpl {
+public class GrMultiplicativeExpressionImpl extends GrBinaryExpressionImpl {
   private static final String DOUBLE_FQ_NAME = "java.lang.Double";
   private static final String FLOAT_FQ_NAME = "java.lang.Float";
 
-  public GrMultiplicativeExprImpl(@NotNull ASTNode node) {
+  public GrMultiplicativeExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -40,8 +40,8 @@ public class GrMultiplicativeExprImpl extends GrBinaryExpressionImpl {
   }
 
   public PsiType getType() {
+    GrExpression lop = getLeftOperand();
     if (findChildByType(GroovyElementTypes.mDIV) != null) {
-      GrExpression lop = getLeftOperand();
       PsiElementFactory factory = getManager().getElementFactory();
       if (lop != null) {
         PsiType lType = lop.getType();
@@ -60,7 +60,7 @@ public class GrMultiplicativeExprImpl extends GrBinaryExpressionImpl {
 
       return factory.createTypeByFQClassName("java.math.BigDecimal", getResolveScope());
     }
-    return TypesUtil.getNumericResultType(this);
+    return TypesUtil.getNumericResultType(this, lop == null ? null : lop.getType());
   }
 
   private boolean isDoubleOrFloat(PsiType type) {
