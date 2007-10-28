@@ -318,15 +318,10 @@ public class ManualArrayToCollectionCopyInspection
             if (initialValue == null) {
                 return;
             }
-            if (!ExpressionUtils.isZero(initialValue)) {
-                return;
-            }
             final PsiExpression condition = statement.getCondition();
-            final PsiExpression comparedTo = ExpressionUtils.getExpressionVariableIsComparedTo(condition, variable);
-            if (comparedTo == null || !ExpressionUtils.isArrayLengthReference(comparedTo)) {
+            if (!ExpressionUtils.isComparison(condition, variable)) {
                 return;
             }
-
             final PsiStatement update = statement.getUpdate();
             if (!VariableAccessUtils.variableIsIncremented(variable, update)) {
                 return;
