@@ -81,7 +81,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     final GrCall call = PsiTreeUtil.getParentOfType(element, GrCall.class);
     if (call != null) {
       argList = call.getArgumentList();
-      if (argList.getTextRange().contains(element.getTextRange().getStartOffset())) return argList;
+      if (argList != null && argList.getTextRange().contains(element.getTextRange().getStartOffset())) return argList;
     }
     return null;
   }
