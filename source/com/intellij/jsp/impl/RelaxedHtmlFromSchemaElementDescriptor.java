@@ -44,7 +44,7 @@ public class RelaxedHtmlFromSchemaElementDescriptor extends XmlElementDescriptor
 
     if(!XmlUtil.XHTML_URI.equals(namespace) && 
        ( base.getContentType() != XmlElementDescriptor.CONTENT_TYPE_EMPTY ||
-         (childTag.getNamespacePrefix().length() > 0 && childTag.getDescriptor() instanceof JspElementDescriptor) // allow custom tag
+         (childTag.getNSDescriptor(namespace, true) instanceof TldDescriptor) // allow custom tag
        ) ) {
       return new AnyXmlElementDescriptor(base,childTag.getNSDescriptor(namespace,true));
     }
