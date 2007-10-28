@@ -192,11 +192,18 @@ public class ExpressionUtils {
     }
 
     public static boolean isComparison(@Nullable PsiExpression expression,
-                                       @NotNull PsiLocalVariable variable) {
+                                       @NotNull PsiVariable variable) {
+        return getExpressionVariableIsComparedTo(expression, variable) != null;
+    }
+
+    @Nullable
+    public static PsiExpression getExpressionVariableIsComparedTo(
+            @Nullable PsiExpression expression,
+            @NotNull PsiVariable variable) {
         expression =
                 ParenthesesUtils.stripParentheses(expression);
         if (!(expression instanceof PsiBinaryExpression)) {
-            return false;
+            return null;
         }
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression)expression;
@@ -205,13 +212,25 @@ public class ExpressionUtils {
         if (tokenType.equals(JavaTokenType.LT)) {
             PsiExpression lhs = binaryExpression.getLOperand();
             lhs = ParenthesesUtils.stripParentheses(lhs);
-            return VariableAccessUtils.evaluatesToVariable(lhs, variable);
+            return VariableAccessUtils.evaluatesToVariable(lhs, variable) ? binaryExpression.getROperand() : null;
         } else if (tokenType.equals(JavaTokenType.GT)) {
             PsiExpression rhs = binaryExpression.getROperand();
             rhs = ParenthesesUtils.stripParentheses(rhs);
-            return VariableAccessUtils.evaluatesToVariable(rhs, variable);
+            return VariableAccessUtils.evaluatesToVariable(rhs, variable) ? binaryExpression.getLOperand() : null;
         }
-        return false;
+        return null;
+    }
+
+    public static boolean isArrayLengthReference(PsiExpression expression) {
+        expression = ParenthesesUtils.stripParentheses(expression);
+
+        if (!(expression instanceof PsiReferenceExpression)) return false;
+        PsiExpression qualifier = ((PsiReferenceExpression) expression).getQualifierExpression();
+        if (qualifier == null) return false;
+        final PsiType qualifierType = qualifier.getType();
+        if (qualifierType == null) return false;
+        if (qualifierType.getArrayDimensions() == 0) return false;
+        return "length".equals(((PsiReferenceExpression) expression).getReferenceName());
     }
 
     public static boolean isZeroLengthArrayConstruction(
