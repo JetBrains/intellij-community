@@ -630,7 +630,8 @@ public class BackendCompilerWrapper {
                                     final VirtualFile sourceRoot,
                                     final String packagePrefix) throws CacheCorruptedException {
     final Ref<CacheCorruptedException> exRef = new Ref<CacheCorruptedException>(null);
-    ProjectRootManager.getInstance(myProject).getFileIndex().iterateContentUnderDirectory(from, new ContentIterator() {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final ContentIterator contentIterator = new ContentIterator() {
       public boolean processFile(final VirtualFile child) {
         try {
           if (!child.isDirectory() && StdFileTypes.JAVA.equals(typeManager.getFileTypeByFile(child))) {
@@ -643,7 +644,26 @@ public class BackendCompilerWrapper {
           return false;
         }
       }
-    });
+    };
+    if (fileIndex.isInContent(from)) {
+      // use file index for iteration to handle 'inner modules' and excludes properly
+      fileIndex.iterateContentUnderDirectory(from, contentIterator);
+    }
+    else {
+      // seems to be a root for generated sources
+      new Object() {
+        void iterateContent(VirtualFile from) {
+          for (VirtualFile child : from.getChildren()) {
+            if (child.isDirectory()) {
+              iterateContent(child);
+            }
+            else {
+              contentIterator.processFile(child);
+            }
+          }
+        }
+      }.iterateContent(from);
+    }
     if (exRef.get() != null) {
       throw exRef.get();
     }
