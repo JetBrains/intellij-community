@@ -67,15 +67,7 @@
     <orderEntry type="module" module-name="treeStructure" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="action-system-impl" />
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit-4.3.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" exported="" name="JUnit4" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
