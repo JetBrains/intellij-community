@@ -107,6 +107,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     if (p.x + width >= widthLimit) {
       p.x = widthLimit - width;
       width = Math.min(width, widthLimit);
+      height += 20;
     }
 
     if (p.x < 3) {
