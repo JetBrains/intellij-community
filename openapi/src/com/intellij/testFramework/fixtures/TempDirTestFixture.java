@@ -18,6 +18,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -32,4 +33,6 @@ public interface TempDirTestFixture extends IdeaTestFixture {
 
   @Nullable
   VirtualFile getFile(String path);
+
+  @NotNull VirtualFile createFile(final String name);
 }

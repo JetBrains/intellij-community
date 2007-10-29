@@ -16,9 +16,10 @@
 
 package com.intellij.util.xml.model;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -27,17 +28,17 @@ import java.util.Set;
  */
 public class DomModelImpl<T extends DomElement> {
 
-  protected final T myMergedModel;
+  protected final DomFileElement<T> myMergedModel;
   protected final Set<XmlFile> myConfigFiles;
 
   public DomModelImpl(@NotNull T mergedModel, @NotNull Set<XmlFile> configFiles) {
-    myMergedModel = mergedModel;
+    myMergedModel = mergedModel.getRoot();
     myConfigFiles = configFiles;
   }
 
   @NotNull
   public T getMergedModel() {
-    return myMergedModel;
+    return myMergedModel.getRootElement();
   }
 
   @NotNull

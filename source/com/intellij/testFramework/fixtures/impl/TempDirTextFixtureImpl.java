@@ -6,12 +6,14 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -76,6 +78,23 @@ public class TempDirTextFixtureImpl extends BaseFixture implements TempDirTestFi
       }
     });
     return result.get();
+  }
+
+  @NotNull
+  public VirtualFile createFile(final String name) {
+    final File file = createTempDirectory();
+    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
+        try {
+          final File file1 = new File(file, name);
+          file1.createNewFile();
+          return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
   }
 
   public void setUp() throws Exception {
