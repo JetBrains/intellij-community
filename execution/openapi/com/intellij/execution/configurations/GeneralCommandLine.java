@@ -141,10 +141,11 @@ public class GeneralCommandLine {
     if (myEnvParams == null) {
       return null;
     }
-    final Map<String, String> envParams = new HashMap<String, String>(myEnvParams);
+    final Map<String, String> envParams = new HashMap<String, String>();
     if (myPassParentEnvs) {
       envParams.putAll(System.getenv());
     }
+    envParams.putAll(myEnvParams);
     final String[] result = new String[envParams.size()];
     int i=0;
     for (final String key : envParams.keySet()) {
