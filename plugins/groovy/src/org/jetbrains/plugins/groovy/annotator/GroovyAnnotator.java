@@ -763,7 +763,7 @@ public class GroovyAnnotator implements Annotator {
       annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
     } else if (!resolveResult.isAccessible()) {
       String message = GroovyBundle.message("cannot.access", refElement.getReferenceName());
-      holder.createErrorAnnotation(refElement, message);
+      holder.createWarningAnnotation(refElement, message);
     }
   }
 
