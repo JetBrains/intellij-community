@@ -278,6 +278,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
             language.equals("da") ||
             language.equals("se") ||
             language.equals("pt") ||
+            language.equals("nl") ||
             language.equals("tr")) {
           // don't search for shortcuts
           return false;
