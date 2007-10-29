@@ -209,6 +209,10 @@ public class AccessorMethod extends LightElement implements PsiMethod {
     return null;
   }
 
+  public boolean isValid() {
+    return myProperty.isValid();
+  }
+
   @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return PsiTypeParameter.EMPTY_ARRAY;
