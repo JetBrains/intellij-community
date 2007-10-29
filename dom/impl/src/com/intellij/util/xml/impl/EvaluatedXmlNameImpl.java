@@ -10,6 +10,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.XmlName;
@@ -19,36 +21,36 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
  */
 public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
-  private static final Key<FactoryMap<String,CachedValue<List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
-  private static final UserDataCache<FactoryMap<String,CachedValue<List<String>>>, XmlFile, Object> ourNamespaceCache =
-    new UserDataCache<FactoryMap<String,CachedValue<List<String>>>, XmlFile, Object>() {
-      protected FactoryMap<String,CachedValue<List<String>>> compute(final XmlFile file, final Object o) {
-        return new FactoryMap<String, CachedValue<List<String>>>() {
-          protected CachedValue<List<String>> create(final String key) {
-            return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<List<String>>() {
-              public Result<List<String>> compute() {
+  private static final Key<CachedValue<FactoryMap<String,List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
+  private static final UserDataCache<CachedValue<FactoryMap<String,List<String>>>, XmlFile, Object> ourNamespaceCache =
+    new UserDataCache<CachedValue<FactoryMap<String, List<String>>>, XmlFile, Object>() {
+      protected CachedValue<FactoryMap<String, List<String>>> compute(final XmlFile file, final Object p) {
+        return file.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<FactoryMap<String, List<String>>>() {
+          public Result<FactoryMap<String, List<String>>> compute() {
+            final FactoryMap<String, List<String>> map = new ConcurrentFactoryMap<String, List<String>>() {
+              protected List<String> create(final String key) {
                 final DomFileDescription<?> description = DomManagerImpl.getDomManager(file.getProject()).getDomFileDescription(file);
-                if (description == null) {
-                  return new CachedValueProvider.Result<List<String>>(Collections.<String>emptyList(), file);
-                }
-                return new CachedValueProvider.Result<List<String>>(description.getAllowedNamespaces(key, file), file);
+                if (description == null) return Collections.emptyList();
+                return description.getAllowedNamespaces(key, file);
               }
-            }, false);
+            };
+            return Result.create(map, file);
           }
-        };
+        }, false);
       }
     };
-
+  private static final Map<EvaluatedXmlNameImpl,EvaluatedXmlNameImpl> ourInterned = new ConcurrentHashMap<EvaluatedXmlNameImpl,EvaluatedXmlNameImpl>();
 
   private final XmlName myXmlName;
   private final String myNamespaceKey;
 
-  protected EvaluatedXmlNameImpl(@NotNull final XmlName xmlName, @Nullable final String namespaceKey) {
+  private EvaluatedXmlNameImpl(@NotNull final XmlName xmlName, @Nullable final String namespaceKey) {
     myXmlName = xmlName;
     myNamespaceKey = namespaceKey;
   }
@@ -67,7 +69,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     if (namespaceKey == null) {
       namespaceKey = myNamespaceKey;
     }
-    return new EvaluatedXmlNameImpl(name, namespaceKey);
+    return createEvaluatedXmlName(name, namespaceKey);
   }
 
   public String toString() {
@@ -101,7 +103,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
 
   @NotNull
   private List<String> getAllowedNamespaces(final XmlFile file) {
-    final List<String> list = ourNamespaceCache.get(NAMESPACE_PROVIDER_KEY, file, null).get(myNamespaceKey).getValue();
+    final List<String> list = ourNamespaceCache.get(NAMESPACE_PROVIDER_KEY, file, null).getValue().get(myNamespaceKey);
     assert list != null;
     return list;
   }
@@ -151,4 +153,13 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return getAllowedNamespaces(handler.getFile());
   }
 
+  protected static EvaluatedXmlNameImpl createEvaluatedXmlName(@NotNull final XmlName xmlName, @Nullable final String namespaceKey) {
+    final EvaluatedXmlNameImpl name = new EvaluatedXmlNameImpl(xmlName, namespaceKey);
+    final EvaluatedXmlNameImpl interned = ourInterned.get(name);
+    if (interned != null) {
+      return interned;
+    }
+    ourInterned.put(name, name);
+    return name;
+  }
 }

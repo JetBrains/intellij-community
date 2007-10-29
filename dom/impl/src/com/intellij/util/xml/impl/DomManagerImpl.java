@@ -37,6 +37,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -294,8 +295,8 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     myModificationCount++;
   }
 
-  public final DynamicGenericInfo getGenericInfo(final Type type) {
-    return new DynamicGenericInfo(null, getStaticGenericInfo(type), myProject);
+  public final DomGenericInfo getGenericInfo(final Type type) {
+    return getStaticGenericInfo(type);
   }
 
   public final StaticGenericInfo getStaticGenericInfo(final Type type) {

@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.xml.XmlName;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ import java.util.*;
  * @author peter
  */
 public class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
-  private final Map<XmlName, T> myMap = new TreeMap<XmlName, T>();
+  private final Map<XmlName, T> myMap = new THashMap<XmlName, T>();
   private final ChildrenDescriptionsHolder<T> myDelegate;
 
   public ChildrenDescriptionsHolder(@Nullable final ChildrenDescriptionsHolder<T> delegate) {

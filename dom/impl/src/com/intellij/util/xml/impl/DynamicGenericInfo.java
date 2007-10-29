@@ -33,26 +33,26 @@ import java.util.List;
  */
 public class DynamicGenericInfo extends DomGenericInfoEx {
   private final StaticGenericInfo myStaticGenericInfo;
-  private final DomInvocationHandler myInvocationHandler;
+  @NotNull private final DomInvocationHandler myInvocationHandler;
   private final CachedValue<Object> myCachedValue;
   private final Project myProject;
   private boolean myComputing;
-  private final ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
-  private final ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
-  private final ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
+  private ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
+  private ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
+  private ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
   private static final JBReentrantReadWriteLock rwl = LockFactory.createReadWriteLock();
   private static final JBLock r = rwl.readLock();
   private static final JBLock w = rwl.writeLock();
 
-  public DynamicGenericInfo(final DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo, final Project project) {
+  public DynamicGenericInfo(@NotNull final DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo, final Project project) {
     myInvocationHandler = handler;
     myStaticGenericInfo = staticGenericInfo;
     myProject = project;
     myCachedValue = PsiManager.getInstance(myProject).getCachedValuesManager().createCachedValue(new MyCachedValueProvider(), false);
 
-    myAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>(staticGenericInfo.getAttributes());
-    myFixeds = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>(staticGenericInfo.getFixed());
-    myCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>(staticGenericInfo.getCollections());
+    myAttributes = staticGenericInfo.getAttributes();
+    myFixeds = staticGenericInfo.getFixed();
+    myCollections = staticGenericInfo.getCollections();
   }
 
   public final void checkInitialized() {
@@ -72,59 +72,70 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     myStaticGenericInfo.buildMethodMaps();
     if (myCachedValue.hasUpToDateValue()) return;
     if (myComputing) return;
-    if (myInvocationHandler != null) {
-      r.unlock();
-      boolean rlocked = false;
+    r.unlock();
+    boolean rlocked = false;
+    try {
+      w.lock();
       try {
-        w.lock();
-        try {
-          if (myCachedValue.hasUpToDateValue()) return;
+        if (myCachedValue.hasUpToDateValue()) return;
 
-          myAttributes.clear();
-          myFixeds.clear();
-          myCollections.clear();
+        myAttributes = myStaticGenericInfo.getAttributes();
+        myFixeds = myStaticGenericInfo.getFixed();
+        myCollections = myStaticGenericInfo.getCollections();
 
-          myComputing = true;
-        } finally {
-          w.unlock();
-        }
+        myComputing = true;
+      } finally {
+        w.unlock();
+      }
 
-        DomExtensionsRegistrarImpl registrar = null;
-        final DomElement domElement = myInvocationHandler.getProxy();
-        for (final DomExtenderEP extenderEP : Extensions.getExtensions(DomExtenderEP.EP_NAME)) {
-          registrar = extenderEP.extend(myProject, domElement, registrar);
-        }
+      DomExtensionsRegistrarImpl registrar = null;
+      final DomElement domElement = myInvocationHandler.getProxy();
+      for (final DomExtenderEP extenderEP : Extensions.getExtensions(DomExtenderEP.EP_NAME)) {
+        registrar = extenderEP.extend(myProject, domElement, registrar);
+      }
 
-        w.lock();
-        try {
-          if (myCachedValue.hasUpToDateValue()) return;
-          if (registrar != null) {
-            for (final DomExtensionImpl extension : registrar.getAttributes()) {
+      w.lock();
+      try {
+        if (myCachedValue.hasUpToDateValue()) return;
+        if (registrar != null) {
+          final List<DomExtensionImpl> attributes = registrar.getAttributes();
+          if (!attributes.isEmpty()) {
+            myAttributes = new ChildrenDescriptionsHolder<AttributeChildDescriptionImpl>(myStaticGenericInfo.getAttributes());
+            for (final DomExtensionImpl extension : attributes) {
               myAttributes.addDescription(extension.addAnnotations(new AttributeChildDescriptionImpl(extension.getXmlName(), extension.getType())));
             }
-            for (final DomExtensionImpl extension : registrar.getFixeds()) {
+          }
+          final List<DomExtensionImpl> fixeds = registrar.getFixeds();
+          if (!fixeds.isEmpty()) {
+            myFixeds = new ChildrenDescriptionsHolder<FixedChildDescriptionImpl>(myStaticGenericInfo.getFixed());
+            for (final DomExtensionImpl extension : fixeds) {
               myFixeds.addDescription(extension.addAnnotations(new FixedChildDescriptionImpl(extension.getXmlName(), extension.getType(), extension.getCount(), ArrayUtil.EMPTY_COLLECTION_ARRAY)));
             }
-            for (final DomExtensionImpl extension : registrar.getCollections()) {
+          }
+          final List<DomExtensionImpl> collections = registrar.getCollections();
+          if (!collections.isEmpty()) {
+            myCollections = new ChildrenDescriptionsHolder<CollectionChildDescriptionImpl>(myStaticGenericInfo.getCollections());
+            for (final DomExtensionImpl extension : collections) {
               myCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(), Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST)));
             }
           }
-          ((MyCachedValueProvider)myCachedValue.getValueProvider()).deps = registrar == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : registrar.getDependencies();
-          myCachedValue.getValue();
         }
-        finally {
-          myComputing = false;
-          r.lock();
-          rlocked = true;
-          w.unlock();
-        }
+        ((MyCachedValueProvider)myCachedValue.getValueProvider()).deps = registrar == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : registrar.getDependencies();
+        myCachedValue.getValue();
       }
       finally {
-        if (!rlocked) {
-          r.lock();
-        }
+        myComputing = false;
+        r.lock();
+        rlocked = true;
+        w.unlock();
       }
     }
+    finally {
+      if (!rlocked) {
+        r.lock();
+      }
+    }
+
   }
 
   public XmlElement getNameElement(DomElement element) {

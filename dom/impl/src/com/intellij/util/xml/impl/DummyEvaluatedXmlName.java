@@ -29,7 +29,7 @@ public class DummyEvaluatedXmlName implements EvaluatedXmlName{
     if (namespaceKey == null) {
       return new DummyEvaluatedXmlName(name.getLocalName(), myNamespace);
     }
-    return new EvaluatedXmlNameImpl(name, namespaceKey);
+    return EvaluatedXmlNameImpl.createEvaluatedXmlName(name, namespaceKey);
   }
 
   public boolean isNamespaceAllowed(final DomInvocationHandler handler, final String namespace) {

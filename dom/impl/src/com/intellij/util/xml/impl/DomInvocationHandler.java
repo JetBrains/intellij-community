@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -47,7 +46,7 @@ import java.lang.reflect.TypeVariable;
 import java.util.*;
 
 /**
- * @author peter                  
+ * @author peter
  */
 public abstract class DomInvocationHandler<T extends AbstractDomChildDescriptionImpl> extends UserDataHolderBase implements InvocationHandler, DomElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
@@ -70,13 +69,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private final Map<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler> myFixedChildren =
     new THashMap<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler>();
   private final Map<AttributeChildDescriptionImpl, AttributeChildInvocationHandler> myAttributeChildren = new THashMap<AttributeChildDescriptionImpl, AttributeChildInvocationHandler>();
-  private final DomGenericInfoEx myGenericInfo;
+  private DomGenericInfoEx myGenericInfo;
   private final Map<FixedChildDescriptionImpl, Class> myFixedChildrenClasses = new THashMap<FixedChildDescriptionImpl, Class>();
   private Throwable myInvalidated;
   private final InvocationCache myInvocationCache;
-  private final Factory<Converter> myGenericConverterFactory = new Factory<Converter>() {
-    public Converter create() {
-      return myGenericConverter;
+  private static final Function<DomInvocationHandler, Converter> myGenericConverterFactory = new Function<DomInvocationHandler, Converter>() {
+    public Converter fun(final DomInvocationHandler handler) {
+      return handler.myGenericConverter;
     }
   };
   private final FactoryMap<JavaMethod, Converter> myScalarConverters = new FactoryMap<JavaMethod, Converter>() {
@@ -85,7 +84,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
       final Class parameter = ReflectionUtil.substituteGenericType(type, myType);
       LOG.assertTrue(parameter != null, type + " " + myType);
-      final Converter converter = getConverter(method, parameter, type instanceof TypeVariable ? myGenericConverterFactory : Factory.NULL_FACTORY);
+      final Converter converter = getConverter(method, parameter, type instanceof TypeVariable ? myGenericConverterFactory : Function.NULL);
       LOG.assertTrue(converter != null, "No converter specified: String<->" + parameter.getName());
       return converter;
     }
@@ -112,7 +111,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myGenericInfo = ((DomInvocationHandler)this) instanceof AttributeChildInvocationHandler ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
     myType = concreteInterface;
 
-    final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), Factory.NULL_FACTORY);
+    final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), Function.NULL);
     myGenericConverter = converter;
     myInvocationCache =
       manager.getInvocationCache(new Pair<Type, Type>(concreteInterface, converter == null ? null : converter.getClass()));
@@ -227,21 +226,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       if (myXmlTag != null && myXmlTag.isPhysical()) {
         assert myManager.getDomElement(myXmlTag) == getProxy() : myManager.getDomElement(myXmlTag) + "\n\n" + myXmlTag.getParent().getText();
         final SmartPsiElementPointer<XmlTag> pointer =
-          SmartPointerManager.getInstance(myManager.getProject()).createSmartPsiElementPointer(myXmlTag);
-        return myManager.createStableValue(new NullableFactory<T>() {
-          public T create() {
-            final XmlTag tag = pointer.getElement();
-            if (tag == null) return null;
-
-            final DomElement element = myManager.getDomElement(tag);
-            if (element == null || !element.getDomElementType().equals(myType)) return null;
-
-            final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
-            if (handler == null || !handler.getClass().equals(DomInvocationHandler.this.getClass())) return null;
-
-            return (T)element;
-          }
-        });
+          SmartPointerManager.getInstance(myManager.getProject()).createLazyPointer(myXmlTag);
+        return myManager.createStableValue(new StableCopyFactory<T>(pointer, myType, getClass()));
       }
     } finally {
       r.unlock();
@@ -360,15 +346,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     }
     w.lock();
     try {
-      setXmlTagToNull();
+      setXmlTag(null);
     }
     finally {
       w.unlock();
     }
-  }
-
-  protected final void setXmlTagToNull() {
-    myXmlTag = null;
   }
 
   protected final void fireUndefinedEvent() {
@@ -464,7 +446,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @Nullable
   private Converter getConverter(final AnnotatedElement annotationProvider,
                                  Class parameter,
-                                 final Factory<Converter> continuation) {
+                                 final Function<DomInvocationHandler,Converter> continuation) {
     final Resolve resolveAnnotation = annotationProvider.getAnnotation(Resolve.class);
     if (resolveAnnotation != null) {
       final Class<? extends DomElement> aClass = resolveAnnotation.value();
@@ -485,7 +467,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       return converterManager.getConverterInstance(convertAnnotation.value());
     }
 
-    final Converter converter = continuation.create();
+    final Converter converter = continuation.fun(this);
     if (converter != null) {
       return converter;
     }
@@ -506,6 +488,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return myFile;
   }
 
+  @NotNull
   public final DomNameStrategy getNameStrategy() {
     final Class<?> rawType = getRawType();
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(rawType, isAttribute());
@@ -740,7 +723,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
       myInitializedChildren.clear();
       removeFromCache();
-      setXmlTagToNull();
+      setXmlTag(null);
     } finally {
       w.unlock();
     }
@@ -755,7 +738,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   protected final void attach(final XmlTag tag) {
     w.lock();
     try {
-      myXmlTag = tag;
+      setXmlTag(tag);
       cacheInTag(tag);
     } finally{
       r.lock();
@@ -768,6 +751,12 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     } finally {
       r.unlock();
     }
+  }
+
+  protected final void setXmlTag(final XmlTag tag) {
+    final StaticGenericInfo staticInfo = myManager.getStaticGenericInfo(myType);
+    myGenericInfo = tag == null || this instanceof AttributeChildInvocationHandler ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
+    myXmlTag = tag;
   }
 
   protected void cacheInTag(final XmlTag tag) {
@@ -885,6 +874,32 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     }
     finally {
       r.unlock();
+    }
+  }
+
+  private static class StableCopyFactory<T extends DomElement> implements NullableFactory<T> {
+    private final SmartPsiElementPointer<XmlTag> myPointer;
+    private final Type myType;
+    private final Class<? extends DomInvocationHandler> myHandlerClass;
+
+    public StableCopyFactory(final SmartPsiElementPointer<XmlTag> pointer,
+                             final Type type, final Class<? extends DomInvocationHandler> aClass) {
+      myPointer = pointer;
+      myType = type;
+      myHandlerClass = aClass;
+    }
+
+    public T create() {
+      final XmlTag tag = myPointer.getElement();
+      if (tag == null) return null;
+
+      final DomElement element = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
+      if (element == null || !element.getDomElementType().equals(myType)) return null;
+
+      final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
+      if (handler == null || !handler.getClass().equals(myHandlerClass)) return null;
+
+      return (T)element;
     }
   }
 }

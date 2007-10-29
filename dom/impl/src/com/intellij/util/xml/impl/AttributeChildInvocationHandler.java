@@ -106,7 +106,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     w.lock();
     try {
       setDefined(false);
-      setXmlTagToNull();
+      setXmlTag(null);
     }
     finally {
       w.unlock();
