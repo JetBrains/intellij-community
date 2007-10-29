@@ -63,16 +63,11 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   public void setAbsoluteWorkDir(String dir) {
-    workDir = FileUtil.getRelativePath(new File(getProject().getBaseDir().getPath()), new File(dir));
+    workDir = dir;
   }
 
   public String getAbsoluteWorkDir() {
-    String path = getProject().getBaseDir().getPath();
-    try {
-      return new File(path, workDir).getCanonicalFile().getAbsolutePath();
-    } catch (IOException e) {
-      return path;
-    }
+    return new File(workDir).getAbsolutePath();
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -82,6 +77,9 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     vmParams = JDOMExternalizer.readString(element, "vmparams");
     scriptParams = JDOMExternalizer.readString(element, "params");
     workDir = JDOMExternalizer.readString(element, "workDir");
+    if (!new File(workDir).isAbsolute()) { //was stored as relative path, so try to make it absolute here
+      workDir = new File(getProject().getBaseDir().getPath(), workDir).getAbsolutePath();
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
