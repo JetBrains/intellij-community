@@ -160,6 +160,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertNull(ref.resolve());
   }
 
+  public void testGRVY633() throws Exception {
+    PsiReference ref = configureByFile("GRVY633/A.groovy");
+    assertNull(ref.resolve());
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
