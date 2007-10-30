@@ -165,6 +165,10 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertNull(ref.resolve());
   }
 
+  public void testGRVY575() throws Exception {
+    doTest("GRVY575/A.groovy");
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();

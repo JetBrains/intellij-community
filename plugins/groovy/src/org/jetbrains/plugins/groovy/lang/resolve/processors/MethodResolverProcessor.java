@@ -84,12 +84,19 @@ public class MethodResolverProcessor extends ResolverProcessor {
     } else if (element instanceof PsiVariable) {
       if (myForCompletion ||
           element instanceof GrField && ((GrField) element).isProperty() ||
-          ((PsiVariable) element).getType().equalsToText("groovy.lang.Closure")) {
+          isClosure((PsiVariable) element)) {
         return super.execute(element, substitutor);
       }
     }
 
     return true;
+  }
+
+  private boolean isClosure(PsiVariable variable) {
+    if (variable instanceof GrVariable) {
+      return ((GrVariable) variable).getTypeGroovy().equalsToText("groovy.lang.Closure");
+    }
+    return variable.getType().equalsToText("groovy.lang.Closure");
   }
 
   private PsiSubstitutor inferMethodTypeParameters(PsiMethod method, PsiSubstitutor partialSubstitutor) {
