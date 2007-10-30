@@ -755,7 +755,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   protected final void setXmlTag(final XmlTag tag) {
     final StaticGenericInfo staticInfo = myManager.getStaticGenericInfo(myType);
-    myGenericInfo = tag == null || this instanceof AttributeChildInvocationHandler ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
+    myGenericInfo = tag == null || ((DomInvocationHandler)this) instanceof AttributeChildInvocationHandler ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
     myXmlTag = tag;
   }
 
