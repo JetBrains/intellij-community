@@ -29,20 +29,20 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GroovyBraceMatcher implements PairedBraceMatcher {
 
-  private static final BracePair[] PAIRS = new BracePair[]{
-      new BracePair('(', GroovyTokenTypes.mLPAREN, ')', GroovyTokenTypes.mRPAREN, false),
-      new BracePair('[', GroovyTokenTypes.mLBRACK, ']', GroovyTokenTypes.mRBRACK, false),
-      new BracePair('{', GroovyTokenTypes.mLCURLY, '}', GroovyTokenTypes.mRCURLY, true),
+  private static final BracePair[] PAIRS = {
+          new BracePair('(', GroovyTokenTypes.mLPAREN, ')', GroovyTokenTypes.mRPAREN, false),
+          new BracePair('[', GroovyTokenTypes.mLBRACK, ']', GroovyTokenTypes.mRBRACK, false),
+          new BracePair('{', GroovyTokenTypes.mLCURLY, '}', GroovyTokenTypes.mRCURLY, true),
 
-      new BracePair('"', GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, '"', GroovyTokenTypes.mGSTRING_SINGLE_END, false),
-      new BracePair('/', GroovyTokenTypes.mREGEX_BEGIN, '/', GroovyTokenTypes.mREGEX_END, false)
+          new BracePair('"', GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, '"', GroovyTokenTypes.mGSTRING_SINGLE_END, false),
+          new BracePair('/', GroovyTokenTypes.mREGEX_BEGIN, '/', GroovyTokenTypes.mREGEX_END, false)
   };
 
   public BracePair[] getPairs() {
     return PAIRS;
   }
 
-  public boolean isLBraceAllowedAfterType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
+  public boolean isLBraceAllowedBeforeType(@NotNull IElementType iElementType, @Nullable IElementType iElementType1) {
     return true;
   }
 }
