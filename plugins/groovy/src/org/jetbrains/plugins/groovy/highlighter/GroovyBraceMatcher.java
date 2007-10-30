@@ -19,6 +19,7 @@ import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,19 +31,26 @@ import org.jetbrains.annotations.Nullable;
 public class GroovyBraceMatcher implements PairedBraceMatcher {
 
   private static final BracePair[] PAIRS = {
-          new BracePair('(', GroovyTokenTypes.mLPAREN, ')', GroovyTokenTypes.mRPAREN, false),
-          new BracePair('[', GroovyTokenTypes.mLBRACK, ']', GroovyTokenTypes.mRBRACK, false),
-          new BracePair('{', GroovyTokenTypes.mLCURLY, '}', GroovyTokenTypes.mRCURLY, true),
+      new BracePair('(', GroovyTokenTypes.mLPAREN, ')', GroovyTokenTypes.mRPAREN, false),
+      new BracePair('[', GroovyTokenTypes.mLBRACK, ']', GroovyTokenTypes.mRBRACK, false),
+      new BracePair('{', GroovyTokenTypes.mLCURLY, '}', GroovyTokenTypes.mRCURLY, true),
 
-          new BracePair('"', GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, '"', GroovyTokenTypes.mGSTRING_SINGLE_END, false),
-          new BracePair('/', GroovyTokenTypes.mREGEX_BEGIN, '/', GroovyTokenTypes.mREGEX_END, false)
+      new BracePair('"', GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, '"', GroovyTokenTypes.mGSTRING_SINGLE_END, false),
+      new BracePair('/', GroovyTokenTypes.mREGEX_BEGIN, '/', GroovyTokenTypes.mREGEX_END, false)
   };
 
   public BracePair[] getPairs() {
     return PAIRS;
   }
 
-  public boolean isLBraceAllowedBeforeType(@NotNull IElementType iElementType, @Nullable IElementType iElementType1) {
-    return true;
+  public boolean isLBraceAllowedBeforeType(@NotNull IElementType ibraceType, @Nullable IElementType tokenType) {
+    return tokenType == null
+        || GroovyTokenTypes.mWS == tokenType
+        || TokenSets.COMMENT_SET.contains(tokenType)
+        || tokenType == GroovyTokenTypes.mSEMI
+        || tokenType == GroovyTokenTypes.mCOMMA
+        || tokenType == GroovyTokenTypes.mRPAREN
+        || tokenType == GroovyTokenTypes.mRBRACK
+        || tokenType == GroovyTokenTypes.mRCURLY;
   }
 }
