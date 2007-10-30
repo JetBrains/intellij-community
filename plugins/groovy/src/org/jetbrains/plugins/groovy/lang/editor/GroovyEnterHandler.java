@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
@@ -52,7 +53,6 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   }
 
   public boolean isEnabled(Editor editor, DataContext dataContext) {
-//    return myOriginalHandler.isEnabled(editor, dataContext);
     return HandlerUtils.isEnabled(editor, dataContext, myOriginalHandler);
   }
 
@@ -79,16 +79,19 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   }
 
   private void executeWriteActionInner(Editor editor, DataContext dataContext) throws IncorrectOperationException {
-    if (!handleEnter(editor, dataContext) &&
+    Project project = DataKeys.PROJECT.getData(dataContext);
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    }
+
+    if (project == null || !handleEnter(editor, dataContext, project) &&
         myOriginalHandler != null &&
         myOriginalHandler.isEnabled(editor, dataContext)) {
       myOriginalHandler.execute(editor, dataContext);
     }
   }
 
-  private boolean handleEnter(Editor editor, DataContext dataContext) throws IncorrectOperationException {
-    final Project project = DataKeys.PROJECT.getData(dataContext);
-    if (project == null) return false;
+  private boolean handleEnter(Editor editor, DataContext dataContext, @NotNull Project project) throws IncorrectOperationException {
     if (!HandlerUtils.canBeInvoked(editor, dataContext)) {
       return false;
     }
