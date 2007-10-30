@@ -64,17 +64,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
       if (!isAccessible((PsiNamedElement) element)) return true;
 
       substitutor = inferMethodTypeParameters(method, substitutor);
-      String name = myName;
-      if (myCurrentFileResolveContext instanceof GrImportStatement){
-        GrImportStatement importStatement = (GrImportStatement) myCurrentFileResolveContext;
-        GrCodeReferenceElement reference = ((GrImportStatement) myCurrentFileResolveContext).getImportReference();
-        if (reference != null && importStatement.isAliasedImport()) {
-          name = reference.getReferenceName();
-        }
-      }
       if (myForCompletion ||
-          (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression))
-           && name != null && name.equals(method.getName())) {
+          PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression)) {
         myCandidates.add(new GroovyResolveResultImpl(method, true, myCurrentFileResolveContext, substitutor));
       } else {
         myInapplicableCandidates.add(new GroovyResolveResultImpl(method, true, myCurrentFileResolveContext, substitutor));
@@ -88,6 +79,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         return super.execute(element, substitutor);
       }
     }
+
 
     return true;
   }

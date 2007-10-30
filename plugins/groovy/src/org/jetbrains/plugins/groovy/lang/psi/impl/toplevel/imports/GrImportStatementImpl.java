@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author ilyas
@@ -112,11 +113,11 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
 
   private boolean processAllMembers(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiClass clazz) {
     for (PsiField field : clazz.getFields()) {
-      if (field.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(field, substitutor))
+      if (field.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, field))
         return false;
     }
     for (PsiMethod method : clazz.getMethods()) {
-      if (method.hasModifierProperty(PsiModifier.STATIC) && !processor.execute(method, substitutor))
+      if (method.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, method))
         return false;
     }
     return true;
