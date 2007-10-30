@@ -39,10 +39,11 @@ public interface PairedBraceMatcher {
   BracePair[] getPairs();
 
   /**
-   * Returns true if lbrace of given type is allowed to appear before contextType. It is ok to return true
-   * @param lbraceType context element type
-   * @param type context element type
+   * Returns true if paired rbrace should be inserted after lbrace of given type when lbrace is encountered before contextType token.
+   * It is safe to always return true, then paired brace will be inserted anyway.
+   * @param lbraceType lbrace for which information is queried
+   * @param contextType token type that follows lbrace
    * @return true / false as described
    */
-  boolean isLBraceAllowedAfterType(@NotNull IElementType lbraceType, @Nullable IElementType contextType);
+  boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType);
 }

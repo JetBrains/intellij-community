@@ -66,7 +66,7 @@ class CustomFileTypeBraceMatcher implements BraceMatchingUtil.BraceMatcher {
     return null;
   }
 
-  public boolean isLBraceAllowedAfterType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
+  public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
     return true;
   }
 }

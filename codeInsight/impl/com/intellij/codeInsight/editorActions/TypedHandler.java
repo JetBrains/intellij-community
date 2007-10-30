@@ -689,7 +689,7 @@ public class TypedHandler implements TypedActionHandler {
       iterator.advance();
 
       IElementType tokenType = !iterator.atEnd() ? iterator.getTokenType() : null;
-      if (!BraceMatchingUtil.isAppropriateElementTypeForBracketOrParenInFileType(braceTokenType, tokenType, fileType)) {
+      if (!BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType(braceTokenType, tokenType, fileType)) {
         return;
       }
 
