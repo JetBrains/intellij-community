@@ -17,7 +17,10 @@ package org.jetbrains.plugins.groovy.highlighter;
 
 import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Brace matcher for Groovy language
@@ -27,15 +30,19 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 public class GroovyBraceMatcher implements PairedBraceMatcher {
 
   private static final BracePair[] PAIRS = new BracePair[]{
-          new BracePair('(', GroovyTokenTypes.mLPAREN, ')', GroovyTokenTypes.mRPAREN, false),
-          new BracePair('[', GroovyTokenTypes.mLBRACK, ']', GroovyTokenTypes.mRBRACK, false),
-          new BracePair('{', GroovyTokenTypes.mLCURLY, '}', GroovyTokenTypes.mRCURLY, true),
+      new BracePair('(', GroovyTokenTypes.mLPAREN, ')', GroovyTokenTypes.mRPAREN, false),
+      new BracePair('[', GroovyTokenTypes.mLBRACK, ']', GroovyTokenTypes.mRBRACK, false),
+      new BracePair('{', GroovyTokenTypes.mLCURLY, '}', GroovyTokenTypes.mRCURLY, true),
 
-          new BracePair('"', GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, '"', GroovyTokenTypes.mGSTRING_SINGLE_END, false),
-          new BracePair('/', GroovyTokenTypes.mREGEX_BEGIN, '/', GroovyTokenTypes.mREGEX_END, false)
+      new BracePair('"', GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, '"', GroovyTokenTypes.mGSTRING_SINGLE_END, false),
+      new BracePair('/', GroovyTokenTypes.mREGEX_BEGIN, '/', GroovyTokenTypes.mREGEX_END, false)
   };
 
   public BracePair[] getPairs() {
     return PAIRS;
+  }
+
+  public boolean isLBraceAllowedAfterType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
+    return true;
   }
 }
