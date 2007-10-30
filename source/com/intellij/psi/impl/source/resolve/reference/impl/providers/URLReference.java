@@ -43,12 +43,12 @@ import java.util.ArrayList;
  * @author Dmitry Avdeev
 */
 public class URLReference implements PsiReference, QuickFixProvider, EmptyResolveMessageProvider {
-
   @NonNls private static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
 
   private final PsiElement myElement;
   private TextRange myRange;
   private boolean mySoft;
+  private boolean myIncorrectResourceMapped;
 
   public URLReference(PsiElement element) {
     myElement = element;
@@ -70,6 +70,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
 
   @Nullable
   public PsiElement resolve() {
+    myIncorrectResourceMapped = false;
     final String canonicalText = getCanonicalText();
 
     if (canonicalText.length() == 0) {
@@ -107,6 +108,12 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
       if (rootTag == null) return null;
       final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(canonicalText, true);
       if (nsDescriptor != null) return nsDescriptor.getDescriptorFile();
+
+      final String url = ExternalResourceManager.getInstance().getResourceLocation(canonicalText);
+      if (!url.equals(canonicalText)) {
+        myIncorrectResourceMapped = true;
+        return null;
+      }
 
       if (tag == rootTag && tag.getNamespace().equals(com.intellij.xml.util.XmlUtil.XML_SCHEMA_URI)) {
         for(XmlTag t:tag.getSubTags()) {
@@ -216,7 +223,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
   }
 
   public String getUnresolvedMessagePattern() {
-    return XmlErrorMessages.message("uri.is.not.registered");
+    return XmlErrorMessages.message(myIncorrectResourceMapped ? "registered.resource.is.not.recognized":"uri.is.not.registered");
   }
 
   public static void processWsdlSchemas(final XmlTag rootTag, Processor<XmlTag> processor) {
