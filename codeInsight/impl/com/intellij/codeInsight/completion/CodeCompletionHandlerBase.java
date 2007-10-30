@@ -407,6 +407,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
       newContext.offset = newContext.startOffset;
       PsiElement element = injectedFile.findElementAt(newContext.startOffset);
+      if (element == null) {
+        LOG.assertTrue(false, "offset " + newContext.startOffset + " at:\n" + injectedFile.getText());
+      }
       return Pair.create(newContext, element);
     }
     PsiElement element;
