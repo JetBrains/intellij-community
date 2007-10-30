@@ -271,7 +271,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     if (autoFocusContents) {
-      appendRequestFocusInToolWindowCmd(id, commandsList);
+      appendRequestFocusInToolWindowCmd(id, commandsList, true);
     }
   }
 
@@ -298,7 +298,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       // tool window's window to front.
       final InternalDecorator decorator = getInternalDecorator(id);
       if (!decorator.hasFocus() && autoFocusContents) {
-        appendRequestFocusInToolWindowCmd(id, commandList);
+        appendRequestFocusInToolWindowCmd(id, commandList, forced);
       }
       return;
     }
@@ -471,12 +471,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myActiveStack.remove(id, false); // hidden window should be at the top of stack
       if (wasActive) {
         if (myActiveStack.isEmpty()) {
-          activateEditorComponentImpl(commandList, true);
+          activateEditorComponentImpl(commandList, false);
         }
         else {
           final String toBeActivatedId = myActiveStack.pop();
           if (toBeActivatedId != null) {
-            activateToolWindowImpl(toBeActivatedId, commandList, true, true);
+            activateToolWindowImpl(toBeActivatedId, commandList, false, true);
           }
         }
       }
@@ -813,7 +813,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       appendAddButtonCmd(getStripeButton(id), info, commandsList);
       showToolWindowImpl(id, false, commandsList);
       if (info.isActive()) {
-        appendRequestFocusInToolWindowCmd(id, commandsList);
+        appendRequestFocusInToolWindowCmd(id, commandsList, true);
       }
     }
   }
@@ -981,10 +981,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return command.getDoneCallback();
   }
 
-  private void appendRequestFocusInToolWindowCmd(final String id, final ArrayList<FinalizableCommand> commandList) {
+  private void appendRequestFocusInToolWindowCmd(final String id, final ArrayList<FinalizableCommand> commandList, boolean forced) {
     final ToolWindowImpl toolWindow = (ToolWindowImpl)getToolWindow(id);
     final FocusWatcher focusWatcher = myId2FocusWatcher.get(id);
-    commandList.add(new RequestFocusInToolWindowCmd(toolWindow, focusWatcher, myWindowManager.getCommandProcessor()));
+    commandList.add(new RequestFocusInToolWindowCmd(toolWindow, focusWatcher, myWindowManager.getCommandProcessor(), forced));
   }
 
   /**
@@ -1409,6 +1409,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
         if (myRequestFocusCmd == command) {
           myRequestFocusCmd = null;
+
           command.run().markDone(result);
 
           if (forced) {

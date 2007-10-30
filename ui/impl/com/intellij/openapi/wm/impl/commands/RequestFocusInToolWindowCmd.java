@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -22,10 +23,13 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private final ToolWindowImpl myToolWindow;
   private final FocusWatcher myFocusWatcher;
 
-  public RequestFocusInToolWindowCmd(final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack) {
+  private boolean myForced;
+
+  public RequestFocusInToolWindowCmd(final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack, boolean forced) {
     super(finishCallBack);
     myToolWindow = toolWindow;
     myFocusWatcher = focusWatcher;
+    myForced = forced;
   }
 
   public final void run() {
@@ -59,9 +63,10 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
       }
 
       final Window owner = SwingUtilities.getWindowAncestor(myToolWindow.getComponent());
-      if (owner == null) {
-        return;
-      }
+      //if (owner == null) {
+      //  System.out.println("owner = " + owner);
+      //  return;
+      //}
       // if owner is active window or it has active child window which isn't floating decorator then
       // don't bring owner window to font. If we will make toFront every time then it's possible
       // the following situation:
@@ -69,7 +74,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
       // 2. "Do not show preview" dialog is popping up.
       // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
       // isn't active.
-      if (owner.getFocusOwner() == null) {
+      if (owner != null && owner.getFocusOwner() == null) {
         final Window activeWindow = getActiveWindow(owner.getOwnedWindows());
         if (activeWindow == null || (activeWindow instanceof FloatingDecorator)) {
           LOG.debug("owner.toFront()");
@@ -97,13 +102,27 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private void requestFocus(final Component c) {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
     if (owner != null && owner == c) {
-      myFocusWatcher.setFocusedComponentImpl(c);
-      updateFocusedComponentForWatcher(c);
-    }
-    else {
-      myManager.requestFocus(c, true).doWhenDone(new Runnable() {
+      myManager.requestFocus(new ActionCallback.Runnable() {
+        public ActionCallback run() {
+          myFocusWatcher.setFocusedComponentImpl(c);
+          return new ActionCallback.Done();
+        }
+      }, myForced).doWhenDone(new Runnable() {
         public void run() {
           updateFocusedComponentForWatcher(c);
+          if (!myToolWindow.isActive()) {
+            myToolWindow.activate(null);
+          }
+        }
+      });
+    }
+    else {
+      myManager.requestFocus(c, myForced).doWhenDone(new Runnable() {
+        public void run() {
+          updateFocusedComponentForWatcher(c);
+          if (!myToolWindow.isActive()) {
+            myToolWindow.activate(null);
+          }
         }
       });
     }

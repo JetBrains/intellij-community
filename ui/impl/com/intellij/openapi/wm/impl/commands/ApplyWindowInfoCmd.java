@@ -3,8 +3,9 @@
  */
 package com.intellij.openapi.wm.impl.commands;
 
-import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
-import com.intellij.openapi.wm.impl.*;
+import com.intellij.openapi.wm.impl.InternalDecorator;
+import com.intellij.openapi.wm.impl.StripeButton;
+import com.intellij.openapi.wm.impl.WindowInfoImpl;
 
 /**
  * Apply <code>info</code> to the corresponded tool button and decarator.
