@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @State(
   name="antWorkspaceConfiguration",
@@ -32,7 +33,7 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
   private final Project myProject;
   @NonNls private static final String BUILD_FILE = "buildFile";
   @NonNls private static final String URL = "url";
-  private Element myProperties;
+  private final AtomicReference<Element> myProperties = new AtomicReference<Element>(null);
 
   public boolean IS_AUTOSCROLL_TO_SOURCE;
   public boolean FILTER_TARGETS;
@@ -67,7 +68,7 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     loadGlobalSettings(parentNode);
-    myProperties = parentNode;
+    myProperties.set(parentNode);
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
@@ -85,13 +86,17 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
   }
 
   public void loadFileProperties() throws InvalidDataException {
-    if (myProperties == null) return;
+    final Element properties = myProperties.getAndSet(null);
+    if (properties == null) {
+      return;
+    }
     for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFiles()) {
-      Element fileElement = findChildByUrl(myProperties, buildFile.getVirtualFile().getUrl());
-      if (fileElement == null) continue;
+      final Element fileElement = findChildByUrl(properties, buildFile.getVirtualFile().getUrl());
+      if (fileElement == null) {
+        continue;
+      }
       ((AntBuildFileBase)buildFile).readWorkspaceProperties(fileElement);
     }
-    myProperties = null;
   }
 
   public void loadFromProjectSettings(Element parentNode) throws InvalidDataException {
