@@ -65,12 +65,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private XmlFile myFile;
   private DomFileElementImpl myRoot;
   private final DomElement myProxy;
-  private final Set<AbstractDomChildDescriptionImpl> myInitializedChildren = new THashSet<AbstractDomChildDescriptionImpl>();
-  private final Map<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler> myFixedChildren =
-    new THashMap<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler>();
-  private final Map<AttributeChildDescriptionImpl, AttributeChildInvocationHandler> myAttributeChildren = new THashMap<AttributeChildDescriptionImpl, AttributeChildInvocationHandler>();
+  private Set<AbstractDomChildDescriptionImpl> myInitializedChildren;
+  private Map<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler> myFixedChildren;
+  private Map<AttributeChildDescriptionImpl, AttributeChildInvocationHandler> myAttributeChildren;
   private DomGenericInfoEx myGenericInfo;
-  private final Map<FixedChildDescriptionImpl, Class> myFixedChildrenClasses = new THashMap<FixedChildDescriptionImpl, Class>();
+  private Map<FixedChildDescriptionImpl, Class> myFixedChildrenClasses;
   private Throwable myInvalidated;
   private final InvocationCache myInvocationCache;
   private static final Function<DomInvocationHandler, Converter> myGenericConverterFactory = new Function<DomInvocationHandler, Converter>() {
@@ -325,11 +324,15 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   protected final void detachChildren() {
-    for (final AttributeChildInvocationHandler handler : myAttributeChildren.values()) {
-      handler.detach(false);
+    if (myAttributeChildren != null) {
+      for (final AttributeChildInvocationHandler handler : myAttributeChildren.values()) {
+        handler.detach(false);
+      }
     }
-    for (final IndexedElementInvocationHandler handler : myFixedChildren.values()) {
-      handler.detach(false);
+    if (myFixedChildren != null) {
+      for (final IndexedElementInvocationHandler handler : myFixedChildren.values()) {
+        handler.detach(false);
+      }
     }
   }
 
@@ -551,6 +554,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   final IndexedElementInvocationHandler getFixedChild(final Pair<FixedChildDescriptionImpl, Integer> info) {
     r.lock();
     try {
+      LOG.assertTrue(myFixedChildren != null);
       final IndexedElementInvocationHandler handler = myFixedChildren.get(info);
       if (handler == null) {
         LOG.assertTrue(false, this + " " + info.toString());
@@ -563,7 +567,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   final Collection<IndexedElementInvocationHandler> getFixedChildren() {
-    return myFixedChildren.values();
+    return myFixedChildren == null ? Collections.<IndexedElementInvocationHandler>emptyList() : myFixedChildren.values();
   }
 
   @NotNull
@@ -572,6 +576,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     r.lock();
     try {
       _checkInitialized(description);
+      assert myAttributeChildren != null;
       final AttributeChildInvocationHandler domElement = myAttributeChildren.get(description);
       assert domElement != null : description;
       return domElement;
@@ -617,7 +622,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   final void _checkInitialized(final AbstractDomChildDescriptionImpl description) {
-    if (myInitializedChildren.contains(description)) return;
+    if (myInitializedChildren != null && myInitializedChildren.contains(description)) return;
 
     final List<XmlTag> subTags;
 
@@ -633,11 +638,12 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     r.unlock();
     w.lock();
     try {
-      if (myInitializedChildren.contains(description)) return;
+      if (myInitializedChildren != null && myInitializedChildren.contains(description)) return;
 
       if (description instanceof AttributeChildDescriptionImpl) {
         final AttributeChildDescriptionImpl attributeChildDescription = (AttributeChildDescriptionImpl)description;
         final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(attributeChildDescription.getXmlName());
+        if (myAttributeChildren == null) myAttributeChildren = new THashMap<AttributeChildDescriptionImpl, AttributeChildInvocationHandler>();
         myAttributeChildren.put(attributeChildDescription, new AttributeChildInvocationHandler(description.getType(), myXmlTag, this,
                                                                                                evaluatedXmlName, attributeChildDescription, myManager));
       }
@@ -655,6 +661,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
           new CollectionElementInvocationHandler(description.getType(), subTag, childDescription, this);
         }
       }
+      if (myInitializedChildren == null) myInitializedChildren = new THashSet<AbstractDomChildDescriptionImpl>();
       myInitializedChildren.add(description);
     }
     finally {
@@ -664,6 +671,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   private void getOrCreateIndexedChild(final XmlTag subTag, EvaluatedXmlName name, final Pair<FixedChildDescriptionImpl, Integer> pair) {
+    if (myFixedChildren == null) myFixedChildren = new THashMap<Pair<FixedChildDescriptionImpl, Integer>, IndexedElementInvocationHandler>();
     IndexedElementInvocationHandler handler = myFixedChildren.get(pair);
     if (handler == null) {
       handler = createIndexedChild(subTag, name, pair);
@@ -676,7 +684,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   private IndexedElementInvocationHandler createIndexedChild(final XmlTag subTag, EvaluatedXmlName qname, final Pair<FixedChildDescriptionImpl, Integer> pair) {
     final FixedChildDescriptionImpl description = pair.first;
-    final Type type = myFixedChildrenClasses.containsKey(description) ? getFixedChildrenClass(description) : description.getType();
+    Type type = getFixedChildrenClass(description);
+    if (type == null) {
+      type = description.getType();
+    }
     return new IndexedElementInvocationHandler(type, subTag, this, qname, description, pair.getSecond());
   }
 
@@ -684,8 +695,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return ReflectionUtil.getRawType(myType);
   }
 
+  @Nullable
   protected final Class getFixedChildrenClass(final FixedChildDescriptionImpl tagName) {
-    return myFixedChildrenClasses.get(tagName);
+    return myFixedChildrenClasses == null ? null : myFixedChildrenClasses.get(tagName);
   }
 
   @Nullable
@@ -710,9 +722,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       if (invalidate && _isValid()) {
         myInvalidated = new Throwable();
       }
-      if (!myInitializedChildren.isEmpty()) {
-        for (DomInvocationHandler handler : myFixedChildren.values()) {
-          handler.detach(invalidate);
+      if (myInitializedChildren != null && !myInitializedChildren.isEmpty()) {
+        if (myFixedChildren != null) {
+          for (DomInvocationHandler handler : myFixedChildren.values()) {
+            handler.detach(invalidate);
+          }
         }
         if (myXmlTag != null && myXmlTag.isValid()) {
           for (CollectionElementInvocationHandler handler : getAllCollectionChildren()) {
@@ -721,7 +735,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         }
       }
 
-      myInitializedChildren.clear();
+      myInitializedChildren = null;
       removeFromCache();
       setXmlTag(null);
     } finally {
@@ -745,8 +759,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       w.unlock();
     }
     try {
-      for (final Pair<FixedChildDescriptionImpl, Integer> pair : myFixedChildren.keySet()) {
-        _checkInitialized(pair.first);
+      if (myFixedChildren != null) {
+        for (final Pair<FixedChildDescriptionImpl, Integer> pair : myFixedChildren.keySet()) {
+          _checkInitialized(pair.first);
+        }
       }
     } finally {
       r.unlock();
@@ -826,7 +842,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public final boolean isInitialized(final AbstractDomChildDescriptionImpl qname) {
     r.lock();
     try {
-      return myInitializedChildren.contains(qname);
+      return myInitializedChildren != null && myInitializedChildren.contains(qname);
     } finally{
       r.unlock();
     }
@@ -835,7 +851,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public final boolean isAnythingInitialized() {
     r.lock();
     try {
-      return !myInitializedChildren.isEmpty();
+      return myInitializedChildren != null && !myInitializedChildren.isEmpty();
     } finally{
       r.unlock();
     }
@@ -843,6 +859,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   public void setFixedChildClass(final FixedChildDescriptionImpl tagName, final Class<? extends DomElement> aClass) {
     assert !isInitialized(tagName);
+    if (myFixedChildrenClasses == null) myFixedChildrenClasses = new THashMap<FixedChildDescriptionImpl, Class>();
     myFixedChildrenClasses.put(tagName, aClass);
   }
 
