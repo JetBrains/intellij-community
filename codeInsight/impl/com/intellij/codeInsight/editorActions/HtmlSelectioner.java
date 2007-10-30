@@ -10,6 +10,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -18,12 +19,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlComment;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.*;
 
 import java.util.List;
 
@@ -65,22 +65,15 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     PsiFile psiFile = e.getContainingFile();
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(psiFile.getVirtualFile());
 
+    addAttributeSelection(result, e);
+    final FileViewProvider fileViewProvider = psiFile.getViewProvider();
+    for(Language lang:fileViewProvider.getPrimaryLanguages()) {
+      final PsiFile langFile = fileViewProvider.getPsi(lang);
+      if (langFile != psiFile) addAttributeSelection(result, fileViewProvider.findElementAt(cursorOffset, lang));
+    }
+
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(e.getProject(), psiFile.getVirtualFile());
     highlighter.setText(editorText);
-
-    HighlighterIterator i = highlighter.createIterator(cursorOffset);
-    if (i.atEnd()) return result;
-
-    final IElementType tokenType = i.getTokenType();
-    if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
-        tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
-        tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN ||
-        tokenType == XmlTokenType.XML_NAME ||
-        tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
-        tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
-      ) {
-      addAttributeSelection(result, i);
-    }
 
     addTagSelection(editorText, cursorOffset, fileType, highlighter, result);
 
@@ -127,107 +120,20 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     }
   }
 
-  private static void addAttributeSelection(List<TextRange> result, HighlighterIterator i) {
-    result.add(new TextRange(i.getStart(), i.getEnd()));
-
-    if (i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
-      int start = i.getStart() - 1;
-      int end = i.getEnd() + 1;
-
-      // Check quote before value
-      i.retreat();
-      boolean hasQuotes = true;
-      int retreatCount = 1;
-
-      if (!i.atEnd()) {
-        IElementType tokenType = i.getTokenType();
-
-        while(tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
-              tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
-              tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN
-          )   {
-          retreatCount++;
-          i.retreat();
-          if (i.atEnd()) {
-            tokenType = null;
-            break;
-          }
-          tokenType = i.getTokenType();
-        }
-
-        if (tokenType != XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
-          hasQuotes = false;
-        } else {
-          start = i.getStart();
-        }
-      }
-
-      while(retreatCount-- > 0) i.advance();
-
-      // Check quote after value
-      i.advance();
-      int advanceCount = 1;
-
-      if (!i.atEnd()) {
-        IElementType tokenType = i.getTokenType();
-        while(tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
-              tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
-              tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN
-          )   {
-          advanceCount++;
-          i.advance();
-          if (i.atEnd()) {
-            tokenType = null;
-            break;
-          }
-          tokenType = i.getTokenType();
-        }
-
-        if (tokenType != XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
-          hasQuotes = false;
-        }else {
-          end = i.getEnd();
-        }
-      }
-
-      while(advanceCount-- > 0) i.retreat();
-
-      if (hasQuotes) {
-        result.add(new TextRange(start , end ));
-        if (i.getStart() != start + 1 ||  i.getEnd() != end - 1) result.add(new TextRange(start + 1, end - 1 ));
-      }
-    }
-
-    while (!i.atEnd() && i.getTokenType() != XmlTokenType.XML_NAME) { i.retreat(); }
-    if (i.atEnd()) return;
-    i.retreat();
-
-    IElementType tokenType = i.getTokenType();
-    i.advance();
-    if(tokenType == XmlTokenType.XML_START_TAG_START) {
-      return;
-    }
-    int start = i.getStart();
-
-    int valueStart = -1;
-
-    while (!i.atEnd() &&
-           i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN &&
-           i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
-           ) {
-      if (i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) valueStart = i.getStart();
-      i.advance();
-    }
-    if (i.atEnd()) return;
-
-    int end = i.getEnd();
-
-    if (i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) i.advance();
-    if (!i.atEnd() && i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
-      end = i.getEnd();
-    }
+  private static void addAttributeSelection(List<TextRange> result, PsiElement e) {
+    final XmlAttribute attribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
     
-    result.add(new TextRange(start, end));
-    if (valueStart != -1) result.add(new TextRange(valueStart, end));
+    if (attribute != null) {
+      result.add(attribute.getTextRange());
+      final XmlAttributeValue value = attribute.getValueElement();
+
+      if (value != null) {
+        final TextRange range = value.getTextRange();
+        result.add(range);
+        if (value.getFirstChild() != null && value.getFirstChild().getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
+          result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
+        }
+      }
+    }
   }
 }
