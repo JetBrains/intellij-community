@@ -215,6 +215,8 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 %xstate IN_TRIPLE_DOT
 %xstate IN_TRIPLE_NLS
 %xstate WRONG_STRING
+%xstate IN_WRONG_SINGLE_GSTRING
+
 %state IN_INNER_BLOCK
 
 %xstate WAIT_FOR_REGEX
@@ -306,6 +308,17 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              yybegin(NLS_AFTER_NLS);
                                              afterComment = YYINITIAL;
                                              return mNLS; }
+  [^]                                     {  gStringStack.clear();
+                                             yybegin(IN_WRONG_SINGLE_GSTRING);
+                                             return mWRONG_GSTRING_LITERAL; }
+}
+
+<IN_WRONG_SINGLE_GSTRING>{
+  {mNLS}                                  {  yypushback(yytext().length());
+                                             yybegin(YYINITIAL); }
+  \"                                      {  yybegin(YYINITIAL);
+                                             return mWRONG_GSTRING_LITERAL; }
+  [^]                                     {  return mWRONG_GSTRING_LITERAL; }
 }
 
 <WRONG_STRING>{
@@ -360,8 +373,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              braceCount.push(mLCURLY);
                                              yybegin(NLS_AFTER_LBRACE);
                                              return mLCURLY; }
-  ([^{[:jletter:]] | "$")
-      (. | mONE_NL)*                      {  clearStacks();
+  ([^{[:jletter:]] | "$")(. | mONE_NL)*   {  clearStacks();
                                              return mWRONG_GSTRING_LITERAL; }
 }
 
