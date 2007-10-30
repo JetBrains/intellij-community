@@ -75,7 +75,10 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
         tokenType == XmlTokenType.XML_CHAR_ENTITY_REF ||
         tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN ||
-        tokenType == XmlTokenType.XML_NAME) {
+        tokenType == XmlTokenType.XML_NAME ||
+        tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
+        tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
+      ) {
       addAttributeSelection(result, i);
     }
 
@@ -126,20 +129,6 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
 
   private static void addAttributeSelection(List<TextRange> result, HighlighterIterator i) {
     result.add(new TextRange(i.getStart(), i.getEnd()));
-
-    if (i.getTokenType() == XmlTokenType.XML_CHAR_ENTITY_REF || i.getTokenType() == XmlTokenType.XML_ENTITY_REF_TOKEN) {
-      i.retreat();
-      if (i.atEnd()) {
-        i.advance();
-      } else if (i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
-        i.advance();
-        i.advance();
-        if (i.atEnd() || i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
-          i.retreat();
-          return;
-        }
-      }
-    }
 
     if (i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
       int start = i.getStart() - 1;
@@ -220,10 +209,15 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     }
     int start = i.getStart();
 
+    int valueStart = -1;
+
     while (!i.atEnd() &&
            i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN &&
            i.getTokenType() != XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
-           ) { i.advance(); }
+           ) {
+      if (i.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) valueStart = i.getStart();
+      i.advance();
+    }
     if (i.atEnd()) return;
 
     int end = i.getEnd();
@@ -234,5 +228,6 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
     }
     
     result.add(new TextRange(start, end));
+    if (valueStart != -1) result.add(new TextRange(valueStart, end));
   }
 }
