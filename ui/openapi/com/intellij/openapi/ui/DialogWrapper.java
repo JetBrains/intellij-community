@@ -21,11 +21,12 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -260,6 +261,11 @@ public abstract class DialogWrapper {
    */
   protected JButton createJButtonForAction(Action action) {
     JButton button = new JButton(action);
+
+    if (SystemInfo.isMac) {
+      button.putClientProperty("JButton.buttonType", "text");
+    }  
+
     String text = button.getText();
     if (text != null) {
       int mnemonic = 0;
@@ -302,10 +308,14 @@ public abstract class DialogWrapper {
   }
 
   private void setMargin(JButton button) {
-    if (myButtonMargins == null) {
-      return;
+    // Aqua LnF does a good job of setting proper margin between buttons. Setting them specifically causes them be 'square' style instead of
+    // 'rounded', which is expected by apple users.
+    if (!SystemInfo.isMac) {
+      if (myButtonMargins == null) {
+        return;
+      }
+      button.setMargin(myButtonMargins);
     }
-    button.setMargin(myButtonMargins);
   }
 
 
@@ -657,7 +667,11 @@ public abstract class DialogWrapper {
   }
 
   protected final void setCancelButtonIcon(Icon icon) {
-    myCancelAction.putValue(Action.SMALL_ICON, icon);
+    // Setting icons causes buttons be 'square' style instead of
+    // 'rounded', which is expected by apple users.
+    if (!SystemInfo.isMac) {
+      myCancelAction.putValue(Action.SMALL_ICON, icon);
+    }
   }
 
   protected final void setCancelButtonText(String text) {
@@ -673,7 +687,11 @@ public abstract class DialogWrapper {
   }
 
   protected final void setOKButtonIcon(Icon icon) {
-    myOKAction.putValue(Action.SMALL_ICON, icon);
+    // Setting icons causes buttons be 'square' style instead of
+    // 'rounded', which is expected by apple users.
+    if (!SystemInfo.isMac) {
+      myOKAction.putValue(Action.SMALL_ICON, icon);
+    }
   }
 
   protected final void setOKButtonText(String text) {
