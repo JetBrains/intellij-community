@@ -60,7 +60,7 @@ public abstract class TabbedContentAction extends AnAction {
 
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myContent != null && myManager.canCloseContents() && myContent.isCloseable());
+      presentation.setEnabled(myContent != null && myManager.canCloseContents() && myContent.isCloseable() && myManager.isSelected(myContent));
       presentation.setVisible(myManager.canCloseContents() && myContent.isCloseable());
       presentation.setText(myManager.getCloseActionName());
     }
