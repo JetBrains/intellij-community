@@ -97,6 +97,10 @@ public class XmlUtil {
   @NonNls public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";
   @NonNls public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
   @NonNls public static final String STRUTS_HTML_URI2 = "http://jakarta.apache.org/struts/tags-html";
+  
+  @NonNls public static final String APACHE_TRINIDAD_URI = "http://myfaces.apache.org/trinidad";
+  @NonNls public static final String APACHE_TRINIDAD_HTML_URI = "http://myfaces.apache.org/trinidad/html";
+
 
   @NonNls public static final String[] HIBERNATE_URIS = {"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd", "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"};
 
