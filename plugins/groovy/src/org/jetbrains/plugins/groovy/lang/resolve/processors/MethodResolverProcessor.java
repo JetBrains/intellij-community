@@ -86,7 +86,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   private boolean isClosure(PsiVariable variable) {
     if (variable instanceof GrVariable) {
-      return ((GrVariable) variable).getTypeGroovy().equalsToText("groovy.lang.Closure");
+      final PsiType type = ((GrVariable) variable).getTypeGroovy();
+      return type != null && type.equalsToText("groovy.lang.Closure");
     }
     return variable.getType().equalsToText("groovy.lang.Closure");
   }
