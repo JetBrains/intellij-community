@@ -11,8 +11,8 @@ import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -220,16 +220,17 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public <T extends DomElement> T createStableCopy() {
+    final XmlTag tag;
     r.lock();
     try {
-      if (myXmlTag != null && myXmlTag.isPhysical()) {
-        assert myManager.getDomElement(myXmlTag) == getProxy() : myManager.getDomElement(myXmlTag) + "\n\n" + myXmlTag.getParent().getText();
-        final SmartPsiElementPointer<XmlTag> pointer =
-          SmartPointerManager.getInstance(myManager.getProject()).createLazyPointer(myXmlTag);
-        return myManager.createStableValue(new StableCopyFactory<T>(pointer, myType, getClass()));
-      }
+      tag = myXmlTag;
     } finally {
       r.unlock();
+    }
+    if (tag != null && tag.isPhysical()) {
+      assert myManager.getDomElement(tag) == getProxy() : myManager.getDomElement(tag) + "\n\n" + tag.getParent().getText();
+      final SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(myManager.getProject()).createLazyPointer(tag);
+      return myManager.createStableValue(new StableCopyFactory<T>(pointer, myType, getClass()));
     }
     return (T)createPathStableCopy();
   }
