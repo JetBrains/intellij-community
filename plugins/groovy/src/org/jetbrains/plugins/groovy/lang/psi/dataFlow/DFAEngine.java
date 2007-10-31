@@ -109,7 +109,7 @@ public class DFAEngine<E> {
     for (int i = 0; i < result.length; i++) visited[i] = false;
 
     int M = 0;
-    CallEnvironment env = new SimpleCallEnvironment();
+    CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
     for (int i = 0; i < myFlow.length; i++) {
       if (!visited[i]) {
         Queue<Instruction> worklist = new LinkedList<Instruction>();
@@ -142,17 +142,5 @@ public class DFAEngine<E> {
 
   private Iterable<? extends Instruction> getNext(Instruction curr, CallEnvironment env) {
     return myDfa.isForward() ? curr.succ(env) : curr.pred(env);
-  }
-
-  public static class SimpleCallEnvironment implements CallEnvironment {
-    private Stack<CallInstruction> myStack = new Stack<CallInstruction>();
-
-    public Stack<CallInstruction> callStack(Instruction instruction) {
-      return myStack;
-    }
-
-    public void update(Stack<CallInstruction> callStack, Instruction instruction) {
-      myStack = callStack;
-    }
   }
 }
