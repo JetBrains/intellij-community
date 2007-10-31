@@ -104,6 +104,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
 
+    if (!processChildrenScopes(this, processor, substitutor, lastParent, place)) return false;
+    
     final GrImportStatement[] imports = getImportStatements();
 
     for (GrImportStatement importStatement : imports) {
@@ -118,8 +120,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     for (GrImportStatement importStatement : imports) {
       if (importStatement.isOnDemand() && !importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
     }
-
-    if (!processChildrenScopes(this, processor, substitutor, lastParent, place)) return false;
 
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
       PsiPackage aPackage = manager.findPackage(implicitlyImported);
