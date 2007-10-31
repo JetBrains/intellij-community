@@ -55,11 +55,17 @@ public abstract class GroovyEditorActionUtil {
   public static boolean areSciptletSeparatorsUnbalanced(HighlighterIterator iterator) {
     int balance = 0;
     while (!iterator.atEnd()) {
-      if (GspTokenTypesEx.JSCRIPT_BEGIN == iterator.getTokenType()) balance++;
-      if (GspTokenTypesEx.JSCRIPT_END == iterator.getTokenType()) balance--;
+      if (GspTokenTypesEx.JSCRIPT_BEGIN == iterator.getTokenType() ||
+          GspTokenTypesEx.JEXPR_BEGIN == iterator.getTokenType() ||
+          GspTokenTypesEx.JDIRECT_BEGIN == iterator.getTokenType() ||
+          GspTokenTypesEx.JDECLAR_BEGIN == iterator.getTokenType()) balance++;
+
+      if (GspTokenTypesEx.JSCRIPT_END == iterator.getTokenType() ||
+          GspTokenTypesEx.JDIRECT_END == iterator.getTokenType() ||
+          GspTokenTypesEx.JDECLAR_END == iterator.getTokenType()) balance--;
       iterator.advance();
     }
-    return balance > 0;
+    return balance >= 0;
   }
 
   public static boolean isWhiteSpace(String text, int i) {
