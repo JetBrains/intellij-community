@@ -342,14 +342,14 @@ public class PsiUtil {
 
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     @NonNls String methodName = getterMethod.getName();
-    return methodName.startsWith("get") ?
+    return methodName.startsWith("get") && methodName.length() > 3 ?
            decapitalize(methodName.substring(3)) :
            methodName;
   }
 
   public static String getPropertyNameBySetter(PsiMethod setterMethod) {
     @NonNls String methodName = setterMethod.getName();
-    return methodName.startsWith("set") ?
+    return methodName.startsWith("set") && methodName.length() > 3 ?
            decapitalize(methodName.substring(3)) :
            methodName;
   }
