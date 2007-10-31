@@ -243,35 +243,4 @@ public class ResolveUtil {
     return false;
   }
 
-  public static boolean isGspTagMember(PsiMember member) {
-    for (String prefix : GspTagLibUtil.getKnownPrefixes(member, true)) {
-      for (PsiClass clazz : GspTagLibUtil.getCustomTagLibClasses(member.getContainingFile(), prefix)) {
-        if (member.getContainingClass() == clazz) {
-          return true;
-        }
-      }
-    }
-    for (PsiClass psiClass : GspTagLibUtil.getDynamicTagLibClasses(member.getProject())) {
-      if (member.getContainingClass() == psiClass) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static void collectContextSpecificVariants(ResolverProcessor processor, GrReferenceExpression refExpr) {
-    GrExpression qualifier = refExpr.getQualifierExpression();
-    if (qualifier == null ||
-        !(qualifier instanceof GrReferenceExpression) ||
-        qualifier.getType() != null) {
-      return;
-    }
-
-    String prefix = ((GrReferenceExpression) qualifier).getName();
-    if (prefix == null) return;
-    for (PsiClass tagLibClass : GspTagLibUtil.getCustomTagLibClasses(refExpr.getContainingFile(), prefix)) {
-      tagLibClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
-    }
-
-  }
 }

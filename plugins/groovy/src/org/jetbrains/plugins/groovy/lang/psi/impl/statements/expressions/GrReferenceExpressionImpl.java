@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GspGroovyFile;
+import org.jetbrains.plugins.grails.lang.gsp.psi.GspResolveUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -355,7 +356,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           if (resolved instanceof PsiPackage) {
             if (!resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
           } else {
-            ResolveUtil.collectContextSpecificVariants(processor, refExpr);
+            GspResolveUtil.collectContextSpecificVariants(processor, refExpr);
           }
         }
       } else {
