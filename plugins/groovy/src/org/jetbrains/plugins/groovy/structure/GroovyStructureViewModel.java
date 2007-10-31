@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.structure.elements.impl.GroovyFileStructureViewElement;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -26,7 +27,7 @@ public class GroovyStructureViewModel extends TextEditorBasedStructureViewModel 
 
   @NotNull
   public StructureViewTreeElement getRoot() {
-    return new GroovyStructureViewElement(myRootElement);
+    return new GroovyFileStructureViewElement(myRootElement);
   }
 
   @NotNull
