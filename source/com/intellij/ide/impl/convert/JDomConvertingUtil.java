@@ -64,8 +64,12 @@ public class JDomConvertingUtil {
   }
 
   public static Condition<Element> createOptionElementFilter(final @NonNls String optionName) {
-    return Conditions.and(createElementNameFilter(OPTION_ELEMENT),
-                          createAttributeValueFilter(NAME_ATTRIBUTE, optionName));
+    return createElementWithAttributeFilter(OPTION_ELEMENT, NAME_ATTRIBUTE, optionName);
+  }
+
+  public static Condition<Element> createElementWithAttributeFilter(final String elementName, final String attributeName, final String attributeValue) {
+    return Conditions.and(createElementNameFilter(elementName),
+                          createAttributeValueFilter(attributeName, attributeValue));
   }
 
   public static void copyAttributes(Element from, Element to) {

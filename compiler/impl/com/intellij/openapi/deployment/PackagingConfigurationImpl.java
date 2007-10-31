@@ -44,7 +44,7 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
   public void removeLibrary(final Library library) {
     for (ContainerElement content : myContents) {
       if (content instanceof LibraryLink && library.equals(((LibraryLink)content).getLibrary())) {
-        myContents.remove(content);
+        removeContainerElement(content);
         break;
       }
     }
@@ -153,10 +153,14 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
   protected void removeModuleLinkInternal(Module module) {
     for (final ContainerElement containerElement : myContents) {
       if (containerElement instanceof ModuleLink && ((ModuleLink)containerElement).getModule() == module) {
-        myContents.remove(containerElement);
+        removeContainerElement(containerElement);
         break;
       }
     }
+  }
+
+  public void removeContainerElement(final ContainerElement containerElement) {
+    myContents.remove(containerElement);
   }
 
   public Module[] getContainingIdeaModules() {
