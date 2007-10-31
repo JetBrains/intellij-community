@@ -1,5 +1,6 @@
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -165,13 +166,15 @@ public class ActionMenuItem extends JMenuItem {
       }
     }
     else {
-      Icon icon = myPresentation.getIcon();
-      setIcon(icon);
-      if (myPresentation.getDisabledIcon() != null) {
-        setDisabledIcon(myPresentation.getDisabledIcon());
-      }
-      else {
-        setDisabledIcon(IconLoader.getDisabledIcon(icon));
+      if (!SystemInfo.isMac || UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
+        Icon icon = myPresentation.getIcon();
+        setIcon(icon);
+        if (myPresentation.getDisabledIcon() != null) {
+          setDisabledIcon(myPresentation.getDisabledIcon());
+        }
+        else {
+          setDisabledIcon(IconLoader.getDisabledIcon(icon));
+        }
       }
     }
   }

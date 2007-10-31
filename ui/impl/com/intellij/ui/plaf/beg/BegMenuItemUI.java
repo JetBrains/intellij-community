@@ -2,6 +2,7 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -208,7 +209,12 @@ public class BegMenuItemUI extends BasicMenuItemUI {
             s1 = (String)getModifiers.invoke(appleLaf, new Object[] {new Integer(j1), Boolean.FALSE});
           }
           catch (Exception e) {
-            s1 = KeyEvent.getKeyModifiersText(j1) + '+';
+            if (SystemInfo.isMacOSLeopard) {
+              s1 = KeymapUtil.getKeyModifiersTextForMacOSLeopard(j1);
+            }
+            else {
+              s1 = KeyEvent.getKeyModifiersText(j1) + '+';
+            }
           }
         }
         else {

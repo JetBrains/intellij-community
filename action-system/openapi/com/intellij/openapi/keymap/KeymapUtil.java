@@ -22,15 +22,15 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 import java.util.StringTokenizer;
-
-import org.jetbrains.annotations.NonNls;
 
 public class KeymapUtil {
   private static final Icon ourKeyboardShortcutIcon = IconLoader.getIcon("/general/keyboardShortcut.png");
@@ -170,6 +170,10 @@ public class KeymapUtil {
         return (String)getModifiers.invoke(appleLaf, new Object[]{new Integer(modifiers), Boolean.FALSE});
       }
       catch (Exception e) {
+        if (SystemInfo.isMacOSLeopard) {
+          return KeymapUtil.getKeyModifiersTextForMacOSLeopard(modifiers);
+        }
+        
         // OK do nothing here.
       }
     }
@@ -251,5 +255,28 @@ public class KeymapUtil {
       }
     }
     return new MouseShortcut(button, modifiers, clickCount);
+  }
+
+  public static String getKeyModifiersTextForMacOSLeopard(int modifiers) {
+      StringBuffer buf = new StringBuffer();
+      if ((modifiers & InputEvent.META_MASK) != 0) {
+          buf.append(Toolkit.getProperty("AWT.meta", "Meta"));
+      }
+      if ((modifiers & InputEvent.CTRL_MASK) != 0) {
+          buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
+      }
+      if ((modifiers & InputEvent.ALT_MASK) != 0) {
+          buf.append(Toolkit.getProperty("AWT.alt", "Alt"));
+      }
+      if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
+          buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
+      }
+      if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
+          buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
+      }
+      if ((modifiers & InputEvent.BUTTON1_MASK) != 0) {
+          buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
+      }
+      return buf.toString();
   }
 }

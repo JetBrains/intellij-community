@@ -79,6 +79,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public float ALPHA_MODE_RATIO = 0.5f;
   public int MAX_CLIPBOARD_CONTENTS = 5;
   public boolean OVERRIDE_NONIDEA_LAF_FONTS = false;
+  public boolean SHOW_ICONS_IN_MENUS = true; // Only makes sense on MacOS
 
   /**
    * Defines whether asterisk is shown on modified editor tab or not

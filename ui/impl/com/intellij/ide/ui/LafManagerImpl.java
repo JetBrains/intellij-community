@@ -251,7 +251,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     //noinspection HardCodedStringLiteral
     String popupWeight=System.getProperty("idea.popup.weight");
     if(popupWeight==null){ // use defaults if popup weight isn't specified
-      if(SystemInfo.isWindows){
+      if(SystemInfo.isWindows || SystemInfo.isMacOSLeopard){
         popupWeight=HEAVY_WEIGHT_POPUP;
       }else{ // UNIXes (Linux and MAC) go here
         popupWeight=MEDIUM_WEIGHT_POPUP;
