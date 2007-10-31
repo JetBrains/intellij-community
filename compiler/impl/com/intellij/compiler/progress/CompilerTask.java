@@ -355,6 +355,9 @@ public class CompilerTask extends Task.Backgroundable {
     // the work with ToolWindowManager should be done in the Swing thread
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) {
+          return;
+        }
         final MessageView messageView = myProject.getComponent(MessageView.class);
         final JComponent component;
         synchronized (myMessageViewLock) {
