@@ -67,7 +67,6 @@ public class TextFieldWithHistory extends JPanel {
     myToggleHistoryLabel = new JLabel(IconLoader.findIcon("/actions/search.png"));
     myToggleHistoryLabel.setOpaque(true);
     myToggleHistoryLabel.setBackground(myTextField.getBackground());
-    myToggleHistoryLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 4));
     myToggleHistoryLabel.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
         togglePopup();
@@ -78,7 +77,6 @@ public class TextFieldWithHistory extends JPanel {
     myClearFieldLabel = new JLabel(IconLoader.findIcon("/actions/clean.png"));
     myClearFieldLabel.setOpaque(true);
     myClearFieldLabel.setBackground(myTextField.getBackground());
-    myClearFieldLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 0));
     add(myClearFieldLabel, BorderLayout.EAST);
     myClearFieldLabel.addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
@@ -143,7 +141,7 @@ public class TextFieldWithHistory extends JPanel {
     setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 0, 4, 0), originalBorder));
 
     myTextField.setOpaque(true);
-    myTextField.setBorder(null);
+    myTextField.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 0, 5));
 
     final ActionManager actionManager = ActionManager.getInstance();
     if (actionManager != null) {
