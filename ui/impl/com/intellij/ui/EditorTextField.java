@@ -18,8 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -393,6 +393,13 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
         preferredSize.height += insets.top;
         preferredSize.height += insets.bottom;
       }
+
+      final Insets defaultInsets = new JTextField().getInsets();
+      if (defaultInsets != null) {
+        preferredSize.height -= defaultInsets.top;
+        preferredSize.width -= defaultInsets.left;
+      }
+
       return preferredSize;
     }
     return new Dimension(100, 20);
