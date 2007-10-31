@@ -73,4 +73,15 @@ public class GenericValueUtil {
     return result;
   }
 
+  @NotNull
+  public static Collection<String> getClassStringCollection(final Collection<? extends GenericValue> collection, Collection<String> result) {
+    for (GenericValue o : collection) {
+      final String value = o.getStringValue();
+      if (value != null) {
+        result.add(value.replace('$', '.'));
+      }
+    }
+    return result;
+  }
+
 }
