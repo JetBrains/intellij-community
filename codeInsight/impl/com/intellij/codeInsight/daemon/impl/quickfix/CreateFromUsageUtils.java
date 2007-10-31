@@ -265,9 +265,20 @@ public class CreateFromUsageUtils {
     final PsiManager manager = referenceElement.getManager();
     final PsiFile sourceFile = referenceElement.getContainingFile();
     final Module module = ModuleUtil.findModuleForPsiElement(sourceFile);
-    final PsiPackage aPackage = qualifierElement instanceof PsiPackage? ((PsiPackage)qualifierElement) :
-                                sourceFile.getContainingDirectory() != null? sourceFile.getContainingDirectory().getPackage() :
-                                manager.findPackage("");
+    PsiPackage aPackage = null;
+    if (qualifierElement instanceof PsiPackage) {
+      aPackage = ((PsiPackage)qualifierElement);
+    }
+    else {
+      final PsiDirectory directory = sourceFile.getContainingDirectory();
+      if (directory != null) {
+        aPackage = directory.getPackage();
+      }
+
+      if (aPackage == null) {
+        aPackage = manager.findPackage("");
+      }
+    }
     if (aPackage == null) return null;
     final PsiDirectory targetDirectory;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
