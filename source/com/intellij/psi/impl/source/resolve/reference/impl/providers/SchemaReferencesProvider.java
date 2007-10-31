@@ -1,18 +1,18 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -31,9 +31,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
@@ -405,8 +405,8 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
 
     public String getCanonicalText() {
-      String text = myElement.getText();
-      return text.substring(myRange.getStartOffset(),myRange.getEndOffset());
+      final String text = myElement.getText();
+      return myRange.getEndOffset() < text.length() ? text.substring(myRange.getStartOffset(),myRange.getEndOffset()):"";
     }
 
     public PsiElement handleElementRename(String _newElementName) throws IncorrectOperationException {
@@ -420,7 +420,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     }
 
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-      return null;
+      throw new IncorrectOperationException();
     }
 
     public boolean isReferenceTo(PsiElement element) {
@@ -628,12 +628,12 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
       int index = text.indexOf(' ');
 
       while(index != -1) {
-        result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, index) ) );
+        if (lastIndex != index) result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, index) ) );
         lastIndex = index + 1;
         index = text.indexOf(' ',lastIndex);
       }
 
-      result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, text.length() - 1) ) );
+      if (lastIndex != text.length() - 1) result.add( new TypeOrElementOrAttributeReference(element, new TextRange(lastIndex, text.length() - 1) ) );
 
       return result.toArray(new PsiReference[result.size()]);
     } else {
