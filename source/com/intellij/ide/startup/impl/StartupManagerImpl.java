@@ -21,6 +21,7 @@ import java.util.List;
 public class StartupManagerImpl extends StartupManagerEx {
   private List<Runnable> myActivities = new ArrayList<Runnable>();
   private List<Runnable> myPostStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
+  private List<Runnable> myProjectConfigurationActivities = Collections.synchronizedList(new ArrayList<Runnable>());
   private List<Runnable> myPreStartupActivities = Collections.synchronizedList(new ArrayList<Runnable>());
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
@@ -51,12 +52,24 @@ public class StartupManagerImpl extends StartupManagerEx {
     return myStartupActivityPassed;
   }
 
+  public void registerProjectConfigurationActivity(Runnable runnable) {
+    myProjectConfigurationActivities.add(runnable);
+  }
+
   public void registerPreStartupActivity(Runnable runnable) {
     myPreStartupActivities.add(runnable);
   }
 
   public FileSystemSynchronizer getFileSystemSynchronizer() {
     return myFileSystemSynchronizer;
+  }
+
+  public void runProjectConfigurationActivities() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        runActivities(myProjectConfigurationActivities);
+      }
+    });
   }
 
   public void runStartupActivities() {

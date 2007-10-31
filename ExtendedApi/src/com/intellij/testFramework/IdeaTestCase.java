@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -343,6 +344,18 @@ import java.util.HashSet;
     if (!b && file.exists() && !myAssertionsInTestDetected) {
       assertTrue("Can't delete " + file.getAbsolutePath() + " in " + getFullName(), false);
     }
+  }
+
+  protected void simulateProjectOpen(Project p) {
+    ModuleManagerImpl mm = (ModuleManagerImpl)ModuleManager.getInstance(myProject);
+    StartupManagerImpl sm = (StartupManagerImpl)StartupManager.getInstance(myProject);
+
+    mm.projectOpened();
+    setUpJdk();
+    sm.runProjectConfigurationActivities();
+    sm.runStartupActivities();
+    // extra init for libraries
+    sm.runPostStartupActivities();
   }
 
   protected void setUpJdk() {
