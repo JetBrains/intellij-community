@@ -404,6 +404,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
+    ProgressManager.getInstance().checkCanceled();
     final DomElement element = getProxy();
     for (final AbstractDomChildrenDescription description : getGenericInfo().getChildrenDescriptions()) {
       for (final DomElement value : description.getValues(element)) {
