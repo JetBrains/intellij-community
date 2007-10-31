@@ -104,6 +104,21 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
 
+    final GrImportStatement[] imports = getImportStatements();
+
+    for (GrImportStatement importStatement : imports) {
+      if (!importStatement.isOnDemand() && !importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
+    }
+
+    String currentPackageName = getPackageName();
+    PsiPackage currentPackage = manager.findPackage(currentPackageName);
+    if (currentPackage != null && !currentPackage.processDeclarations(processor, substitutor, lastParent, place))
+      return false;
+
+    for (GrImportStatement importStatement : imports) {
+      if (importStatement.isOnDemand() && !importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
+    }
+
     if (!processChildrenScopes(this, processor, substitutor, lastParent, place)) return false;
 
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
@@ -115,11 +130,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       PsiClass clazz = manager.findClass(implicitlyImportedClass, getResolveScope());
       if (clazz != null && !ResolveUtil.processElement(processor, clazz)) return false;
     }
-
-    String currentPackageName = getPackageName();
-    PsiPackage currentPackage = manager.findPackage(currentPackageName);
-    if (currentPackage != null && !currentPackage.processDeclarations(processor, substitutor, lastParent, place))
-      return false;
 
     if (currentPackageName.length() > 0) { //otherwise already processed default package
       PsiPackage defaultPackage = manager.findPackage("");
@@ -138,6 +148,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
       if (!(run instanceof GrTopLevelDefintion) &&
+          !(run instanceof GrImportStatement) &&
           !(lastParent instanceof GrMethod && run instanceof GrVariableDeclaration) &&
           !run.processDeclarations(processor, substitutor, null, place)) return false;
       run = run.getPrevSibling();
