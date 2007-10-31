@@ -251,11 +251,16 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     //noinspection HardCodedStringLiteral
     String popupWeight=System.getProperty("idea.popup.weight");
     if(popupWeight==null){ // use defaults if popup weight isn't specified
-      if(SystemInfo.isWindows || SystemInfo.isMacOSLeopard){
+      if(SystemInfo.isWindows){
         popupWeight=HEAVY_WEIGHT_POPUP;
       }else{ // UNIXes (Linux and MAC) go here
         popupWeight=MEDIUM_WEIGHT_POPUP;
       }
+    }
+
+    if (SystemInfo.isMacOSLeopard) {
+      // Force heavy weight popups under Leopard, otherwise they don't have shadow or any kind of border.
+      popupWeight = HEAVY_WEIGHT_POPUP;
     }
 
     PopupFactory popupFactory;
