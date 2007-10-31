@@ -53,8 +53,6 @@
         <string>false</string>
         <key>idea.config.path</key>
         <string>~/Library/Preferences/IntelliJIDEA70</string>
-        <key>idea.popup.weight</key>
-        <string>medium</string>
         <key>idea.system.path</key>
         <string>~/Library/Caches/IntelliJIDEA70/</string>
         <key>idea.plugins.path</key>
@@ -64,6 +62,8 @@
         <key>idea.smooth.progress</key>
         <string>false</string>
         <key>apple.laf.useScreenMenuBar</key>
+        <string>true</string>
+        <key>apple.awt.graphics.UseQuartz</key>
         <string>true</string>
       </dict>
       <key>VMOptions</key>
