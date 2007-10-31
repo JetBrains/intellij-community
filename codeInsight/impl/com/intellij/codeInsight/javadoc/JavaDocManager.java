@@ -11,7 +11,9 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -47,7 +49,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.util.Alarm;
-import com.intellij.xml.util.documentation.XmlDocumentationProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -751,10 +752,12 @@ public class JavaDocManager implements ProjectComponent {
     PsiFile containingFile = originalElement != null ? originalElement.getContainingFile() : element != null ? element.getContainingFile() : null;
 
     DocumentationProvider originalProvider = containingFile != null ? containingFile.getLanguage().getDocumentationProvider() : null;
-    DocumentationProvider elementProvider = element == null ? null : element.getLanguage().getDocumentationProvider();
+    final Language elementLanguage = element != null ?element.getLanguage():null;
+    DocumentationProvider elementProvider = element == null ? null : elementLanguage.getDocumentationProvider();
 
     if (elementProvider == null ||
-        (elementProvider instanceof XmlDocumentationProvider && originalProvider != null)) {
+        // If resolve result (element) goes into xml (schema of some sort) then prefer picking up original element provider
+        (elementLanguage.getClass() == XMLLanguage.class && originalProvider != null)) {
       return originalProvider;
     }
 
