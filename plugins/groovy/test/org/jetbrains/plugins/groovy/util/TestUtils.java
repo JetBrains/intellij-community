@@ -34,6 +34,8 @@ public abstract class TestUtils {
   public static final String CARET_MARKER = "<caret>";
   public static final String BEGIN_MARKER = "<begin>";
   public static final String END_MARKER = "<end>";
+  public static final String GRAILS_JAR = "grails-web.jar";
+  public static final String GROOVY_JAR = "groovy-all.jar";
 
   public static String getMockJdkHome() {
     return getTestDataPath() + "/mockJDK";
