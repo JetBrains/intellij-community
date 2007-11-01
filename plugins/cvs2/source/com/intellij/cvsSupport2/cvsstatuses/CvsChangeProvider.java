@@ -127,7 +127,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     if (recursively) {
-      for (VirtualFile file : dir.getChildren()) {
+      for (VirtualFile file : CvsVfsUtil.getChildrenOf(dir)) {
         if (file.isDirectory() && !ProjectRootManager.getInstance(myVcs.getProject()).getFileIndex().isIgnored(file)) {
           processEntriesIn(file, scope, builder, true);
         }
