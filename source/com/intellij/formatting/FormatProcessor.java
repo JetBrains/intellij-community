@@ -8,7 +8,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -653,15 +652,6 @@ class FormatProcessor {
     final Block block = myInfos.get(parent);
     
     if (block == null) {
-      @NonNls final StringBuilder message = new StringBuilder(100);
-      for(AbstractBlockWrapper blockWrapper = myCurrentBlock; blockWrapper != null; blockWrapper = blockWrapper.getParent()) {
-        if (message.length() > 0) message.append(',');
-        message.append(myInfos.get(blockWrapper)).append(" (").append(blockWrapper.getStartOffset()).append(',').append(blockWrapper.getEndOffset()).append(')');
-      }
-      message.insert(0, "Invalid formatter block, formatting blocks hierarchy followed:");
-      message.append("\nrequested:").append(myInfos.get(parent)).append(parent.getStartOffset()).append(',').append(parent.getEndOffset());
-      message.append("\ninterested offset:").append(myInterestingOffset).append(',').append(offset);
-      assert false:message.toString();
       return new IndentInfo(0, 0, 0);
     }
 
