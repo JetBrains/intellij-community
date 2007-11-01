@@ -9,9 +9,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
-import com.intellij.psi.jsp.el.ELExpressionHolder;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,9 +79,6 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
                                          final boolean relativePathsAllowed,
                                          PathReferenceProvider... additionalProviders) {
 
-    if (PsiTreeUtil.getChildOfAnyType(psiElement, ELExpressionHolder.class, JspXmlTagBase.class) != null) {
-      return PsiReference.EMPTY_ARRAY;
-    }
     List<PsiReference> mergedReferences = new ArrayList<PsiReference>();
     processProvider(psiElement, myGlobalPathsProvider, mergedReferences, soft);
 
@@ -163,7 +157,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     if (list.size() == 1) {
       result.add(list.get(0));
     } else {
-      final PsiDynaReference psiDynaReference = new PsiDynaReference(element, soft);
+      final PsiDynaReference psiDynaReference = new PsiDynaReference<PsiElement>(element, soft);
       psiDynaReference.addReferences(list);
       psiDynaReference.setRangeInElement(range);
       result.add(psiDynaReference);
@@ -216,7 +210,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     return result;
   }
 
-  private PathReferenceProvider[] getProviders() {
+  private static PathReferenceProvider[] getProviders() {
     return Extensions.getExtensions(PATH_REFERENCE_PROVIDER_EP);
   }
 }

@@ -52,7 +52,17 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
   }
 
   public TextRange getRangeInElement(final XmlAttributeValue xmlAttributeValue) {
+    final PsiElement child = xmlAttributeValue.getFirstChild();
+    if (child == null) {
+      return new TextRange(0, 0);
+    }
+    final ASTNode node = child.getNode();
+    assert node != null;
     final int textLength = xmlAttributeValue.getTextLength();
-    return textLength < 2 ? new TextRange(0, 0) : new TextRange(1, textLength - 1);
+    if (node.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
+      return new TextRange(1, textLength - 1);
+    } else {
+      return new TextRange(0, textLength);
+    }
   }
 }
