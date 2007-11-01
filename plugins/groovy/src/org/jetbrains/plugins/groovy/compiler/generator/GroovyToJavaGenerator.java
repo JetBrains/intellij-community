@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
@@ -497,7 +498,14 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (constructorInvocation != null && constructorInvocation.isSuperCall()) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          final PsiMethod superConstructor = constructorInvocation.resolveConstructor();
+          PsiMethod superConstructor = constructorInvocation.resolveConstructor();
+          if (superConstructor == null) {
+            final GroovyResolveResult[] results = constructorInvocation.multiResolveConstructor();
+            if (results.length > 0) {
+              superConstructor = (PsiMethod) results[0].getElement();
+            }
+          }
+
           if (superConstructor != null) {
             final PsiClassType[] throwsTypes = superConstructor.getThrowsList().getReferencedTypes();
             if (throwsTypes.length > 0) {
