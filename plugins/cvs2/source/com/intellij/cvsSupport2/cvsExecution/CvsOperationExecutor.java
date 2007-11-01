@@ -53,17 +53,20 @@ public class CvsOperationExecutor {
   private final ModalityContext myExecutor;
   private boolean myShowErrors = true;
   private boolean myIsQuietOperation = false;
+  private final CvsConfiguration myConfiguration;
 
   public CvsOperationExecutor(boolean showProgress, Project project, ModalityState modalityState) {
     myProject = project;
     myShowProgress = showProgress;
     myExecutor = new ModalityContextImpl(modalityState, false);
+    myConfiguration = CvsConfiguration.getInstance(project);
   }
 
   public CvsOperationExecutor(boolean showProgress, Project project, ModalityContext modalityContext) {
     myProject = project;
     myShowProgress = showProgress;
     myExecutor = modalityContext;
+    myConfiguration = CvsConfiguration.getInstance(project);
   }
 
   public CvsOperationExecutor(Project project) {
@@ -304,7 +307,7 @@ public class CvsOperationExecutor {
   public CvsTabbedWindow openTabbedWindow(final CvsHandler output) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (myProject != null) {
-      if (CvsConfiguration.getInstance(myProject).SHOW_OUTPUT && !myIsQuietOperation) {
+      if (myConfiguration.SHOW_OUTPUT && !myIsQuietOperation) {
         if (ApplicationManager.getApplication().isDispatchThread()) {
           connectToOutput(output);
         } else {
