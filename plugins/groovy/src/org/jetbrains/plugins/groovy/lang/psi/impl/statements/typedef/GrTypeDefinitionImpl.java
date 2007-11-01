@@ -596,9 +596,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     } else {
       final Map<String, List<CandidateInfo>> map = CollectClassMembersUtil.getAllMethods(this);
       final List<CandidateInfo> candidateInfos = map.get(name);
-      for (CandidateInfo info : candidateInfos) {
-        final PsiElement element = info.getElement();
-        result.add(new Pair<PsiMethod, PsiSubstitutor>((PsiMethod) element, info.getSubstitutor()));
+      if (candidateInfos != null) {
+        for (CandidateInfo info : candidateInfos) {
+          final PsiElement element = info.getElement();
+          result.add(new Pair<PsiMethod, PsiSubstitutor>((PsiMethod) element, info.getSubstitutor()));
+        }
       }
     }
 
