@@ -83,6 +83,9 @@
       <implementation-class>org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactoryImpl</implementation-class>
       <interface-class>org.jetbrains.plugins.grails.lang.gsp.psi.GspPsiElementFactory</interface-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.GrailsProjectLoader</implementation-class>
+    </component>
   </project-components>
   <module-components>
     <component>
