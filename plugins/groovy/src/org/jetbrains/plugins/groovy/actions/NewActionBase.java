@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -32,6 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 
 import javax.swing.*;
 
@@ -58,16 +56,13 @@ public abstract class NewActionBase extends CreateElementActionBase {
 
     super.update(e);
 
-    if (!presentation.isEnabled() || !isUnderSourceRoots(e))
-      return;
-
-    if (!isGroovyConfigured(e)) {
+    if (!presentation.isEnabled() || !isUnderSourceRoots(e) || !isGroovyConfigured(e)) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
     }
   }
 
-  protected boolean isGroovyConfigured(AnActionEvent e) {
+  public  static boolean isGroovyConfigured(AnActionEvent e) {
     Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
     if (project != null) {
       PsiPackage groovyPackage = PsiManager.getInstance(project).findPackage("groovy.lang");
@@ -79,7 +74,7 @@ public abstract class NewActionBase extends CreateElementActionBase {
   public static boolean isUnderSourceRoots(final AnActionEvent e) {
     final DataContext context = e.getDataContext();
     Module module = (Module) context.getData(DataConstants.MODULE);
-    if (module == null) {
+    if (!GroovyGrailsConfiguration.isSuitableModule(module)) {
       return false;
     }
     final IdeView view = (IdeView) context.getData(DataConstants.IDE_VIEW);
