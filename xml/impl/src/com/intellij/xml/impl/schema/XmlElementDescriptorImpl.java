@@ -407,12 +407,18 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       final XmlElementDescriptor xmlDescriptorByType = XmlUtil.findXmlDescriptorByType(element);
 
       if (xmlDescriptorByType != null) elementDescriptor = xmlDescriptorByType;
-      else if (context instanceof XmlTag && ((XmlTag)context).getAttributeValue("xsi:type") != null) {
+      else if (context instanceof XmlTag && ((XmlTag)context).getAttributeValue("xsi:type") != null && askParentDescriptorViaXsi()) {
         final XmlElementDescriptor parentXmlDescriptorByType = XmlUtil.findXmlDescriptorByType(((XmlTag)context));
-        if (parentXmlDescriptorByType != null) elementDescriptor = parentXmlDescriptorByType.getElementDescriptor(element);
+        if (parentXmlDescriptorByType != null) {
+          elementDescriptor = parentXmlDescriptorByType.getElementDescriptor(element);
+        }
       }
     }
     return elementDescriptor;
+  }
+
+  protected boolean askParentDescriptorViaXsi() {
+    return true;
   }
 
   public String getQualifiedName() {

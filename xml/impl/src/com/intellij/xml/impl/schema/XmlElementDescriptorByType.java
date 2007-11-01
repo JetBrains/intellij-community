@@ -58,4 +58,8 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
 
     return getName();
   }
+  
+  protected boolean askParentDescriptorViaXsi() {
+    return false;
+  }
 }
