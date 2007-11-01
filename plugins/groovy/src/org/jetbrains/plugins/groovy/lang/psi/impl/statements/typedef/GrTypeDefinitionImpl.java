@@ -499,6 +499,17 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       allMethods.add(method);
     }
 
+    final PsiField[] fields = clazz.getFields();
+    for (PsiField field : fields) {
+      if (field instanceof GrField) {
+        final GrField groovyField = (GrField) field;
+        if (groovyField.isProperty()) {
+          allMethods.add(groovyField.getGetter());
+          allMethods.add(groovyField.getSetter());
+        }
+      }
+    }
+
     final PsiClass[] supers = clazz.getSupers();
     for (PsiClass aSuper : supers) {
       getAllMethodsInner(aSuper, allMethods, visited);
