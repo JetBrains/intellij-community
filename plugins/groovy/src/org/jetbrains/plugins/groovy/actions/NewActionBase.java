@@ -56,7 +56,7 @@ public abstract class NewActionBase extends CreateElementActionBase {
 
     super.update(e);
 
-    if (!presentation.isEnabled() || !isUnderSourceRoots(e) || !isGroovyConfigured(e)) {
+    if (!presentation.isEnabled() || !isUnderSourceRoots(e)) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
     }
