@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 
   @NotNull
   public String getText() {
-    return GroovyBundle.message("package.name.fix");
+    return GroovyBundle.message("fix.package.name");
   }
 
   @NotNull
