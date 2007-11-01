@@ -210,6 +210,7 @@ public class InjectedLanguageUtil {
 
     @Nullable
     protected PsiFile getPsiInner(Language target) {
+      // when FileManager rebuilds file map, all files temporarily become invalid, so this check is doomed
       PsiFile file = super.getPsiInner(target);
       //if (file == null || file.getContext() == null) return null;
       return file;
@@ -700,8 +701,12 @@ public class InjectedLanguageUtil {
 
   public static void clearCaches(PsiFile injected) {
     VirtualFileWindow virtualFile = (VirtualFileWindow)injected.getVirtualFile();
-    ((PsiManagerEx)injected.getManager()).getFileManager().setViewProvider(virtualFile, null);
-    InjectedLanguageManagerImpl.getInstanceImpl(injected.getProject()).clearCaches(virtualFile);
+    PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
+    psiManagerEx.getFileManager().setViewProvider(virtualFile, null);
+    Project project = psiManagerEx.getProject();
+    if (!project.isDisposed()) {
+      InjectedLanguageManagerImpl.getInstanceImpl(project).clearCaches(virtualFile);
+    }
   }
 
   private static PsiFile registerDocument(final DocumentWindow documentWindow, final PsiFile injectedPsi,
