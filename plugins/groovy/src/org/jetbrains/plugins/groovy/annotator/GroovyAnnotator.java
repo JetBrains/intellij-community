@@ -21,7 +21,10 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.tree.IElementType;
@@ -53,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -108,6 +112,8 @@ public class GroovyAnnotator implements Annotator {
       checkNewExpression(holder, (GrNewExpression) element);
     } else if (element instanceof GrConstructorInvocation) {
       checkConstructorInvocation(holder, (GrConstructorInvocation) element);
+    } else if (element instanceof GrPackageDefinition) {
+      checkPackageReference(holder, (GrPackageDefinition) element);
     } else if (element instanceof GroovyFile) {
       final GroovyFile file = (GroovyFile) element;
       if (file.isScript()) {
@@ -122,6 +128,32 @@ public class GroovyAnnotator implements Annotator {
           element.getContainingFile() instanceof GroovyFile) {
         GroovyImportsTracker.getInstance(element.getProject()).markFileAnnotated((GroovyFile) element.getContainingFile());
       }
+    }
+  }
+
+  private void checkPackageReference(AnnotationHolder holder, GrPackageDefinition packageDefinition) {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(packageDefinition.getProject()).getFileIndex();
+    final PsiFile file = packageDefinition.getContainingFile();
+    assert file != null;
+
+    final VirtualFile virtualFile = file.getVirtualFile();
+    assert virtualFile != null;
+
+    final VirtualFile sourceRootForFile = projectFileIndex.getSourceRootForFile(virtualFile);
+    assert sourceRootForFile != null;
+
+    assert virtualFile.getPath().startsWith(sourceRootForFile.getPath());
+    final int length = sourceRootForFile.getPath().length();
+
+    final VirtualFile containingDirectory = virtualFile.getParent();
+    assert containingDirectory != null;
+
+    final String packageNameSlashed = containingDirectory.getPath().substring(length + 1); //1 = length of separator
+    final String realPackageName = packageNameSlashed.replace('/', '.');
+
+    if (!packageDefinition.getPackageName().equals(realPackageName)) {
+      final Annotation annotation = holder.createWarningAnnotation(packageDefinition, "wrong package name");
+      annotation.registerFix(new ChangePackageQuickFix(packageDefinition, realPackageName));
     }
   }
 

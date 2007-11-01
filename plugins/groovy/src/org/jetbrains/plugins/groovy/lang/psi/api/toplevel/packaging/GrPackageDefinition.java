@@ -19,6 +19,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
@@ -29,4 +30,6 @@ public interface GrPackageDefinition extends UserDataHolderEx, Cloneable, Iconab
   String getPackageName();
 
   GrCodeReferenceElement getPackageReference();
+
+  void replacePackageReference(GrReferenceElement newPackageReference);
 }

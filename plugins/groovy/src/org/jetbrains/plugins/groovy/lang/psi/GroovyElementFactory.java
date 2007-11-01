@@ -95,4 +95,6 @@ public abstract class GroovyElementFactory {
   public abstract GrCodeBlock createMetodBodyFormText(String text);
 
   public abstract GrVariableDeclaration createSimpleVariableDeclaration(String name, String typeText);
+
+  public abstract GrReferenceElement createPackegeReferenceElementFromText(String newPackageName);
 }
