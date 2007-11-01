@@ -112,7 +112,7 @@ public class MappedFile implements Forceable {
     myHolder = new ReadWriteMappedBufferWrapper(myFile);
     myRealSize = myFile.length();
     if (LOG.isDebugEnabled()) {
-      LOG.assertTrue(myPosition >= 0L && myPosition < myRealSize, "myPosition=" + myPosition + ", myRealSize=" + myRealSize);
+      LOG.assertTrue(myPosition > 0L && myPosition < myRealSize || myPosition == 0 && myRealSize == 0, "myPosition=" + myPosition + ", myRealSize=" + myRealSize);
     }
     myHolder.buf().position((int)myPosition);
   }
