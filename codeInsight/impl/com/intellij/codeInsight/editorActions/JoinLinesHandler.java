@@ -74,7 +74,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       docManager.commitDocument(doc);
       CharSequence text = doc.getCharsSequence();
       int firstNonSpaceOffsetInNextLine = doc.getLineStartOffset(startLine + 1);
-      while (text.charAt(firstNonSpaceOffsetInNextLine) == ' ' || text.charAt(firstNonSpaceOffsetInNextLine) == '\t') {
+      while (firstNonSpaceOffsetInNextLine < text.length() - 1 && (text.charAt(firstNonSpaceOffsetInNextLine) == ' ' || text.charAt(firstNonSpaceOffsetInNextLine) == '\t')) {
         firstNonSpaceOffsetInNextLine++;
       }
       PsiElement elementAtNextLineStart = psiFile.findElementAt(firstNonSpaceOffsetInNextLine);
