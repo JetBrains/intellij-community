@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.FocusEvent;
@@ -46,6 +47,9 @@ import java.util.List;
  */
 public class FindUtil {
   private static final Key<Direction> KEY = Key.create("FindUtil.KEY");
+
+  private FindUtil() {}
+
   private static enum Direction {
     UP, DOWN
   }
@@ -178,6 +182,8 @@ public class FindUtil {
   public static void findAll(final Project project, final Editor editor, final FindModel findModel) {
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (psiFile == null) return;
+
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
     final List<Usage> usages = new ArrayList<Usage>();
@@ -461,6 +467,7 @@ public class FindUtil {
     return isReplaced;
   }
 
+  @Nullable
   private static FindResult doSearch(Project project,
                                      final Editor editor,
                                      int offset,

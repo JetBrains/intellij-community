@@ -25,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.ui.DocumentAdapter;
@@ -573,7 +574,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
     public void update(final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(hasMatches());
+      e.getPresentation().setEnabled(hasMatches() && PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument()) != null);
     }
 
     public void actionPerformed(final AnActionEvent e) {
