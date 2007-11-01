@@ -30,7 +30,8 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   protected MethodSignatureBackedByPsiMethod(@NotNull PsiMethod method,
                                              PsiSubstitutor substitutor,
                                              boolean isRaw,
-                                             final boolean isInGenericContext, PsiType[] parameterTypes,
+                                             final boolean isInGenericContext,
+                                             PsiType[] parameterTypes,
                                              PsiTypeParameter[] methodTypeParameters) {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
@@ -60,6 +61,10 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     }
 
     return super.equals(o);
+  }
+
+  public int hashCode() {
+    return super.hashCode();
   }
 
   @NotNull

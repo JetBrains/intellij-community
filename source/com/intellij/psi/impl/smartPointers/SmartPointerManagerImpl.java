@@ -37,10 +37,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   public static void fastenBelts(PsiFile file) {
-    fastenBeltsInSingleFile(file);
-  }
-
-  private static void fastenBeltsInSingleFile(final PsiFile file) {
     synchronized (file) {
       if (areBeltsFastened(file)) return;
 

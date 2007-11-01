@@ -695,7 +695,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         myHolder.add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, myRefCountHolder, myResolveHelper));
       }
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass));
-      if (!myHolder.hasErrorResults()) myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
+      if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCyclicInheritance(aClass));
     }
     else if (parent instanceof PsiEnumConstant) {
@@ -807,7 +807,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
 
     if (parent instanceof PsiAnonymousClass && ref.equals(((PsiAnonymousClass)parent).getBaseClassReference())) {
-      myHolder.addAll(GenericsHighlightUtil.checkOverrideEquivalentMethods((PsiClass)parent));
+      myHolder.add(GenericsHighlightUtil.checkOverrideEquivalentMethods((PsiClass)parent));
     }
 
     if (resolved instanceof PsiVariable) {

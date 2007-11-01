@@ -20,9 +20,12 @@
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
+import gnu.trove.THashSet;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public class ClassUtil {
   public static PsiMethod getAnyAbstractMethod(PsiClass aClass, Collection<HierarchicalMethodSignature> allMethodsCollection) {
@@ -35,8 +38,7 @@ public class ClassUtil {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return method;
     }
 
-    return null;
-
+    return abstractPackageLocalMethod(aClass, allMethodsCollection);
 /*
     // the only remaining possiblity for class to have abstract method here is
     //  from package local abstract method defined in inherited class from other package
@@ -89,6 +91,38 @@ public class ClassUtil {
 */
   }
 
+  private static PsiMethod abstractPackageLocalMethod(PsiClass aClass, Collection<HierarchicalMethodSignature> allMethodsCollection) {
+    Set<PsiMethod> allMethods = new THashSet<PsiMethod>(Arrays.asList(aClass.getAllMethods()));
+    Set<PsiMethod> suspects = new THashSet<PsiMethod>();
+    // check all methods collection first for sibling overrides
+    for (HierarchicalMethodSignature signature : allMethodsCollection) {
+      removeSupers(signature, allMethods, suspects);
+      PsiMethod method = signature.getMethod();
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        suspects.add(method);
+      }
+      allMethods.remove(method);
+    }
+    while (!allMethods.isEmpty()) {
+      PsiMethod method = allMethods.iterator().next();
+      removeSupers(method.getHierarchicalMethodSignature(), allMethods, suspects);
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        suspects.add(method);
+      }
+      allMethods.remove(method);
+    }
+    return suspects.isEmpty() ? null : suspects.iterator().next();
+  }
+
+  private static void removeSupers(HierarchicalMethodSignature hierarchicalMethodSignature, Set<PsiMethod> allMethods, Set<PsiMethod> suspects) {
+    for (HierarchicalMethodSignature superS : hierarchicalMethodSignature.getSuperSignatures()) {
+      PsiMethod superMethod = superS.getMethod();
+      allMethods.remove(superMethod);
+      suspects.remove(superMethod);
+      removeSupers(superS, allMethods, suspects);
+    }
+  }
+
   public static PsiMethod getAnyMethodToImplement(PsiClass aClass, Collection<HierarchicalMethodSignature> allMethodsCollection) {
     for (HierarchicalMethodSignature signatureHierarchical : allMethodsCollection) {
       final PsiMethod method = signatureHierarchical.getMethod();
@@ -96,13 +130,14 @@ public class ClassUtil {
       if (containingClass == null) {
         continue;
       }
-      final PsiResolveHelper resolveHelper = aClass.getManager().getResolveHelper();
       if (!aClass.equals(containingClass) &&
           method.hasModifierProperty(PsiModifier.ABSTRACT)
           && !method.hasModifierProperty(PsiModifier.STATIC)
           && !method.hasModifierProperty(PsiModifier.PRIVATE)) {
         return method;
-      } else {
+      }
+      else {
+        final PsiResolveHelper resolveHelper = aClass.getManager().getResolveHelper();
         final List<HierarchicalMethodSignature> superSignatures = signatureHierarchical.getSuperSignatures();
         for (HierarchicalMethodSignature superSignatureHierarchical : superSignatures) {
           final PsiMethod superMethod = superSignatureHierarchical.getMethod();

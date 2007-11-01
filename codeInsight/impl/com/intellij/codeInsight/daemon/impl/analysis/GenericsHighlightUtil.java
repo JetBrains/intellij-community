@@ -261,87 +261,79 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  public static List<HighlightInfo> checkOverrideEquivalentMethods(final PsiClass aClass) {
+  public static HighlightInfo checkOverrideEquivalentMethods(final PsiClass aClass) {
     final Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
     PsiManager manager = aClass.getManager();
-    List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
       new THashMap<MethodSignature, MethodSignatureBackedByPsiMethod>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
-    Map<MethodSignature, MethodSignatureBackedByPsiMethod> toCheckSubsignature = new HashMap<MethodSignature, MethodSignatureBackedByPsiMethod>();
-
+                                                                       
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
-      checkSameErasureNotSubsignatureInner(signature, manager, aClass, toCheckSubsignature, result, sameErasureMethods);
+      HighlightInfo info = checkSameErasureNotSubsignatureInner(signature, manager, aClass, sameErasureMethods);
+      if (info != null) return info;
     }
 
-    return result;
+    return null;
   }
 
-  private static void checkSameErasureNotSubsignatureInner(final HierarchicalMethodSignature signature,
-                                                           final PsiManager manager,
-                                                           final PsiClass aClass,
-                                                           final Map<MethodSignature, MethodSignatureBackedByPsiMethod> toCheckSubsignature,
-                                                           final List<HighlightInfo> result,
-                                                           final Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
+  private static HighlightInfo checkSameErasureNotSubsignatureInner(final HierarchicalMethodSignature signature,
+                                                                    final PsiManager manager,
+                                                                    final PsiClass aClass, final Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
     PsiMethod method = signature.getMethod();
-    if (!manager.getResolveHelper().isAccessible(method, aClass, null)) return;
+    if (!manager.getResolveHelper().isAccessible(method, aClass, null)) return null;
     MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
     MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
+    HighlightInfo info;
     if (sameErasure != null) {
-      checkSameErasureNotSubsignatureOrSameClass(sameErasure, toCheckSubsignature, signature, aClass, method, result);
+      info = checkSameErasureNotSubsignatureOrSameClass(sameErasure, signature, aClass, method);
+      if (info != null) return info;
     }
     sameErasureMethods.put(signatureToErase, signature);
-    toCheckSubsignature.put(signature, signature);
     List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
     for (HierarchicalMethodSignature superSignature : supers) {
-      checkSameErasureNotSubsignatureInner(superSignature, manager, aClass, toCheckSubsignature, result, sameErasureMethods);
+      info = checkSameErasureNotSubsignatureInner(superSignature, manager, aClass, sameErasureMethods);
+      if (info != null) return info;
     }
+    return null;
   }
 
-  private static void checkSameErasureNotSubsignatureOrSameClass(
-    final MethodSignatureBackedByPsiMethod signatureToCheck,
-    final Map<MethodSignature, MethodSignatureBackedByPsiMethod> toCheckSubsignature,
-    final HierarchicalMethodSignature superSignature,
-    final PsiClass aClass,
-    final PsiMethod superMethod,
-    final List<HighlightInfo> highlights) {
-
-    MethodSignatureBackedByPsiMethod toCheck = toCheckSubsignature.get(signatureToCheck);
-    final PsiMethod checkMethod = toCheck.getMethod();
+  private static HighlightInfo checkSameErasureNotSubsignatureOrSameClass(final MethodSignatureBackedByPsiMethod signatureToCheck,
+                                                                          final HierarchicalMethodSignature superSignature,
+                                                                          final PsiClass aClass,
+                                                                          final PsiMethod superMethod) {
+    final PsiMethod checkMethod = signatureToCheck.getMethod();
+    PsiClass checkContainingClass = checkMethod.getContainingClass();
+    PsiClass superContainingClass = superMethod.getContainingClass();
     if (checkMethod.isConstructor()) {
-      if (!superMethod.isConstructor() || !checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return;
-    } else if (superMethod.isConstructor()) return;
+      if (!superMethod.isConstructor() || !checkContainingClass.equals(superContainingClass)) return null;
+    }
+    else if (superMethod.isConstructor()) return null;
 
-    if (checkMethod.hasModifierProperty(PsiModifier.STATIC)) {
-      if (!checkMethod.getContainingClass().equals(superMethod.getContainingClass())) return;
+    if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkContainingClass.equals(superContainingClass)) {
+      return null;
     }
 
     final PsiType returnType1 = TypeConversionUtil.erasure(checkMethod.getReturnType());
     final PsiType returnType2 = TypeConversionUtil.erasure(superMethod.getReturnType());
-    if (!Comparing.equal(returnType1, returnType2)) return;
+    if (!Comparing.equal(returnType1, returnType2)) return null;
 
-    if (checkMethod.getContainingClass().equals(superMethod.getContainingClass()) ||
-        !MethodSignatureUtil.isSubsignature(superSignature, toCheck)) {
-      PsiMethod method1 = signatureToCheck.getMethod();
-      if (aClass.equals(method1.getContainingClass())) {
-        boolean sameClass = method1.getContainingClass().equals(superMethod.getContainingClass());
-        highlights.add(getSameErasureMessage(sameClass, method1, superMethod));
-      }
-      else {
-        final String descr = JavaErrorMessages.message(
-          "generics.methods.have.same.erasure.override",
-          HighlightMethodUtil.createClashMethodMessage(method1, superMethod, true)
-        );
-        TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-        highlights.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, descr));
-      }
+    if (!checkContainingClass.equals(superContainingClass) && MethodSignatureUtil.isSubsignature(superSignature, signatureToCheck)) {
+      return null;
+    }
+    PsiMethod method1 = signatureToCheck.getMethod();
+    if (superMethod.equals(method1)) return null;
+    if (aClass.equals(method1.getContainingClass())) {
+      boolean sameClass = aClass.equals(superContainingClass);
+      return getSameErasureMessage(sameClass, method1, superMethod, HighlightNamesUtil.getMethodDeclarationTextRange(method1));
+    }
+    else {
+      return getSameErasureMessage(false, method1, superMethod, HighlightNamesUtil.getClassDeclarationTextRange(aClass));
     }
   }
 
-  private static HighlightInfo getSameErasureMessage(final boolean sameClass, final PsiMethod method, final PsiMethod superMethod) {
+  private static HighlightInfo getSameErasureMessage(final boolean sameClass, final PsiMethod method, final PsiMethod superMethod,
+                                                     TextRange textRange) {
     @NonNls final String key = sameClass ? "generics.methods.have.same.erasure" : "generics.methods.have.same.erasure.override";
-    String description = JavaErrorMessages.message(key,
-                                                   HighlightMethodUtil.createClashMethodMessage(method, superMethod, !sameClass));
-    TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
+    String description = JavaErrorMessages.message(key, HighlightMethodUtil.createClashMethodMessage(method, superMethod, !sameClass));
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
   }
 

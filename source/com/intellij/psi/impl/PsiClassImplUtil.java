@@ -19,6 +19,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -112,7 +113,7 @@ public class PsiClassImplUtil {
 
     final PsiMethod[] methodsByName = aClass.findMethodsByName(patternMethod.getName(), checkBases);
     if (methodsByName.length == 0) return Collections.emptyList();
-    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
+    final List<PsiMethod> methods = new SmartList<PsiMethod>();
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
     for (final PsiMethod method : methodsByName) {
       final PsiClass superClass = method.getContainingClass();
@@ -182,12 +183,9 @@ public class PsiClassImplUtil {
   }
 
   @NotNull private static <T extends PsiMember> List<T> getAllByMap(PsiClass aClass, Class<T> type) {
-    final Map<String, List<Pair<T, PsiSubstitutor>>> allMap = getMap(aClass, type);
-    final List<Pair<T, PsiSubstitutor>> pairs = allMap.get(ALL);
+    List<Pair<T, PsiSubstitutor>> pairs = getAllWithSubstitutorsByMap(aClass, type);
 
-    if (pairs == null) {
-      LOG.error("pairs should be already computed. Wrong allMap: " + allMap);
-    }
+    assert pairs != null : "pairs should be already computed. Wrong allMap: " + getMap(aClass, type);
 
     final List<T> ret = new ArrayList<T>(pairs.size());
     for (final Pair<T, PsiSubstitutor> pair : pairs) {
@@ -244,7 +242,7 @@ public class PsiClassImplUtil {
     return map;
   }
 
-  private static <T extends PsiMember> Map<String, List<Pair<T, PsiSubstitutor>>> getMap(final PsiClass aClass, Class<T> memberClazz) {
+  static <T extends PsiMember> Map<String, List<Pair<T, PsiSubstitutor>>> getMap(final PsiClass aClass, Class<T> memberClazz) {
     CachedValue<Map> value = aClass.getUserData(MAP_IN_CLASS_KEY);
     if (value == null) {
       final CachedValueProvider<Map> provider = new ByNameCachedValueProvider(aClass);
@@ -404,7 +402,7 @@ public class PsiClassImplUtil {
                                                             PsiElement last,
                                                             PsiElement place,
                                                             boolean isRaw) {
-    if (visited.contains(aClass)) return true;
+    if (!visited.add(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
     final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
     final NameHint nameHint = processor.getHint(NameHint.class);
@@ -462,7 +460,6 @@ public class PsiClassImplUtil {
       }
     }
 
-    visited.add(aClass);
     if (!(last instanceof PsiReferenceList)) {
       if (!processSuperTypes(
         aClass.getSuperTypes(),

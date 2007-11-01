@@ -865,8 +865,7 @@ public class HighlightMethodUtil {
         currentType = unifyingSubstitutor.substitute(currentType);
       }
 
-      if (otherSuperReturnType == null || currentType == null) continue;
-      if (otherSuperReturnType.equals(currentType)) continue;
+      if (otherSuperReturnType == null || currentType == null || otherSuperReturnType.equals(currentType)) continue;
 
       if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(currentMethod)) <= 0) {
         if (otherSuperReturnType.isAssignableFrom(currentType)) continue;
@@ -893,24 +892,23 @@ public class HighlightMethodUtil {
 
       boolean allAbstracts = method.hasModifierProperty(PsiModifier.ABSTRACT);
       final PsiClass containingClass = method.getContainingClass();
-      if (aClass.equals(containingClass)) continue;
+      if (aClass.equals(containingClass)) continue; //to be checked at method level
+
       if (aClass.isInterface() && !containingClass.isInterface()) continue;
       HighlightInfo highlightInfo = null;
-      if (!allAbstracts) {
-        if (!aClass.equals(containingClass)) {
-          highlightInfo = checkMethodIncompatibleReturnType(signature, superSignatures, false);
-        }
-      }
-      else {
+      if (allAbstracts) {
         if (!containingClass.equals(aClass)) {
           superSignatures = new ArrayList<HierarchicalMethodSignature>(superSignatures);
           superSignatures.add(signature);
         }
         highlightInfo = checkInterfaceInheritedMethodsReturnTypes(superSignatures);
       }
+      else {
+        if (!aClass.equals(containingClass)) {
+          highlightInfo = checkMethodIncompatibleReturnType(signature, superSignatures, false);
+        }
+      }
       if (highlightInfo != null) errorDescription = highlightInfo.description;
-
-      if (aClass.equals(containingClass)) continue; //to be checked at method level
 
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         for (HierarchicalMethodSignature superSignature : superSignatures) {

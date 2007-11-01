@@ -29,7 +29,7 @@ import java.util.List;
 
 public class MethodSignatureUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.MethodSignatureUtil");
-  public static TObjectHashingStrategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
+  public static final TObjectHashingStrategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
     new TObjectHashingStrategy<MethodSignatureBackedByPsiMethod>() {
       public int computeHashCode(final MethodSignatureBackedByPsiMethod signature) {
         return signature.getMethod().hashCode();
@@ -319,20 +319,16 @@ public class MethodSignatureUtil {
     if (subSignature == superSignature) return true;
     if (checkDifferentSignaturesLightweight(superSignature, subSignature)) return false;
     PsiSubstitutor unifyingSubstitutor = getSuperMethodSignatureSubstitutor(superSignature, subSignature);
-    if (!checkSignaturesEqualInner(superSignature, subSignature, unifyingSubstitutor)) {
-      if (subSignature.getTypeParameters().length > 0) return false;
-      final PsiType[] subParameterTypes = subSignature.getParameterTypes();
-      final PsiType[] superParameterTypes = superSignature.getParameterTypes();
-      for (int i = 0; i < subParameterTypes.length; i++) {
-        PsiType type1 = subParameterTypes[i];
-        PsiType type2 = TypeConversionUtil.erasure(superParameterTypes[i]);
-        if (!Comparing.equal(type1, type2)) return false;
-      }
+    if (checkSignaturesEqualInner(superSignature, subSignature, unifyingSubstitutor)) return true;
 
-      return true;
+    if (subSignature.getTypeParameters().length > 0) return false;
+    final PsiType[] subParameterTypes = subSignature.getParameterTypes();
+    final PsiType[] superParameterTypes = superSignature.getParameterTypes();
+    for (int i = 0; i < subParameterTypes.length; i++) {
+      PsiType type1 = subParameterTypes[i];
+      PsiType type2 = TypeConversionUtil.erasure(superParameterTypes[i]);
+      if (!Comparing.equal(type1, type2)) return false;
     }
-
     return true;
   }
-
 }
