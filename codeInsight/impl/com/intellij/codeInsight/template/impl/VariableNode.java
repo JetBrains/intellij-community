@@ -1,17 +1,16 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.lookup.LookupItem;
 
 /**
  *
  */
 class VariableNode implements Expression {
-  private String myName;
-  private Expression myInitialValue;
+  private final String myName;
+  private final Expression myInitialValue;
 
   public VariableNode(String name, Expression initialValue) {
     myName = name;

@@ -10,7 +10,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -32,6 +35,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -51,7 +55,7 @@ public class TemplateState implements Disposable {
   private TemplateSegments mySegments = null;
 
   private RangeMarker myTemplateRange = null;
-  private ArrayList<RangeHighlighter> myTabStopHighlighters = new ArrayList<RangeHighlighter>();
+  private final ArrayList<RangeHighlighter> myTabStopHighlighters = new ArrayList<RangeHighlighter>();
   private int myCurrentVariableNumber = -1;
   private int myCurrentSegmentNumber = -1;
   private boolean toProcessTab = true;
@@ -63,11 +67,11 @@ public class TemplateState implements Disposable {
 
   private List<TemplateEditingListener> myListeners = new ArrayList<TemplateEditingListener>();
   private DocumentAdapter myEditorDocumentListener;
-  private Map myProperties = new HashMap();
+  private final Map myProperties = new HashMap();
   private boolean myTemplateIndented = false;
   private Document myDocument;
 
-  public TemplateState(Project project, final Editor editor) {
+  public TemplateState(@NotNull Project project, final Editor editor) {
     myProject = project;
     myEditor = editor;
     myDocument = myEditor.getDocument();

@@ -13,11 +13,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseCompleteMacro implements Macro {
   private final String myName;
 
-  public BaseCompleteMacro(@NonNls String name) {
+  protected BaseCompleteMacro(@NonNls String name) {
     myName = name;
   }
 
@@ -98,7 +99,7 @@ public abstract class BaseCompleteMacro implements Macro {
   private class MyLookupListener extends LookupAdapter {
     private final ExpressionContext myContext;
 
-    public MyLookupListener(ExpressionContext context) {
+    public MyLookupListener(@NotNull ExpressionContext context) {
       myContext = context;
     }
 

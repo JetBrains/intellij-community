@@ -21,7 +21,7 @@ public abstract class LookupManager {
   public abstract void hideActiveLookup();
   public abstract Lookup getActiveLookup();
 
-  public static final @NonNls String PROP_ACTIVE_LOOKUP = "activeLookup";
+  @NonNls public static final String PROP_ACTIVE_LOOKUP = "activeLookup";
 
   public abstract void addPropertyChangeListener(PropertyChangeListener listener);
   public abstract void removePropertyChangeListener(PropertyChangeListener listener);

@@ -16,8 +16,8 @@ public class MacroCallNode implements Expression {
     return myMacro;
   }
 
-  private Macro myMacro;
-  private ArrayList<Expression> myParameters = new ArrayList<Expression>();
+  private final Macro myMacro;
+  private final ArrayList<Expression> myParameters = new ArrayList<Expression>();
 
   public MacroCallNode(Macro macro) {
     myMacro = macro;
