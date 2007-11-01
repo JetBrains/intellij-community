@@ -19,16 +19,17 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -146,15 +147,21 @@ public class ChangesUtil {
     return filePath;
   }
 
-  public static FilePath getLocalPath(final Project project, FilePath filePath) {
+  public static FilePath getLocalPath(final Project project, final FilePath filePath) {
     // check if the file has just been renamed (IDEADEV-15494)
-    Change change = ChangeListManager.getInstance(project).getChange(filePath);
+    Change change = ApplicationManager.getApplication().runReadAction(new Computable<Change>() {
+      @Nullable
+      public Change compute() {
+        if (project.isDisposed()) return null;
+        return ChangeListManager.getInstance(project).getChange(filePath);
+      }
+    });
     if (change != null) {
       final ContentRevision beforeRevision = change.getBeforeRevision();
       final ContentRevision afterRevision = change.getAfterRevision();
       if (beforeRevision != null && afterRevision != null && !beforeRevision.getFile().equals(afterRevision.getFile()) &&
           beforeRevision.getFile().equals(filePath)) {
-        filePath = afterRevision.getFile();
+        return afterRevision.getFile();
       }
     }
     return filePath;
