@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class BasicProjectImportingTest extends ProjectImportingTest {
   public void testSimpleProject() throws IOException {
-    importProject("<groupId>mvn</groupId>" +
+    importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
@@ -14,7 +14,7 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
   }
 
   public void testProjectWithDependency() throws IOException {
-    importProject("<groupId>mvn</groupId>" +
+    importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
 
@@ -30,7 +30,7 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
   }
 
   public void testProjectWithProperty() throws IOException {
-    importProject("<groupId>mvn</groupId>" +
+    importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
 
@@ -48,7 +48,7 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
   }
 
   public void testProjectWithEnvProperty() throws IOException {
-    importProject("<groupId>mvn</groupId>" +
+    importProject("<groupId>test</groupId>" +
                   "<artifactId>env-properties</artifactId>" +
                   "<version>1</version>" +
 
@@ -67,7 +67,7 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
   }
 
   public void testModulesWithSlashesRegularAndBack() throws IOException {
-    createProjectPom("<groupId>mvn.modules-with-slashes</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
                      "<version>1</version>" +
@@ -77,11 +77,11 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
                      "  <module>dir/m2</module>" +
                      "</modules>");
 
-    createModulePom("dir/m1", "<groupId>mvn.modules-with-slashes</groupId>" +
+    createModulePom("dir/m1", "<groupId>test</groupId>" +
                               "<artifactId>m1</artifactId>" +
                               "<version>1</version>");
 
-    createModulePom("dir/m2", "<groupId>mvn.modules-with-slashes</groupId>" +
+    createModulePom("dir/m2", "<groupId>test</groupId>" +
                               "<artifactId>m2</artifactId>" +
                               "<version>1</version>");
 
@@ -96,8 +96,36 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
     assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
   }
 
+  public void testModulesWithSlashesAtTheEnds() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1/</module>" +
+                     "  <module>m2\\</module>" +
+                     "  <module>m3//</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    createModulePom("m3", "<groupId>test</groupId>" +
+                          "<artifactId>m3</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2", "m3");
+  }
+
   public void testModulesWithSameArtifactId() throws Exception {
-    createProjectPom("<groupId>mvn</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
                      "<version>1</version>" +
@@ -107,20 +135,20 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
                      "  <module>dir2/m</module>" +
                      "</modules>");
 
-    createModulePom("dir1/m", "<groupId>mvn.group1</groupId>" +
+    createModulePom("dir1/m", "<groupId>test.group1</groupId>" +
                               "<artifactId>m</artifactId>" +
                               "<version>1</version>");
 
-    createModulePom("dir2/m", "<groupId>mvn.group2</groupId>" +
+    createModulePom("dir2/m", "<groupId>test.group2</groupId>" +
                               "<artifactId>m</artifactId>" +
                               "<version>1</version>");
 
     importProject();
-    assertModules("project", "m (mvn.group1)", "m (mvn.group2)");
+    assertModules("project", "m (test.group1)", "m (test.group2)");
   }
 
   public void testTestJarDependencies() throws Exception {
-    createProjectPom("<groupId>mvn</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
@@ -139,7 +167,7 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
   }
 
   public void testDependencyWithClassifier() throws IOException {
-    createProjectPom("<groupId>mvn</groupId>" +
+    createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
