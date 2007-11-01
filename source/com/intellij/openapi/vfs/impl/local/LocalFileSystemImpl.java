@@ -233,16 +233,16 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
   }
 
   public void refreshFiles(Iterable<VirtualFile> files) {
-    refreshFiles(files, false);
+    refreshFiles(files, false, false);
   }
 
-  private static void refreshFiles(final Iterable<VirtualFile> files, final boolean recursive) {
+  private static void refreshFiles(final Iterable<VirtualFile> files, final boolean recursive, final boolean async) {
     List<VirtualFile> list = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
       list.add(file);
     }
 
-    RefreshQueue.getInstance().refresh(false, recursive, null, list.toArray(new VirtualFile[list.size()]));
+    RefreshQueue.getInstance().refresh(async, recursive, null, list.toArray(new VirtualFile[list.size()]));
   }
 
   public byte[] physicalContentsToByteArray(final VirtualFile virtualFile) throws IOException {
@@ -533,7 +533,7 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode() && !filesToSynchronize.isEmpty()) {
-      refreshFiles(filesToSynchronize, toWatchRecursively);
+      refreshFiles(filesToSynchronize, toWatchRecursively, true);
     }
 
     return result;
