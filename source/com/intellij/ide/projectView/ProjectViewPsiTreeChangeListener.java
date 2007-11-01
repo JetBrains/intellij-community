@@ -50,7 +50,8 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     while(true){
       if (parent == null) break;
       if (parent instanceof PsiCodeBlock) break;
-      if (parent instanceof PsiFile){
+      if (parent instanceof PsiFile && !(parent instanceof PsiPlainTextFile)) {
+        // adding a class within a file causes a new node to appear in project view => entire dir should be updated
         parent = ((PsiFile)parent).getContainingDirectory();
         if (parent == null) break;
       }
