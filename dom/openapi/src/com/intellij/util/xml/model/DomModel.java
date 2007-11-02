@@ -16,10 +16,12 @@
 
 package com.intellij.util.xml.model;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -32,4 +34,6 @@ public interface DomModel<T extends DomElement> {
 
   @NotNull
   Set<XmlFile> getConfigFiles();
+  
+  List<DomFileElement<T>> getRoots();
 }

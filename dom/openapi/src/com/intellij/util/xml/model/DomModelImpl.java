@@ -19,8 +19,11 @@ package com.intellij.util.xml.model;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.MergedObject;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -45,4 +48,10 @@ public class DomModelImpl<T extends DomElement> {
   public Set<XmlFile> getConfigFiles() {
     return myConfigFiles;
   }
+
+  @NotNull
+  public List<DomFileElement<T>> getRoots() {
+    return myMergedModel instanceof MergedObject ? ((MergedObject) myMergedModel).getImplementations() : Collections.singletonList(myMergedModel);
+  }
+
 }

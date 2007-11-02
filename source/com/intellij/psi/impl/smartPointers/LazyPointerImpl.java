@@ -39,7 +39,7 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
   private E myElement = null;
   private PsiAnchor myAnchor = null;
   private SmartPsiElementPointer myPointer = null;
-  private Class<? extends PsiElement> myElementClass;
+  private final Class<? extends PsiElement> myElementClass;
 
   public LazyPointerImpl(E element) {
     myElementClass = element.getClass();
@@ -71,6 +71,29 @@ public class LazyPointerImpl<E extends PsiElement> implements SmartPointerEx<E> 
   }
 
   public void documentAndPsiInSync() {
+  }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof LazyPointerImpl)) return false;
+
+    final LazyPointerImpl that = (LazyPointerImpl)o;
+
+    if (myAnchor != null ? !myAnchor.equals(that.myAnchor) : that.myAnchor != null) return false;
+    if (myElement != null ? !myElement.equals(that.myElement) : that.myElement != null) return false;
+    if (myElementClass != null ? !myElementClass.equals(that.myElementClass) : that.myElementClass != null) return false;
+    if (myPointer != null ? !myPointer.equals(that.myPointer) : that.myPointer != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = (myElement != null ? myElement.hashCode() : 0);
+    result = 31 * result + (myAnchor != null ? myAnchor.hashCode() : 0);
+    result = 31 * result + (myPointer != null ? myPointer.hashCode() : 0);
+    result = 31 * result + (myElementClass != null ? myElementClass.hashCode() : 0);
+    return result;
   }
 
   public E getElement() {

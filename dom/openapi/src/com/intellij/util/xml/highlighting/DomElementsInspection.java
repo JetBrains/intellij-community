@@ -20,15 +20,16 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementVisitor;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.xml.*;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,14 +62,45 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   public void checkFileElement(DomFileElement<T> domFileElement, final DomElementAnnotationHolder holder) {
     final DomHighlightingHelper helper =
       DomElementAnnotationsManager.getInstance(domFileElement.getManager().getProject()).getHighlightingHelper();
-    domFileElement.accept(new DomElementVisitor() {
+    domFileElement.acceptChildren(new DomElementVisitor() {
       public void visitDomElement(DomElement element) {
-        if (element.getXmlElement() != null) {
-          element.acceptChildren(this);
-        }
+        checkChildren(element, this);
         checkDomElement(element, holder, helper);
       }
+
     });
+  }
+
+  protected void checkChildren(final DomElement element, DomElementVisitor visitor) {
+    final XmlElement xmlElement = element.getXmlElement();
+    if (xmlElement instanceof XmlTag) {
+      final Set<XmlElement> visited = new THashSet<XmlElement>();
+      XmlTag tag = (XmlTag) xmlElement;
+      final DomManager domManager = element.getManager();
+      for (final XmlAttribute attribute : tag.getAttributes()) {
+        final GenericAttributeValue value = domManager.getDomElement(attribute);
+        if (value != null) {
+          visited.add(attribute);
+          value.accept(visitor);
+        }
+      }
+      for (final XmlTag subTag : tag.getSubTags()) {
+        final DomElement child = domManager.getDomElement(subTag);
+        if (child != null) {
+          visited.add(subTag);
+          child.accept(visitor);
+        }
+      }
+      for (final AbstractDomChildrenDescription description : element.getGenericInfo().getChildrenDescriptions()) {
+        if (description.getAnnotation(Required.class) != null) {
+          for (final DomElement child : description.getValues(element)) {
+            if (!visited.contains(child.getXmlElement())) {
+              child.accept(visitor);
+            }
+          }
+        }
+      }
+    }
   }
 
   /**
