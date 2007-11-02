@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -42,8 +43,9 @@ public class TextFieldWithHistory extends JPanel {
   private final TextFieldWithProcessing myTextField;
 
   private JBPopup myPopup;
-  private final JLabel myClearFieldLabel;
-  private final JLabel myToggleHistoryLabel;
+  private JLabel myClearFieldLabel;
+  private JLabel myToggleHistoryLabel;
+  private JPopupMenu myNativeSearchPopup;
 
   private boolean myFreaze = false;
   private final boolean myCropList;
@@ -61,87 +63,93 @@ public class TextFieldWithHistory extends JPanel {
 
     myTextField = new TextFieldWithProcessing();
     myTextField.setColumns(15);
-
     add(myTextField, BorderLayout.CENTER);
 
-    myToggleHistoryLabel = new JLabel(IconLoader.findIcon("/actions/search.png"));
-    myToggleHistoryLabel.setOpaque(true);
-    myToggleHistoryLabel.setBackground(myTextField.getBackground());
-    myToggleHistoryLabel.addMouseListener(new MouseAdapter() {
-      public void mousePressed(MouseEvent e) {
-        togglePopup();
-      }
-    });
-    add(myToggleHistoryLabel, BorderLayout.WEST);
-
-    myClearFieldLabel = new JLabel(IconLoader.findIcon("/actions/clean.png"));
-    myClearFieldLabel.setOpaque(true);
-    myClearFieldLabel.setBackground(myTextField.getBackground());
-    add(myClearFieldLabel, BorderLayout.EAST);
-    myClearFieldLabel.addMouseListener(new MouseAdapter() {
-      public void mousePressed(MouseEvent e) {
-        myTextField.setText("");
-      }
-    });
-
-    // myTextField.addKeyListener(new HistoricalValuesHighlighter());
-    myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        if (!cropList) return;
-        if (myFreaze) return; //do not suggest during batch update
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            String text = getTextEditor().getText();
-            myModel.setSelectedItemAndCropList(text);
-          }
-        });
-
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (0 == myModel.getSize()) {
-              hidePopup();
-              myModel.uncropList();
-            }
-            else {
-              refreshPopup();
-            }
-          }
-        });
-      }
-
-      private void refreshPopup() {
-        Runnable hider = new Runnable() {
-          public void run() {
-            hidePopup();
-          }
-        };
-
-        Runnable shower = new Runnable() {
-          public void run() {
-            showPopup();
-          }
-        };
-
-        if (myModel.croppedListEnlarged()) {
-          SwingUtilities.invokeLater(hider);
-        }
-
-        SwingUtilities.invokeLater(shower);
-      }
-    });
-
-    final Border originalBorder;
-    if (SystemInfo.isMac) {
-      originalBorder = BorderFactory.createLoweredBevelBorder();
+    if (hasNativeLeopardSearchControl()) {
+      myTextField.putClientProperty("JTextField.variant", "search");
+      myNativeSearchPopup = new JPopupMenu();
+      myTextField.putClientProperty("JTextField.Search.FindPopup", myNativeSearchPopup);
     }
     else {
-      originalBorder = myTextField.getBorder();
+      myToggleHistoryLabel = new JLabel(IconLoader.findIcon("/actions/search.png"));
+      myToggleHistoryLabel.setOpaque(true);
+      myToggleHistoryLabel.setBackground(myTextField.getBackground());
+      myToggleHistoryLabel.addMouseListener(new MouseAdapter() {
+        public void mousePressed(MouseEvent e) {
+          togglePopup();
+        }
+      });
+      add(myToggleHistoryLabel, BorderLayout.WEST);
+
+      myClearFieldLabel = new JLabel(IconLoader.findIcon("/actions/clean.png"));
+      myClearFieldLabel.setOpaque(true);
+      myClearFieldLabel.setBackground(myTextField.getBackground());
+      add(myClearFieldLabel, BorderLayout.EAST);
+      myClearFieldLabel.addMouseListener(new MouseAdapter() {
+        public void mousePressed(MouseEvent e) {
+          myTextField.setText("");
+        }
+      });
+
+      final Border originalBorder;
+      if (SystemInfo.isMac) {
+        originalBorder = BorderFactory.createLoweredBevelBorder();
+      }
+      else {
+        originalBorder = myTextField.getBorder();
+      }
+
+      setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 0, 4, 0), originalBorder));
+
+      myTextField.setOpaque(true);
+      myTextField.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 0, 5));
+
+      // myTextField.addKeyListener(new HistoricalValuesHighlighter());
+      myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+        protected void textChanged(DocumentEvent e) {
+          if (!cropList) return;
+          if (myFreaze) return; //do not suggest during batch update
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              String text = getTextEditor().getText();
+              myModel.setSelectedItemAndCropList(text);
+            }
+          });
+
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              if (0 == myModel.getSize()) {
+                hidePopup();
+                myModel.uncropList();
+              }
+              else {
+                refreshPopup();
+              }
+            }
+          });
+        }
+
+        private void refreshPopup() {
+          Runnable hider = new Runnable() {
+            public void run() {
+              hidePopup();
+            }
+          };
+
+          Runnable shower = new Runnable() {
+            public void run() {
+              showPopup();
+            }
+          };
+
+          if (myModel.croppedListEnlarged()) {
+            SwingUtilities.invokeLater(hider);
+          }
+
+          SwingUtilities.invokeLater(shower);
+        }
+      });
     }
-
-    setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(4, 0, 4, 0), originalBorder));
-
-    myTextField.setOpaque(true);
-    myTextField.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 0, 5));
 
     final ActionManager actionManager = ActionManager.getInstance();
     if (actionManager != null) {
@@ -150,6 +158,10 @@ public class TextFieldWithHistory extends JPanel {
         clearTextAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, this);
       }
     }
+  }
+
+  private static boolean hasNativeLeopardSearchControl() {
+    return SystemInfo.isMacOSLeopard && LafManager.getInstance().isUnderAquaLookAndFeel();
   }
 
   public void addDocumentListener(DocumentListener listener) {
@@ -166,9 +178,7 @@ public class TextFieldWithHistory extends JPanel {
 
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
-    final Color bg = enabled
-                     ? UIUtil.getTextFieldBackground()
-                     : UIUtil.getPanelBackground();
+    final Color bg = enabled ? UIUtil.getTextFieldBackground() : UIUtil.getPanelBackground();
     myToggleHistoryLabel.setBackground(bg);
     myClearFieldLabel.setBackground(bg);
   }
@@ -179,6 +189,12 @@ public class TextFieldWithHistory extends JPanel {
 
   public void setHistory(List<String> aHistory) {
     myModel.setItems(aHistory);
+    if (myNativeSearchPopup != null) {
+      myNativeSearchPopup.removeAll();
+      for (final String item : aHistory) {
+        addMenuItem(item);
+      }
+    }
   }
 
   public List getHistory() {
@@ -205,7 +221,20 @@ public class TextFieldWithHistory extends JPanel {
   }
 
   public void addCurrentTextToHistory() {
-    myModel.addElement(getText());
+    final String item = getText();
+    myModel.addElement(item);
+  }
+
+  private void addMenuItem(final String item) {
+    if (myNativeSearchPopup != null) {
+      final JMenuItem menuItem = new JMenuItem(item);
+      myNativeSearchPopup.add(menuItem);
+      menuItem.addActionListener(new ActionListener() {
+        public void actionPerformed(final ActionEvent e) {
+          myTextField.setText(item);
+        }
+      });
+    }
   }
 
   public void selectText() {
@@ -218,7 +247,7 @@ public class TextFieldWithHistory extends JPanel {
 
 
   public boolean requestFocusInWindow() {
-    return myTextField.requestFocusInWindow();   
+    return myTextField.requestFocusInWindow();
   }
 
   public void requestFocus() {
@@ -247,7 +276,7 @@ public class TextFieldWithHistory extends JPanel {
     }
 
     public void addElement(Object obj) {
-      String newItem = ((String) obj).trim();
+      String newItem = ((String)obj).trim();
 
       if (0 == newItem.length()) {
         return;
@@ -263,6 +292,8 @@ public class TextFieldWithHistory extends JPanel {
         }
 
         refreshCroppedList();
+
+        addMenuItem(newItem);
       }
     }
 
@@ -372,11 +403,13 @@ public class TextFieldWithHistory extends JPanel {
             if (list.getSelectedIndex() < list.getModel().getSize() - 1) {
               list.setSelectedIndex(list.getSelectedIndex() + 1);
             }
-          } else if (e.getKeyCode() == KeyEvent.VK_UP){
+          }
+          else if (e.getKeyCode() == KeyEvent.VK_UP) {
             if (list.getSelectedIndex() > 0) {
               list.setSelectedIndex(list.getSelectedIndex() - 1);
             }
-          } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          }
+          else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             if (list.getSelectedIndex() > -1) {
               chooseRunnable.run();
             }
