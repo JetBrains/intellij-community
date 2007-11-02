@@ -15,9 +15,8 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.ReadWriteAccessUsage;
@@ -46,8 +45,8 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
 
       if (usage instanceof ReadWriteAccessUsage) {
         ReadWriteAccessUsage u = (ReadWriteAccessUsage)usage;
-        if (u.isAccessedForReading()) return new UsageTypeGroup(UsageType.READ);
         if (u.isAccessedForWriting()) return new UsageTypeGroup(UsageType.WRITE);
+        if (u.isAccessedForReading()) return new UsageTypeGroup(UsageType.READ);
       }
 
       return new UsageTypeGroup(UsageType.UNCLASSIFIED);
