@@ -962,7 +962,12 @@ public class CompileDriver {
           final ValidityState savedState = cache.getState(outputPath);
 
           if (forceGenerate || savedState == null || !savedState.equalsTo(item.getValidityState())) {
-            toGenerate.add(item);
+            if (context.getCompileScope().belongs(outputPath)) {
+              toGenerate.add(item);
+            }
+            else {
+              pathsToRemove.remove(outputPath);
+            }
           }
           else {
             pathsToRemove.remove(outputPath);
