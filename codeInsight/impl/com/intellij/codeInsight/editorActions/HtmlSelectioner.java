@@ -11,14 +11,15 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -39,12 +40,19 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
   }
 
   public boolean canSelect(PsiElement e) {
-    if (e instanceof XmlToken) {
-      PsiFile file = e.getContainingFile();
-      VirtualFile virtualFile = file != null ? file.getVirtualFile() : null;
-      FileType fType = virtualFile != null ? FileTypeManager.getInstance().getFileTypeByFile(virtualFile) : null;
+    return canSelectElement(e);
+  }
 
-      return fType == StdFileTypes.HTML || fType == StdFileTypes.XHTML || fType == StdFileTypes.JSPX || fType == StdFileTypes.JSP;
+  static boolean canSelectElement(final PsiElement e) {
+    if (e instanceof XmlToken) {
+      Language language = e.getLanguage();
+      if (language == StdLanguages.XML) language = e.getParent().getLanguage();
+
+      return language instanceof HTMLLanguage ||
+             language instanceof XHTMLLanguage ||
+             language == StdLanguages.JSP ||
+             language == StdLanguages.JSPX ||
+             (ourStyleSelectioner != null && ourStyleSelectioner.canSelect(e));
     }
     return false;
   }

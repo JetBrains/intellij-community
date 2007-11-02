@@ -5,8 +5,6 @@ import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
@@ -1076,11 +1074,8 @@ public class SelectWordUtil {
 
   static class XmlTokenSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
-      final FileType fileType = e.getContainingFile().getFileType();
       return e instanceof XmlToken && 
-             (fileType == StdFileTypes.XML ||
-              fileType == StdFileTypes.DTD
-             );
+             !HtmlSelectioner.canSelectElement(e);
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
