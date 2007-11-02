@@ -50,7 +50,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private MessageBus myMessageBus;
 
   private final ComponentManagerConfigurator myConfigurator = new ComponentManagerConfigurator(this);
-  private ComponentManager myParentComponentManager;
+  private final ComponentManager myParentComponentManager;
   private IComponentStore myComponentStore;
   private Boolean myHeadless;
   private final ComponentsRegistry myComponentsRegistry = new ComponentsRegistry();
@@ -390,13 +390,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   private class ComponentsRegistry {
-    private Map<Class, Object> myInterfaceToLockMap = new HashMap<Class, Object>();
-    private Map<Class, Class> myInterfaceToClassMap = new HashMap<Class, Class>();
-    private ArrayList<Class> myComponentInterfaces = new ArrayList<Class>(); // keeps order of component's registration
-    private Map<String, BaseComponent> myNameToComponent = new HashMap<String, BaseComponent>();
-    private List<ComponentConfig> myComponentConfigs = new ArrayList<ComponentConfig>();
-    private List<Object> myImplementations = new ArrayList<Object>();
-    private Map<Class, ComponentConfig> myComponentClassToConfig = new java.util.HashMap<Class, ComponentConfig>();
+    private final Map<Class, Object> myInterfaceToLockMap = new HashMap<Class, Object>();
+    private final Map<Class, Class> myInterfaceToClassMap = new HashMap<Class, Class>();
+    private final ArrayList<Class> myComponentInterfaces = new ArrayList<Class>(); // keeps order of component's registration
+    private final Map<String, BaseComponent> myNameToComponent = new HashMap<String, BaseComponent>();
+    private final List<ComponentConfig> myComponentConfigs = new ArrayList<ComponentConfig>();
+    private final List<Object> myImplementations = new ArrayList<Object>();
+    private final Map<Class, ComponentConfig> myComponentClassToConfig = new java.util.HashMap<Class, ComponentConfig>();
     private boolean myClassesLoaded = false;
 
     private void loadClasses() {
@@ -507,7 +507,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     public <T> T[] getComponentsByType(final Class<T> baseClass) {
       ArrayList<T> array = new ArrayList<T>();
 
-      for (Class interfaceClass : myComponentInterfaces) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < myComponentInterfaces.size(); i++) {
+        Class interfaceClass = myComponentInterfaces.get(i);
         final Class implClass = myInterfaceToClassMap.get(interfaceClass);
         if (ReflectionCache.isAssignable(baseClass, implClass)) {
           array.add((T)getComponent(interfaceClass));
