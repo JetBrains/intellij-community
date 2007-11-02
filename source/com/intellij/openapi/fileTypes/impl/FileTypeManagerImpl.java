@@ -415,7 +415,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           String name = mapping.getAttributeValue(ATTRIBUTE_TYPE);
           FileType type = getFileTypeByName(name);
 
-          FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : new WildcardFileNameMatcher(pattern);
+          FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : createFromPattern(pattern);
 
           if (type != null) {
             associate(type, matcher, false);
@@ -433,7 +433,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           String pattern = mapping.getAttributeValue(ATTRIBUTE_PATTERN);
           String name = mapping.getAttributeValue(ATTRIBUTE_TYPE);
           FileType type = getFileTypeByName(name);
-          FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : new WildcardFileNameMatcher(pattern);
+          FileNameMatcher matcher = ext != null ? new ExtensionFileNameMatcher(ext) : createFromPattern(pattern);
 
           if (type != null) {
             removeAssociation(type, matcher, false);
@@ -450,6 +450,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
     if (savedVersion < VERSION) {
       restoreStandardFileExtensions();
+    }
+  }
+
+  private static FileNameMatcher createFromPattern(final String pattern) {
+    if (pattern.contains("?") || pattern.contains("*")) {
+      return new WildcardFileNameMatcher(pattern);
+    }
+    else {
+      return new ExcactFileNameMatcher(pattern);
     }
   }
 
@@ -509,6 +518,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           else if (matcher instanceof WildcardFileNameMatcher) {
             mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());
           }
+          else if (matcher instanceof ExcactFileNameMatcher) {
+            mapping.setAttribute(ATTRIBUTE_PATTERN, ((ExcactFileNameMatcher)matcher).getFileName());
+          }
           else {
             continue;
           }
@@ -525,6 +537,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
         else if (matcher instanceof WildcardFileNameMatcher) {
           mapping.setAttribute(ATTRIBUTE_PATTERN, ((WildcardFileNameMatcher)matcher).getPattern());
+        }
+        else if (matcher instanceof ExcactFileNameMatcher) {
+          mapping.setAttribute(ATTRIBUTE_PATTERN, ((ExcactFileNameMatcher)matcher).getFileName());
         }
         else {
           continue;
