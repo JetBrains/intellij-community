@@ -59,7 +59,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
 
   @NotNull
   public JComponent getContentComponent() {
-    throw new UnsupportedOperationException("Not implemented");
+    return myTextComponent;
   }
 
   @NotNull
