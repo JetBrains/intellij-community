@@ -2,17 +2,17 @@
  * Copyright (c) 2007, Your Corporation. All Rights Reserved.
  */
 
-package com.intellij.openapi.paths;
+package com.intellij.javaee.web;
 
-import com.intellij.javaee.web.WebUtil;
 import com.intellij.lang.Language;
+import com.intellij.openapi.paths.PathReferenceProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
