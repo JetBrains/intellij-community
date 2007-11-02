@@ -178,9 +178,11 @@ public class TextFieldWithHistory extends JPanel {
 
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
-    final Color bg = enabled ? UIUtil.getTextFieldBackground() : UIUtil.getPanelBackground();
-    myToggleHistoryLabel.setBackground(bg);
-    myClearFieldLabel.setBackground(bg);
+    if (myToggleHistoryLabel != null) {
+      final Color bg = enabled ? UIUtil.getTextFieldBackground() : UIUtil.getPanelBackground();
+      myToggleHistoryLabel.setBackground(bg);
+      myClearFieldLabel.setBackground(bg);
+    }
   }
 
   public void setHistorySize(int aHistorySize) {
