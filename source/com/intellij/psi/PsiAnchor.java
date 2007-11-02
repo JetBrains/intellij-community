@@ -4,6 +4,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -59,6 +60,7 @@ public class PsiAnchor {
     }
   }
 
+  @Nullable
   public PsiElement retrieve() {
     if (myElement != null) return myElement;
 
@@ -114,18 +116,14 @@ public class PsiAnchor {
     if (myElement != null){
       int result = myElement.getClass().getName().hashCode();
       final String name = myElement.getContainingFile().getName();
-      if (name != null) {
-        result = 31 * result + name.hashCode();
-      }
+      result = 31 * result + name.hashCode();
       return result;
     }
     int result = myClass != null ? myClass.getName().hashCode() : 0;
     result = 31 * result + myStartOffset; //todo
     result = 31 * result + myEndOffset;
     if (myFile != null) {
-      final String name = myFile.getName();
-      LOG.assertTrue(name != null);
-      result = 31 * result + name.hashCode();
+      result = 31 * result + myFile.getName().hashCode();
     }
 
     return result;
