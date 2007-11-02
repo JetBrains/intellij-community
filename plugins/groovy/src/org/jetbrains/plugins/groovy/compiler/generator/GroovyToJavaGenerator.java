@@ -151,7 +151,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   protected VirtualFile[] getGroovyFilesToGenerate(CompileContext context) {
-    return context.getCompileScope().getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
+    return context.getProjectCompileScope().getFiles(GroovyFileType.GROOVY_FILE_TYPE, true);
   }
 
   public GenerationItem[] generate(CompileContext context, GenerationItem[] itemsToGenerate, VirtualFile outputRootDirectory) {
