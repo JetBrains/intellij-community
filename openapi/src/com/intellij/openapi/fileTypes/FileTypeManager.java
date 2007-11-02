@@ -207,7 +207,12 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
         pattern.indexOf('?', 2) < 0) {
       return new ExtensionFileNameMatcher(pattern.substring(2).toLowerCase());
     }
-    return new WildcardFileNameMatcher(pattern);
+
+    if (pattern.contains("*") ||  pattern.contains("?")) {
+      return new WildcardFileNameMatcher(pattern);
+    }
+
+    return new ExcactFileNameMatcher(pattern);
   }
 
   @NotNull
