@@ -276,6 +276,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     public MyProgressBar(final int orient, boolean compact) {
       super(orient);
       myCompact = compact;
+      putClientProperty("JComponent.sizeVariant", "mini");
     }
 
 
