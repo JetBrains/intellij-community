@@ -38,7 +38,7 @@ public class LogFilesManager {
           Set<String> newFiles = logFile.getPaths();
           for (String file : newFiles) {
             if (!oldFiles.contains(file)){
-              myManager.addLogConsole(logFile.getName(), file, 0);
+              myManager.addLogConsole(newFiles.size() > 1 ? new File(file).getName() : logFile.getName(), file, 0);
             }
           }
           for (String oldFile : oldFiles) {
@@ -82,7 +82,7 @@ public class LogFilesManager {
       if (logFile.isEnabled()) {
         final Set<String> paths = logFile.getPaths();
         for (String path : paths) {
-          myManager.addLogConsole(logFile.getName(), path, logFile.isSkipContent() ? new File(path).length() : 0);
+          myManager.addLogConsole(paths.size() > 1 ? new File(path).getName() : logFile.getName(), path, logFile.isSkipContent() ? new File(path).length() : 0);
         }
       }
     }
