@@ -40,7 +40,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (file == null) return false;
 
     FileType fileType = file.getFileType();
-    final TypedHandler.QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(fileType);
+    final TypedHandler.QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);
     if (quoteHandler == null) return false;
 
     if (editor.getSelectionModel().hasSelection()) return false;

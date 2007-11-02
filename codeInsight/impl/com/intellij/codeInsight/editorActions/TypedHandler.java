@@ -49,6 +49,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -75,8 +76,14 @@ public class TypedHandler implements TypedActionHandler {
 
   private static final Map<FileType,QuoteHandler> quoteHandlers = new HashMap<FileType, QuoteHandler>();
 
-  public static QuoteHandler getQuoteHandler(FileType fileType) {
-    return quoteHandlers.get(fileType);
+  public static @Nullable QuoteHandler getQuoteHandler(@NotNull PsiFile file) {
+    QuoteHandler quoteHandler = quoteHandlers.get(file.getFileType());
+    if (quoteHandler == null &&
+        file.getViewProvider().getBaseLanguage() instanceof XMLLanguage
+       ) {
+      quoteHandler = quoteHandlers.get(StdFileTypes.XML);
+    }
+    return quoteHandler;
   }
 
   public static void registerQuoteHandler(FileType fileType, QuoteHandler quoteHandler) {
