@@ -51,7 +51,7 @@ public class GuiUtils {
   }
 
   public static JPanel constructFieldWithBrowseButton(TextFieldWithHistory aComponent, ActionListener aActionListener) {
-    return constructFieldWithBrowseButton(aComponent, aActionListener, 8);
+    return constructFieldWithBrowseButton(aComponent, aActionListener, 0);
   }
 
   private static JPanel constructFieldWithBrowseButton(final JComponent aComponent, final ActionListener aActionListener, int delta) {
