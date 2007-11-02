@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
  */
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
-  private final static int VERSION = 2;
+  private static final int VERSION = 2;
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private SetWithArray myFileTypes = new SetWithArray(new THashSet<FileType>());
@@ -56,7 +56,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final Set<String> myIgnoredFiles = new ConcurrentHashSet<String>();
   private final Map<FileType, SyntaxTable> myDefaultTables = new THashMap<FileType, SyntaxTable>();
   private final FileTypeAssocTable myInitialAssociations = new FileTypeAssocTable();
-  private Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();
+  private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();
 
   @NonNls private static final String ELEMENT_FILETYPE = "filetype";
   @NonNls private static final String ELEMENT_FILETYPES = "filetypes";
@@ -177,7 +177,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NotNull
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
     // first let file recognize its type
-    for (FakeFileType fileType : mySpecialFileTypes) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < mySpecialFileTypes.size(); i++) {
+      FakeFileType fileType = mySpecialFileTypes.get(i);
       if (fileType.isMyFileType(file)) return fileType;
     }
 
@@ -219,7 +221,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return myFileTypes.toArray();
   }
 
-  public @NotNull String getExtension(String fileName) {
+  @NotNull
+  public String getExtension(String fileName) {
     int index = fileName.lastIndexOf('.');
     if (index < 0) return "";
     return fileName.substring(index + 1);
@@ -326,7 +329,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     myMessageBus.syncPublisher(AppTopics.FILE_TYPES).fileTypesChanged(event);
   }
 
-  private Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
+  private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
   public void addFileTypeListener(@NotNull FileTypeListener listener) {
     final MessageBusConnection connection = myMessageBus.connect();
     connection.subscribe(AppTopics.FILE_TYPES, listener);
