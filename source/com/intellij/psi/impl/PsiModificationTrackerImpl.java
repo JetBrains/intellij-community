@@ -18,6 +18,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker {
   private PsiManager myManager;
   private long myModificationCount = 0;
   private long myOutOfCodeBlockModificationCount = 0;
+  private long myJavaStructureModificationCount = 0;
 
   public PsiModificationTrackerImpl(PsiManager manager) {
     myManager = manager;
@@ -26,6 +27,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker {
   public void incCounter(){
     myModificationCount++;
     myOutOfCodeBlockModificationCount++;
+    myJavaStructureModificationCount++;
   }
 
   public void treeChanged(PsiTreeChangeEventImpl event) {
@@ -97,5 +99,9 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker {
 
   public long getOutOfCodeBlockModificationCount() {
     return myOutOfCodeBlockModificationCount;
+  }
+
+  public long getJavaStructureModificationCount() {
+    return myJavaStructureModificationCount;
   }
 }

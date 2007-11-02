@@ -236,6 +236,9 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     else if (dependency == PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT) {
       return myManager.getModificationTracker().getOutOfCodeBlockModificationCount();
     } 
+    else if (dependency == PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT) {
+      return myManager.getModificationTracker().getJavaStructureModificationCount();
+    }
     else {
       LOG.error("Wrong dependency type: " + dependency.getClass());
       return -1;

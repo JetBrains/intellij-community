@@ -21,9 +21,12 @@ import com.intellij.psi.PsiElement;
 public interface PsiModificationTracker {
   Key MODIFICATION_COUNT = Key.create("MODIFICATION_COUNT");
   Key OUT_OF_CODE_BLOCK_MODIFICATION_COUNT = Key.create("OUT_OF_CODE_BLOCK_MODIFICATION_COUNT");
+  Key JAVA_STRUCTURE_MODIFICATION_COUNT = Key.create("JAVA_STRUCTURE_MODIFICATION_COUNT");
 
   long getModificationCount();
   long getOutOfCodeBlockModificationCount();
 
   boolean isInsideCodeBlock(PsiElement element);
+
+  long getJavaStructureModificationCount();
 }
