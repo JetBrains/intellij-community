@@ -50,16 +50,16 @@ public class GenericValueUtil {
     return false;
   }
 
-  public static <T> boolean containsValue(final List<? extends GenericValue<T>> list, T value) {
-    for (GenericValue<T> o : list) {
+  public static <T> boolean containsValue(final List<? extends GenericValue<? extends T>> list, T value) {
+    for (GenericValue<? extends T> o : list) {
       if (Comparing.equal(value, o.getValue())) return true;
     }
     return false;
   }
 
   @NotNull
-  public static <T> Collection<T> getValueCollection(final Collection<? extends GenericValue<T>> collection, Collection<T> result) {
-    for (GenericValue<T> o : collection) {
+  public static <T> Collection<T> getValueCollection(final Collection<? extends GenericValue<? extends T>> collection, Collection<T> result) {
+    for (GenericValue<? extends T> o : collection) {
       ContainerUtil.addIfNotNull(o.getValue(), result);
     }
     return result;
