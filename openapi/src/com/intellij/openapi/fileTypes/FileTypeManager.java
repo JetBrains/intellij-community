@@ -64,8 +64,8 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param fileName The file name for which the type is requested.
    * @return The file type instance, or {@link StdFileTypes#UNKNOWN} if not found.
    */
-  public abstract
   @NotNull
+  public abstract
   FileType getFileTypeByFileName(@NotNull @NonNls String fileName);
 
   /**
@@ -74,8 +74,8 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param file The file for which the type is requested.
    * @return The file type instance.
    */
-  public abstract
   @NotNull
+  public abstract
   FileType getFileTypeByFile(@NotNull VirtualFile file);
 
   /**
@@ -84,8 +84,8 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param extension The extension for which the file type is requested, not including the leading '.'.
    * @return The file type instance.
    */
-  public abstract
   @NotNull
+  public abstract
   FileType getFileTypeByExtension(@NonNls @NotNull String extension);
 
   /**
@@ -93,6 +93,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    *
    * @return The list of file types.
    */
+  @NotNull
   public abstract FileType[] getRegisteredFileTypes();
 
   /**
@@ -113,11 +114,11 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @deprecated since more generic way of associations by means of whildcards exist not every associations matches extension paradigm
    */
   @NotNull
-  public abstract String[] getAssociatedExtensions(FileType type);
+  public abstract String[] getAssociatedExtensions(@NotNull FileType type);
 
 
   @NotNull
-  public abstract List<FileNameMatcher> getAssociations(FileType type);  
+  public abstract List<FileNameMatcher> getAssociations(@NotNull FileType type);
 
   /**
    * Adds a listener for receiving notifications about changes in the list of
@@ -128,7 +129,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param listener The listener instance.
    */
 
-  public abstract void addFileTypeListener(FileTypeListener listener);
+  public abstract void addFileTypeListener(@NotNull FileTypeListener listener);
 
   /**
    * Removes a listener for receiving notifications about changes in the list of
@@ -139,7 +140,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param listener The listener instance.
    */
 
-  public abstract void removeFileTypeListener(FileTypeListener listener);
+  public abstract void removeFileTypeListener(@NotNull FileTypeListener listener);
 
   /**
    * If fileName is already associated with any known file type returns it.
@@ -148,7 +149,8 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param file - a file to ask for file type association
    * @return Known file type or null. Never returns {@link StdFileTypes#UNKNOWN}.
    */
-  public abstract @Nullable FileType getKnownFileTypeOrAssociate(VirtualFile file);
+  @Nullable
+  public abstract FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file);
 
   /**
    * Returns the semicolon-delimited list of patterns for files and folders
@@ -157,6 +159,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    *
    * @return Semicolon-delimited list of patterns.
    */
+  @NotNull
   public abstract String getIgnoredFilesList();
 
   /**
@@ -165,7 +168,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    *
    * @param list List of semicolon-delimited patterns.
    */
-  public abstract void setIgnoredFilesList(String list);
+  public abstract void setIgnoredFilesList(@NotNull String list);
 
   /**
    * Adds an extension to the list of extensions associated with a file type.
@@ -174,15 +177,15 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param extension the extension to associate.
    * @since 5.0.2
    */
-  public final void associateExtension(FileType type, @NonNls String extension) {
+  public final void associateExtension(@NotNull FileType type, @NotNull @NonNls String extension) {
     associate(type, new ExtensionFileNameMatcher(extension));
   }
 
-  public final void associatePattern(FileType type, @NonNls String pattern) {
+  public final void associatePattern(@NotNull FileType type, @NotNull @NonNls String pattern) {
     associate(type, parseFromString(pattern));
   }
 
-  public abstract void associate(FileType type, FileNameMatcher matcher);
+  public abstract void associate(@NotNull FileType type, @NotNull FileNameMatcher matcher);
 
   /**
    * Removes an extension from the list of extensions associated with a file type.
@@ -191,11 +194,11 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * @param extension the extension to remove.
    * @since 5.0.2
    */
-  public final void removeAssociatedExtension(FileType type, @NonNls String extension) {
+  public final void removeAssociatedExtension(@NotNull FileType type, @NotNull @NonNls String extension) {
     removeAssociation(type, new ExtensionFileNameMatcher(extension));
   }
 
-  public abstract void removeAssociation(FileType type, FileNameMatcher matcher);
+  public abstract void removeAssociation(@NotNull FileType type, @NotNull FileNameMatcher matcher);
 
   public static FileNameMatcher parseFromString(String pattern) {
     if (pattern.startsWith("*.") &&
@@ -207,6 +210,8 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
     return new WildcardFileNameMatcher(pattern);
   }
 
+  @NotNull
   public abstract FileType getStdFileType(@NotNull @NonNls String fileTypeName);
+  @NotNull
   public abstract LanguageFileType getLanguageStdFileType(@NotNull @NonNls String fileTypeName);
 }

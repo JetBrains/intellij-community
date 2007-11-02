@@ -1,11 +1,20 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
 public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
+  private final FileTypeManager myFileTypeManager;
+
+  protected ProjectViewPsiTreeChangeListener() {
+    myFileTypeManager = FileTypeManager.getInstance();
+  }
+
   protected abstract AbstractTreeUpdater getUpdater();
 
   protected abstract boolean isFlattenPackages();
@@ -50,10 +59,13 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     while(true){
       if (parent == null) break;
       if (parent instanceof PsiCodeBlock) break;
-      if (parent instanceof PsiFile && !(parent instanceof PsiPlainTextFile)) {
-        // adding a class within a file causes a new node to appear in project view => entire dir should be updated
-        parent = ((PsiFile)parent).getContainingDirectory();
-        if (parent == null) break;
+      if (parent instanceof PsiFile) {
+        VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
+        if (virtualFile != null && myFileTypeManager.getFileTypeByFile(virtualFile) != StdFileTypes.PLAIN_TEXT) {
+          // adding a class within a file causes a new node to appear in project view => entire dir should be updated
+          parent = ((PsiFile)parent).getContainingDirectory();
+          if (parent == null) break;
+        }
       }
 
       if (getUpdater().addSubtreeToUpdateByElement(parent)){

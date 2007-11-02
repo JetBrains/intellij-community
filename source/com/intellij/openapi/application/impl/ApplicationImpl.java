@@ -57,7 +57,7 @@ import java.util.concurrent.*;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
-  private ModalityState MODALITY_STATE_NONE = ModalityState.NON_MODAL;
+  private final ModalityState MODALITY_STATE_NONE = ModalityState.NON_MODAL;
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
   private final List<ApplicationListener> myListeners = new CopyOnWriteArrayList<ApplicationListener>();

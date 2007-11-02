@@ -124,11 +124,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     myMessageBus = bus;
   }
 
+  @NotNull
   public FileType getStdFileType(@NotNull @NonNls String name) {
     Pair<FileType, String> pair = ourStandardFileTypes.get(name);
     return pair != null ? pair.first : new PlainTextFileType();
   }
 
+  @NotNull
   public LanguageFileType getLanguageStdFileType(@NotNull @NonNls final String name) {
     return (LanguageFileType)getStdFileType(name);
   }
@@ -212,6 +214,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
+  @NotNull
   public FileType[] getRegisteredFileTypes() {
     return myFileTypes.toArray();
   }
@@ -222,6 +225,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return fileName.substring(index + 1);
   }
 
+  @NotNull
   public String getIgnoredFilesList() {
     StringBuilder sb = new StringBuilder();
     for (String ignoreMask : myIgnoredFileMasksSet) {
@@ -231,7 +235,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return sb.toString();
   }
 
-  public void setIgnoredFilesList(String list) {
+  public void setIgnoredFilesList(@NotNull String list) {
     fireBeforeFileTypesChanged();
     setIgnoredFilesListWithoutNotification(list);
 
@@ -288,20 +292,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @SuppressWarnings({"deprecation"})
   @NotNull
-  public String[] getAssociatedExtensions(FileType type) {
+  public String[] getAssociatedExtensions(@NotNull FileType type) {
     return myPatternsTable.getAssociatedExtensions(type);
   }
 
   @NotNull
-  public List<FileNameMatcher> getAssociations(FileType type) {
+  public List<FileNameMatcher> getAssociations(@NotNull FileType type) {
     return myPatternsTable.getAssociations(type);
   }
 
-  public void associate(FileType type, FileNameMatcher matcher) {
+  public void associate(@NotNull FileType type, @NotNull FileNameMatcher matcher) {
     associate(type, matcher, true);
   }
 
-  public void removeAssociation(FileType type, FileNameMatcher matcher) {
+  public void removeAssociation(@NotNull FileType type, @NotNull FileNameMatcher matcher) {
     removeAssociation(type, matcher, true);
   }
 
@@ -323,13 +327,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
-  public void addFileTypeListener(FileTypeListener listener) {
+  public void addFileTypeListener(@NotNull FileTypeListener listener) {
     final MessageBusConnection connection = myMessageBus.connect();
     connection.subscribe(AppTopics.FILE_TYPES, listener);
     myAdapters.put(listener, connection);
   }
 
-  public void removeFileTypeListener(FileTypeListener listener) {
+  public void removeFileTypeListener(@NotNull FileTypeListener listener) {
     final MessageBusConnection connection = myAdapters.remove(listener);
     if (connection != null) {
       connection.disconnect();
@@ -952,7 +956,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   @Nullable
-  public FileType getKnownFileTypeOrAssociate(VirtualFile file) {
+  public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) {
     return FileTypeChooser.getKnownFileTypeOrAssociate(file);
   }
 }
