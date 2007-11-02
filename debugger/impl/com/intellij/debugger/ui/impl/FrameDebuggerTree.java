@@ -124,8 +124,10 @@ public class FrameDebuggerTree extends DebuggerTree {
         super.buildVariables(stackDescriptor, evaluationContext);
       }
       // add expressions
+      final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
+      evalContextCopy.setAutoLoadClasses(false);
       for (TextWithImports text : usedVars.second) {
-        myChildren.add(myNodeManager.createNode(myNodeManager.getWatchItemDescriptor(stackDescriptor, text, null), evaluationContext));
+        myChildren.add(myNodeManager.createNode(myNodeManager.getWatchItemDescriptor(stackDescriptor, text, null), evalContextCopy));
       }
     }
   }

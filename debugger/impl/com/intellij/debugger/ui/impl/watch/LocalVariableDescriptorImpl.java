@@ -4,6 +4,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
@@ -48,6 +49,9 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
       return local.getType() instanceof PrimitiveType;
     }
     catch (ClassNotLoadedException e) {
+      if (!evaluationContext.isAutoLoadClasses()) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
       try {
         evaluationContext.getDebugProcess().loadClass(evaluationContext, myTypeName, evaluationContext.getClassLoader());
         return local.getType() instanceof PrimitiveType;

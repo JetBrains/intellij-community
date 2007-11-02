@@ -1,9 +1,9 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.*;
 
 /**
@@ -42,6 +42,9 @@ public class AssignmentEvaluator implements Evaluator{
       modifier.setValue(((Value)right));
     }
     catch (ClassNotLoadedException e) {
+      if (!context.isAutoLoadClasses()) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
       try {
         context.getDebugProcess().loadClass(context, e.className(), context.getClassLoader());
       }

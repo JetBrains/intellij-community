@@ -96,8 +96,7 @@ public class SetValueAction extends DebuggerAction {
                                                                                                          IncompatibleThreadStateException,
                                                                                                          InvalidTypeException,
                                                                                                          EvaluateException {
-              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                   field.declaringType().classLoader());
+              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className, field.declaringType().classLoader());
             }
           });
         }
@@ -243,6 +242,9 @@ public class SetValueAction extends DebuggerAction {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
     catch (ClassNotLoadedException ex) {
+      if (!evaluationContext.isAutoLoadClasses()) {
+        throw EvaluateExceptionUtil.createEvaluateException(ex);
+      }
       final ReferenceType refType;
       try {
         refType = setValueRunnable.loadClass(evaluationContext, ex.className());

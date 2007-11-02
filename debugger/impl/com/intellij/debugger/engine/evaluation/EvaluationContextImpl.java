@@ -20,7 +20,8 @@ public final class EvaluationContextImpl implements EvaluationContext{
   private final Value myThisObject;
   private final SuspendContextImpl mySuspendContext;
   private final StackFrameProxyImpl myFrameProxy;
-
+  private boolean myAutoLoadClasses = true;
+  
   public EvaluationContextImpl(SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy, Value thisObject) {
     myThisObject = thisObject;
     myFrameProxy = frameProxy;
@@ -50,7 +51,9 @@ public final class EvaluationContextImpl implements EvaluationContext{
   }
 
   public EvaluationContextImpl createEvaluationContext(Value value) {
-    return new EvaluationContextImpl(getSuspendContext(), getFrameProxy(), value);
+    final EvaluationContextImpl copy = new EvaluationContextImpl(getSuspendContext(), getFrameProxy(), value);
+    copy.setAutoLoadClasses(myAutoLoadClasses);
+    return copy;
   }
 
   public ClassLoaderReference getClassLoader() throws EvaluateException {
@@ -58,4 +61,11 @@ public final class EvaluationContextImpl implements EvaluationContext{
     return myFrameProxy != null ? myFrameProxy.getClassLoader() : null;
   }
 
+  public boolean isAutoLoadClasses() {
+    return myAutoLoadClasses;
+  }
+
+  public void setAutoLoadClasses(final boolean autoLoadClasses) {
+    myAutoLoadClasses = autoLoadClasses;
+  }
 }

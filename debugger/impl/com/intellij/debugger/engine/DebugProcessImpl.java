@@ -889,7 +889,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
             return invokeMethodAndFork(suspendContext);
           }
           catch (ClassNotLoadedException e) {
-            ReferenceType loadedClass = loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader());
+            ReferenceType loadedClass = evaluationContext.isAutoLoadClasses()? loadClass(evaluationContext, e.className(), evaluationContext.getClassLoader()) : null;
             if (loadedClass == null) {
               throw EvaluateExceptionUtil.createEvaluateException(e);
             }
@@ -1125,8 +1125,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
           break;
         }
       }
-      if (result == null) {
-        return loadClass((EvaluationContextImpl)evaluationContext, className, classLoader);
+      final EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
+      if (result == null && evalContext.isAutoLoadClasses()) {
+        return loadClass(evalContext, className, classLoader);
       }
       return result;
     }
