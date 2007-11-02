@@ -1,14 +1,13 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 
 import java.io.IOException;
 
-public class BasicProjectImportingTest extends ProjectImportingTest {
+public class BasicProjectImportingTest extends ProjectImportingTestCase {
   public void testSimpleProject() throws IOException {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("<groupId>test</groupId>" + "<artifactId>project</artifactId>" + "<version>1</version>");
 
     assertModules("project");
   }
@@ -67,15 +66,16 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
   }
 
   public void testModulesWithSlashesRegularAndBack() throws IOException {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom(
+      "<groupId>test</groupId>" +
+      "<artifactId>project</artifactId>" +
+      "<packaging>pom</packaging>" +
+      "<version>1</version>" +
 
-                     "<modules>" +
-                     "  <module>dir\\m1</module>" +
-                     "  <module>dir/m2</module>" +
-                     "</modules>");
+      "<modules>" +
+      "  <module>dir\\m1</module>" +
+      "  <module>dir/m2</module>" +
+      "</modules>");
 
     createModulePom("dir/m1", "<groupId>test</groupId>" +
                               "<artifactId>m1</artifactId>" +
@@ -97,16 +97,17 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
   }
 
   public void testModulesWithSlashesAtTheEnds() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom(
+      "<groupId>test</groupId>" +
+      "<artifactId>project</artifactId>" +
+      "<packaging>pom</packaging>" +
+      "<version>1</version>" +
 
-                     "<modules>" +
-                     "  <module>m1/</module>" +
-                     "  <module>m2\\</module>" +
-                     "  <module>m3//</module>" +
-                     "</modules>");
+      "<modules>" +
+      "  <module>m1/</module>" +
+      "  <module>m2\\</module>" +
+      "  <module>m3//</module>" +
+      "</modules>");
 
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>m1</artifactId>" +
@@ -125,15 +126,16 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
   }
 
   public void testModulesWithSameArtifactId() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
+    createProjectPom(
+      "<groupId>test</groupId>" +
+      "<artifactId>project</artifactId>" +
+      "<packaging>pom</packaging>" +
+      "<version>1</version>" +
 
-                     "<modules>" +
-                     "  <module>dir1/m</module>" +
-                     "  <module>dir2/m</module>" +
-                     "</modules>");
+      "<modules>" +
+      "  <module>dir1/m</module>" +
+      "  <module>dir2/m</module>" +
+      "</modules>");
 
     createModulePom("dir1/m", "<groupId>test.group1</groupId>" +
                               "<artifactId>m</artifactId>" +
@@ -148,40 +150,102 @@ public class BasicProjectImportingTest extends ProjectImportingTest {
   }
 
   public void testTestJarDependencies() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-                     "<dependencies>" +
-                     "   <dependency>" +
-                     "    <groupId>group</groupId>" +
-                     "    <artifactId>artifact</artifactId>" +
-                     "    <type>test-jar</type>" +
-                     "    <version>1</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+                  "<dependencies>" +
+                  "   <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>artifact</artifactId>" +
+                  "    <type>test-jar</type>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
 
-    importProject();
     assertModules("project");
     assertModuleLibraries("project", "group:artifact:1:tests");
   }
 
   public void testDependencyWithClassifier() throws IOException {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-                     "<dependencies>" +
-                     "   <dependency>" +
-                     "    <groupId>group</groupId>" +
-                     "    <artifactId>artifact</artifactId>" +
-                     "    <classifier>bar</classifier>" +
-                     "    <version>1</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    importProject();
+                  "<dependencies>" +
+                  "   <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>artifact</artifactId>" +
+                  "    <classifier>bar</classifier>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
     assertModules("project");
     assertModuleLibraries("project", "group:artifact:1:bar");
+  }
+
+  public void testLanguageLevel() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <source>1.4</source>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    assertModules("project");
+    assertEquals(LanguageLevel.JDK_1_4, getModule("project").getLanguageLevel());
+  }
+
+  public void testLanguageLevelWhenCompilerPluginIsNotSpecified() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertModules("project");
+    assertNull(getModule("project").getLanguageLevel());
+  }
+
+  public void testLanguageLevelWhenConfigurationIsNotSpecified() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    assertModules("project");
+    assertNull(getModule("project").getLanguageLevel());
+  }
+
+  public void testLanguageLevelWhenSourseLanguageLevelIsNotSpecified() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    assertModules("project");
+    assertNull(getModule("project").getLanguageLevel());
   }
 }

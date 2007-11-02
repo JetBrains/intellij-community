@@ -19,20 +19,20 @@ import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 import org.jetbrains.idea.maven.project.MavenImportProcessor;
+import org.jetbrains.idea.maven.project.MavenProjectModel;
 import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
-public abstract class ProjectImportingTest extends IdeaTestCase {
+public abstract class ProjectImportingTestCase extends IdeaTestCase {
   private VirtualFile root;
   private VirtualFile projectPom;
   private List<VirtualFile> poms = new ArrayList<VirtualFile>();
+
+  protected MavenProjectModel projectModel;
 
   @Override
   protected void setUp() throws Exception {
@@ -82,7 +82,6 @@ public abstract class ProjectImportingTest extends IdeaTestCase {
       actualNames.add(m.getName());
     }
 
-    assertEquals(expectedNames.length, actualNames.size());
     assertElementsAreEqual(expectedNames, actualNames);
   }
 
@@ -99,10 +98,19 @@ public abstract class ProjectImportingTest extends IdeaTestCase {
     assertElementsAreEqual(expectedLibraries, actual);
   }
 
-  private void assertElementsAreEqual(final String[] names, final List<String> actualNames) {
-    for (String name : names) {
-      String s = "\nexpected: " + Arrays.asList(names) + "\nactual: " + actualNames;
-      assertTrue(s, actualNames.contains(name));
+  protected <T, U> void assertElementsAreEqual(T[] expected, Collection<U> actual) {
+    assertEquals(expected.length, actual.size());
+    for (T eachExpected : expected) {
+      String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
+
+      boolean found = false;
+      for (U eachActual : actual) {
+        if (eachExpected.equals(eachActual)) {
+          found = true;
+          break;
+        }
+      }
+      assertTrue(s, found);
     }
   }
 
@@ -153,5 +161,6 @@ public abstract class ProjectImportingTest extends IdeaTestCase {
     p.createMavenToIdeaMapping(false);
     p.resolve(myProject, profiles);
     p.commit(myProject, profiles, false);
+    projectModel = p.getMavenProjectModel();
   }
 }

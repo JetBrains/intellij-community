@@ -12,11 +12,10 @@ import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.model.Build;
-import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
@@ -132,7 +131,7 @@ public class MavenToIdeaConverter {
 
     convertRootModel(module, mavenProject, profiles);
 
-    createFacets(module, mavenProject);
+    createFacets(module, mavenProject, profiles);
 
     SyntheticModuleUtil.setSynthetic(module, markSynthetic && !node.isLinked());
   }
@@ -147,31 +146,20 @@ public class MavenToIdeaConverter {
     rootModel.commit();
   }
 
-  private void createFacets(Module module, MavenProject mavenProject) {
+  private void createFacets(Module module, MavenProject mavenProject, Collection<String> profiles) {
     final String packaging = mavenProject.getPackaging();
     if (!packaging.equals("jar")) {
       for (PackagingConverter converter : Extensions.getExtensions(PackagingConverter.EXTENSION_POINT_NAME)) {
         if (converter.isApplicable(packaging)) {
-          converter.convert(module, mavenProject, mavenToIdeaMapping, modifiableModuleModel);
+          converter.convert(module, mavenProject, profiles, mavenToIdeaMapping, modifiableModuleModel);
         }
       }
     }
   }
 
+  @Nullable
   private String getLanguageLevel(MavenProject mavenProject, final Collection<String> profiles) {
-    for (Plugin plugin : ProjectUtil.collectPlugins(mavenProject, profiles, new HashMap<Plugin, MavenProject>()).keySet()) {
-      if (plugin.getGroupId().equals("org.apache.maven.plugins") && plugin.getArtifactId().equals("maven-compiler-plugin")) {
-        final Xpp3Dom configuration = (Xpp3Dom)plugin.getConfiguration();
-        if (configuration != null) {
-          final Xpp3Dom source = configuration.getChild("source");
-          if (source != null) {
-            return source.getValue();
-          }
-        }
-        break;
-      }
-    }
-    return null;
+    return ProjectUtil.findPluginConfiguration(mavenProject, profiles, "org.apache.maven.plugins", "maven-compiler-plugin", "source");
   }
 
   private static void createRoots(final RootModelAdapter rootModel, final MavenProject mavenProject) {
