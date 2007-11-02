@@ -51,6 +51,7 @@ public class TextFieldWithHistory extends JPanel {
   private final boolean myCropList;
 
   private KeyListener myListener = null;
+  private JMenuItem myNoItems;
 
   public TextFieldWithHistory() {
     this(true);
@@ -68,6 +69,10 @@ public class TextFieldWithHistory extends JPanel {
     if (hasNativeLeopardSearchControl()) {
       myTextField.putClientProperty("JTextField.variant", "search");
       myNativeSearchPopup = new JPopupMenu();
+      myNoItems = new JMenuItem("No recent searches");
+      myNoItems.setEnabled(false);
+
+      addNoRecentSearchesItem();
       myTextField.putClientProperty("JTextField.Search.FindPopup", myNativeSearchPopup);
     }
     else {
@@ -160,6 +165,10 @@ public class TextFieldWithHistory extends JPanel {
     }
   }
 
+  private void addNoRecentSearchesItem() {
+    myNativeSearchPopup.add(myNoItems);
+  }
+
   private static boolean hasNativeLeopardSearchControl() {
     return SystemInfo.isMacOSLeopard && LafManager.getInstance().isUnderAquaLookAndFeel();
   }
@@ -193,8 +202,13 @@ public class TextFieldWithHistory extends JPanel {
     myModel.setItems(aHistory);
     if (myNativeSearchPopup != null) {
       myNativeSearchPopup.removeAll();
-      for (final String item : aHistory) {
-        addMenuItem(item);
+      if (aHistory.isEmpty()) {
+        addNoRecentSearchesItem();
+      }
+      else {
+        for (final String item : aHistory) {
+          addMenuItem(item);
+        }
       }
     }
   }
@@ -229,6 +243,7 @@ public class TextFieldWithHistory extends JPanel {
 
   private void addMenuItem(final String item) {
     if (myNativeSearchPopup != null) {
+      myNativeSearchPopup.remove(myNoItems);
       final JMenuItem menuItem = new JMenuItem(item);
       myNativeSearchPopup.add(menuItem);
       menuItem.addActionListener(new ActionListener() {
