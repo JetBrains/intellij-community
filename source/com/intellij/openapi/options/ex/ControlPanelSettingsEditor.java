@@ -58,7 +58,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
   private int mySelectedGroup = 0;
 
   private Set<Configurable> myOptionContainers = null;
-  private SearchUtil.SearchTextField mySearchField;
+  private SearchUtil.ConfigurableSearchTextField mySearchField;
   private GlassPanel myGlassPanel;
   private Alarm mySearchUpdater = new Alarm();
   private JBPopup[] myPopup = new JBPopup[2];
@@ -264,7 +264,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     };
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final JPanel panel = new JPanel(new GridBagLayout());
-    mySearchField = new SearchUtil.SearchTextField();
+    mySearchField = new SearchUtil.ConfigurableSearchTextField();
     final DocumentAdapter docAdapter = new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         mySearchUpdater.cancelAllRequests();

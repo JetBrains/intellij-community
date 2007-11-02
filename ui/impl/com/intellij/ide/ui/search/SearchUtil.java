@@ -357,7 +357,7 @@ public class SearchUtil {
   }
 
   @Nullable
-  private static JBPopup createPopup(final SearchTextField searchField,
+  private static JBPopup createPopup(final ConfigurableSearchTextField searchField,
                                      final JBPopup[] activePopup,
                                      final Alarm showHintAlarm,
                                      final Consumer<String> selectConfigurable,
@@ -446,7 +446,7 @@ public class SearchUtil {
     return null;
   }
 
-  public static void showHintPopup(final SearchTextField searchField,
+  public static void showHintPopup(final ConfigurableSearchTextField searchField,
                                    final JBPopup[] activePopup,
                                    final Alarm showHintAlarm,
                                    final Consumer<String> selectConfigurable,
@@ -468,7 +468,7 @@ public class SearchUtil {
   }
 
 
-  public static void registerKeyboardNavigation(final SearchTextField searchField,
+  public static void registerKeyboardNavigation(final ConfigurableSearchTextField searchField,
                                                 final JBPopup[] activePopup,
                                                 final Alarm showHintAlarm,
                                                 final Consumer<String> selectConfigurable,
@@ -565,10 +565,9 @@ public class SearchUtil {
   }
 
   //to process event
-  public static class SearchTextField extends TextFieldWithHistory {
-
-    public SearchTextField() {
-      super(false);
+  public static class ConfigurableSearchTextField extends SearchTextFieldWithStoredHistory {
+    public ConfigurableSearchTextField() {
+      super("ALL_CONFIGURABLES_PANEL_SEARCH_HISTORY");
     }
 
     public void process(final KeyEvent e) {

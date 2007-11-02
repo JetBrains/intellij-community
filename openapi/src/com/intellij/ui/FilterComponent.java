@@ -31,12 +31,12 @@ import java.awt.event.KeyEvent;
  * Date: 16-Dec-2005
  */
 public abstract class FilterComponent extends JPanel {
-  private final TextFieldWithStoredHistory myFilter;
+  private final SearchTextFieldWithStoredHistory myFilter;
   private final Alarm myUpdateAlarm = new Alarm();
 
   public FilterComponent(@NonNls String propertyName, int historySize) {
     super(new BorderLayout());
-    myFilter = new TextFieldWithStoredHistory(propertyName);
+    myFilter = new SearchTextFieldWithStoredHistory(propertyName);
     myFilter.getTextEditor().addKeyListener(new KeyAdapter() {
       //to consume enter in combo box - do not process this event by default button from DialogWrapper
       public void keyPressed(final KeyEvent e) {
