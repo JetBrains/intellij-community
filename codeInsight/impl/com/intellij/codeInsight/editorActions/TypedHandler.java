@@ -177,17 +177,22 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
 
-    Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file);
+    final Editor originalEditor = editor;
+    final PsiFile originalFile = file;
 
-    if (injectedEditor != editor) {
-      file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
-      editor = injectedEditor;
+    if (charTypedWeWantToShowSmartnessInInjectedLanguageWithoutPerformanceLoss(charTyped)) {
+      Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file);
+
+      if (injectedEditor != editor) {
+        file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
+        editor = injectedEditor;
+      }
     }
 
     AutoPopupController autoPopupController = AutoPopupController.getInstance(project);
 
     if (charTyped == '.') {
-      autoPopupController.autoPopupMemberLookup(editor);
+      autoPopupController.autoPopupMemberLookup(InjectedLanguageUtil.getEditorForInjectedLanguage(originalEditor, originalFile));
     }
 
     if (charTyped == '#') {
@@ -318,6 +323,11 @@ public class TypedHandler implements TypedActionHandler {
         handleJspEqual(project, editor);
       }
     }
+  }
+
+  static boolean charTypedWeWantToShowSmartnessInInjectedLanguageWithoutPerformanceLoss(final char charTyped) {
+    return charTyped == '"' || charTyped == '\'' || charTyped == '[' || charTyped == '(' || charTyped == ']' || charTyped == ')' ||
+      charTyped == '{' || charTyped == '}';
   }
 
   private boolean handleJavaArrayInitializerRBrace(final Editor editor) {

@@ -39,16 +39,6 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     if (file == null) return false;
-    
-    final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file);
-    if (injectedEditor != editor) {
-      file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
-      editor = injectedEditor;
-    }
-
-    FileType fileType = file.getFileType();
-    final TypedHandler.QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);
-    if (quoteHandler == null) return false;
 
     if (editor.getSelectionModel().hasSelection()) return false;
 
@@ -56,6 +46,20 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (offset < 0) return false;
     CharSequence chars = editor.getDocument().getCharsSequence();
     char c = chars.charAt(offset);
+
+    if (TypedHandler.charTypedWeWantToShowSmartnessInInjectedLanguageWithoutPerformanceLoss(c)) {
+      final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file);
+      if (injectedEditor != editor) {
+        file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
+        editor = injectedEditor;
+        offset = editor.getCaretModel().getOffset() - 1;
+        chars = editor.getDocument().getCharsSequence();
+      }
+    }
+
+    FileType fileType = file.getFileType();
+    final TypedHandler.QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);
+    if (quoteHandler == null) return false;
 
     boolean toDeleteGt = c =='<' &&
                         file instanceof PsiJavaFile &&
