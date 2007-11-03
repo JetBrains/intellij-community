@@ -16,6 +16,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
@@ -35,9 +36,15 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
     if (project == null) return false;
 
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     if (file == null) return false;
+    
+    final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file);
+    if (injectedEditor != editor) {
+      file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
+      editor = injectedEditor;
+    }
 
     FileType fileType = file.getFileType();
     final TypedHandler.QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);

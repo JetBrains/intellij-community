@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -161,7 +160,7 @@ public class TypedHandler implements TypedActionHandler {
       return;
     }
 
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     if (file == null){
       if (myOriginalHandler != null){
@@ -178,10 +177,17 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
 
+    Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file);
+
+    if (injectedEditor != editor) {
+      file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
+      editor = injectedEditor;
+    }
+
     AutoPopupController autoPopupController = AutoPopupController.getInstance(project);
 
     if (charTyped == '.') {
-      autoPopupController.autoPopupMemberLookup(InjectedLanguageUtil.getEditorForInjectedLanguage(editor, file));
+      autoPopupController.autoPopupMemberLookup(editor);
     }
 
     if (charTyped == '#') {
@@ -229,7 +235,7 @@ public class TypedHandler implements TypedActionHandler {
     FileType originalFileType = null;
 
     if (virtualFile != null){
-      originalFileType = fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+      originalFileType = fileType = virtualFile.getFileType();
     }
     else {
       fileType = file.getFileType();
