@@ -341,6 +341,18 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertTrue(resolved instanceof PsiMethod && ((PsiMethod) resolved).hasModifierProperty(PsiModifier.STATIC));
   }
 
+  public void testClosureMethodInsideClosure() throws Exception {
+    PsiReference ref = configureByFile("closureMethodInsideClosure/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+  }
+
+  public void testScriptMethodInsideClosure() throws Exception {
+    PsiReference ref = configureByFile("scriptMethodInsideClosure/A.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+  }
+
   public void testExplicitGetter() throws Exception {
     PsiReference ref = configureByFile("explicitGetter/A.groovy");
     final PsiElement resolved = ref.resolve();

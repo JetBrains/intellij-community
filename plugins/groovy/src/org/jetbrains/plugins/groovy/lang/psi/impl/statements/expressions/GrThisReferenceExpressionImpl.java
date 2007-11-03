@@ -34,11 +34,12 @@ public class GrThisReferenceExpressionImpl extends GrExpressionImpl implements G
   }
 
   public PsiType getType() {
-    GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
+    GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GroovyFile.class);
     if (context instanceof GrTypeDefinition) {
       return getManager().getElementFactory().createType((PsiClass)context);
-    } else if (context instanceof GroovyFileBase) {
-      return getManager().getElementFactory().createTypeByFQClassName(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope());
+    } else if (context instanceof GroovyFile) {
+      final PsiClass scriptClass = ((GroovyFile) context).getScriptClass();
+      if (scriptClass != null) return getManager().getElementFactory().createType(scriptClass);
     }
 
     return null;

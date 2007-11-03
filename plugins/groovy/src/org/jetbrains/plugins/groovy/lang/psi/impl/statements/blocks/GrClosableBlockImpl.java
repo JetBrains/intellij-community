@@ -17,9 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +60,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
     if (!ResolveUtil.processElement(processor, getDelegate())) return false;
 
+    final PsiClass closureClass = getManager().findClass(GROOVY_LANG_CLOSURE, getResolveScope());
+    if (closureClass != null && !closureClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
+
     return true;
   }
 
@@ -91,7 +92,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public PsiType getType() {
-    return getManager().getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
+    return getManager().getElementFactory().createTypeByFQClassName(GROOVY_LANG_CLOSURE, getResolveScope());
   }
 
   @Nullable
