@@ -31,6 +31,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.HighlightUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -288,13 +289,15 @@ public class TooBroadScopeInspection extends BaseInspection
                 {
                     final PsiAssignmentExpression assignmentExpression =
                             (PsiAssignmentExpression)expression;
-                    final PsiExpression lExpression =
+                    final PsiExpression rhs =
+                            assignmentExpression.getRExpression();
+                    final PsiExpression lhs =
                             assignmentExpression.getLExpression();
-                    if (location.equals(lExpression))
+                    if (location.equals(lhs) &&
+                        !VariableAccessUtils.mayEvaluateToVariable(rhs, variable))
                     {
                         PsiDeclarationStatement newDeclaration=
-                                createNewDeclaration(variable,
-                                        assignmentExpression.getRExpression());
+                                createNewDeclaration(variable, rhs);
                         newDeclaration = (PsiDeclarationStatement)
                                 statementParent.addBefore(newDeclaration,
                                         statement);
@@ -509,9 +512,14 @@ public class TooBroadScopeInspection extends BaseInspection
                 }
                 final PsiAssignmentExpression assignmentExpression =
                         (PsiAssignmentExpression)expression;
-                final PsiExpression lExpression =
+                final PsiExpression lhs =
                         assignmentExpression.getLExpression();
-                if (!lExpression.equals(referenceElement))
+                if (!lhs.equals(referenceElement))
+                {
+                    return;
+                }
+                final PsiExpression rhs = assignmentExpression.getRExpression();
+                if (VariableAccessUtils.mayEvaluateToVariable(rhs, variable))
                 {
                     return;
                 }

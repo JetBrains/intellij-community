@@ -62,4 +62,9 @@ public class TooBroadScope
         }
     }
 
+    public int hashCode() {
+        int result = 17;
+        result = 37 * result;
+        return result;
+    }
 }
