@@ -34,7 +34,17 @@ public class DomModelImpl<T extends DomElement> {
   protected final DomFileElement<T> myMergedModel;
   protected final Set<XmlFile> myConfigFiles;
 
+  /**
+   * Using this method may result in a large memory usage, since it will keep all the DOM and PSI for all the config files
+   * @return
+   */
+  @Deprecated
   public DomModelImpl(@NotNull T mergedModel, @NotNull Set<XmlFile> configFiles) {
+    myMergedModel = mergedModel.getRoot();
+    myConfigFiles = configFiles;
+  }
+
+  public DomModelImpl(@NotNull DomFileElement<T> mergedModel, @NotNull Set<XmlFile> configFiles) {
     myMergedModel = mergedModel.getRoot();
     myConfigFiles = configFiles;
   }

@@ -25,7 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -71,30 +70,18 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
     });
   }
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   protected void checkChildren(final DomElement element, DomElementVisitor visitor) {
     final XmlElement xmlElement = element.getXmlElement();
     if (xmlElement instanceof XmlTag) {
-      final Set<XmlElement> visited = new THashSet<XmlElement>();
-      XmlTag tag = (XmlTag) xmlElement;
-      final DomManager domManager = element.getManager();
-      for (final XmlAttribute attribute : tag.getAttributes()) {
-        final GenericAttributeValue value = domManager.getDomElement(attribute);
-        if (value != null) {
-          visited.add(attribute);
-          value.accept(visitor);
-        }
+      for (final DomElement child : DomUtil.getDefinedChildren(element, true, true)) {
+        child.accept(visitor);
       }
-      for (final XmlTag subTag : tag.getSubTags()) {
-        final DomElement child = domManager.getDomElement(subTag);
-        if (child != null) {
-          visited.add(subTag);
-          child.accept(visitor);
-        }
-      }
+
       for (final AbstractDomChildrenDescription description : element.getGenericInfo().getChildrenDescriptions()) {
         if (description.getAnnotation(Required.class) != null) {
           for (final DomElement child : description.getValues(element)) {
-            if (!visited.contains(child.getXmlElement())) {
+            if (child.getXmlElement() == null) {
               child.accept(visitor);
             }
           }

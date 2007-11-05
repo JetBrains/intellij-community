@@ -159,15 +159,15 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
         return models.get(0);
     }
     final Set<XmlFile> configFiles = new LinkedHashSet<XmlFile>();
-    final LinkedHashSet<T> list = new LinkedHashSet<T>(models.size());
+    final LinkedHashSet<DomFileElement<T>> list = new LinkedHashSet<DomFileElement<T>>(models.size());
     for (M model: models) {
       final Set<XmlFile> files = model.getConfigFiles();
       for (XmlFile file: files) {
-        ContainerUtil.addIfNotNull(getDom(file), list);
+        ContainerUtil.addIfNotNull(getDomRoot(file), list);
       }
       configFiles.addAll(files);
     }
-    final T mergedModel = getModelMerger().mergeModels(getClazz(), list);
+    final DomFileElement<T> mergedModel = getModelMerger().mergeModels(DomFileElement.class, list);
     final M firstModel = models.get(0);
     return createCombinedModel(configFiles, mergedModel, firstModel, module);
   }
@@ -182,7 +182,7 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
    * @param module
    * @return combined model.
    */
-  protected abstract M createCombinedModel(Set<XmlFile> configFiles, T mergedModel, M firstModel, final Module module);
+  protected abstract M createCombinedModel(Set<XmlFile> configFiles, DomFileElement<T> mergedModel, M firstModel, final Module module);
 
   @NotNull
   public Set<XmlFile> getConfigFiles(@Nullable C context) {

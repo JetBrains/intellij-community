@@ -23,6 +23,7 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ModelMerger;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Set;
 import java.util.List;
@@ -42,20 +43,27 @@ public class SimpleDomModelFactory<T extends DomElement> {
 
   @Nullable
   public T getDom(@NotNull XmlFile configFile) {
-    final DomFileElement<T> element = DomManager.getDomManager(configFile.getProject()).getFileElement(configFile, myClass);
+    final DomFileElement<T> element = getDomRoot(configFile);
     return element == null ? null : element.getRootElement();
   }
 
+  @Nullable
+  public DomFileElement<T> getDomRoot(@NotNull XmlFile configFile) {
+    return DomManager.getDomManager(configFile.getProject()).getFileElement(configFile, myClass);
+  }
+
+  @Deprecated
   @NotNull
   public T createMergedModel(Set<XmlFile> configFiles) {
-    List<T> configs = new ArrayList<T>(configFiles.size());
-    for (XmlFile configFile : configFiles) {
-      final T dom = getDom(configFile);
-      if (dom != null) {
-        configs.add(dom);
-      }
-    }
+    return createMergedModelRoot(configFiles).getRootElement();
+  }
 
-    return myModelMerger.mergeModels(myClass, configs);
+  @NotNull
+  public DomFileElement<T> createMergedModelRoot(Set<XmlFile> configFiles) {
+    List<DomFileElement<T>> configs = new ArrayList<DomFileElement<T>>(configFiles.size());
+    for (XmlFile configFile : configFiles) {
+      ContainerUtil.addIfNotNull(getDomRoot(configFile), configs);
+    }
+    return myModelMerger.mergeModels(DomFileElement.class, configs);
   }
 }

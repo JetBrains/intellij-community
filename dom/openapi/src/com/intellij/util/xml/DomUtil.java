@@ -14,6 +14,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
@@ -178,16 +179,46 @@ public class DomUtil {
     return result;
   }
 
-  public static <T> List<T> getDefinedChildrenOfType(@NotNull final DomElement parent, final Class<T> type) {
-    final List<T> result = new SmartList<T>();
-    parent.acceptChildren(new DomElementVisitor() {
-      public void visitDomElement(final DomElement element) {
-        if (type.isInstance(element) && element.getXmlElement() != null) {
-          result.add((T)element);
+  public static List<DomElement> getDefinedChildren(@NotNull final DomElement parent, final boolean tags, final boolean attributes) {
+    if (parent instanceof MergedObject) {
+      final SmartList<DomElement> result = new SmartList<DomElement>();
+      parent.acceptChildren(new DomElementVisitor() {
+        public void visitDomElement(final DomElement element) {
+          if (element.getXmlElement() != null) {
+            result.add(element);
+          }
+        }
+      });
+      return result;
+
+    }
+
+    final XmlElement xmlElement = parent.getXmlElement();
+    if (xmlElement instanceof XmlTag) {
+      XmlTag tag = (XmlTag) xmlElement;
+      final DomManager domManager = parent.getManager();
+      final SmartList<DomElement> result = new SmartList<DomElement>();
+      if (attributes) {
+        for (final XmlAttribute attribute : tag.getAttributes()) {
+          ContainerUtil.addIfNotNull(domManager.getDomElement(attribute), result);
         }
       }
-    });
-    return result;
+      if (tags) {
+        for (final XmlTag subTag : tag.getSubTags()) {
+          ContainerUtil.addIfNotNull(domManager.getDomElement(subTag), result);
+        }
+      }
+      return result;
+    }
+    return Collections.emptyList();
+  }
+
+  public static <T> List<T> getDefinedChildrenOfType(@NotNull final DomElement parent, final Class<T> type, boolean tags, boolean attributes) {
+    return ContainerUtil.findAll(getDefinedChildren(parent, tags, attributes), type);
+  }
+
+  public static <T> List<T> getDefinedChildrenOfType(@NotNull final DomElement parent, final Class<T> type) {
+    return getDefinedChildrenOfType(parent, type, true, true);
   }
 
   @Nullable
