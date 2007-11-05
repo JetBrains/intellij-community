@@ -15,12 +15,6 @@ public class EditableRowTable {
   }
 
   public static JPanel createButtonsTable(final JTable table, final RowEditableTableModel tableModel, boolean addMnemonics) {
-    return createButtonsPanel(addMnemonics, table, tableModel);
-  }
-
-  private static JPanel createButtonsPanel(boolean addMnemonics,
-                                    final JTable table,
-                                    final RowEditableTableModel tableModel) {
     JPanel buttonsPanel = new JPanel();
     buttonsPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
