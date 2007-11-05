@@ -1,4 +1,4 @@
-package com.intellij.refactoring.ui;
+package com.intellij.ui;
 
 import javax.swing.table.TableModel;
 

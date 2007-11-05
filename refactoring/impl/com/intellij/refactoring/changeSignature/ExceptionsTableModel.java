@@ -1,6 +1,6 @@
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.refactoring.ui.RowEditableTableModel;
+import com.intellij.ui.RowEditableTableModel;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.psi.*;

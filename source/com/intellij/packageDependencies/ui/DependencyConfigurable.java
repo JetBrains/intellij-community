@@ -11,8 +11,8 @@ import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.refactoring.ui.EditableRowTableManager;
-import com.intellij.refactoring.ui.RowEditableTableModel;
+import com.intellij.ui.EditableRowTable;
+import com.intellij.ui.RowEditableTableModel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
@@ -82,7 +82,7 @@ public class DependencyConfigurable extends BaseConfigurable {
     JPanel panel = new JPanel(new BorderLayout());
     table.setSurrendersFocusOnKeystroke(true);
 
-    JPanel buttonsPanel = new EditableRowTableManager(table, model, true).getButtonsPanel();
+    JPanel buttonsPanel = EditableRowTable.createButtonsTable(table, model, true);
     panel.add(buttonsPanel, BorderLayout.EAST);
 
     table.setShowGrid(true);

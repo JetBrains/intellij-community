@@ -295,8 +295,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
 
-    final EditableRowTableManager editableRowTableManager = new EditableRowTableManager(table, tableModel, addMnemonics);
-    JPanel buttonsPanel = editableRowTableManager.getButtonsPanel();
+    JPanel buttonsPanel = EditableRowTable.createButtonsTable(table, tableModel, addMnemonics);
 
     panel.add(buttonsPanel, BorderLayout.EAST);
 

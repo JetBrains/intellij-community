@@ -3,7 +3,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.RowEditableTableModel;
+import com.intellij.ui.RowEditableTableModel;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;

@@ -82,7 +82,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     nameColumn.setCellEditor(new StringTableCellEditor(project));
     valueColumn.setCellRenderer(new MyCodeFragmentTableCellRenderer());
     valueColumn.setCellEditor(new CodeFragmentTableCellEditor(project));
-    EditableRowTableManager manager = new EditableRowTableManager(myTable, myTableModel, true);
 
     myTable.setPreferredScrollableViewportSize(new Dimension(210, myTable.getRowHeight() * 4));
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -96,7 +95,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
 
     panel.add(scrollPane, BorderLayout.CENTER);
-    panel.add(manager.getButtonsPanel(), BorderLayout.EAST);
+    final JPanel buttonsTable = EditableRowTable.createButtonsTable(myTable, myTableModel, true);
+    panel.add(buttonsTable, BorderLayout.EAST);
     return panel;
   }
 
