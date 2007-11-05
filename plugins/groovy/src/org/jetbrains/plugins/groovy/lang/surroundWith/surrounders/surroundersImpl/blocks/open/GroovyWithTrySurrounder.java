@@ -27,12 +27,12 @@ public abstract class GroovyWithTrySurrounder extends GroovyOpenBlockSurrounder 
     GrFinallyClause finallyClause = tryCatchStatement.getFinallyClause();
 
     if (finallyClause != null) {
-      GrOpenBlock grOpenBlock = finallyClause.getBody();
-      assert grOpenBlock != null;
-      GrStatement[] grStatements = grOpenBlock.getStatements();
-      assert grStatements.length > 0;
+      GrOpenBlock block = finallyClause.getBody();
+      assert block != null;
+      GrStatement[] statements = block.getStatements();
+      assert statements.length > 0;
 
-      GrStatement grStatement = grStatements[0];
+      GrStatement grStatement = statements[0];
       assert grStatement != null;
 
       endOffset = grStatement.getTextRange().getStartOffset();
@@ -44,9 +44,9 @@ public abstract class GroovyWithTrySurrounder extends GroovyOpenBlockSurrounder 
     if (catchClauses != null && catchClauses.length > 0) {
       GrParameter parameter = catchClauses[0].getParameter();
       if (parameter == null) {
-        GrOpenBlock grOpenBlock = catchClauses[0].getBody();
-        assert grOpenBlock != null;
-        endOffset = grOpenBlock.getTextRange().getEndOffset();
+        GrOpenBlock block = catchClauses[0].getBody();
+        assert block != null;
+        endOffset = block.getTextRange().getEndOffset();
       } else {
         endOffset = parameter.getTextRange().getStartOffset();
         parameter.getParent().getNode().removeChild(parameter.getNode());

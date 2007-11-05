@@ -19,8 +19,8 @@ public class GroovyWithWithStatementsSurrounder extends GroovyManyStatementsSurr
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrWithStatement;
 
-    GrWithStatement grWithStatement = (GrWithStatement) element;
-    GrCondition condition = grWithStatement.getCondition();
+    GrWithStatement withStatement = (GrWithStatement) element;
+    GrCondition condition = withStatement.getCondition();
     int endOffset = condition.getTextRange().getStartOffset();
 
     condition.getParent().getNode().removeChild(condition.getNode());
