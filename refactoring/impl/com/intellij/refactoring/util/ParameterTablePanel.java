@@ -9,6 +9,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
@@ -221,12 +222,12 @@ public abstract class ParameterTablePanel extends JPanel {
     gbConstraints.insets = new Insets(2, 4, 2, 4);
 
     myUpButton = new JButton();
-    myUpButton.setText(RefactoringBundle.message("row.move.up"));
+    myUpButton.setText(UIBundle.message("row.move.up"));
     myUpButton.setDefaultCapable(false);
     buttonsPanel.add(myUpButton, gbConstraints);
 
     myDownButton = new JButton();
-    myDownButton.setText(RefactoringBundle.message("row.move.down"));
+    myDownButton.setText(UIBundle.message("row.move.down"));
     myDownButton.setDefaultCapable(false);
     buttonsPanel.add(myDownButton, gbConstraints);
 
