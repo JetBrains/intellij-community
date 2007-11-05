@@ -378,4 +378,10 @@ public class PathManager {
     }
     return s;
   }
+
+  public static String getPluginTempPath () {
+    String systemPath = getSystemPath();
+
+    return systemPath + File.separator + PLUGINS_DIRECTORY;
+  }
 }

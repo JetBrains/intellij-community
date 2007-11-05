@@ -3,7 +3,7 @@
  */
 package com.intellij.ide.startup;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
@@ -46,7 +46,7 @@ public class StartupActionScriptManager {
   }
 
   private static String getActionScriptPath() {
-    String systemPath = PathManagerEx.getPluginTempPath();
+    String systemPath = PathManager.getPluginTempPath();
     return systemPath + File.separator + ACTION_SCRIPT_FILE;
   }
 
@@ -77,7 +77,7 @@ public class StartupActionScriptManager {
   }
 
   private static void saveActionScript(List<ActionCommand> commands) throws IOException {
-    File temp = new File(PathManagerEx.getPluginTempPath());
+    File temp = new File(PathManager.getPluginTempPath());
     if (!temp.exists()) {
       temp.mkdirs();
     }

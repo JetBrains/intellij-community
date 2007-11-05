@@ -1,13 +1,11 @@
 package com.intellij.ide.plugins;
 
-import com.intellij.CommonBundle;
+import com.intellij.ide.ClassloaderUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
-import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.application.impl.PluginsFacade;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -24,7 +22,6 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +30,6 @@ import sun.reflect.Reflection;
 
 import javax.swing.*;
 import java.io.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -41,7 +37,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author mike
@@ -50,9 +45,9 @@ import java.util.regex.Pattern;
 public class PluginManager {
   @SuppressWarnings({"NonConstantLogger"}) //Logger is lasy-initialized in order not to use it outside the appClassLoader
   private static Logger ourLogger = null;
+
   @NonNls public static final String AREA_IDEA_PROJECT = "IDEA_PROJECT";
   @NonNls public static final String AREA_IDEA_MODULE = "IDEA_MODULE";
-  @NonNls private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
   private static String myPluginError = null;
@@ -66,37 +61,9 @@ public class PluginManager {
 
   private static String ourBuildNumber;
   @NonNls private static final String PLUGIN_XML = "plugin.xml";
-  @NonNls private static final String FILE_CACHE = "fileCache";
-  @NonNls private static final String URL_CACHE = "urlCache";
   @NonNls private static final String META_INF = "META-INF";
 
-  private static Logger getLogger() {
-    if (ourLogger == null) {
-      ourLogger = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
-    }
-    return ourLogger;
-  }
-
-  // these fields are accessed via Reflection, so their names must not be changed by the obfuscator
-  // do not make them private cause in this case they will be scrambled
-  @SuppressWarnings({"WeakerAccess"}) static String[] ourArguments;
-  @SuppressWarnings({"WeakerAccess"}) static String ourMainClass;
-  @SuppressWarnings({"WeakerAccess"}) static String ourMethodName;
-
-  public static void initPluginClasses () {
-    synchronized(lock) {
-      File file = new File (getPluginClassesPath());
-      if (file.exists())
-        file.delete();
-    }
-  }
-
-  @NonNls
-  static String getPluginClassesPath() {
-    return PathManagerEx.getPluginTempPath() + File.separator + "plugin.classes";
-  }
-
-  private static class Facade extends PluginsFacade {
+  public static class Facade extends PluginsFacade {
     public IdeaPluginDescriptor getPlugin(PluginId id) {
       return PluginManager.getPlugin(id);
     }
@@ -109,28 +76,58 @@ public class PluginManager {
   private static IdeaPluginDescriptorImpl[] ourPlugins;
   private static Map<String, PluginId> ourPluginClasses;
 
-  public static void main(final String[] args, final String mainClass, final String methodName) {
-    main(args, mainClass, methodName, new ArrayList<URL>());
-  }
-
-  public static void main(final String[] args, final String mainClass, final String methodName, List<URL> classpathElements) {
-    ourArguments = args;
-    ourMainClass = mainClass;
-    ourMethodName = methodName;
-
-    final PluginManager pluginManager = new PluginManager();
-    pluginManager.bootstrap(classpathElements);
-  }
-
   /**
    * do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by IdeaClassLoader
    */
   public synchronized static IdeaPluginDescriptor[] getPlugins() {
     if (ourPlugins == null) {
       initializePlugins();
-      clearJarURLCache();
+      ClassloaderUtil.clearJarURLCache();
     }
     return ourPlugins;
+  }
+
+  /**
+   * Called via reflection
+   */
+  @SuppressWarnings({"UnusedDeclaration"})
+  protected static void start(final String mainClass, final String methodName, final String[] args) {
+    try {
+      //noinspection HardCodedStringLiteral
+      ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
+        public void uncaughtException(Thread t, Throwable e) {
+          getLogger().error(e);
+        }
+      };
+
+      Runnable runnable = new Runnable() {
+        public void run() {
+          try {
+            ClassloaderUtil.clearJarURLCache();
+
+            //noinspection AssignmentToStaticFieldFromInstanceMethod
+            PluginsFacade.INSTANCE = new PluginManager.Facade();
+
+            Class aClass = Class.forName(mainClass);
+            final Method method = aClass.getDeclaredMethod(methodName, (ArrayUtil.EMPTY_STRING_ARRAY).getClass());
+            method.setAccessible(true);
+
+            //noinspection RedundantArrayCreation
+            method.invoke(null, new Object[]{args});
+          }
+          catch (Exception e) {
+            e.printStackTrace();
+            getLogger().error("Error while accessing " + mainClass + "." + methodName + " with arguments: " + Arrays.asList(args), e);
+          }
+        }
+      };
+
+      //noinspection HardCodedStringLiteral
+      new Thread(threadGroup, runnable, "Idea Main Thread").start();
+    }
+    catch (Exception e) {
+      getLogger().error(e);
+    }
   }
 
   private static void initializePlugins() {
@@ -377,79 +374,8 @@ public class PluginManager {
     return classLoaders.toArray(new ClassLoader[classLoaders.size()]);
   }
 
-  // See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4167874
-  private static void clearJarURLCache() {
-    try {
-      /*
-      new URLConnection(null) {
-        public void connect() throws IOException {
-          throw new UnsupportedOperationException();
-        }
-      }.setDefaultUseCaches(false);
-      */
-
-      Class jarFileFactory = Class.forName("sun.net.www.protocol.jar.JarFileFactory");
-
-      Field fileCache = jarFileFactory.getDeclaredField(FILE_CACHE);
-      Field urlCache = jarFileFactory.getDeclaredField(URL_CACHE);
-
-      fileCache.setAccessible(true);
-      fileCache.set(null, new HashMap());
-
-      urlCache.setAccessible(true);
-      urlCache.set(null, new HashMap());
-    }
-    catch (Exception e) {
-      System.out.println("Failed to clear URL cache");
-      // Do nothing.
-    }
-  }
-
-  /**
-   * Called via reflection
-   */
-  @SuppressWarnings({"UnusedDeclaration"})
-  protected static void start() {
-    try {
-      //noinspection HardCodedStringLiteral
-      ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
-        public void uncaughtException(Thread t, Throwable e) {
-          getLogger().error(e);
-        }
-      };
-
-      Runnable runnable = new Runnable() {
-        public void run() {
-          try {
-            clearJarURLCache();
-
-            //noinspection AssignmentToStaticFieldFromInstanceMethod
-            PluginsFacade.INSTANCE = new Facade();
-
-            Class aClass = Class.forName(ourMainClass);
-            final Method method = aClass.getDeclaredMethod(ourMethodName, (ArrayUtil.EMPTY_STRING_ARRAY).getClass());
-            method.setAccessible(true);
-
-            //noinspection RedundantArrayCreation
-            method.invoke(null, new Object[]{ourArguments});
-          }
-          catch (Exception e) {
-            e.printStackTrace();
-            getLogger().error("Error while accessing " + ourMainClass + "." + ourMethodName + " with arguments: " + Arrays.asList(ourArguments), e);
-          }
-        }
-      };
-
-      //noinspection HardCodedStringLiteral
-      new Thread(threadGroup, runnable, "Idea Main Thread").start();
-    }
-    catch (Exception e) {
-      getLogger().error(e);
-    }
-  }
-
   private static IdeaPluginDescriptorImpl[] loadDescriptors() {
-    if (isLoadingOfExternalPluginsDisabled()) {
+    if (ClassloaderUtil.isLoadingOfExternalPluginsDisabled()) {
       return IdeaPluginDescriptorImpl.EMPTY_ARRAY;
     }
 
@@ -682,7 +608,7 @@ public class PluginManager {
          return null;
        }
        for (final File f : files) {
-         if (isJarOrZip(f)) {
+         if (ClassloaderUtil.isJarOrZip(f)) {
            IdeaPluginDescriptorImpl descriptor1 = loadDescriptorFromJar(f, fileName);
            if (descriptor1 != null) {
              if (descriptor != null) {
@@ -770,118 +696,6 @@ public class PluginManager {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  protected void bootstrap(List<URL> classpathElements) {
-    UrlClassLoader newClassLoader = initClassloader(classpathElements);
-    try {
-      final Class mainClass = Class.forName(getClass().getName(), true, newClassLoader);
-      Field field = mainClass.getDeclaredField("ourMainClass");
-      field.setAccessible(true);
-      field.set(null, ourMainClass);
-
-      field = mainClass.getDeclaredField("ourMethodName");
-      field.setAccessible(true);
-      field.set(null, ourMethodName);
-
-      field = mainClass.getDeclaredField("ourArguments");
-      field.setAccessible(true);
-      field.set(null, ourArguments);
-
-      final Method startMethod = mainClass.getDeclaredMethod("start");
-      startMethod.setAccessible(true);
-      startMethod.invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
-    }
-    catch (Exception e) {
-      Logger logger = getLogger();
-      if (logger == null) {
-        e.printStackTrace(System.err);
-      }
-      else {
-        logger.error(e);
-      }
-    }
-  }
-
-  public UrlClassLoader initClassloader(final List<URL> classpathElements) {
-    PathManager.loadProperties();
-
-    try {
-      addParentClasspath(classpathElements);
-      addIDEALibraries(classpathElements);
-      addAdditionalClassPath(classpathElements);
-    }
-    catch (IllegalArgumentException e) {
-      if (Main.isHeadless()) {
-        getLogger().error(e);
-      } else {
-        JOptionPane
-          .showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), CommonBundle.getErrorTitle(), JOptionPane.INFORMATION_MESSAGE);
-      }
-      System.exit(1);
-    }
-    catch (MalformedURLException e) {
-      if (Main.isHeadless()) {
-        getLogger().error(e.getMessage());
-      } else {
-        JOptionPane
-          .showMessageDialog(JOptionPane.getRootFrame(), e.getMessage(), CommonBundle.getErrorTitle(), JOptionPane.INFORMATION_MESSAGE);
-      }
-      System.exit(1);
-    }
-
-    filterClassPath(classpathElements);
-
-    UrlClassLoader newClassLoader = null;
-    try {
-      newClassLoader = new UrlClassLoader(classpathElements, null, true, true);
-
-      // prepare plugins
-      if (!isLoadingOfExternalPluginsDisabled()) {
-        initPluginClasses();
-        try {
-          StartupActionScriptManager.executeActionScript();
-        }
-        catch (IOException e) {
-          final String errorMessage = "Error executing plugin installation script: " + e.getMessage();
-          if (Main.isHeadless()) {
-            System.out.println(errorMessage);
-          } else {
-            JOptionPane
-              .showMessageDialog(JOptionPane.getRootFrame(), errorMessage, CommonBundle.getErrorTitle(), JOptionPane.INFORMATION_MESSAGE);
-          }
-        }
-      }
-
-      Thread.currentThread().setContextClassLoader(newClassLoader);
-
-    }
-    catch (Exception e) {
-      Logger logger = getLogger();
-      if (logger == null) {
-        e.printStackTrace(System.err);
-      }
-      else {
-        logger.error(e);
-      }
-    }
-    return newClassLoader;
-  }
-
-  private static void filterClassPath(final List<URL> classpathElements) {
-    final String ignoreProperty = System.getProperty(PROPERTY_IGNORE_CLASSPATH);
-    if (ignoreProperty == null) return;
-
-    final Pattern pattern = Pattern.compile(ignoreProperty);
-
-    for (Iterator<URL> i = classpathElements.iterator(); i.hasNext();) {
-      URL url = i.next();
-      final String u = url.toExternalForm();
-      if (pattern.matcher(u).matches()) {
-        i.remove();
-      }
-    }
-  }
-
   @Nullable
   private static ClassLoader createPluginClassLoader(final File[] classPath,
                                                          final ClassLoader[] parentLoaders,
@@ -946,118 +760,6 @@ public class PluginManager {
     return loader.getClass().getDeclaredMethod("addURL", URL.class);
   }
 
-
-  private void addParentClasspath(List<URL> aClasspathElements) throws MalformedURLException {
-    final ClassLoader loader = getClass().getClassLoader();
-    if (loader instanceof URLClassLoader) {
-      URLClassLoader urlClassLoader = (URLClassLoader)loader;
-      aClasspathElements.addAll(Arrays.asList(urlClassLoader.getURLs()));
-    }
-    else {
-      try {
-        Class antClassLoaderClass = Class.forName("org.apache.tools.ant.AntClassLoader");
-        if (antClassLoaderClass.isInstance(loader) ||
-            loader.getClass().getName().equals("org.apache.tools.ant.AntClassLoader") ||
-            loader.getClass().getName().equals("org.apache.tools.ant.loader.AntClassLoader2")) {
-          //noinspection HardCodedStringLiteral
-          final String classpath =
-            (String)antClassLoaderClass.getDeclaredMethod("getClasspath", ArrayUtil.EMPTY_CLASS_ARRAY).invoke(loader, ArrayUtil.EMPTY_OBJECT_ARRAY);
-          final StringTokenizer tokenizer = new StringTokenizer(classpath, File.separator, false);
-          while (tokenizer.hasMoreTokens()) {
-            final String token = tokenizer.nextToken();
-            aClasspathElements.add(new File(token).toURL());
-          }
-        }
-        else {
-          getLogger().warn("Unknown classloader: " + loader.getClass().getName());
-        }
-      }
-      catch (ClassCastException e) {
-        getLogger().warn("Unknown classloader [CCE]: " + e.getMessage());
-      }
-      catch (ClassNotFoundException e) {
-        getLogger().warn("Unknown classloader [CNFE]: " + loader.getClass().getName());
-      }
-      catch (NoSuchMethodException e) {
-        getLogger().warn("Unknown classloader [NSME]: " + e.getMessage());
-      }
-      catch (IllegalAccessException e) {
-        getLogger().warn("Unknown classloader [IAE]: " + e.getMessage());
-      }
-      catch (InvocationTargetException e) {
-        getLogger().warn("Unknown classloader [ITE]: " + e.getMessage());
-      }
-    }
-  }
-
-  private static void addIDEALibraries(List<URL> classpathElements) {
-    final String ideaHomePath = PathManager.getHomePath();
-    addAllFromLibFolder(ideaHomePath, classpathElements);
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void addAllFromLibFolder(final String aFolderPath, List<URL> classPath) {
-    try {
-      final Class<PluginManager> aClass = PluginManager.class;
-      final String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-
-      final URL selfRootUrl = new File(selfRoot).getAbsoluteFile().toURL();
-      classPath.add(selfRootUrl);
-
-      final File libFolder = new File(aFolderPath + File.separator + "lib");
-      addLibraries(classPath, libFolder, selfRootUrl);
-
-      final File antLib = new File(new File(libFolder, "ant"), "lib");
-      addLibraries(classPath, antLib, selfRootUrl);
-    }
-    catch (MalformedURLException e) {
-      getLogger().error(e);
-    }
-  }
-
-  private static void addLibraries(List<URL> classPath, File fromDir, final URL selfRootUrl) throws MalformedURLException {
-    final File[] files = fromDir.listFiles();
-    if (files != null) {
-      for (final File file : files) {
-        if (!isJarOrZip(file)) {
-          continue;
-        }
-        final URL url = file.toURL();
-        if (selfRootUrl.equals(url)) {
-          continue;
-        }
-        classPath.add(url);
-      }
-    }
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static boolean isJarOrZip(File file) {
-    if (file.isDirectory()) {
-      return false;
-    }
-    final String name = file.getName();
-    return StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip");
-  }
-
-  private static void addAdditionalClassPath(List<URL> classPath) {
-    try {
-      //noinspection HardCodedStringLiteral
-      final StringTokenizer tokenizer = new StringTokenizer(System.getProperty("idea.additional.classpath", ""), File.pathSeparator, false);
-      while (tokenizer.hasMoreTokens()) {
-        String pathItem = tokenizer.nextToken();
-        classPath.add(new File(pathItem).toURL());
-      }
-    }
-    catch (MalformedURLException e) {
-      getLogger().error(e);
-    }
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static boolean isLoadingOfExternalPluginsDisabled() {
-    return !"true".equalsIgnoreCase(System.getProperty("idea.plugins.load", "true"));
-  }
 
   public static boolean isPluginInstalled(PluginId id) {
     return (getPlugin(id) != null);
@@ -1171,5 +873,12 @@ public class PluginManager {
     public void warn(Throwable t) {
       getLogger().info(t);
     }
+  }
+
+  public static Logger getLogger() {
+    if (ourLogger == null) {
+      ourLogger = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
+    }
+    return ourLogger;
   }
 }

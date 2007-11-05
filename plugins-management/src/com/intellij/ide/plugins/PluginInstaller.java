@@ -12,12 +12,11 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -175,23 +174,4 @@ public class PluginInstaller {
       }
     }
   }
-
-  @SuppressWarnings({"unchecked"})
-  public static Map<String, String> loadPluginClasses () throws IOException, ClassNotFoundException {
-    synchronized(PluginManager.lock) {
-      File file = new File (PluginManager.getPluginClassesPath());
-      if (file.exists()) {
-        ObjectInputStream ois = new ObjectInputStream (new FileInputStream (file));
-        try {
-          return (Map<String, String>)ois.readObject();
-        }
-        finally {
-          ois.close();
-        }
-      } else {
-        return new HashMap<String, String> ();
-      }
-    }
-  }
-
 }

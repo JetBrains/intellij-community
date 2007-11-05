@@ -18,8 +18,8 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ActionCallback {
 

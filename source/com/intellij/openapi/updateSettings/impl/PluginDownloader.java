@@ -13,7 +13,6 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -143,7 +142,7 @@ public class PluginDownloader {
 
       pi.setText(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-      final File pluginsTemp = new File(PathManagerEx.getPluginTempPath());
+      final File pluginsTemp = new File(PathManager.getPluginTempPath());
 
       if (!pluginsTemp.exists()) {
         pluginsTemp.mkdirs();

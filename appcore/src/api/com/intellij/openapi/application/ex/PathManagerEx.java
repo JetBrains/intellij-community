@@ -21,14 +21,4 @@ public class PathManagerEx {
   public static String getTestDataPath() {
     return PathManager.getHomePath() + File.separatorChar + "testData";
   }
-  @NonNls
-  public static String getLibRtPath() {
-    return PathManager.getLibPath() + File.separatorChar + "rt";
-  }
-
-  public static String getPluginTempPath () {
-    String systemPath = PathManager.getSystemPath();
-
-    return systemPath + File.separator + PathManager.PLUGINS_DIRECTORY;
-  }
 }

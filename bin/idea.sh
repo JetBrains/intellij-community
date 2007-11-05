@@ -44,7 +44,7 @@ JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
 JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
 
 CLASSPATH=../lib/bootstrap.jar
-CLASSPATH=$CLASSPATH:../lib/openapi.jar
+CLASSPATH=$CLASSPATH:../lib/util.jar
 CLASSPATH=$CLASSPATH:../lib/jdom.jar
 CLASSPATH=$CLASSPATH:../lib/log4j.jar
 CLASSPATH=$CLASSPATH:../lib/extensions.jar

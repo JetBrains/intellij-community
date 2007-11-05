@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -74,7 +73,7 @@ public class ImportSettingsAction extends AnAction {
         }
       }
 
-      final File tempFile = new File(PathManagerEx.getPluginTempPath() + "/" + saveFile.getName());
+      final File tempFile = new File(PathManager.getPluginTempPath() + "/" + saveFile.getName());
       FileUtil.copy(saveFile, tempFile);
       File outDir = new File(PathManager.getConfigPath());
       final ImportSettingsFilenameFilter filenameFilter = new ImportSettingsFilenameFilter(relativeNamesToExtract);

@@ -7,13 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="util" />
     <orderEntryProperties />
-  </component>
-  <component name="copyright">
-    <Base>
-      <setting name="state" value="1" />
-    </Base>
   </component>
 </module>
 
