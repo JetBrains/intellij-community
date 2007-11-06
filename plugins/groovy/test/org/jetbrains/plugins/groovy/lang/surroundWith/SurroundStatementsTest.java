@@ -4,7 +4,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByParametrizedClosure;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByClosure;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.*;
 
 import java.io.File;
@@ -31,7 +31,7 @@ public class SurroundStatementsTest extends TestSuite {
       surroundersOfStmtToPathsMap.put(GroovyWithIfElseSurrounder.class, stmtsPrefix + "if_else");
       surroundersOfStmtToPathsMap.put(GroovyWithTryCatchSurrounder.class, stmtsPrefix + "try_catch");
       surroundersOfStmtToPathsMap.put(GroovyWithWhileSurrounder.class, stmtsPrefix + "while");
-      surroundersOfStmtToPathsMap.put(GroovySurrounderByParametrizedClosure.class, stmtsPrefix + "all");
+      surroundersOfStmtToPathsMap.put(GroovySurrounderByClosure.class, stmtsPrefix + "all");
     }
   }
 

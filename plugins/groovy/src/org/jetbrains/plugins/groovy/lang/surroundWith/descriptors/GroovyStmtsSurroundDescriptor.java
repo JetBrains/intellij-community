@@ -2,7 +2,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.descriptors;
 
 import com.intellij.lang.surroundWith.Surrounder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByParametrizedClosure;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByClosure;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.*;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.*;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfExprSurrounder;
@@ -29,7 +29,7 @@ public class GroovyStmtsSurroundDescriptor extends GroovySurroundDescriptor {
 
       new GroovyWithWhileSurrounder(),
 
-      new GroovySurrounderByParametrizedClosure(),
+      new GroovySurrounderByClosure(),
   };
 
       /********** ***********/
