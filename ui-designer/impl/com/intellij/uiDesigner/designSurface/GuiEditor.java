@@ -1110,7 +1110,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   private class MyRefreshPropertiesRequest implements Runnable {
     public void run() {
-      refreshProperties();
+      if (!getProject().isDisposed()) {
+        refreshProperties();
+      }
     }
   }
 
