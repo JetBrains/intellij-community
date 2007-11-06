@@ -28,15 +28,11 @@ import com.intellij.psi.xml.*;
 
 import java.util.List;
 
-public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
+public class HtmlSelectioner extends AbstractWordSelectioner {
   private static ExtendWordSelectionHandler ourStyleSelectioner;
 
   public static void setStyleSelectioner(ExtendWordSelectionHandler _styleSelectioner) {
     ourStyleSelectioner = _styleSelectioner;
-  }
-
-  protected boolean canSelectXml(PsiElement e) {
-    return true;
   }
 
   public boolean canSelect(PsiElement e) {
@@ -67,7 +63,7 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
 
     final PsiElement parent = e.getParent();
     if (parent instanceof XmlComment) {
-      result.addAll(SelectWordUtil.expandToWholeLine(editorText, parent.getTextRange(), true));
+      result.addAll(expandToWholeLine(editorText, parent.getTextRange(), true));
     }
     
     PsiFile psiFile = e.getContainingFile();

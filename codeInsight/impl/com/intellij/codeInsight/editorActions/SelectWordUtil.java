@@ -10,7 +10,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -48,12 +47,6 @@ public class SelectWordUtil {
     new WordSelectioner(),
     new StatementGroupSelectioner(),
     new CaseStatementsSelectioner(),
-    new HtmlSelectioner(),
-    new XmlTagSelectioner(),
-    new XmlCDATAContentSelectioner(),
-    new DtdSelectioner(),
-    new XmlElementSelectioner(),
-    new XmlTokenSelectioner(),
     new ScriptletSelectioner(),
     new PlainTextLineSelectioner(),
     new ELExpressionHolderSelectioner()
@@ -123,97 +116,13 @@ public class SelectWordUtil {
     return element instanceof PsiDocTag;
   }
 
-  static List<TextRange> expandToWholeLine(CharSequence text, TextRange range, boolean isSymmetric) {
-    int textLength = text.length();
-    List<TextRange> result = new ArrayList<TextRange>();
-
-    if (range == null) {
-      return result;
-    }
-
-    boolean hasNewLines = false;
-
-    for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
-      char c = text.charAt(i);
-
-      if (c == '\r' || c == '\n') {
-        hasNewLines = true;
-        break;
-      }
-    }
-
-    if (!hasNewLines) {
-      result.add(range);
-    }
-
-
-    int startOffset = range.getStartOffset();
-    int endOffset = range.getEndOffset();
-    int index1 = CharArrayUtil.shiftBackward(text, startOffset - 1, " \t");
-    if (endOffset > startOffset && text.charAt(endOffset - 1) == '\n' || text.charAt(endOffset - 1) == '\r') {
-      endOffset--;
-    }
-    int index2 = Math.min(textLength, CharArrayUtil.shiftForward(text, endOffset, " \t"));
-
-    if (index1 < 0
-        || text.charAt(index1) == '\n'
-        || text.charAt(index1) == '\r'
-        || index2 == textLength
-        || text.charAt(index2) == '\n'
-        || text.charAt(index2) == '\r') {
-
-      if (!isSymmetric) {
-        if (index1 < 0 || text.charAt(index1) == '\n' || text.charAt(index1) == '\r') {
-          startOffset = index1 + 1;
-        }
-
-        if (index2 == textLength || text.charAt(index2) == '\n' || text.charAt(index2) == '\r') {
-          endOffset = index2;
-          if (endOffset < textLength) {
-            endOffset++;
-            if (endOffset < textLength && text.charAt(endOffset - 1) == '\r' && text.charAt(endOffset) == '\n') {
-              endOffset++;
-            }
-          }
-        }
-
-        result.add(new TextRange(startOffset, endOffset));
-      }
-      else {
-        if ((index1 < 0 || text.charAt(index1) == '\n' || text.charAt(index1) == '\r') &&
-            (index2 == textLength || text.charAt(index2) == '\n' || text.charAt(index2) == '\r')) {
-          startOffset = index1 + 1;
-          endOffset = index2;
-          if (endOffset < textLength) {
-            endOffset++;
-            if (endOffset < textLength && text.charAt(endOffset - 1) == '\r' && text.charAt(endOffset) == '\n') {
-              endOffset++;
-            }
-          }
-          result.add(new TextRange(startOffset, endOffset));
-        }
-        else {
-          result.add(range);
-        }
-      }
-    }
-    else {
-      result.add(range);
-    }
-
-    return result;
-  }
-
-  private static List<TextRange> expandToWholeLine(CharSequence text, TextRange range) {
-    return expandToWholeLine(text, range, true);
-  }
-
-  private static class BasicSelectioner implements ExtendWordSelectionHandler {
-    protected boolean canSelectXml(PsiElement e) {
-      return !(e instanceof XmlToken) && !(e instanceof XmlElement);
-    }
+  private static class BasicSelectioner extends ExtendWordSelectionHandlerBase {
 
     public boolean canSelect(PsiElement e) {
+      return canSelectBasic(e);
+    }
+
+    public static boolean canSelectBasic(final PsiElement e) {
       return
         !(e instanceof PsiWhiteSpace) &&
         !(e instanceof PsiComment) &&
@@ -223,43 +132,20 @@ public class SelectWordUtil {
         !(e instanceof PsiExpressionList) &&
         !(e instanceof PsiBlockStatement) &&
         !(e instanceof PsiJavaCodeReferenceElement) &&
-        !(e instanceof PsiJavaToken && !(e instanceof PsiKeyword)) &&
-        canSelectXml(e) &&
+        !(e instanceof PsiJavaToken &&
+        !(e instanceof PsiKeyword)) &&
+        !(e instanceof XmlToken) &&
+        !(e instanceof XmlElement) &&
         !isDocCommentElement(e);
-    }
-
-    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-
-      final TextRange originalRange = e.getTextRange();
-      List<TextRange> ranges = expandToWholeLine(editorText, originalRange, true);
-
-      if (ranges.size() == 1 && ranges.contains(originalRange)) {
-        ranges = expandToWholeLine(editorText, originalRange, false);
-      }
-
-      List<TextRange> result = new ArrayList<TextRange>();
-      result.addAll(ranges);
-      return result;
     }
   }
 
-  static class WordSelectioner extends BasicSelectioner {
+  static class WordSelectioner extends AbstractWordSelectioner {
     public boolean canSelect(PsiElement e) {
-      return super.canSelect(e) ||
+      return BasicSelectioner.canSelectBasic(e) ||
              e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType() == JavaTokenType.IDENTIFIER;
     }
 
-    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> ranges;
-      if (super.canSelect(e)) {
-        ranges = super.select(e, editorText, cursorOffset, editor);
-      }
-      else {
-        ranges = new ArrayList<TextRange>();
-      }
-      addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, ranges);
-      return ranges;
-    }
   }
 
   public static void addWordSelection(boolean camel, CharSequence editorText, int cursorOffset, @NotNull List<TextRange> ranges) {
@@ -908,130 +794,6 @@ public class SelectWordUtil {
     }
   }
 
-  static class DtdSelectioner implements ExtendWordSelectionHandler {
-    public boolean canSelect(PsiElement e) {
-      return e instanceof XmlAttlistDecl || e instanceof XmlElementDecl;
-    }
-
-    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      PsiElement[] children = e.getChildren();
-
-      PsiElement first = null;
-      PsiElement last = null;
-      for (PsiElement child : children) {
-        if (child instanceof XmlToken) {
-          XmlToken token = (XmlToken)child;
-          if (token.getTokenType() == XmlTokenType.XML_TAG_END) {
-            last = token;
-            break;
-          }
-          if (token.getTokenType() == XmlTokenType.XML_ELEMENT_DECL_START ||
-              token.getTokenType() == XmlTokenType.XML_ATTLIST_DECL_START
-             ) {
-            first = token;
-          }
-        }
-      }
-
-      List<TextRange> result = new ArrayList<TextRange>(1);
-      if (first != null && last != null) {
-        result.addAll(expandToWholeLine(editorText,
-                                        new TextRange(first.getTextRange().getStartOffset(),
-                                                      last.getTextRange().getEndOffset() + 1),
-                                        false));
-      }
-
-      return result;
-    }
-  }
-
-  static class XmlCDATAContentSelectioner extends BasicSelectioner {
-    public boolean canSelect(PsiElement e) {
-      return e instanceof CompositePsiElement &&
-             ((CompositePsiElement)e).getElementType() == XmlElementType.XML_CDATA;
-    }
-
-    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
-      PsiElement[] children = e.getChildren();
-
-      PsiElement first = null;
-      PsiElement last = null;
-      for (PsiElement child : children) {
-        if (child instanceof XmlToken) {
-          XmlToken token = (XmlToken)child;
-          if (token.getTokenType() == XmlTokenType.XML_CDATA_START) {
-            first = token.getNextSibling();
-          }
-          if (token.getTokenType() == XmlTokenType.XML_CDATA_END) {
-            last = token.getPrevSibling();
-            break;
-          }
-        }
-      }
-
-      if (first != null && last != null) {
-        result.addAll(expandToWholeLine(editorText,
-                                        new TextRange(first.getTextRange().getStartOffset(),
-                                                      last.getTextRange().getEndOffset()),
-                                        false));
-      }
-
-      return result;
-    }
-  }
-
-  static class XmlTagSelectioner extends BasicSelectioner {
-    public boolean canSelect(PsiElement e) {
-      return e instanceof XmlTag;
-    }
-
-    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
-      PsiElement[] children = e.getChildren();
-
-      addTagContentSelection(children, result, editorText);
-
-      PsiElement prev = e.getPrevSibling();
-      while (prev instanceof PsiWhiteSpace || prev instanceof XmlText || prev instanceof XmlComment) {
-        if (prev instanceof XmlText && prev.getText().trim().length() > 0) break;
-        if (prev instanceof XmlComment) {
-          result.addAll(expandToWholeLine(editorText,
-                                          new TextRange(prev.getTextRange().getStartOffset(),
-                                                        e.getTextRange().getEndOffset()),
-                                          false));
-        }
-        prev = prev.getPrevSibling();
-      }
-
-      return result;
-    }
-
-    private static void addTagContentSelection(final PsiElement[] children, final List<TextRange> result, final CharSequence editorText) {
-      PsiElement first = null;
-      PsiElement last = null;
-      for (PsiElement child : children) {
-        if (child instanceof XmlToken) {
-          XmlToken token = (XmlToken)child;
-          if (token.getTokenType() == XmlTokenType.XML_TAG_END) {
-            first = token.getNextSibling();
-          }
-          if (token.getTokenType() == XmlTokenType.XML_END_TAG_START) {
-            last = token.getPrevSibling();
-            break;
-          }
-        }
-      }
-
-      if (first != null && last != null) {
-        result.addAll(expandToWholeLine(editorText,
-                                        new TextRange(first.getTextRange().getStartOffset(),
-                                                      last.getTextRange().getEndOffset()),
-                                        false));
-      }
-    }
-  }
-  
   static class CaseStatementsSelectioner extends BasicSelectioner {
       public boolean canSelect(PsiElement e) {
         return  e.getParent() instanceof PsiCodeBlock && 
@@ -1072,37 +834,6 @@ public class SelectWordUtil {
         return result;
       }
     }
-  
-  static class XmlElementSelectioner extends BasicSelectioner {
-    public boolean canSelect(PsiElement e) {
-      return e instanceof XmlAttribute || e instanceof XmlAttributeValue;
-    }
-  }
-
-  static class XmlTokenSelectioner extends BasicSelectioner {
-    public boolean canSelect(PsiElement e) {
-      return e instanceof XmlToken && 
-             !HtmlSelectioner.canSelectElement(e);
-    }
-
-    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      XmlToken token = (XmlToken)e;
-
-      if (token.getTokenType() != XmlTokenType.XML_DATA_CHARACTERS &&
-          token.getTokenType() != XmlTokenType.XML_START_TAG_START &&
-          token.getTokenType() != XmlTokenType.XML_END_TAG_START
-        ) {
-        List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
-        addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, ranges);
-        return ranges;
-      }
-      else {
-        List<TextRange> result = new ArrayList<TextRange>();
-        addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, result);
-        return result;
-      }
-    }
-  }
 
   static class ScriptletSelectioner extends BasicSelectioner {
     @Override
@@ -1139,10 +870,14 @@ public class SelectWordUtil {
 
   static class PlainTextLineSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
-      return e instanceof PsiPlainText || e instanceof XmlToken && ((XmlToken)e).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS;
+      return e instanceof PsiPlainText;
     }
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+      return selectPlainTextLine(e, editorText, cursorOffset);
+    }
+
+    public static List<TextRange> selectPlainTextLine(final PsiElement e, final CharSequence editorText, final int cursorOffset) {
       int start = cursorOffset;
       while (start > 0 && editorText.charAt(start - 1) != '\n' && editorText.charAt(start - 1) != '\r') start--;
 
