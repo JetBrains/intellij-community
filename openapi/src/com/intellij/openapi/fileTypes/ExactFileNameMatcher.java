@@ -8,10 +8,10 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ExcactFileNameMatcher implements FileNameMatcher {
+public class ExactFileNameMatcher implements FileNameMatcher {
   private final String myFileName;
 
-  public ExcactFileNameMatcher(@NotNull @NonNls final String fileName) {
+  public ExactFileNameMatcher(@NotNull @NonNls final String fileName) {
     myFileName = fileName;
   }
 

@@ -212,7 +212,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
       return new WildcardFileNameMatcher(pattern);
     }
 
-    return new ExcactFileNameMatcher(pattern);
+    return new ExactFileNameMatcher(pattern);
   }
 
   @NotNull
