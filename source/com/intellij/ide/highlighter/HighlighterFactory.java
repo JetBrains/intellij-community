@@ -63,7 +63,7 @@ public class HighlighterFactory {
       return ((LanguageFileType)fileType).getEditorHighlighter(project, null, settings);
     }
 
-    SyntaxHighlighter highlighter = fileType.getHighlighter(project, null);
+    SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, null);
     return createHighlighter(highlighter, settings);
   }
 
@@ -73,7 +73,7 @@ public class HighlighterFactory {
       return ((LanguageFileType)fileType).getEditorHighlighter(project, vFile, settings);
     }
 
-    SyntaxHighlighter highlighter = fileType.getHighlighter(project, vFile);
+    SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, vFile);
     return createHighlighter(highlighter, settings);
   }
 }

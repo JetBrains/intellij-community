@@ -375,7 +375,7 @@ public class FileTemplateConfigurable implements Configurable {
       fileType = StdFileTypes.PLAIN_TEXT;
     }
 
-    SyntaxHighlighter originalHighlighter = fileType.getHighlighter(null, null);
+    SyntaxHighlighter originalHighlighter = SyntaxHighlighter.PROVIDER.create(fileType, null, null);
     if (originalHighlighter == null) originalHighlighter = new PlainSyntaxHighlighter();
     EditorHighlighter highlighter = new LexerEditorHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
     ((EditorEx)myTemplateEditor).setHighlighter(highlighter);

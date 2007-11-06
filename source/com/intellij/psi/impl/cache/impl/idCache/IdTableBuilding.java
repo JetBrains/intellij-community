@@ -233,7 +233,7 @@ public class IdTableBuilding {
       return new WordsScannerIdCacheBuilderAdapter(customWordsScanner, null, null, virtualFile);
     }
 
-    final SyntaxHighlighter highlighter = fileType.getHighlighter(project, virtualFile);
+    final SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, virtualFile);
     if (fileType instanceof LanguageFileType) {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
       final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();

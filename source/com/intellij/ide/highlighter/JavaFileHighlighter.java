@@ -44,17 +44,20 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 public class JavaFileHighlighter extends SyntaxHighlighterBase {
   private static Map<IElementType, TextAttributesKey> ourMap1;
   private static Map<IElementType, TextAttributesKey> ourMap2;
 
   private LanguageLevel myLanguageLevel;
+
+  public JavaFileHighlighter() {
+    this(LanguageLevel.HIGHEST);
+  }
 
   public JavaFileHighlighter(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;

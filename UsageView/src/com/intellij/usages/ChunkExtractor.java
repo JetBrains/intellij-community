@@ -90,7 +90,8 @@ public class ChunkExtractor {
     final int lineStartOffset = myDocument.getLineStartOffset(myLineNumber);
     final int lineEndOffset = lineStartOffset < myDocument.getTextLength() ? myDocument.getLineEndOffset(myLineNumber):0;
     final FileType fileType = myElement.getContainingFile().getFileType();
-    SyntaxHighlighter highlighter = fileType.getHighlighter(myElement.getProject(), myElement.getContainingFile().getVirtualFile());
+    SyntaxHighlighter highlighter =
+      SyntaxHighlighter.PROVIDER.create(fileType, myElement.getProject(), myElement.getContainingFile().getVirtualFile());
     if (highlighter == null) {
       highlighter = new PlainSyntaxHighlighter();
     }

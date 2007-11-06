@@ -34,10 +34,9 @@ package com.intellij.ide.highlighter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,10 +73,6 @@ public class GuiFormFileType implements FileType {
 
   public String getCharset(@NotNull VirtualFile file) {
     return CharsetToolkit.UTF8;
-  }
-
-  public SyntaxHighlighter getHighlighter(Project project, final VirtualFile virtualFile) {
-    return new XmlFileHighlighter();
   }
 
   public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {

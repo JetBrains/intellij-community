@@ -55,18 +55,6 @@ public abstract class LanguageFileType implements FileType{
   }
 
   /**
-   * Returns the syntax highlighter for the files of the type.
-   * @param project The project in which the highligher will work, or null if the highlighter is not tied to any project.
-   * @param virtualFile The file to be highlighted
-   * @return The highlighter implementation.
-   */
-
-  @NotNull
-  public SyntaxHighlighter getHighlighter(@Nullable Project project, @Nullable final VirtualFile virtualFile) {
-    return myLanguage.getSyntaxHighlighter(project, virtualFile);
-  }
-
-  /**
    * Lower level API for customizing language's file syntax highlighting in editor component. Delegates to {@link #getHighlighter(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile)} by default.
    * @param project The project in which the highligher will work, or null if the highlighter is not tied to any project.
    * @param virtualFile The file to be highlighted
@@ -76,7 +64,7 @@ public abstract class LanguageFileType implements FileType{
   public EditorHighlighter getEditorHighlighter(@Nullable Project project,
                                                 @Nullable final VirtualFile virtualFile,
                                                 @NotNull EditorColorsScheme colors) {
-    return PeerFactory.getInstance().createEditorHighlighter(getHighlighter(project, virtualFile), colors);
+    return PeerFactory.getInstance().createEditorHighlighter(SyntaxHighlighter.PROVIDER.create(this, project, virtualFile), colors);
   }
 
   /**

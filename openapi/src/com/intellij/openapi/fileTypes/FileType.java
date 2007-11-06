@@ -89,16 +89,6 @@ public interface FileType {
   String getCharset(@NotNull VirtualFile file);
 
   /**
-   * Returns the syntax highlighter for the files of the type.
-   * @param project The project in which the highligher will work, or null if the highlighter is not tied to any project.
-   * @param virtualFile
-   * @return The highlighter implementation.
-   */
-
-  @Nullable
-  SyntaxHighlighter getHighlighter(@Nullable Project project, final VirtualFile virtualFile);
-
-  /**
    * Returns the structure view builder for the specified file.
    * @param file The file for which the structure view builder is requested.
    * @param project The project to which the file belongs.

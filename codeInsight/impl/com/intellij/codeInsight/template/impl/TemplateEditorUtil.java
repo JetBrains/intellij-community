@@ -68,7 +68,7 @@ public class TemplateEditorUtil {
       fileType = StdFileTypes.PLAIN_TEXT;
     }
 
-    SyntaxHighlighter highlighter = createTemplateTextHighlighter(fileType.getHighlighter(null, null));
+    SyntaxHighlighter highlighter = createTemplateTextHighlighter(SyntaxHighlighter.PROVIDER.create(fileType, null, null));
     ((EditorEx)editor).setHighlighter(new LexerEditorHighlighter(highlighter, EditorColorsManager.getInstance().getGlobalScheme()));
   }
 

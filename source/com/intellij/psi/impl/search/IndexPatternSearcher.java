@@ -10,6 +10,7 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -100,7 +101,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       synchronized (PsiLock.LOCK) {
         if (fType instanceof CustomFileType) {
           TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
-          Lexer lexer = fType.getHighlighter(file.getProject(), file.getVirtualFile()).getHighlightingLexer();
+          Lexer lexer = SyntaxHighlighter.PROVIDER.create(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
           findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds);
         }
         else {
