@@ -4,6 +4,8 @@ import com.intellij.execution.StepsBeforeRunProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 
@@ -27,14 +29,18 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
     return getState().getTask(configuration.getType(), configuration.getName()) != null;
   }
 
-  public boolean executeTask(DataContext context, final RunConfiguration configuration) {
+  public boolean executeTask(final DataContext context, final RunConfiguration configuration) {
     final boolean [] result = new boolean[]{false};
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
-        final MavenTask task = getState().getTask(configuration.getType(), configuration.getName());
-        result [0] = task != null && getEventsHandler().execute(Arrays.asList(task));
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+          public void run() {
+            final MavenTask task = getState().getTask(configuration.getType(), configuration.getName());
+            result [0] = task != null && getEventsHandler().execute(Arrays.asList(task));
+          }
+        }, EventsBundle.message("execute.before.launch.steps.title"), true, DataKeys.PROJECT.getData(context));
       }
-    }, EventsBundle.message("execute.before.launch.steps.title"), true, DataKeys.PROJECT.getData(context));
+    }, ModalityState.NON_MODAL);
     return result[0];
   }
 
