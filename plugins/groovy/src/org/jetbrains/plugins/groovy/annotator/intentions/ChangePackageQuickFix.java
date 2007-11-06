@@ -39,7 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    //TODO
     final GrReferenceElement newPackageReference = GroovyElementFactory.getInstance(myPackageDefinition.getProject()).createPackegeReferenceElementFromText(myNewPackageName);
     myPackageDefinition.replacePackageReference(newPackageReference);
   }
