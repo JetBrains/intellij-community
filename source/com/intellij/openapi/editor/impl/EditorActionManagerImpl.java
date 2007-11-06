@@ -1,17 +1,13 @@
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.*;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.codeInsight.editorActions.TypedHandler;
-import com.intellij.codeInsight.editorActions.JavaQuoteHandler;
-import com.intellij.codeInsight.editorActions.XmlQuoteHandler;
-import com.intellij.codeInsight.editorActions.HtmlQuoteHandler;
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorActionManagerImpl extends EditorActionManager implements ApplicationComponent {
@@ -21,12 +17,6 @@ public class EditorActionManagerImpl extends EditorActionManager implements Appl
 
   public EditorActionManagerImpl(ActionManager actionManager) {
     myActionManager = actionManager;
-    TypedHandler.registerQuoteHandler(StdFileTypes.JAVA, new JavaQuoteHandler());
-    TypedHandler.registerQuoteHandler(StdFileTypes.XML, new XmlQuoteHandler());
-    HtmlQuoteHandler quoteHandler = new HtmlQuoteHandler();
-    TypedHandler.registerQuoteHandler(StdFileTypes.HTML, quoteHandler);
-    TypedHandler.registerQuoteHandler(StdFileTypes.XHTML, quoteHandler);
-    
     final BraceMatchingUtil.BraceMatcher defaultBraceMatcher = new BraceMatchingUtil.DefaultBraceMatcher();
     BraceMatchingUtil.registerBraceMatcher(StdFileTypes.JAVA,defaultBraceMatcher);
     BraceMatchingUtil.registerBraceMatcher(StdFileTypes.XML,defaultBraceMatcher);

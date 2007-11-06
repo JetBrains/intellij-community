@@ -58,7 +58,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
 
     FileType fileType = file.getFileType();
-    final TypedHandler.QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);
+    final QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);
     if (quoteHandler == null) return false;
 
     boolean toDeleteGt = c =='<' &&

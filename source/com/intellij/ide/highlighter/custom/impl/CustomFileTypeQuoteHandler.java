@@ -1,6 +1,6 @@
 package com.intellij.ide.highlighter.custom.impl;
 
-import com.intellij.codeInsight.editorActions.TypedHandler;
+import com.intellij.codeInsight.editorActions.QuoteHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -14,7 +14,7 @@ import com.intellij.psi.tree.IElementType;
  * Time: 8:34:21 PM
  * To change this template use File | Settings | File Templates.
  */
-class CustomFileTypeQuoteHandler implements TypedHandler.QuoteHandler {
+class CustomFileTypeQuoteHandler implements QuoteHandler {
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -66,23 +67,31 @@ public class TypedHandler implements TypedActionHandler {
     boolean isAppropriateElementTypeForLiteral(final @NotNull IElementType tokenType);
   }
 
-  public interface QuoteHandler {
-    boolean isClosingQuote(HighlighterIterator iterator, int offset);
-    boolean isOpeningQuote(HighlighterIterator iterator, int offset);
-    boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset);
-    boolean isInsideLiteral(HighlighterIterator iterator);
-  }
-
   private static final Map<FileType,QuoteHandler> quoteHandlers = new HashMap<FileType, QuoteHandler>();
 
   public static @Nullable QuoteHandler getQuoteHandler(@NotNull PsiFile file) {
-    QuoteHandler quoteHandler = quoteHandlers.get(file.getFileType());
+    QuoteHandler quoteHandler = getQuoteHandlerForType(file.getFileType());
     if (quoteHandler == null &&
         file.getViewProvider().getBaseLanguage() instanceof XMLLanguage
        ) {
-      quoteHandler = quoteHandlers.get(StdFileTypes.XML);
+      quoteHandler = getQuoteHandlerForType(StdFileTypes.XML);
     }
     return quoteHandler;
+  }
+
+  private static QuoteHandler getQuoteHandlerForType(final FileType fileType) {
+    if (!quoteHandlers.containsKey(fileType)) {
+      QuoteHandler handler = null;
+      final QuoteHandlerEP[] handlerEPs = Extensions.getExtensions(QuoteHandlerEP.EP_NAME);
+      for(QuoteHandlerEP ep: handlerEPs) {
+        if (ep.fileType.equals(fileType.getName())) {
+          handler = ep.getHandler();
+          break;
+        }
+      }
+      quoteHandlers.put(fileType, handler);
+    }
+    return quoteHandlers.get(fileType);
   }
 
   public static void registerQuoteHandler(FileType fileType, QuoteHandler quoteHandler) {

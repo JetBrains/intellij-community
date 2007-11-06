@@ -120,7 +120,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       final Commenter languageCommenter = language.getCommenter();
       final CodeDocumentationAwareCommenter commenter = languageCommenter instanceof CodeDocumentationAwareCommenter
                                                         ? (CodeDocumentationAwareCommenter)languageCommenter:null;
-      final TypedHandler.QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile());
+      final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile());
       TypedHandler.JavaLikeQuoteHandler quoteHandler = fileTypeQuoteHandler instanceof TypedHandler.JavaLikeQuoteHandler ?
                                                        (TypedHandler.JavaLikeQuoteHandler) fileTypeQuoteHandler:null;
 
@@ -316,7 +316,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     final Language language = comment.getParent().getLanguage();
     Lexer lexer = language == StdLanguages.JAVA ? new JavaLexer(PsiUtil.getLanguageLevel(comment)):language.getParserDefinition().createLexer(containingFile.getProject());
     lexer.start(commentText, commenter.getDocumentationCommentPrefix().length(), commentText.length(),0);
-    TypedHandler.QuoteHandler fileTypeHandler = TypedHandler.getQuoteHandler(containingFile);
+    QuoteHandler fileTypeHandler = TypedHandler.getQuoteHandler(containingFile);
     TypedHandler.JavaLikeQuoteHandler javaLikeQuoteHandler = fileTypeHandler instanceof TypedHandler.JavaLikeQuoteHandler ?
                                                              (TypedHandler.JavaLikeQuoteHandler)fileTypeHandler:null;
 

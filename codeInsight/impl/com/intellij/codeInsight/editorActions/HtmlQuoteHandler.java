@@ -9,20 +9,20 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 /**
  * @author peter
 */
-public class HtmlQuoteHandler implements TypedHandler.QuoteHandler {
-  private static TypedHandler.QuoteHandler ourStyleQuoteHandler;
-  private TypedHandler.QuoteHandler myBaseQuoteHandler;
-  private static TypedHandler.QuoteHandler ourScriptQuoteHandler;
+public class HtmlQuoteHandler implements QuoteHandler {
+  private static QuoteHandler ourStyleQuoteHandler;
+  private QuoteHandler myBaseQuoteHandler;
+  private static QuoteHandler ourScriptQuoteHandler;
 
   public HtmlQuoteHandler() {
     this(new XmlQuoteHandler());
   }
 
-  public HtmlQuoteHandler(TypedHandler.QuoteHandler _baseHandler) {
+  public HtmlQuoteHandler(QuoteHandler _baseHandler) {
     myBaseQuoteHandler = _baseHandler;
   }
 
-  public static void setStyleQuoteHandler(TypedHandler.QuoteHandler quoteHandler) {
+  public static void setStyleQuoteHandler(QuoteHandler quoteHandler) {
     ourStyleQuoteHandler = quoteHandler;
   }
 
@@ -81,7 +81,7 @@ public class HtmlQuoteHandler implements TypedHandler.QuoteHandler {
     return false;
   }
 
-  public static void setScriptQuoteHandler(TypedHandler.QuoteHandler scriptQuoteHandler) {
+  public static void setScriptQuoteHandler(QuoteHandler scriptQuoteHandler) {
     ourScriptQuoteHandler = scriptQuoteHandler;
   }
 }
