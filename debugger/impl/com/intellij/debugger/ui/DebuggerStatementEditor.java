@@ -16,7 +16,9 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.ListIterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,7 +36,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
 
   public DebuggerStatementEditor(Project project, PsiElement context, @NonNls String recentsId) {
     super(project, context, recentsId);
-    myRecentIdx = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId()).size();
+    myRecentIdx = getRecentItemsCount();
     myEditor = new EditorTextField("", project, StdFileTypes.JAVA) {
       protected EditorEx createEditor() {
         EditorEx editor = super.createEditor();
@@ -56,15 +58,13 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
       }
 
       public void update(AnActionEvent e) {
-        LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
-        e.getPresentation().setEnabled(myRecentIdx < recents.size());
+        e.getPresentation().setEnabled(myRecentIdx < getRecentItemsCount());
       }
     });
     actionGroup.add(new ItemAction(IdeActions.ACTION_NEXT_OCCURENCE, this){
       public void actionPerformed(AnActionEvent e) {
         if(LOG.isDebugEnabled()) {
-          LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
-          LOG.assertTrue(myRecentIdx < recents.size());
+          LOG.assertTrue(myRecentIdx < getRecentItemsCount());
         }
         // since recents are stored in a stack, next item is at currentIndex - 1
         myRecentIdx -= 1;
@@ -83,9 +83,22 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
   }
 
   private void updateTextFromRecents() {
-    LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
+    java.util.List<TextWithImports> recents = getRecents();
     LOG.assertTrue(myRecentIdx <= recents.size());
     setText(myRecentIdx < recents.size() ? recents.get(myRecentIdx) : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
+  }
+
+  private java.util.List<TextWithImports> getRecents() {
+    final LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
+    final ArrayList<TextWithImports> reversed = new ArrayList<TextWithImports>(recents.size());
+    for (final ListIterator<TextWithImports> it = recents.listIterator(recents.size()); it.hasPrevious();) {
+      reversed.add(it.previous());
+    }
+    return reversed;
+  }
+
+  private int getRecentItemsCount() {
+    return DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId()).size();
   }
 
   public JComponent getPreferredFocusedComponent() {
