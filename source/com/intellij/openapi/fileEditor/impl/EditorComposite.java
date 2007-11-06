@@ -89,6 +89,10 @@ public abstract class EditorComposite{
       final TabbedPaneWrapper wrapper = new TabbedPaneWrapper(SwingConstants.BOTTOM, false);
       myTabbedPaneWrapper=wrapper;
       myComponent=new MyComponent(wrapper.getComponent()){
+        public boolean requestFocusInWindow() {
+          return wrapper.getComponent().requestFocusInWindow();
+        }
+
         public void requestFocus() {
           wrapper.getComponent().requestFocus();
         }
@@ -110,6 +114,15 @@ public abstract class EditorComposite{
           if (component != null) {
             component.requestFocus();
           }
+        }
+
+        public boolean requestFocusInWindow() {
+          JComponent component = editors[0].getPreferredFocusedComponent();
+          if (component != null) {
+            return component.requestFocusInWindow();
+          }
+
+          return false;
         }
 
         public boolean requestDefaultFocus() {
