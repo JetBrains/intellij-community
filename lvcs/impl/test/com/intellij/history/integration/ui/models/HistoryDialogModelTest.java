@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.List;
 
 public class HistoryDialogModelTest extends LocalVcsTestCase {
@@ -21,8 +22,7 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
   @Before
   public void setUp() {
     vcs.beginChangeSet();
-    long timestamp = -1;
-    vcs.createFile("f", cf("1"), timestamp, false);
+    vcs.createFile("f", cf("1"), -1, false);
     vcs.endChangeSet("1");
 
     vcs.beginChangeSet();
@@ -245,6 +245,27 @@ public class HistoryDialogModelTest extends LocalVcsTestCase {
     assertTrue(m.isCreatePatchEnabled());
 
     m.selectChanges(0, 1);
+    assertFalse(m.isCreatePatchEnabled());
+  }
+
+  @Test
+  public void testCannotCreatePatchIfThereIsUnavailableContent() throws IOException {
+    vcs.changeFileContent("f", bigContentFactory(), -1);
+    vcs.changeFileContent("f", cf(""), -1);
+    vcs.changeFileContent("f", bigContentFactory(), -1);
+
+    initModelFor("f");
+
+    m.selectRevisions(1, 3);
+    assertTrue(m.isCreatePatchEnabled());
+
+    m.selectRevisions(0, 3);
+    assertFalse(m.isCreatePatchEnabled());
+
+    m.selectRevisions(1, 2);
+    assertFalse(m.isCreatePatchEnabled());
+
+    m.selectRevisions(0, 2);
     assertFalse(m.isCreatePatchEnabled());
   }
 

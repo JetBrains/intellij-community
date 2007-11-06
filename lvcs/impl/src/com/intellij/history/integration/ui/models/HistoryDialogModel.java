@@ -148,6 +148,11 @@ public abstract class HistoryDialogModel {
   }
 
   public boolean isCreatePatchEnabled() {
+    if (!isCorrectSelectionForPatchCreation()) return false;
+    return !getLeftEntry().hasUnavailableContent() && !getRightEntry().hasUnavailableContent();
+  }
+
+  private boolean isCorrectSelectionForPatchCreation() {
     if (myIsChangesSelected) return isCorrectChangeSelection();
     return myLeftRevisionIndex > 0;
   }
