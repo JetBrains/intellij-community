@@ -1,16 +1,13 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.GenericsUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,22 +16,19 @@ import java.util.List;
  * @author ven
  */
 public class MethodTypeInferencer implements Computable<PsiType> {
-  private GrMethod myMethod;
+  private GrCodeBlock myBlock;
 
-  public MethodTypeInferencer(GrMethod method) {
-    myMethod = method;
+  public MethodTypeInferencer(GrCodeBlock block) {
+    myBlock = block;
   }
 
   @Nullable
   public PsiType compute () {
-    GrOpenBlock body = myMethod.getBlock();
-    if (body == null) return null;
-
     List<GrReturnStatement> returns = new ArrayList<GrReturnStatement>();
-    collectReturns(body, returns);
+    collectReturns(myBlock, returns);
 
     PsiType result = null;
-    PsiManager manager = myMethod.getManager();
+    PsiManager manager = myBlock.getManager();
     for (GrReturnStatement returnStatement : returns) {
       GrExpression value = returnStatement.getReturnValue();
       if (value != null) {
@@ -44,7 +38,7 @@ public class MethodTypeInferencer implements Computable<PsiType> {
 
     boolean isVoid = returns.size() == 0;
 
-    GrStatement[] statements = body.getStatements();
+    GrStatement[] statements = myBlock.getStatements();
     if (statements.length > 0) {
       GrStatement last = statements[statements.length - 1];
       if (last instanceof GrExpression) {

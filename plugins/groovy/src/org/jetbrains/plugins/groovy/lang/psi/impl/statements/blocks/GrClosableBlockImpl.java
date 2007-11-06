@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -29,9 +30,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 
 /**
  * @author ilyas
@@ -92,7 +94,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public PsiType getType() {
-    return getManager().getElementFactory().createTypeByFQClassName(GROOVY_LANG_CLOSURE, getResolveScope());
+    return new GrClosureType(this);
   }
 
   @Nullable
@@ -129,5 +131,15 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 
+  private static Function<GrClosableBlock, PsiType> ourTypesCalculator = new Function<GrClosableBlock, PsiType>() {
+    public PsiType fun(GrClosableBlock block) {
+      final GroovyPsiManager manager = GroovyPsiManager.getInstance(block.getProject());
+      if (manager.isTypeBeingInferred(block)) return null;
+      return manager.inferType(block, new MethodTypeInferencer(block));
+    }
+  };
 
+  public @Nullable PsiType getReturnType(){
+    return GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator);
+  }
 }

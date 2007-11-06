@@ -22,6 +22,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiType;
 
 /**
  * @author ilyas
@@ -33,4 +35,7 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
   GrParameterList getParameterList();
 
   boolean hasParametersSection();
+
+  @Nullable
+  PsiType getReturnType();
 }

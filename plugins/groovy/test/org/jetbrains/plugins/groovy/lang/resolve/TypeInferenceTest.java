@@ -53,4 +53,10 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("circular/A.groovy");
     assertNull(ref.getType());
   }
+
+  public void testClosure() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("closure/A.groovy");
+    assertNotNull(ref.getType());
+  }
+
 }
