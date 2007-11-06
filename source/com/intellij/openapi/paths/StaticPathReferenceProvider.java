@@ -6,6 +6,7 @@ package com.intellij.openapi.paths;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,16 +18,26 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class StaticPathReferenceProvider implements PathReferenceProvider {
+public class StaticPathReferenceProvider extends PathReferenceProviderBase {
 
   private boolean myEndingSlashNotAllowed;
   private boolean myRelativePathsAllowed;
 
-  public boolean createReferences(@NotNull final PsiElement psiElement, @NotNull final List<PsiReference> references, final boolean soft) {
-    FileReferenceSet set = FileReferenceSet.createSet(psiElement, soft, myEndingSlashNotAllowed, true);
-    if (set == null) {
-      return false;
-    }
+  public boolean createReferences(@NotNull final PsiElement psiElement,
+                                  final int offset,
+                                  final String text,
+                                  final @NotNull List<PsiReference> references,
+                                  final boolean soft) {
+
+    FileReferenceSet set = new FileReferenceSet(text, psiElement, offset, ReferenceType.FILE_TYPE, null, true, myEndingSlashNotAllowed) {
+      protected boolean isUrlEncoded() {
+        return true;
+      }
+
+      protected boolean isSoft() {
+        return soft;
+      }
+    };
     if (!myRelativePathsAllowed) {
       set.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, FileReferenceSet.ABSOLUTE_TOP_LEVEL);
     }

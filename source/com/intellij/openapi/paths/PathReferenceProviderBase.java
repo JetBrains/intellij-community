@@ -2,10 +2,8 @@
  * Copyright (c) 2007, Your Corporation. All Rights Reserved.
  */
 
-package com.intellij.javaee.web;
+package com.intellij.openapi.paths;
 
-import com.intellij.lang.Language;
-import com.intellij.openapi.paths.PathReferenceProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.PsiElement;
@@ -34,7 +32,6 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
     final String elementText = psiElement.getText();
     boolean dynamicContext = false;
     if (PsiUtil.isInJspFile(psiElement)) {
-      final Language language = psiElement.getLanguage();
       final PsiElement[] children = psiElement.getChildren();
       for (PsiElement child : children) {
         if (child instanceof OuterLanguageElement || child instanceof JspXmlTagBase || child instanceof ELExpressionHolder) {
@@ -47,7 +44,7 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
             offset = next.getStartOffsetInParent();
             dynamicContext = true;
           } else {
-            final int pos = WebUtil.getLastPosOfURL(elementText);
+            final int pos = getLastPosOfURL(elementText);
             if (pos == -1 || pos > i) {
               return false;
             }
@@ -58,7 +55,7 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
         }
       }
     }
-    final int pos = WebUtil.getLastPosOfURL(elementText);
+    final int pos = getLastPosOfURL(elementText);
     if (pos != -1 && pos < endOffset) {
       endOffset = pos;
     }
@@ -72,4 +69,16 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
                                   String text,
                                   final @NotNull List<PsiReference> references,
                                   final boolean soft);
+
+  public static int getLastPosOfURL(@NotNull String url) {
+    for (int i = 0; i < url.length(); i++) {
+      switch (url.charAt(i)) {
+        case '?':
+        case '#':
+          return i;
+      }
+    }
+    return -1;
+  }
+
 }
