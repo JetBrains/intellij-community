@@ -230,7 +230,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   private static <T> State getStateSpec(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
     final Class<? extends PersistentStateComponent> aClass = persistentStateComponent.getClass();
     final State stateSpec = aClass.getAnnotation(State.class);
-    assert stateSpec != null : "No State annotation found in " + aClass;
+    assert stateSpec != null : "No @State annotation found in " + aClass;
     return stateSpec;
   }
 

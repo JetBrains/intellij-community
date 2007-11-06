@@ -24,6 +24,7 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 //todo: use TagBinding
@@ -61,7 +62,7 @@ class OptionTagBinding implements Binding {
   }
 
   public Object deserialize(Object o, Object... nodes) {
-    assert nodes.length == 1;
+    assert nodes.length == 1 : "Wrong nodes: " + Arrays.asList(nodes) + " passed to: " + this;
     Element element = ((Element)nodes[0]);
     Attribute valueAttr = element.getAttribute(Constants.VALUE);
 
