@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -211,6 +212,11 @@ public class CompletionUtil {
   }
 
   public static CompletionData getCompletionDataByFileType(FileType fileType) {
+    for(CompletionDataEP ep: Extensions.getExtensions(CompletionDataEP.EP_NAME)) {
+      if (ep.fileType.equals(fileType.getName())) {
+        return ep.getHandler();
+      }
+    }
     final NotNullLazyValue<CompletionData> lazyValue = ourCustomCompletionDatas.get(fileType);
     return lazyValue == null ? null : lazyValue.getValue();
   }

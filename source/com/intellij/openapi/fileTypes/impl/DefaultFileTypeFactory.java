@@ -3,13 +3,11 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
-import com.intellij.codeInsight.completion.*;
 import com.intellij.ide.highlighter.*;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -23,44 +21,14 @@ public class DefaultFileTypeFactory extends FileTypeFactory {
     consumer.consume(new ArchiveFileType(), "zip;jar;war;ear");
     consumer.consume(new JavaClassFileType(), "class");
 
-    final FileType htmlFileType = new HtmlFileType();
-    consumer.consume(htmlFileType, "html;htm;sht;shtm;shtml");
-    CompletionUtil.registerCompletionData(htmlFileType, new NotNullLazyValue<CompletionData>() {
-      @NotNull
-      protected CompletionData compute() {
-        return new HtmlCompletionData();
-      }
-    });
-
-    final FileType xhtmlFileType = new XHtmlFileType();
-    consumer.consume(xhtmlFileType, "xhtml");
-    CompletionUtil.registerCompletionData(xhtmlFileType, new NotNullLazyValue<CompletionData>() {
-      @NotNull
-      protected CompletionData compute() {
-        return new XHtmlCompletionData();
-      }
-    });
-
-    final FileType dtdFileType = new DTDFileType();
-    consumer.consume(dtdFileType, "dtd;ent;mod");
-    CompletionUtil.registerCompletionData(dtdFileType, new NotNullLazyValue<CompletionData>() {
-      @NotNull
-      protected CompletionData compute() {
-        return new DtdCompletionData();
-      }
-    });
+    consumer.consume(new HtmlFileType(), "html;htm;sht;shtm;shtml");
+    consumer.consume(new XHtmlFileType(), "xhtml");
+    consumer.consume(new DTDFileType(), "dtd;ent;mod");
 
     consumer.consume(new JavaFileType(), "java");
     consumer.consume(new PlainTextFileType(), "txt;sh;bat;cmd;policy;log;cgi;pl;MF;sql;jad;jam");
 
-    final XmlFileType xmlFileType = new XmlFileType();
-    consumer.consume(xmlFileType, "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;mxm;mxml");
-    CompletionUtil.registerCompletionData(xmlFileType, new NotNullLazyValue<CompletionData>() {
-      @NotNull
-      protected CompletionData compute() {
-        return new XmlCompletionData();
-      }
-    });
+    consumer.consume(new XmlFileType(), "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;mxm;mxml");
 
     consumer.consume(new GuiFormFileType(), "form");
     consumer.consume(new WorkspaceFileType(), "iws");
