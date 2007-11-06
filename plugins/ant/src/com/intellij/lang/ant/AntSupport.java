@@ -1,6 +1,5 @@
 package com.intellij.lang.ant;
 
-import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.StdLanguages;
@@ -38,7 +37,6 @@ public class AntSupport implements ApplicationComponent, InspectionToolProvider 
     if (group != null) {
       group.add(addAntBuildFile, new Constraints(Anchor.AFTER, "ValidateXml"));
     }
-    SelectWordUtil.registerSelectioner(new AntPropertyRefSelectioner());
   }
 
   public static synchronized AntLanguage getLanguage() {

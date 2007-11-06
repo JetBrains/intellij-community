@@ -169,7 +169,7 @@ public class SelectWordHandler extends EditorActionHandler {
     }
     TextRange minimumRange = null;
 
-    for (SelectWordUtil.Selectioner selectioner : SelectWordUtil.SELECTIONERS) {
+    for (ExtendWordSelectionHandler selectioner : SelectWordUtil.getExtendWordSelectionHandlers()) {
       if (!selectioner.canSelect(element)) {
         continue;
       }

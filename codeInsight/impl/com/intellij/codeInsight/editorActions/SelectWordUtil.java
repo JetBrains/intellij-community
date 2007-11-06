@@ -5,6 +5,7 @@ import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
@@ -30,7 +31,7 @@ import java.util.List;
  */
 public class SelectWordUtil {
     
-  static Selectioner[] SELECTIONERS = new Selectioner[]{
+  private static ExtendWordSelectionHandler[] SELECTIONERS = new ExtendWordSelectionHandler[]{
     new LineCommentSelectioner(),
     new LiteralSelectioner(),
     new DocCommentSelectioner(),
@@ -58,8 +59,20 @@ public class SelectWordUtil {
     new ELExpressionHolderSelectioner()
   };
 
-  public static void registerSelectioner(Selectioner selectioner) {
+  private static boolean ourExtensionsLoaded = false;
+
+  public static void registerSelectioner(ExtendWordSelectionHandler selectioner) {
     SELECTIONERS = ArrayUtil.append(SELECTIONERS, selectioner);
+  }
+
+  static ExtendWordSelectionHandler[] getExtendWordSelectionHandlers() {
+    if (!ourExtensionsLoaded) {
+      ourExtensionsLoaded = true;
+      for (ExtendWordSelectionHandler handler : Extensions.getExtensions(ExtendWordSelectionHandler.EP_NAME)) {
+        registerSelectioner(handler);        
+      }
+    }
+    return SELECTIONERS;
   }
 
   private static int findOpeningBrace(PsiElement[] children) {
@@ -195,13 +208,7 @@ public class SelectWordUtil {
     return expandToWholeLine(text, range, true);
   }
 
-  public static interface Selectioner {
-    boolean canSelect(PsiElement e);
-
-    List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor);
-  }
-
-  private static class BasicSelectioner implements Selectioner {
+  private static class BasicSelectioner implements ExtendWordSelectionHandler {
     protected boolean canSelectXml(PsiElement e) {
       return !(e instanceof XmlToken) && !(e instanceof XmlElement);
     }
@@ -901,7 +908,7 @@ public class SelectWordUtil {
     }
   }
 
-  static class DtdSelectioner implements Selectioner {
+  static class DtdSelectioner implements ExtendWordSelectionHandler {
     public boolean canSelect(PsiElement e) {
       return e instanceof XmlAttlistDecl || e instanceof XmlElementDecl;
     }

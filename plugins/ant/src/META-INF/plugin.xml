@@ -16,6 +16,7 @@
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntStepsBeforeRunProvider"/>
     <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
+    <extendWordSelectionHandler implementation="com.intellij.lang.ant.AntPropertyRefSelectioner"/>
   </extensions>
 
   <application-components>

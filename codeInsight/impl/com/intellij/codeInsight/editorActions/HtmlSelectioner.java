@@ -29,9 +29,9 @@ import com.intellij.psi.xml.*;
 import java.util.List;
 
 public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
-  private static SelectWordUtil.Selectioner ourStyleSelectioner;
+  private static ExtendWordSelectionHandler ourStyleSelectioner;
 
-  public static void setStyleSelectioner(SelectWordUtil.Selectioner _styleSelectioner) {
+  public static void setStyleSelectioner(ExtendWordSelectionHandler _styleSelectioner) {
     ourStyleSelectioner = _styleSelectioner;
   }
 

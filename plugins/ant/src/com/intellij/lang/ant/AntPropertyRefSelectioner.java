@@ -1,6 +1,6 @@
 package com.intellij.lang.ant;
 
-import com.intellij.codeInsight.editorActions.SelectWordUtil;
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.editor.Editor;
@@ -19,7 +19,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Sep 14, 2007
  */
-public class AntPropertyRefSelectioner implements SelectWordUtil.Selectioner{
+public class AntPropertyRefSelectioner implements ExtendWordSelectionHandler {
   public boolean canSelect(final PsiElement e) {
     return getRangesToSelect(e).size() > 0;
   }
