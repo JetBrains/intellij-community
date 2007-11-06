@@ -3,6 +3,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -11,6 +12,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper {
+  public static final Key<Boolean> TOP_LEVEL_ELEMENT = new Key<Boolean>("TOP_LEVEL_ELEMENT");
   private String mySubId;
 
   protected ProjectViewSelectInTarget(Project project) {
@@ -89,6 +91,8 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
   private static boolean isTopLevelClass(final PsiElement element, PsiFile baseRootFile) {
+    if (element != null && element.getUserData(TOP_LEVEL_ELEMENT) == Boolean.TRUE) return true;
+
     if (!(element instanceof PsiClass)) {
       return false;
     }
