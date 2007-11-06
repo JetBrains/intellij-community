@@ -93,7 +93,7 @@ public class GrClosureType extends PsiClassType {
   }
 
   public String getPresentableText() {
-    return myClosure.getText();
+    return "Closure";
   }
 
   @Nullable
@@ -112,8 +112,7 @@ public class GrClosureType extends PsiClassType {
   }
 
   public boolean equalsToText(@NonNls String text) {
-    return text.endsWith(getPresentableText()) && //optimization
-        text.equals(getCanonicalText());
+    return text.equals(GrClosableBlock.GROOVY_LANG_CLOSURE);
   }
 
   @NotNull

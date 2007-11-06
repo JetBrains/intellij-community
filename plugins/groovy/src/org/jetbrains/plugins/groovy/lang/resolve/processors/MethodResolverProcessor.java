@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -87,9 +88,9 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private boolean isClosure(PsiVariable variable) {
     if (variable instanceof GrVariable) {
       final PsiType type = ((GrVariable) variable).getTypeGroovy();
-      return type != null && type.equalsToText("groovy.lang.Closure");
+      return type != null && type.equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE);
     }
-    return variable.getType().equalsToText("groovy.lang.Closure");
+    return variable.getType().equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE);
   }
 
   private PsiSubstitutor inferMethodTypeParameters(PsiMethod method, PsiSubstitutor partialSubstitutor) {
