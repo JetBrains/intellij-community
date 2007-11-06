@@ -641,6 +641,12 @@ public class GroovyAnnotator implements Annotator {
       if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
+      } if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
+        final String key = ((PsiModifierListOwner) resolved).hasModifierProperty(PsiModifier.STATIC) ?
+            "cannot.reference.static" :
+            "cannot.reference.nonstatic";
+        String message = GroovyBundle.message(key, refExpr.getReferenceName());
+        holder.createWarningAnnotation(refExpr, message);
       } else if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
         checkMethodApplicability(resolveResult, refExpr, holder);
       }

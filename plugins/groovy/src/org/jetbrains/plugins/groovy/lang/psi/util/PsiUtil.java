@@ -359,4 +359,19 @@ public class PsiUtil {
     chars[0] = Character.toLowerCase(chars[0]);
     return new String(chars);
   }
+
+  public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place) {
+    PsiElement run = place;
+    if (owner.hasModifierProperty(PsiModifier.STATIC)) {
+      if (place instanceof GrReferenceExpression && ((GrReferenceExpression) place).getQualifierExpression() == null) {
+        while (run != null && run != owner) {
+          if (run instanceof GrClosableBlock) return false;
+          run = run.getContext();
+        }
+      }
+      return true;
+    } else {
+      return true;
+    }
+  }
 }

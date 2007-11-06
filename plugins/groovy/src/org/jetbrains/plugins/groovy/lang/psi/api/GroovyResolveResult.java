@@ -14,6 +14,8 @@ public interface GroovyResolveResult extends ResolveResult {
 
   boolean isAccessible();
 
+  boolean isStaticsOK();
+
   @Nullable
   GroovyPsiElement getCurrentFileResolveContext();
 
@@ -26,6 +28,10 @@ public interface GroovyResolveResult extends ResolveResult {
 
     public GroovyPsiElement getCurrentFileResolveContext() {
       return null;
+    }
+
+    public boolean isStaticsOK() {
+      return true;
     }
 
     public PsiSubstitutor getSubstitutor() {

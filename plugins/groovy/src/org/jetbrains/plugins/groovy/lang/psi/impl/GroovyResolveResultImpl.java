@@ -19,6 +19,7 @@ import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ven
@@ -26,21 +27,25 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 public class GroovyResolveResultImpl implements GroovyResolveResult {
   private PsiElement myElement;
   private boolean myIsAccessible;
+  private boolean myIsStaticsOK;
   private PsiSubstitutor mySubstitutor;
 
   private GroovyPsiElement myCurrentFileResolveContext;
 
   public GroovyResolveResultImpl(PsiElement element, boolean isAccessible) {
-    this(element, isAccessible, null, PsiSubstitutor.EMPTY);
+    this(element, null, PsiSubstitutor.EMPTY, isAccessible, true);
   }
 
-  public GroovyResolveResultImpl(PsiElement element, boolean isAccessible,
+  public GroovyResolveResultImpl(PsiElement element,
                                  GroovyPsiElement context,
-                                 PsiSubstitutor substitutor) {
+                                 PsiSubstitutor substitutor,
+                                 boolean isAccessible,
+                                 boolean staticsOK) {
     myCurrentFileResolveContext = context;
     myElement = element;
     myIsAccessible = isAccessible;
     mySubstitutor = substitutor;
+    myIsStaticsOK = staticsOK;
   }
 
   public PsiSubstitutor getSubstitutor() {
@@ -49,6 +54,10 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
 
   public boolean isAccessible() {
     return myIsAccessible;
+  }
+
+  public boolean isStaticsOK() {
+    return myIsStaticsOK;
   }
 
   @Nullable

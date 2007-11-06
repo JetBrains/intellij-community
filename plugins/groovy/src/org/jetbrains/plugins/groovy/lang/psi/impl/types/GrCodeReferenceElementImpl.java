@@ -286,7 +286,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         if (element instanceof PsiClass) {
           final PsiSubstitutor substitutor = result.getSubstitutor();
           final PsiSubstitutor newSubstitutor = substitutor.putAll((PsiClass) element, args);
-          results[i] = new GroovyResolveResultImpl(element, result.isAccessible(), result.getCurrentFileResolveContext(), newSubstitutor);
+          results[i] = new GroovyResolveResultImpl(element, result.getCurrentFileResolveContext(), newSubstitutor, result.isAccessible(), result.isStaticsOK());
         }
       }
       return results;

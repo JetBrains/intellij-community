@@ -68,7 +68,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
       }
 
       boolean isAccessible = isAccessible(namedElement);
-      myCandidates.add(new GroovyResolveResultImpl(namedElement, isAccessible, myCurrentFileResolveContext, substitutor));
+      boolean isStaticsOK = isStaticsOK(namedElement);
+      myCandidates.add(new GroovyResolveResultImpl(namedElement, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK));
       return myForCompletion || !isAccessible;
     }
 
@@ -77,6 +78,13 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   protected boolean isAccessible(PsiNamedElement namedElement) {
     return !(namedElement instanceof PsiMember) || PsiUtil.isAccessible((PsiMember) namedElement, myPlace, null);
+  }
+
+  protected boolean isStaticsOK(PsiNamedElement element) {
+    if (element instanceof PsiModifierListOwner) {
+      return org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isStaticsOK((PsiModifierListOwner) element, myPlace);
+    }
+    return true;
   }
 
   public GroovyResolveResult[] getCandidates() {
