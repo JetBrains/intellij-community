@@ -4,7 +4,6 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.modifiers;
 
-import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;

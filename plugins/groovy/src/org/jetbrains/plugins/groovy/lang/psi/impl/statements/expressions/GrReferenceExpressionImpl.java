@@ -17,17 +17,22 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.*;
-import org.jetbrains.plugins.grails.lang.gsp.psi.GspResolveUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -36,14 +41,21 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -68,6 +80,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
 
     return null;
+  }
+
+  public PsiReference getReference() {
+    PsiReference[] otherReferences = com.intellij.psi.impl.source.resolve.ResolveUtil.getReferencesFromProviders(this, GrReferenceExpression.class);
+    PsiReference[] thisReference = {this};
+    return new PsiMultiReference(otherReferences.length == 0 ? thisReference : ArrayUtil.mergeArrays(thisReference, otherReferences, PsiReference.class), this);
   }
 
   public String getReferenceName() {
@@ -174,6 +192,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     PsiElement resolved = resolveResult.getElement();
     PsiType result = null;
     PsiManager manager = getManager();
+    if (resolved == null && !"class".equals(getReferenceName())) {
+      resolved = getReference().resolve();
+    }
     if (resolved instanceof PsiClass) {
       if (getParent() instanceof GrReferenceExpression) {
         result = manager.getElementFactory().createType((PsiClass) resolved);
@@ -342,8 +363,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
           if (resolved instanceof PsiPackage) {
             if (!resolved.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr)) return;
-          } else if (resolved == null) {
-            GspResolveUtil.collectContextSpecificVariants(processor, refExpr);
           }
         }
       } else {
@@ -389,7 +408,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
   }
 
-  static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpression refExpr, String name, boolean forCompletion, boolean checkArguments) {
+  public static ResolverProcessor getMethodOrPropertyResolveProcessor(GrReferenceExpression refExpr, String name, boolean forCompletion, boolean checkArguments) {
     Kind kind = ((GrReferenceExpressionImpl) refExpr).getKind();
     ResolverProcessor processor;
     if (kind == Kind.METHOD_OR_PROPERTY) {
@@ -434,7 +453,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public Object[] getVariants() {
-
     return CompleteReferenceExpression.getVariants(this);
   }
 

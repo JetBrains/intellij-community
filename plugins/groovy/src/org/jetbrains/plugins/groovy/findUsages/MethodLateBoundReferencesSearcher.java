@@ -75,9 +75,10 @@ public class MethodLateBoundReferencesSearcher implements QueryExecutor<PsiRefer
   private boolean processTextOccurrences(SearchScope searchScope, final String name, final Processor<PsiReference> consumer, Project project) {
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
+        PsiReference ref = element.getReference();
         if (element instanceof GrReferenceExpression &&
             name.equals(((GrReferenceExpression) element).getReferenceName()) &&
-            ((GrReferenceExpression) element).resolve() == null &&
+            ref != null && ref.resolve() == null &&
             !PsiUtil.isLValue((GroovyPsiElement) element)) {
           if (!consumer.process((PsiReference) element)) return false;
         }

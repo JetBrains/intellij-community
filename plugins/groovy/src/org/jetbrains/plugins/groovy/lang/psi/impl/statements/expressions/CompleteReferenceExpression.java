@@ -67,17 +67,12 @@ public class CompleteReferenceExpression {
       }
     }
 
-    Object[] specificVariants = GroovyCompletionUtil.getContextSpecificVariants(refExpr);
     if (refExpr.getKind() == GrReferenceExpressionImpl.Kind.TYPE_OR_PROPERTY) {
       ResolverProcessor classVariantsCollector = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), refExpr, true, PsiType.EMPTY_ARRAY);
       final Object[] classVariants = getVariantsImpl(refExpr, classVariantsCollector);
-      if (specificVariants.length > 0) {
-        return ArrayUtil.mergeArrays(ArrayUtil.mergeArrays(propertyVariants, classVariants, Object.class), specificVariants, Object.class);
-      } else {
         return ArrayUtil.mergeArrays(propertyVariants, classVariants, Object.class);
-      }
     } else {
-      return ArrayUtil.mergeArrays(propertyVariants, specificVariants, Object.class);
+      return propertyVariants;
     }
 
   }
@@ -143,8 +138,6 @@ public class CompleteReferenceExpression {
     PsiElement[] elements = ResolveUtil.mapToElements(candidates);
     LookupElement[] propertyLookupElements = addPretendedProperties(elements);
     Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
-
-    variants = GroovyCompletionUtil.filterSpecificVariants(variants, refExpr);
     variants = ArrayUtil.mergeArrays(variants, propertyLookupElements, Object.class);
     return ArrayUtil.mergeArrays(variants, sameQualifier, Object.class);
   }

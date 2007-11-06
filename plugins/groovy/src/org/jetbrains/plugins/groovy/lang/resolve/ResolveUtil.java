@@ -25,7 +25,6 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspClass;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
-import org.jetbrains.plugins.grails.lang.gsp.resolve.taglib.GspTagLibUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;

@@ -17,9 +17,6 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.modifiers;
 
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.annotations.NonNls;
 
