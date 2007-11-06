@@ -110,7 +110,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
       }, myForced).doWhenDone(new Runnable() {
         public void run() {
           updateFocusedComponentForWatcher(c);
-          if (!myToolWindow.isActive()) {
+          if (myToolWindow.isAvailable() && !myToolWindow.isActive()) {
             myToolWindow.activate(null);
           }
         }
@@ -120,7 +120,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
       myManager.requestFocus(c, myForced).doWhenDone(new Runnable() {
         public void run() {
           updateFocusedComponentForWatcher(c);
-          if (!myToolWindow.isActive()) {
+          if (myToolWindow.isAvailable() && !myToolWindow.isActive()) {
             myToolWindow.activate(null);
           }
         }
