@@ -14,10 +14,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jdom.Element;
@@ -205,7 +205,7 @@ public final class TextEditorProvider implements FileEditorProvider {
       VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
       final Project project = myEditor.getProject();
       LOG.assertTrue(project != null);
-      return file.getFileType().getStructureViewBuilder(file, project);
+      return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);
     }
 
     @NotNull

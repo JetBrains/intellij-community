@@ -181,7 +181,7 @@ public final class TextEditorImpl extends UserDataHolderBase implements TextEdit
     Document document = myComponent.getEditor().getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null || !file.isValid()) return null;
-    return file.getFileType().getStructureViewBuilder(file, myProject);
+    return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, myProject);
   }
 
   public boolean canNavigateTo(@NotNull final Navigatable navigatable) {

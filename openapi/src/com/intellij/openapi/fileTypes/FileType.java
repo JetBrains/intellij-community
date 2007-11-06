@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -88,13 +86,4 @@ public interface FileType {
   @NonNls
   String getCharset(@NotNull VirtualFile file);
 
-  /**
-   * Returns the structure view builder for the specified file.
-   * @param file The file for which the structure view builder is requested.
-   * @param project The project to which the file belongs.
-   * @return The structure view builder, or null if no structure view is available for the file.
-   */
-
-  @Nullable
-  StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project);
 }

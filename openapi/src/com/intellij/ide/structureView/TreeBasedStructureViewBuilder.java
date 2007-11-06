@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * @see StructureViewModel
  * @see TextEditorBasedStructureViewModel
  * @see com.intellij.lang.Language#getStructureViewBuilder(com.intellij.psi.PsiFile)
- * @see com.intellij.openapi.fileTypes.FileType#getStructureViewBuilder(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.project.Project)
  */
 public abstract class TreeBasedStructureViewBuilder implements StructureViewBuilder {
   /**

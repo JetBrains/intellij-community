@@ -5,14 +5,9 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
-import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.structureView.impl.jsp.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
-import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.FileStructureDialog;
-import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.Language;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewModel;
@@ -133,6 +128,6 @@ public class ViewStructureAction extends AnAction {
       return;
     }
     presentation.setEnabled(
-      virtualFile.getFileType().getStructureViewBuilder(virtualFile, project) != null );
+      StructureViewBuilder.PROVIDER.getStructureViewBuilder(virtualFile.getFileType(), virtualFile, project) != null );
   }
 }
