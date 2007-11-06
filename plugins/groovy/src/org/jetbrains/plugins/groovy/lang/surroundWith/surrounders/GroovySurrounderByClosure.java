@@ -15,11 +15,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
  */
 public class GroovySurrounderByClosure extends GroovyManyStatementsSurrounder {
   public String getTemplateDescription() {
-    return "{ ... }.call()";
+    return "{ -> ... }.call()";
   }
 
   protected String getElementsTemplateAsString(ASTNode[] nodes) {
-    return "{\n" + getListElementsTemplateAsString(nodes) + "}.call()";
+    return "{ -> \n" + getListElementsTemplateAsString(nodes) + "}.call()";
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
