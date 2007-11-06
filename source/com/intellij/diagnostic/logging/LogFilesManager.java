@@ -5,14 +5,12 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: anna
@@ -20,7 +18,7 @@ import java.util.Set;
  */
 public class LogFilesManager {
 
-  private Map<LogFileOptions, Set<String>> myLogFileManagerMap = new HashMap<LogFileOptions, Set<String>>();
+  private Map<LogFileOptions, Set<String>> myLogFileManagerMap = new LinkedHashMap<LogFileOptions, Set<String>>();
   private Map<LogFileOptions, RunConfigurationBase> myLogFileToConfiguration = new HashMap<LogFileOptions, RunConfigurationBase>();
   private Runnable myUpdateRequest;
   private LogConsoleManager myManager;
@@ -34,13 +32,13 @@ public class LogFilesManager {
         if (myUpdateAlarm == null) return; //already disposed
         myUpdateAlarm.cancelAllRequests();
         for (LogFileOptions logFile : myLogFileManagerMap.keySet()) {
-          Set<String> oldFiles = myLogFileManagerMap.get(logFile);
-          Set<String> newFiles = logFile.getPaths();
-          for (String file : newFiles) {
-            if (!oldFiles.contains(file)){
-              myManager.addLogConsole(newFiles.size() > 1 ? new File(file).getName() : logFile.getName(), file, 0);
+          final Set<String> oldFiles = myLogFileManagerMap.get(logFile);
+          final Set<String> newFiles = logFile.getPaths();
+          addConfigurationConsoles(logFile, new Condition<String>(){
+            public boolean value(final String file) {
+              return !oldFiles.contains(file);
             }
-          }
+          });
           for (String oldFile : oldFiles) {
             if (!newFiles.contains(oldFile)){
               myManager.removeLogConsole(oldFile);
@@ -80,12 +78,37 @@ public class LogFilesManager {
     final ArrayList<LogFileOptions> logFiles = base.getAllLogFiles();
     for (LogFileOptions logFile : logFiles) {
       if (logFile.isEnabled()) {
-        final Set<String> paths = logFile.getPaths();
-        for (String path : paths) {
-          myManager.addLogConsole(paths.size() > 1 ? new File(path).getName() : logFile.getName(), path, logFile.isSkipContent() ? new File(path).length() : 0);
-        }
+        addConfigurationConsoles(logFile, Condition.TRUE);
       }
     }
     base.createAdditionalTabComponents(myManager, startedProcess);
+  }
+
+  private void addConfigurationConsoles(final LogFileOptions logFile, Condition<String> shouldInclude) {
+    final Set<String> paths = logFile.getPaths();
+    if (!paths.isEmpty()) {
+      final TreeMap<String, String> title2Path = new TreeMap<String, String>();
+      if (paths.size() == 1) {
+        final String path = paths.iterator().next();
+        if (shouldInclude.value(path)) {
+          title2Path.put(logFile.getName(), path);
+        }
+      }
+      else {
+        for (String path : paths) {
+          if (shouldInclude.value(path)) {
+            String title = new File(path).getName();
+            if (title2Path.containsKey(title)) {
+              title = path;
+            }
+            title2Path.put(title, path);
+          }
+        }
+      }
+      for (final String title : title2Path.keySet()) {
+        final String path = title2Path.get(title);
+        myManager.addLogConsole(title, path, logFile.isSkipContent() ? new File(path).length() : 0);
+      }
+    }
   }
 }
