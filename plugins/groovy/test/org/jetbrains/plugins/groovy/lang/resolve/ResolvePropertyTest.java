@@ -88,21 +88,21 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void testField3() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement) configureByFile("field3/A.groovy");
+    GrReferenceElement ref = (GrReferenceElement) configureByFile("field3/A.groovy").getElement();
     GroovyResolveResult resolveResult = ref.advancedResolve();
     assertTrue(resolveResult.getElement() instanceof GrField);
     assertFalse(resolveResult.isValidResult());
   }
 
   public void testToGetter() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement) configureByFile("toGetter/A.groovy");
+    GrReferenceElement ref = (GrReferenceElement) configureByFile("toGetter/A.groovy").getElement();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
     assertTrue(PropertyUtil.isSimplePropertyGetter((PsiMethod) resolved));
   }
 
   public void testToSetter() throws Exception {
-    GrReferenceElement ref = (GrReferenceElement) configureByFile("toSetter/A.groovy");
+    GrReferenceElement ref = (GrReferenceElement) configureByFile("toSetter/A.groovy").getElement();
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrMethod);
     assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));

@@ -82,13 +82,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
   public void testFilterBase() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("filterBase/A.groovy");
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("filterBase/A.groovy").getElement();
     assertNotNull(ref.resolve());
     assertEquals(1, ref.multiResolve(false).length);
   }
 
   public void testTwoCandidates() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("twoCandidates/A.groovy");
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("twoCandidates/A.groovy").getElement();
     assertNull(ref.resolve());
     assertEquals(2, ref.multiResolve(false).length);
   }

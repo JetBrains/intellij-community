@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.TokenSet;
@@ -57,24 +58,10 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   }
 
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
-
-    final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
-    if (project != null) {
-      PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
-        public void run() {
-          try {
-            executeWriteActionInner(editor, dataContext);
-          } catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-      });
-    } else {
-      try {
-        executeWriteActionInner(editor, dataContext);
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+    try {
+      executeWriteActionInner(editor, dataContext);
+    } catch (IncorrectOperationException e) {
+      LOG.error(e);
     }
   }
 
@@ -111,13 +98,13 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     return false;
   }
 
-  private boolean handleInLineComment(Editor editor, int carret, DataContext dataContext) {
+  private boolean handleInLineComment(Editor editor, int caret, DataContext dataContext) {
     final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(carret - 1);
+    HighlighterIterator iterator = highlighter.createIterator(caret - 1);
     if (GroovyTokenTypes.mSL_COMMENT == iterator.getTokenType()) {
       String text = editor.getDocument().getText();
-      if (text.length() == carret) return false;
-      if (text.length() > carret && (text.charAt(carret) == '\n' || text.charAt(carret) == '\r')) {
+      if (text.length() == caret) return false;
+      if (text.length() > caret && (text.charAt(caret) == '\n' || text.charAt(caret) == '\r')) {
         return false;
       }
       myOriginalHandler.execute(editor, dataContext);
@@ -193,7 +180,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         String innerText = text.equals("''") ? "" : text.substring(1, text.length() - 1);
         PsiElement literal = stringElement.getParent();
         if (!(literal instanceof GrLiteral)) return false;
-        ((GrExpression) literal).replaceWithExpression(factory.createExpressionFromText("'''" + innerText + "'''"), false);
+        TextRange literalRange = literal.getTextRange();
+        document.replaceString(literalRange.getStartOffset(), literalRange.getEndOffset(), "'''" + innerText + "'''");
         editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
       } else {
@@ -224,7 +212,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         if (rightFromDollar) caretOffset--;
         String text = parent.getText();
         String innerText = text.equals("\"\"") ? "" : text.substring(1, text.length() - 1);
-        ((GrLiteral) parent).replaceWithExpression(factory.createExpressionFromText("\"\"\"" + innerText + "\"\"\""), false);
+        TextRange parentRange = parent.getTextRange();
+        document.replaceString(parentRange.getStartOffset(), parentRange.getEndOffset(), "\"\"\"" + innerText + "\"\"\"");
         editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
         if (rightFromDollar) {
@@ -238,10 +227,10 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     return false;
   }
 
-  private static boolean checkStringApplicable(Editor editor, int carret) {
+  private static boolean checkStringApplicable(Editor editor, int caret) {
     final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
-    HighlighterIterator iteratorLeft = highlighter.createIterator(carret - 1);
-    HighlighterIterator iteratorRight = highlighter.createIterator(carret);
+    HighlighterIterator iteratorLeft = highlighter.createIterator(caret - 1);
+    HighlighterIterator iteratorRight = highlighter.createIterator(caret);
 
     if (iteratorLeft != null && !(ALL_STRINGS.contains(iteratorLeft.getTokenType()))) {
       return false;
@@ -271,18 +260,18 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     return false;
   }
 
-  private boolean handleJspLikeScriptlet(Editor editor, int carret, DataContext dataContext) {
+  private boolean handleJspLikeScriptlet(Editor editor, int caret, DataContext dataContext) {
 
     final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(carret - 1);
+    HighlighterIterator iterator = highlighter.createIterator(caret - 1);
     if (iterator.getTokenType() != GspTokenTypesEx.JSCRIPT_BEGIN) {
       return false;
     }
     String text = editor.getDocument().getText();
-    if (carret < 2 || text.length() < Math.min(carret - 2, 2)) {
+    if (caret < 2 || text.length() < Math.min(caret - 2, 2)) {
       return false;
     }
-    if (text.charAt(carret - 1) == '%' && text.charAt(carret - 2) == '<') {
+    if (text.charAt(caret - 1) == '%' && text.charAt(caret - 2) == '<') {
       if (!GroovyEditorActionUtil.areSciptletSeparatorsUnbalanced(iterator)) {
         myOriginalHandler.execute(editor, dataContext);
         return true;
