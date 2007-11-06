@@ -63,4 +63,9 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("closure1/A.groovy");
     assertTrue(ref.getType().equalsToText("java.lang.Integer"));
   }
+
+  public void testClosure2() throws Exception {
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("closure2/A.groovy");
+    assertTrue(ref.getType().equalsToText("java.lang.Integer"));
+  }
 }
