@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -95,7 +96,10 @@ public class JavaCompletionUtil {
       final PsiMethod method = (PsiMethod)element;
       if (method.isConstructor()) {
         final PsiClass containingClass = method.getContainingClass();
-        LookupItemUtil.addLookupItem(set, containingClass.getName(), context.getPrefix());
+        final String name = containingClass.getName();
+        if (StringUtil.isNotEmpty(name)) {
+          LookupItemUtil.addLookupItem(set, name, context.getPrefix());
+        }
         return null;
       }
     }
