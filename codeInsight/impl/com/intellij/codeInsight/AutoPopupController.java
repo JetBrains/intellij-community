@@ -2,7 +2,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.DotAutoLookupHandler;
 import com.intellij.codeInsight.completion.JavadocAutoLookupHandler;
-import com.intellij.codeInsight.completion.XmlAutoLookupHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
@@ -88,30 +87,14 @@ public class AutoPopupController implements Disposable {
     }
   }
 
-  public void autoPopupXmlLookup(final Editor editor){
+  public void invokeAutoPopupRunnable(final Runnable request, final int delay) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_XML_LOOKUP) {
-      final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-      if (file == null) return;
-      final Runnable request = new Runnable(){
-        public void run(){
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            public void run() {
-              new XmlAutoLookupHandler().invoke(myProject, editor, file);
-            }
-          }, null, null);
-        }
-      };
-      // invoke later prevents cancelling request by keyPressed from the same action
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              myAlarm.addRequest(request, settings.XML_LOOKUP_DELAY);
-            }
-          });
-    }
+    // invoke later prevents cancelling request by keyPressed from the same action
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            myAlarm.addRequest(request, delay);
+          }
+        });
   }
 
   public void autoPopupParameterInfo(final Editor editor, final PsiElement highlightedMethod){

@@ -8,7 +8,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.editorActions.XmlAutoPopupHandler;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.openapi.editor.Editor;
 
@@ -38,7 +38,7 @@ public class XmlCharFilter implements CharFilter {
           if (prefix != null && prefix.length() > 0) {
             return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
           } else {
-            AutoPopupController.getInstance(myEditor.getProject()).autoPopupXmlLookup(myEditor);
+            XmlAutoPopupHandler.autoPopupXmlLookup(myEditor.getProject(), myEditor);
             return CharFilter.HIDE_LOOKUP;
           }
         }

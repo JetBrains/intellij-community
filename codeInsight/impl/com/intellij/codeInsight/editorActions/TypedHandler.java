@@ -36,7 +36,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -189,7 +188,12 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
 
+    final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
     AutoPopupController autoPopupController = AutoPopupController.getInstance(project);
+
+    for(TypedHandlerDelegate delegate: delegates) {
+      delegate.checkAutoPopup(charTyped, project, editor, file);
+    }
 
     if (charTyped == '.') {
       autoPopupController.autoPopupMemberLookup(InjectedLanguageUtil.getEditorForInjectedLanguage(originalEditor, originalFile));
@@ -201,25 +205,6 @@ public class TypedHandler implements TypedActionHandler {
 
     if (charTyped == '@' && file instanceof PsiJavaFile) {
       autoPopupController.autoPopupJavadocLookup(editor);
-    }
-
-    final boolean isXmlLikeFile = file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
-    boolean spaceInTag = isXmlLikeFile && charTyped == ' ';
-
-    if (spaceInTag) {
-      spaceInTag = false;
-      final PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
-      
-      if (at != null) {
-        final PsiElement parent = at.getParent();
-        if (parent instanceof XmlTag) {
-          spaceInTag = true;
-        }
-      }
-    }
-
-    if ((charTyped == '<' || charTyped == '{' || charTyped == '/' || spaceInTag) && isXmlLikeFile) {
-      autoPopupController.autoPopupXmlLookup(editor);
     }
 
     if (charTyped == '('){
@@ -246,7 +231,6 @@ public class TypedHandler implements TypedActionHandler {
       fileType = file.getFileType();
     }
 
-    final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
     for(TypedHandlerDelegate delegate: delegates) {
       if (delegate.beforeCharTyped(charTyped, project, editor, file, fileType)) {
         return;
