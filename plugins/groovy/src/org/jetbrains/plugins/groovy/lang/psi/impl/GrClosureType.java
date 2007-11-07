@@ -21,10 +21,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
  * @author ven
@@ -32,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 public class GrClosureType extends PsiClassType {
   private GrClosableBlock myClosure;
 
-  public GrClosureType(GrClosableBlock closure) {
+  private GrClosureType(GrClosableBlock closure) {
     myClosure = closure;
     myLanguageLevel = LanguageLevel.JDK_1_5;
   }
@@ -137,8 +135,12 @@ public class GrClosureType extends PsiClassType {
   }
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    GrClosureType copy = new GrClosureType(myClosure);
+    GrClosureType copy = create(myClosure);
     copy.myLanguageLevel = languageLevel;
     return copy;
+  }
+
+  public static GrClosureType create(GrClosableBlock closure) {
+    return new GrClosureType(closure);
   }
 }

@@ -1,3 +1,0 @@
-def c = {
-  <ref>delegate
-}

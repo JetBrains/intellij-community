@@ -1,8 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -32,8 +30,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     doTest("closureParameter1/A.groovy");
   }
   
-  public void testClosureDelegate() throws Exception {
-    doTest("closureDelegate/A.groovy");
+  public void testClosureOwner() throws Exception {
+    PsiReference ref = configureByFile("closureOwner/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof GrVariable);
+    assertEquals(((PsiClassType) ((GrVariable) resolved).getTypeGroovy()).getCanonicalText(), "W");
   }
 
   public void testLocal1() throws Exception {
