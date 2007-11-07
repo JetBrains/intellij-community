@@ -34,8 +34,8 @@ public class MyCompilationUnits {
   final CompilationUnit sourceCompilationUnit;
   final CompilationUnit testCompilationUnit;
 
-  private final List<SourceUnit> sourceFilesToCompile = new ArrayList<SourceUnit>();
-  private final List<SourceUnit> testFilesToCompile = new ArrayList<SourceUnit>();
+  private final List sourceFilesToCompile = new ArrayList();
+  private final List testFilesToCompile = new ArrayList();
 
   MyCompilationUnits(CompilationUnit sourceCompilationUnit, CompilationUnit testCompilationUnit) {
     this.sourceCompilationUnit = sourceCompilationUnit;
@@ -58,12 +58,12 @@ public class MyCompilationUnits {
     testFilesToCompile.add(testCompilationUnit.addSource(new File(file.getPath())));
   }
 
-  public void compile(MessageCollector collector, List<OutputItem> compiledFiles, List<File> filesToRecompile) {
+  public void compile(MessageCollector collector, List compiledFiles, List filesToRecompile) {
     compile(collector, sourceCompilationUnit, compiledFiles, filesToRecompile);
     compile(collector, testCompilationUnit, compiledFiles, filesToRecompile);
   }
 
-  void compile(MessageCollector collector, CompilationUnit compilationUnit, List<OutputItem> compiledFiles, List<File> filesToRecompile) {
+  void compile(MessageCollector collector, CompilationUnit compilationUnit, List compiledFiles, List filesToRecompile) {
     try {
       compilationUnit.compile();
       addCompiledFiles(compilationUnit, compiledFiles);
@@ -76,9 +76,8 @@ public class MyCompilationUnits {
     }
   }
 
-  private void addCompiledFiles(CompilationUnit compilationUnit, List<OutputItem> compiledFiles) throws IOException {
+  private void addCompiledFiles(CompilationUnit compilationUnit, List compiledFiles) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
-    assert targetDirectory != null;
 
     String outputRootDirectory = targetDirectory.getParentFile().getCanonicalPath();
     String outputPath = targetDirectory.getCanonicalPath();
@@ -90,15 +89,15 @@ public class MyCompilationUnits {
       List listOfClasses = sourceUnit.getAST().getClasses();
       System.out.println(listOfClasses);
 
-      for (Object className : listOfClasses) {
-        assert className instanceof ClassNode;
+      for (int i = 0; i < listOfClasses.size(); i++) {
+        Object className = listOfClasses.get(i);
         ClassNode classNode = (ClassNode) className;
 
         String pathToClass = "";
-        pathToClass = classNode.getName().replace(".", File.separator);
+        pathToClass = classNode.getName().replace('.', File.separatorChar);
 
         String outputPathClass = outputPath + File.separator + pathToClass + ".class";
-        outputPathClass = outputPathClass.replace(File.separator, "/");
+        outputPathClass = outputPathClass.replace(File.separatorChar, '/');
         compiledFiles.add(new OutputItemImpl(outputRootDirectory, outputPathClass, fileName));
       }
     }

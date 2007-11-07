@@ -22,7 +22,6 @@ import org.codehaus.groovy.control.messages.WarningMessage;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -73,8 +72,8 @@ public class GroovycRunner {
       return;
     }
 
-    List<File> srcFiles = new ArrayList<File>();
-    List<File> testFiles = new ArrayList<File>();
+    List srcFiles = new ArrayList();
+    List testFiles = new ArrayList();
 
     BufferedReader reader = null;
     FileInputStream stream;
@@ -132,18 +131,18 @@ public class GroovycRunner {
     MyGroovyCompiler groovyCompiler = new MyGroovyCompiler();
     if (srcFiles.isEmpty() && testFiles.isEmpty()) return;
 
-    MyCompilationUnits myCompilationUnits = createCompilationUnits(srcFiles, testFiles, Charset.defaultCharset().toString(), moduleName, moduleClasspath, moduleTestOutputPath, moduleOutputPath, moduleSourceFoldersPath);
+    MyCompilationUnits myCompilationUnits = createCompilationUnits(srcFiles, testFiles, moduleName, moduleClasspath, moduleTestOutputPath, moduleOutputPath, moduleSourceFoldersPath);
 
     MessageCollector messageCollector = new MessageCollector();
     MyGroovyCompiler.MyExitStatus exitStatus = groovyCompiler.compile(messageCollector, myCompilationUnits);
 
 
     MyCompilationUnits.OutputItem[] successfullyCompiled = exitStatus.getSuccessfullyCompiled();
-    Set<File> allCompiling = new HashSet<File>();
+    Set allCompiling = new HashSet();
     allCompiling.addAll(srcFiles);
     allCompiling.addAll(testFiles);
 
-    File[] toRecompilesFiles = successfullyCompiled.length > 0 ? new File[0] : allCompiling.toArray(new File[0]);
+    File[] toRecompilesFiles = (File[]) (successfullyCompiled.length > 0 ? new File[0] : allCompiling.toArray(new File[0]));
 
     CompilerMessage[] compilerMessages = messageCollector.getAllMessage();
 
@@ -154,7 +153,8 @@ public class GroovycRunner {
     */
 
     System.out.println();
-    for (MyCompilationUnits.OutputItem compiledOutputItem : successfullyCompiled) {
+    for (int i = 0; i < successfullyCompiled.length; i++) {
+      MyCompilationUnits.OutputItem compiledOutputItem = successfullyCompiled[i];
       System.out.print(COMPILED_START);
       System.out.print(compiledOutputItem.getOutputPath());
       System.out.print(SEPARATOR);
@@ -166,7 +166,8 @@ public class GroovycRunner {
     }
 
     System.out.println();
-    for (File toRecompileFile : toRecompilesFiles) {
+    for (int i = 0; i < toRecompilesFiles.length; i++) {
+      File toRecompileFile = toRecompilesFiles[i];
       System.out.print(TO_RECOMPILE_START);
 
       try {
@@ -179,7 +180,8 @@ public class GroovycRunner {
       System.out.println();
     }
 
-    for (CompilerMessage message : compilerMessages) {
+    for (int i = 0; i < compilerMessages.length; i++) {
+      CompilerMessage message = compilerMessages[i];
       System.out.print(MESSAGES_START);
 
       System.out.print(message.getCategory());
@@ -198,16 +200,18 @@ public class GroovycRunner {
     }
   }
 
-  private static MyCompilationUnits createCompilationUnits(List<File> srcFilesToCompile, List<File> testFilesToCompile, String characterEncoding, String moduleName, String classpath, String testOutputPath, String ordinaryOutputPath, String sourceFoldersPath) {
-    final CompilationUnit sourceUnit = createCompilationUnit(characterEncoding, classpath, ordinaryOutputPath, sourceFoldersPath);
-    final CompilationUnit testUnit = createCompilationUnit(characterEncoding, classpath, testOutputPath, sourceFoldersPath);
+  private static MyCompilationUnits createCompilationUnits(List srcFilesToCompile, List testFilesToCompile, String moduleName, String classpath, String testOutputPath, String ordinaryOutputPath, String sourceFoldersPath) {
+    final CompilationUnit sourceUnit = createCompilationUnit(classpath, ordinaryOutputPath, sourceFoldersPath);
+    final CompilationUnit testUnit = createCompilationUnit(classpath, testOutputPath, sourceFoldersPath);
     MyCompilationUnits myCompilationUnits = myFactory.create(sourceUnit, testUnit);
 
-    for (File fileToCompile : srcFilesToCompile) {
+    for (int i = 0; i < srcFilesToCompile.size(); i++) {
+      File fileToCompile = (File) srcFilesToCompile.get(i);
       myCompilationUnits.add(fileToCompile, false);
     }
 
-    for (File fileToCompile : testFilesToCompile) {
+    for (int i = 0; i < testFilesToCompile.size(); i++) {
+      File fileToCompile = (File) testFilesToCompile.get(i);
       myCompilationUnits.add(fileToCompile, true);
     }
 
@@ -215,9 +219,8 @@ public class GroovycRunner {
     return myCompilationUnits;
   }
 
-  private static CompilationUnit createCompilationUnit(String characterEncoding, String classpath, String outputPath, String sourceFoldersPath) {
+  private static CompilationUnit createCompilationUnit(String classpath, String outputPath, String sourceFoldersPath) {
     CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
-    compilerConfiguration.setSourceEncoding(characterEncoding);
     compilerConfiguration.setOutput(new PrintWriter(System.err));
     compilerConfiguration.setWarningLevel(WarningMessage.PARANOIA);
 
@@ -229,8 +232,8 @@ public class GroovycRunner {
   }
 
   static GroovyClassLoader buildClassLoaderFor(final CompilerConfiguration compilerConfiguration) {
-    return AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
-      public GroovyClassLoader run() {
+    return (GroovyClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
+      public Object run() {
         URLClassLoader urlClassLoader = new URLClassLoader(convertClasspathToUrls(compilerConfiguration));
         return new GroovyClassLoader(urlClassLoader, compilerConfiguration);
       }
