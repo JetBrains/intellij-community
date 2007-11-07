@@ -39,6 +39,9 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     final DomInvocationHandler parent = getParentHandler();
     final FixedChildDescriptionImpl description = getChildDescription();
     parent.createFixedChildrenTags(getXmlName(), description, myIndex);
+    final XmlTag tag = getXmlTag();
+    if (tag != null) return tag;
+
     final XmlTag[] newTag = new XmlTag[1];
     getManager().runChange(new Runnable() {
       public void run() {
