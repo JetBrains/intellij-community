@@ -67,6 +67,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final Project myProject;
   private List<DependenciesBuilder> myBuilders;
+  private final Set<PsiFile> myExcluded;
   private Content myContent;
   private final DependencyPanelSettings mySettings = new DependencyPanelSettings();
   private static final Logger LOG = Logger.getInstance("#" + DependenciesPanel.class.getName());
@@ -75,12 +76,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final AnalysisScope myScopeOfInterest;
 
   public DependenciesPanel(Project project, final DependenciesBuilder builder){
-    this(project, Collections.singletonList(builder));
+    this(project, Collections.singletonList(builder), new HashSet<PsiFile>());
   }
 
-  public DependenciesPanel(Project project, final List<DependenciesBuilder> builders) {
+  public DependenciesPanel(Project project, final List<DependenciesBuilder> builders, final Set<PsiFile> excluded) {
     super(new BorderLayout());
     myBuilders = builders;
+    myExcluded = excluded;
     final DependenciesBuilder main = myBuilders.get(0);
     myForward = !main.isBackward();
     myScopeOfInterest = main.getScopeOfInterest();
@@ -90,6 +92,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       myDependencies.putAll(builder.getDependencies());
       myIllegalDependencies.putAll(builder.getIllegalDependencies());
     }
+    exclude(excluded);
     myProject = project;
     myUsagesPanel = new UsagesPanel(myProject, myBuilders);
     Disposer.register(this, myUsagesPanel);
@@ -185,6 +188,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
           selectElementInLeftTree(oneFileSet.iterator().next());
         }
       }
+    }
+  }
+
+  private void exclude(final Set<PsiFile> excluded) {
+    for (PsiFile psiFile : excluded) {
+      myDependencies.remove(psiFile);
+      myIllegalDependencies.remove(psiFile);
     }
   }
 
@@ -297,6 +307,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       group.add(actionManager.getAction(IdeActions.GROUP_ANALYZE));
       group.add(new AddToScopeAction());
       group.add(new SelectInLeftTreeAction());
+    } else {
+      group.add(new RemoveFromScopeAction());
     }
 
     return group;
@@ -537,10 +549,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
             scopes.add(scope);
           }
           if (!myForward) {
-            new BackwardDependenciesHandler(myProject, scopes, myScopeOfInterest).analyze();
+            new BackwardDependenciesHandler(myProject, scopes, myScopeOfInterest, myExcluded).analyze();
           }
           else {
-            new AnalyzeDependenciesHandler(myProject, scopes).analyze();
+            new AnalyzeDependenciesHandler(myProject, scopes, myExcluded).analyze();
           }
         }
       });
@@ -623,6 +635,24 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
+  private class RemoveFromScopeAction extends AnAction {
+    private RemoveFromScopeAction() {
+      super("Remove from scope");
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(!getSelectedScope(myLeftTree).isEmpty());
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final Set<PsiFile> selectedScope = getSelectedScope(myLeftTree);
+      exclude(selectedScope);
+      myExcluded.addAll(selectedScope);
+      TreeUtil.removeSelected(myLeftTree);
+    }
+  }
+
   private class AddToScopeAction extends AnAction {
     private AddToScopeAction() {
       super("Add to scope");
@@ -630,14 +660,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     public void update(final AnActionEvent e) {
       super.update(e);
-      final PackageDependenciesNode node = myRightTree.getSelectedNode();
-      e.getPresentation().setEnabled(node != null && getScope(node) != null);
+      e.getPresentation().setEnabled(getScope() != null);
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      PackageDependenciesNode node = myRightTree.getSelectedNode();
-      LOG.assertTrue(node != null);
-      final AnalysisScope scope = getScope(node);
+      final AnalysisScope scope = getScope();
       LOG.assertTrue(scope != null);
       final DependenciesBuilder builder;
       if (!myForward) {
@@ -654,13 +681,14 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
           myBuilders.add(builder);
           myDependencies.putAll(builder.getDependencies());
           myIllegalDependencies.putAll(builder.getIllegalDependencies());
+          exclude(myExcluded);
           rebuild();
         }
       }, null, new PerformAnalysisInBackgroundOption(myProject));
     }
 
     @Nullable
-    private AnalysisScope getScope(final PackageDependenciesNode node) {
+    private AnalysisScope getScope() {
       final Set<PsiFile> selectedScope = getSelectedScope(myRightTree);
       Set<PsiFile> result = new HashSet<PsiFile>();
       ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES);

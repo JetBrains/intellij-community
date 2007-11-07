@@ -11,12 +11,11 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.peer.PeerFactory;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: anna
@@ -26,15 +25,17 @@ public class BackwardDependenciesHandler {
   private final Project myProject;
   private final List<AnalysisScope> myScopes;
   private final AnalysisScope myScopeOfInterest;
+  private final Set<PsiFile> myExcluded;
 
   public BackwardDependenciesHandler(Project project, AnalysisScope scope, final AnalysisScope selectedScope) {
-    this(project, Collections.singletonList(scope), selectedScope);
+    this(project, Collections.singletonList(scope), selectedScope, new HashSet<PsiFile>());
   }
 
-  public BackwardDependenciesHandler(final Project project, final List<AnalysisScope> scopes, final AnalysisScope scopeOfInterest) {
+  public BackwardDependenciesHandler(final Project project, final List<AnalysisScope> scopes, final AnalysisScope scopeOfInterest, Set<PsiFile> excluded) {
     myProject = project;
     myScopes = scopes;
     myScopeOfInterest = scopeOfInterest;
+    myExcluded = excluded;
   }
 
   public void analyze() {
@@ -53,7 +54,7 @@ public class BackwardDependenciesHandler {
       public void run() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            DependenciesPanel panel = new DependenciesPanel(myProject, builders);
+            DependenciesPanel panel = new DependenciesPanel(myProject, builders, myExcluded);
             Content content = PeerFactory.getInstance().getContentFactory().createContent(panel, AnalysisScopeBundle.message(
               "backward.dependencies.toolwindow.title", builders.get(0).getScope().getDisplayName()), false);
             content.setDisposer(panel);

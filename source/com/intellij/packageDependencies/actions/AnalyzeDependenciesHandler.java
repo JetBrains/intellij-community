@@ -11,24 +11,25 @@ import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.peer.PeerFactory;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class AnalyzeDependenciesHandler {
   private final Project myProject;
   private final List<AnalysisScope> myScopes;
+  private final Set<PsiFile> myExcluded;
 
   public AnalyzeDependenciesHandler(Project project, AnalysisScope scope) {
-    this(project, Collections.singletonList(scope));
+    this(project, Collections.singletonList(scope), new HashSet<PsiFile>());
   }
 
-  public AnalyzeDependenciesHandler(Project project, List<AnalysisScope> scopes) {
+  public AnalyzeDependenciesHandler(Project project, List<AnalysisScope> scopes, Set<PsiFile> excluded) {
     myProject = project;
     myScopes = scopes;
+    myExcluded = excluded;
   }
 
   public void analyze() {
@@ -47,7 +48,7 @@ public class AnalyzeDependenciesHandler {
       public void run() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            DependenciesPanel panel = new DependenciesPanel(myProject, builders);
+            DependenciesPanel panel = new DependenciesPanel(myProject, builders, myExcluded);
             Content content = PeerFactory.getInstance().getContentFactory().createContent(panel, AnalysisScopeBundle.message(
               "package.dependencies.toolwindow.title", builders.get(0).getScope().getDisplayName()), false);
             content.setDisposer(panel);
