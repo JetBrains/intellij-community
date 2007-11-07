@@ -31,7 +31,7 @@ public class FilePatch {
   private String myAfterName;
   private String myBeforeVersionId;
   private String myAfterVersionId;
-  private List<PatchHunk> myHunks = new ArrayList<PatchHunk>();
+  private final List<PatchHunk> myHunks = new ArrayList<PatchHunk>();
 
   public String getBeforeName() {
     return myBeforeName;
@@ -113,6 +113,9 @@ public class FilePatch {
       }
       VirtualFile newFile = fileToPatch.createChildData(this, getBeforeFileName());
       final Document document = FileDocumentManager.getInstance().getDocument(newFile);
+      if (document == null) {
+        throw new ApplyPatchException("Failed to set contents for new file " + fileToPatch.getPath());
+      }
       document.setText(getNewFileText());
       FileDocumentManager.getInstance().saveDocument(document);
     }
@@ -126,6 +129,9 @@ public class FilePatch {
       ApplyPatchStatus status = applyModifications(text, newText);
       if (status != ApplyPatchStatus.ALREADY_APPLIED) {
         final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
+        if (document == null) {
+          throw new ApplyPatchException("Failed to set contents for updated file " + fileToPatch.getPath());
+        }
         document.setText(newText.toString());
         FileDocumentManager.getInstance().saveDocument(document);
       }
@@ -195,7 +201,7 @@ public class FilePatch {
 
   private static boolean checkPackageRename(final ApplyPatchContext context,
                                             final String[] beforeNameComponents,
-                                            final String[] afterNameComponents) throws IOException {
+                                            final String[] afterNameComponents) {
     int changedIndex = -1;
     for(int i=context.getSkipTopDirs(); i<afterNameComponents.length-1; i++) {
       if (!beforeNameComponents [i].equals(afterNameComponents [i])) {
