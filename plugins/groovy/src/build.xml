@@ -90,7 +90,7 @@
   <target name="make.rt" description="makes runtime classes" depends="build.lexer, unzip.last.successful.IDEA.build">
     <mkdir dir="${production.dest.groovy_rt}"/>
     
-    <javac destdir="${production.dest.groovy_rt}">
+    <javac destdir="${production.dest.groovy_rt}" target="1.3">
       <src refId="rtFiles"/>
       <classpath refid="groovy.path"/>
     </javac>
