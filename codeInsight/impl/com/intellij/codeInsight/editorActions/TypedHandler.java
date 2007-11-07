@@ -3,7 +3,6 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
@@ -28,13 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
@@ -43,11 +36,9 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.xml.util.HtmlUtil;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -255,11 +246,15 @@ public class TypedHandler implements TypedActionHandler {
       fileType = file.getFileType();
     }
 
-    if ('>' == charTyped){
-      if (file instanceof XmlFile){
-        if(handleXmlGreater(project, editor, fileType)) return;
+    final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
+    for(TypedHandlerDelegate delegate: delegates) {
+      if (delegate.beforeCharTyped(charTyped, project, editor, file, fileType)) {
+        return;
       }
-      else if (file instanceof PsiJavaFile && !(file instanceof JspFile) &&
+    }
+
+    if ('>' == charTyped){
+      if (file instanceof PsiJavaFile && !(file instanceof JspFile) &&
           CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
                ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
         if (handleJavaGT(editor)) return;
@@ -281,10 +276,6 @@ public class TypedHandler implements TypedActionHandler {
         if (handleELClosingBrace(editor, file, project)) return;
       } else if (originalFileType == StdFileTypes.JAVA) {
         if (handleJavaArrayInitializerRBrace(editor)) return;
-      }
-    } else if ('/' == charTyped){
-      if (file instanceof XmlFile){
-        if(handleXmlSlashInEmptyEnd(project, editor)) return;
       }
     }
 
@@ -323,14 +314,14 @@ public class TypedHandler implements TypedActionHandler {
 
       indentOpenedBrace(project, editor);
     }
-    else if ('/' == charTyped){
-      if (file instanceof XmlFile){
-        handleXmlSlash(project, editor);
-      }
-    } else if ('=' == charTyped) {
+    else if ('=' == charTyped) {
       if (originalFileType == StdFileTypes.JSP) {
         handleJspEqual(project, editor);
       }
+    }
+
+    for(TypedHandlerDelegate delegate: delegates) {
+      delegate.charTyped(charTyped, project, editor, file);
     }
   }
 
@@ -527,184 +518,6 @@ public class TypedHandler implements TypedActionHandler {
     editor.getCaretModel().moveToOffset(offset + 1);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     return true;
-  }
-
-  private static boolean handleXmlSlashInEmptyEnd(Project project, Editor editor){
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    final int offset = editor.getCaretModel().getOffset();
-    FileViewProvider provider = file.getViewProvider();
-    PsiElement element = provider.findElementAt(offset, XMLLanguage.class);
-
-    if (element instanceof XmlToken) {
-      final IElementType tokenType = ((XmlToken)element).getTokenType();
-
-      if (tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END &&
-          offset == element.getTextOffset()
-         ) {
-        editor.getCaretModel().moveToOffset(offset + 1);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        return true;
-      } else if (tokenType == XmlTokenType.XML_TAG_END &&
-                 offset == element.getTextOffset()
-                ) {
-        final ASTNode parentNode = element.getParent().getNode();
-        final ASTNode child = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(parentNode);
-
-        if (child != null && offset + 1 == child.getTextRange().getStartOffset()) {
-          editor.getDocument().replaceString(offset + 1, parentNode.getTextRange().getEndOffset(),"");
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private static void handleXmlSlash(Project project, Editor editor){
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    FileViewProvider provider = file.getViewProvider();
-    final int offset = editor.getCaretModel().getOffset();
-    PsiElement element = provider.findElementAt(offset - 1, XMLLanguage.class);
-    if (element == null) return;
-    if (!(element.getLanguage() instanceof XMLLanguage)) return;
-
-    ASTNode prevLeaf = element.getNode();
-    final String prevLeafText = prevLeaf != null ? prevLeaf.getText():null;
-    if (prevLeaf != null && !"/".equals(prevLeafText)) {
-      if (!"/".equals(prevLeafText.trim())) return;
-    }
-    while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
-    if(prevLeaf instanceof OuterLanguageElement) {
-      element = file.getDocument().findElementAt(offset - 1);
-      prevLeaf = element.getNode();
-      while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
-    }
-    if(prevLeaf == null) return;
-
-    XmlTag tag = PsiTreeUtil.getParentOfType(prevLeaf.getPsi(), XmlTag.class);
-    if(tag == null) { // prevLeaf maybe in one tree and element in another
-      PsiElement element2 = provider.findElementAt(prevLeaf.getStartOffset(), XMLLanguage.class);
-      tag = PsiTreeUtil.getParentOfType(element2, XmlTag.class);
-      if (tag == null) return;
-    }
-
-    if (tag instanceof JspXmlTagBase || tag instanceof JspXmlRootTag) return;
-    if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return;
-    if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return;
-    if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) return;
-
-    EditorModificationUtil.insertStringAtCaret(editor, ">");
-  }
-
-  private static boolean handleXmlGreater(Project project, Editor editor, FileType fileType){
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    FileViewProvider provider = file.getViewProvider();
-    final int offset = editor.getCaretModel().getOffset();
-
-    PsiElement element;
-
-    if (offset < editor.getDocument().getTextLength()) {
-      element = provider.findElementAt(offset, XMLLanguage.class);
-      if (!(element instanceof PsiWhiteSpace)) {
-        boolean nonAcceptableDelimiter = true;
-
-        if (element instanceof XmlToken) {
-          IElementType tokenType = ((XmlToken)element).getTokenType();
-
-          if (tokenType == XmlTokenType.XML_START_TAG_START ||
-              tokenType == XmlTokenType.XML_END_TAG_START
-             ) {
-            if (offset > 0) {
-              PsiElement previousElement = provider.findElementAt(offset - 1, XMLLanguage.class);
-
-              if (previousElement instanceof XmlToken) {
-                tokenType = ((XmlToken)previousElement).getTokenType();
-                element = previousElement;
-                nonAcceptableDelimiter = false;
-              }
-            }
-          }
-
-          if (tokenType == XmlTokenType.XML_TAG_END ||
-              tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END && element.getTextOffset() == offset - 1
-             ) {
-            editor.getCaretModel().moveToOffset(offset + 1);
-            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            return true;
-          }
-        }
-        if (nonAcceptableDelimiter) return false;
-      } else {
-        // check if right after empty end
-        PsiElement previousElement = provider.findElementAt(offset - 1, XMLLanguage.class);
-        if (previousElement instanceof XmlToken) {
-          final IElementType tokenType = ((XmlToken)previousElement).getTokenType();
-
-          if (tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
-            return true;
-          }
-        }
-      }
-
-      PsiElement parent = element.getParent();
-      if (parent instanceof XmlText) {
-        final String text = parent.getText();
-        // check /
-        final int index = offset - parent.getTextOffset() - 1;
-
-        if (index >= 0 && text.charAt(index)=='/') {
-          return false; // already seen /
-        }
-        element = parent.getPrevSibling();
-      } else if (parent instanceof XmlTag && !(element.getPrevSibling() instanceof XmlTag)) {
-        element = parent;
-      } else if (parent instanceof XmlAttributeValue) {
-        element = parent;
-      }
-    }
-    else {
-      element = provider.findElementAt(editor.getDocument().getTextLength() - 1, XMLLanguage.class);
-      if (element == null) return false;
-      element = element.getParent();
-    }
-
-    if (element instanceof XmlAttributeValue) {
-      element = element.getParent().getParent();
-    }
-
-    while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
-    if (element == null) return false;
-    if (!(element instanceof XmlTag)) {
-      if (element instanceof XmlTokenImpl &&
-          element.getPrevSibling() !=null &&
-          element.getPrevSibling().getText().equals("<")
-         ) {
-        // tag is started and there is another text in the end
-        editor.getDocument().insertString(offset, "</" + element.getText() + ">");
-      }
-      return false;
-    }
-
-    XmlTag tag = (XmlTag)element;
-    if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return false;
-    if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return false;
-    if (tag instanceof JspXmlTagBase) return false;
-
-    final String name = tag.getName();
-    if (tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(name)) return false;
-    if ("".equals(name)) return false;
-
-    int tagOffset = tag.getTextRange().getStartOffset();
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(tagOffset);
-    if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), fileType, iterator, true,true)) return false;
-
-    editor.getDocument().insertString(offset, "</" + name + ">");
-    return false;
   }
 
   private static void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){
