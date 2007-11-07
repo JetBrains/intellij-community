@@ -107,6 +107,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
         myLastProcessedOverComponent = null;
         myCurrentDragContext = null;
         myCurrentEvent = null;
+        myLastProcessedEvent = null;
       }
     };
 
