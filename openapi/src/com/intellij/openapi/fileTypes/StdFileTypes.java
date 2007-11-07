@@ -26,8 +26,6 @@ public class StdFileTypes {
   public static final LanguageFileType XHTML = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("XHTML");
   public static final LanguageFileType PROPERTIES = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("Properties");
   public static final LanguageFileType PLAIN_TEXT = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("PLAIN_TEXT");
-  public static final FileType ARCHIVE = FileTypeManager.getInstance().getStdFileType("ARCHIVE");
-  public static final FileType UNKNOWN = FileTypeManager.getInstance().getStdFileType("UNKNOWN");
   public static final FileType GUI_DESIGNER_FORM = FileTypeManager.getInstance().getStdFileType("GUI_DESIGNER_FORM");
   public static final FileType IDEA_WORKSPACE = FileTypeManager.getInstance().getStdFileType("IDEA_WORKSPACE");
   public static final FileType IDEA_PROJECT = FileTypeManager.getInstance().getStdFileType("IDEA_PROJECT");

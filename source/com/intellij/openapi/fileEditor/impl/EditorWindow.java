@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.ui.Splitter;
@@ -507,7 +507,7 @@ public class EditorWindow {
     LOG.assertTrue(file != null);
 
     if (!file.isValid()) {
-      Icon fakeIcon = StdFileTypes.UNKNOWN.getIcon();
+      Icon fakeIcon = FileTypes.UNKNOWN.getIcon();
       assert fakeIcon != null : "Can't find the icon for unknown file type";
       return fakeIcon;
     }

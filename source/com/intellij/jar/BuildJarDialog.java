@@ -10,7 +10,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -202,7 +202,7 @@ public class BuildJarDialog extends DialogWrapper {
         fileChooser.setMultiSelectionEnabled(false);
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.setDialogTitle(IdeBundle.message("jar.build.save.title"));
-        fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.ARCHIVE));
+        fileChooser.addChoosableFileFilter(new FileTypeFilter(FileTypes.ARCHIVE));
 
         if (fileChooser.showSaveDialog(WindowManager.getInstance().suggestParentWindow(myProject)) != JFileChooser.APPROVE_OPTION) {
           return;

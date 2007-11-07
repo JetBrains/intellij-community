@@ -229,11 +229,11 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     FileNameMatcher matcher = FileTypeManager.parseFromString(pattern);
     FileType fileTypeByExtension = myTempPatternsTable.findAssociatedFileType(matcher);
 
-    if (fileTypeByExtension != null && fileTypeByExtension != StdFileTypes.UNKNOWN) {
+    if (fileTypeByExtension != null && fileTypeByExtension != FileTypes.UNKNOWN) {
       return fileTypeByExtension;
     }
     FileType registeredFileType = FileTypeManager.getInstance().getFileTypeByExtension(pattern);
-    if (registeredFileType != StdFileTypes.UNKNOWN && registeredFileType.isReadOnly()) {
+    if (registeredFileType != FileTypes.UNKNOWN && registeredFileType.isReadOnly()) {
       return registeredFileType;
     }
 
@@ -316,7 +316,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       DefaultListModel listModel = (DefaultListModel)myFileTypesList.getModel();
       listModel.clear();
       for (FileType type : types) {
-        if (type != StdFileTypes.UNKNOWN) {
+        if (type != FileTypes.UNKNOWN) {
           listModel.addElement(type);
         }
       }

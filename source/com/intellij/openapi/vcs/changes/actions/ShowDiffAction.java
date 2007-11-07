@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -211,10 +211,10 @@ public class ShowDiffAction extends AnAction {
 
     if ((bRev != null && (bRev.getFile().getFileType().isBinary() || bRev.getFile().isDirectory())) ||
         (aRev != null && (aRev.getFile().getFileType().isBinary() || aRev.getFile().isDirectory()))) {
-      if (bRev != null && bRev.getFile().getFileType() == StdFileTypes.UNKNOWN && !bRev.getFile().isDirectory()) {
+      if (bRev != null && bRev.getFile().getFileType() == FileTypes.UNKNOWN && !bRev.getFile().isDirectory()) {
         if (!checkAssociate(project, bRev.getFile())) return null;
       }
-      else if (aRev != null && aRev.getFile().getFileType() == StdFileTypes.UNKNOWN && !aRev.getFile().isDirectory()) {
+      else if (aRev != null && aRev.getFile().getFileType() == FileTypes.UNKNOWN && !aRev.getFile().isDirectory()) {
         if (!checkAssociate(project, aRev.getFile())) return null;
       }
       else {

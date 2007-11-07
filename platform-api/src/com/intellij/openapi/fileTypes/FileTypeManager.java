@@ -62,7 +62,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * Returns the file type for the specified file name.
    *
    * @param fileName The file name for which the type is requested.
-   * @return The file type instance, or {@link StdFileTypes#UNKNOWN} if not found.
+   * @return The file type instance, or {@link FileTypes#UNKNOWN} if not found.
    */
   @NotNull
   public abstract
@@ -147,7 +147,7 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
    * Otherwise asks user to select file type and associates it with fileName extension if any selected.
    *
    * @param file - a file to ask for file type association
-   * @return Known file type or null. Never returns {@link StdFileTypes#UNKNOWN}.
+   * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
    */
   @Nullable
   public abstract FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file);

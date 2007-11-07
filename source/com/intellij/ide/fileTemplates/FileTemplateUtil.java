@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
@@ -396,7 +397,7 @@ public class FileTemplateUtil{
 
   public static boolean canCreateFromTemplate (PsiDirectory[] dirs, FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
-    if (fileType.equals(StdFileTypes.UNKNOWN)) return false;
+    if (fileType.equals(FileTypes.UNKNOWN)) return false;
     if (
       template.isJavaClassTemplate() ||
       fileType.equals(StdFileTypes.GUI_DESIGNER_FORM)

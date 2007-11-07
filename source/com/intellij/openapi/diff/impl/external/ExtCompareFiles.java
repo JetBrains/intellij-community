@@ -5,14 +5,13 @@ import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
-import org.jetbrains.annotations.NonNls;
 
 class ExtCompareFiles extends BaseExternalTool {
   public static final BaseExternalTool INSTANCE = new ExtCompareFiles();
@@ -41,7 +40,7 @@ class ExtCompareFiles extends BaseExternalTool {
   private boolean canExternalizeAsFile(VirtualFile file) {
     if (file == null || file.isDirectory()) return false;
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-    if (fileType.isBinary() && fileType != StdFileTypes.UNKNOWN) return false;
+    if (fileType.isBinary() && fileType != FileTypes.UNKNOWN) return false;
     return true;
   }
 

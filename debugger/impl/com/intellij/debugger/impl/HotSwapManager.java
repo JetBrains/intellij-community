@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
@@ -86,7 +87,7 @@ public class HotSwapManager implements ProjectComponent{
 
           protected void acceptDirectory(final VirtualFile file, final String fileRoot, final String filePath) {
             progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
-            if(file.getFileSystem() instanceof JarFileSystem && StdFileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFile(file))) {
+            if(file.getFileSystem() instanceof JarFileSystem && FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFile(file))) {
               if(file.getTimeStamp() > timeStamp) {
                 super.acceptDirectory(file, fileRoot, filePath);
               }

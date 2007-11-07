@@ -25,7 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -522,7 +522,7 @@ public class VcsUtil {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     VirtualFile[] children = dir.getChildren();
     for (VirtualFile child : children) {
-      if (!child.isDirectory() && (fileTypeManager == null || fileTypeManager.getFileTypeByFile(child) != StdFileTypes.UNKNOWN)) {
+      if (!child.isDirectory() && (fileTypeManager == null || fileTypeManager.getFileTypeByFile(child) != FileTypes.UNKNOWN)) {
         files.add(child);
       }
       else if (recursive && child.isDirectory()) {

@@ -18,8 +18,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -170,7 +171,7 @@ public class AntExplorer extends JPanel implements DataProvider {
   }
 
   private void addBuildFile() {
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createXmlDescriptor();
+    final FileChooserDescriptor descriptor = createXmlDescriptor();
     descriptor.setTitle(AntBundle.message("select.ant.build.file.dialog.title"));
     descriptor.setDescription(AntBundle.message("select.ant.build.file.dialog.description"));
     final VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
@@ -443,6 +444,18 @@ public class AntExplorer extends JPanel implements DataProvider {
       return result.toArray(new VirtualFile[result.size()]);
     }
     return null;
+  }
+
+  public static FileChooserDescriptor createXmlDescriptor() {
+    return new FileChooserDescriptor(true, false, false, false, false, true){
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        boolean b = super.isFileVisible(file, showHiddenFiles);
+        if (!file.isDirectory()) {
+          b &= StdFileTypes.XML.equals(FileTypeManager.getInstance().getFileTypeByFile(file));
+        }
+        return b;
+      }
+    };
   }
 
   private static final class NodeRenderer extends ColoredTreeCellRenderer {

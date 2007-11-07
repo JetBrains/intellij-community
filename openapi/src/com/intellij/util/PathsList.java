@@ -17,14 +17,15 @@ package com.intellij.util;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.*;
-import com.intellij.util.containers.HashSet;
 import static com.intellij.util.containers.ContainerUtil.*;
+import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -54,7 +55,7 @@ public class PathsList  {
     new Function<String, VirtualFile>() {
       public VirtualFile fun(String s) {
         final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(s);
-        if (StdFileTypes.ARCHIVE.equals(fileType)) {
+        if (FileTypes.ARCHIVE.equals(fileType)) {
           return JarFileSystem.getInstance().findFileByPath(s + JarFileSystem.JAR_SEPARATOR);
         }
         return PATH_TO_LOCAL_VFILE.fun(s);

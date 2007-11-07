@@ -28,6 +28,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
@@ -141,7 +142,7 @@ public class ApplyPatchAction extends AnAction {
       if (fileToPatch != null && !fileToPatch.isDirectory()) {
         filesToMakeWritable.add(fileToPatch);
         FileType fileType = fileToPatch.getFileType();
-        if (fileType == StdFileTypes.UNKNOWN) {
+        if (fileType == FileTypes.UNKNOWN) {
           fileType = FileTypeChooser.associateFileType(fileToPatch.getPresentableName());
           if (fileType == null) {
             return false;
@@ -150,7 +151,7 @@ public class ApplyPatchAction extends AnAction {
       }
       else if (patch.isNewFile()) {
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(patch.getBeforeFileName());
-        if (fileType == StdFileTypes.UNKNOWN) {
+        if (fileType == FileTypes.UNKNOWN) {
           fileType = FileTypeChooser.associateFileType(patch.getBeforeFileName());
           if (fileType == null) {
             return false;

@@ -171,7 +171,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NotNull
   public FileType getFileTypeByFileName(@NotNull String fileName) {
     FileType type = myPatternsTable.findAssociatedFileType(fileName);
-    return type == null ? StdFileTypes.UNKNOWN : type;
+    return type == null ? FileTypes.UNKNOWN : type;
   }
 
   @NotNull
@@ -796,7 +796,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private static boolean shouldSave(FileType fileType) {
-    return fileType != StdFileTypes.UNKNOWN && !fileType.isReadOnly();
+    return fileType != FileTypes.UNKNOWN && !fileType.isReadOnly();
   }
 
   private static void writeHeader(Element root, FileType fileType) {

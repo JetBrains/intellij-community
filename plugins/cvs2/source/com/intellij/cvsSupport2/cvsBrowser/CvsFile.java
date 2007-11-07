@@ -4,7 +4,7 @@ import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
 import com.intellij.cvsSupport2.history.ComparableVcsRevisionOnOperation;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -29,7 +29,7 @@ public class CvsFile extends CvsElement {
       return FileTypeManager.getInstance().getFileTypeByFileName(name).getIcon();
     }
     catch (Exception ex) {
-      return StdFileTypes.UNKNOWN.getIcon();
+      return FileTypes.UNKNOWN.getIcon();
     }
   }
 

@@ -1,6 +1,6 @@
 package com.intellij.openapi.roots.ui.util;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -12,7 +12,7 @@ public class JarSubfileCellAppearance extends ValidFileCellAppearance {
   }
 
   protected Icon getIcon() {
-    return StdFileTypes.ARCHIVE.getIcon();
+    return FileTypes.ARCHIVE.getIcon();
   }
 
   protected int getSplitUrlIndex(String url) {

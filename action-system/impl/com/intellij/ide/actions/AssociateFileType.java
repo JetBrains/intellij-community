@@ -2,7 +2,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +24,7 @@ public class AssociateFileType extends AnAction {
       haveSmthToDo = false;
     }
     else {
-      haveSmthToDo = FileTypeManager.getInstance().getFileTypeByFile(file) == StdFileTypes.UNKNOWN;
+      haveSmthToDo = FileTypeManager.getInstance().getFileTypeByFile(file) == FileTypes.UNKNOWN;
     }
     presentation.setVisible(haveSmthToDo || ActionPlaces.MAIN_MENU.equals(e.getPlace()));
     presentation.setEnabled(haveSmthToDo);

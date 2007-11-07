@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -316,7 +316,7 @@ public abstract class PathEditor {
           tempFile = LocalFileSystem.getInstance().findFileByPath(path);
         }
         if (tempFile != null && !tempFile.isDirectory()){
-          return Boolean.valueOf(FileTypeManager.getInstance().getFileTypeByFile(tempFile).equals(StdFileTypes.ARCHIVE));
+          return Boolean.valueOf(FileTypeManager.getInstance().getFileTypeByFile(tempFile).equals(FileTypes.ARCHIVE));
         }
         return Boolean.FALSE;
 

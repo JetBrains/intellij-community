@@ -16,9 +16,8 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -74,7 +73,7 @@ public class FileElement {
   public static boolean isArchive(VirtualFile file) {
     if (isArchiveFileSystem(file) && file.getParent() == null) return true;
     return !file.isDirectory() &&
-           FileTypeManager.getInstance().getFileTypeByFile(file) == StdFileTypes.ARCHIVE &&
+           FileTypeManager.getInstance().getFileTypeByFile(file) == FileTypes.ARCHIVE &&
            !isArchiveFileSystem(file.getParent());
   }
 

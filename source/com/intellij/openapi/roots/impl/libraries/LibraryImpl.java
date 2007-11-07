@@ -3,7 +3,7 @@ package com.intellij.openapi.roots.impl.libraries;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
@@ -123,7 +123,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private static void addChildren(final VirtualFile dir, final List<VirtualFile> container, final boolean recursively) {
     for (VirtualFile child : dir.getChildren()) {
       final FileType fileType = child.getFileType();
-      if (StdFileTypes.ARCHIVE.equals(fileType)) {
+      if (FileTypes.ARCHIVE.equals(fileType)) {
         final StringBuilder builder = StringBuilderSpinAllocator.alloc();
         try {
           builder.append(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, child.getPath()));
