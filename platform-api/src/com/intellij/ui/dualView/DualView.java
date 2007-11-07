@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.fileView.DualViewColumnInfo;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;

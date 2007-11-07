@@ -15,14 +15,12 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.intellij.util.ui.UIUtil;
 
 /**
  * Created by IntelliJ IDEA.

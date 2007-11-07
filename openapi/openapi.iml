@@ -46,6 +46,7 @@
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="lvcs-openapi" exported="" />
     <orderEntry type="module" module-name="xml-openapi" exported="" />
+    <orderEntry type="module" module-name="platform-api" exported="" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
