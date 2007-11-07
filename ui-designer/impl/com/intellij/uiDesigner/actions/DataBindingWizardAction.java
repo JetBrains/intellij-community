@@ -1,12 +1,13 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -40,7 +41,7 @@ public final class DataBindingWizardAction extends AnAction{
       final WizardData wizardData = new WizardData(project, formFile);
 
 
-      final Module module = VfsUtil.getModuleForFile(wizardData.myProject, formFile);
+      final Module module = ModuleUtil.findModuleForFile(formFile, wizardData.myProject);
       LOG.assertTrue(module != null);
 
       final LwRootContainer[] rootContainer = new LwRootContainer[1];

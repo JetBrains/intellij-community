@@ -4,7 +4,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -20,10 +20,10 @@ import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.quickFixes.FormInspectionTool;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Nls;
 
 /**
  * @author yole
@@ -65,7 +65,7 @@ public abstract class BaseFormInspection extends LocalInspectionTool implements 
       if (virtualFile == null) {
         return null;
       }
-      final Module module = VfsUtil.getModuleForFile(file.getProject(), virtualFile);
+      final Module module = ModuleUtil.findModuleForFile(virtualFile, file.getProject());
       if (module == null) {
         return null;
       }

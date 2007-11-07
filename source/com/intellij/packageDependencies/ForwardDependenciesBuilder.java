@@ -6,9 +6,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
             indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
             final VirtualFile virtualFile = file.getVirtualFile();
             if (virtualFile != null) {
-              indicator.setText2(VfsUtil.calcRelativeToProjectPath(virtualFile, getProject()));
+              indicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, getProject()));
             }
             if (myTotalFileCount > 0) {
               indicator.setFraction(((double)++ myFileCount) / myTotalFileCount);

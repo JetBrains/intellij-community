@@ -9,10 +9,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
@@ -482,7 +482,7 @@ public class EditorWindow {
 
   private String getFileTooltipText(final VirtualFile file) {
     final StringBuilder tooltipText = new StringBuilder();
-    final Module module = VfsUtil.getModuleForFile(getManager().myProject, file);
+    final Module module = ModuleUtil.findModuleForFile(file, getManager().myProject);
     if (module != null) {
       tooltipText.append("[");
       tooltipText.append(module.getName());

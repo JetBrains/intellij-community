@@ -6,10 +6,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.impl.Pattern;
 import static com.intellij.patterns.impl.StandardPatterns.psiElement;
@@ -90,7 +90,7 @@ public final class FormSourceCodeGenerator {
     myNeedLoadLabelText = false;
     myNeedLoadButtonText = false;
 
-    final Module module = VfsUtil.getModuleForFile(myProject, formFile);
+    final Module module = ModuleUtil.findModuleForFile(formFile, myProject);
     if (module == null) {
       return;
     }

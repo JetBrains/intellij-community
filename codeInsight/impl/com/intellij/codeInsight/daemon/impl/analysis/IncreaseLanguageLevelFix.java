@@ -4,13 +4,13 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -49,12 +49,12 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    Module module = VfsUtil.getModuleForFile(project, file.getVirtualFile());
+    Module module = ModuleUtil.findModuleForFile(file.getVirtualFile(), project);
     return isJdkSupportsLevel(getRelevantJdk(project, module));
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    Module module = VfsUtil.getModuleForFile(project, file.getVirtualFile());
+    Module module = ModuleUtil.findModuleForFile(file.getVirtualFile(), project);
     LanguageLevel moduleLevel = module == null ? null : module.getLanguageLevel();
     ProjectJdk jdk = getRelevantJdk(project, module);
     if (moduleLevel != null && isJdkSupportsLevel(jdk)) {

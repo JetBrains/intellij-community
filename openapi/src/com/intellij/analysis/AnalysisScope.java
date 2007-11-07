@@ -23,13 +23,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.ApplicationProfileManager;
@@ -189,7 +189,7 @@ public class AnalysisScope {
           myFilesSet.add(virtualFile);
           if (indicator != null){
             indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
-            indicator.setText2(VfsUtil.calcRelativeToProjectPath(virtualFile, file.getProject()));
+            indicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, file.getProject()));
           }
         }
       }
@@ -536,10 +536,10 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.project", myProject.getName());
 
       case FILE:
-        return AnalysisScopeBundle.message("scope.file", VfsUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject()));
+        return AnalysisScopeBundle.message("scope.file", ProjectUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject()));
 
       case DIRECTORY:
-        return AnalysisScopeBundle.message("scope.directory", VfsUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject()));
+        return AnalysisScopeBundle.message("scope.directory", ProjectUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject()));
 
       case PACKAGE:
         return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());

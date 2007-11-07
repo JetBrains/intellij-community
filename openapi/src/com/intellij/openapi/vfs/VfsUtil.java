@@ -18,10 +18,6 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -528,31 +524,6 @@ public class VfsUtil {
     return false;
   }
 
-  @Nullable
-  public static Module getModuleForFile(@NotNull Project project, @NotNull VirtualFile file){
-    return ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(file);
-  }
-
-  public static String calcRelativeToProjectPath(final VirtualFile file, final Project project) {
-    String url = file.getPresentableUrl();
-    if (project == null) {
-      return url;
-    }
-    else {
-      final VirtualFile baseDir = project.getBaseDir();
-      if (baseDir != null) {
-        //noinspection ConstantConditions
-        final String projectHomeUrl = baseDir.getPresentableUrl();
-        if (url.startsWith(projectHomeUrl)) {
-          url = "..." + url.substring(projectHomeUrl.length());
-        }
-      }
-      final Module module = getModuleForFile(project, file);
-      if (module == null) return url;
-      return new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
-    }
-  }
-
   /**
    * Returns the relative path from one virtual file to another.
    *
@@ -580,22 +551,6 @@ public class VfsUtil {
     }
 
     return null;
-  }
-
-  @Nullable
-  public static Project guessProjectForFile(VirtualFile file) {
-    ProjectManager projectManager = ProjectManager.getInstance();
-    if (projectManager == null) return null;
-    final Project[] projects = projectManager.getOpenProjects();
-    if (projects.length == 1) return projects[0];
-
-    for (Project project : projects) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
-        return project;
-      }
-    }
-
-    return projects.length == 0 ? null : projects[0];
   }
 
   public static boolean isValidName(String name) {

@@ -4,12 +4,12 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
@@ -58,7 +58,7 @@ public final class LoaderFactory {
   }
 
   @NotNull public ClassLoader getLoader(final VirtualFile formFile) {
-    final Module module = VfsUtil.getModuleForFile(myProject, formFile);
+    final Module module = ModuleUtil.findModuleForFile(formFile, myProject);
     if (module == null) {
       return getClass().getClassLoader();
     }

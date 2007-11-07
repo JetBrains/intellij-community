@@ -28,11 +28,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -212,7 +212,7 @@ public final class PreviewFormAction extends AnAction{
       for(String bundleName: bundleSet) {
         for(PropertiesFile propFile: manager.findPropertiesFiles(module, bundleName)) {
           virtualFiles.add(propFile.getVirtualFile());
-          modules.add(VfsUtil.getModuleForFile(module.getProject(), propFile.getVirtualFile()));
+          modules.add(ModuleUtil.findModuleForFile(propFile.getVirtualFile(), module.getProject()));
         }
       }
       FileSetCompileScope scope = new FileSetCompileScope(virtualFiles.toArray(new VirtualFile[] {}),

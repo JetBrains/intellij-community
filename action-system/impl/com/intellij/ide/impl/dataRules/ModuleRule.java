@@ -6,8 +6,8 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 
@@ -45,6 +45,6 @@ public class ModuleRule implements GetDataRule {
       return null;
     }
 
-    return VfsUtil.getModuleForFile(project, virtualFile);
+    return ModuleUtil.findModuleForFile(virtualFile, project);
   }
 }

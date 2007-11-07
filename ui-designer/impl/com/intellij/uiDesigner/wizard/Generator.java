@@ -6,17 +6,18 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.PsiPropertiesProvider;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -25,9 +26,8 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -48,7 +48,7 @@ public final class Generator {
    * @param rootContainer output parameter; should be LwRootContainer[1]
    */
   public static FormProperty[] exposeForm(final Project project, final VirtualFile formFile, final LwRootContainer[] rootContainer) throws MyException{
-    final Module module = VfsUtil.getModuleForFile(project, formFile);
+    final Module module = ModuleUtil.findModuleForFile(formFile, project);
     LOG.assertTrue(module != null);
 
     final PsiPropertiesProvider propertiesProvider = new PsiPropertiesProvider(module);
@@ -333,7 +333,7 @@ public final class Generator {
 
     // put them to the bound class
 
-    final Module module = VfsUtil.getModuleForFile(data.myProject, data.myFormFile);
+    final Module module = ModuleUtil.findModuleForFile(data.myFormFile, data.myProject);
     LOG.assertTrue(module != null);
     final PsiClass boundClass = FormEditingUtil.findClassToBind(module, rootContainer[0].getClassToBind());
     LOG.assertTrue(boundClass != null);

@@ -13,14 +13,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.util.SmartList;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
@@ -246,7 +245,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
     ModuleUtil.getDependencies(module, dependentModules);
 
     for(VirtualFile file: PropertiesFilesManager.getInstance().getAllPropertiesFiles()) {
-      if (!dependentModules.contains(VfsUtil.getModuleForFile(myProject, file))) {
+      if (!dependentModules.contains(ModuleUtil.findModuleForFile(file, myProject))) {
         continue;
       }
 

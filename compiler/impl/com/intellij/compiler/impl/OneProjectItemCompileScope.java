@@ -4,13 +4,13 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public class OneProjectItemCompileScope extends UserDataHolderBase implements Co
   }
 
   public Module[] getAffectedModules() {
-    final Module module = VfsUtil.getModuleForFile(myProject, myFile);
+    final Module module = ModuleUtil.findModuleForFile(myFile, myProject);
     if (module == null) {
       LOG.assertTrue(false, "Module is null for file " + myFile.getPresentableUrl());
       return Module.EMPTY_ARRAY;

@@ -8,10 +8,10 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,7 @@ public final class UIFormEditorProvider implements FileEditorProvider {
     return
       FileTypeManager.getInstance().getFileTypeByFile(file) == StdFileTypes.GUI_DESIGNER_FORM &&
       !StdFileTypes.GUI_DESIGNER_FORM.isBinary() &&
-      VfsUtil.getModuleForFile(project, file) != null;
+      ModuleUtil.findModuleForFile(file, project) != null;
   }
 
   @NotNull public FileEditor createEditor(@NotNull final Project project, @NotNull final VirtualFile file){

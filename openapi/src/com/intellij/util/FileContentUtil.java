@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -36,7 +37,7 @@ public class FileContentUtil {
 
   public static void setFileText(@Nullable Project project, final VirtualFile virtualFile, final String text) throws IOException {
     if (project == null) {
-      project = VfsUtil.guessProjectForFile(virtualFile);
+      project = ProjectUtil.guessProjectForFile(virtualFile);
     }
     if (project != null) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
