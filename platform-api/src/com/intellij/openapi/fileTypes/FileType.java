@@ -24,6 +24,7 @@ import javax.swing.*;
 
 /**
  * @see com.intellij.openapi.fileTypes.StdFileTypes
+ * @see com.intellij.openapi.fileTypes.FileTypes
  */
 public interface FileType {
   FileType[] EMPTY_ARRAY = new FileType[0];
