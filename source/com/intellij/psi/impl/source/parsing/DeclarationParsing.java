@@ -469,7 +469,7 @@ public class DeclarationParsing extends Parsing {
           lexer.advance();
           TreeUtil.addChildren(parameterList, parseAnnotationParameter(lexer, false));
         }
-        else if (tokenType == BAD_CHARACTER) {
+        else if (tokenType == BAD_CHARACTER || KEYWORD_BIT_SET.contains(tokenType)) {
           TreeUtil.addChildren(parameterList, Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.rparen")));
           TreeUtil.addChildren(parameterList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           lexer.advance();
