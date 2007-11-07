@@ -2,6 +2,7 @@ package com.intellij.xml.util;
 
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.javaee.UriUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -82,11 +83,11 @@ public class XmlResourceResolver implements XMLEntityResolver {
               File workingFile = new File("");
               String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
               String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
-              vFile = VfsUtil.findRelativeFile(id, null);
+              vFile = UriUtil.findRelativeFile(id, null);
             }
 
             if (vFile == null) {
-              vFile = VfsUtil.findRelativeFile(baseSystemId, null);
+              vFile = UriUtil.findRelativeFile(baseSystemId, null);
 
               if (vFile == null) {
                 try {
@@ -145,7 +146,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Finding "+relativePath+" relative to:"+file.getPath());
             }
-            final VirtualFile relativeFile = VfsUtil.findRelativeFile(relativePath, file);
+            final VirtualFile relativeFile = UriUtil.findRelativeFile(relativePath, file);
             if (LOG.isDebugEnabled()) {
               LOG.debug("Found "+(relativeFile != null ? relativeFile.getPath():"null"));
             }

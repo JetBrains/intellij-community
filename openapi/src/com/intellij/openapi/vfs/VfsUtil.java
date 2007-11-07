@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -313,7 +312,6 @@ public class VfsUtil {
       }
     }
 
-    uri = ExternalResourceManager.getInstance().getResourceLocation(uri);
     uri = uri.replace('\\', '/');
 
     if (uri.startsWith("file:///")) {

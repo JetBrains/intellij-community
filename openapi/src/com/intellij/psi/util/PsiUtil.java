@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.javaee.UriUtil;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -632,13 +632,13 @@ public final class PsiUtil {
     if (base instanceof PsiFile) {
       PsiFile baseFile = (PsiFile) base;
       if (baseFile.getOriginalFile() != null) return findRelativeFile(uri, baseFile.getOriginalFile());
-      VirtualFile file = VfsUtil.findRelativeFile(uri, baseFile.getVirtualFile());
+      VirtualFile file = UriUtil.findRelativeFile(uri, baseFile.getVirtualFile());
       if (file == null) return null;
       return base.getManager().findFile(file);
     }
     else if (base instanceof PsiDirectory) {
       PsiDirectory baseDir = (PsiDirectory) base;
-      VirtualFile file = VfsUtil.findRelativeFile(uri, baseDir.getVirtualFile());
+      VirtualFile file = UriUtil.findRelativeFile(uri, baseDir.getVirtualFile());
       if (file == null) return null;
       return base.getManager().findFile(file);
     }
@@ -651,13 +651,13 @@ public final class PsiUtil {
     if (base instanceof PsiFile) {
       PsiFile baseFile = (PsiFile) base;
       if (baseFile.getOriginalFile() != null) return findRelativeDirectory(uri, baseFile.getOriginalFile());
-      VirtualFile file = VfsUtil.findRelativeFile(uri, baseFile.getVirtualFile());
+      VirtualFile file = UriUtil.findRelativeFile(uri, baseFile.getVirtualFile());
       if (file == null) return null;
       return base.getManager().findDirectory(file);
     }
     else if (base instanceof PsiDirectory) {
       PsiDirectory baseDir = (PsiDirectory) base;
-      VirtualFile file = VfsUtil.findRelativeFile(uri, baseDir.getVirtualFile());
+      VirtualFile file = UriUtil.findRelativeFile(uri, baseDir.getVirtualFile());
       if (file == null) return null;
       return base.getManager().findDirectory(file);
     }

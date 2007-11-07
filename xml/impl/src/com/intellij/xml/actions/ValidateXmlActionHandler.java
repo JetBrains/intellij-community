@@ -1,7 +1,9 @@
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.javaee.UriUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +12,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -25,7 +26,6 @@ import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlResourceResolver;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.jaxp.JAXPConstants;
 import org.apache.xerces.jaxp.SAXParserFactoryImpl;
@@ -47,8 +47,8 @@ import java.net.MalformedURLException;
 import java.net.NoRouteToHostException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
 
@@ -87,14 +87,14 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     if (publicId == null) {
       if (systemId != null) {
         final String path = myXmlResourceResolver.getPathByPublicId(systemId);
-        if (path != null) return VfsUtil.findRelativeFile(path,null);
+        if (path != null) return UriUtil.findRelativeFile(path,null);
         final PsiFile file = myXmlResourceResolver.resolve(null, systemId);
         if (file != null) return file.getVirtualFile();
       }
       return myFile.getVirtualFile();
     }
     final String path = myXmlResourceResolver.getPathByPublicId(publicId);
-    if (path != null) return VfsUtil.findRelativeFile(path,null);
+    if (path != null) return UriUtil.findRelativeFile(path,null);
     return null;
   }
 
@@ -405,7 +405,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
           if (resourcePaths.length > 0) { // if caches are used
             final VirtualFile[] files = new VirtualFile[resourcePaths.length];
             for(int i = 0; i < resourcePaths.length; ++i) {
-              files[i] = VfsUtil.findRelativeFile(resourcePaths[i], null);
+              files[i] = UriUtil.findRelativeFile(resourcePaths[i], null);
             }
 
             myFile.putUserData(DEPENDENT_FILES_KEY, files);
