@@ -14,36 +14,48 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * User: anna
  * Date: Jan 16, 2005
  */
 public class BackwardDependenciesHandler {
-  private Project myProject;
-  private AnalysisScope myScope;
+  private final Project myProject;
+  private final List<AnalysisScope> myScopes;
   private final AnalysisScope myScopeOfInterest;
 
   public BackwardDependenciesHandler(Project project, AnalysisScope scope, final AnalysisScope selectedScope) {
+    this(project, Collections.singletonList(scope), selectedScope);
+  }
+
+  public BackwardDependenciesHandler(final Project project, final List<AnalysisScope> scopes, final AnalysisScope scopeOfInterest) {
     myProject = project;
-    myScope = scope;
-    myScopeOfInterest = selectedScope;
+    myScopes = scopes;
+    myScopeOfInterest = scopeOfInterest;
   }
 
   public void analyze() {
-    final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, myScope, myScopeOfInterest);
+    final List<DependenciesBuilder> builders = new ArrayList<DependenciesBuilder>();
+    for (AnalysisScope scope : myScopes) {
+      builders.add(new BackwardDependenciesBuilder(myProject, scope, myScopeOfInterest));
+    }
     final Runnable process = new Runnable() {
       public void run() {
-        builder.analyze();
+        for (DependenciesBuilder builder : builders) {
+          builder.analyze();
+        }
       }
     };
     final Runnable successRunnable = new Runnable() {
       public void run() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            DependenciesPanel panel = new DependenciesPanel(myProject, builder);
+            DependenciesPanel panel = new DependenciesPanel(myProject, builders);
             Content content = PeerFactory.getInstance().getContentFactory().createContent(panel, AnalysisScopeBundle.message(
-              "backward.dependencies.toolwindow.title", builder.getScope().getDisplayName()), false);
+              "backward.dependencies.toolwindow.title", builders.get(0).getScope().getDisplayName()), false);
             content.setDisposer(panel);
             panel.setContent(content);
             ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);

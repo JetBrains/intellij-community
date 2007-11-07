@@ -3,19 +3,24 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packageDependencies.*;
@@ -43,36 +48,50 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class DependenciesPanel extends JPanel implements Disposable, DataProvider {
-  private Map<PsiFile, Set<PsiFile>> myDependencies;
+  private final Map<PsiFile, Set<PsiFile>> myDependencies;
   private Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
-  private MyTree myLeftTree = new MyTree();
-  private MyTree myRightTree = new MyTree();
-  private UsagesPanel myUsagesPanel;
+  private final MyTree myLeftTree = new MyTree();
+  private final MyTree myRightTree = new MyTree();
+  private final UsagesPanel myUsagesPanel;
 
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<PsiFile>(0);
-  private TreeExpansionMonitor myRightTreeExpansionMonitor;
-  private TreeExpansionMonitor myLeftTreeExpansionMonitor;
+  private final TreeExpansionMonitor myRightTreeExpansionMonitor;
+  private final TreeExpansionMonitor myLeftTreeExpansionMonitor;
 
-  private TreeModelBuilder.Marker myRightTreeMarker;
-  private TreeModelBuilder.Marker myLeftTreeMarker;
+  private final TreeModelBuilder.Marker myRightTreeMarker;
+  private final TreeModelBuilder.Marker myLeftTreeMarker;
   private Set<PsiFile> myIllegalsInRightTree = new HashSet<PsiFile>();
 
-  private Project myProject;
-  private DependenciesBuilder myBuilder;
+  private final Project myProject;
+  private List<DependenciesBuilder> myBuilders;
   private Content myContent;
-  private DependencyPanelSettings mySettings = new DependencyPanelSettings();
+  private final DependencyPanelSettings mySettings = new DependencyPanelSettings();
   private static final Logger LOG = Logger.getInstance("#" + DependenciesPanel.class.getName());
 
+  private final boolean myForward;
+  private final AnalysisScope myScopeOfInterest;
 
-  public DependenciesPanel(Project project, final DependenciesBuilder builder) {
+  public DependenciesPanel(Project project, final DependenciesBuilder builder){
+    this(project, Collections.singletonList(builder));
+  }
+
+  public DependenciesPanel(Project project, final List<DependenciesBuilder> builders) {
     super(new BorderLayout());
-    myDependencies = builder.getDependencies();
-    myBuilder = builder;
-    myIllegalDependencies = myBuilder.getIllegalDependencies();
+    myBuilders = builders;
+    final DependenciesBuilder main = myBuilders.get(0);
+    myForward = !main.isBackward();
+    myScopeOfInterest = main.getScopeOfInterest();
+    myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
+    myIllegalDependencies = new HashMap<PsiFile, Map<DependencyRule, Set<PsiFile>>>();
+    for (DependenciesBuilder builder : builders) {
+      myDependencies.putAll(builder.getDependencies());
+      myIllegalDependencies.putAll(builder.getIllegalDependencies());
+    }
     myProject = project;
-    myUsagesPanel = new UsagesPanel(myProject, myBuilder);
+    myUsagesPanel = new UsagesPanel(myProject, myBuilders);
     Disposer.register(this, myUsagesPanel);
 
     final Splitter treeSplitter = new Splitter();
@@ -158,11 +177,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     initTree(myLeftTree, false);
     initTree(myRightTree, true);
 
-    AnalysisScope scope = builder.getScope();
-    if (scope.getScopeType() == AnalysisScope.FILE) {
-      Set<PsiFile> oneFileSet = myDependencies.keySet();
-      if (oneFileSet.size() == 1) {
-        selectElementInLeftTree(oneFileSet.iterator().next());
+    if (builders.size() == 1) {
+      AnalysisScope scope = builders.get(0).getScope();
+      if (scope.getScopeType() == AnalysisScope.FILE) {
+        Set<PsiFile> oneFileSet = myDependencies.keySet();
+        if (oneFileSet.size() == 1) {
+          selectElementInLeftTree(oneFileSet.iterator().next());
+        }
       }
     }
   }
@@ -213,7 +234,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private void rebuild() {
-    myIllegalDependencies = myBuilder.getIllegalDependencies();
+    myIllegalDependencies = new HashMap<PsiFile, Map<DependencyRule, Set<PsiFile>>>();
+    for (DependenciesBuilder builder : myBuilders) {
+      myIllegalDependencies.putAll(builder.getIllegalDependencies());
+    }
     updateLeftTreeModel();
     updateRightTreeModel();
   }
@@ -271,6 +295,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     if (isRightTree) {
       group.add(actionManager.getAction(IdeActions.GROUP_ANALYZE));
+      group.add(new AddToScopeAction());
       group.add(new SelectInLeftTreeAction());
     }
 
@@ -493,7 +518,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myBuilder.getScope().isValid());
+      boolean enabled = true;
+      for (DependenciesBuilder builder : myBuilders) {
+        enabled &= builder.getScope().isValid();
+      }
+      e.getPresentation().setEnabled(enabled);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -501,13 +530,17 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       mySettings.copyToApplicationDependencySettings();
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          final AnalysisScope scope = myBuilder.getScope();
-          scope.invalidate();
-          if (myBuilder.isBackward()) {
-            new BackwardDependenciesHandler(myProject, scope, myBuilder.getScopeOfInterest()).analyze();
+          final List<AnalysisScope> scopes = new ArrayList<AnalysisScope>();
+          for (DependenciesBuilder builder : myBuilders) {
+            final AnalysisScope scope = builder.getScope();
+            scope.invalidate();
+            scopes.add(scope);
+          }
+          if (!myForward) {
+            new BackwardDependenciesHandler(myProject, scopes, myScopeOfInterest).analyze();
           }
           else {
-            new AnalyzeDependenciesHandler(myProject, scope).analyze();
+            new AnalyzeDependenciesHandler(myProject, scopes).analyze();
           }
         }
       });
@@ -535,19 +568,16 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       Set<PsiFile> files = getSelectedScope(myRightTree);
       Set<String> excludeStrings = new TreeSet<String>();
 
-      for (Iterator<PsiFile> iterator = files.iterator(); iterator.hasNext();) {
-        PsiFile psiFile = iterator.next();
+      for (PsiFile psiFile : files) {
         if (psiFile instanceof PsiJavaFile) {
           PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-          for (int i = 0; i < classes.length; i++) {
-            final PsiClass aClass = classes[i];
+          for (final PsiClass aClass : classes) {
             excludeClass(aClass, false, excludeStrings);
           }
         }
       }
 
-      for (Iterator<String> iterator = excludeStrings.iterator(); iterator.hasNext();) {
-        String s = iterator.next();
+      for (String s : excludeStrings) {
         System.out.println(s);
       }
 
@@ -565,14 +595,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       excludeStrings.add(instr + " !private * and" + (base ? " //base" : ""));
 
       final PsiClass[] supers = aClass.getSupers();
-      for (int i = 0; i < supers.length; i++) {
-        PsiClass aSuper = supers[i];
+      for (PsiClass aSuper : supers) {
         excludeClass(aSuper, true, excludeStrings);
       }
 
       final PsiClass[] interfaces = aClass.getInterfaces();
-      for (int i = 0; i < interfaces.length; i++) {
-        PsiClass anInterface = interfaces[i];
+      for (PsiClass anInterface : interfaces) {
         excludeClass(anInterface, true, excludeStrings);
       }
     }
@@ -587,10 +615,70 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       return null;
     }
 
+    @Nullable
     public PackageDependenciesNode getSelectedNode() {
       TreePath[] paths = getSelectionPaths();
       if (paths == null || paths.length != 1) return null;
       return (PackageDependenciesNode)paths[0].getLastPathComponent();
+    }
+  }
+
+  private class AddToScopeAction extends AnAction {
+    private AddToScopeAction() {
+      super("Add to scope");
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final PackageDependenciesNode node = myRightTree.getSelectedNode();
+      e.getPresentation().setEnabled(node != null && getScope(node) != null);
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      PackageDependenciesNode node = myRightTree.getSelectedNode();
+      LOG.assertTrue(node != null);
+      final AnalysisScope scope = getScope(node);
+      LOG.assertTrue(scope != null);
+      final DependenciesBuilder builder;
+      if (!myForward) {
+        builder = new BackwardDependenciesBuilder(myProject, scope, myScopeOfInterest);
+      } else {
+        builder = new ForwardDependenciesBuilder(myProject, scope);
+      }
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"), new Runnable() {
+        public void run() {
+          builder.analyze();
+        }
+      }, new Runnable() {
+        public void run() {
+          myBuilders.add(builder);
+          myDependencies.putAll(builder.getDependencies());
+          myIllegalDependencies.putAll(builder.getIllegalDependencies());
+          rebuild();
+        }
+      }, null, new PerformAnalysisInBackgroundOption(myProject));
+    }
+
+    @Nullable
+    private AnalysisScope getScope(final PackageDependenciesNode node) {
+      final Set<PsiFile> selectedScope = getSelectedScope(myRightTree);
+      Set<PsiFile> result = new HashSet<PsiFile>();
+      ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES);
+      selectedScope.removeAll(result);
+      if (selectedScope.isEmpty()) return null;
+      List<VirtualFile> files = new ArrayList<VirtualFile>();
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      for (PsiFile psiFile : selectedScope) {
+        final VirtualFile file = psiFile.getVirtualFile();
+        LOG.assertTrue(file != null);
+        if (fileIndex.isInContent(file)) {
+          files.add(file);
+        }
+      }
+      if (!files.isEmpty()) {
+        return new AnalysisScope(myProject, files);
+      }
+      return null;
     }
   }
 

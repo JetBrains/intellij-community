@@ -14,30 +14,42 @@ import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class AnalyzeDependenciesHandler {
-  private Project myProject;
-  private AnalysisScope myScope;
+  private final Project myProject;
+  private final List<AnalysisScope> myScopes;
 
   public AnalyzeDependenciesHandler(Project project, AnalysisScope scope) {
+    this(project, Collections.singletonList(scope));
+  }
+
+  public AnalyzeDependenciesHandler(Project project, List<AnalysisScope> scopes) {
     myProject = project;
-    myScope = scope;
+    myScopes = scopes;
   }
 
   public void analyze() {
-    final DependenciesBuilder forwardBuilder = new ForwardDependenciesBuilder(myProject, myScope);
+    final List<DependenciesBuilder> builders = new ArrayList<DependenciesBuilder>();
+    for (AnalysisScope scope : myScopes) {
+      builders.add(new ForwardDependenciesBuilder(myProject, scope));
+    }
     final Runnable process = new Runnable() {
       public void run() {
-        forwardBuilder.analyze();
+        for (final DependenciesBuilder builder : builders) {
+          builder.analyze();
+        }
       }
     };
     final Runnable successRunnable = new Runnable() {
       public void run() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            DependenciesPanel panel = new DependenciesPanel(myProject, forwardBuilder);
+            DependenciesPanel panel = new DependenciesPanel(myProject, builders);
             Content content = PeerFactory.getInstance().getContentFactory().createContent(panel, AnalysisScopeBundle.message(
-              "package.dependencies.toolwindow.title", forwardBuilder.getScope().getDisplayName()), false);
+              "package.dependencies.toolwindow.title", builders.get(0).getScope().getDisplayName()), false);
             content.setDisposer(panel);
             panel.setContent(content);
             ((DependencyValidationManagerImpl)DependencyValidationManager.getInstance(myProject)).addContent(content);
@@ -45,7 +57,9 @@ public class AnalyzeDependenciesHandler {
         });
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"),
-                                                                       process, successRunnable, null, new PerformAnalysisInBackgroundOption(myProject));
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject,
+                                                                       AnalysisScopeBundle.message("package.dependencies.progress.title"),
+                                                                       process, successRunnable, null,
+                                                                       new PerformAnalysisInBackgroundOption(myProject));
   }
 }

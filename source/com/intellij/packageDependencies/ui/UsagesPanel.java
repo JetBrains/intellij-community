@@ -25,28 +25,34 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 public class UsagesPanel extends JPanel implements Disposable, DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packageDependencies.ui.UsagesPanel");
 
   private Project myProject;
-  private DependenciesBuilder myBuilder;
+  private List<DependenciesBuilder> myBuilders;
   private ProgressIndicator myCurrentProgress;
   private JComponent myCurrentComponent;
   private UsageView myCurrentUsageView;
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  public UsagesPanel(Project project, DependenciesBuilder builder) {
+  public UsagesPanel(Project project, DependenciesBuilder  builder) {
+    this(project, Collections.singletonList(builder));
+  }
+
+  public UsagesPanel(Project project, List<DependenciesBuilder> builders) {
     super(new BorderLayout());
     myProject = project;
-    myBuilder = builder;
+    myBuilders = builders;
     setToInitialPosition();
   }
 
   public void setToInitialPosition() {
     cancelCurrentFindRequest();
-    setToComponent(createLabel(myBuilder.getInitialUsagesPosition()));
+    setToComponent(createLabel(myBuilders.get(0).getInitialUsagesPosition()));
   }
 
   public void findUsages(final Set<PsiFile> searchIn, final Set<PsiFile> searchFor) {
@@ -71,13 +77,13 @@ public class UsagesPanel extends JPanel implements Disposable, DataProvider {
                     Set<PsiFile> elementsToSearch = null;
 
                     try {
-                      if (myBuilder.isBackward()){
+                      if (myBuilders.get(0).isBackward()){
                         elementsToSearch = searchIn;
-                        usages = FindDependencyUtil.findBackwardDependencies(myBuilder, searchFor, searchIn);
+                        usages = FindDependencyUtil.findBackwardDependencies(myBuilders, searchFor, searchIn);
                       }
                       else {
                         elementsToSearch = searchFor;
-                        usages = FindDependencyUtil.findDependencies(myBuilder, searchIn, searchFor);
+                        usages = FindDependencyUtil.findDependencies(myBuilders, searchIn, searchFor);
                       }
                     }
                     catch (ProcessCanceledException e) {
@@ -116,7 +122,7 @@ public class UsagesPanel extends JPanel implements Disposable, DataProvider {
     try {
       Usage[] usages = UsageInfoToUsageConverter.convert(descriptor, usageInfos);
       UsageViewPresentation presentation = new UsageViewPresentation();
-      presentation.setCodeUsagesString(myBuilder.getRootNodeNameInUsageView());
+      presentation.setCodeUsagesString(myBuilders.get(0).getRootNodeNameInUsageView());
       myCurrentUsageView = UsageViewManager.getInstance(myProject).createUsageView(new UsageTarget[0], usages, presentation, null);
       setToComponent(myCurrentUsageView.getComponent());
     }
@@ -164,5 +170,9 @@ public class UsagesPanel extends JPanel implements Disposable, DataProvider {
       return "ideaInterface.find";
     }
     return null;
+  }
+
+  public void addBuilder(DependenciesBuilder builder) {
+    myBuilders.add(builder);
   }
 }
