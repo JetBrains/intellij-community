@@ -147,7 +147,7 @@ public class PluginBuildParticipant extends BuildParticipantBase {
     }
 
     // libraries
-    final VirtualFile libDir = VfsUtil.findRelativeFile(LIB_DIRECTORY, jdk.getHomeDirectory());
+    final VirtualFile libDir = jdk.getHomeDirectory().findFileByRelativePath(LIB_DIRECTORY);
     for (i = 0; i < libraryLinks.length; i++) {
       LibraryLink libraryLink = libraryLinks[i];
       final Library library = libraryLink.getLibrary();
