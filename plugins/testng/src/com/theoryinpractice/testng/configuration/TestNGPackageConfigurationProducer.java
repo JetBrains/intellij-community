@@ -7,8 +7,8 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -33,7 +33,7 @@ public class TestNGPackageConfigurationProducer extends TestNGConfigurationProdu
       if (predefinedModule == null) {
         Module module = null;
         if (element instanceof PsiDirectory) {
-          module = VfsUtil.getModuleForFile(project, ((PsiDirectory)element).getVirtualFile());
+          module = ModuleUtil.findModuleForFile(((PsiDirectory)element).getVirtualFile(), project);
         }
         if (module != null) {
           configuration.setModule(module);

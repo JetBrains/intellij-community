@@ -23,8 +23,8 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
@@ -32,8 +32,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterComponentFix;
@@ -174,7 +174,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
-    final Module module = VfsUtil.getModuleForFile(project, psiFile.getVirtualFile());
+    final Module module = ModuleUtil.findModuleForFile(psiFile.getVirtualFile(), project);
     return module != null && PluginModuleType.isPluginModuleOrDependency(module);
   }
 }

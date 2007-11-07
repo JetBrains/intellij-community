@@ -20,9 +20,9 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -69,7 +69,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiFile psiFile = myClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
-    final Module module = VfsUtil.getModuleForFile(project, psiFile.getVirtualFile());
+    final Module module = ModuleUtil.findModuleForFile(psiFile.getVirtualFile(), project);
 
     Runnable command = new Runnable() {
       public void run() {

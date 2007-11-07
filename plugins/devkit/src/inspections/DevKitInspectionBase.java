@@ -19,8 +19,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -57,7 +57,7 @@ public abstract class DevKitInspectionBase extends LocalInspectionTool {
 
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
-    final Module module = VfsUtil.getModuleForFile(project, virtualFile);
+    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
 
     if (module == null) return null;
 
