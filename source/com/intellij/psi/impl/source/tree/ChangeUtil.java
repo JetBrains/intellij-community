@@ -8,6 +8,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -38,7 +39,6 @@ import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -343,7 +343,7 @@ public class ChangeUtil {
     else if (shallEncodeEscapedTexts && original instanceof LeafElement && !(original instanceof OuterLanguageElement)) {
       if (!isInCData(original)) {
         final String originalText = element.getText();
-        final String unescapedText = XmlUtil.unescape(originalText);
+        final String unescapedText = StringUtil.unescapeXml(originalText);
         if (!Comparing.equal(originalText, unescapedText)) {
           ((LeafElement)element).setText(unescapedText);
           element.putCopyableUserData(ALREADY_ESCAPED, null);
@@ -500,7 +500,7 @@ public class ChangeUtil {
     else if (shallDecodeEscapedTexts && element instanceof LeafElement && !(element instanceof OuterLanguageElement)) {
       if (!isInCData(element)) {
         final String original = element.getText();
-        final String escaped = XmlUtil.escape(original);
+        final String escaped = StringUtil.escapeXml(original);
         if (!Comparing.equal(original, escaped) && element.getCopyableUserData(ALREADY_ESCAPED) == null) {
           final LeafElement copy = (LeafElement)element.copyElement();
           copy.setText(escaped);

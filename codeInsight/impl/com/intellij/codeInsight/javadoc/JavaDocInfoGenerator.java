@@ -23,7 +23,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -1142,7 +1141,7 @@ class JavaDocInfoGenerator {
     }
     String parmName = text.substring(0, spaceIndex);
     buffer.append("<code>");
-    buffer.append(XmlUtil.escape(parmName));
+    buffer.append(StringUtil.escapeXml(parmName));
     buffer.append("</code>");
     buffer.append(" - ");
     buffer.append(text.substring(spaceIndex));

@@ -7,6 +7,7 @@ import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.lang.documentation.MetaDataDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -366,6 +367,6 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
   }
 
   private static String escapeDocumentationTextText(final String result) {
-    return XmlUtil.escape(result).replaceAll("&apos;","'").replaceAll("\n","<br>\n");
+    return StringUtil.escapeXml(result).replaceAll("&apos;","'").replaceAll("\n","<br>\n");
   }
 }

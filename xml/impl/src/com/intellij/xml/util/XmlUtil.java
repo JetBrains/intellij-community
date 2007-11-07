@@ -1284,14 +1284,6 @@ public class XmlUtil {
     return text;
   }
 
-  public static String unescape(String text) {
-    return StringUtil.unescapeXml(text);
-  }
-
-  public static String escape(String text) {
-    return StringUtil.escapeXml(text);
-  }
-
   @NonNls private static final byte[] XML_PROLOG_START_BYTES = CharsetToolkit.getUtf8Bytes("<?xml");
   @NonNls private static final byte[] ENCODING_BYTES = CharsetToolkit.getUtf8Bytes("encoding");
   @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetToolkit.getUtf8Bytes("?>");

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,7 +103,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
       }
     }
     message = StringUtil.replace(message, "#loc", "");
-    message = XmlUtil.unescape(message);
+    message = StringUtil.unescapeXml(message);
     return message;
   }
 }

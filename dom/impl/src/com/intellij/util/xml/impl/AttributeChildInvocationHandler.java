@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -15,7 +16,6 @@ import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.xml.util.XmlStringUtil;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,7 +154,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     final XmlTag tag = ensureTagExists();
     final String attributeName = getXmlElementName();
     final String namespace = getXmlElementNamespace();
-    final String oldValue = XmlUtil.unescape(tag.getAttributeValue(attributeName, namespace));
+    final String oldValue = StringUtil.unescapeXml(tag.getAttributeValue(attributeName, namespace));
     final String newValue = XmlStringUtil.escapeString(value);
     if (Comparing.equal(oldValue, newValue)) return;
 

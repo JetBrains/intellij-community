@@ -34,7 +34,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
-import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -376,7 +375,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!inspectionProfile.isToolEnabled(key)) return null;
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(psiElement), level.getAttributesKey());
-    final String plainMessage = message.startsWith("<html>") ? XmlUtil.unescape(message.replaceAll("<[^>]*>", "")) : message;
+    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(message.replaceAll("<[^>]*>", "")) : message;
     @NonNls final String link = "<a href=\"#inspection/" + tool.getShortName() + "\"> " + DaemonBundle.message("inspection.extended.description") +
                                 "</a>" + myShortcutText;
 
@@ -424,7 +423,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     message = StringUtil.replace(message, "#ref", text);
     message = StringUtil.replace(message, "#loc", "");
 
-    message = XmlUtil.unescape(message).trim();
+    message = StringUtil.unescapeXml(message).trim();
     return message;
   }
 
