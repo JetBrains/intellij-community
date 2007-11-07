@@ -9,7 +9,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -103,7 +103,7 @@ public class DeannotateIntentionAction implements IntentionAction {
           protected void run(final Result result) throws Throwable {
             final VirtualFile virtualFile = file.getVirtualFile();
             if (annotationsManager.deannotate(listOwner, selectedValue.getQualifiedName()) && virtualFile != null && virtualFile.isInLocalFileSystem()) {
-              UndoManager.getInstance(listOwner.getProject()).markDocumentForUndo(file);
+              UndoUtil.markPsiFileForUndo(file);
             }
           }
         }.execute();

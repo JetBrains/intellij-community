@@ -16,8 +16,8 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import org.jetbrains.annotations.NotNull;

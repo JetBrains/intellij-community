@@ -6,7 +6,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -102,7 +102,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
                 CreateFromUsageUtils.setupMethodBody(constructor);
                 CreateFromUsageUtils.setupEditor(constructor, editor);
 
-                UndoManager.getInstance(callSite.getProject()).markDocumentForUndo(callSite);
+                UndoUtil.markPsiFileForUndo(callSite);
               } catch (IncorrectOperationException e) {
                 LOG.error(e);
               }

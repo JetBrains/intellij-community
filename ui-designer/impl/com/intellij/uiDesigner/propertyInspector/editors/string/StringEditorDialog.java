@@ -10,39 +10,41 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.StringDescriptorManager;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.binding.FormReferenceProvider;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Query;
 import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.CardLayout;
-import java.awt.Component;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -162,7 +164,7 @@ public final class StringEditorDialog extends DialogWrapper{
           module.getProject(),
           new Runnable() {
             public void run() {
-              UndoManager.getInstance(module.getProject()).markDocumentForUndo(formFile);
+              UndoUtil.markPsiFileForUndo(formFile);
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
                   PsiDocumentManager.getInstance(module.getProject()).commitAllDocuments();
@@ -245,7 +247,7 @@ public final class StringEditorDialog extends DialogWrapper{
       bundle.getProject(),
       new Runnable() {
         public void run() {
-          UndoManager.getInstance(bundle.getProject()).markDocumentForUndo(formFile);
+          UndoUtil.markPsiFileForUndo(formFile);
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {

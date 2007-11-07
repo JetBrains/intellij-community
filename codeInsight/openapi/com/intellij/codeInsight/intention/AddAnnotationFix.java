@@ -22,7 +22,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -154,7 +154,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
         PsiElement inserted = modifierList.addAfter(annotation, null);
         CodeStyleManager.getInstance(project).shortenClassReferences(inserted);
         if (containingFile != file) {
-          UndoManager.getInstance(project).markDocumentForUndo(file);
+          UndoUtil.markPsiFileForUndo(file);
         }
       }
     }

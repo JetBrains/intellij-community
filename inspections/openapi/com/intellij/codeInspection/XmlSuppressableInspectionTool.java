@@ -17,7 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -118,7 +118,7 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
     final int offset = rootTag != null ? rootTag.getTextRange().getStartOffset() : 0;
     doc.insertString(offset, suppressComment);
     CodeStyleManager.getInstance(project).adjustLineIndent(doc, offset + suppressComment.length());
-    UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
+    UndoUtil.markPsiFileForUndo(file);
   }
 
   public class SuppressTag implements IntentionAction {

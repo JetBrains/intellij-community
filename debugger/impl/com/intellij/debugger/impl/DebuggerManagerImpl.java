@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -33,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -335,7 +335,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     }
     if (jdk == null) return false;
 
-    String version = PathUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
+    String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
     if (version != null) {
       if (version.compareTo("1.4") >= 0) {
         return false;
@@ -422,7 +422,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       return true;
     }
     if (jdk != null) {
-      final String version = PathUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
+      final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
       if (version != null && (version.startsWith("1.2") || version.startsWith("1.3"))) {
         return true;
       }

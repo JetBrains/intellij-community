@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -51,7 +51,7 @@ public class MakeClassInterfaceFix implements IntentionAction {
         }
       }
       convertPsiClass(myClass, myMakeInterface);
-      UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
+      UndoUtil.markPsiFileForUndo(file);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }

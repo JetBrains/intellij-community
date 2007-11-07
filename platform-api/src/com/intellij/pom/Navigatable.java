@@ -13,30 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide;
+package com.intellij.pom;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
+public interface Navigatable {
+  /**
+   * Open editor and select/navigate to the object there if possible. Just do nothing if navigation is not possible like in case of a package
+   * @param requestFocus
+   */
+  void navigate(boolean requestFocus);
 
-/**
- * @author kir
- */
-public interface SelectInContext {
+  /**
+   * @return <code>false</code> if navigation is not possible for any reason.
+   */
+  boolean canNavigate();
 
-  @NonNls String DATA_CONTEXT_ID = "SelectInContext";
-
-  @NotNull
-  Project getProject();
-
-  @NotNull
-  VirtualFile getVirtualFile();
-
-  @Nullable
-  Object getSelectorInFile();
-
-  @Nullable
-  FileEditorProvider getFileEditorProvider();
+  /**
+   * @return <code>false</code> if navigation to source is not possible for any reason. Source means some kind of editor
+   */
+  boolean canNavigateToSource();
 }

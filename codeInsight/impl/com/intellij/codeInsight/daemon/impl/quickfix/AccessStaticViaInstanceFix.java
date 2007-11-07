@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -68,7 +68,7 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
         qualifierExpression.replace(factory.createReferenceExpression(containingClass));
       }
 
-      UndoManager.getInstance(project).markDocumentForUndo(myMember.getContainingFile());
+      UndoUtil.markPsiFileForUndo(myMember.getContainingFile());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

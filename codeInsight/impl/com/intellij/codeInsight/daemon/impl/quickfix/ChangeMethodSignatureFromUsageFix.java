@@ -17,7 +17,7 @@ import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.findUsages.FindUsagesUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -157,7 +157,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       processor.run();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
+          UndoUtil.markPsiFileForUndo(file);
         }
       });
     }

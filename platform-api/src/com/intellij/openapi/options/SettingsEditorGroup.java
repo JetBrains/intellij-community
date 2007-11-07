@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 
 import javax.swing.*;
 import java.util.ArrayList;

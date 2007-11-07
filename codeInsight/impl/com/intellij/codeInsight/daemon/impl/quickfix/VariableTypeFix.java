@@ -1,12 +1,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
@@ -52,7 +52,7 @@ public class VariableTypeFix implements IntentionAction {
       myVariable.normalizeDeclaration();
       myVariable.getTypeElement().replace(file.getManager().getElementFactory().createTypeElement(myReturnType));
       CodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
-      UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
+      UndoUtil.markPsiFileForUndo(file);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }

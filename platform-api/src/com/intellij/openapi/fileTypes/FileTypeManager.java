@@ -218,5 +218,5 @@ public abstract class FileTypeManager implements SettingsSavingComponent {
   @NotNull
   public abstract FileType getStdFileType(@NotNull @NonNls String fileTypeName);
   @NotNull
-  public abstract LanguageFileType getLanguageStdFileType(@NotNull @NonNls String fileTypeName);
+  public abstract FileType getLanguageStdFileType(@NotNull @NonNls String fileTypeName);
 }

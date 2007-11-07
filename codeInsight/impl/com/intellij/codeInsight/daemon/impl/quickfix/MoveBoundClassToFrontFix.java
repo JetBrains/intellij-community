@@ -1,12 +1,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiFile;
@@ -44,7 +44,7 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    UndoManager.getInstance(file.getProject()).markDocumentForUndo(file);
+    UndoUtil.markPsiFileForUndo(file);
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

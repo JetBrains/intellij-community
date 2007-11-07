@@ -10,6 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 public class ProjectUtil {
+  private ProjectUtil() {
+  }
+
   public static String calcRelativeToProjectPath(final VirtualFile file, final Project project) {
     String url = file.getPresentableUrl();
     if (project == null) {

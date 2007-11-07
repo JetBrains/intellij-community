@@ -7,7 +7,7 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -123,7 +123,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
             LOG.error(e);
           }
 
-          UndoManager.getInstance(myClass.getContainingFile().getProject()).markDocumentForUndo(myClass.getContainingFile());
+          UndoUtil.markPsiFileForUndo(myClass.getContainingFile());
         }
       }
     );

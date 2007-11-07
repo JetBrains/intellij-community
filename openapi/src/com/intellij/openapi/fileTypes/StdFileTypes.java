@@ -16,16 +16,16 @@
 package com.intellij.openapi.fileTypes;
 
 public class StdFileTypes {
-  public static final LanguageFileType JAVA = FileTypeManager.getInstance().getLanguageStdFileType("JAVA");
+  public static final LanguageFileType JAVA = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("JAVA");
   public static final FileType CLASS = FileTypeManager.getInstance().getStdFileType("CLASS");
-  public static final LanguageFileType JSP = FileTypeManager.getInstance().getLanguageStdFileType("JSP");
-  public static final LanguageFileType JSPX = FileTypeManager.getInstance().getLanguageStdFileType("JSPX");
-  public static final LanguageFileType XML = FileTypeManager.getInstance().getLanguageStdFileType("XML");
-  public static final LanguageFileType DTD = FileTypeManager.getInstance().getLanguageStdFileType("DTD");
-  public static final LanguageFileType HTML = FileTypeManager.getInstance().getLanguageStdFileType("HTML");
-  public static final LanguageFileType XHTML = FileTypeManager.getInstance().getLanguageStdFileType("XHTML");
-  public static final LanguageFileType PROPERTIES = FileTypeManager.getInstance().getLanguageStdFileType("Properties");
-  public static final LanguageFileType PLAIN_TEXT = FileTypeManager.getInstance().getLanguageStdFileType("PLAIN_TEXT");
+  public static final LanguageFileType JSP = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("JSP");
+  public static final LanguageFileType JSPX = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("JSPX");
+  public static final LanguageFileType XML = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("XML");
+  public static final LanguageFileType DTD = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("DTD");
+  public static final LanguageFileType HTML = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("HTML");
+  public static final LanguageFileType XHTML = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("XHTML");
+  public static final LanguageFileType PROPERTIES = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("Properties");
+  public static final LanguageFileType PLAIN_TEXT = (LanguageFileType)FileTypeManager.getInstance().getLanguageStdFileType("PLAIN_TEXT");
   public static final FileType ARCHIVE = FileTypeManager.getInstance().getStdFileType("ARCHIVE");
   public static final FileType UNKNOWN = FileTypeManager.getInstance().getStdFileType("UNKNOWN");
   public static final FileType GUI_DESIGNER_FORM = FileTypeManager.getInstance().getStdFileType("GUI_DESIGNER_FORM");

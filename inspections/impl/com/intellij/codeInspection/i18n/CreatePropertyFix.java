@@ -9,7 +9,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -139,7 +139,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
     for (PropertiesFile selectedFile : selectedPropertiesFiles) {
       if (!CodeInsightUtil.prepareFileForWrite(selectedFile)) return;
     }
-    UndoManager.getInstance(project).markDocumentForUndo(psiElement.getContainingFile());
+    UndoUtil.markPsiFileForUndo(psiElement.getContainingFile());
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

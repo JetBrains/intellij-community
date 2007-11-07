@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -54,7 +54,7 @@ public class QuickFixWrapper implements IntentionAction {
     if (element != null) {
       final PsiFile fileForUndo = element.getContainingFile();
       if (!Comparing.equal(fileForUndo, file)) {
-        UndoManager.getInstance(project).markDocumentForUndo(fileForUndo);
+        UndoUtil.markPsiFileForUndo(fileForUndo);
       }
     }
   }

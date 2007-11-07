@@ -3,7 +3,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -70,7 +70,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     for (PsiMethod psiMethod : toAnnotate) {
       annotateMethod(psiMethod);
     }
-    UndoManager.getInstance(project).markDocumentForUndo(method.getContainingFile());
+    UndoUtil.markPsiFileForUndo(method.getContainingFile());
   }
 
   public int annotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {

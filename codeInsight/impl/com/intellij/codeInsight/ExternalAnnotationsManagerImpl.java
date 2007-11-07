@@ -9,7 +9,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -305,7 +305,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
     finally {
       if (codeUsageFile.getVirtualFile().isInLocalFileSystem()) {
-        UndoManager.getInstance(listOwner.getProject()).markDocumentForUndo(codeUsageFile);
+        UndoUtil.markPsiFileForUndo(codeUsageFile);
       }
     }
   }

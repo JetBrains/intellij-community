@@ -29,10 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -568,33 +565,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     }
     return null;
 
-  }
-
-  public void markDocumentForUndo(final PsiFile file) {
-    Project project = file.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) return;
-    final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
-    undoableActionPerformed(new UndoableAction() {
-      public void undo() {
-      }
-
-      public void redo() {
-      }
-
-      public DocumentReference[] getAffectedDocuments() {
-        return new DocumentReference[]{ref};
-      }
-
-      public boolean isComplex() {
-        return false;
-      }
-
-      @NonNls
-      public String toString() {
-        return "markDocumentForUndo: " + file;
-      }
-    });
   }
 
   public Document getOriginal(Document d) {
