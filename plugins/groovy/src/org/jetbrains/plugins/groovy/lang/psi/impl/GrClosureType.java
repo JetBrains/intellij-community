@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
@@ -44,6 +45,16 @@ public class GrClosureType extends PsiClassType {
   public PsiType getClosureReturnType() {
     return myClosure.getReturnType();
   }
+
+  public PsiType[] getClosureParameterTypes() {
+    final GrParameter[] params = myClosure.getParameters();
+    PsiType[] result = new PsiType[params.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = params[i].getType();
+    }
+    return result;
+  }
+
   public String getClassName() {
     return "Closure";
   }

@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -647,9 +648,13 @@ public class GroovyAnnotator implements Annotator {
             "cannot.reference.nonstatic";
         String message = GroovyBundle.message(key, refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
-      } else if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
-        checkMethodApplicability(resolveResult, refExpr, holder);
-      }
+      } else if (refExpr.getParent() instanceof GrMethodCallExpression) {
+        if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
+          checkMethodApplicability(resolveResult, refExpr, holder);
+        } else {
+          checkClosureApplicability(resolveResult, refExpr, holder);
+        }
+    }
       if (isAssignmentLHS(refExpr) || resolved instanceof PsiPackage) return;
     } else {
       if (isAssignmentLHS(refExpr)) return;
@@ -749,7 +754,7 @@ public class GroovyAnnotator implements Annotator {
         final PsiClassType containingType = method.getManager().getElementFactory().createType(containingClass, methodResolveResult.getSubstitutor());
         message = GroovyBundle.message("cannot.apply.method1", method.getName(), containingType.getInternalCanonicalText(), typesString);
       } else {
-        message = GroovyBundle.message("cannot.apply.method", method.getName(), typesString);
+        message = GroovyBundle.message("cannot.apply.method.or.closure", method.getName(), typesString);
       }
       holder.createWarningAnnotation(elementToHighlight, message);
     }
@@ -826,6 +831,32 @@ public class GroovyAnnotator implements Annotator {
         }
       }
     }
+  }
+
+  private void checkClosureApplicability(GroovyResolveResult resolveResult, PsiElement place, AnnotationHolder holder) {
+    final PsiElement element = resolveResult.getElement();
+    if (!(element instanceof GrVariable)) return;
+    final GrVariable variable = (GrVariable) element;
+    final PsiType type = variable.getTypeGroovy();
+    if (!(type instanceof GrClosureType)) return;
+    final PsiType[] paramTypes = ((GrClosureType) type).getClosureParameterTypes();
+    PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, false);
+    if (argumentTypes == null) return;
+    if (!areTypesCompatibleForCallingClosure(argumentTypes, paramTypes)) {
+      final String typesString = buildArgTypesList(argumentTypes);
+      String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
+      PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+      if (elementToHighlight == null) elementToHighlight = place;
+      holder.createWarningAnnotation(elementToHighlight, message);
+    }
+  }
+
+  private boolean areTypesCompatibleForCallingClosure(PsiType[] argumentTypes, PsiType[] paramTypes) {
+    if (argumentTypes.length > paramTypes.length) return false;
+    for (int i = 0; i < argumentTypes.length; i++) {
+      if (!paramTypes[i].isAssignableFrom(argumentTypes[i])) return false;
+    }
+    return true;
   }
 
   private void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {
