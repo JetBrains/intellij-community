@@ -17,11 +17,10 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.EmptyClipboardOwner;
 
 import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 
 public class CutLineEndAction extends EditorAction {
   public CutLineEndAction() {
@@ -55,18 +54,11 @@ public class CutLineEndAction extends EditorAction {
       Project project = DataKeys.PROJECT.getData(dataContext);
       if (project == null) {
         Clipboard clipboard = editor.getComponent().getToolkit().getSystemClipboard();
-        clipboard.setContents(contents, defaultClipboardOwner);
+        clipboard.setContents(contents, EmptyClipboardOwner.INSTANCE);
       }
       else {
         CopyPasteManager.getInstance().setContents(contents);
       }
     }
   }
-
-  private static class ClipboardObserver implements ClipboardOwner {
-    public void lostOwnership(Clipboard clipboard, Transferable contents) {
-    }
-  }
-
-  private static ClipboardOwner defaultClipboardOwner = new ClipboardObserver();
 }

@@ -35,6 +35,7 @@ import com.intellij.ui.JScrollPane2;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.EmptyClipboardOwner;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
@@ -3787,16 +3788,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                 Transferable backup = clipboard.getContents(this);
-                ClipboardOwner clipboardOwner = new ClipboardOwner() {
-                  public void lostOwnership(Clipboard clipboard, Transferable contents) {
-                  }
-                };
-                clipboard.setContents(t, clipboardOwner);
+                clipboard.setContents(t, EmptyClipboardOwner.INSTANCE);
 
                 editor.putUserData(LAST_PASTED_REGION, null);
                 pasteHandler.execute(editor, editor.getDataContext());
                 try {
-                  clipboard.setContents(backup, clipboardOwner);
+                  clipboard.setContents(backup, EmptyClipboardOwner.INSTANCE);
                 }
                 catch (IllegalStateException e) {
                   LOG.info(e);

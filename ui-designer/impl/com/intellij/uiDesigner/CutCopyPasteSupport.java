@@ -4,14 +4,15 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.ui.EmptyClipboardOwner;
 import gnu.trove.TIntArrayList;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -21,7 +22,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -59,7 +63,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     final SimpleTransferable transferable = new SimpleTransferable<SerializedComponentData>(data, SerializedComponentData.class, ourDataFlavor);
     try {
       final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-      clipboard.setContents(transferable, new MyClipboardOwner());
+      clipboard.setContents(transferable, EmptyClipboardOwner.INSTANCE);
       return true;
     } catch (Exception e) {
       if (LOG.isDebugEnabled()) {
@@ -213,11 +217,6 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     }
     catch (ClassNotFoundException e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private static final class MyClipboardOwner implements ClipboardOwner {
-    public void lostOwnership(final Clipboard clipboard, final Transferable contents) {
     }
   }
 

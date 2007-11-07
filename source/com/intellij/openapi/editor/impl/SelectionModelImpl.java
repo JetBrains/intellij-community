@@ -28,13 +28,12 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.EmptyClipboardOwner;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
@@ -160,7 +159,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       final Toolkit toolkit = myEditor.getComponent().getToolkit();
       Clipboard clip = toolkit.getSystemSelection();
       if (clip != null) {
-        clip.setContents(new StringSelection(getSelectedText()), defaultClipboardOwner);
+        clip.setContents(new StringSelection(getSelectedText()), EmptyClipboardOwner.INSTANCE);
       }
     }
 
@@ -493,13 +492,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return newOffset;
   }
 
-  private static class ClipboardObserver implements ClipboardOwner {
-    public void lostOwnership(Clipboard clipboard, Transferable contents) {
-    }
-  }
-
-  private static final ClipboardOwner defaultClipboardOwner = new ClipboardObserver();
-
   public void copySelectionToClipboard() {
     validateContext();
     String s = myEditor.getSelectionModel().getSelectedText();
@@ -511,7 +503,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myEditor.getContentComponent()));
     if (project == null) {
       Clipboard clipboard = myEditor.getComponent().getToolkit().getSystemClipboard();
-      clipboard.setContents(contents, defaultClipboardOwner);
+      clipboard.setContents(contents, EmptyClipboardOwner.INSTANCE);
     }
     else {
       CopyPasteManager.getInstance().setContents(contents);

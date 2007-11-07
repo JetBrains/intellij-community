@@ -9,13 +9,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ui.EmptyClipboardOwner;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 
 public class ConfigurationArgumentsHelpArea extends JPanel {
   private JTextArea myHelpArea;
@@ -63,10 +62,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
         final Project project = DataKeys.PROJECT.getData(e.getDataContext());
         if (project == null) {
           final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-          clipboard.setContents(contents, new ClipboardOwner() {
-            public void lostOwnership(final Clipboard c, final Transferable contents) {
-            }
-          });
+          clipboard.setContents(contents, EmptyClipboardOwner.INSTANCE);
         } else {
           CopyPasteManager.getInstance().setContents(contents);
         }
