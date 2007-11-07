@@ -640,9 +640,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     XmlAttribute attribute = (XmlAttribute)parent;
-    if (value.getUserData(DO_NOT_VALIDATE_KEY) != null) {
-      return;
-    }
 
     XmlTag tag = attribute.getParent();
 
@@ -651,20 +648,22 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor(attribute);
     if (attributeDescriptor == null) return;
 
-    String error = attributeDescriptor.validateValue(value, attribute.getValue());
+    if (value.getUserData(DO_NOT_VALIDATE_KEY) == null) {
+      String error = attributeDescriptor.validateValue(value, attribute.getValue());
 
-    if (error != null) {
-      addToResults(HighlightInfo.createHighlightInfo(
-          getTagProblemInfoType(tag),
-          value,
-          error));
-      return;
+      if (error != null) {
+        addToResults(HighlightInfo.createHighlightInfo(
+            getTagProblemInfoType(tag),
+            value,
+            error));
+        return;
+      }
     }
 
     PsiReference[] refs = null;
     final RefCountHolder refCountHolder = myRefCountHolder;  // To make sure it doesn't get null in multi-threaded envir.
 
-    if (refCountHolder != null) {
+    if (refCountHolder != null && value.getUserData(DO_NOT_VALIDATE_KEY) == null) {
       if (attributeDescriptor.hasIdType()) {
         if (doAddValueWithIdType(value, refCountHolder, false)) return;
       } else {
