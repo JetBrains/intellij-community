@@ -786,7 +786,7 @@ public class TypedHandler implements TypedActionHandler {
 
   private boolean handleQuote(Editor editor, FileType fileType, char quote, DataContext dataContext) {
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return false;
-    final QuoteHandler quoteHandler = quoteHandlers.get(fileType);
+    final QuoteHandler quoteHandler = getQuoteHandlerForType(fileType);
     if (quoteHandler == null) return false;
 
     int offset = editor.getCaretModel().getOffset();
