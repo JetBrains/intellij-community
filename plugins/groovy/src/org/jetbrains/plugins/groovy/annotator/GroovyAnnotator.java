@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -842,7 +843,7 @@ public class GroovyAnnotator implements Annotator {
     final PsiType[] paramTypes = ((GrClosureType) type).getClosureParameterTypes();
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, false);
     if (argumentTypes == null) return;
-    if (!areTypesCompatibleForCallingClosure(argumentTypes, paramTypes)) {
+    if (!areTypesCompatibleForCallingClosure(argumentTypes, paramTypes, place.getManager(), place.getResolveScope())) {
       final String typesString = buildArgTypesList(argumentTypes);
       String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
       PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
@@ -851,10 +852,13 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private boolean areTypesCompatibleForCallingClosure(PsiType[] argumentTypes, PsiType[] paramTypes) {
-    if (argumentTypes.length > paramTypes.length) return false;
+  private boolean areTypesCompatibleForCallingClosure(PsiType[] argumentTypes, PsiType[] paramTypes,
+                                                      PsiManager manager, GlobalSearchScope resolveScope) {
+    if (argumentTypes.length != paramTypes.length) return false;
     for (int i = 0; i < argumentTypes.length; i++) {
-      if (!paramTypes[i].isAssignableFrom(argumentTypes[i])) return false;
+      final PsiType paramType = TypesUtil.boxPrimitiveType(paramTypes[i], manager, resolveScope);
+      final PsiType argType = argumentTypes[i];
+      if (!paramType.isAssignableFrom(argType)) return false;
     }
     return true;
   }
