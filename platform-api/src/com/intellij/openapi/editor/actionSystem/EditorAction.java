@@ -47,7 +47,7 @@ public abstract class EditorAction extends AnAction {
 
   @Nullable
   protected Editor getEditor(final DataContext dataContext) {
-    return DataKeys.EDITOR.getData(dataContext);
+    return PlatformDataKeys.EDITOR.getData(dataContext);
   }
 
   public final void actionPerformed(final Editor editor, final DataContext dataContext) {

@@ -99,7 +99,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
     final BrowseFolderActionListener<Comp> actionListener =
       new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor);
     if (project == null) {
-      project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
     if (project != null) {
       Disposer.register(project, new Disposable(){

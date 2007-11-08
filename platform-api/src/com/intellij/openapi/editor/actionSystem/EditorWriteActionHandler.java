@@ -16,7 +16,7 @@
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -28,7 +28,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     if (editor.isViewer()) return;
 
     if (!editor.getDocument().isWritable()) {
-      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), DataKeys.PROJECT.getData(dataContext)))
+      if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), PlatformDataKeys.PROJECT.getData(dataContext)))
         return;
     }
 
