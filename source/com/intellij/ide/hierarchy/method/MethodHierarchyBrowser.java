@@ -4,7 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.actions.CloseTabToolbarAction;
-import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
@@ -294,7 +294,7 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     actionGroup.add(myRefreshAction);
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     actionGroup.add(new CloseAction());
-    actionGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(HELP_ID));
+    actionGroup.add(new ContextHelpAction(HELP_ID));
 
     final ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.METHOD_HIERARCHY_VIEW_TOOLBAR,
                                                                                   actionGroup, true);

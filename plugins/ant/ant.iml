@@ -12,7 +12,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="ExtendedApi" />
-    <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="module" module-name="action-system-impl" />

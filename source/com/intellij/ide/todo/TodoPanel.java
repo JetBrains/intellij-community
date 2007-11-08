@@ -4,9 +4,9 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.CommonActionsFactory;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.todo.configurable.TodoConfigurable;
 import com.intellij.ide.todo.nodes.TodoDirNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
@@ -139,7 +139,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     DefaultActionGroup leftGroup = new DefaultActionGroup();
     leftGroup.add(new PreviousOccurenceToolbarAction(myOccurenceNavigator));
     leftGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
-    leftGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction("find.todoList"));
+    leftGroup.add(new ContextHelpAction("find.todoList"));
     toolBarPanel.add(
       ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, leftGroup, false).getComponent());
 

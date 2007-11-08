@@ -18,7 +18,6 @@
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="codeInsight-impl" exported="" />
-    <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="module" module-name="inspections-impl" exported="" />
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="dom-openapi" />

@@ -3,10 +3,7 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.CloseTabToolbarAction;
-import com.intellij.ide.actions.CommonActionsFactory;
-import com.intellij.ide.actions.NextOccurenceToolbarAction;
-import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
+import com.intellij.ide.actions.*;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
@@ -357,7 +354,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     leftActionGroup.add(new CloseAction());
     leftActionGroup.add(new PreviousOccurenceToolbarAction(this));
     leftActionGroup.add(new NextOccurenceToolbarAction(this));
-    leftActionGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(HelpID.ANT));
+    leftActionGroup.add(new ContextHelpAction(HelpID.ANT));
 
     DefaultActionGroup rightActionGroup = new DefaultActionGroup();
     rightActionGroup.add(new ChangeViewAction(this));

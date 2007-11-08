@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -121,7 +121,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     }
     if (getHelpId() != null) {
       actionGroup.add(Separator.getInstance());
-      actionGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(getHelpId()));
+      actionGroup.add(new ContextHelpAction(getHelpId()));
     }
 
     final ActionManager actionManager = ActionManager.getInstance();

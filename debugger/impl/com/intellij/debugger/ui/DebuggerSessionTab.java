@@ -33,7 +33,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -355,7 +355,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
 
-    group.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(myRunner.getInfo().getHelpId()));
+    group.add(new ContextHelpAction(myRunner.getInfo().getHelpId()));
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
   }

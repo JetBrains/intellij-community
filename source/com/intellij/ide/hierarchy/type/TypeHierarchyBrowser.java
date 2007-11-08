@@ -7,7 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.actions.CloseTabToolbarAction;
-import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -280,7 +280,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider, 
     actionGroup.add(myRefreshAction);
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     actionGroup.add(new CloseAction());
-    actionGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(HELP_ID));
+    actionGroup.add(new ContextHelpAction(HELP_ID));
 
     final ActionToolbar toolBar =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.TYPE_HIERARCHY_VIEW_TOOLBAR, actionGroup, true);

@@ -21,7 +21,6 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="refactoring-openapi" />
     <orderEntry type="module" module-name="refactoring-impl" />
-    <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="library" name="OroMatcher" level="project" />

@@ -3,7 +3,7 @@ package com.intellij.lang.ant.config.explorer;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.AntBuildFilePropertiesAction;
@@ -162,7 +162,7 @@ public class AntExplorer extends JPanel implements DataProvider {
     action.getTemplatePresentation().setDescription(AntBundle.message("ant.explorer.collapse.all.nodes.action.description"));
     group.add(action);
     group.add(myAntBuildFilePropertiesAction);
-    group.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction(HelpID.ANT));
+    group.add(new ContextHelpAction(HelpID.ANT));
 
     final ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANT_EXPLORER_TOOLBAR, group, true);
     final JPanel buttonsPanel = new JPanel(new BorderLayout());

@@ -1,6 +1,6 @@
 package com.intellij.lang.properties.editor;
 
-import com.intellij.ide.actions.CommonActionsFactory;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
@@ -30,7 +30,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   protected ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = (DefaultActionGroup)super.createActionGroup();
     actionGroup.add(new ChangeGroupSeparatorAction());
-    actionGroup.add(CommonActionsFactory.getCommonActionsFactory().createContextHelpAction("editing.propertyFile.bundleEditor"));
+    actionGroup.add(new ContextHelpAction("editing.propertyFile.bundleEditor"));
     return actionGroup;
   }
 
