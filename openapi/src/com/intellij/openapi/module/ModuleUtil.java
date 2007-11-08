@@ -42,6 +42,16 @@ import java.util.*;
 
 public class ModuleUtil {
   public static final Key<Module> KEY_MODULE = new Key<Module>("Module");
+
+  public interface ModuleVisitor {
+    /**
+     *
+     * @param module module to be visited.
+     * @return false to stop visiting.
+     */
+    boolean visit(final Module module);
+  }
+
   private ModuleUtil() {}
 
   public static String getModuleNameInReadAction(@NotNull final Module module) {
@@ -242,5 +252,18 @@ public class ModuleUtil {
       }
     }
     return false;
+  }
+
+  public static boolean visitMeAndDependentModules(final @NotNull Module module, final ModuleVisitor visitor) {
+    if (!visitor.visit(module)) {
+      return false;
+    }
+    final List<Module> list = getAllDependentModules(module);
+    for (Module dependentModule : list) {
+      if (!visitor.visit(dependentModule)) {
+        return false;
+      }
+    }
+    return true;
   }
 }
