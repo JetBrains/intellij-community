@@ -189,23 +189,29 @@ public class LibraryDownloader {
       if (!dontTouch) {
         FileUtil.rename(pair.getSecond(), toFile);
       }
-      files.add(new WriteAction<VirtualFile>() {
+      VirtualFile file = new WriteAction<VirtualFile>() {
         protected void run(final Result<VirtualFile> result) {
           final String url = VfsUtil.getUrlForLibraryRoot(toFile);
           LocalFileSystem.getInstance().refreshAndFindFileByIoFile(toFile);
           result.setResult(VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));
         }
-      }.execute().getResultObject());
+      }.execute().getResultObject();
+      if (file != null) {
+        files.add(file);
+      }
     }
 
     for (final VirtualFile file : existingFiles) {
-      files.add(new WriteAction<VirtualFile>() {
+      VirtualFile libraryRootFile = new WriteAction<VirtualFile>() {
         protected void run(final Result<VirtualFile> result) {
           final String url = VfsUtil.getUrlForLibraryRoot(VfsUtil.virtualToIoFile(file));
           result.setResult(VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));
         }
 
-      }.execute().getResultObject());
+      }.execute().getResultObject();
+      if (libraryRootFile != null) {
+        files.add(libraryRootFile);
+      }
     }
 
     return files.toArray(new VirtualFile[files.size()]);
