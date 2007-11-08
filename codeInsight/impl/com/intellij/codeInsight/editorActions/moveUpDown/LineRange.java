@@ -1,8 +1,8 @@
-package com.intellij.openapi.editor.actions.moveUpDown;
+package com.intellij.codeInsight.editorActions.moveUpDown;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

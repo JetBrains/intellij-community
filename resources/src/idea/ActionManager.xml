@@ -419,8 +419,8 @@
         <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction"/>
         <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
         <separator/>
-        <action id="MoveStatementDown" class="com.intellij.openapi.editor.actions.moveUpDown.MoveStatementDownAction"/>
-        <action id="MoveStatementUp" class="com.intellij.openapi.editor.actions.moveUpDown.MoveStatementUpAction"/>
+        <action id="MoveStatementDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction"/>
+        <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>
         <action id="RemoveEnclosingTag" class="com.intellij.xml.util.actions.RemoveEnclosingTagAction"/>
       </group>
 

@@ -1,4 +1,4 @@
-package com.intellij.openapi.editor.impl;
+package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;

@@ -1,5 +1,7 @@
 package com.intellij.ide.util;
 
+import com.intellij.featureStatistics.FeatureDescriptor;
+import com.intellij.featureStatistics.ProductivityFeaturesProvider;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,8 +9,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.featureStatistics.ProductivityFeaturesProvider;
-import com.intellij.featureStatistics.FeatureDescriptor;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -21,8 +21,8 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class TipPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.TipPanel");

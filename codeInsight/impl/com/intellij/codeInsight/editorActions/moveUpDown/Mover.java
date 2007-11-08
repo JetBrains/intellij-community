@@ -1,4 +1,4 @@
-package com.intellij.openapi.editor.actions.moveUpDown;
+package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;

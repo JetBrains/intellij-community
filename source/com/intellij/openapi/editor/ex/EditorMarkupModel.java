@@ -1,9 +1,9 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.ui.PopupHandler;
 
 public interface EditorMarkupModel extends MarkupModel {
   Editor getEditor();
@@ -15,4 +15,6 @@ public interface EditorMarkupModel extends MarkupModel {
 
   void addErrorMarkerListener(ErrorStripeListener listener);
   void removeErrorMarkerListener(ErrorStripeListener listener);
+
+  void setErrorPanelPopupHandler(PopupHandler handler);
 }

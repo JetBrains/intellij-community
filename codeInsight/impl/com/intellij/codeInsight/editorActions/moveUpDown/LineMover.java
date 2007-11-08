@@ -1,4 +1,4 @@
-package com.intellij.openapi.editor.actions.moveUpDown;
+package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;

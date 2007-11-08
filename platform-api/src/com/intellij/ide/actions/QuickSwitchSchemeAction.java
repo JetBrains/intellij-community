@@ -18,8 +18,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -36,7 +36,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction {
   protected static final Icon ourNotCurrentAction = new EmptyIcon(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     DefaultActionGroup group = new DefaultActionGroup();
     fillActions(project, group);
     showPopup(e, group);
@@ -53,12 +53,12 @@ public abstract class QuickSwitchSchemeAction extends AnAction {
                               JBPopupFactory.ActionSelectionAid.NUMBERING,
                               true);
 
-    popup.showCenteredInCurrentWindow(e.getData(DataKeys.PROJECT));
+    popup.showCenteredInCurrentWindow(e.getData(PlatformDataKeys.PROJECT));
   }
 
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(e.getData(DataKeys.PROJECT) != null && isEnabled());
+    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null && isEnabled());
   }
 
   protected abstract boolean isEnabled();
