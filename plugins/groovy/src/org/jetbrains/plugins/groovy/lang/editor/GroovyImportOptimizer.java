@@ -106,15 +106,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         }
       });
 
-      for (GrImportStatement importStatement : myFile.getImportStatements()) {
-        try {
-          if (!importStatement.isAliasedImport() || !usedImports.contains(importStatement)) {
-            myFile.removeImport(importStatement);
-          }
-        } catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
+      final GrImportStatement[] oldImports = myFile.getImportStatements();
 
       GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers);
       try {
@@ -123,6 +115,16 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         }
       } catch (IncorrectOperationException e) {
         LOG.error(e);
+      }
+      
+      for (GrImportStatement importStatement : oldImports) {
+        try {
+          if (!importStatement.isAliasedImport() || !usedImports.contains(importStatement)) {
+            myFile.removeImport(importStatement);
+          }
+        } catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
       }
     }
 
