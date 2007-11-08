@@ -220,7 +220,7 @@ public class TestNGRunnableState extends JavaCommandLineState
 
     // Always include the source paths - just makes things easier :)
     VirtualFile[] sources;
-    if (config.getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT || module == null) {
+    if ((data.getScope() == TestSearchScope.WHOLE_PROJECT && TestType.PACKAGE.getType().equals(data.TEST_OBJECT)) || module == null) {
       sources = ProjectRootManager.getInstance(project).getContentSourceRoots();
     } else {
       sources = ModuleRootManager.getInstance(module).getSourceRoots();
@@ -264,7 +264,7 @@ public class TestNGRunnableState extends JavaCommandLineState
       // We have groups we wish to limit to.
       Collection<String> groupNames = null;
       if (TestType.GROUP.getType().equals(data.TEST_OBJECT)) {
-        String groupName = config.getPersistantData().getGroupName();
+        String groupName = data.getGroupName();
         if (groupName != null && groupName.length() > 0) {
           groupNames = new HashSet<String>(1);
           groupNames.add(groupName);
