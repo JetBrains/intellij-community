@@ -21,12 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTreeChangeAdapter;
-import com.intellij.psi.PsiTreeChangeEvent;
-import com.intellij.psi.PsiTreeChangeListener;
 
 /**
  * Provides services for registering actions which are activated by typing in the editor.
@@ -38,7 +33,6 @@ public class TypedAction {
   private static final Object TYPING_COMMAND_GROUP = Key.create("Typing");
 
   private TypedActionHandler myHandler;
-  private static final PsiTreeChangeListener myCommitLogger = new PsiModificationTracker();
 
   public TypedAction() {
     myHandler = new Handler();
@@ -55,9 +49,7 @@ public class TypedAction {
         }
       }
 
-      Project project = editor.getProject();
       doc.startGuardedBlockChecking();
-      if (project != null) PsiManager.getInstance(project).addPsiTreeChangeListener(myCommitLogger);
       try {
         final String str = String.valueOf(charTyped);
         CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.in.editor.command.name"));
@@ -67,7 +59,6 @@ public class TypedAction {
         EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
       }
       finally {
-        if (project != null) PsiManager.getInstance(project).removePsiTreeChangeListener(myCommitLogger);
         doc.stopGuardedBlockChecking();
       }
     }
@@ -119,34 +110,5 @@ public class TypedAction {
     };
 
     CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), command, "", TYPING_COMMAND_GROUP);
-  }
-
-  private static class PsiModificationTracker extends PsiTreeChangeAdapter {
-    public void beforeChildAddition(PsiTreeChangeEvent event) {
-      logError();
-    }
-
-    public void beforeChildRemoval(PsiTreeChangeEvent event) {
-      logError();
-    }
-
-    public void beforeChildReplacement(PsiTreeChangeEvent event) {
-      logError();
-    }
-
-    public void beforeChildMovement(PsiTreeChangeEvent event) {
-      logError();
-    }
-
-    public void beforeChildrenChange(PsiTreeChangeEvent event) {
-      logError();
-    }
-
-    public void beforePropertyChange(PsiTreeChangeEvent event) {
-      logError();
-    }
-    private void logError() {
-      //LOG.error("PSI should not be committed on every typing since this greatly reduces app responsiveness");
-    }
   }
 }
