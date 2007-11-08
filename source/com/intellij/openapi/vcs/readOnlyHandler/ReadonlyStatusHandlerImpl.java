@@ -32,6 +32,7 @@
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -44,7 +45,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import gnu.trove.THashSet;
 

@@ -1,8 +1,10 @@
-package com.intellij.openapi.editor.impl.injected;
+package com.intellij.injected.editor;
 
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 
 /**

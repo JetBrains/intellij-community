@@ -1,11 +1,11 @@
-package com.intellij.openapi.editor.impl.injected;
+package com.intellij.injected.editor;
 
 import gnu.trove.THashMap;
 
-import java.util.EventListener;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Collection;
+import java.util.EventListener;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author cdr

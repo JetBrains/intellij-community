@@ -1,7 +1,9 @@
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ModalityStateListener;
+import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -12,15 +14,13 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
-import com.intellij.openapi.editor.impl.injected.DocumentWindow;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.ide.highlighter.HighlighterFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

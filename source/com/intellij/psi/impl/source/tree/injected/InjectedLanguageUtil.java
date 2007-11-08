@@ -1,5 +1,8 @@
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
@@ -14,9 +17,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.injected.DocumentWindow;
-import com.intellij.openapi.editor.impl.injected.EditorWindow;
-import com.intellij.openapi.editor.impl.injected.VirtualFileWindow;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;

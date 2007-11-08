@@ -4,10 +4,10 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
@@ -56,27 +56,21 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
       }
     });
     if (StringUtil.isEmpty(text)) return true;
-    if (DEBUG) System.out.println("Searching for :'"+text+"'");
-      
+
     SearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       public SearchScope compute() {
         return p.getEffectiveSearchScope();
       }
     });
-    if (DEBUG) System.out.println("searchScope = " + searchScope);
     final boolean ignoreInjectedPsi = searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).isIgnoreInjectedPsi();
 
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        if (DEBUG) System.out.println("!!! About to check "+element);
         if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
-          if (DEBUG) System.out.println("!!!!!!!!!!!!!! Ref "+ref);
           if (ref.getRangeInElement().contains(offsetInElement)) {
-            if (DEBUG) System.out.println("!!!!!!!!!!!!!!!!!!!!! Ref "+ref + " contains");
             if (ref.isReferenceTo(refElement)) {
-              if (DEBUG) System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   Found ref "+ref);
               return consumer.process(ref);
             }
           }

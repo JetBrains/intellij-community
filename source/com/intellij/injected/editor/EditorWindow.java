@@ -1,4 +1,4 @@
-package com.intellij.openapi.editor.impl.injected;
+package com.intellij.injected.editor;
 
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;

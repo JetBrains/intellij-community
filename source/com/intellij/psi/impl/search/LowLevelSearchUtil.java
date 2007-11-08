@@ -119,9 +119,6 @@ public class LowLevelSearchUtil {
       if (startOffset < 0) {
         return true;
       }
-      if (CachesBasedRefSearcher.DEBUG) {
-        System.out.println(">>>>>>>>>>>>>>>>>>> found word:" + startOffset + " in " + scope + "," + scope.getContainingFile().getName());
-      }
       if (!processTreeUp(processor, scope, searcher, startOffset, ignoreInjectedPsi)) return false;
 
       startOffset++;

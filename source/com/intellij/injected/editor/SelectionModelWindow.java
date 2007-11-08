@@ -1,8 +1,8 @@
-package com.intellij.openapi.editor.impl.injected;
+package com.intellij.injected.editor;
 
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.TextRange;

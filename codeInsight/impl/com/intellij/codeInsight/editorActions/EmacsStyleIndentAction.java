@@ -1,5 +1,5 @@
 
-package com.intellij.openapi.editor.actions;
+package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;

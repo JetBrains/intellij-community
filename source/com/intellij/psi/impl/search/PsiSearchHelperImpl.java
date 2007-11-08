@@ -542,14 +542,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                       PsiElement[] psiRoots = file.getPsiRoots();
                       Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
                       for (PsiElement psiRoot : psiRoots) {
-                        if (CachesBasedRefSearcher.DEBUG) {
-                          System.out.println("Scanning root:" + psiRoot + " lang:" + psiRoot.getLanguage() + " file:" +
-                                             psiRoot.getContainingFile().getName());
-                        }
                         ProgressManager.getInstance().checkCanceled();
                         if (!processed.add(psiRoot)) continue;
                         if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, false)) {
-                          if (CachesBasedRefSearcher.DEBUG) System.out.println(" cancelling subsequent file scan");
                           processFilesJob.cancel();
                           return;
                         }
@@ -574,9 +569,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       try {
         processFilesJob.scheduleAndWaitForResults();
-        if (CachesBasedRefSearcher.DEBUG) {
-          System.out.println("Job finished");
-        }
       }
       catch (Throwable throwable) {
         LOG.error(throwable);

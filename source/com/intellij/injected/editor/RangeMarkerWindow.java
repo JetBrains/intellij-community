@@ -4,10 +4,10 @@
  * Date: Aug 22, 2007
  * Time: 9:09:57 PM
  */
-package com.intellij.openapi.editor.impl.injected;
+package com.intellij.injected.editor;
 
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import org.jetbrains.annotations.NotNull;
 
