@@ -7,10 +7,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="appcore-api" />
-    <orderEntry type="module" module-name="Annotations" />
-    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="util" exported="" />
+    <orderEntry type="module" module-name="appcore-api" exported="" />
+    <orderEntry type="module" module-name="Annotations" exported="" />
+    <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntryProperties />
   </component>
 </module>

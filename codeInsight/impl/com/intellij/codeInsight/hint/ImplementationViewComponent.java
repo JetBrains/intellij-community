@@ -276,8 +276,8 @@ public class ImplementationViewComponent extends JPanel {
 
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
 
-    final HintUtil.ImplementationTextSelectioner implementationTextSelectioner =
-      HintUtil.getImplementationTextSelectioner(elt.getLanguage());
+    final LanguageHintUtil.ImplementationTextSelectioner implementationTextSelectioner =
+      LanguageHintUtil.getImplementationTextSelectioner(elt.getLanguage());
     int start = implementationTextSelectioner.getTextStartOffset(elt);
     final int end = implementationTextSelectioner.getTextEndOffset(elt);
 
