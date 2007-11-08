@@ -37,6 +37,7 @@ import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.ui.LoadingNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1201,16 +1202,6 @@ public abstract class AbstractTreeBuilder implements Disposable {
     }
 
     public void update(PresentationData presentation) {
-    }
-  }
-
-  public static class LoadingNode extends DefaultMutableTreeNode {
-    public LoadingNode() {
-      super(IdeBundle.message("treenode.loading"));
-    }
-
-    public LoadingNode(String text) {
-      super(text);
     }
   }
 

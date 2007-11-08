@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -82,7 +81,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       }
     }
 
-    if (value instanceof AbstractTreeBuilder.LoadingNode) {
+    if (value instanceof LoadingNode) {
       setForeground(Color.gray);
       setIcon(LOADING_NODE_ICON);
     } else {
