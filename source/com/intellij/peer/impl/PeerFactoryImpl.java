@@ -18,6 +18,7 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl;
 import com.intellij.openapi.editor.Document;
@@ -41,7 +42,6 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
-import com.intellij.openapi.vcs.impl.FileStatusFactoryImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
@@ -80,14 +80,9 @@ public class PeerFactoryImpl extends PeerFactory {
   private final ContentFactoryImpl myContentFactory = new ContentFactoryImpl();
   private final FileSystemTreeFactoryImpl myFileSystemTreeFactory = new FileSystemTreeFactoryImpl();
   private final DiffRequestFactoryImpl myDiffRequestFactory = new DiffRequestFactoryImpl();
-  private final FileStatusFactoryImpl myFileStatusFactory;
-
-  public PeerFactoryImpl() {
-    myFileStatusFactory = new FileStatusFactoryImpl();
-  }
 
   public FileStatusFactory getFileStatusFactory() {
-    return myFileStatusFactory;
+    return ServiceManager.getService(FileStatusFactory.class);
   }
 
   public DialogWrapperPeerFactory getDialogWrapperPeerFactory() {
