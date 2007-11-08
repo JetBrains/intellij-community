@@ -218,6 +218,10 @@ public class ProgressWindow extends BlockingProgressIndicator {
     }
   }
 
+  public boolean isBackgrounded() {
+    return myBackgrounded;
+  }
+
   public void setText(String text) {
     if (!Comparing.equal(text, getText())) {
       super.setText(text);

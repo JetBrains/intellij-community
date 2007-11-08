@@ -142,6 +142,11 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final AntNoFileException[] ex = new AntNoFileException[]{null};
     final String title = AntBundle.message("register.ant.build.progress", file.getPresentableUrl());
     ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), title, false) {
+      @Nullable
+      public NotificationInfo getNotificationInfo() {
+        return new NotificationInfo("Ant", "Ant Task Finished", "");
+      }
+
       public void run(final ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.pushState();

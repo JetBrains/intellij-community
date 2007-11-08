@@ -57,6 +57,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -149,6 +150,19 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             finally {
               action.finish();
             }
+          }
+
+          @Nullable
+          public NotificationInfo getNotificationInfo() {
+            StringBuffer text = new StringBuffer();
+            final List<FileGroup> groups = updatedFiles.getTopLevelGroups();
+            for (FileGroup group : groups) {
+              final int s = group.getFiles().size();
+              if (text.length() > 0) text.append("\n");
+              text.append(s + " Files " + group.getUpdateName());
+            }
+
+            return new NotificationInfo("VCS Update", "VCS Update Finished", text.toString(), true);
           }
 
           public void onSuccess() {

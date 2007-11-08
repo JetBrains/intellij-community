@@ -82,6 +82,10 @@ public abstract class Task implements TaskInfo {
     return this;
   }
 
+  @Nullable
+  public NotificationInfo getNotificationInfo() {
+    return null;
+  }
 
   public boolean isHeadless() {
     return ApplicationManager.getApplication().isUnitTestMode();
@@ -180,6 +184,43 @@ public abstract class Task implements TaskInfo {
 
     public final boolean isConditionalModal() {
       return true;
+    }
+  }
+
+  public static class NotificationInfo {
+    private final String myNotificationName;
+    private final String myNotificationTitle;
+    private final String myNotificationText;
+    private final boolean myShowWhenFocused;
+
+    public NotificationInfo(final String notificationName, final String notificationTitle, final String notificationText) {
+      this(notificationName,  notificationTitle, notificationText, false);
+    }
+
+    public NotificationInfo(final String notificationName,
+                            final String notificationTitle,
+                            final String notificationText,
+                            final boolean showWhenFocused) {
+      myNotificationName = notificationName;
+      myNotificationTitle = notificationTitle;
+      myNotificationText = notificationText;
+      myShowWhenFocused = showWhenFocused;
+    }
+
+    public String getNotificationName() {
+      return myNotificationName;
+    }
+
+    public String getNotificationTitle() {
+      return myNotificationTitle;
+    }
+
+    public String getNotificationText() {
+      return myNotificationText;
+    }
+
+    public boolean isShowWhenFocused() {
+      return myShowWhenFocused;
     }
   }
 }

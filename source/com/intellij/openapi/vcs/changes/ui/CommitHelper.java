@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ui.ConfirmationDialog;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -84,6 +85,12 @@ public class CommitHelper {
             finally {
               vcsManager.stopBackgroundVcsOperation();
             }
+          }
+
+          @Nullable
+          public NotificationInfo getNotificationInfo() {
+            final String text = (myChangeList.getChanges().size() - changesFailedToCommit.size()) + " Change(s) Commited, " + changesFailedToCommit.size() + " Change(s) Failed To Commit";
+            return new NotificationInfo("VCS Commit",  "VCS Commit Finished", text, true);
           }
         };
       ProgressManager.getInstance().run(task);

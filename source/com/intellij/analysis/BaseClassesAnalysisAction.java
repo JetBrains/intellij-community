@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
@@ -59,6 +60,11 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
 
   private void doAnalyze(final Project project, final AnalysisScope scope) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, AnalysisScopeBundle.message("analyzing.project"), true) {
+      @Nullable
+      public NotificationInfo getNotificationInfo() {
+        return new NotificationInfo("Analysis",  "\"" + getTitle() + "\" Analysis Finished", "");
+      }
+
       public void run(final ProgressIndicator indicator) {
         analyzeClasses(project, scope, indicator);
       }

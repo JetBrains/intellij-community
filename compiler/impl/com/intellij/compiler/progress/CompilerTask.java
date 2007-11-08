@@ -41,6 +41,7 @@ import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,6 +87,11 @@ public class CompilerTask extends Task.Backgroundable {
 
   public ProgressIndicator getIndicator() {
     return myIndicator;
+  }
+
+  @Nullable
+  public NotificationInfo getNotificationInfo() {
+    return new NotificationInfo("Compiler", "Compilation Finished", myErrorCount + " Errors, " + myWarningCount + " Warnings", true);
   }
 
   public void run(final ProgressIndicator indicator) {

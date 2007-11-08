@@ -308,9 +308,20 @@ public class FindUsagesManager implements JDOMExternalizable {
     UsageViewPresentation presentation = createPresentation(element, findUsagesOptions, myToOpenInNewTab);
     final UsageSearcher usageSearcher = createUsageSearcher(descriptor, findUsagesOptions, null);
     final boolean[] canceled = new boolean[]{false};
+    final int[] usageCount = new int[]{0};
     Task task = new Task.Modal(myProject, UsageViewManagerImpl.getProgressTitle(presentation), true) {
       public void run(final ProgressIndicator indicator) {
-        usageSearcher.generate(processor);
+        usageSearcher.generate(new Processor<Usage>() {
+          public boolean process(final Usage usage) {
+            usageCount[0]++;
+            return processor.process(usage);
+          }
+        });
+      }
+
+      @Nullable
+      public NotificationInfo getNotificationInfo() {
+        return new NotificationInfo("Find Usages",  "Find Usages Finished", usageCount[0] + " Usage(s) Found");
       }
 
       public void onCancel() {

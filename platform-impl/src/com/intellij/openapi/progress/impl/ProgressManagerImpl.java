@@ -9,13 +9,16 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
+import com.intellij.ui.Notifications;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -169,6 +172,14 @@ public class ProgressManagerImpl extends ProgressManager {
         }
       }, task.getTitle(), task.isCancellable(), task.getProject());
     if (result) {
+      final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
+      if (notificationInfo != null) {
+        final JFrame frame = WindowManager.getInstance().getFrame(task.getProject());
+        if (!frame.hasFocus()) {
+          Notifications.notify(notificationInfo.getNotificationName(), notificationInfo.getNotificationTitle(), notificationInfo.getNotificationText());
+        }
+      }
+
       task.onSuccess();
     }
     else {
@@ -239,6 +250,14 @@ public class ProgressManagerImpl extends ProgressManager {
           }, ModalityState.NON_MODAL);
         }
         else if (!canceled) {
+          final Task.NotificationInfo notificationInfo = task.getNotificationInfo();
+          if (notificationInfo != null) {
+            final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            if (window == null || notificationInfo.isShowWhenFocused()) {
+              Notifications.notify(notificationInfo.getNotificationName(), notificationInfo.getNotificationTitle(), notificationInfo.getNotificationText());
+            }
+          }
+
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               task.onSuccess();

@@ -39,6 +39,7 @@ import com.intellij.usages.*;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.RangeBlinker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -108,6 +109,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
     Task task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       public void run(final ProgressIndicator indicator) {
         new SearchForUsagesRunnable(usageView, presentation, searchFor, searcherFactory, processPresentation, listener).run();
+      }
+
+      @Nullable
+      public NotificationInfo getNotificationInfo() {
+        return new NotificationInfo("Find Usages",  "Find Usages Finished", usageView.get() != null ? (usageView.get().getUsagesCount() + " Usage(s) Found") : "No Usages Found");
       }
     };
     ProgressManager.getInstance().run(task);
