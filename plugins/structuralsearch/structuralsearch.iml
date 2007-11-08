@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="codeInsight-openapi" />
     <orderEntry type="module" module-name="codeInsight-impl" />
     <orderEntry type="module" module-name="idea-tests" />
-    <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="module" module-name="ui-openapi" />
     <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="inspections-openapi" />
