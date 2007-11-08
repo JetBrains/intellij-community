@@ -22,13 +22,12 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.UIHelper;
 import com.intellij.ui.table.BaseTableView;
 import com.intellij.ui.table.SelectionProvider;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.config.Storage;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -375,9 +374,8 @@ public class DualView extends JPanel {
   }
 
   public void installEditSourceOnDoubleClickHandler() {
-    UIHelper uiHelper = PeerFactory.getInstance().getUIHelper();
-    uiHelper.installEditSourceOnDoubleClick(myTreeView);
-    uiHelper.installEditSourceOnDoubleClick(myFlatView);
+    EditSourceOnDoubleClickHandler.install(myTreeView);
+    EditSourceOnDoubleClickHandler.install(myFlatView);
   }
 
   public void installDoubleClickHandler(AnAction action) {

@@ -62,8 +62,8 @@ public final class DataKeys {
   public static final DataKey<Project> PROJECT_CONTEXT = DataKey.create(DataConstants.PROJECT_CONTEXT);
   public static final DataKey<Module> MODULE_CONTEXT = DataKey.create(DataConstants.MODULE_CONTEXT);
   public static final DataKey<Module[]> MODULE_CONTEXT_ARRAY = DataKey.create(DataConstants.MODULE_CONTEXT_ARRAY);
-  public static final DataKey<Navigatable> NAVIGATABLE = DataKey.create(DataConstants.NAVIGATABLE);
-  public static final DataKey<Navigatable[]> NAVIGATABLE_ARRAY = DataKey.create(DataConstants.NAVIGATABLE_ARRAY);
+  public static final DataKey<Navigatable> NAVIGATABLE = PlatformDataKeys.NAVIGATABLE;
+  public static final DataKey<Navigatable[]> NAVIGATABLE_ARRAY = PlatformDataKeys.NAVIGATABLE_ARRAY;
   public static final DataKey<ExporterToTextFile> EXPORTER_TO_TEXT_FILE = DataKey.create(DataConstants.EXPORTER_TO_TEXT_FILE);
   public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create(DataConstants.PSI_ELEMENT);
   public static final DataKey<PsiFile> PSI_FILE = DataKey.create(DataConstants.PSI_FILE);
