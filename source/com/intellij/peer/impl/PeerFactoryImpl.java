@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -92,7 +91,7 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public DialogWrapperPeerFactory getDialogWrapperPeerFactory() {
-    return new DialogWrapperPeerFactoryImpl();
+    return DialogWrapperPeerFactory.getInstance();
   }
 
   public ProcessProxyFactory getProcessProxyFactory() {

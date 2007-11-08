@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AwtVisitor;
@@ -114,14 +113,14 @@ public abstract class DialogWrapper {
    */
   protected DialogWrapper(Project project, boolean canBeParent) {
     synchronized (ourLock) {
-      myPeer = PeerFactory.getInstance().getDialogWrapperPeerFactory().createPeer(this, project, canBeParent);
+      myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent);
       createDefaultActions();
     }
   }
 
   protected DialogWrapper(boolean canBeParent) {
     synchronized (ourLock) {
-      myPeer = PeerFactory.getInstance().getDialogWrapperPeerFactory().createPeer(this, canBeParent);
+      myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent);
       createDefaultActions();
     }
   }
@@ -132,7 +131,7 @@ public abstract class DialogWrapper {
    */
   protected DialogWrapper(Component parent, boolean canBeParent) {
     synchronized (ourLock) {
-      myPeer = PeerFactory.getInstance().getDialogWrapperPeerFactory().createPeer(this, parent, canBeParent);
+      myPeer = DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
       createDefaultActions();
     }
   }

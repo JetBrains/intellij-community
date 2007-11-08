@@ -16,10 +16,15 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 
 import java.awt.*;
 
 public abstract class DialogWrapperPeerFactory {
+  public static DialogWrapperPeerFactory getInstance() {
+    return ServiceManager.getService(DialogWrapperPeerFactory.class);
+  }
+
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, Project project, boolean canBeParent);
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent);
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, Component parent, boolean canBeParent);
