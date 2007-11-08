@@ -17,7 +17,7 @@ package com.intellij.ui.dualView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.peer.PeerFactory;
+import com.intellij.ui.HighlightableCellRenderer;
 import com.intellij.ui.table.ItemsProvider;
 import com.intellij.ui.table.SelectionProvider;
 import com.intellij.ui.table.TableHeaderRenderer;
@@ -51,7 +51,7 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     getTableHeader().setDefaultRenderer(new TableHeaderRenderer(treeTableModel));
 
     setTreeCellRenderer(new TreeCellRenderer() {
-      private final TreeCellRenderer myBaseRenderer = PeerFactory.getInstance().getUIHelper().createHighlightableTreeCellRenderer();
+      private final TreeCellRenderer myBaseRenderer = new HighlightableCellRenderer();
       public Component getTreeCellRendererComponent(JTree tree1,
                                                     Object value,
                                                     boolean selected,
