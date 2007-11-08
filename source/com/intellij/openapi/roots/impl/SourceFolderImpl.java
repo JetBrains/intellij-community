@@ -31,6 +31,12 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     myPackagePrefix = packagePrefix;
   }
 
+  public SourceFolderImpl(String url, boolean isTestSource, ContentEntryImpl e) {
+    super(url, e);
+    myIsTestSource = isTestSource;
+    myPackagePrefix = DEFAULT_PACKAGE_PREFIX;
+  }
+
   SourceFolderImpl(Element element, ContentEntryImpl contentEntry) throws InvalidDataException {
     super(element, contentEntry);
     LOG.assertTrue(element.getName().equals(ELEMENT_NAME));

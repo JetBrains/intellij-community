@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -13,9 +14,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.TreeSet;
 
 /**
@@ -33,39 +34,50 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @NonNls private static final String URL_ATTR = "url";
 
 
-  private ContentEntryImpl(VirtualFilePointer root, RootModelImpl rootModel) {
-    super(rootModel);
-    myRootModel = rootModel;
-    myRoot = rootModel.pointerFactory().duplicate(root);
+  ContentEntryImpl(VirtualFile file, RootModelImpl m) {
+    this(m.pointerFactory().create(file), m);
   }
 
-  ContentEntryImpl(Element element, RootModelImpl rootModel) throws InvalidDataException {
-    super(rootModel);
-    myRootModel = rootModel;
-    LOG.assertTrue(ELEMENT_NAME.equals(element.getName()));
-    final String urlAttrValue = element.getAttributeValue(URL_ATTR);
-    if (urlAttrValue == null) throw new InvalidDataException();
-    myRoot = myRootModel.pointerFactory().create(urlAttrValue);
+  ContentEntryImpl(String url, RootModelImpl m) {
+    this(m.pointerFactory().create(url), m);
+  }
 
+  ContentEntryImpl(Element e, RootModelImpl m) throws InvalidDataException {
+    this(getUrlFrom(e), m);
+    initSourceFolders(e);
+    initExcludeFolders(e);
+  }
+
+  private static String getUrlFrom(Element e) throws InvalidDataException {
+    LOG.assertTrue(ELEMENT_NAME.equals(e.getName()));
+    
+    String url = e.getAttributeValue(URL_ATTR);
+    if (url == null) throw new InvalidDataException();
+    return url;
+  }
+
+  private void initSourceFolders(Element e) throws InvalidDataException {
     mySourceFolders.clear();
-    final List sourceChildren = element.getChildren(SourceFolderImpl.ELEMENT_NAME);
-    for (Object aSourceChildren : sourceChildren) {
-      Element sourceEntryElement = (Element)aSourceChildren;
-      mySourceFolders.add(new SourceFolderImpl(sourceEntryElement, this));
-    }
-
-    myExcludeFolders.clear();
-    final List excludeChildren = element.getChildren(ExcludeFolderImpl.ELEMENT_NAME);
-    for (Object aExcludeChildren : excludeChildren) {
-      Element excludeFolderElement = (Element)aExcludeChildren;
-      myExcludeFolders.add(new ExcludeFolderImpl(excludeFolderElement, this));
+    for (Object child : e.getChildren(SourceFolderImpl.ELEMENT_NAME)) {
+      mySourceFolders.add(new SourceFolderImpl((Element)child, this));
     }
   }
 
-  ContentEntryImpl(VirtualFile file, RootModelImpl rootModel) {
-    super(rootModel);
-    myRootModel = rootModel;
-    myRoot = myRootModel.pointerFactory().create(file);
+  private void initExcludeFolders(Element e) throws InvalidDataException {
+    myExcludeFolders.clear();
+    for (Object child : e.getChildren(ExcludeFolderImpl.ELEMENT_NAME)) {
+      myExcludeFolders.add(new ExcludeFolderImpl((Element)child, this));
+    }
+  }
+
+  private ContentEntryImpl copyWith(RootModelImpl m) {
+    return new ContentEntryImpl(m.pointerFactory().duplicate(myRoot), m);
+  }
+
+  private ContentEntryImpl(VirtualFilePointer root, RootModelImpl m) {
+    super(m);
+    myRootModel = m;
+    myRoot = root;
   }
 
   public VirtualFile getFile() {
@@ -150,58 +162,63 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource) {
-    return addSourceFolder(file, isTestSource, SourceFolderImpl.DEFAULT_PACKAGE_PREFIX);
+    assertCanAddFolder(file);
+    return addSourceFolder(new SourceFolderImpl(file, isTestSource, this));
   }
 
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix) {
-    myRootModel.assertWritable();
-    assertFolderUnderMe(file);
-    final SourceFolderImpl simpleSourceFolder = new SourceFolderImpl(file, isTestSource, packagePrefix, this);
-    mySourceFolders.add(simpleSourceFolder);
-    return simpleSourceFolder;
+    assertCanAddFolder(file);
+    return addSourceFolder(new SourceFolderImpl(file, isTestSource, packagePrefix, this));
   }
 
-  private void assertFolderUnderMe(VirtualFile file) {
-    final VirtualFile rootFile = getFile();
-    if (rootFile == null) {
-      LOG.assertTrue(false, "Content entry file is null");
-      return;
-    }
-    if (!VfsUtil.isAncestor(rootFile, file, false)) {
-      LOG.assertTrue(false, "The file " + file.getPresentableUrl() + " is not under content entry root " + rootFile.getPresentableUrl());
-    }
+  public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
+    assertFolderUnderMe(url);
+    return addSourceFolder(new SourceFolderImpl(url, isTestSource, this));
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    LOG.assertTrue(ELEMENT_NAME.equals(element.getName()));
-    element.setAttribute(URL_ATTR, myRoot.getUrl());
-    for (final SourceFolder sourceFolder : mySourceFolders) {
-      if (sourceFolder instanceof SourceFolderImpl) {
-        final Element subElement = new Element(SourceFolderImpl.ELEMENT_NAME);
-        ((SourceFolderImpl)sourceFolder).writeExternal(subElement);
-        element.addContent(subElement);
-      }
-    }
-
-    for (final ExcludeFolder excludeFolder : myExcludeFolders) {
-      if (excludeFolder instanceof ExcludeFolderImpl) {
-        final Element subElement = new Element(ExcludeFolderImpl.ELEMENT_NAME);
-        ((ExcludeFolderImpl)excludeFolder).writeExternal(subElement);
-        element.addContent(subElement);
-      }
-    }
-  }
-
-  public boolean isSynthetic() {
-    return false;
+  private SourceFolder addSourceFolder(SourceFolderImpl f) {
+    mySourceFolders.add(f);
+    return f;
   }
 
   public void removeSourceFolder(@NotNull SourceFolder sourceFolder) {
-    myRootModel.assertWritable();
-    LOG.assertTrue(mySourceFolders.contains(sourceFolder));
+    assertCanRemoveFrom(sourceFolder, mySourceFolders);
     mySourceFolders.remove(sourceFolder);
   }
 
+  public ExcludeFolder addExcludeFolder(@NotNull VirtualFile file) {
+    assertCanAddFolder(file);
+    return addExcludeFolder(new ExcludeFolderImpl(file, this));
+  }
+
+  public ExcludeFolder addExcludeFolder(@NotNull String url) {
+    assertCanAddFolder(url);
+    return addExcludeFolder(new ExcludeFolderImpl(url, this));
+  }
+
+  private void assertCanAddFolder(VirtualFile file) {
+    assertCanAddFolder(file.getUrl());
+  }
+
+  private void assertCanAddFolder(String url) {
+    myRootModel.assertWritable();
+    assertFolderUnderMe(url);
+  }
+
+  public void removeExcludeFolder(@NotNull ExcludeFolder excludeFolder) {
+    assertCanRemoveFrom(excludeFolder, myExcludeFolders);
+    myExcludeFolders.remove(excludeFolder);
+  }
+
+  private ExcludeFolder addExcludeFolder(ExcludeFolder f) {
+    myExcludeFolders.add(f);
+    return f;
+  }
+
+  private <T extends ContentFolder> void assertCanRemoveFrom(T f, TreeSet<T> ff) {
+    myRootModel.assertWritable();
+    LOG.assertTrue(ff.contains(f));
+  }
 
   public ExcludedOutputFolder addExcludedOutputFolder(VirtualFilePointer directory) {
     myRootModel.assertWritable();
@@ -214,22 +231,24 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return myExcludedOutputFolders.remove(folder);
   }
 
-  public ExcludeFolder addExcludeFolder(@NotNull VirtualFile file) {
-    myRootModel.assertWritable();
-    assertFolderUnderMe(file);
-    final ExcludeFolderImpl excludeFolder = new ExcludeFolderImpl(file, this);
-    myExcludeFolders.add(excludeFolder);
-    return excludeFolder;
+  private void assertFolderUnderMe(String url) {
+    final String rootUrl = getUrl();
+    try {
+      if (!FileUtil.isAncestor(new File(rootUrl), new File(url), false)) {
+        LOG.assertTrue(false, "The file " + url + " is not under content entry root " + rootUrl);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  public void removeExcludeFolder(@NotNull ExcludeFolder excludeFolder) {
-    myRootModel.assertWritable();
-    LOG.assertTrue(myExcludeFolders.contains(excludeFolder));
-    myExcludeFolders.remove(excludeFolder);
+  public boolean isSynthetic() {
+    return false;
   }
 
   public ContentEntry cloneEntry(RootModelImpl rootModel) {
-    final ContentEntryImpl cloned = new ContentEntryImpl(myRoot, rootModel);
+    final ContentEntryImpl cloned = copyWith(rootModel);
     for (final SourceFolder sourceFolder : mySourceFolders) {
       if (sourceFolder instanceof ClonableContentFolder) {
         ContentFolder folder = ((ClonableContentFolder)sourceFolder).cloneFolder(cloned);
@@ -267,6 +286,26 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     }
     for (final ExcludeFolder excludeFolder : myExcludeFolders) {
       ((RootModelComponentBase)excludeFolder).dispose();
+    }
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    LOG.assertTrue(ELEMENT_NAME.equals(element.getName()));
+    element.setAttribute(URL_ATTR, myRoot.getUrl());
+    for (final SourceFolder sourceFolder : mySourceFolders) {
+      if (sourceFolder instanceof SourceFolderImpl) {
+        final Element subElement = new Element(SourceFolderImpl.ELEMENT_NAME);
+        ((SourceFolderImpl)sourceFolder).writeExternal(subElement);
+        element.addContent(subElement);
+      }
+    }
+
+    for (final ExcludeFolder excludeFolder : myExcludeFolders) {
+      if (excludeFolder instanceof ExcludeFolderImpl) {
+        final Element subElement = new Element(ExcludeFolderImpl.ELEMENT_NAME);
+        ((ExcludeFolderImpl)excludeFolder).writeExternal(subElement);
+        element.addContent(subElement);
+      }
     }
   }
 

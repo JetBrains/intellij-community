@@ -93,6 +93,15 @@ public interface ContentEntry extends Synthetic {
   SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix);
 
   /**
+   * Adds a source or test source root under the content root.
+   *
+   * @param  url the directory url to add as a source root.
+   * @param isTestSource true if the directory is added as a test source root.
+   * @return the object representing the added root.
+   */
+  SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource);
+
+  /**
    * Removes a source or test source root from this content root.
    *
    * @param sourceFolder the source root to remove (must belong to this content root).
@@ -106,6 +115,14 @@ public interface ContentEntry extends Synthetic {
    * @return the object representing the added root.
    */
   ExcludeFolder addExcludeFolder(@NotNull VirtualFile file);
+
+  /**
+   * Adds an exclude root under the content root.
+   *
+   * @param url the directory url to add as an exclude root.
+   * @return the object representing the added root.
+   */
+  ExcludeFolder addExcludeFolder(@NotNull String url);
 
   /**
    * Removes an exclude root from this content root.

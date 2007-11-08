@@ -21,6 +21,10 @@ public class ExcludeFolderImpl extends ContentFolderBaseImpl implements Clonable
     super(file, contentEntry);
   }
 
+  ExcludeFolderImpl(String url, ContentEntryImpl contentEntry) {
+    super(url, contentEntry);
+  }
+
   ExcludeFolderImpl(Element element, ContentEntryImpl contentEntry) throws InvalidDataException {
     super(element, contentEntry);
     LOG.assertTrue(ELEMENT_NAME.equals(element.getName()));

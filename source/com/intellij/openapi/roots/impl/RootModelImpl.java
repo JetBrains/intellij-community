@@ -509,9 +509,17 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NotNull
   public ContentEntry addContentEntry(VirtualFile file) {
-    ContentEntry entry = new ContentEntryImpl(file, this);
-    myContent.add(entry);
-    return entry;
+    return addContentEntry(new ContentEntryImpl(file, this));
+  }
+
+  @NotNull
+  public ContentEntry addContentEntry(String url) {
+    return addContentEntry(new ContentEntryImpl(url, this));
+  }
+
+  private ContentEntry addContentEntry(ContentEntry e) {
+    myContent.add(e);
+    return e;
   }
 
   private VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {

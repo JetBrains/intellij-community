@@ -7,6 +7,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerFactory;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,24 +22,35 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
   @NonNls protected static final String URL_ATTR = "url";
 
   ContentFolderBaseImpl(VirtualFile file, ContentEntryImpl contentEntry) {
-    super(contentEntry.getRootModel());
-    myContentEntry = contentEntry;
-    myFilePointer = contentEntry.getRootModel().pointerFactory().create(file);
+    this(getPointerFactory(contentEntry).create(file), contentEntry);
+  }
+
+  ContentFolderBaseImpl(String url, ContentEntryImpl contentEntry) {
+    this(getPointerFactory(contentEntry).create(url), contentEntry);
   }
 
   protected ContentFolderBaseImpl(ContentFolderBaseImpl that, ContentEntryImpl contentEntry) {
-    super(contentEntry.getRootModel());
-    myContentEntry = contentEntry;
-    myFilePointer =
-    contentEntry.getRootModel().pointerFactory().duplicate(that.myFilePointer);
+    this(getPointerFactory(contentEntry).duplicate(that.myFilePointer), contentEntry);
+  }
+
+  private static VirtualFilePointerFactory getPointerFactory(ContentEntryImpl entry) {
+    return entry.getRootModel().pointerFactory();
   }
 
   ContentFolderBaseImpl(Element element, ContentEntryImpl contentEntry) throws InvalidDataException {
-    super(contentEntry.getRootModel());
-    final String path = element.getAttributeValue(URL_ATTR);
-    if (path == null) throw new InvalidDataException();
-    myContentEntry = contentEntry;
-    myFilePointer = myContentEntry.getRootModel().pointerFactory().create(path);
+    this(getUrlFrom(element), contentEntry);
+  }
+
+  private static String getUrlFrom(Element element) throws InvalidDataException {
+    String url = element.getAttributeValue(URL_ATTR);
+    if (url == null) throw new InvalidDataException();
+    return url;
+  }
+
+  private ContentFolderBaseImpl(VirtualFilePointer p, ContentEntryImpl e) {
+    super(e.getRootModel());
+    myContentEntry = e;
+    myFilePointer = p;
   }
 
   public VirtualFile getFile() {
