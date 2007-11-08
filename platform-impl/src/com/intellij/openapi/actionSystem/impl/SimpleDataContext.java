@@ -1,7 +1,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 
 public class SimpleDataContext implements DataContext {

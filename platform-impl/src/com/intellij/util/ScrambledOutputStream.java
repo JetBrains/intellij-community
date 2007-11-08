@@ -1,7 +1,7 @@
 package com.intellij.util;
 
-import java.io.OutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 public class ScrambledOutputStream extends OutputStream{
   static final int MASK = 0xAA;
