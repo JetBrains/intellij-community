@@ -35,6 +35,8 @@ import java.util.regex.Pattern;
 public class TestNGConsoleView implements ConsoleView
 {
     @NonNls private static Pattern COMPARISION_PATTERN = Pattern.compile("([^\\<\\>]*)expected[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*\\<([^\\<\\>]*)\\>[^\\<\\>]*");
+    @NonNls private static Pattern EXPECTED_BUT_WAS_PATTERN = Pattern.compile("(.*)expected:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
+    @NonNls private static Pattern EXPECTED_NOT_SAME_BUT_WAS_PATTERN = Pattern.compile("(.*)expected not same with:\\<(.*)\\> but was:\\<(.*)\\>.*", Pattern.DOTALL);
     private ConsoleView console;
     private TestNGResults testNGResults;
     private final List<Printable> allOutput = new ArrayList<Printable>();
@@ -148,7 +150,13 @@ public class TestNGConsoleView implements ConsoleView
     private List<Printable> getPrintables(final TestResultMessage result, String s) {
         List<Printable> printables = new ArrayList<Printable>();
         //figure out if we have a diff we need to hyperlink
-        final Matcher matcher = COMPARISION_PATTERN.matcher(s);
+        Matcher matcher = COMPARISION_PATTERN.matcher(s);
+        if (!matcher.matches()) {
+          matcher =  EXPECTED_BUT_WAS_PATTERN.matcher(s);
+        }
+        if (!matcher.matches()) {
+          matcher = EXPECTED_NOT_SAME_BUT_WAS_PATTERN.matcher(s);
+        }
         if (matcher.matches()) {
             printables.add(new Chunk(matcher.group(1), ConsoleViewContentType.ERROR_OUTPUT));
             //we have an assert with expected/actual, so we parse it out and create a diff hyperlink
