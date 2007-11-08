@@ -294,7 +294,9 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 <IN_SINGLE_GSTRING> {
   {mGSTRING_SINGLE_CONTENT}"$"            {  yybegin(IN_SINGLE_GSTRING_DOLLAR);
                                              return mGSTRING_SINGLE_CONTENT; }
-  {mGSTRING_SINGLE_CONTENT}"\""           {  gStringStack.pop();
+  {mGSTRING_SINGLE_CONTENT}"\""           {  if (!blockStack.isEmpty()) {
+                                               gStringStack.pop();
+                                             }
                                              if (blockStack.isEmpty()){
                                                yybegin(YYINITIAL);
                                              } else {
