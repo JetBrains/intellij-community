@@ -45,7 +45,6 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -140,12 +139,14 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         updateRightTreeModel();
         final StringBuffer denyRules = new StringBuffer();
         final StringBuffer allowRules = new StringBuffer();
-        final TreePath selectionPath = myLeftTree.getSelectionPath();
-        if (selectionPath == null) {
+        final TreePath[] paths = myLeftTree.getSelectionPaths();
+        if (paths == null) {
           return;
         }
-        PackageDependenciesNode selectedNode = (PackageDependenciesNode)selectionPath.getLastPathComponent();
-        traverseToLeaves(selectedNode, denyRules, allowRules);
+        for (TreePath path : paths) {
+          PackageDependenciesNode selectedNode = (PackageDependenciesNode)path.getLastPathComponent();
+          traverseToLeaves(selectedNode, denyRules, allowRules);
+        }
         final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
         if (denyRules.length() + allowRules.length() > 0) {
           statusBar.setInfo(AnalysisScopeBundle.message("status.bar.rule.violation.message",
@@ -253,7 +254,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private void initTree(final MyTree tree, boolean isRightTree) {
-    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.setCellRenderer(new MyTreeCellRenderer());
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
@@ -349,11 +349,12 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private static Set<PsiFile> getSelectedScope(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
-    if (paths == null || paths.length != 1) return EMPTY_FILE_SET;
-    PackageDependenciesNode node = (PackageDependenciesNode)paths[0].getLastPathComponent();
-    if (node.isRoot()) return EMPTY_FILE_SET;
+    if (paths == null ) return EMPTY_FILE_SET;
     Set<PsiFile> result = new HashSet<PsiFile>();
-    node.fillFiles(result, !DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES);
+    for (TreePath path : paths) {
+      PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
+      node.fillFiles(result, !DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES);
+    }
     return result;
   }
 
@@ -649,7 +650,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       final Set<PsiFile> selectedScope = getSelectedScope(myLeftTree);
       exclude(selectedScope);
       myExcluded.addAll(selectedScope);
-      TreeUtil.removeSelected(myLeftTree);
+      final TreePath[] paths = myLeftTree.getSelectionPaths();
+      for (TreePath path : paths) {
+        TreeUtil.removeLastPathComponent(myLeftTree, path);
+      }
     }
   }
 
