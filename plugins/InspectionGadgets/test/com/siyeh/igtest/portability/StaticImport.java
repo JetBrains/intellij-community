@@ -1,10 +1,12 @@
 package com.siyeh.igtest.portability;
 
-import static Math;
+import static java.lang.Math.abs;
+import static java.util.AbstractMap.*;
 
 public class StaticImport {
 
     public static void main(String[] args) {
-        Math.abs(3.0);
+        abs(3.0);
+        Entry entry;
     }
 }

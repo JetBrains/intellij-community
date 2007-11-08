@@ -18,6 +18,8 @@ package com.siyeh.ig.imports;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,6 +27,11 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class StaticImportInspection extends BaseInspection {
 
@@ -44,8 +51,7 @@ public class StaticImportInspection extends BaseInspection {
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        // todo implement me
-        return null;
+        return new StaticImportFix();
     }
 
     private static class StaticImportFix extends InspectionGadgetsFix{
@@ -58,18 +64,205 @@ public class StaticImportInspection extends BaseInspection {
 
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
-            final PsiElement reference = descriptor.getPsiElement();
-            final PsiImportStaticStatement importStatment =
-                    (PsiImportStaticStatement) reference.getParent();
+            final PsiImportStaticStatement importStatement =
+                    (PsiImportStaticStatement)descriptor.getPsiElement();
+            final PsiJavaCodeReferenceElement importReference =
+                    importStatement.getImportReference();
+            if (importReference == null) {
+                return;
+            }
+            final JavaResolveResult[] importTargets =
+                    importReference.multiResolve(false);
+            if (importTargets.length == 0) {
+                return;
+            }
+            final boolean onDemand = importStatement.isOnDemand();
+            final StaticImportReferenceCollector referenceCollector =
+                    new StaticImportReferenceCollector(importTargets,
+                            onDemand);
             final PsiJavaFile file =
-                    (PsiJavaFile) importStatment.getContainingFile();
+                    (PsiJavaFile) importStatement.getContainingFile();
+            file.accept(referenceCollector);
+            final List<PsiJavaCodeReferenceElement> references =
+                    referenceCollector.getReferences();
+            final Map<PsiJavaCodeReferenceElement, PsiMember>
+                    referenceTargetMap = new HashMap();
+            for (PsiJavaCodeReferenceElement reference : references) {
+                final PsiElement target = reference.resolve();
+                if (target instanceof PsiMember) {
+                    final PsiMember member = (PsiMember)target;
+                    referenceTargetMap.put(reference, member);
+                }
+            }
+            importStatement.delete();
+            for (Map.Entry<PsiJavaCodeReferenceElement, PsiMember> entry :
+                    referenceTargetMap.entrySet()) {
+                removeReference(entry.getKey(), entry.getValue());
+            }
+        }
 
-           // final List references = qualifyReferences(importStatment, file);
-         //   importStatment.delete();
+        private static void removeReference(
+                PsiJavaCodeReferenceElement reference, PsiMember target) {
+            final PsiManager manager = reference.getManager();
+            final PsiElementFactory factory = manager.getElementFactory();
+            final PsiClass aClass = target.getContainingClass();
+            final String qualifiedName = aClass.getQualifiedName();
+            final String text = reference.getText();
+            final String referenceText = qualifiedName + '.' + text;
+            if (reference instanceof PsiReferenceExpression) {
+                try {
+                    final PsiExpression newReference =
+                            factory.createExpressionFromText(
+                                    referenceText, reference);
+                    reference.replace(newReference);
+                } catch (IncorrectOperationException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                final PsiJavaCodeReferenceElement referenceElement =
+                        factory.createReferenceElementByFQClassName(
+                                referenceText, reference.getResolveScope());
+                try {
+                    reference.replace(referenceElement);
+                } catch (IncorrectOperationException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
 
-          //  for(Object referencesToShorten : references){
+        private static StringBuilder replace(
+                PsiElement element, PsiJavaCodeReferenceElement reference,
+                String newReferenceText, StringBuilder out) {
+            if (element.equals(reference)) {
+                out.append(newReferenceText);
+                return out;
+            }
+            final PsiElement[] children = element.getChildren();
+            if (children.length == 0) {
+                out.append(element.getText());
+                return out;
+            }
+            for (PsiElement child : children) {
+                replace(child, reference, newReferenceText, out);
+            }
+            return out;
+        }
 
-          //  }
+        static class StaticImportReferenceCollector
+                extends PsiRecursiveElementVisitor {
+
+            private final JavaResolveResult[] importTargets;
+            private final boolean onDemand;
+            private List<PsiJavaCodeReferenceElement> references =
+                    new ArrayList();
+
+            StaticImportReferenceCollector(
+                    @NotNull JavaResolveResult[] importTargets,
+                    boolean onDemand) {
+                this.importTargets = importTargets;
+                this.onDemand = onDemand;
+            }
+
+            public void visitReferenceElement(
+                    PsiJavaCodeReferenceElement reference) {
+                super.visitReferenceElement(reference);
+                if (isFullyQualifiedReference(reference)) {
+                    return;
+                }
+                PsiElement parent = reference.getParent();
+                if (parent instanceof PsiImportStatementBase) {
+                    return;
+                }
+                while (parent instanceof PsiJavaCodeReferenceElement) {
+                    parent = parent.getParent();
+                    if (parent instanceof PsiImportStatementBase) {
+                        return;
+                    }
+                }
+                checkStaticImportReference(reference);
+            }
+
+            private void checkStaticImportReference(
+                    PsiJavaCodeReferenceElement reference) {
+                if (reference.isQualified()) {
+                    return;
+                }
+                final PsiElement target = reference.resolve();
+                if (!(target instanceof PsiMethod) &&
+                        !(target instanceof PsiClass) &&
+                        !(target instanceof PsiField)) {
+                    return;
+                }
+                final PsiMember member = (PsiMember) target;
+                for (JavaResolveResult importTarget : importTargets) {
+                    final PsiElement targetElement = importTarget.getElement();
+                    if (targetElement instanceof PsiMethod) {
+                        if (member.equals(targetElement)) {
+                            addReference(reference);
+                        }
+                    } else if (targetElement instanceof PsiClass) {
+                        if (onDemand) {
+                            final PsiClass containingClass =
+                                    member.getContainingClass();
+                            if (InheritanceUtil.isInheritorOrSelf(
+                                    (PsiClass)targetElement, containingClass,
+                                    true)) {
+                                addReference(reference);
+                            }
+                        } else {
+                            if (targetElement.equals(member)) {
+                                addReference(reference);
+                            }
+                        }
+                    }
+                }
+            }
+
+            private void addReference(PsiJavaCodeReferenceElement reference) {
+                references.add(reference);
+            }
+
+            public List<PsiJavaCodeReferenceElement> getReferences() {
+                return references;
+            }
+
+            public boolean isFullyQualifiedReference(
+                    PsiJavaCodeReferenceElement reference) {
+                if (!reference.isQualified()) {
+                    return false;
+                }
+                final PsiElement directParent = reference.getParent();
+                if (directParent instanceof PsiMethodCallExpression ||
+                        directParent instanceof PsiAssignmentExpression ||
+                        directParent instanceof PsiVariable) {
+                    return false;
+                }
+                final PsiElement parent = PsiTreeUtil.getParentOfType(reference,
+                        PsiImportStatementBase.class, PsiPackageStatement.class,
+                        PsiCodeFragment.class);
+                if (parent != null) {
+                    return false;
+                }
+                final PsiElement target = reference.resolve();
+                if(!(target instanceof PsiClass)) {
+                    return false;
+                }
+                final PsiClass aClass = (PsiClass) target;
+                final String fqName = aClass.getQualifiedName();
+                if (fqName == null) {
+                    return false;
+                }
+                final String text = stripAngleBrackets(reference.getText());
+                return text.equals(fqName);
+            }
+
+            private static String stripAngleBrackets(String string) {
+                final int index = string.indexOf('<');
+                if (index == -1) {
+                    return string;
+                }
+                return string.substring(0, index);
+            }
         }
     }
 
