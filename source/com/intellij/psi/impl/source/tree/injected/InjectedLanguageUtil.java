@@ -76,7 +76,6 @@ public class InjectedLanguageUtil {
     return new TextRange(marker.getStartOffset(), marker.getEndOffset());
   }
 
-
   public static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> getHighlightTokens(PsiFile file) {
     return file.getUserData(HIGHLIGHT_TOKENS);
   }
@@ -296,10 +295,12 @@ public class InjectedLanguageUtil {
           // optimization: put all garbage into whitespace
           leafEncodedText = prevElementTail + leafEncodedText;
           newTexts.remove(prevElement);
+          storeUnescapedTextFor(prevElement, null);
         }
         String leafText = leaf.getText();
         if (!Comparing.strEqual(leafText, leafEncodedText)) {
           newTexts.put(leaf, leafEncodedText);
+          storeUnescapedTextFor(leaf, leafText);
         }
         if (leafEncodedText.startsWith(leafText) && leafEncodedText.length() != leafText.length()) {
           prevElementTail = leafEncodedText.substring(leafText.length());
@@ -330,6 +331,13 @@ public class InjectedLanguageUtil {
         return true;
       }
     });
+  }
+
+  private static void storeUnescapedTextFor(final LeafElement leaf, final String leafText) {
+    PsiElement psi = leaf.getPsi();
+    if (psi != null) {
+      psi.putUserData(InjectedLanguageManagerImpl.UNESCAPED_TEXT, leafText);
+    }
   }
 
   public static Editor getEditorForInjectedLanguage(final Editor editor, PsiFile file) {

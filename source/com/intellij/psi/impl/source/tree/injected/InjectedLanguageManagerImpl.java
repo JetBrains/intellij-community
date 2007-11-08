@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -314,6 +315,13 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     boolean removed = myConcatenationInjectors.remove(injector);
     concatenationInjectorsChanged();
     return removed;
+  }
+
+  static final Key<String> UNESCAPED_TEXT = Key.create("INJECTED_UNESCAPED_TEXT");
+  public String getUnescapedText(@NotNull final PsiElement injectedNode) {
+    String text = injectedNode.getUserData(UNESCAPED_TEXT);
+    if (text != null) return text;
+    return injectedNode.getText();
   }
 
   public static interface InjProcessor {

@@ -47,5 +47,6 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
 
   public abstract void registerConcatenationInjector(@NotNull ConcatenationAwareInjector injector);
   public abstract boolean unregisterConcatenationInjector(@NotNull ConcatenationAwareInjector injector);
+  public abstract String getUnescapedText(@NotNull PsiElement injectedNode);
 
 }
