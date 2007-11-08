@@ -407,7 +407,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     PsiElement grandPrevLeaf = prevLeaf != null ? PsiTreeUtil.prevLeaf(prevLeaf):null;
     if (grandPrevLeaf != null && containingFile.getFileType() == StdFileTypes.JSPX) {
       final ELExpressionHolder languageElement = PsiTreeUtil.getParentOfType(grandPrevLeaf, ELExpressionHolder.class);
-      if (languageElement != null) return true;
+      if (languageElement != null && PsiTreeUtil.findCommonParent(grandPrevLeaf, element, languageElement.getFirstChild()) != languageElement) {
+        return true;
+      }
     }
 
     return element.getParent().getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null ||
