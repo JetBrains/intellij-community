@@ -25,8 +25,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,21 +100,9 @@ public class OpenFileDescriptor implements Navigatable {
       throw new IllegalStateException("Navigation is not possible with null project");
     }
 
-    if (navigateDirectory(requestFocus)) return;
-    if (navigateInEditor(myProject, requestFocus)) return;
+    if (!myFile.isDirectory() && navigateInEditor(myProject, requestFocus)) return;
 
     navigateInProjectView();
-  }
-
-  private boolean navigateDirectory(final boolean requestFocus) {
-    if (myFile != null && myFile.isDirectory()) {
-      final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(myFile);
-      if (directory != null) {
-        directory.navigate(requestFocus);
-        return true;
-      }
-    }
-    return false;
   }
 
   private boolean navigateInEditor(Project project, boolean focusEditor) {
@@ -161,7 +147,7 @@ public class OpenFileDescriptor implements Navigatable {
 
       @Nullable
       public Object getSelectorInFile() {
-        return myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
+        return null;
       }
 
       @Nullable
@@ -187,7 +173,7 @@ public class OpenFileDescriptor implements Navigatable {
     scrollToCaret(e);
   }
 
-  private void scrollToCaret(final Editor e) {
+  private static void scrollToCaret(final Editor e) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         e.getScrollingModel().scrollToCaret(ScrollType.CENTER);
