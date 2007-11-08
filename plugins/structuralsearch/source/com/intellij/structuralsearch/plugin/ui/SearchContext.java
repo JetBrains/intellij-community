@@ -2,6 +2,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -48,14 +49,14 @@ public final class SearchContext implements DataProvider, Cloneable {
   }
 
   public void configureFromDataContext(DataContext context) {
-    Project project = DataKeys.PROJECT.getData(context);
+    Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
     setProject(project);
 
     setFile(DataKeys.PSI_FILE.getData(context));
-    setCurrentFile(DataKeys.VIRTUAL_FILE.getData(context));
+    setCurrentFile(PlatformDataKeys.VIRTUAL_FILE.getData(context));
   }
 
   private final Editor selectedEditor() {

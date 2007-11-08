@@ -48,7 +48,7 @@ public class StructuralSearchAction extends AnAction {
   public void update(AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext context = event.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(context);
+    final Project project = PlatformDataKeys.PROJECT.getData(context);
     final StructuralSearchPlugin plugin = project==null ? null:StructuralSearchPlugin.getInstance( project );
 
     if (plugin == null || plugin.isSearchInProgress()) {
