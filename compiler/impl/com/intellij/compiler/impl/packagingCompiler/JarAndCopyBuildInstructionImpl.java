@@ -2,10 +2,7 @@ package com.intellij.compiler.impl.packagingCompiler;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.make.ManifestBuilder;
-import com.intellij.openapi.compiler.make.JarAndCopyBuildInstruction;
-import com.intellij.openapi.compiler.make.BuildInstructionVisitor;
-import com.intellij.openapi.compiler.make.BuildRecipe;
+import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,6 +32,10 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
   private File myJarFile;
   private List<File> myTempJars = new ArrayList<File>(1);
   @NonNls private static final String TMP_FILE_SUFFIX = ".tmp";
+
+  public JarAndCopyBuildInstructionImpl(Module module, File directoryToJar, String outputRelativePath, @Nullable PackagingFileFilter fileFilter) {
+    super(directoryToJar, false, module, outputRelativePath, fileFilter);
+  }
 
   public JarAndCopyBuildInstructionImpl(Module module, File directoryToJar, String outputRelativePath) {
     super(directoryToJar, false, module, outputRelativePath);

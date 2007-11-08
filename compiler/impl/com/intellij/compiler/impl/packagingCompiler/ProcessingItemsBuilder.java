@@ -172,13 +172,15 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     final VirtualFile sourceFile = myLocalFileSystem.findFileByIoFile(instruction.getFile());
     if (sourceFile == null) return true;
 
+    PackagingFileFilter fileFilter = instruction.getFileFilter();
+
     if (myBuildConfiguration.willBuildExploded()) {
       String outputRoot = DeploymentUtilImpl.getOrCreateExplodedDir(myBuildParticipant);
       String jarPath = DeploymentUtil.concatPaths(outputRoot, myOutputPaths.peek(), instruction.getOutputRelativePath());
       jarPath = getCanonicalPath(jarPath);
 
       checkRecursiveCopying(sourceFile, jarPath);
-      addItemsToJar(sourceFile, createExplodedDestination(jarPath));
+      addItemsToJar(sourceFile, createExplodedDestination(jarPath), fileFilter);
     }
 
     if (myNestedJars != null) {
@@ -187,20 +189,20 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
         final String outputRelativePath = trimParentPrefix(instruction.getOutputRelativePath());
         JarDestinationInfo destination = new JarDestinationInfo(outputRelativePath, nestedJar.myJarInfo, nestedJar.myDestination);
         checkRecursiveCopying(sourceFile, destination.getOutputFilePath());
-        addItemsToJar(sourceFile, destination);
+        addItemsToJar(sourceFile, destination, fileFilter);
       }
       else {
         String jarPath = DeploymentUtil.concatPaths(myBuildConfiguration.getJarPath(), instruction.getOutputRelativePath());
         jarPath = getCanonicalPath(jarPath);
         checkRecursiveCopying(sourceFile, jarPath);
-        addItemsToJar(sourceFile, createExplodedDestination(jarPath));
+        addItemsToJar(sourceFile, createExplodedDestination(jarPath), fileFilter);
       }
     }
 
     return true;
   }
 
-  private void addItemsToJar(final VirtualFile sourceFile, final DestinationInfo destination) {
+  private void addItemsToJar(final VirtualFile sourceFile, final DestinationInfo destination, final @Nullable PackagingFileFilter fileFilter) {
     JarInfo jarInfo = myContext.getCachedJar(sourceFile);
     boolean addToJarInfo = jarInfo == null;
     if (jarInfo == null) {
@@ -209,7 +211,7 @@ public class ProcessingItemsBuilder extends BuildInstructionVisitor {
     }
 
     jarInfo.addDestination(destination);
-    addItemsToJarRecursively(sourceFile, "", destination, jarInfo, addToJarInfo, null);
+    addItemsToJarRecursively(sourceFile, "", destination, jarInfo, addToJarInfo, fileFilter);
   }
 
   private void addItemsToJarRecursively(final VirtualFile sourceFile, String pathInJar, DestinationInfo jarDestination,
