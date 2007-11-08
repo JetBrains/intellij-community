@@ -62,7 +62,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public void addMoveUpAction() {
-    addAction(new AnAction(ExecutionBundle.message("move.up.action.name"), null, IconLoader.getIcon("/actions/moveUp.png")) {
+    addAction(new AnAction(UIBundle.message("move.up.action.name"), null, IconLoader.getIcon("/actions/moveUp.png")) {
       public void actionPerformed(final AnActionEvent e) {
         ListUtil.moveSelectedItemsUp(myList);
       }
@@ -74,7 +74,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public void addMoveDownAction() {
-    addAction(new AnAction(ExecutionBundle.message("move.down.action.name"), null, IconLoader.getIcon("/actions/moveDown.png")) {
+    addAction(new AnAction(UIBundle.message("move.down.action.name"), null, IconLoader.getIcon("/actions/moveDown.png")) {
       public void actionPerformed(final AnActionEvent e) {
         ListUtil.moveSelectedItemsDown(myList);
       }
