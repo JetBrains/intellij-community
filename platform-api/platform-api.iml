@@ -8,9 +8,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" exported="" />
-    <orderEntry type="module" module-name="appcore-api" exported="" />
     <orderEntry type="module" module-name="Annotations" exported="" />
     <orderEntry type="module" module-name="openapi" exported="" />
+    <orderEntry type="library" name="picocontainer" level="project" />
+    <orderEntry type="module" module-name="bootstrap" />
     <orderEntryProperties />
   </component>
 </module>
