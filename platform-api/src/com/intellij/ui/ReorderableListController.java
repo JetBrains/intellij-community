@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
