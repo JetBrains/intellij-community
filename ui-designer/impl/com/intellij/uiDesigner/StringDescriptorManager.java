@@ -7,8 +7,8 @@ package com.intellij.uiDesigner;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -47,7 +47,7 @@ public class StringDescriptorManager {
   }
 
   public static StringDescriptorManager getInstance(Module module) {
-    return ServiceManager.getService(module, StringDescriptorManager.class);
+    return ModuleServiceManager.getService(module, StringDescriptorManager.class);
   }
 
   @Nullable public String resolve(@NotNull RadComponent component, @Nullable StringDescriptor descriptor) {

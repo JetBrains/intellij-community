@@ -19,7 +19,7 @@ package com.intellij.facet;
 
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.util.ModificationTracker;
 
 /**
@@ -28,7 +28,7 @@ import com.intellij.openapi.util.ModificationTracker;
 public abstract class FacetModificationTrackingService {
 
   public static FacetModificationTrackingService getInstance(@NotNull Module module) {
-    return ServiceManager.getService(module, FacetModificationTrackingService.class);
+    return ModuleServiceManager.getService(module, FacetModificationTrackingService.class);
   }
 
   @NotNull
