@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.navigator.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +16,7 @@ public abstract class PomTreeViewAction extends ToggleAction {
 
   @Nullable
   private static MavenProjectNavigator getNavigator(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     return project == null ? null : MavenProjectNavigator.getInstance(project);
   }
 

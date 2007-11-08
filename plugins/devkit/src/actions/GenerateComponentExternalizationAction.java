@@ -86,7 +86,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
   @Nullable
   private PsiClass getComponentInContext(DataContext context) {
     Editor editor = DataKeys.EDITOR.getData(context);
-    Project project = DataKeys.PROJECT.getData(context);
+    Project project = PlatformDataKeys.PROJECT.getData(context);
     if (editor == null || project == null) return null;
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());

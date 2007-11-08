@@ -16,13 +16,15 @@
  */
 package org.intellij.images.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
@@ -44,8 +46,8 @@ import java.util.Set;
  */
 public final class EditExternalyAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
-        Project project = e.getData(DataKeys.PROJECT);
-        VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+        Project project = e.getData(PlatformDataKeys.PROJECT);
+        VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
         Options options = OptionsManager.getInstance().getOptions();
         String executablePath = options.getExternalEditorOptions().getExecutablePath();
         if (StringUtil.isEmpty(executablePath)) {
@@ -92,7 +94,7 @@ public final class EditExternalyAction extends AnAction {
     public void update(AnActionEvent e) {
         super.update(e);
 
-        VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+        VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
         final boolean isEnabled = isImages(files);
         if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
             e.getPresentation().setVisible(isEnabled);

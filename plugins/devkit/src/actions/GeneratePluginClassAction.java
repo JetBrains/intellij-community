@@ -17,10 +17,7 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -123,7 +120,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
         presentation.setVisible(false);
       }
       final IdeView view = DataKeys.IDE_VIEW.getData(e.getDataContext());
-      final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
       if (view != null && project != null) {
         // from com.intellij.ide.actions.CreateClassAction.update()
         ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();

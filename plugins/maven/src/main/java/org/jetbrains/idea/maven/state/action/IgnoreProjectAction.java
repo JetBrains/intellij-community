@@ -2,7 +2,7 @@ package org.jetbrains.idea.maven.state.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,9 +13,9 @@ import org.jetbrains.idea.maven.state.StateBundle;
 public class IgnoreProjectAction extends AnAction {
 
   public void update(final AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final MavenProjectsState projectsState = project != null ? project.getComponent(MavenProjectsState.class) : null;
-    final VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
 
     final boolean enabled = projectsState != null && files != null && isEnabled(projectsState, files);
     e.getPresentation().setEnabled(enabled);
@@ -27,9 +27,9 @@ public class IgnoreProjectAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final MavenProjectsState projectsState = project != null ? project.getComponent(MavenProjectsState.class) : null;
-    final VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
 
     if (projectsState != null && files != null && isEnabled(projectsState, files)) {
       final boolean flag = projectsState.getIgnoredFlag(files[0]);

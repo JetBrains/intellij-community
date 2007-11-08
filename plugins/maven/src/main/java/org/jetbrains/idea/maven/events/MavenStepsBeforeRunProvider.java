@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.events;
 import com.intellij.execution.StepsBeforeRunProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressManager;
@@ -38,7 +38,7 @@ public class MavenStepsBeforeRunProvider implements StepsBeforeRunProvider {
             final MavenTask task = getState().getTask(configuration.getType(), configuration.getName());
             result [0] = task != null && getEventsHandler().execute(Arrays.asList(task));
           }
-        }, EventsBundle.message("execute.before.launch.steps.title"), true, DataKeys.PROJECT.getData(context));
+        }, EventsBundle.message("execute.before.launch.steps.title"), true, PlatformDataKeys.PROJECT.getData(context));
       }
     }, ModalityState.NON_MODAL);
     return result[0];

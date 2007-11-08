@@ -16,11 +16,12 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
-
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -207,7 +207,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       }
       final VirtualFile vcsFile = getSelectedVcsFile();
       return vcsFile != null ? new OpenFileDescriptor(project, vcsFile) : null;
-    } else if (DataKeys.PROJECT.getName().equals(dataId)) {
+    } else if (PlatformDataKeys.PROJECT.getName().equals(dataId)) {
       return myVCS.getProject();
     }
     return null;

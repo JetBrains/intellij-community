@@ -164,7 +164,7 @@ public class MavenKeymapExtension implements KeymapExtension {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final Project project = e.getData(DataKeys.PROJECT);
+      final Project project = e.getData(PlatformDataKeys.PROJECT);
       if (project != null) {
         final MavenBuilder mavenBuilder = project.getComponent(MavenBuilder.class);
         if (!mavenBuilder.isRunning()) {

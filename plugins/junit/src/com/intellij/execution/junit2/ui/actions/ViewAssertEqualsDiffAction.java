@@ -31,7 +31,7 @@ public class ViewAssertEqualsDiffAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final AbstractTestProxy testProxy = TestProxy.fromDataContext(dataContext);
     final ComparisonFailureState state = (ComparisonFailureState)((TestProxy)testProxy).getState();
-    state.openDiff(DataKeys.PROJECT.getData(dataContext));
+    state.openDiff(PlatformDataKeys.PROJECT.getData(dataContext));
   }
 
   public void update(final AnActionEvent e) {

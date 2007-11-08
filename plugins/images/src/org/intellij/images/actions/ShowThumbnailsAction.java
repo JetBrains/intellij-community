@@ -15,7 +15,10 @@
  */
 package org.intellij.images.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailManager;
@@ -28,8 +31,8 @@ import org.intellij.images.thumbnail.ThumbnailView;
  */
 public final class ShowThumbnailsAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
-        Project project = e.getData(DataKeys.PROJECT);
-        VirtualFile file = e.getData(DataKeys.VIRTUAL_FILE);
+        Project project = e.getData(PlatformDataKeys.PROJECT);
+        VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
         if (project != null && file != null && file.isDirectory()) {
             ThumbnailManager thumbnailManager = project.getComponent(ThumbnailManager.class);
             ThumbnailView thumbnailView = thumbnailManager.getThumbnailView();
@@ -41,7 +44,7 @@ public final class ShowThumbnailsAction extends AnAction {
 
     public void update(AnActionEvent e) {
         super.update(e);
-        VirtualFile file = e.getData(DataKeys.VIRTUAL_FILE);
+        VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
         final boolean isEnabled = file != null && file.isDirectory();
         if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
             e.getPresentation().setVisible(isEnabled);

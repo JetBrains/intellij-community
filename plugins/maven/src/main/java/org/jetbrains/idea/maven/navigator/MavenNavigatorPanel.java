@@ -1,9 +1,6 @@
 package org.jetbrains.idea.maven.navigator;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,11 +91,11 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    if (dataId.equals(DataKeys.HELP_ID.getName())) {
+    if (dataId.equals(PlatformDataKeys.HELP_ID.getName())) {
       return "reference.toolWindows.mavenProjects";
     }
 
-    if (dataId.equals(DataKeys.PROJECT.getName())) {
+    if (dataId.equals(PlatformDataKeys.PROJECT.getName())) {
       return myProject;
     }
     if (dataId.equals(DataKeys.NAVIGATABLE_ARRAY.getName())) {
@@ -111,14 +108,14 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
       }
       return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
     }
-    if (dataId.equals(DataKeys.VIRTUAL_FILE.getName())) {
+    if (dataId.equals(PlatformDataKeys.VIRTUAL_FILE.getName())) {
       final PomTreeStructure.PomNode pomNode = getContextPomNode();
       if (pomNode == null) return null;
       VirtualFile file = pomNode.getFile();
       if (file == null || !file.isValid()) return null;
       return file;
     }
-    if (dataId.equals(DataKeys.VIRTUAL_FILE_ARRAY.getName())) {
+    if (dataId.equals(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName())) {
       final List<VirtualFile> files = new ArrayList<VirtualFile>();
       for (PomTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
         VirtualFile file = pomNode.getFile();

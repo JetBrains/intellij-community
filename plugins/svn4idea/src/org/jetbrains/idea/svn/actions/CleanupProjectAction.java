@@ -18,7 +18,7 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,7 +36,7 @@ import java.io.File;
  */
 public class CleanupProjectAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final SvnVcs vcs = SvnVcs.getInstance(project);
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
     SVNWCClient wcClient = vcs.createWCClient();
@@ -52,7 +52,7 @@ public class CleanupProjectAction extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setVisible(isEnabled(project));
   }
 
