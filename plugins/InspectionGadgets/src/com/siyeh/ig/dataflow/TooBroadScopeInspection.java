@@ -18,6 +18,7 @@ package com.siyeh.ig.dataflow;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -293,7 +294,9 @@ public class TooBroadScopeInspection extends BaseInspection
                             assignmentExpression.getRExpression();
                     final PsiExpression lhs =
                             assignmentExpression.getLExpression();
-                    if (location.equals(lhs) &&
+                    final IElementType tokenType =
+                            assignmentExpression.getOperationTokenType();
+                    if (location.equals(lhs) && JavaTokenType.EQ == tokenType &&
                         !VariableAccessUtils.mayEvaluateToVariable(rhs, variable))
                     {
                         PsiDeclarationStatement newDeclaration=
@@ -512,6 +515,12 @@ public class TooBroadScopeInspection extends BaseInspection
                 }
                 final PsiAssignmentExpression assignmentExpression =
                         (PsiAssignmentExpression)expression;
+                final IElementType tokenType =
+                        assignmentExpression.getOperationTokenType();
+                if (tokenType != JavaTokenType.EQ)
+                {
+                    return;
+                }
                 final PsiExpression lhs =
                         assignmentExpression.getLExpression();
                 if (!lhs.equals(referenceElement))

@@ -67,4 +67,9 @@ public class TooBroadScope
         result = 37 * result;
         return result;
     }
+
+    public void operatorAssignment() {
+        int i = 10;
+        i -= 1;
+    }
 }
