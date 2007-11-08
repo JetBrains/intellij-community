@@ -65,10 +65,10 @@ public class DependencyConfigurable extends BaseConfigurable {
   }
 
   public JComponent createComponent() {
-    myDenyRulesModel = new MyTableModel(new ColumnInfo[]{DENY_USAGES_OF, DENY_USAGES_IN}, true);
+    myDenyRulesModel = new MyTableModel(myProject, new ColumnInfo[]{DENY_USAGES_OF, DENY_USAGES_IN}, true);
     myDenyRulesModel.setSortable(false);
 
-    myAllowRulesModel = new MyTableModel(new ColumnInfo[]{ALLOW_USAGES_OF, ALLOW_USAGES_ONLY_IN}, false);
+    myAllowRulesModel = new MyTableModel(myProject, new ColumnInfo[]{ALLOW_USAGES_OF, ALLOW_USAGES_ONLY_IN}, false);
     myAllowRulesModel.setSortable(false);
 
     myDenyTable = new TableView<DependencyRule>(myDenyRulesModel);
@@ -239,16 +239,19 @@ public class DependencyConfigurable extends BaseConfigurable {
   }
 
   private static class MyTableModel extends ListTableModel<DependencyRule> implements RowEditableTableModel {
-    private boolean myDenyRule;
+    private final Project myProject;
+    private final boolean myDenyRule;
 
-    public MyTableModel(final ColumnInfo[] columnInfos, final boolean isDenyRule) {
+    public MyTableModel(final Project project, final ColumnInfo[] columnInfos, final boolean isDenyRule) {
       super(columnInfos);
+      myProject = project;
       myDenyRule = isDenyRule;
     }
 
     public void addRow() {
       ArrayList<DependencyRule> newList = new ArrayList<DependencyRule>(getItems());
-      newList.add(new DependencyRule(null, null, myDenyRule));
+      final NamedScope scope = DependencyValidationManager.getInstance(myProject).getProjectProductionScope();
+      newList.add(new DependencyRule(scope, scope, myDenyRule));
       setItems(newList);
     }
 
