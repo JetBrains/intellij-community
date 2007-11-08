@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class SwitchPredicate implements PsiElementPredicate{
         }
         final PsiSwitchStatement switchStatement = (PsiSwitchStatement) parent;
         final PsiExpression expression = switchStatement.getExpression();
-        if(expression == null || !expression.isValid()){
+        if(expression == null){
             return false;
         }
         final PsiCodeBlock body = switchStatement.getBody();

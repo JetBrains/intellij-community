@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression condition = ifStatement.getCondition();
-        if(condition == null || !condition.isValid()){
+        if(condition == null){
             return false;
         }
         if(isReplaceableAssignment(ifStatement)){
@@ -53,10 +53,7 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
 
     public static boolean isReplaceableImplicitReturn(
             PsiIfStatement ifStatement){
-        final PsiElement nextStatement =
-                PsiTreeUtil.skipSiblingsForward(ifStatement,
-                        PsiWhiteSpace.class);
-        if(!(nextStatement instanceof PsiReturnStatement)){
+        if(ifStatement.getElseBranch() != null){
             return false;
         }
         PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -64,8 +61,10 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
         if(!(thenBranch instanceof PsiReturnStatement)){
             return false;
         }
+        final PsiReturnStatement thenReturnStatement =
+                (PsiReturnStatement)thenBranch;
         final PsiExpression thenReturn =
-                ((PsiReturnStatement) thenBranch).getReturnValue();
+                thenReturnStatement.getReturnValue();
         if(thenReturn == null){
             return false;
         }
@@ -73,8 +72,16 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
         if(thenType == null){
             return false;
         }
+        final PsiElement nextStatement =
+                PsiTreeUtil.skipSiblingsForward(ifStatement,
+                        PsiWhiteSpace.class);
+        if(!(nextStatement instanceof PsiReturnStatement)){
+            return false;
+        }
+        final PsiReturnStatement elseReturnStatement =
+                (PsiReturnStatement)nextStatement;
         final PsiExpression elseReturn =
-                ((PsiReturnStatement) nextStatement).getReturnValue();
+                elseReturnStatement.getReturnValue();
         if(elseReturn == null){
             return false;
         }
@@ -120,7 +127,6 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
             return false;
         }
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
-
         if(!ConditionalUtils.isAssignment(thenBranch)){
             return false;
         }
