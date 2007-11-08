@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="codeInsight-openapi" />
-    <orderEntry type="module" module-name="action-system-openapi" />
     <orderEntry type="module" module-name="ExtendedApi" />
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="jsp-openapi" />
