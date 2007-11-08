@@ -18,7 +18,6 @@ package com.intellij.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -441,7 +440,7 @@ public class SimpleColoredComponent extends JComponent {
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       g.setColor(Color.BLACK);
-      PeerFactory.getInstance().getUIHelper().drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
+      UIUtil.drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
     }
 
     public Insets getBorderInsets(final Component c) {
