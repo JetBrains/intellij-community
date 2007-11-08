@@ -2,26 +2,27 @@ package com.intellij.openapi.diff.ex;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.vcs.checkin.DifferenceType;
-import com.intellij.openapi.vcs.checkin.ex.DifferenceTypeEx;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
  * @author Yura Cangea
  */
 public class DiffStatusBar extends JPanel {
-  public static final List<LegendTypeDescriptor> DEFAULT_TYPES =
+  public static final List<? extends LegendTypeDescriptor> DEFAULT_TYPES =
     Arrays.asList(
-      new LegendTypeDescriptor[]{
-        (DifferenceTypeEx)DifferenceType.MODIFIED,
-        (DifferenceTypeEx)DifferenceType.INSERTED,
-        (DifferenceTypeEx)DifferenceType.DELETED});
+      new LegendTypeDescriptorImpl(VcsBundle.message("diff.type.name.modified"), FileStatus.COLOR_MODIFIED),
+      new LegendTypeDescriptorImpl(VcsBundle.message("diff.type.name.added"), FileStatus.COLOR_ADDED),
+      new LegendTypeDescriptorImpl(VcsBundle.message("diff.type.name.deleted"), FileStatus.COLOR_MISSING));
 
   private final Collection<JComponent> myLabels = new ArrayList<JComponent>();
 
@@ -122,5 +123,23 @@ public class DiffStatusBar extends JPanel {
   public interface LegendTypeDescriptor {
     String getDisplayName();
     Color getLegendColor(EditorColorsScheme colorScheme);
+  }
+
+  static class LegendTypeDescriptorImpl implements LegendTypeDescriptor {
+    private String myDisplayName;
+    private Color myColor;
+
+    LegendTypeDescriptorImpl(final String displayName, final Color color) {
+      myDisplayName = displayName;
+      myColor = color;
+    }
+
+    public String getDisplayName() {
+      return myDisplayName;
+    }
+
+    public Color getLegendColor(final EditorColorsScheme colorScheme) {
+      return myColor;
+    }
   }
 }

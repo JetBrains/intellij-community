@@ -15,28 +15,11 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.vcs.checkin.DifferenceType;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
-import org.jetbrains.annotations.NonNls;
-
 public interface FileStatusFactory {
   FileStatus createFileStatus(@NonNls String id, String description, Color color);
-
-  DifferenceType createDifferenceTypeInserted();
-  DifferenceType createDifferenceTypeDeleted();
-  DifferenceType createDifferenceTypeNotChanged();
-  DifferenceType createDifferenceTypeModified();
-
-  DifferenceType createDifferenceType(String id,
-                                      FileStatus fileStatus,
-                                      TextAttributesKey mainTextColorKey,
-                                      TextAttributesKey leftTextColorKey,
-                                      TextAttributesKey rightTextColorKey,
-                                      Color background,
-                                      Color activeBgColor);
-
   FileStatus[] getAllFileStatuses();
 }

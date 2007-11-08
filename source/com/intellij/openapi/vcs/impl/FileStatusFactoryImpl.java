@@ -1,17 +1,12 @@
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.checkin.DifferenceType;
-import com.intellij.openapi.vcs.checkin.impl.DifferenceTypeImpl;
 
-import java.util.List;
+import java.awt.*;
 import java.util.ArrayList;
-import java.awt.Color;
+import java.util.List;
 
 
 public class FileStatusFactoryImpl implements FileStatusFactory {
@@ -21,75 +16,6 @@ public class FileStatusFactoryImpl implements FileStatusFactory {
     FileStatusImpl result = new FileStatusImpl(id, ColorKey.createColorKey("FILESTATUS_" + id, color), description);
     myStatuses.add(result);
     return result;
-  }
-
-  public DifferenceType createDifferenceType(String id,
-                                             FileStatus fileStatus,
-                                             final TextAttributesKey textColorKey,
-                                             final Color backgroundColor, Color activeBgColor) {
-    return new DifferenceTypeImpl(id, fileStatus, activeBgColor, backgroundColor) {
-      public TextAttributesKey getDiffColor(int index) {
-        return textColorKey;
-      }
-
-      public TextAttributesKey getColor() {
-        return textColorKey;
-      }
-    };
-  }
-
-  public DifferenceType createDifferenceTypeInserted() {
-    return createDifferenceType(VcsBundle.message("diff.type.name.added"),
-                                FileStatus.ADDED,
-                                DiffColors.DIFF_INSERTED,
-                                DiffColors.DIFF_ABSENT,
-                                DiffColors.DIFF_INSERTED,
-                                null, new Color(125, 223, 125));
-  }
-
-  public DifferenceType createDifferenceTypeNotChanged() {
-    return createDifferenceType(VcsBundle.message("diff.type.name.not.changed"),
-                                FileStatus.NOT_CHANGED,
-                                null,
-                                null, Color.white);
-  }
-
-  public DifferenceType createDifferenceTypeDeleted() {
-    return createDifferenceType(VcsBundle.message("diff.type.name.deleted"),
-                                FileStatus.DELETED,
-                                DiffColors.DIFF_DELETED,
-                                DiffColors.DIFF_DELETED,
-                                DiffColors.DIFF_ABSENT,
-                                null, new Color(157, 157, 157));
-  }
-
-  public DifferenceType createDifferenceTypeModified() {
-    return createDifferenceType(VcsBundle.message("diff.type.name.modified"),
-                                FileStatus.MODIFIED,
-                                DiffColors.DIFF_MODIFIED,
-                                null, new Color(129, 164, 244));
-  }
-
-  public DifferenceType createDifferenceType(String id,
-                                             FileStatus fileStatus,
-                                             final TextAttributesKey mainTextColorKey,
-                                             final TextAttributesKey leftTextColorKey,
-                                             final TextAttributesKey rightTextColorKey,
-                                             Color activeBgColor, Color background) {
-    return new DifferenceTypeImpl(id, fileStatus, background, activeBgColor) {
-      public TextAttributesKey getDiffColor(int index) {
-        if (index == 0) {
-          return leftTextColorKey;
-        }
-        else {
-          return rightTextColorKey;
-        }
-      }
-
-      public TextAttributesKey getColor() {
-        return mainTextColorKey;
-      }
-    };
   }
 
   public FileStatus[] getAllFileStatuses() {
