@@ -49,6 +49,10 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
                 new RenameFix(), new MethodNameSameAsClassNameFix()};
     }
 
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     private static class MethodNameSameAsClassNameFix
             extends InspectionGadgetsFix {
 
@@ -72,10 +76,6 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
             }
             returnTypeElement.delete();
         }
-    }
-
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-        return true;
     }
 
     public BaseInspectionVisitor buildVisitor() {
