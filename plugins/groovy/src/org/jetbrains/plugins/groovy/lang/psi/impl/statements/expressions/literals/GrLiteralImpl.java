@@ -16,16 +16,19 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 /**
  * @author ilyas
@@ -67,5 +70,62 @@ public class GrLiteralImpl extends GrExpressionImpl implements GrLiteral {
 
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitLiteralExpression(this);
+  }
+
+  public Object getValue() {
+    final PsiElement child = getFirstChild();
+    IElementType elemType = child.getNode().getElementType();
+    String text = child.getText();
+    if (elemType == mNUM_INT) {
+      try {
+        return Integer.parseInt(text);
+      } catch (NumberFormatException e) {}
+    } else if (elemType == mNUM_LONG) {
+      try {
+        return Long.parseLong(text);
+      } catch (NumberFormatException e) {}
+    } else if (elemType == mNUM_FLOAT) {
+      try {
+        return Float.parseFloat(text);
+      } catch (NumberFormatException e) {}
+    } else if (elemType == mNUM_DOUBLE) {
+      try {
+        return Double.parseDouble(text);
+      } catch (NumberFormatException e) {}
+    } else if (elemType == mNUM_BIG_INT) {
+      try {
+        return new BigInteger(text);
+      } catch (NumberFormatException e) {}
+    } else if (elemType == mNUM_BIG_DECIMAL) {
+      try {
+        return new BigDecimal(text);
+      } catch (NumberFormatException e) {}
+    } else if (elemType == kFALSE) {
+      return Boolean.FALSE;
+    } else if (elemType == kTRUE) {
+      return Boolean.TRUE;
+    } else if (elemType == mSTRING_LITERAL) {
+      if (!text.startsWith("'")) return null;
+      text = text.substring(1);
+      if (text.endsWith("'")) {
+        text = text.substring(0, text.length() -1);
+      }
+      return StringUtil.unescapeStringCharacters(text);
+    } else if (elemType == mGSTRING_LITERAL) {
+      if (!text.startsWith("\"")) return null;
+      text = text.substring(1);
+      if (text.endsWith("\"")) {
+        text = text.substring(0, text.length() -1);
+      }
+      return StringUtil.unescapeStringCharacters(text);
+    }
+
+
+    return null; //todo
+  }
+
+  @NotNull
+  public PsiReference[] getReferences() {
+    return ResolveUtil.getReferencesFromProviders(this, GrLiteral.class);
   }
 }

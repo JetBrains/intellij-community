@@ -47,5 +47,9 @@ public class GrRegexImpl extends GrExpressionImpl implements GrRegex {
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitRegexExpression(this);
   }
+
+  public Object getValue() {
+    return null;
+  }
 }
 

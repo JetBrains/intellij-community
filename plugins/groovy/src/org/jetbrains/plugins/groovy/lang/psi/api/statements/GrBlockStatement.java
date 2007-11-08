@@ -12,15 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
 /**
  * @author ilyas
  */
-public interface GrLiteral extends GrExpression {
-  @Nullable Object getValue();
+public interface GrBlockStatement extends GrStatement {
+
+  public GrOpenBlock getBlock();
+
 }

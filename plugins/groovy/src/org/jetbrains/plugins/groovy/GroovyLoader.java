@@ -26,16 +26,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.util.Function;
-import com.intellij.problems.WolfTheProblemSolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
@@ -44,6 +43,8 @@ import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.refactoring.GroovyClassMoveCallback;
 
 import java.util.HashSet;
@@ -134,6 +135,8 @@ public class GroovyLoader implements ApplicationComponent {
         });
 
         RefactoringListenerManager.getInstance(project).addListenerProvider(new GroovyClassMoveCallback());
+
+        ReferenceProvidersRegistry.getInstance(project).registerReferenceProvider(GrLiteral.class, new PropertiesReferenceProvider());
       }
     });
   }

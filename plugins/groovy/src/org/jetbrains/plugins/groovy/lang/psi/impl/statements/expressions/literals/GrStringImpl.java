@@ -47,4 +47,8 @@ public class GrStringImpl extends GrExpressionImpl implements GrString {
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitGStringExpression(this);
   }
+
+  public Object getValue() {
+    return null;
+  }
 }
