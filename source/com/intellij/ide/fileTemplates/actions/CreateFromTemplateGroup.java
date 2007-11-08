@@ -134,7 +134,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
       if (view == null) {
         return;
       }
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
       PsiDirectory dir = PackageUtil.getOrChooseDirectory(view);
       if (dir == null) return;

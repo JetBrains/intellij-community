@@ -14,7 +14,7 @@ public class ExportToHTMLAction extends AnAction{
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }

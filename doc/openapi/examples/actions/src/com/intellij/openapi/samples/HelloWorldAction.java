@@ -17,13 +17,13 @@ package com.intellij.openapi.samples;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 
 public class HelloWorldAction extends AnAction {
   public void actionPerformed(AnActionEvent event) {
-    Project project = event.getData(DataKeys.PROJECT);
+    Project project = event.getData(PlatformDataKeys.PROJECT);
     Messages.showMessageDialog(project, "Hello World!", "Information", Messages.getInformationIcon());
   }
 }

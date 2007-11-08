@@ -1,29 +1,26 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui;
 
-import com.intellij.cvsSupport2.cvsoperations.cvsEdit.EditorInfo;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.table.TableView;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.CvsBundle;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.cvsSupport2.cvsoperations.cvsEdit.EditorInfo;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.table.TableView;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.List;
-import java.io.File;
 
 
 /**
@@ -122,8 +119,8 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   public void calcData(DataKey key, DataSink sink) {
-    if (key.equals(DataKeys.PROJECT)) {
-      sink.put(DataKeys.PROJECT, myProject);
+    if (key.equals(PlatformDataKeys.PROJECT)) {
+      sink.put(PlatformDataKeys.PROJECT, myProject);
     }
     else if (key.equals(DataKeys.NAVIGATABLE)) {
       final EditorInfo editorInfo = myTable.getSelectedObject();

@@ -13,7 +13,7 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,9 +56,9 @@ public class ApplyPatchAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchAction");
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final ApplyPatchDialog dialog = new ApplyPatchDialog(project);
-    final VirtualFile vFile = e.getData(DataKeys.VIRTUAL_FILE);
+    final VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     if (vFile != null && vFile.getFileType() == StdFileTypes.PATCH) {
       dialog.setFileName(vFile.getPresentableUrl());
     }
@@ -250,9 +250,9 @@ public class ApplyPatchAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (e.getPlace() == ActionPlaces.PROJECT_VIEW_POPUP) {
-      VirtualFile vFile = e.getData(DataKeys.VIRTUAL_FILE);
+      VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
       e.getPresentation().setVisible(project != null && vFile != null && vFile.getFileType() == StdFileTypes.PATCH);
     }
     else {

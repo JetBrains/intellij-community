@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class AddAllToFavoritesActionGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
-    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null){
       return AnAction.EMPTY_ARRAY;
     }

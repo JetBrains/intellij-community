@@ -23,7 +23,7 @@ import java.awt.*;
 public final class BrowseTypeHierarchyAction extends AnAction {
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
@@ -84,7 +84,7 @@ public final class BrowseTypeHierarchyAction extends AnAction {
     final DataContext dataContext = event.getDataContext();
     final Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
-      final Project project = DataKeys.PROJECT.getData(dataContext);
+      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       final boolean enabled = file instanceof PsiJavaFile || PsiUtil.isInJspFile(file);
       presentation.setVisible(enabled);
@@ -98,7 +98,7 @@ public final class BrowseTypeHierarchyAction extends AnAction {
   }
 
   private static PsiClass getPsiClass(final DataContext dataContext) {
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
     final Editor editor = DataKeys.EDITOR.getData(dataContext);

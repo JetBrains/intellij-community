@@ -21,7 +21,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -72,7 +72,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
     final JButton editDependencies = new JButton(InspectionsBundle.message("inspection.dependency.configure.button.text"));
     editDependencies.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editDependencies));
+        Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editDependencies));
         if (project == null) project = ProjectManager.getInstance().getDefaultProject();
         ShowSettingsUtil.getInstance().editConfigurable(editDependencies, new DependencyConfigurable(project));
       }

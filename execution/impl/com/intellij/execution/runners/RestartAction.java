@@ -50,7 +50,7 @@ public class RestartAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     try {
       RunStrategyImpl.getInstance().execute(myProfile, new DataContext() {
         public Object getData(final String dataId) {

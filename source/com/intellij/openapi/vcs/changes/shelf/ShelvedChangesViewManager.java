@@ -251,8 +251,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           }
         }
       }
-      else if (key == DataKeys.DELETE_ELEMENT_PROVIDER) {
-        sink.put(DataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+      else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
+        sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
       }
     }
   }

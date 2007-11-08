@@ -3,6 +3,7 @@ package com.intellij.codeEditor.printing;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 
 class PrintManager {
   public static void executePrint(DataContext dataContext) {
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
     final PrinterJob printerJob = PrinterJob.getPrinterJob();
 

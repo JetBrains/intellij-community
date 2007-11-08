@@ -8,6 +8,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -33,7 +34,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
 
   public void update(final AnActionEvent e) {
     super.update(e);
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
       final IdeView view = e.getData(DataKeys.IDE_VIEW);

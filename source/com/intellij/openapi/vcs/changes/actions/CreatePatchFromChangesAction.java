@@ -7,16 +7,17 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
-import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.progress.ProgressManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +28,7 @@ import java.util.List;
  */
 public class CreatePatchFromChangesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     final Change[] changes = e.getData(DataKeys.CHANGES);
     String commitMessage = "";
     ShelvedChangeList[] shelvedChangeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);

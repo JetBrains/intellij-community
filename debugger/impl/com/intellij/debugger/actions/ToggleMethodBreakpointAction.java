@@ -10,10 +10,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -44,7 +41,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
 
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       return;
     }
@@ -71,7 +68,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
 
   @Nullable
   private static PlaceInDocument getPlace(AnActionEvent event) {
-    final Project project = event.getData(DataKeys.PROJECT);
+    final Project project = event.getData(PlatformDataKeys.PROJECT);
     if(project == null) {
       return null;
     }

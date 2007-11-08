@@ -5,7 +5,7 @@ import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -18,7 +18,7 @@ public class EditWatchAction extends DebuggerAction {
     final DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     if(selectedNode == null || !(selectedNode.getDescriptor() instanceof WatchItemDescriptor)) return;
 
-    Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 
     MainWatchPanel watchPanel = DebuggerPanelsManager.getInstance(project).getWatchPanel();
     if(watchPanel != null) {

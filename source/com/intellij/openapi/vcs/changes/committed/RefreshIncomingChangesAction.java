@@ -2,7 +2,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
  */
 public class RefreshIncomingChangesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
       doRefresh(project);
     }
@@ -26,7 +26,7 @@ public class RefreshIncomingChangesAction extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null && !CommittedChangesCache.getInstance(project).isRefreshingIncomingChanges());
   }
 }

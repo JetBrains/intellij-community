@@ -16,7 +16,7 @@ public class SelectAllAction extends AnAction {
     final Editor editor = TextComponentEditorAction.getEditorFromContext(dataContext);
     if (editor == null) return;
     CommandProcessor processor = CommandProcessor.getInstance();
-    processor.executeCommand(DataKeys.PROJECT.getData(dataContext), new Runnable() {
+    processor.executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
       public void run() {
         editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
       }

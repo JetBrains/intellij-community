@@ -230,8 +230,8 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
   }
 
   public void calcData(DataKey key, DataSink sink) {
-    if (DataKeys.HELP_ID.equals(key)) {
-      sink.put(DataKeys.HELP_ID, getHelpId());
+    if (PlatformDataKeys.HELP_ID.equals(key)) {
+      sink.put(PlatformDataKeys.HELP_ID, getHelpId());
     }
   }
 

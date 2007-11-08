@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -30,7 +31,7 @@ import java.text.DateFormat;
  */
 public class ChangeListDetailsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final ChangeList[] changeLists = e.getData(DataKeys.CHANGE_LISTS);
     if (changeLists != null && changeLists.length > 0 && changeLists [0] instanceof CommittedChangeList) {
       showDetailsPopup(project, (CommittedChangeList) changeLists [0]);
@@ -38,7 +39,7 @@ public class ChangeListDetailsAction extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final ChangeList[] changeLists = e.getData(DataKeys.CHANGE_LISTS);
     e.getPresentation().setEnabled(project != null && changeLists != null && changeLists.length == 1 &&
       changeLists [0] instanceof CommittedChangeList);

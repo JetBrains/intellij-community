@@ -72,6 +72,6 @@ class OpenPartialDiffAction extends AnAction {
 
   @Nullable
   private static Project projectFromDataContext(DataContext dataContext) {
-    return DataKeys.PROJECT.getData(dataContext);
+    return PlatformDataKeys.PROJECT.getData(dataContext);
   }
 }

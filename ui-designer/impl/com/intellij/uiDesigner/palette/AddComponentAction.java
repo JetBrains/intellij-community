@@ -7,6 +7,7 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -30,7 +31,7 @@ import java.util.HashMap;
  */
 public class AddComponentAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
     GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
     PsiFile psiFile = e.getData(DataKeys.PSI_FILE);
@@ -104,7 +105,7 @@ public class AddComponentAction extends AnAction {
   }
 
   @Override public void update(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (e.getData(GroupItem.DATA_KEY) != null ||
         e.getData(ComponentItem.DATA_KEY) != null) {
       e.getPresentation().setVisible(true);

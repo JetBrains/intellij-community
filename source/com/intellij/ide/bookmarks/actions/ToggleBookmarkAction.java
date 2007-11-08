@@ -19,7 +19,7 @@ public class ToggleBookmarkAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
     BookmarkManager bookmarkManager = BookmarkManager.getInstance(project);
 
@@ -57,7 +57,7 @@ public class ToggleBookmarkAction extends AnAction {
     String s = IdeBundle.message("action.toggle.bookmark");
 
     DataContext dataContext = event.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setText(s);

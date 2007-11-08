@@ -9,7 +9,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -33,7 +33,7 @@ public class TabAction extends EditorAction {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.EDIT_COMMAND_GROUP);
       CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.command.name"));
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       insertTabAtCaret(editor, project);
     }
 

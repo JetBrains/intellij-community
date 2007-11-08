@@ -3,8 +3,9 @@ package com.intellij.openapi.vcs.checkout;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -13,7 +14,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.extensions.Extensions;
 
 import java.io.File;
 
@@ -25,7 +25,7 @@ public class CheckoutAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     myProvider.doCheckout(new MyListener(project));
   }
 

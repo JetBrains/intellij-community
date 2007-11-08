@@ -23,7 +23,7 @@ abstract class TabNavigationActionBase extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -43,7 +43,7 @@ abstract class TabNavigationActionBase extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     presentation.setEnabled(false);
     if (project == null) {
       return;
@@ -76,7 +76,7 @@ abstract class TabNavigationActionBase extends AnAction {
   }
 
   private void doNavigate(DataContext dataContext, Project project) {
-    VirtualFile selectedFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile selectedFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     navigateImpl(dataContext, project, selectedFile, myDir);
   }
 

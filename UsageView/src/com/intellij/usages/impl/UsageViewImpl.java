@@ -1074,8 +1074,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     public void calcData(final DataKey key, final DataSink sink) {
       Node node = getSelectedNode();
 
-      if (key == DataKeys.PROJECT) {
-        sink.put(DataKeys.PROJECT, myProject);
+      if (key == PlatformDataKeys.PROJECT) {
+        sink.put(PlatformDataKeys.PROJECT, myProject);
       }
       else if (key == USAGE_VIEW_KEY) {
         sink.put(USAGE_VIEW_KEY, UsageViewImpl.this);
@@ -1098,14 +1098,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         sink.put(USAGE_TARGETS_KEY, getSelectedUsageTargets());
       }
 
-      else if (key == DataKeys.VIRTUAL_FILE_ARRAY) {
+      else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
         final Set<Usage> usages = getSelectedUsages();
         VirtualFile[] data = provideVirtualFileArray(usages != null ? usages.toArray(new Usage[usages.size()]) : null, getSelectedUsageTargets());
-        sink.put(DataKeys.VIRTUAL_FILE_ARRAY, data);
+        sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, data);
       }
 
-      else if (key == DataKeys.HELP_ID) {
-        sink.put(DataKeys.HELP_ID, HELP_ID);
+      else if (key == PlatformDataKeys.HELP_ID) {
+        sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
       }
 
       else if (node != null) {

@@ -8,7 +8,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,7 +26,7 @@ public class DumpIntentionsAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final VirtualFile[] files =
-      FileChooser.chooseFiles(e.getData(DataKeys.PROJECT), FileChooserDescriptorFactory.createSingleFolderDescriptor());
+      FileChooser.chooseFiles(e.getData(PlatformDataKeys.PROJECT), FileChooserDescriptorFactory.createSingleFolderDescriptor());
     if (files.length > 0) {
       final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
       final File root = VfsUtil.virtualToIoFile(files[0]);
@@ -49,6 +49,6 @@ public class DumpIntentionsAction extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(DataKeys.PROJECT) != null);
+    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
   }
 }

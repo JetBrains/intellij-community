@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class CloseAllEditorsButActiveAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     FileEditorManagerEx fileEditorManager=FileEditorManagerEx.getInstanceEx(project);
     VirtualFile selectedFile;
     final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
@@ -39,7 +39,7 @@ public class CloseAllEditorsButActiveAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;

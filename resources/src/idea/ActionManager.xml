@@ -73,7 +73,7 @@
       <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.IndentSelectionAction"/>
       <action id="EditorUnindentSelection" class="com.intellij.openapi.editor.actions.UnindentSelectionAction"/>
       <action id="EditorTab" class="com.intellij.openapi.editor.actions.TabAction"/>
-      <action id="EmacsStyleIndent" class="com.intellij.openapi.editor.actions.EmacsStyleIndentAction"/>
+      <action id="EmacsStyleIndent" class="com.intellij.codeInsight.editorActions.EmacsStyleIndentAction"/>
       <action id="EditorScrollUp" class="com.intellij.openapi.editor.actions.ScrollUpAction"/>
       <action id="EditorScrollDown" class="com.intellij.openapi.editor.actions.ScrollDownAction"/>
       <action id="EditorMoveUpAndScroll" class="com.intellij.openapi.editor.actions.MoveUpAndScrollAction"/>

@@ -1,8 +1,8 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -14,7 +14,7 @@ public class CodeEditorActionGroup extends DefaultActionGroup {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = DataKeys.PROJECT.getData(event.getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       presentation.setVisible(false);
       return;

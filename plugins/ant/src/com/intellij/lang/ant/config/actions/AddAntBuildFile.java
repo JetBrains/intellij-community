@@ -16,8 +16,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 public class AddAntBuildFile extends AnAction {
   public void actionPerformed(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
-    VirtualFile file = DataKeys.VIRTUAL_FILE.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
     try {
       antConfiguration.addBuildFile(file);
@@ -33,13 +33,13 @@ public class AddAntBuildFile extends AnAction {
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
       return;
     }
-    VirtualFile file = DataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);

@@ -5,7 +5,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
@@ -54,7 +54,7 @@ public class NewModuleAction extends AnAction {
 
   @Nullable
   private static Project getProject(AnActionEvent e) {
-    return e.getData(DataKeys.PROJECT);
+    return e.getData(PlatformDataKeys.PROJECT);
   }
 
 }

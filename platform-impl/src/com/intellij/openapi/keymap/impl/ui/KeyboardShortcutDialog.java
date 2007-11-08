@@ -2,8 +2,8 @@ package com.intellij.openapi.keymap.impl.ui;
 
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
@@ -37,7 +37,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     super(component, true);
     setTitle(KeyMapBundle.message("keyboard.shortcut.dialog.title"));
     myActionId = actionId;
-    final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component));
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component));
     myMainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, quickLists, null, false, null); //without current filter
     myEnableSecondKeystroke = new JCheckBox(KeyMapBundle.message("enable.second.keystroke.check.box"));
     myEnableSecondKeystroke.setFocusable(false);

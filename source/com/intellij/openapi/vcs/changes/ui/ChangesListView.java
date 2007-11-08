@@ -179,8 +179,8 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     else if (key == DataKeys.CHANGE_LISTS) {
       sink.put(DataKeys.CHANGE_LISTS, getSelectedChangeLists());
     }
-    else if (key == DataKeys.VIRTUAL_FILE_ARRAY) {
-      sink.put(DataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
+    else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
+      sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
     }
     else if (key == DataKeys.NAVIGATABLE) {
       final VirtualFile[] files = getSelectedFiles();
@@ -191,11 +191,11 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     else if (key == DataKeys.NAVIGATABLE_ARRAY) {
       sink.put(DataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
     }
-    else if (key == DataKeys.DELETE_ELEMENT_PROVIDER) {
-      sink.put(DataKeys.DELETE_ELEMENT_PROVIDER, this);
+    else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
+      sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, this);
     }
-    else if (key == DataKeys.COPY_PROVIDER) {
-      sink.put(DataKeys.COPY_PROVIDER, myCopyProvider);
+    else if (key == PlatformDataKeys.COPY_PROVIDER) {
+      sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
     }
     else if (key == UNVERSIONED_FILES_DATA_KEY) {
       sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles());

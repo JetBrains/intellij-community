@@ -17,7 +17,7 @@ import com.intellij.psi.PsiManager;
 public class ReloadFromDiskAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -52,7 +52,7 @@ public class ReloadFromDiskAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       presentation.setEnabled(false);
       return;

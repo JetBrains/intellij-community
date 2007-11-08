@@ -1,6 +1,7 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -11,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.ide.IdeBundle;
 
 import java.util.ArrayList;
 
@@ -20,7 +20,7 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
   private ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
     final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<Pair<EditorComposite, EditorWindow>>();
     final DataContext dataContext = event.getDataContext();
-    final Project project = event.getData(DataKeys.PROJECT);
+    final Project project = event.getData(PlatformDataKeys.PROJECT);
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
     final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     final EditorWindow[] windows;
@@ -51,7 +51,7 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
 
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, new Runnable(){
@@ -72,7 +72,7 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
     final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     final boolean inSplitter = editorWindow != null && editorWindow.inSplitter();
     presentation.setText(getPresentationText(inSplitter));
-    final Project project = event.getData(DataKeys.PROJECT);
+    final Project project = event.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;

@@ -30,9 +30,9 @@ public class MultiplePasteAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     Component focusedComponent = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
 
     if (!(focusedComponent instanceof JComponent)) return;
 

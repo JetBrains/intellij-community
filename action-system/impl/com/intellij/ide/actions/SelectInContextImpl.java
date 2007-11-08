@@ -3,10 +3,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -72,15 +69,15 @@ abstract class SelectInContextImpl implements SelectInContext {
       if (descriptor instanceof OpenFileDescriptor) {
         final VirtualFile file = ((OpenFileDescriptor)descriptor).getFile();
         if (file.isValid()) {
-          Project project = DataKeys.PROJECT.getData(dataContext);
+          Project project = PlatformDataKeys.PROJECT.getData(dataContext);
           selectInContext = OpenFileDescriptorContext.create(project, file);
         }
       }
     }
 
     if (selectInContext == null) {
-      VirtualFile virtualFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (virtualFile != null && project != null) {
         return new VirtualFileSelectInContext(project, virtualFile);
       }
@@ -91,8 +88,8 @@ abstract class SelectInContextImpl implements SelectInContext {
 
   @Nullable
   private static SelectInContext createEditorContext(DataContext dataContext) {
-    final Project project = DataKeys.PROJECT.getData(dataContext);
-    final FileEditor editor = DataKeys.FILE_EDITOR.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     if (project == null || editor == null) {
       return null;
     }

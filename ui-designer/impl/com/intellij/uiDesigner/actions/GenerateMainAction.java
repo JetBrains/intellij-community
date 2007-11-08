@@ -9,6 +9,7 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +40,7 @@ public class GenerateMainAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.GenerateMainAction");
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
     final Editor editor = e.getData(DataKeys.EDITOR);
     assert editor != null;
@@ -113,7 +114,7 @@ public class GenerateMainAction extends AnAction {
   }
 
   private static boolean isActionEnabled(final AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return false;
     Editor editor = e.getData(DataKeys.EDITOR);
     if (editor == null) return false;

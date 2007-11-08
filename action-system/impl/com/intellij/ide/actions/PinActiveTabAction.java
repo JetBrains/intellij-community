@@ -17,7 +17,7 @@ public class PinActiveTabAction extends ToggleAction {
    * @return selected editor or <code>null</code>
    */
   private VirtualFile getFile(final DataContext context){
-    Project project = DataKeys.PROJECT.getData(context);
+    Project project = PlatformDataKeys.PROJECT.getData(context);
     if(project == null){
       return null;
     }
@@ -27,7 +27,7 @@ public class PinActiveTabAction extends ToggleAction {
       return null;
     }
 
-    return DataKeys.VIRTUAL_FILE.getData(context);
+    return PlatformDataKeys.VIRTUAL_FILE.getData(context);
   }
 
   /**
@@ -87,7 +87,7 @@ public class PinActiveTabAction extends ToggleAction {
   }
 
   private EditorWindow getEditorWindow(DataContext context) {
-    final Project project = DataKeys.PROJECT.getData(context);
+    final Project project = PlatformDataKeys.PROJECT.getData(context);
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     EditorWindow editorWindow = (EditorWindow) context.getData(DataConstantsEx.EDITOR_WINDOW);
     if (editorWindow == null) {

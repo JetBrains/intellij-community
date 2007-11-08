@@ -5,7 +5,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,10 +45,10 @@ public abstract class LocalHistoryAction extends AnAction {
   }
 
   private VirtualFile[] getFiles(AnActionEvent e) {
-    return e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+    return e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
   }
 
   private Project getProject(AnActionEvent e) {
-    return e.getData(DataKeys.PROJECT);
+    return e.getData(PlatformDataKeys.PROJECT);
   }
 }

@@ -1,10 +1,9 @@
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -15,8 +14,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.idea.ActionsBundle;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +33,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);
     List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
 
@@ -62,7 +59,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
       return null;
     }
     
-    VirtualFile[] virtualFiles = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null) {
       List<Change> changesInFiles = new ArrayList<Change>();
       for(VirtualFile vFile: virtualFiles) {
@@ -85,7 +82,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);
     List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
 

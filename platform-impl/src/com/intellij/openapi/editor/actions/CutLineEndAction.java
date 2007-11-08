@@ -9,7 +9,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -51,7 +51,7 @@ public class CutLineEndAction extends EditorAction {
       s = StringUtil.convertLineSeparators(s, "\n");
       StringSelection contents = new StringSelection(s);
 
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null) {
         Clipboard clipboard = editor.getComponent().getToolkit().getSystemClipboard();
         clipboard.setContents(contents, EmptyClipboardOwner.INSTANCE);

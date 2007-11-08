@@ -12,7 +12,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -46,7 +46,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       return;
     }
     final DocumentEx doc = (DocumentEx)editor.getDocument();
-    final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
 
     LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
 

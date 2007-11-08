@@ -21,7 +21,7 @@ public class ToggleLineBreakpointAction extends AnAction {
     boolean toEnable = false;
     PlaceInDocument place = getPlace(event);
     if (place != null) {
-      final Project project = event.getData(DataKeys.PROJECT);
+      final Project project = event.getData(PlatformDataKeys.PROJECT);
       final Document document = place.getDocument();
       final int offset = place.getOffset();
       final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
@@ -39,7 +39,7 @@ public class ToggleLineBreakpointAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       return;
     }
@@ -66,7 +66,7 @@ public class ToggleLineBreakpointAction extends AnAction {
 
   @Nullable
   public static PlaceInDocument getPlace(AnActionEvent event) {
-    Project project = event.getData(DataKeys.PROJECT);
+    Project project = event.getData(PlatformDataKeys.PROJECT);
     if(project == null) {
       return null;
     }

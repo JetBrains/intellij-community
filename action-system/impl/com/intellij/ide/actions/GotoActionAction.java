@@ -8,7 +8,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -18,8 +18,8 @@ import java.util.Map;
 
 public class GotoActionAction extends GotoActionBase {
   public void gotoActionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
-    final Component component = e.getData(DataKeys.CONTEXT_COMPONENT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.action");
 

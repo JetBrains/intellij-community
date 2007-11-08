@@ -1,7 +1,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -26,11 +26,11 @@ public abstract class TextComponentEditorAction extends EditorAction {
 
   @Nullable
   public static Editor getEditorFromContext(final DataContext dataContext) {
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor != null) return editor;
-    final Object data = DataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    final Object data = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (data instanceof JTextComponent) {
-      return new TextComponentEditor(DataKeys.PROJECT.getData(dataContext), (JTextComponent) data);
+      return new TextComponentEditor(PlatformDataKeys.PROJECT.getData(dataContext), (JTextComponent) data);
     }
     return null;
   }

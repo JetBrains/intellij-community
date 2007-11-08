@@ -182,7 +182,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     if (myWindowManager == null) {
       return dataContext;
     }
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     Component focusedComponent = myWindowManager.getFocusedComponent(project);
     if (focusedComponent != null) {
       dataContext = getDataContext(focusedComponent);

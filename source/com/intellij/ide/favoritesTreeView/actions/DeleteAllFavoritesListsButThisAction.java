@@ -6,7 +6,7 @@ import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -20,7 +20,7 @@ public class DeleteAllFavoritesListsButThisAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -36,7 +36,7 @@ public class DeleteAllFavoritesListsButThisAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       e.getPresentation().setEnabled(false);
       return;

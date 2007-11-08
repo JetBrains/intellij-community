@@ -12,11 +12,11 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.reference.RefManagerImpl;
@@ -50,13 +50,13 @@ public class ViewOfflineResultsAction extends AnAction {
 
   public void update(AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    final Project project = event.getData(DataKeys.PROJECT);
+    final Project project = event.getData(PlatformDataKeys.PROJECT);
     presentation.setEnabled(project != null);
     presentation.setVisible(ActionPlaces.MAIN_MENU.equals(event.getPlace()));
   }
 
   public void actionPerformed(AnActionEvent event) {
-    final Project project = event.getData(DataKeys.PROJECT);
+    final Project project = event.getData(PlatformDataKeys.PROJECT);
 
     LOG.assertTrue(project != null);
 

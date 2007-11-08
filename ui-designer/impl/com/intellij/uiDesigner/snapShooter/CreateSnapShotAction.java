@@ -17,6 +17,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -71,7 +72,7 @@ public class CreateSnapShotAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final IdeView view = e.getData(DataKeys.IDE_VIEW);
     e.getPresentation().setVisible(project != null && view != null && hasDirectoryInPackage(project, view));
   }
@@ -88,7 +89,7 @@ public class CreateSnapShotAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final IdeView view = e.getData(DataKeys.IDE_VIEW);
     if (project == null || view == null) {
       return;

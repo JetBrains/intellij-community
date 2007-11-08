@@ -34,6 +34,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -78,7 +79,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public Project getProject() {
-    return DataKeys.PROJECT.getData(myContext);
+    return PlatformDataKeys.PROJECT.getData(myContext);
   }
 
   public VirtualFile getSelectedFile() {
@@ -88,12 +89,12 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public VirtualFile[] getSelectedFiles() {
-    VirtualFile[] fileArray = DataKeys.VIRTUAL_FILE_ARRAY.getData(myContext);
+    VirtualFile[] fileArray = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(myContext);
     if (fileArray != null) {
       return filterLocalFiles(fileArray);
     }
 
-    VirtualFile virtualFile = DataKeys.VIRTUAL_FILE.getData(myContext);
+    VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(myContext);
     if (virtualFile != null && isLocal(virtualFile)) {
       return new VirtualFile[]{virtualFile};
     }

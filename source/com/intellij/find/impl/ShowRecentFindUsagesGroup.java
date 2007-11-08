@@ -12,22 +12,22 @@ import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author cdr
  */
 public class ShowRecentFindUsagesGroup extends ActionGroup {
   public void update(final AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);    
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);
     e.getPresentation().setVisible(project != null);
   }
 
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return EMPTY_ARRAY;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     List<FindUsagesManager.SearchData> history = new ArrayList<FindUsagesManager.SearchData>(findUsagesManager.getFindUsageHistory());

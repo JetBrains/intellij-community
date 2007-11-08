@@ -12,7 +12,7 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -36,7 +36,7 @@ public abstract class AbstractMissingFilesAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     final List<FilePath> files = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     if (files == null) return;
 

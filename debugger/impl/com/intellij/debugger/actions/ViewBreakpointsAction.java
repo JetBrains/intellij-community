@@ -31,7 +31,7 @@ public class ViewBreakpointsAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
     DebuggerManagerEx debugManager = DebuggerManagerEx.getInstanceEx(project);
 
@@ -52,7 +52,7 @@ public class ViewBreakpointsAction extends AnAction {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = DataKeys.PROJECT.getData(event.getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       presentation.setEnabled(false);
       return;

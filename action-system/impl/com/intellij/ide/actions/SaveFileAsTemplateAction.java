@@ -2,7 +2,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
 import com.intellij.ide.fileTemplates.ui.ConfigureTemplatesDialog;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -23,9 +26,9 @@ import java.io.CharArrayWriter;
 
 public class SaveFileAsTemplateAction extends AnAction{
   public void actionPerformed(AnActionEvent e){
-    Project project = e.getData(DataKeys.PROJECT);
-    String fileText = e.getData(DataKeys.FILE_TEXT);
-    VirtualFile file = e.getData(DataKeys.VIRTUAL_FILE);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    String fileText = e.getData(PlatformDataKeys.FILE_TEXT);
+    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     String extension = file.getExtension();
     String nameWithoutExtension = file.getNameWithoutExtension();
     AllFileTemplatesConfigurable fileTemplateOptions = new AllFileTemplatesConfigurable();
@@ -80,8 +83,8 @@ public class SaveFileAsTemplateAction extends AnAction{
   }
 
   public void update(AnActionEvent e) {
-    VirtualFile file = e.getData(DataKeys.VIRTUAL_FILE);
-    String fileText = e.getData(DataKeys.FILE_TEXT);
+    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    String fileText = e.getData(PlatformDataKeys.FILE_TEXT);
     e.getPresentation().setEnabled((fileText != null) && (file != null));
   }
 }

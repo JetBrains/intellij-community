@@ -22,7 +22,7 @@ import java.awt.*;
 public final class BrowseMethodHierarchyAction extends AnAction {
   public final void actionPerformed(final AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
     final PsiMethod method = getMethod(dataContext);
     final MethodHierarchyBrowser hierarchyBrowser = new MethodHierarchyBrowser(project, method);
@@ -94,7 +94,7 @@ public final class BrowseMethodHierarchyAction extends AnAction {
   }
 
   private static PsiMethod getMethodImpl(final DataContext dataContext){
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
     PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);

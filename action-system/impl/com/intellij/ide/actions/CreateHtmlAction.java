@@ -10,10 +10,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.highlighter.HtmlFileType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -124,7 +121,7 @@ public class CreateHtmlAction extends CreateElementActionBase {
   public void update(final AnActionEvent e) {
     super.update(e);
     DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
       Module module = DataKeys.MODULE.getData(dataContext);

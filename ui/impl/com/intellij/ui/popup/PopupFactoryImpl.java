@@ -89,7 +89,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           boolean honorActionMnemonics,
                                           final Runnable disposeCallback,
                                           final int maxRowCount) {
-    final Component component = DataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     LOG.assertTrue(component != null);
 
     ListPopupStep step = createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics);
@@ -201,7 +201,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     JComponent focusOwner=component instanceof JComponent ? (JComponent)component : null;
 
     if (focusOwner == null) {
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       IdeFrameImpl frame = project == null ? null : ((WindowManagerEx)WindowManager.getInstance()).getFrame(project);
       focusOwner = frame == null ? null : frame.getRootPane();
       if (focusOwner == null) {

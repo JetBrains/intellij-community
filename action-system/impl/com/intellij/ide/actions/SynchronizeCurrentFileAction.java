@@ -7,7 +7,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -62,10 +62,10 @@ public class SynchronizeCurrentFileAction extends AnAction {
   }
 
   private static Project getProject(AnActionEvent e) {
-    return e.getData(DataKeys.PROJECT);
+    return e.getData(PlatformDataKeys.PROJECT);
   }
 
   private static VirtualFile[] getFiles(AnActionEvent e) {
-    return e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+    return e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
   }
 }

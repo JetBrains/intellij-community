@@ -2,12 +2,12 @@ package com.intellij.find.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.FindBundle;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -24,7 +24,7 @@ public class FindUsagesAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       return;
     }

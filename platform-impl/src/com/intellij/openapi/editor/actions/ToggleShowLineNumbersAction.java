@@ -32,7 +32,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +50,7 @@ public class ToggleShowLineNumbersAction extends ToggleAction {
 
   @Nullable
   private static Editor getEditor(AnActionEvent e) {
-    return e.getData(DataKeys.EDITOR);
+    return e.getData(PlatformDataKeys.EDITOR);
   }
 
   public void update(AnActionEvent e){

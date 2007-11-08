@@ -5,7 +5,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -22,7 +22,7 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
   }
 
   protected static void doAction(DataContext dataContext) {
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if(project == null) return;
     StackFrameDescriptorImpl stackFrameDescriptor = getStackFrameDescriptor(dataContext);
     if(stackFrameDescriptor != null) {

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.ShowContainerInfoHandler;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -20,7 +20,7 @@ public class ShowContainerInfoAction extends BaseCodeInsightAction{
 
   @Nullable
   protected Editor getBaseEditor(final DataContext dataContext, final Project project) {
-    return DataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext);
+    return PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext);
   }
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {

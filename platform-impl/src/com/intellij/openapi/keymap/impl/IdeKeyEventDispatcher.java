@@ -224,7 +224,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if(KeyEvent.KEY_RELEASED==e.getID()){
       myFirstKeyStroke=null;
       myState=STATE_INIT;
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       WindowManager.getInstance().getStatusBar(project).setInfo(null);
       return false;
     }
@@ -240,7 +240,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // finally user had managed to enter the second keystroke, so let it be processed
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     StatusBarEx statusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(project);
     if (processAction(e, dataContext)) {
       statusBar.setInfo(null);
@@ -319,7 +319,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         }
       }
 
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       StringBuffer message = new StringBuffer();
       message.append(KeyMapBundle.message("prefix.key.pressed.message"));
       message.append(' ');

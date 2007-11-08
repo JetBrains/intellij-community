@@ -2,7 +2,7 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.project.Project;
 
@@ -15,7 +15,7 @@ public class ShowPrevChangeAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    final DiffRequest request = e.getData(DataKeys.DIFF_REQUEST);
+    final DiffRequest request = e.getData(PlatformDataKeys.DIFF_REQUEST);
     if (request instanceof ChangeDiffRequest) {
       final ChangeDiffRequest changeDiffRequest = (ChangeDiffRequest)request;
       e.getPresentation().setEnabled(changeDiffRequest.getIndex() > 0);
@@ -26,8 +26,8 @@ public class ShowPrevChangeAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
-    final DiffRequest request = e.getData(DataKeys.DIFF_REQUEST);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final DiffRequest request = e.getData(PlatformDataKeys.DIFF_REQUEST);
     if (request instanceof ChangeDiffRequest) {
       final ChangeDiffRequest changeDiffRequest = (ChangeDiffRequest)request;
       ShowDiffAction.showDiffForChange(e,

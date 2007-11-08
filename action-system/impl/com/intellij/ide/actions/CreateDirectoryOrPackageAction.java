@@ -29,7 +29,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     DataContext dataContext = e.getDataContext();
 
     IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
     PsiDirectory directory = PackageUtil.getOrChooseDirectory(view);
 
@@ -52,7 +52,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

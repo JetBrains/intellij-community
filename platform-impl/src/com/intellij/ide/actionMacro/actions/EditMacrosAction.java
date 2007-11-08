@@ -5,7 +5,7 @@ import com.intellij.ide.actionMacro.ActionMacroManager;
 import com.intellij.ide.actionMacro.EditMacrosDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,7 +16,7 @@ import com.intellij.openapi.actionSystem.DataKeys;
  */
 public class EditMacrosAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    EditMacrosDialog dialog = new EditMacrosDialog(DataKeys.PROJECT.getData(e.getDataContext()));
+    EditMacrosDialog dialog = new EditMacrosDialog(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
     dialog.show();
   }
 

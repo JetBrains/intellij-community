@@ -1,12 +1,10 @@
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.*;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,13 +15,6 @@ public class EditorActionManagerImpl extends EditorActionManager implements Appl
 
   public EditorActionManagerImpl(ActionManager actionManager) {
     myActionManager = actionManager;
-    final BraceMatchingUtil.BraceMatcher defaultBraceMatcher = new BraceMatchingUtil.DefaultBraceMatcher();
-    BraceMatchingUtil.registerBraceMatcher(StdFileTypes.JAVA,defaultBraceMatcher);
-    BraceMatchingUtil.registerBraceMatcher(StdFileTypes.XML,defaultBraceMatcher);
-
-    BraceMatchingUtil.HtmlBraceMatcher braceMatcher = new BraceMatchingUtil.HtmlBraceMatcher();
-    BraceMatchingUtil.registerBraceMatcher(StdFileTypes.HTML,braceMatcher);
-    BraceMatchingUtil.registerBraceMatcher(StdFileTypes.XHTML,braceMatcher);
   }
 
   public EditorActionHandler getActionHandler(@NotNull String actionId) {

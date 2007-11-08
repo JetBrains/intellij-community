@@ -21,7 +21,7 @@ public class FindUsagesInFileAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if(project==null){
       return;
     }
@@ -29,7 +29,7 @@ public class FindUsagesInFileAction extends AnAction {
 
     UsageTarget[] usageTargets = (UsageTarget[])dataContext.getData(UsageView.USAGE_TARGETS);
     if (usageTargets != null) {
-      FileEditor fileEditor = DataKeys.FILE_EDITOR.getData(dataContext);
+      FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
       if (fileEditor != null) {
         usageTargets[0].findUsagesInEditor(fileEditor);
       }
@@ -49,7 +49,7 @@ public class FindUsagesInFileAction extends AnAction {
   }
 
   private static boolean isEnabled(DataContext dataContext) {
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return false;
     }

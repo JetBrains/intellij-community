@@ -3,7 +3,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -30,7 +30,7 @@ public class EndHandler extends EditorActionHandler {
       return;
     }
 
-    final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null){
       if (myOriginalHandler != null){
         myOriginalHandler.execute(editor, dataContext);

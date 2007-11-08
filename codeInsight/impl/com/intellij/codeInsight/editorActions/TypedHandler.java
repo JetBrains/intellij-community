@@ -8,7 +8,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -151,7 +151,7 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   public void execute(Editor editor, char charTyped, DataContext dataContext) {
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null || editor.isColumnMode()){
       if (myOriginalHandler != null){
         myOriginalHandler.execute(editor, charTyped, dataContext);

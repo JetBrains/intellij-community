@@ -79,7 +79,7 @@ public abstract class DebuggerAction extends AnAction {
     if(panel != null) {
       return panel.getContext();
     } else {
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       return project != null ? (DebuggerManagerEx.getInstanceEx(project)).getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
     }
   }

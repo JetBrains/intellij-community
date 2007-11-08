@@ -17,7 +17,7 @@ public class EditRunConfigurationsAction extends AnAction{
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null || project.isDisposed()) return;
     final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project);
     dialog.show();
@@ -25,7 +25,7 @@ public class EditRunConfigurationsAction extends AnAction{
 
   public void update(final AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setEnabled(e.getData(DataKeys.PROJECT) != null);
+    presentation.setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
     if (ActionPlaces.RUN_CONFIGURATIONS_COMBOBOX.equals(e.getPlace())) {
       presentation.setText(ExecutionBundle.message("edit.configuration.action"));
       presentation.setDescription(presentation.getText());

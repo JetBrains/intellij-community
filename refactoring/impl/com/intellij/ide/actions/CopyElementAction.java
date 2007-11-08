@@ -12,7 +12,7 @@ import com.intellij.refactoring.copy.CopyHandler;
 public class CopyElementAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
@@ -48,7 +48,7 @@ public class CopyElementAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -71,7 +71,7 @@ public class CopyElementAction extends AnAction {
       return;
     }
 
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
     PsiClass topLevelClass = getTopLevelClass(editor, project);

@@ -1,7 +1,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -78,6 +78,6 @@ public class ToggleReadOnlyAttributePanel extends JLabel {
   }
 
   private Project getProject() {
-    return DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
+    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
   }
 }

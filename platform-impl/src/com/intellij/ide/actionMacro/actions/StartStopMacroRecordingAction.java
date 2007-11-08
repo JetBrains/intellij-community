@@ -5,7 +5,7 @@ import com.intellij.ide.actionMacro.ActionMacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 
 /**
  * @author max
@@ -24,7 +24,7 @@ public class StartStopMacroRecordingAction extends AnAction {
       manager.startRecording(IdeBundle.message("macro.noname"));
     }
     else {
-      ActionMacroManager.getInstance().stopRecording(DataKeys.PROJECT.getData(e.getDataContext()));
+      ActionMacroManager.getInstance().stopRecording(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
     }
   }
 }

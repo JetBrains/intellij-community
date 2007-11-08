@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiUtil;
 public class ExternalJavaDocAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -52,7 +52,7 @@ public class ExternalJavaDocAction extends AnAction {
     final PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
 
     if (editor != null) {
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       boolean enabled = (file instanceof PsiJavaFile || PsiUtil.isInJspFile(file) ||
                         (file!=null && JavaDocManager.getProviderFromElement(file)!=null

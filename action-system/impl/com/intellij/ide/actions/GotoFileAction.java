@@ -6,7 +6,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -19,7 +19,7 @@ import com.intellij.psi.PsiFile;
 public class GotoFileAction extends GotoActionBase {
   public void gotoActionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file");
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoFileModel(project), getPsiContext(e));
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       public void onClose () {

@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -24,7 +25,7 @@ public class ShowDiffWithLocalAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);
     assert changes != null;
     List<Change> changesToLocal = new ArrayList<Change>();
@@ -41,7 +42,7 @@ public class ShowDiffWithLocalAction extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);
     e.getPresentation().setEnabled(project != null && changes != null && anyHasAfterRevision(changes));
   }

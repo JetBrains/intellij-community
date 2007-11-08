@@ -10,10 +10,7 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -35,7 +32,7 @@ public class RenameChangeListAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
     assert lists != null;
     final LocalChangeList list = ChangeListManager.getInstance(project).findChangeList(lists[0].getName());

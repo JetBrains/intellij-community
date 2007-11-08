@@ -37,7 +37,7 @@ public class CyclicDependenciesAction extends AnAction{
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Module module = DataKeys.MODULE.getData(dataContext);
     if (project != null) {
       PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
@@ -67,7 +67,7 @@ public class CyclicDependenciesAction extends AnAction{
 
 
   private AnalysisScope getInspectionScope(final DataContext dataContext) {
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
@@ -77,7 +77,7 @@ public class CyclicDependenciesAction extends AnAction{
 
   private AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: package, project, module.
-    Project projectContext = DataKeys.PROJECT_CONTEXT.getData(dataContext);
+    Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
       return new AnalysisScope(projectContext);
     }
@@ -112,7 +112,7 @@ public class CyclicDependenciesAction extends AnAction{
   }
 
   private AnalysisScope getProjectScope(DataContext dataContext) {
-    return new AnalysisScope(DataKeys.PROJECT.getData(dataContext));
+    return new AnalysisScope(PlatformDataKeys.PROJECT.getData(dataContext));
   }
 
   private AnalysisScope getModuleScope(DataContext dataContext) {

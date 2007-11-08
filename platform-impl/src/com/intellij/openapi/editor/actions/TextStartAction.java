@@ -9,11 +9,10 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
@@ -33,7 +32,7 @@ public class TextStartAction extends TextComponentEditorAction {
       scrollingModel.scrollToCaret(ScrollType.RELATIVE);
       scrollingModel.enableAnimation();
 
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
         IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
       }

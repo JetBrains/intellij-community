@@ -9,6 +9,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -54,14 +55,14 @@ public class ResourceBundleRenameHandler implements RenameHandler {
   private static ResourceBundle getResourceBundleFromDataContext(DataContext dataContext) {
     PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
     if (element instanceof Property) return null; //rename property
-    VirtualFile virtualFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) {
       return null;
     }
     if (virtualFile instanceof ResourceBundleAsVirtualFile) {
       return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle();
     }
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       if (psiFile instanceof PropertiesFile) {

@@ -3,7 +3,7 @@ package com.intellij.ide.favoritesTreeView.actions;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +24,7 @@ public class AddAllOpenFilesToFavorites extends AnAction{
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null){
       return;
     }
@@ -49,7 +49,7 @@ public class AddAllOpenFilesToFavorites extends AnAction{
   }
 
   public void update(AnActionEvent e) {
-    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null){
       e.getPresentation().setEnabled(false);
       return;

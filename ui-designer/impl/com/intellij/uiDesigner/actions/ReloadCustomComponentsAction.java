@@ -12,7 +12,7 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -26,7 +26,7 @@ import com.intellij.uiDesigner.radComponents.RadErrorComponent;
 
 public class ReloadCustomComponentsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
     LoaderFactory.getInstance(project).clearClassLoaderCache();
     final FileEditor[] fileEditors = FileEditorManager.getInstance(project).getAllEditors();

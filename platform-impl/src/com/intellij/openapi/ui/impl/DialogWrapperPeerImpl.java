@@ -66,7 +66,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     if (myWindowManager != null) {
 
       if (project == null) {
-        project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+        project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       }
 
       window = myWindowManager.suggestParentWindow(project);
@@ -449,7 +449,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       Point location = null;
 
       if (myDimensionServiceKey != null) {
-        final Project projectGuess = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
+        final Project projectGuess = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
         location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
         Dimension size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
         if (size != null) {
@@ -580,7 +580,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       public void saveSize() {
         if (myDimensionServiceKey != null && myInitialSize != null && myOpened) { // myInitialSize can be null only if dialog is disposed before first showing
-          final Project projectGuess = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(MyDialog.this));
+          final Project projectGuess = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(MyDialog.this));
 
           // Save location
           Point location = getLocation();

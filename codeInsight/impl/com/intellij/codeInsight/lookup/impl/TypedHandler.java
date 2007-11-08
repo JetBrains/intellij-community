@@ -4,7 +4,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -34,7 +34,7 @@ class TypedHandler implements TypedActionHandler {
     final LookupItem<?> currentItem = lookup.getCurrentItem();
     final int result = getLookupAction(charTyped, charFilter, prefix, currentItem);
 
-    CommandProcessor.getInstance().executeCommand(DataKeys.PROJECT.getData(dataContext), new Runnable() {
+    CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
       public void run() {
         EditorModificationUtil.deleteSelectedText(editor);
         if (result == CharFilter.ADD_TO_PREFIX) {

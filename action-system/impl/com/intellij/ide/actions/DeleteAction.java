@@ -41,7 +41,7 @@ public class DeleteAction extends AnAction {
     else
       presentation.setText(IdeBundle.message("action.delete"));
     DataContext dataContext = event.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;

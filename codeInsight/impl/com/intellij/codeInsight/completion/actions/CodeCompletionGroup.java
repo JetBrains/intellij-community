@@ -12,7 +12,7 @@ public class CodeCompletionGroup extends DefaultActionGroup {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       presentation.setEnabled(false);
       return;

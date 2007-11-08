@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 public class ToggleFieldBreakpointAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       return;
     }
@@ -90,7 +90,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
     }
     else if(DebuggerAction.isContextView(event)) {
       presentation.setText(DebuggerBundle.message("action.add.field.watchpoint.text"));
-      Project project = event.getData(DataKeys.PROJECT);
+      Project project = event.getData(PlatformDataKeys.PROJECT);
       if(place != null) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());
         if (document != null) {
@@ -110,7 +110,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
   @Nullable
   public static SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    Project project = event.getData(DataKeys.PROJECT);
+    Project project = event.getData(PlatformDataKeys.PROJECT);
     if(project == null) {
       return null;
     }

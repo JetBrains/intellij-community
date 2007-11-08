@@ -3,6 +3,7 @@ package com.intellij.codeEditor.printing;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -38,7 +39,7 @@ class ExportToHTMLManager {
       psiDirectory = (PsiDirectory)psiElement;
     }
     final PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     String shortFileName = null;
     String directoryName = null;
     if(psiFile != null || psiDirectory != null) {

@@ -537,7 +537,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    if (dataId.equals(DataKeys.TOOL_WINDOW.getName())) return myWindow;
+    if (dataId.equals(PlatformDataKeys.TOOL_WINDOW.getName())) return myWindow;
 
     return null;
   }

@@ -16,7 +16,7 @@
 package com.intellij.vcsUtil;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -505,7 +505,7 @@ public class VcsUtil {
    *         Returns empty array if there are no available files.
    */
   public static VirtualFile[] getVirtualFiles(AnActionEvent e) {
-    VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     return (files == null) ? VirtualFile.EMPTY_ARRAY : files;
   }
 

@@ -11,7 +11,7 @@ public final class GenerateJavadocAction extends AnAction{
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final PsiDirectory dir = getDirectoryFromContext(dataContext);
     JavadocGenerationManager.getInstance(project).generateJavadoc(dir, dataContext);
   }
@@ -22,7 +22,7 @@ public final class GenerateJavadocAction extends AnAction{
   }
 
   private static PsiDirectory getDirectoryFromContext(final DataContext dataContext) {
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     final Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor != null){
@@ -38,7 +38,7 @@ public final class GenerateJavadocAction extends AnAction{
         }
       } else {
         //This is the case with GUI designer
-        VirtualFile virtualFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
+        VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
         if (virtualFile != null && virtualFile.isValid()) {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
           if (psiFile != null) return psiFile.getContainingDirectory();

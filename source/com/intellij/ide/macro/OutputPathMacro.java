@@ -2,7 +2,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -25,12 +25,12 @@ public final class OutputPathMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }
 
-    VirtualFile file = DataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file != null) {
       ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       Module module = projectFileIndex.getModuleForFile(file);

@@ -23,7 +23,7 @@ import java.awt.*;
 public class ShowModuleDependenciesAction extends AnAction{
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       return;
     }
@@ -66,7 +66,7 @@ public class ShowModuleDependenciesAction extends AnAction{
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     e.getPresentation().setEnabled(project != null);
   }
 

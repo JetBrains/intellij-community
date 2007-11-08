@@ -9,10 +9,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,7 +65,7 @@ public class CopyReferenceAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = DataKeys.EDITOR.getData(dataContext);
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
 
     PsiElement member = getMember(element);
@@ -286,7 +283,7 @@ public class CopyReferenceAction extends AnAction {
 
   public static class MyPasteProvider implements PasteProvider {
     public void performPaste(DataContext dataContext) {
-      final Project project = DataKeys.PROJECT.getData(dataContext);
+      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       final Editor editor = DataKeys.EDITOR.getData(dataContext);
       if (project == null || editor == null) return;
 
@@ -300,7 +297,7 @@ public class CopyReferenceAction extends AnAction {
     }
 
     public boolean isPasteEnabled(DataContext dataContext) {
-      final Project project = DataKeys.PROJECT.getData(dataContext);
+      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       final Editor editor = DataKeys.EDITOR.getData(dataContext);
       return project != null && editor != null && getCopiedFqn() != null;
     }

@@ -59,7 +59,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
     public void actionPerformed(final AnActionEvent e) {
       try {
         final StringSelection contents = new StringSelection(myHelpArea.getText().trim());
-        final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+        final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
         if (project == null) {
           final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
           clipboard.setContents(contents, EmptyClipboardOwner.INSTANCE);

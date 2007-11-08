@@ -3,7 +3,7 @@ package com.intellij.uiDesigner;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
@@ -524,7 +524,7 @@ public final class FormEditingUtil {
    */
   @Nullable
   public static GuiEditor getEditorFromContext(@NotNull final DataContext context){
-    final FileEditor editor = DataKeys.FILE_EDITOR.getData(context);
+    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
     if(editor instanceof UIFormEditor){
       return ((UIFormEditor)editor).getEditor();
     }
@@ -534,7 +534,7 @@ public final class FormEditingUtil {
   }
 
   @Nullable public static GuiEditor getActiveEditor(final DataContext context){
-    Project project = DataKeys.PROJECT.getData(context);
+    Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) {
       return null;
     }

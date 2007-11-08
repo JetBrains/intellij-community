@@ -51,7 +51,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     }
 
     public final void update(AnActionEvent e) {
-      Project project = DataKeys.PROJECT.getData(e.getDataContext());
+      Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
       boolean isGroupActive = isActionActive(GroupByWordPrefixes.ID);
       String separator = getCurrentSeparator();

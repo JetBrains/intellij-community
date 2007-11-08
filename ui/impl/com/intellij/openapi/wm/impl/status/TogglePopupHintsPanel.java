@@ -4,7 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HectorComponent;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -164,7 +164,7 @@ public class TogglePopupHintsPanel extends JPanel {
 
   @Nullable
   private Project getCurrentProject() {
-    return DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
+    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
   }
 
   public Point getToolTipLocation(MouseEvent event) {

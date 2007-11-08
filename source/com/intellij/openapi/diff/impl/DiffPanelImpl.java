@@ -356,7 +356,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     public Object getData(String dataId) {
       if (DataConstants.DIFF_VIEWER.equals(dataId)) return DiffPanelImpl.this;
       if (FocusDiffSide.FOCUSED_DIFF_SIDE.equals(dataId)) return myCurrentSide == null ? null : myFocusDiffSide;
-      if (DataKeys.DIFF_REQUEST.getName().equals(dataId)) return myDiffRequest;
+      if (PlatformDataKeys.DIFF_REQUEST.getName().equals(dataId)) return myDiffRequest;
       return null;
     }
   }

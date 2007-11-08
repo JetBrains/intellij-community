@@ -4,7 +4,7 @@ import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -296,7 +296,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       }
 
       public boolean isPasteEnabled(DataContext dataContext){
-        Project project = DataKeys.PROJECT.getData(dataContext);
+        Project project = PlatformDataKeys.PROJECT.getData(dataContext);
         if (project == null) {
           return false;
         }

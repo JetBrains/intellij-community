@@ -6,7 +6,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -15,7 +15,7 @@ public class GotoSymbolAction extends GotoActionBase {
 
   public void gotoActionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.symbol");
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

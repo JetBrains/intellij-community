@@ -9,7 +9,7 @@ import com.intellij.debugger.ui.impl.FrameDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class CustomizeContextViewAction extends DebuggerAction{
   public void actionPerformed(AnActionEvent e) {
-    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 
     final CompositeConfigurable configurable = new CompositeConfigurable() {
       protected List<Configurable> createConfigurables() {

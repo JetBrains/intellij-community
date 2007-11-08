@@ -9,7 +9,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -29,7 +29,7 @@ public class UnindentSelectionAction extends EditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       unindentSelection(editor, project);
     }
 

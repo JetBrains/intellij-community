@@ -13,18 +13,18 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 
 public class DeleteUnversionedFilesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    DeleteProvider deleteProvider = e.getData(DataKeys.DELETE_ELEMENT_PROVIDER);
+    DeleteProvider deleteProvider = e.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER);
     assert deleteProvider != null;
     deleteProvider.deleteElement(e.getDataContext());
   }
 
   @Override
   public void update(AnActionEvent e) {
-    DeleteProvider deleteProvider = e.getData(DataKeys.DELETE_ELEMENT_PROVIDER);
+    DeleteProvider deleteProvider = e.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER);
     e.getPresentation().setVisible(deleteProvider != null && deleteProvider.canDeleteElement(e.getDataContext()));
   }
 }

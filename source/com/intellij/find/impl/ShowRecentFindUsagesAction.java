@@ -5,7 +5,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -28,13 +28,13 @@ import java.util.List;
 public class ShowRecentFindUsagesAction extends AnAction {
   public void update(final AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(usageView != null && project != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     List<FindUsagesManager.SearchData> history = new ArrayList<FindUsagesManager.SearchData>(findUsagesManager.getFindUsageHistory());
 

@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.DocumentFragment;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.DocumentFragment;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;

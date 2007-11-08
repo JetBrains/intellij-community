@@ -2,7 +2,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -14,7 +14,7 @@ public class AddTestProcessActionIndefinite extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
 
     new Task.Backgroundable(project, "Test", true) {
       public void run(final ProgressIndicator indicator) {

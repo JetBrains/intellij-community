@@ -77,7 +77,7 @@ public abstract class CreateElementActionBase extends AnAction {
       return;
     }
 
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
@@ -92,7 +92,7 @@ public abstract class CreateElementActionBase extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

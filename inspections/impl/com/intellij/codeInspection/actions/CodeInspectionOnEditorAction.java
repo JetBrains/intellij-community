@@ -6,10 +6,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -18,7 +15,7 @@ import com.intellij.psi.PsiFile;
 public class CodeInspectionOnEditorAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       return;
     }
@@ -42,7 +39,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
     e.getPresentation().setEnabled(project != null && psiFile != null  && DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile));
   }

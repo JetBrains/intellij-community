@@ -1,9 +1,6 @@
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -36,14 +33,14 @@ public abstract class GotoActionBase extends AnAction {
 
   public final void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    final Project project = DataKeys.PROJECT.getData(event.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(!getClass ().equals (myInAction) && project != null);
   }
 
   public static PsiElement getPsiContext(final AnActionEvent e) {
     PsiFile file = e.getData(DataKeys.PSI_FILE);
     if (file != null) return file;
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     return getPsiContext(project);
   }
 

@@ -285,8 +285,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         sink.put(DataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
       }
     }
-    else if (key.equals(DataKeys.COPY_PROVIDER)) {
-      sink.put(DataKeys.COPY_PROVIDER, myCopyProvider);
+    else if (key.equals(PlatformDataKeys.COPY_PROVIDER)) {
+      sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
     }
     else if (key.equals(DataKeys.NAVIGATABLE_ARRAY)) {
       final CommittedChangeList list = getSelectedChangeList();
@@ -299,8 +299,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     else if (key.equals(DataKeys.TREE_EXPANDER)) {
       sink.put(DataKeys.TREE_EXPANDER, myTreeExpander);
     }
-    else if (key.equals(DataKeys.HELP_ID)) {
-      sink.put(DataKeys.HELP_ID, ourHelpId);
+    else if (key.equals(PlatformDataKeys.HELP_ID)) {
+      sink.put(PlatformDataKeys.HELP_ID, ourHelpId);
     }
   }
 

@@ -4,8 +4,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.actions.CloseTabToolbarAction;
-import com.intellij.ide.actions.RefreshAction;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.actions.RefreshAction;
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
@@ -601,7 +601,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider, 
   private final class ChangeScopeAction extends ComboBoxAction {
     public final void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
 
       presentation.setText(getCurrentScopeType());

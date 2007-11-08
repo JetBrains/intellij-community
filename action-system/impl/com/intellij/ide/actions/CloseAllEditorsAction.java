@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class CloseAllEditorsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, new Runnable(){
@@ -49,7 +49,7 @@ public class CloseAllEditorsAction extends AnAction {
     else {
       presentation.setText(IdeBundle.message("action.close.all.editors"));
     }
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;

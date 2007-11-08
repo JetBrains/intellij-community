@@ -50,13 +50,13 @@ public class AddToFavoritesAction extends AnAction {
     Collection<AbstractTreeNode> nodesToAdd = getNodesToAdd(dataContext, true);
 
     if (nodesToAdd != null && !nodesToAdd.isEmpty()) {
-      Project project = e.getData(DataKeys.PROJECT);
+      Project project = e.getData(PlatformDataKeys.PROJECT);
       FavoritesManager.getInstance(project).addRoots(myFavoritesListName, nodesToAdd);
     }
   }
 
   public static Collection<AbstractTreeNode> getNodesToAdd(final DataContext dataContext, final boolean inProjectView) {
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
     if (project == null) return null;
 
@@ -82,7 +82,7 @@ public class AddToFavoritesAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       e.getPresentation().setEnabled(false);
     }
@@ -105,10 +105,10 @@ public class AddToFavoritesAction extends AnAction {
   private static Object collectSelectedElements(final DataContext dataContext) {
     Object elements = retrieveData(null, dataContext.getData(DataConstantsEx.RESOURCE_BUNDLE_ARRAY));
     elements = retrieveData(elements, DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext));
-    elements = retrieveData(elements, DataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    elements = retrieveData(elements, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     elements = retrieveData(elements, DataKeys.PSI_FILE.getData(dataContext));
     elements = retrieveData(elements, DataKeys.PSI_ELEMENT.getData(dataContext));
-    elements = retrieveData(elements, DataKeys.VIRTUAL_FILE.getData(dataContext));
+    elements = retrieveData(elements, PlatformDataKeys.VIRTUAL_FILE.getData(dataContext));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.MODULE_GROUP_ARRAY));
     elements = retrieveData(elements, DataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext));
     elements = retrieveData(elements, DataKeys.MODULE.getData(dataContext));

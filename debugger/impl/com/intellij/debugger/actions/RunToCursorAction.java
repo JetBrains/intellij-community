@@ -31,7 +31,7 @@ public class RunToCursorAction extends AnAction {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = event.getData(DataKeys.PROJECT);
+    Project project = event.getData(PlatformDataKeys.PROJECT);
     boolean enabled;
 
     Editor editor = event.getData(DataKeys.EDITOR);
@@ -66,7 +66,7 @@ public class RunToCursorAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       return;
     }

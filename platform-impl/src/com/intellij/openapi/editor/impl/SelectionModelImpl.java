@@ -9,8 +9,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -500,7 +500,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     s = StringUtil.convertLineSeparators(s, "\n");
     StringSelection contents = new StringSelection(s);
 
-    Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myEditor.getContentComponent()));
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myEditor.getContentComponent()));
     if (project == null) {
       Clipboard clipboard = myEditor.getComponent().getToolkit().getSystemClipboard();
       clipboard.setContents(contents, EmptyClipboardOwner.INSTANCE);

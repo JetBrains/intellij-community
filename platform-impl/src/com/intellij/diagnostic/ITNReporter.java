@@ -12,7 +12,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
@@ -57,7 +57,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     SubmittedReportInfo.SubmissionStatus submissionStatus = SubmittedReportInfo.SubmissionStatus.FAILED;
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
     String description = "";
     do {

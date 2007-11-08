@@ -52,7 +52,7 @@ public class MergeActionGroup extends ActionGroup {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myOperation.perform(DataKeys.PROJECT.getData(e.getDataContext()));
+      myOperation.perform(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
     }
   }
 }

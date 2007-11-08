@@ -3,7 +3,7 @@ package com.intellij.refactoring.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -21,7 +21,7 @@ public class TypeCookAction extends BaseRefactoringAction {
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
 
     if (project == null) {
       return false;

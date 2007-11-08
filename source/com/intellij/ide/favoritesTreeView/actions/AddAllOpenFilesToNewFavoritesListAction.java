@@ -4,7 +4,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 
@@ -20,7 +20,7 @@ class AddAllOpenFilesToNewFavoritesListAction extends AnAction {
 
  public void actionPerformed(AnActionEvent e) {
    final DataContext dataContext = e.getDataContext();
-   final String newName = AddNewFavoritesListAction.doAddNewFavoritesList(DataKeys.PROJECT.getData(dataContext));
+   final String newName = AddNewFavoritesListAction.doAddNewFavoritesList(PlatformDataKeys.PROJECT.getData(dataContext));
    if (newName != null){
      new AddAllOpenFilesToFavorites(newName).actionPerformed(e);
    }
@@ -28,7 +28,7 @@ class AddAllOpenFilesToNewFavoritesListAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       e.getPresentation().setEnabled(false);
     }

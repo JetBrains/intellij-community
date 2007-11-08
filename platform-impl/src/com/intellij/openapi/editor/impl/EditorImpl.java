@@ -47,7 +47,10 @@ import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
-import java.awt.datatransfer.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
@@ -2453,7 +2456,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private DataContext getProjectAwareDataContext(final DataContext original) {
-    if (DataKeys.PROJECT.getData(original) == myProject) return original;
+    if (PlatformDataKeys.PROJECT.getData(original) == myProject) return original;
 
     return new DataContext() {
       public Object getData(String dataId) {

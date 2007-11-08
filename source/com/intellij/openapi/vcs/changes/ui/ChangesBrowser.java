@@ -3,13 +3,16 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.ui.SeparatorFactory;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,8 +127,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     else if (key == DataKeys.CHANGE_LISTS) {
       sink.put(DataKeys.CHANGE_LISTS, getSelectedChangeLists());
     }
-    else if (key == DataKeys.VIRTUAL_FILE_ARRAY) {
-      sink.put(DataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
+    else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
+      sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
     }
     else if (key == DataKeys.NAVIGATABLE_ARRAY) {
       sink.put(DataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));

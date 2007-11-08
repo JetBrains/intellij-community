@@ -17,7 +17,7 @@ public class QuickEvaluateAction extends AnAction {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = event.getData(DataKeys.PROJECT);
+    Project project = event.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -36,7 +36,7 @@ public class QuickEvaluateAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) { return; }
 
     DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();

@@ -8,10 +8,7 @@ import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -51,7 +48,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -103,7 +100,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Editor editor = DataKeys.EDITOR.getData(dataContext);
     final PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
 

@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -42,7 +43,7 @@ public class ConfigurationContext {
       myLocation = (Location<PsiElement>)location;
       return;
     }
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       myLocation = null;
       return;
@@ -115,7 +116,7 @@ public class ConfigurationContext {
       element = DataKeys.PSI_ELEMENT.getData(dataContext);
     }
     if (element == null) {
-      final VirtualFile file = DataKeys.VIRTUAL_FILE.getData(dataContext);
+      final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
       if (file != null) {
         element = PsiManager.getInstance(project).findFile(file);
       }

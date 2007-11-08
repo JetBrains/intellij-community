@@ -7,7 +7,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -60,7 +60,7 @@ public class DeleteHandler {
     public void deleteElement(DataContext dataContext) {
       PsiElement[] elements = getPsiElements(dataContext);
       if (elements == null) return;
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
       LocalHistoryAction a = LocalHistory.startAction(project, IdeBundle.message("progress.deleting"));
       try {

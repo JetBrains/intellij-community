@@ -8,7 +8,7 @@ import com.intellij.ide.license.LicenseManager;
 import com.intellij.ide.license.ui.LicenseUrls;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.IconLoader;
@@ -34,14 +34,14 @@ public class AboutAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Window window = WindowManager.getInstance().suggestParentWindow(e.getData(DataKeys.PROJECT));
+    Window window = WindowManager.getInstance().suggestParentWindow(e.getData(PlatformDataKeys.PROJECT));
 
     showAboutDialog(window);
   }
 
   public static void showAbout() {
     Window window = WindowManager.getInstance().suggestParentWindow(
-      DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
+      PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
 
     showAboutDialog(window);
   }

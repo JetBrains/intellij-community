@@ -38,10 +38,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -64,7 +61,7 @@ public class ShowImplementationsAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     Editor editor = DataKeys.EDITOR.getData(dataContext);
     PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
 

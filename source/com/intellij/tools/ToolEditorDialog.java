@@ -4,7 +4,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -181,7 +181,7 @@ public class ToolEditorDialog extends DialogWrapper {
     myOutputFiltersButton = new JButton(ToolsBundle.message("tools.filters.button"));
 
     DataContext dataContext = DataManager.getInstance().getDataContext(parent);
-    myProject = DataKeys.PROJECT.getData(dataContext);
+    myProject = PlatformDataKeys.PROJECT.getData(dataContext);
     MacroManager.getInstance().cacheMacrosPreview(dataContext);
     setTitle(ToolsBundle.message("tools.edit.title"));
     init();

@@ -2,6 +2,7 @@ package com.intellij.openapi.diff.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -19,7 +20,7 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
 
   @Nullable
   protected DiffRequest getDiffData(DataContext dataContext) {
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     Editor editorData = DataKeys.EDITOR.getData(dataContext);
     Editor editor = editorData != null ? editorData : FileEditorManager.getInstance(project).getSelectedTextEditor();

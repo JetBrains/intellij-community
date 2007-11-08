@@ -20,7 +20,7 @@ public class ReformatCodeAction extends AnAction {
 
   public void actionPerformed(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    final Project project = DataKeys.PROJECT.getData(dataContext);
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = DataKeys.EDITOR.getData(dataContext);
     final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
@@ -52,7 +52,7 @@ public class ReformatCodeAction extends AnAction {
       return;
     }
     else{
-      Project projectContext = DataKeys.PROJECT_CONTEXT.getData(dataContext);
+      Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
       Module moduleContext = (Module)dataContext.getData(DataConstants.MODULE_CONTEXT);
 
       if (projectContext != null || moduleContext != null) {
@@ -146,7 +146,7 @@ public class ReformatCodeAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = DataKeys.PROJECT.getData(dataContext);
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       presentation.setEnabled(false);
       return;

@@ -24,7 +24,7 @@ public class RunConfigurationAction extends ComboBoxAction {
   private static final Key<ComboBoxAction.ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
 
   public void actionPerformed(final AnActionEvent e) {
-    final IdeFrameImpl ideFrame = findFrame(e.getData(DataKeys.CONTEXT_COMPONENT));
+    final IdeFrameImpl ideFrame = findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
     final ComboBoxAction.ComboBoxButton button = (ComboBoxAction.ComboBoxButton)ideFrame.getRootPane().getClientProperty(BUTTON_KEY);
     if (button == null || !button.isShowing()) return;
     button.showPopup();
@@ -36,10 +36,10 @@ public class RunConfigurationAction extends ComboBoxAction {
 
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
       presentation.setDescription(ExecutionBundle.message("choose.run.configuration.action.description"));
-      presentation.setEnabled(findFrame(e.getData(DataKeys.CONTEXT_COMPONENT)) != null);
+      presentation.setEnabled(findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT)) != null);
       return;
     }
 
@@ -100,7 +100,7 @@ public class RunConfigurationAction extends ComboBoxAction {
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
     final DefaultActionGroup allActionsGroup = new DefaultActionGroup();
-    final Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
+    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
     if (project != null) {
       final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
 
@@ -132,7 +132,7 @@ public class RunConfigurationAction extends ComboBoxAction {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final Project project = e.getData(DataKeys.PROJECT);
+      final Project project = e.getData(PlatformDataKeys.PROJECT);
       if (project != null) {
         final RunManager runManager = RunManager.getInstance(project);
         runManager.makeStable(runManager.getTempConfiguration());
@@ -141,7 +141,7 @@ public class RunConfigurationAction extends ComboBoxAction {
 
     public void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      final Project project = e.getData(DataKeys.PROJECT);
+      final Project project = e.getData(PlatformDataKeys.PROJECT);
       if (project == null) {
         disable(presentation);
         return;

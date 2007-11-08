@@ -31,7 +31,7 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = e.getData(DataKeys.EDITOR);
@@ -58,7 +58,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     presentation.setVisible(true);
     presentation.setEnabled(true);
     DataContext dataContext = e.getDataContext();
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       disableAction(e);
       return;

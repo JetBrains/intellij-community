@@ -122,9 +122,9 @@ public class FileGroupingRule implements UsageGroupingRule {
     }
 
     public void calcData(final DataKey key, final DataSink sink) {
-      if (key == DataKeys.VIRTUAL_FILE) {
+      if (key == PlatformDataKeys.VIRTUAL_FILE) {
         VirtualFile file = myFile != null && myFile.isValid() ? myFile : null;
-        sink.put(DataKeys.VIRTUAL_FILE, file);
+        sink.put(PlatformDataKeys.VIRTUAL_FILE, file);
       }
       if (key == DataKeys.PSI_ELEMENT) {
         sink.put(DataKeys.PSI_ELEMENT, getPsiFile());

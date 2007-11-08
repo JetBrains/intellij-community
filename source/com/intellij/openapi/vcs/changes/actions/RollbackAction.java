@@ -13,6 +13,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -37,10 +38,10 @@ public class RollbackAction extends AnAction {
     final boolean isEnabled = isEnabled(e);
     e.getPresentation().setEnabled(isEnabled);
     if (isEnabled) {
-      VirtualFile[] files = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+      VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
       if (files != null) {
         for(VirtualFile file: files) {
-          final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(e.getData(DataKeys.PROJECT)).getVcsFor(file);
+          final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(e.getData(PlatformDataKeys.PROJECT)).getVcsFor(file);
           if (vcs != null) {
             final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
             if (rollbackEnvironment != null) {
@@ -53,7 +54,7 @@ public class RollbackAction extends AnAction {
   }
 
   private static boolean isEnabled(final AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       return false;
     }
@@ -74,7 +75,7 @@ public class RollbackAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
     if (missingFiles != null && !missingFiles.isEmpty()) {
       new RollbackDeletionAction().actionPerformed(e);
@@ -102,7 +103,7 @@ public class RollbackAction extends AnAction {
       }
       return changes;
     }
-    final VirtualFile[] virtualFiles = e.getData(DataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length > 0) {
       List<Change> result = new ArrayList<Change>();
       for(VirtualFile file: virtualFiles) {

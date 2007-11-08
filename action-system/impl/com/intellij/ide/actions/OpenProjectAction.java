@@ -6,7 +6,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -23,7 +23,7 @@ import javax.swing.*;
 
 public class OpenProjectAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
       public boolean isFileSelectable(final VirtualFile file) {

@@ -133,7 +133,7 @@ public abstract class AutoScrollToSourceHandler {
 
   protected void scrollToSource(Component tree) {
     DataContext dataContext=DataManager.getInstance().getDataContext(tree);
-    final VirtualFile vFile = DataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (vFile != null) {
       // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
       // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.

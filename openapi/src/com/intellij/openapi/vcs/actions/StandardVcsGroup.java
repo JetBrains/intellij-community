@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -27,7 +30,7 @@ public abstract class StandardVcsGroup extends DefaultActionGroup {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     presentation.setVisible(project != null &&
                             ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(getVcsName(project)));
     presentation.setEnabled(presentation.isVisible());

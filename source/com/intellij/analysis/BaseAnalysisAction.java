@@ -39,7 +39,7 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final Module module = e.getData(DataKeys.MODULE);
     if (project != null) {
       AnalysisScope scope;
@@ -109,7 +109,7 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   @Nullable
   private static AnalysisScope getInspectionScope(final DataContext dataContext) {
-    if (DataKeys.PROJECT.getData(dataContext) == null) return null;
+    if (PlatformDataKeys.PROJECT.getData(dataContext) == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
 
@@ -119,7 +119,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   @Nullable
   private static AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: file, directory, package, project, module.
-    Project projectContext = DataKeys.PROJECT_CONTEXT.getData(dataContext);
+    Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
       return new AnalysisScope(projectContext);
     }
@@ -155,9 +155,9 @@ public abstract class BaseAnalysisAction extends AnAction {
       return null;
     }
 
-    final VirtualFile[] virtualFiles = DataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (virtualFiles != null) { //analyze on selection
-      final Project project = DataKeys.PROJECT.getData(dataContext);
+      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       Set<VirtualFile> files = new HashSet<VirtualFile>();
       for (VirtualFile vFile : virtualFiles) {
@@ -175,7 +175,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   }
 
   private static AnalysisScope getProjectScope(DataContext dataContext) {
-    return new AnalysisScope(DataKeys.PROJECT.getData(dataContext));
+    return new AnalysisScope(PlatformDataKeys.PROJECT.getData(dataContext));
   }
 
   @Nullable

@@ -1,7 +1,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,7 +24,7 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
 
   private static IdeFrameImpl getFrame(AnActionEvent e){
     WindowManagerEx windowManagerEx=WindowManagerEx.getInstanceEx();
-    Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     return windowManagerEx.getFrame(project);
   }
 
@@ -35,7 +35,7 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
 
   public void setSelected(AnActionEvent e,boolean state){
     // Hide all all visible floating tool windows.
-    Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if(project!=null){
       ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(project);
       String[] ids=toolWindowManager.getToolWindowIds();

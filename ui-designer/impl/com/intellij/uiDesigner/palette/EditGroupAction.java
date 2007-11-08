@@ -7,7 +7,7 @@ package com.intellij.uiDesigner.palette;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
  */
 public class EditGroupAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     GroupItem groupToBeEdited = (GroupItem)e.getDataContext().getData(GroupItem.class.getName());
     if (groupToBeEdited == null || project == null) return;
 
@@ -51,7 +51,7 @@ public class EditGroupAction extends AnAction {
   }
 
   @Override public void update(AnActionEvent e) {
-    Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     GroupItem groupItem = (GroupItem) e.getDataContext().getData(GroupItem.class.getName());
     e.getPresentation().setEnabled(project != null && groupItem != null && !groupItem.isReadOnly());
   }

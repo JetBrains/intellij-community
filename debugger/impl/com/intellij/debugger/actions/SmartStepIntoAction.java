@@ -13,7 +13,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -40,7 +40,7 @@ import java.util.List;
 
 public class SmartStepIntoAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
       final DebuggerContextImpl debuggerContext = (DebuggerManagerEx.getInstanceEx(project)).getContext();
       doStep(project, debuggerContext.getSourcePosition(), debuggerContext.getDebuggerSession());
@@ -146,7 +146,7 @@ public class SmartStepIntoAction extends AnAction {
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = event.getData(DataKeys.PROJECT);
+    Project project = event.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;

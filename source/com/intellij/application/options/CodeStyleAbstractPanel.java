@@ -32,7 +32,7 @@
 package com.intellij.application.options;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -156,7 +156,7 @@ public abstract class CodeStyleAbstractPanel {
       myTextToReformat = myEditor.getDocument().getText();
     }
 
-    Project project = DataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }

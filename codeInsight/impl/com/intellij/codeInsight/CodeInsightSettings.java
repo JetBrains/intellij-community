@@ -1,12 +1,14 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.*;
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -143,6 +145,14 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES, new JoinLinesHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_JOIN_LINES)));
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)));
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START)));
+
+      final BraceMatchingUtil.BraceMatcher defaultBraceMatcher = new BraceMatchingUtil.DefaultBraceMatcher();
+      BraceMatchingUtil.registerBraceMatcher(StdFileTypes.JAVA,defaultBraceMatcher);
+      BraceMatchingUtil.registerBraceMatcher(StdFileTypes.XML,defaultBraceMatcher);
+
+      BraceMatchingUtil.HtmlBraceMatcher braceMatcher = new BraceMatchingUtil.HtmlBraceMatcher();
+      BraceMatchingUtil.registerBraceMatcher(StdFileTypes.HTML,braceMatcher);
+      BraceMatchingUtil.registerBraceMatcher(StdFileTypes.XHTML,braceMatcher);
 
       TypedAction typedAction = actionManager.getTypedAction();
       typedAction.setupHandler(new TypedHandler(typedAction.getHandler()));

@@ -10,7 +10,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
@@ -26,7 +26,7 @@ import java.awt.datatransfer.StringSelection;
 public class CopyValueAction extends DebuggerAction {
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     final Value value = getValue(e);
     if (value == null) {
       return;

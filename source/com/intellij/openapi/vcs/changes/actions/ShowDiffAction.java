@@ -2,10 +2,7 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -39,7 +36,7 @@ public class ShowDiffAction extends AnAction {
 
   public void update(AnActionEvent e) {
     Change[] changes = e.getData(DataKeys.CHANGES);
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null && canShowDiff(changes));
   }
 
@@ -49,7 +46,7 @@ public class ShowDiffAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(DataKeys.PROJECT);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
     Change[] changes = e.getData(DataKeys.CHANGES);
     List<Change> changesInList = e.getData(ChangesListView.CHANGES_IN_LIST_KEY);
     if (project == null || changes == null) return;
@@ -190,7 +187,7 @@ public class ShowDiffAction extends AnAction {
                                         final int index,
                                         final Project project,
                                         DiffExtendUIFactory actionsFactory) {
-    DiffViewer diffViewer = e.getData(DataKeys.DIFF_VIEWER);
+    DiffViewer diffViewer = e.getData(PlatformDataKeys.DIFF_VIEWER);
     if (diffViewer != null) {
       final SimpleDiffRequest diffReq = createDiffRequest(changes, index, project, actionsFactory);
       if (diffReq != null) {

@@ -7,7 +7,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -43,7 +43,7 @@ public class OpenFileAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = DataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
 
     String lastFilePath = getLastFilePath(project);
@@ -154,7 +154,7 @@ public class OpenFileAction extends AnAction {
 
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    Project project = DataKeys.PROJECT.getData(event.getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(project != null);
   }
 }

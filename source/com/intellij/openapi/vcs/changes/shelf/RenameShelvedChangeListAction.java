@@ -2,10 +2,10 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class RenameShelvedChangeListAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
     assert changes != null;
     final ShelvedChangeList changeList = changes [0];
@@ -47,7 +47,7 @@ public class RenameShelvedChangeListAction extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
     e.getPresentation().setEnabled(project != null && changes != null && changes.length == 1);
   }

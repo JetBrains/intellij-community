@@ -29,7 +29,7 @@ import com.intellij.openapi.ui.Messages;
 public class EvaluateAction extends DebuggerAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    final Project project = event.getData(DataKeys.PROJECT);
+    final Project project = event.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -55,7 +55,7 @@ public class EvaluateAction extends DebuggerAction {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     final DataContext dataContext = e.getDataContext();
     final DebuggerContextImpl context = DebuggerAction.getDebuggerContext(dataContext);
 

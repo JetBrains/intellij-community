@@ -12,20 +12,20 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vfs.VirtualFile;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class EditAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(DataKeys.PROJECT);
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
     List<VirtualFile> files = e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     editFiles(project, files, exceptions);

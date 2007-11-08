@@ -9,7 +9,7 @@ import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -148,7 +148,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
     }
 
     public void deleteElement(DataContext dataContext) {
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       DeleteHandler.deletePsiElement(myElements, project);
     }
 
