@@ -201,7 +201,7 @@ public class MavenToIdeaConverter {
     }
   }
 
-  private void createOutput(final RootModelAdapter rootModel, final MavenProject mavenProject) {
+  private void createOutput(RootModelAdapter rootModel, MavenProject mavenProject) {
     Build build = mavenProject.getBuild();
     if (preferences.isUseMavenOutput()) {
       rootModel.useModuleOutput(build.getOutputDirectory(), build.getTestOutputDirectory());
@@ -211,6 +211,7 @@ public class MavenToIdeaConverter {
       rootModel.excludeRoot(build.getOutputDirectory());
       rootModel.excludeRoot(build.getTestOutputDirectory());
     }
+    rootModel.excludeRoot(build.getDirectory());
   }
 
   void createDependencies(RootModelAdapter rootModel, MavenProject mavenProject) {

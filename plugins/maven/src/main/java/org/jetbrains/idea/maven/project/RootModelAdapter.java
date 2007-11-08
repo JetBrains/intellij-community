@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,37 +81,39 @@ class RootModelAdapter {
   }
 
   void createSrcDir(String path, boolean testSource) {
-    final VirtualFile srcDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-    if (srcDir != null) {
-      findOrCreateContentRoot(srcDir).addSourceFolder(srcDir, testSource);
-    }
+    String url = toUrl(path);
+    findOrCreateContentRoot(url).addSourceFolder(url, testSource);
   }
 
-  public void excludeRoot(final String path) {
-    final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-    if (dir != null) {
-      findOrCreateContentRoot(dir).addExcludeFolder(dir);
-    }
+  public void excludeRoot(String path) {
+    String url = toUrl(path);
+    findOrCreateContentRoot(url).addExcludeFolder(url);
   }
 
   public void useProjectOutput() {
     modifiableRootModel.inheritCompilerOutputPath(true);
   }
 
-  public void useModuleOutput(final String production, final String test) {
+  public void useModuleOutput(String production, String test) {
     modifiableRootModel.inheritCompilerOutputPath(false);
-    modifiableRootModel.setCompilerOutputPath(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(production)));
-    modifiableRootModel.setCompilerOutputPathForTests(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(test)));
+    modifiableRootModel.setCompilerOutputPath(toUrl(production));
+    modifiableRootModel.setCompilerOutputPathForTests(toUrl(test));
   }
 
-  ContentEntry findOrCreateContentRoot(VirtualFile srcDir) {
-    for (ContentEntry contentEntry : modifiableRootModel.getContentEntries()) {
-      VirtualFile virtualFile = contentEntry.getFile();
-      if (virtualFile != null && VfsUtil.isAncestor(virtualFile, srcDir, false)) {
-        return contentEntry;
+  private String toUrl(String path) {
+    return VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path));
+  }
+
+  ContentEntry findOrCreateContentRoot(String url) {
+    try {
+      for (ContentEntry e : modifiableRootModel.getContentEntries()) {
+        if (FileUtil.isAncestor(new File(e.getUrl()), new File(url), false)) return e;
       }
+      return modifiableRootModel.addContentEntry(url);
     }
-    return modifiableRootModel.addContentEntry(srcDir);
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   void createModuleDependency(String moduleName) {
@@ -118,7 +122,8 @@ class RootModelAdapter {
     ModuleOrderEntry e;
     if (m != null) {
       e = modifiableRootModel.addModuleOrderEntry(m);
-    } else {
+    }
+    else {
       e = modifiableRootModel.addInvalidModuleEntry(moduleName);
     }
 

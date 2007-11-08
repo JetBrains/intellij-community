@@ -7,10 +7,10 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -19,7 +19,9 @@ import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
 import org.jetbrains.idea.maven.project.MavenImportProcessor;
+import org.jetbrains.idea.maven.project.MavenImporterPreferences;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
+import org.jetbrains.idea.maven.project.MavenWorkspacePreferencesComponent;
 import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
@@ -28,10 +30,11 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class ProjectImportingTestCase extends IdeaTestCase {
-  private VirtualFile root;
+  protected VirtualFile root;
   private VirtualFile projectPom;
   private List<VirtualFile> poms = new ArrayList<VirtualFile>();
 
+  protected MavenImporterPreferences prefs;
   protected MavenProjectModel projectModel;
 
   @Override
@@ -48,6 +51,13 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
         }
       }
     });
+  }
+
+  @Override
+  protected void setUpProject() throws Exception {
+    super.setUpProject();
+    MavenWorkspacePreferencesComponent c = myProject.getComponent(MavenWorkspacePreferencesComponent.class);
+    prefs = c.getState().myImporterPreferences;
   }
 
   @Override
@@ -85,11 +95,83 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
     assertElementsAreEqual(expectedNames, actualNames);
   }
 
+  protected void assertContentRoots(String moduleName, String... expectedRoots) {
+    List<String> actual = new ArrayList<String>();
+    for (ContentEntry e : getContentRoots(moduleName)) {
+      actual.add(e.getUrl());
+    }
+
+    for (int i = 0; i < expectedRoots.length; i++) {
+      expectedRoots[i] = VfsUtil.pathToUrl(expectedRoots[i]);
+    }
+
+    assertElementsAreEqual(expectedRoots, actual);
+  }
+
+  protected void assertSources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, true, false, expectedSources);
+  }
+
+  protected void assertTestSources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, true, true, expectedSources);
+  }
+
+  protected void assertExcludes(String moduleName, String... expectedExcludes) {
+    doAssertContentFolders(moduleName, false, false, expectedExcludes);
+  }
+
+  protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
+    doAssertContentFolders(getContentRoot(moduleName, contentRoot), false, false, expectedExcudes);
+  }
+
+  private void doAssertContentFolders(String moduleName, boolean isSource, boolean isTest, String... expected) {
+    doAssertContentFolders(getContentRoot(moduleName), isSource, isTest, expected);
+  }
+
+  private void doAssertContentFolders(ContentEntry e, boolean isSource, boolean isTest, String... expected) {
+    List<String> actual = new ArrayList<String>();
+    for (ContentFolder f : isSource ? e.getSourceFolders() : e.getExcludeFolders()) {
+      if (isSource && (isTest != ((SourceFolder)f).isTestSource())) continue;
+
+      String rootUrl = e.getUrl();
+      String folderUrl = f.getUrl();
+
+      if (folderUrl.startsWith(rootUrl)) {
+        int lenght = rootUrl.length() + 1;
+        folderUrl = folderUrl.substring(Math.min(lenght, folderUrl.length()));
+      }
+
+      actual.add(folderUrl);
+    }
+
+    assertElementsAreEqual(expected, actual);
+  }
+
+  protected void assertModuleOutput(String module, String output, String testOutput) {
+    ModuleRootManager m = getRootManager(module);
+    assertFalse(m.isCompilerOutputPathInherited());
+    assertEquals(output, getAbsolutePath(m.getCompilerOutputPathUrl()));
+    assertEquals(testOutput, getAbsolutePath(m.getCompilerOutputPathForTestsUrl()));
+  }
+
+  private String getAbsolutePath(String path) {
+    try {
+      return FileUtil.toSystemIndependentName(new File(VfsUtil.urlToPath(path)).getCanonicalPath());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  protected void assertProjectOutput(String module) {
+    ModuleRootManager m = getRootManager(module);
+    assertTrue(m.isCompilerOutputPathInherited());
+  }
+
   protected void assertModuleLibraries(String moduleName, String... expectedLibraries) {
-    Module m = getModule(moduleName);
     List<String> actual = new ArrayList<String>();
 
-    for (OrderEntry e : ModuleRootManager.getInstance(m).getOrderEntries()) {
+    for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
       if (e instanceof LibraryOrderEntry) {
         actual.add(e.getPresentableName());
       }
@@ -116,6 +198,27 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
 
   protected Module getModule(String name) {
     return ModuleManager.getInstance(myProject).findModuleByName(name);
+  }
+
+  private ContentEntry getContentRoot(String moduleName) {
+    ContentEntry[] ee = getContentRoots(moduleName);
+    assertEquals(1, ee.length);
+    return ee[0];
+  }
+
+  private ContentEntry getContentRoot(String moduleName, String path) {
+    for (ContentEntry e : getContentRoots(moduleName)) {
+      if (e.getUrl().equals(VfsUtil.pathToUrl(path))) return e;
+    }
+    throw new AssertionError("content root not found");
+  }
+
+  private ContentEntry[] getContentRoots(String moduleName) {
+    return getRootManager(moduleName).getContentEntries();
+  }
+
+  private ModuleRootManager getRootManager(String module) {
+    return ModuleRootManager.getInstance(getModule(module));
   }
 
   protected void createProjectPom(String xml) throws IOException {
