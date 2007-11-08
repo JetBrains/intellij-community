@@ -22,5 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author ilyas
  */
 public interface GrLiteral extends GrExpression {
+
   @Nullable Object getValue();
 }
