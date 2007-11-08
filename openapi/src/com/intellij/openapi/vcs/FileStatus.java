@@ -20,7 +20,7 @@ import com.intellij.peer.PeerFactory;
 
 import java.awt.*;
 
-public interface FileStatus extends NamedComponent {
+public interface FileStatus {
   Color COLOR_NOT_CHANGED = null; // deliberately null, do not use hardcoded Color.BLACK
   Color COLOR_MERGE = new Color(117, 3, 220);
   Color COLOR_MODIFIED = new Color(0, 50, 160);
@@ -46,6 +46,8 @@ public interface FileStatus extends NamedComponent {
                      new Color(119, 56, 149));
   FileStatus SWITCHED = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("SWITCHED", VcsBundle.message("file.status.name.switched"), COLOR_SWITCHED);
   FileStatus OBSOLETE = PeerFactory.getInstance().getFileStatusFactory().createFileStatus("OBSOLETE", VcsBundle.message("file.status.name.switched"), COLOR_OUT_OF_DATE);
+
+  String getText();
 
   Color getColor();
 
