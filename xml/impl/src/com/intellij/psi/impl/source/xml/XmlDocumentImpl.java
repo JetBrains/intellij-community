@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.PomModel;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
@@ -310,7 +311,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
   }
 
   public TreeElement addInternal(final TreeElement first, final ASTNode last, final ASTNode anchor, final Boolean before) {
-    final PomModel model = getProject().getModel();
+    final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     final TreeElement[] holder = new TreeElement[1];
     try{
@@ -326,7 +327,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
   }
 
   public void deleteChildInternal(@NotNull final ASTNode child) {
-    final PomModel model = getProject().getModel();
+    final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{
       model.runTransaction(new PomTransactionBase(this, aspect) {
@@ -340,7 +341,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
   }
 
   public void replaceChildInternal(@NotNull final ASTNode child, @NotNull final TreeElement newElement) {
-    final PomModel model = getProject().getModel();
+    final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     try{
       model.runTransaction(new PomTransactionBase(this, aspect) {

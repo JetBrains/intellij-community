@@ -34,10 +34,7 @@ package com.intellij.pom.java.impl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.PomElement;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.PomScope;
-import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.*;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.java.LanguageLevel;
@@ -65,7 +62,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
     myProject = project;
     myPsiManager = psiManager;
     myRootPackage = new PomPackageImpl("", null, this);
-    project.getModel().registerAspect(PomJavaAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
+    PomManager.getModel(project).registerAspect(PomJavaAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
   }
 
   public PomPackage getRootPackage() {
@@ -142,7 +139,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
   }
 
   public void update(PomModelEvent event) {
-    final PomModel model = myProject.getModel();
+    final PomModel model = PomManager.getModel(myProject);
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(model.getModelAspect(TreeAspect.class));
     if(changeSet == null) return;
     final PsiFile containingFile = changeSet.getRootElement().getPsi().getContainingFile();
@@ -163,9 +160,9 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
 
   private void firePomEvent(final PsiFile file) {
     if (isJavaFile(file)) {
-      final PomModel model = myProject.getModel();
+      final PomModel model = PomManager.getModel(myProject);
       try {
-        myProject.getModel().runTransaction(new PomTransactionBase(file, this) {
+        PomManager.getModel(myProject).runTransaction(new PomTransactionBase(file, this) {
           public PomModelEvent runInner() {
             final PomModelEvent event = new PomModelEvent(model);
             final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, file);

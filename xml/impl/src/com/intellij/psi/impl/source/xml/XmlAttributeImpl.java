@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomModel;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
@@ -69,7 +70,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
   public void setValue(String valueText) throws IncorrectOperationException{
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
-    final PomModel model = getProject().getModel();
+    final PomModel model = PomManager.getModel(getProject());
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((CompositeElement)getManager().getElementFactory().createXmlAttribute("a", valueText));
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
@@ -250,7 +251,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   public PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
-    final PomModel model = getProject().getModel();
+    final PomModel model = PomManager.getModel(getProject());
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)getManager().getElementFactory().createXmlAttribute(nameText, ""));
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {

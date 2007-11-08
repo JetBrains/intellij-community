@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.PomModel;
+import com.intellij.pom.PomManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -575,7 +576,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         myModuleGroupPath.putAll(that.myModuleGroupPath);
       }
       myIsWritable = true;
-      myPomModel = myProject.getModel();
+      myPomModel = PomManager.getModel(myProject);
     }
 
     private void assertWritable() {

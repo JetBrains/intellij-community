@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.event.PomChangeSet;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
@@ -102,7 +103,7 @@ public class BreadcrumbsComponent extends JComponent implements Disposable {
       }
     });
 
-    project.getModel().addModelListener(new PomModelListener() {
+    PomManager.getModel(project).addModelListener(new PomModelListener() {
       public void modelChanged(final PomModelEvent event) {
         final PomChangeSet set = event.getChangeSet(event.getSource().getModelAspect(XmlAspect.class));
         if (set instanceof XmlChangeSet && myQueue != null) {

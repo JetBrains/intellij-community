@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomModel;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.java.LanguageLevel;
@@ -271,7 +272,7 @@ public class ChangeUtil {
   private static void prepareAndRunChangeAction(final ChangeAction action, final TreeElement changedElement){
     final FileElement changedFile = TreeUtil.getFileElement(changedElement);
     final PsiManager manager = changedFile.getManager();
-    final PomModel model = manager.getProject().getModel();
+    final PomModel model = PomManager.getModel(manager.getProject());
     try{
       final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
       model.runTransaction(new PomTransactionBase(changedElement.getPsi(), treeAspect) {

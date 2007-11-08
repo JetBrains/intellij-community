@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.PomModel;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
@@ -156,7 +157,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
       return;
     }
 
-    final PomModel pomModel = getProject().getModel();
+    final PomModel pomModel = PomManager.getModel(getProject());
     final PomTransactionBase transaction = new PomTransactionBase(this, pomModel.getModelAspect(XmlAspect.class)) {
 
       @Nullable
@@ -361,7 +362,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   }
 
   public PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
-    final PomModel model = getProject().getModel();
+    final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner() throws IncorrectOperationException{
@@ -801,7 +802,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   }
 
   private TreeElement addInternal(TreeElement child, ASTNode anchor, boolean before) throws IncorrectOperationException{
-    final PomModel model = getProject().getModel();
+    final PomModel model = PomManager.getModel(getProject());
     if (anchor != null && child.getElementType() == XmlElementType.XML_TEXT) {
       XmlText psi = null;
       if(anchor.getPsi() instanceof XmlText)
@@ -842,7 +843,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   }
 
   public void deleteChildInternal(@NotNull final ASTNode child) {
-    final PomModel model = getProject().getModel();
+    final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
 
     if(child.getElementType() == XmlElementType.XML_ATTRIBUTE){
@@ -1052,7 +1053,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
   protected abstract class InsertTransaction extends PomTransactionBase{
     public InsertTransaction(final PsiElement scope) {
-      super(scope, getProject().getModel().getModelAspect(XmlAspect.class));
+      super(scope, PomManager.getModel(getProject()).getModelAspect(XmlAspect.class));
     }
 
     public abstract TreeElement getFirstInserted();

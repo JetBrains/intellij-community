@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.ChangeInfo;
@@ -41,7 +42,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   public PostprocessReformattingAspect(PsiManager psiManager, TreeAspect treeAspect) {
     myPsiManager = psiManager;
     myTreeAspect = treeAspect;
-    psiManager.getProject().getModel().registerAspect(PostprocessReformattingAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
+    PomManager.getModel(psiManager.getProject()).registerAspect(PostprocessReformattingAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
   }
 
   public void disablePostprocessFormattingInside(final Runnable runnable) {

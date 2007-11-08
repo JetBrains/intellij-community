@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomModel;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
@@ -156,7 +157,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       return;
     }
 
-    final PomModel model = getProject().getModel();
+    final PomModel model = PomManager.getModel(getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner() {
@@ -173,7 +174,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       insertText(((XmlText)element).getValue(), displayOffset);
     }
     else {
-      final PomModel model = getProject().getModel();
+      final PomModel model = PomManager.getModel(getProject());
       final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
       model.runTransaction(new PomTransactionBase(getParent(), aspect) {
         public PomModelEvent runInner() throws IncorrectOperationException {
@@ -214,7 +215,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       final String oldElementText = psiElement.getText();
       final String newElementText = oldElementText.substring(0, insertOffset) + text + oldElementText.substring(insertOffset);
 
-      final PomModel model = getProject().getModel();
+      final PomModel model = PomManager.getModel(getProject());
       final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
       model.runTransaction(new PomTransactionBase(this, aspect) {
         public PomModelEvent runInner() {
@@ -264,7 +265,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
           final String oldElementText = psiElement.getText();
           final String newElementText = oldElementText.substring(0, removeStart) + oldElementText.substring(removeEnd);
 
-          final PomModel model = getProject().getModel();
+          final PomModel model = PomManager.getModel(getProject());
           final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
           model.runTransaction(new PomTransactionBase(this, aspect) {
             public PomModelEvent runInner() throws IncorrectOperationException {
@@ -373,7 +374,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       return null;
     }
 
-    final PomModel model = xmlTag.getProject().getModel();
+    final PomModel model = PomManager.getModel(xmlTag.getProject());
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
 
     class MyTransaction extends PomTransactionBase {
@@ -458,15 +459,15 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   private PomModelEvent createEvent(final XmlChange...events) {
-    final PomModelEvent event = new PomModelEvent(getProject().getModel());
+    final PomModelEvent event = new PomModelEvent(PomManager.getModel(getProject()));
 
-    final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(getProject().getModel(), (XmlFile)getContainingFile());
+    final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(PomManager.getModel(getProject()), (XmlFile)getContainingFile());
 
     for (XmlChange xmlChange : events) {
       xmlAspectChangeSet.add(xmlChange);
     }
 
-    event.registerChangeSet(getProject().getModel().getModelAspect(XmlAspect.class), xmlAspectChangeSet);
+    event.registerChangeSet(PomManager.getModel(getProject()).getModelAspect(XmlAspect.class), xmlAspectChangeSet);
 
     return event;
   }

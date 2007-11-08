@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomModel;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
@@ -271,7 +272,7 @@ public class BlockSupportImpl extends BlockSupport {
       }
 
 
-      final PomModel model = file.getProject().getModel();
+      final PomModel model = PomManager.getModel(file.getProject());
       try {
         newRoot.putUserData(TREE_TO_BE_REPARSED, oldRoot);
 

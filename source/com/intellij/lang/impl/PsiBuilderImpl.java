@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.pom.PomModel;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
@@ -689,7 +690,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private void merge(final ASTNode oldNode, final StartMarker newNode) {
     final PsiFileImpl file = (PsiFileImpl)oldNode.getPsi().getContainingFile();
-    final PomModel model = file.getProject().getModel();
+    final PomModel model = PomManager.getModel(file.getProject());
 
     try {
       model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
