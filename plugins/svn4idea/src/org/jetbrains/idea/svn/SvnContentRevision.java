@@ -66,7 +66,10 @@ class SvnContentRevision implements ContentRevision {
   public String getContent() throws VcsException {
     if (myContent == null) {
       try {
-        myContent = new String(getUpToDateBinaryContent(), myFile.getCharset().name());
+        final byte[] content = getUpToDateBinaryContent();
+        if (content != null) {
+          myContent = new String(content, myFile.getCharset().name());
+        }
       }
       catch(Exception ex) {
         throw new VcsException(ex);
