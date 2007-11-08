@@ -9,10 +9,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.usages.UsageView;
 import com.intellij.util.StringSetSpinAllocator;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -103,12 +103,12 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
 
   @Nullable
   public GetDataRule getDataRule(String dataId) {
-    GetDataRule rule = myDataConstantToRuleMap.get(dataId);
+    GetDataRule rule = getRuleFromMap(dataId);
     if (rule != null) {
       return rule;
     }
 
-    final GetDataRule plainRule = myDataConstantToRuleMap.get(AnActionEvent.uninjectedId(dataId));
+    final GetDataRule plainRule = getRuleFromMap(AnActionEvent.uninjectedId(dataId));
     if (plainRule != null) {
       return new GetDataRule() {
         public Object getData(final DataProvider dataProvider) {
@@ -123,6 +123,20 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     }
 
     return null;
+  }
+
+  private GetDataRule getRuleFromMap(final String dataId) {
+    GetDataRule rule = myDataConstantToRuleMap.get(dataId);
+    if (rule == null && !myDataConstantToRuleMap.containsKey(dataId)) {
+      final GetDataRuleEP[] eps = Extensions.getExtensions(GetDataRuleEP.EP_NAME);
+      for(GetDataRuleEP ruleEP: eps) {
+        if (ruleEP.key.equals(dataId)) {
+          rule = ruleEP.getDataRule();
+        }
+      }
+      myDataConstantToRuleMap.put(dataId, rule);
+    }
+    return rule;
   }
 
   private static Object validated(Object data, String dataId, Object dataSource) {
@@ -202,20 +216,12 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
 
   private void registerRules() {
-    myDataConstantToRuleMap.put(DataConstants.PSI_FILE, new PsiFileRule());
-    myDataConstantToRuleMap.put(DataConstantsEx.PASTE_TARGET_PSI_ELEMENT, new PasteTargetRule());
     myDataConstantToRuleMap.put(DataConstants.COPY_PROVIDER, new CopyProviderRule());
     myDataConstantToRuleMap.put(DataConstants.CUT_PROVIDER, new CutProviderRule());
     myDataConstantToRuleMap.put(DataConstants.PASTE_PROVIDER, new PasteProviderRule());
     myDataConstantToRuleMap.put(DataConstantsEx.PROJECT_FILE_DIRECTORY, new ProjectFileDirectoryRule());
-    myDataConstantToRuleMap.put(DataConstants.NAVIGATABLE, new NavigatableRule());
-    myDataConstantToRuleMap.put(DataConstants.VIRTUAL_FILE_ARRAY, new VirtualFileArrayRule());
-    myDataConstantToRuleMap.put(DataConstants.VIRTUAL_FILE, new VirtualFileRule());
     myDataConstantToRuleMap.put(DataConstants.FILE_TEXT, new FileTextRule());
     myDataConstantToRuleMap.put(DataConstants.FILE_EDITOR, new FileEditorRule());
-    myDataConstantToRuleMap.put(DataConstants.MODULE, new ModuleRule());
-    myDataConstantToRuleMap.put(UsageView.USAGE_TARGETS, new UsageTargetsRule());
-    myDataConstantToRuleMap.put(UsageView.USAGE_INFO_LIST_KEY.getName(), new UsageInfo2ListRule());
     myDataConstantToRuleMap.put(DataConstants.NAVIGATABLE_ARRAY, new NavigatableArrayRule());
     myDataConstantToRuleMap.put(DataConstants.EDITOR_EVEN_IF_INACTIVE, new InactiveEditorRule());
   }
