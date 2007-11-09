@@ -8,8 +8,8 @@ import com.intellij.util.xmlb.annotations.Attribute;
 /**
  * @author yole
  */
-public class GetDataRuleEP extends AbstractExtensionPointBean {
-  public static final ExtensionPointName<GetDataRuleEP> EP_NAME = ExtensionPointName.create("com.intellij.getDataRule");
+public class KeyedLazyInstanceEP extends AbstractExtensionPointBean {
+  public static final ExtensionPointName<KeyedLazyInstanceEP> EP_NAME = ExtensionPointName.create("com.intellij.getDataRule");
 
   // these must be public for scrambling compatibility
   @Attribute("key")
@@ -18,13 +18,13 @@ public class GetDataRuleEP extends AbstractExtensionPointBean {
   @Attribute("implementationClass")
   public String implementationClass;
 
-  private final LazyInstance<GetDataRule> myHandler = new LazyInstance<GetDataRule>() {
+  private final LazyInstance myHandler = new LazyInstance<GetDataRule>() {
     protected Class<GetDataRule> getInstanceClass() throws ClassNotFoundException {
       return findClass(implementationClass);
     }
   };
 
-  public GetDataRule getDataRule() {
+  public Object getInstance() {
     return myHandler.getValue();
   }
 }

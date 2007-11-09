@@ -1,15 +1,22 @@
 package com.intellij.ide.impl;
 
+import com.intellij.ide.impl.dataRules.KeyedLazyInstanceEP;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
 
 import java.lang.reflect.Array;
 import java.util.Map;
 
+import org.jetbrains.annotations.Nullable;
+
 public abstract class DataValidator <T> {
+  private static boolean ourExtensionsLoaded;
+
+  public static final ExtensionPointName<KeyedLazyInstanceEP> EP_NAME = ExtensionPointName.create("com.intellij.dataValidator");
 
   Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataValidator");
 
@@ -19,15 +26,17 @@ public abstract class DataValidator <T> {
       return file.isValid() ? null : file;
     }
   };
-  private static final DataValidator<PsiElement> PSI_ELEMENT_VALIDATOR = new DataValidator<PsiElement>() {
-    public PsiElement findInvalid(final String dataId, PsiElement psiElement, final Object dataSource) {
-      return psiElement.isValid() ? null : psiElement;
-    }
-  };
 
+  @Nullable
   public abstract T findInvalid(final String dataId, T data, final Object dataSource);
 
   private static <T> DataValidator<T> getValidator(String dataId) {
+    if (!ourExtensionsLoaded) {
+      ourExtensionsLoaded = true;
+      for(KeyedLazyInstanceEP ep: Extensions.getExtensions(EP_NAME)) {
+        ourValidators.put(ep.key, (DataValidator) ep.getInstance());
+      }
+    }
     return ourValidators.get(dataId);
   }
 
@@ -41,12 +50,9 @@ public abstract class DataValidator <T> {
   static {
     ourValidators.put(DataConstants.VIRTUAL_FILE, VIRTUAL_FILE_VALIDATOR);
     ourValidators.put(DataConstants.VIRTUAL_FILE_ARRAY, new ArrayValidator<VirtualFile>(VIRTUAL_FILE_VALIDATOR));
-    ourValidators.put(DataConstants.PSI_ELEMENT, PSI_ELEMENT_VALIDATOR);
-    ourValidators.put(DataConstants.PSI_ELEMENT_ARRAY, new ArrayValidator<PsiElement>(PSI_ELEMENT_VALIDATOR));
-    ourValidators.put(DataConstants.PSI_FILE, PSI_ELEMENT_VALIDATOR);
   }
 
-  private static class ArrayValidator<T> extends DataValidator<T[]> {
+  public static class ArrayValidator<T> extends DataValidator<T[]> {
     private final DataValidator<T> myElementValidator;
 
     public ArrayValidator(DataValidator<T> elementValidator) {
@@ -67,4 +73,5 @@ public abstract class DataValidator <T> {
       return null;
     }
   }
+
 }
