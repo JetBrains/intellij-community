@@ -478,6 +478,9 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
         return myComboBox;
       }
 
+      myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
+      myComboBox.putClientProperty("JComponent.sizeVariant", "small");
+
       myEmptyLabel.setBackground(background);
       return myEmptyLabel;
     }
@@ -499,6 +502,9 @@ public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel
       };
       myComboBox.addActionListener(synchronizer);
       myCheckBox.addActionListener(synchronizer);
+
+      myComboBox.putClientProperty("JComponent.sizeVariant", "small");
+      myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
     }
 
     public Object getCellEditorValue() {
