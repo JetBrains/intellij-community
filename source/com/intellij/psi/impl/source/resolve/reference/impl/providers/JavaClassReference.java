@@ -5,6 +5,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionVariantPeerImpl;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -13,6 +14,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.StdLanguages;
@@ -21,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -50,6 +53,16 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private final String myText;
   private final boolean myInStaticImport;
   private final JavaClassReferenceSet myJavaClassReferenceSet;
+  private static final SimpleInsertHandler FQN_INSERT_HANDLER = new SimpleInsertHandler() {
+    public int handleInsert(final Editor editor, final int startOffset, final LookupElement item, final LookupElement[] allItems, final TailType tailType)
+      throws IncorrectOperationException {
+      final String qname = ((PsiClass)item.getObject()).getQualifiedName();
+      editor.getDocument().replaceString(startOffset, item.getLookupString().length() + startOffset, qname);
+      final int tailOffset = startOffset + qname.length();
+      editor.getCaretModel().moveToOffset(tailOffset);
+      return tailOffset;
+    }
+  };
 
   public JavaClassReference(final JavaClassReferenceSet referenceSet, TextRange range, int index, String text, final boolean staticImport) {
     super(referenceSet.getProvider());
@@ -469,6 +482,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       else return null;
     }
     final LookupItem<PsiClass> lookup = LookupElementFactoryImpl.getInstance().createLookupElement(clazz, name);
+    lookup.setInsertHandler(FQN_INSERT_HANDLER);
+    lookup.setLookupString(clazz.getName());
     return CompletionVariantPeerImpl.setShowFQN(lookup).setTailType(TailType.NONE);
    }
 
