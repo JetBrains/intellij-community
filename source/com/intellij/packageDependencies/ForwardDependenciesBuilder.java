@@ -29,7 +29,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     super(project, scope, scopeOfInterest);
   }
 
-  public ForwardDependenciesBuilder(final Project project, final AnalysisScope scope, final boolean transitive) {
+  public ForwardDependenciesBuilder(final Project project, final AnalysisScope scope, final int transitive) {
     super(project, scope);
     myTransitive = transitive;
   }
@@ -64,7 +64,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
 
   private void visit(final PsiFile file, final ProjectFileIndex fileIndex, final PsiManager psiManager, final Set<PsiFile> fileDeps,
                      final HashSet<PsiFile> processed, int depth) {
-    if (depth++ > 20) return;
+    if (depth++ > getTransitiveBorder()) return;
     final FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider.getBaseLanguage() != file.getLanguage()) return;
 

@@ -20,7 +20,7 @@ public abstract class DependenciesBuilder {
   private final Map<PsiFile, Set<PsiFile>> myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
   protected int myTotalFileCount;
   protected int myFileCount = 0;
-  protected boolean myTransitive = false;
+  protected int myTransitive = 0;
 
   protected DependenciesBuilder(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     this(project, scope, null);
@@ -116,11 +116,13 @@ public abstract class DependenciesBuilder {
       if (!processed.contains(from)) {
         processed.add(from);
         for (PsiFile file : reachable) {
-          final List<List<PsiFile>> paths = findPaths(file, to, processed);
-          for (List<PsiFile> path : paths) {
-            path.add(0, file);
+          if (!getScope().contains(file)) { //exclude paths through scope
+            final List<List<PsiFile>> paths = findPaths(file, to, processed);
+            for (List<PsiFile> path : paths) {
+              path.add(0, file);
+            }
+            result.addAll(paths);
           }
-          result.addAll(paths);
         }
       }
     }
@@ -134,6 +136,10 @@ public abstract class DependenciesBuilder {
   }
 
   public boolean isTransitive() {
+    return myTransitive > 0;
+  }
+
+  public int getTransitiveBorder() {
     return myTransitive;
   }
 

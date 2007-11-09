@@ -20,24 +20,24 @@ import java.util.*;
 public class AnalyzeDependenciesHandler {
   private final Project myProject;
   private final List<AnalysisScope> myScopes;
-  private final boolean myTransitive;
+  private final int myTransitiveBorder;
   private final Set<PsiFile> myExcluded;
 
-  public AnalyzeDependenciesHandler(Project project, List<AnalysisScope> scopes,boolean isTransitive, Set<PsiFile> excluded) {
+  public AnalyzeDependenciesHandler(Project project, List<AnalysisScope> scopes, int transitiveBorder, Set<PsiFile> excluded) {
     myProject = project;
     myScopes = scopes;
-    myTransitive = isTransitive;
+    myTransitiveBorder = transitiveBorder;
     myExcluded = excluded;
   }
 
-  public AnalyzeDependenciesHandler(final Project project, final AnalysisScope scope, final boolean isTransitive) {
-    this(project, Collections.singletonList(scope), isTransitive, new HashSet<PsiFile>());
+  public AnalyzeDependenciesHandler(final Project project, final AnalysisScope scope, final int transitiveBorder) {
+    this(project, Collections.singletonList(scope), transitiveBorder, new HashSet<PsiFile>());
   }
 
   public void analyze() {
     final List<DependenciesBuilder> builders = new ArrayList<DependenciesBuilder>();
     for (AnalysisScope scope : myScopes) {
-      builders.add(new ForwardDependenciesBuilder(myProject, scope, myTransitive));
+      builders.add(new ForwardDependenciesBuilder(myProject, scope, myTransitiveBorder));
     }
     final Runnable process = new Runnable() {
       public void run() {

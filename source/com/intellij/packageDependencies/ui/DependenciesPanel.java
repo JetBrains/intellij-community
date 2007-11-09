@@ -79,7 +79,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final boolean myForward;
   private final AnalysisScope myScopeOfInterest;
-  private final boolean myTransitive;
+  private final int myTransitiveBorder;
 
   public DependenciesPanel(Project project, final DependenciesBuilder builder){
     this(project, Collections.singletonList(builder), new HashSet<PsiFile>());
@@ -92,7 +92,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     final DependenciesBuilder main = myBuilders.get(0);
     myForward = !main.isBackward();
     myScopeOfInterest = main.getScopeOfInterest();
-    myTransitive = main.isTransitive();
+    myTransitiveBorder = main.getTransitiveBorder();
     myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
     myIllegalDependencies = new HashMap<PsiFile, Map<DependencyRule, Set<PsiFile>>>();
     for (DependenciesBuilder builder : builders) {
@@ -209,7 +209,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private void processDependencies(final Set<PsiFile> searchIn, final Set<PsiFile> searchFor, Processor<List<PsiFile>> processor) {
-    if (!myTransitive) return;
+    if (myTransitiveBorder == 0) return;
     Set<PsiFile> initialSearchFor = new HashSet<PsiFile>(searchFor);
     for (DependenciesBuilder builder : myBuilders) {
       for (PsiFile from : searchIn) {
@@ -594,7 +594,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
             new BackwardDependenciesHandler(myProject, scopes, myScopeOfInterest, myExcluded).analyze();
           }
           else {
-            new AnalyzeDependenciesHandler(myProject, scopes, myTransitive, myExcluded).analyze();
+            new AnalyzeDependenciesHandler(myProject, scopes, myTransitiveBorder, myExcluded).analyze();
           }
         }
       });
@@ -758,7 +758,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       if (!myForward) {
         builder = new BackwardDependenciesBuilder(myProject, scope, myScopeOfInterest);
       } else {
-        builder = new ForwardDependenciesBuilder(myProject, scope, myTransitive);
+        builder = new ForwardDependenciesBuilder(myProject, scope, myTransitiveBorder);
       }
       ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"), new Runnable() {
         public void run() {
@@ -865,8 +865,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       final PackageDependenciesNode leftNode = myLeftTree.getSelectedNode();
       final PackageDependenciesNode rightNode = myRightTree.getSelectedNode();
       if (leftNode != null && rightNode != null) {
-        boolean hasDirectDependencies = !myTransitive;
-        if (myTransitive) {
+        boolean hasDirectDependencies = myTransitiveBorder == 0;
+        if (myTransitiveBorder > 0) {
           final Set<PsiFile> searchIn = getSelectedScope(myLeftTree);
           final Set<PsiFile> searchFor = getSelectedScope(myRightTree);
           for (DependenciesBuilder builder : myBuilders) {
