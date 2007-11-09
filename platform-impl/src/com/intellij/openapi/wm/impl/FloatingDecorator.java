@@ -63,6 +63,7 @@ public final class FloatingDecorator extends JDialog{
       // Therefore we use native WM decoration.
       // TODO[vova] investigate the problem under Mac OSX.
       cp.add(myInternalDecorator,BorderLayout.CENTER);
+      getRootPane().putClientProperty("Window.style", "small");
     }
 
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
