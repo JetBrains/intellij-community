@@ -159,7 +159,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
                     descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
                     final VirtualFile[] files = FileChooser.chooseFiles(project, descriptor);
                     if (files.length > 0) {
-                      new WriteCommandAction(project, null) {
+                      new WriteCommandAction(project) {
                         protected void run(final Result result) throws Throwable {
                           if (files[0] != null) {
                             appendChosenAnnotationsRoot(entry, files[0]);

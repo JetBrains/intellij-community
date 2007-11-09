@@ -30,6 +30,7 @@ import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
@@ -107,7 +108,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   private void performWriteCommandAction(final RunResult<T> result) {
-    if (!ensureFilesWritable(myProject, Arrays.asList(myPsiFiles))) return;
+    if (!ensureFilesWritable(myProject, myPsiFiles == null? Collections.<PsiFile>emptyList() : Arrays.asList(myPsiFiles))) return;
 
     //this is needed to prevent memory leak, since command
     // is put into undo queue

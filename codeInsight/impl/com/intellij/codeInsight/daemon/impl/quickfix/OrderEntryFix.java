@@ -133,7 +133,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                                                    QuickFixBundle.message("add.library.annotations.description"));
               dialog.show();
               if (dialog.isOK()) {
-                new WriteCommandAction(project, null) {
+                new WriteCommandAction(project) {
                   protected void run(final Result result) throws Throwable {
                     addBundledJarToRoots(project, editor, currentModule, reference, "org.jetbrains.annotations." + referenceName,
                                          dialog.getResultingLibraryPath());
