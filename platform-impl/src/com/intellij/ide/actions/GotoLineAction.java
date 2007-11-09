@@ -2,7 +2,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.GotoLineNumberDialog;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -15,7 +18,7 @@ public class GotoLineAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final Editor editor = e.getData(DataKeys.EDITOR);
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
       GotoLineNumberDialog dialog = new GotoLineNumberDialog(project, editor);
       dialog.show();
@@ -44,7 +47,7 @@ public class GotoLineAction extends AnAction {
       presentation.setVisible(false);
       return;
     }
-    Editor editor = event.getData(DataKeys.EDITOR);
+    Editor editor = event.getData(PlatformDataKeys.EDITOR);
     presentation.setEnabled(editor != null);
     presentation.setVisible(editor != null);
   }

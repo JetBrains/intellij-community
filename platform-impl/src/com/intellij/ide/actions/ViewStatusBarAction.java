@@ -3,9 +3,9 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ToggleAction;
 
 public class ViewStatusBarAction extends ToggleAction{
   public boolean isSelected(AnActionEvent e){

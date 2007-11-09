@@ -1,11 +1,11 @@
 package com.intellij.ide.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.CommonBundle;
 
 public abstract class CloseTabToolbarAction extends AnAction {
   public CloseTabToolbarAction() {

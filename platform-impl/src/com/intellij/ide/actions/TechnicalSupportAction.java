@@ -10,9 +10,9 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.ide.BrowserUtil;
 
 public class TechnicalSupportAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
