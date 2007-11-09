@@ -1,8 +1,6 @@
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiManager;
 import gnu.trove.Equality;
 
 import javax.swing.*;
@@ -15,27 +13,6 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public abstract class TreeExpansionMonitor<T> {
-  public static TreeExpansionMonitor<PackageDependenciesNode> install(final JTree tree, final Project project) {
-    return new TreeExpansionMonitor<PackageDependenciesNode>(tree) {
-      protected TreePath findPathByNode(final PackageDependenciesNode node) {
-         if (node.getPsiElement() == null){
-           return new TreePath(node.getPath());
-         }
-          PsiManager manager = PsiManager.getInstance(project);
-          Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
-          while (enumeration.hasMoreElements()) {
-            final Object nextElement = enumeration.nextElement();
-            if (nextElement instanceof PackageDependenciesNode) { //do not include root
-              PackageDependenciesNode child = (PackageDependenciesNode)nextElement;
-              if (manager.areElementsEquivalent(child.getPsiElement(), node.getPsiElement())) {
-                return new TreePath(child.getPath());
-              }
-            }
-          }
-          return null;
-      }
-    };
-  }
 
   public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree) {
     return install(tree, new Equality<DefaultMutableTreeNode>() {
@@ -68,7 +45,7 @@ public abstract class TreeExpansionMonitor<T> {
   private JTree myTree;
   private boolean myFrozen = false;
 
-  private TreeExpansionMonitor(JTree tree) {
+  protected TreeExpansionMonitor(JTree tree) {
     myTree = tree;
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {

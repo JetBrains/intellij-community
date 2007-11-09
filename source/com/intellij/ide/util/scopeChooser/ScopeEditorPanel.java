@@ -80,7 +80,7 @@ public class ScopeEditorPanel {
     myTreeToolbar.setLayout(new BorderLayout());
     myTreeToolbar.add(createTreeToolbar(), BorderLayout.WEST);
 
-    myTreeExpansionMonitor = TreeExpansionMonitor.install(myPackageTree, myProject);
+    myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree, myProject);
 
     myTreeMarker = new TreeModelBuilder.Marker() {
       public boolean isMarked(PsiFile file) {

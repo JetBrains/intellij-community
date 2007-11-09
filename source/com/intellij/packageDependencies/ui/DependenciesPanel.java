@@ -123,8 +123,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     add(splitter, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.NORTH);
 
-    myRightTreeExpansionMonitor = TreeExpansionMonitor.install(myRightTree, myProject);
-    myLeftTreeExpansionMonitor = TreeExpansionMonitor.install(myLeftTree, myProject);
+    myRightTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myRightTree, myProject);
+    myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree, myProject);
 
     myRightTreeMarker = new TreeModelBuilder.Marker() {
       public boolean isMarked(PsiFile file) {
