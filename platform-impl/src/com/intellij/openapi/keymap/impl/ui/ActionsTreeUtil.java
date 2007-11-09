@@ -3,7 +3,6 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.ide.actionMacro.ActionMacro;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -152,7 +151,6 @@ public class ActionsTreeUtil {
       else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
-          if (id.startsWith(AntConfiguration.ACTION_ID_PREFIX)) continue;
           if (id.startsWith(Tool.ACTION_ID_PREFIX)) continue;
           if (filtered == null || filtered.value(action)) {
             group.addActionId(id);
