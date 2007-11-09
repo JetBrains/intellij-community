@@ -1,7 +1,8 @@
 package com.intellij.ide.structureView.newStructureView;
 
-import com.intellij.ide.CopyPasteManagerEx;
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
@@ -17,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -61,7 +61,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   private final Alarm myAutoscrollAlarm = new Alarm();
 
-  private final CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
+  private final CopyPasteDelegator myCopyPasteDelegator;
   private final MyAutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private final AutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
 
@@ -135,7 +135,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
     installTree();
 
-    myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, getTree()) {
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, getTree()) {
       @NotNull
       protected PsiElement[] getSelectedElements() {
         return getSelectedPsiElements();
@@ -242,7 +242,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
             {
               return;
             }
-            CopyPasteManagerEx copyPasteManager = (CopyPasteManagerEx)CopyPasteManager.getInstance();
+            PsiCopyPasteManager copyPasteManager = PsiCopyPasteManager.getInstance();
             boolean[] isCopied = new boolean[1];
             if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
               copyPasteManager.clear();

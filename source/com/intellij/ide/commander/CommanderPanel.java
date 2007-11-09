@@ -2,10 +2,7 @@ package com.intellij.ide.commander;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.CopyPasteManagerEx;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
+import com.intellij.ide.*;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
@@ -23,12 +20,11 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -66,7 +62,7 @@ public class CommanderPanel extends JPanel {
   protected final JList myList;
   private final MyModel myModel;
 
-  private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
+  private CopyPasteDelegator myCopyPasteDelegator;
   protected final ListSpeedSearch myListSpeedSearch;
   private final IdeView myIdeView = new MyIdeView();
   private final MyDeleteElementProvider myDeleteElementProvider = new MyDeleteElementProvider();
@@ -87,7 +83,7 @@ public class CommanderPanel extends JPanel {
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     if (enablePopupMenu) {
-      myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, myList) {
+      myCopyPasteDelegator = new CopyPasteDelegator(myProject, myList) {
         @NotNull
         protected PsiElement[] getSelectedElements() {
           return CommanderPanel.this.getSelectedElements();
@@ -148,7 +144,7 @@ public class CommanderPanel extends JPanel {
       public void keyPressed(final KeyEvent e) {
         if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
           if (e.isConsumed()) return;
-          final CopyPasteManagerEx copyPasteManager = (CopyPasteManagerEx)CopyPasteManager.getInstance();
+          final PsiCopyPasteManager copyPasteManager = PsiCopyPasteManager.getInstance();
           final boolean[] isCopied = new boolean[1];
           if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
             copyPasteManager.clear();

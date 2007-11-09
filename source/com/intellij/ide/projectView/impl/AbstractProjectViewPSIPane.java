@@ -3,8 +3,8 @@
  */
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
@@ -14,7 +14,6 @@ import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -119,7 +118,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
         }
         else if (KeyEvent.VK_ESCAPE == e.getKeyCode()) {
           if (e.isConsumed()) return;
-          CopyPasteManagerEx copyPasteManager = (CopyPasteManagerEx)CopyPasteManager.getInstance();
+          PsiCopyPasteManager copyPasteManager = PsiCopyPasteManager.getInstance();
           boolean[] isCopied = new boolean[1];
           if (copyPasteManager.getElements(isCopied) != null && !isCopied[0]) {
             copyPasteManager.clear();

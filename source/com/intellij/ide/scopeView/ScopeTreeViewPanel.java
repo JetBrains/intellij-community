@@ -4,10 +4,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.CopyPasteManagerEx;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
+import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -85,7 +82,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   public String CURRENT_SCOPE_NAME;
 
   private TreeExpansionMonitor myTreeExpansionMonitor;
-  private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
+  private CopyPasteDelegator myCopyPasteDelegator;
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final DependencyValidationManager myDependencyValidationManager;
@@ -164,7 +161,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
-    myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, this) {
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this) {
       @NotNull
       protected PsiElement[] getSelectedElements() {
         return getSelectedPsiElements();

@@ -1,8 +1,8 @@
 package com.intellij.peer.impl;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
-import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewFactory;
@@ -198,7 +198,7 @@ public class PeerFactoryImpl extends PeerFactory {
     }
 
     public CopyPasteSupport createPsiBasedCopyPasteSupport(Project project, JComponent keyReceiver, final PsiElementSelector dataSelector) {
-      return new CopyPasteManagerEx.CopyPasteDelegator(project, keyReceiver) {
+      return new CopyPasteDelegator(project, keyReceiver) {
         @NotNull
         protected PsiElement[] getSelectedElements() {
           PsiElement[] elements = dataSelector.getSelectedElements();

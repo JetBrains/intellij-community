@@ -2,10 +2,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.CopyPasteManagerEx;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
+import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
@@ -54,7 +51,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   private FavoritesTreeStructure myFavoritesTreeStructure;
   private FavoritesViewTreeBuilder myBuilder;
-  private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
+  private CopyPasteDelegator myCopyPasteDelegator;
   private MouseListener myTreePopupHandler;
   @NonNls public static final String CONTEXT_FAVORITES_ROOTS = "FavoritesRoot";
   @NonNls public static final String FAVORITES_LIST_NAME = "FavoritesListName";
@@ -132,7 +129,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     //add(createActionsToolbar(), BorderLayout.NORTH);
 
     EditSourceOnDoubleClickHandler.install(myTree);
-    myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, this) {
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, this) {
       @NotNull
       protected PsiElement[] getSelectedElements() {
         return getSelectedPsiElements();

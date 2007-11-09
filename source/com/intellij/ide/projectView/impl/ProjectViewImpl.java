@@ -79,7 +79,7 @@ import java.util.List;
 
 public final class ProjectViewImpl extends ProjectView implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
-  private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
+  private CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
   private final Project myProject;
 
@@ -418,7 +418,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowProject.png"));
     }
 
-    myCopyPasteDelegator = new CopyPasteManagerEx.CopyPasteDelegator(myProject, myPanel) {
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myPanel) {
       @NotNull
       protected PsiElement[] getSelectedElements() {
         final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();

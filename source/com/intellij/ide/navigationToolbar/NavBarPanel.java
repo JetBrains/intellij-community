@@ -17,9 +17,9 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -99,8 +99,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private final MyTimerListener myTimerListener = new MyTimerListener();
   private ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private IdeView myIdeView = new MyIdeView();
-  private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator =
-    new CopyPasteManagerEx.CopyPasteDelegator(myProject, NavBarPanel.this) {
+  private CopyPasteDelegator myCopyPasteDelegator =
+    new CopyPasteDelegator(myProject, NavBarPanel.this) {
 
       @NotNull
       protected PsiElement[] getSelectedElements() {
