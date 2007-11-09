@@ -53,7 +53,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     try {
       getScope().accept(new PsiRecursiveElementVisitor() {
         public void visitFile(final PsiFile file) {
-          visit(file, fileIndex, psiManager, null, new HashSet<PsiFile>());
+          visit(file, fileIndex, psiManager, null, new HashSet<PsiFile>(), 0);
         }
       });
     }
@@ -63,7 +63,8 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
   }
 
   private void visit(final PsiFile file, final ProjectFileIndex fileIndex, final PsiManager psiManager, final Set<PsiFile> fileDeps,
-                     final HashSet<PsiFile> processed) {
+                     final HashSet<PsiFile> processed, int depth) {
+    if (depth++ > 20) return;
     final FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider.getBaseLanguage() != file.getLanguage()) return;
 
@@ -119,7 +120,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
       for (final PsiFile psiFile : new HashSet<PsiFile>(deps)) {
         if (!processed.contains(psiFile) && !getScope().contains(psiFile)) {
           processed.add(psiFile);
-          visit(psiFile, fileIndex, psiManager, deps, processed);
+          visit(psiFile, fileIndex, psiManager, deps, processed, depth);
         }
       }
     }
