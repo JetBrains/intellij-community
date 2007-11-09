@@ -119,7 +119,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
 
     File srcFile = new File(file.getPath());
     File destFile = new File(new File(toDir.getPath()), copyName);
-    if (!SVNWCUtil.isVersionedDirectory(destFile.getParentFile())) {
+    if (!SVNWCUtil.isVersionedDirectory(destFile.getParentFile()) && !isPendingAdd(toDir)) {
       return null;
     }
 
