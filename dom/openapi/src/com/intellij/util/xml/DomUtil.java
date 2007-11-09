@@ -6,6 +6,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -193,6 +194,7 @@ public class DomUtil {
 
     }
 
+    ProgressManager.getInstance().checkCanceled();
     final XmlElement xmlElement = parent.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       XmlTag tag = (XmlTag) xmlElement;

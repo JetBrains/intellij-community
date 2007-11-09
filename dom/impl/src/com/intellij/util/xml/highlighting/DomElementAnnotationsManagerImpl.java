@@ -144,19 +144,20 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   private DomElementsProblemsHolderImpl _getOrCreateProblemsHolder(final DomFileElement element) {
     final DomElementsProblemsHolderImpl holder;
+    final DomElement rootElement = element.getRootElement();
     if (isHolderOutdated(element)) {
       holder = new DomElementsProblemsHolderImpl(element);
-      element.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
+      rootElement.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
       final CachedValue<Boolean> cachedValue = myCachedValuesManager.createCachedValue(new CachedValueProvider<Boolean>() {
         public Result<Boolean> compute() {
           return new Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myModificationTracker, myProjectRootManager);
         }
       }, false);
       cachedValue.getValue();
-      element.putUserData(CACHED_VALUE_KEY, cachedValue);
+      rootElement.putUserData(CACHED_VALUE_KEY, cachedValue);
     }
     else {
-      holder = element.getUserData(DOM_PROBLEM_HOLDER_KEY);
+      holder = rootElement.getUserData(DOM_PROBLEM_HOLDER_KEY);
       LOG.assertTrue(holder != null);
     }
     return holder;
@@ -170,12 +171,12 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
 
   public static void outdateProblemHolder(final DomElement element) {
     synchronized (LOCK) {
-      element.getRoot().putUserData(CACHED_VALUE_KEY, null);
+      element.getRoot().getRootElement().putUserData(CACHED_VALUE_KEY, null);
     }
   }
 
   private static boolean isHolderOutdated(final DomFileElement element) {
-    final CachedValue<Boolean> cachedValue = element.getUserData(CACHED_VALUE_KEY);
+    final CachedValue<Boolean> cachedValue = element.getRootElement().getUserData(CACHED_VALUE_KEY);
     return cachedValue == null || !cachedValue.hasUpToDateValue();
   }
 
@@ -185,7 +186,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     final DomFileElement<DomElement> fileElement = element.getRoot();
 
     synchronized (LOCK) {
-      final DomElementsProblemsHolder readyHolder = fileElement.getUserData(DOM_PROBLEM_HOLDER_KEY);
+      final DomElementsProblemsHolder readyHolder = fileElement.getRootElement().getUserData(DOM_PROBLEM_HOLDER_KEY);
       return readyHolder == null ? EMPTY_PROBLEMS_HOLDER : readyHolder;
     }
   }
