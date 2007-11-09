@@ -31,8 +31,6 @@ public abstract class ShowSettingsUtil {
 
   public abstract boolean editConfigurable(Project project, Configurable configurable, Runnable advancedInitialization);
 
-  public abstract boolean showCodeStyleSettings(Project project, Class pageToSelect);
-
   public abstract boolean editConfigurable(Component parent, Configurable configurable);
 
   public abstract boolean editConfigurable(Component parent, Configurable configurable, Runnable advancedInitialization);

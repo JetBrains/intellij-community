@@ -1,7 +1,5 @@
 package com.intellij.ide.actions;
 
-import com.intellij.application.options.CodeStyleSchemesConfigurable;
-import com.intellij.application.options.ProjectCodeStyleConfigurable;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
@@ -11,8 +9,6 @@ import com.intellij.openapi.options.ex.ControlPanelSettingsEditor;
 import com.intellij.openapi.options.ex.ExplorerSettingsEditor;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -105,41 +101,4 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     editor.show();
     return editor.isOK();
   }
-
-  /**
-   * Shows code style settings sutable for the project passed. I.e. it shows project code style page if one
-   * is configured to use own code style scheme or global one in other case.
-   * @param project
-   * @return Returns true if settings were modified during editing session.
-   */
-  public boolean showCodeStyleSettings(Project project, final Class pageToSelect) {
-    CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
-    boolean usePerProject = settingsManager.USE_PER_PROJECT_SETTINGS;
-    CodeStyleSettings savedSettings = (CodeStyleSettings)settingsManager.getCurrentSettings().clone();
-    if (usePerProject) {
-      final ProjectCodeStyleConfigurable configurable = ProjectCodeStyleConfigurable.getInstance(project);
-      Runnable selectPage = new Runnable() {
-        public void run() {
-          if (pageToSelect != null) {
-            configurable.selectPage(pageToSelect);
-          }
-        }
-      };
-      editConfigurable(project, configurable, selectPage);
-    }
-    else {
-      final CodeStyleSchemesConfigurable configurable = CodeStyleSchemesConfigurable.getInstance();
-      Runnable selectPage = new Runnable() {
-        public void run() {
-          if (pageToSelect != null) {
-            configurable.selectPage(pageToSelect);
-          }
-        }
-      };
-      editConfigurable(project, configurable, selectPage);
-    }
-
-    return !savedSettings.equals(settingsManager.getCurrentSettings());
-  }
-
 }
