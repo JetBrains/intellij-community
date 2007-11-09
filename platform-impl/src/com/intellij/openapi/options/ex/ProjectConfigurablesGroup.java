@@ -1,8 +1,8 @@
 package com.intellij.openapi.options.ex;
 
-import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 
@@ -47,7 +47,7 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
       final Iterator<Configurable> iterator = result.iterator();
       while (iterator.hasNext()) {
         Configurable configurable = iterator.next();
-        if (configurable instanceof ScopeChooserConfigurable) {
+        if (configurable instanceof NonDefaultProjectConfigurable) {
           iterator.remove();
         }
       }

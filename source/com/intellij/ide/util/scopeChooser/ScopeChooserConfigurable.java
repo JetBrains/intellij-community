@@ -12,6 +12,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.InputValidator;
@@ -53,7 +54,7 @@ import java.util.*;
   storages = {@Storage(
     id = "other",
     file = "$WORKSPACE_FILE$")})
-public class ScopeChooserConfigurable extends MasterDetailsComponent {
+public class ScopeChooserConfigurable extends MasterDetailsComponent implements NonDefaultProjectConfigurable {
   private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
 
