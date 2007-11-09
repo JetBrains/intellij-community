@@ -37,7 +37,7 @@ public class ReachingDefinitionsCollector {
     final Instruction[] flow = flowOwner.getControlFlow();
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
-    final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine(flow, dfaInstance, lattice);
+    final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
     final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFA();
 
     TIntHashSet fragmentReads = getFragmentReads(first, last, flow);
