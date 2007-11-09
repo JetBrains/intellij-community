@@ -11,7 +11,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckboxTreeBase;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -52,8 +51,8 @@ public class DetectedFacetsTreeComponent {
           parent = facetInfos.get(underlyingFacet);
         }
 
-        String relativePath = getRelativePath(root, pair.getSecond());
-        DetectedFacetsTree.FacetNode detectedFacet = new FacetInfoNode(pair.getFirst(), relativePath, pair.getSecond(), parent);
+        VirtualFile virtualRoot = LocalFileSystem.getInstance().findFileByIoFile(root);
+        DetectedFacetsTree.FacetNode detectedFacet = new FacetInfoNode(pair.getFirst(), virtualRoot, pair.getSecond(), parent);
         facetInfos.put(pair.getFirst(), detectedFacet);
         if (parent == null) {
           moduleNode.addRootFacet(detectedFacet);
@@ -62,13 +61,6 @@ public class DetectedFacetsTreeComponent {
 
       myModuleNodes.add(moduleNode);
     }
-  }
-
-  private static String getRelativePath(final File root, final VirtualFile file) {
-    VirtualFile virtualRoot = LocalFileSystem.getInstance().findFileByIoFile(root);
-    if (virtualRoot == null) return file.getPresentableUrl();
-    String path = VfsUtil.getRelativePath(file, virtualRoot, File.separatorChar);
-    return path != null ? path : file.getPresentableUrl();
   }
 
   public void createTree() {
@@ -106,7 +98,12 @@ public class DetectedFacetsTreeComponent {
         facetModel.addFacet(facet);
       }
       else {
-        FacetAutodetectingManager.getInstance(module.getProject()).disableAutodetectionInFiles(type, module, facetNode.getFile().getUrl());
+        VirtualFile[] files = facetNode.getFiles();
+        String[] urls = new String[files.length];
+        for (int i = 0; i < files.length; i++) {
+          urls[i] = files[i].getUrl();
+        }
+        FacetAutodetectingManager.getInstance(module.getProject()).disableAutodetectionInFiles(type, module, urls);
       }
 
       processFacetsInfos(facetNode.getChildren(), module, rootModel, facetModel, facet, createFacet);
@@ -116,8 +113,8 @@ public class DetectedFacetsTreeComponent {
   private static class FacetInfoNode extends DetectedFacetsTree.FacetNode {
     private FacetInfo myFacetInfo;
 
-    private FacetInfoNode(final FacetInfo facetInfo, final String relativeFilePath, final VirtualFile file, @Nullable final DetectedFacetsTree.FacetNode parent) {
-      super(facetInfo, facetInfo.getFacetType(), relativeFilePath, file, parent);
+    private FacetInfoNode(final FacetInfo facetInfo, final VirtualFile root, final VirtualFile file, @Nullable final DetectedFacetsTree.FacetNode parent) {
+      super(facetInfo, facetInfo.getFacetType(), root, new VirtualFile[]{file}, parent);
       myFacetInfo = facetInfo;
     }
 

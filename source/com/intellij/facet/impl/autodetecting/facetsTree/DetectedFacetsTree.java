@@ -5,6 +5,8 @@
 package com.intellij.facet.impl.autodetecting.facetsTree;
 
 import com.intellij.facet.FacetType;
+import com.intellij.facet.autodetecting.DetectedFacetPresentation;
+import com.intellij.facet.impl.autodetecting.FacetDetectorRegistryEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,7 +73,10 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
         FacetType type = node.getFacetType();
         renderer.setIcon(type.getIcon());
         renderer.append(node.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        renderer.append(" (" + node.myRelativeFilePath + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        String description = node.getDescription();
+        if (description != null) {
+          renderer.append(" (" + description + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        }
       }
       else if (value instanceof FacetTypeNode) {
         FacetType type = ((FacetTypeNode)value).getFacetType();
@@ -128,16 +133,16 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
   }
 
   public static class FacetNode extends CheckedTreeNode {
-    private final VirtualFile myFile;
-    private final FacetType myFacetType;
-    private final String myRelativeFilePath;
+    private final VirtualFile[] myFiles;
+    private final FacetType<?,?> myFacetType;
+    private final VirtualFile myProjectRoot;
     private List<FacetNode> myChildren = new ArrayList<FacetNode>();
 
-    public FacetNode(Object userObject, FacetType facetType, String relativeFilePath, final VirtualFile file, @Nullable FacetNode parent) {
+    public FacetNode(Object userObject, FacetType facetType, VirtualFile projectRoot, final VirtualFile[] files, @Nullable FacetNode parent) {
       super(userObject);
       myFacetType = facetType;
-      myRelativeFilePath = relativeFilePath;
-      myFile = file;
+      myProjectRoot = projectRoot;
+      myFiles = files;
       if (parent != null) {
         parent.myChildren.add(this);
         parent.add(this);
@@ -148,8 +153,8 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
       return myFacetType.getPresentableName();
     }
 
-    public VirtualFile getFile() {
-      return myFile;
+    public VirtualFile[] getFiles() {
+      return myFiles;
     }
 
     public List<FacetNode> getChildren() {
@@ -158,6 +163,12 @@ public class DetectedFacetsTree extends CheckboxTreeBase {
 
     public FacetType getFacetType() {
       return myFacetType;
+    }
+
+    @Nullable
+    public String getDescription() {
+      DetectedFacetPresentation presentation = FacetDetectorRegistryEx.getDetectedFacetPresentation(myFacetType);
+      return presentation.getDetectedFacetDescription(myProjectRoot, myFiles);
     }
   }
 }

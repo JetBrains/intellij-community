@@ -9,6 +9,7 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.impl.autodetecting.ImplicitFacetInfo;
 import com.intellij.facet.impl.autodetecting.ImplicitFacetManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckedTreeNode;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public class ImplicitFacetsTreeComponent {
         parentNode = facetNodes.get(underlyingFacet);
       }
 
-      DetectedFacetsTree.FacetNode facetNode = new FacetNodeImpl(implicitFacet, implicitFacet.getRelativeFileUrl(), parentNode);
+      DetectedFacetsTree.FacetNode facetNode = new FacetNodeImpl(implicitFacet, implicitFacet.getFacet().getModule().getProject().getBaseDir(), parentNode);
       facetNodes.put(facet, facetNode);
       if (parentNode == null) {
         moduleNode.addRootFacet(facetNode);
@@ -145,8 +146,8 @@ public class ImplicitFacetsTreeComponent {
   private static class FacetNodeImpl extends DetectedFacetsTree.FacetNode {
     private final ImplicitFacetInfo myImplicitFacetInfo;
 
-    private FacetNodeImpl(ImplicitFacetInfo implicitFacet, final String relativeFilePath, @Nullable final DetectedFacetsTree.FacetNode parent) {
-      super(implicitFacet.getFacet(), implicitFacet.getFacet().getType(), relativeFilePath, implicitFacet.getFile(), parent);
+    private FacetNodeImpl(ImplicitFacetInfo implicitFacet, VirtualFile projectRoot, @Nullable final DetectedFacetsTree.FacetNode parent) {
+      super(implicitFacet.getFacet(), implicitFacet.getFacet().getType(), projectRoot, implicitFacet.getFiles(), parent);
       myImplicitFacetInfo = implicitFacet;
     }
 

@@ -27,6 +27,11 @@ import org.jetbrains.annotations.Nullable;
 public abstract class DetectedFacetPresentation {
 
   @Nullable
+  public String getDetectedFacetDescription(VirtualFile root, VirtualFile[] files) {
+    return null;
+  }
+
+  @Nullable
   public String getAutodetectionPopupText(@NotNull Facet facet, @NotNull VirtualFile[] files) {
     return null;
   }
