@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -126,7 +125,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     final Ref<AnAction> anAction = new Ref<AnAction>();
     final LightweightHint hint = new LightweightHint(scrollPane) {
       public void hide() {
-        ShowErrorDescriptionAction.rememberCurrentWidth(pane.getWidth());
+        onHide(pane);
         super.hide();
         final AnAction action = anAction.get();
         if (action != null) {
@@ -180,6 +179,10 @@ public class LineTooltipRenderer implements TooltipRenderer {
                                HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT |
                                HintManager.HIDE_BY_SCROLLING, 0, false);
     return hint;
+  }
+
+  protected void onHide(JComponent contentComponent) {
+
   }
 
   private boolean dressDescription() {

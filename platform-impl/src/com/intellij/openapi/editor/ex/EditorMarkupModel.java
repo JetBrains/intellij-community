@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.NotNull;
 
 public interface EditorMarkupModel extends MarkupModel {
   Editor getEditor();
@@ -17,4 +18,6 @@ public interface EditorMarkupModel extends MarkupModel {
   void removeErrorMarkerListener(ErrorStripeListener listener);
 
   void setErrorPanelPopupHandler(PopupHandler handler);
+
+  void setErrorStripTooltipRendererProvider(@NotNull ErrorStripTooltipRendererProvider provider);
 }

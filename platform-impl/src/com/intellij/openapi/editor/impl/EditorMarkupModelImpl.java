@@ -9,9 +9,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,10 +16,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.ErrorStripeEvent;
-import com.intellij.openapi.editor.ex.ErrorStripeListener;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -31,6 +25,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,6 +55,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return o1.getLayer() - o2.getLayer();
     }
   };
+
+  private @NotNull ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
 
   private int offsetToLine(int offset) {
     final Document document = myEditor.getDocument();
@@ -116,49 +113,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       for (MarkSpot markSpot : nearestMarkSpots) {
         highlighters.addAll(Arrays.asList(markSpot.highlighters));
       }
-      LineTooltipRenderer bigRenderer = null;
-      List<HighlightInfo> infos = new SmartList<HighlightInfo>();
-      Collection<String> tooltips = new THashSet<String>(); //do not show same tooltip twice
-      for (RangeHighlighter marker : highlighters) {
-        final Object tooltipObject = marker.getErrorStripeTooltip();
-        if (tooltipObject == null) continue;
-        if (tooltipObject instanceof HighlightInfo) {
-          HighlightInfo info = (HighlightInfo)tooltipObject;
-          if (info.toolTip != null && tooltips.add(info.toolTip)) {
-            infos.add(info);
-          }
-        }
-        else {
-          final String text = tooltipObject.toString();
-          if (tooltips.add(text)) {
-            if (bigRenderer == null) {
-              bigRenderer = new LineTooltipRenderer(text);
-            }
-            else {
-              bigRenderer.addBelow(text);
-            }
-          }
-        }
-      }
-      if (!infos.isEmpty()) {
-        // show errors first
-        Collections.sort(infos, new Comparator<HighlightInfo>() {
-          public int compare(final HighlightInfo o1, final HighlightInfo o2) {
-            int i = SeverityRegistrar.getInstance(myEditor.getProject()).compare(o2.getSeverity(), o1.getSeverity());
-            if (i != 0) return i;
-            return o1.toolTip.compareTo(o2.toolTip);
-          }
-        });
-        final HighlightInfoComposite composite = new HighlightInfoComposite(infos);
-        if (bigRenderer == null) {
-          bigRenderer = new LineTooltipRenderer(composite.toolTip);
-        }
-        else {
-          final LineTooltipRenderer renderer = new LineTooltipRenderer(composite.toolTip);
-          renderer.addBelow(bigRenderer.getText());
-          bigRenderer = renderer;
-        }
-      }
+      TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
       if (bigRenderer != null) {
         showTooltip(e, bigRenderer);
         return true;
@@ -435,6 +390,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
+  public void setErrorStripTooltipRendererProvider(@NotNull final ErrorStripTooltipRendererProvider provider) {
+    myTooltipRendererProvider = provider;
+  }
+
   public Editor getEditor() {
     return myEditor;
   }
@@ -662,4 +621,27 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT;
   }
 
+  private static class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+    public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
+        LineTooltipRenderer bigRenderer = null;
+        Collection<String> tooltips = new THashSet<String>(); //do not show same tooltip twice
+
+        for (RangeHighlighter highlighter : highlighters) {
+          final Object tooltipObject = highlighter.getErrorStripeTooltip();
+          if (tooltipObject == null) continue;
+
+          final String text = tooltipObject.toString();
+          if (tooltips.add(text)) {
+            if (bigRenderer == null) {
+              bigRenderer = new LineTooltipRenderer(text);
+            }
+            else {
+              bigRenderer.addBelow(text);
+            }
+          }
+        }
+
+        return bigRenderer;
+      }
+  }
 }
