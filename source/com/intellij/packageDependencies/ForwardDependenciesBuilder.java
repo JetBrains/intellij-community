@@ -113,15 +113,16 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
 
     getDirectDependencies().put(file, new HashSet<PsiFile>(collectedDeps));
 
+    psiManager.dropResolveCaches();
+
     if (isTransitive()) {
       for (final PsiFile psiFile : new HashSet<PsiFile>(deps)) {
-        if (!processed.contains(psiFile) && !getDependencies().containsKey(psiFile)) {
+        if (!processed.contains(psiFile) && !getScope().contains(psiFile)) {
           processed.add(psiFile);
           visit(psiFile, fileIndex, psiManager, deps, processed);
         }
       }
     }
-    psiManager.dropResolveCaches();
   }
 
   public Map<PsiFile, Set<PsiFile>> getDirectDependencies() {

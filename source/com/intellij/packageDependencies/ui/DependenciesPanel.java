@@ -209,6 +209,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private void processDependencies(final Set<PsiFile> searchIn, final Set<PsiFile> searchFor, Processor<List<PsiFile>> processor) {
+    if (!myTransitive) return;
     Set<PsiFile> initialSearchFor = new HashSet<PsiFile>(searchFor);
     for (DependenciesBuilder builder : myBuilders) {
       for (PsiFile from : searchIn) {
