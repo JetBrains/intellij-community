@@ -1,3 +1,17 @@
+/*
+ * Copyright 2000-2007 JetBrains s.r.o.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +42,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
   private boolean myIsSetter;
 
   private LightReferenceList myThrowsList;
+  private LightParameterList myParameterList = null;
 
 
   public AccessorMethod(GrField property, boolean isSetter) {
@@ -51,19 +66,22 @@ public class AccessorMethod extends LightElement implements PsiMethod {
   @NotNull
   public PsiParameterList getParameterList() {
     final PsiManager manager = getManager();
-    return new LightParameterList(manager, new Computable<LightParameter[]>() {
-      public LightParameter[] compute() {
-        if (myIsSetter) {
-          PsiType type = myProperty.getDeclaredType();
-          if (type == null) {
-            type = getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", myProperty.getResolveScope());
+    if (myParameterList == null) {
+      myParameterList = new LightParameterList(manager, new Computable<LightParameter[]>() {
+        public LightParameter[] compute() {
+          if (myIsSetter) {
+            PsiType type = myProperty.getDeclaredType();
+            if (type == null) {
+              type = getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", myProperty.getResolveScope());
+            }
+            return new LightParameter[]{new LightParameter(manager, "p", null, type, AccessorMethod.this)};
           }
-          return new LightParameter[]{new LightParameter(manager, null, type, AccessorMethod.this)};
-        }
 
-        return LightParameter.EMPTY_ARRAY;
-      }
-    });
+          return LightParameter.EMPTY_ARRAY;
+        }
+      });
+    }
+    return myParameterList;
   }
 
   @NotNull

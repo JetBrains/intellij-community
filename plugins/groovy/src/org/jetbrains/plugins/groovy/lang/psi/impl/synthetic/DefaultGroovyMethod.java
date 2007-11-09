@@ -18,12 +18,17 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+
+import java.util.Set;
 
 /**
  * @author ven
@@ -32,7 +37,11 @@ public class DefaultGroovyMethod extends LightMethod {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod");
 
   private PsiMethod myMethod;
-  private PsiMethod myModifiedMethod;
+
+  private LightReferenceList myThrowsList;
+  private LightParameterList myParameterList = null;
+
+  private LightModifierList myModifierList;
 
   @NotNull
   public Language getLanguage() {
@@ -46,68 +55,79 @@ public class DefaultGroovyMethod extends LightMethod {
   public DefaultGroovyMethod(PsiMethod method, boolean isStatic) {
     super(method.getManager(), method, null);
     myMethod = method;
-    PsiElementFactory elementFactory = method.getManager().getElementFactory();
-    try {
-      myModifiedMethod = elementFactory.createMethod(method.getName(), method.getReturnType());
-      myModifiedMethod.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
-      myModifiedMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
-      PsiParameter[] originalParameters = method.getParameterList().getParameters();
-      PsiParameterList newParamList = myModifiedMethod.getParameterList();
-      String[] parmNames = new String[originalParameters.length - 1];
-      for (int i = 1; i < originalParameters.length; i++) {
-        PsiParameter originalParameter = originalParameters[i];
-        String baseName;
-        final PsiType type = originalParameter.getType();
-        String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,
-            null, type).names;
-        if (nameSuggestions.length > 0) {
-          baseName = nameSuggestions[0];
-        } else {
-          baseName = "p";
+    final PsiManager manager = method.getManager();
+    Set<String> modifiers = new HashSet<String>();
+    modifiers.add(PsiModifier.PUBLIC);
+    if (isStatic) modifiers.add(PsiModifier.STATIC);
+    myModifierList = new LightModifierList(manager, modifiers);
+
+    final PsiParameter[] originalParameters = method.getParameterList().getParameters();
+    final String[] parmNames = new String[originalParameters.length - 1];
+    for (int i = 1; i < originalParameters.length; i++) {
+      PsiParameter originalParameter = originalParameters[i];
+      String baseName;
+      final PsiType type = originalParameter.getType();
+      String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,
+          null, type).names;
+      if (nameSuggestions.length > 0) {
+        baseName = nameSuggestions[0];
+      } else {
+        baseName = "p";
+      }
+
+      int postfix = 1;
+
+      String name = baseName;
+      NextName:
+      do {
+        for (int j = 1; j < i; j++) {
+          if (name.equals(parmNames[j - 1])) {
+            name = baseName + postfix;
+            postfix++;
+            continue NextName;
+          }
         }
 
-        int postfix = 1;
+        break;
+      } while (true);
 
-        String name = baseName;
-        NextName:
-        do {
-          for (int j = 1; j < i; j++) {
-            if (name.equals(parmNames[j - 1])) {
-              name = baseName + postfix;
-              postfix++;
-              continue NextName;
-            }
-          }
-
-          break;
-        } while (true);
-
-        parmNames[i - 1] = name;
-        PsiParameter parameter = elementFactory.createParameter(name, type);
-        newParamList.add(parameter);
-      }
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
+      parmNames[i - 1] = name;
     }
+
+    myParameterList = new LightParameterList(manager, new Computable<LightParameter[]>() {
+      public LightParameter[] compute() {
+        LightParameter[] result = new LightParameter[parmNames.length];
+        for (int i = 0; i < result.length; i++) {
+          result[i] = new LightParameter(manager, parmNames[i], null, originalParameters[i+1].getType(), DefaultGroovyMethod.this);
+
+        }
+        return result;
+      }
+    });
   }
 
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
-    return myModifiedMethod.getSignature(substitutor);
+    final PsiParameter[] parameters = getParameterList().getParameters();
+    PsiType[] parameterTypes = new PsiType[parameters.length];
+    for (int i = 0; i < parameterTypes.length; i++) {
+      parameterTypes[i] = parameters[i].getType();
+    }
+    return MethodSignatureUtil.createMethodSignature(getName(), parameterTypes, PsiTypeParameter.EMPTY_ARRAY, substitutor); //todo
   }
 
   @NotNull
   public PsiParameterList getParameterList() {
-    return myModifiedMethod.getParameterList();
+    return myParameterList;
   }
 
   @NotNull
   public PsiModifierList getModifierList() {
-    return myModifiedMethod.getModifierList();
+    return myModifierList;
   }
 
   public boolean hasModifierProperty(String name) {
-    return myModifiedMethod.hasModifierProperty(name);
+    return myModifierList.hasModifierProperty(name);
   }
 
   public boolean canNavigate() {
