@@ -17,10 +17,11 @@ package com.intellij.openapi.fileEditor;
 
 import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author peter
  */
 public interface EditorDataProvider {
-  @Nullable Object getData(String dataId, Editor editor);
+  @Nullable Object getData(String dataId, Editor e, final VirtualFile file);
 }

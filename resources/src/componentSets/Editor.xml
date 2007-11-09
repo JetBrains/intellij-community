@@ -71,5 +71,8 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiTextEditorConnector</implementation-class>
+    </component>
   </project-components>
 </components>

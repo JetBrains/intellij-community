@@ -1,18 +1,14 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.AppTopics;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -31,12 +27,6 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.messages.MessageBusConnection;
@@ -277,106 +267,22 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   }
 
   public Object getData(final String dataId) {
-    if (!myProject.isDisposed()) {
-      final Object o = ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).getData(dataId, myEditor);
-      if (o != null) return o;
-    }
-
     final Editor e = validateCurrentEditor();
     if (e == null) return null;
+
+    if (!myProject.isDisposed()) {
+      final Object o = ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).getData(dataId, e, myFile);
+      if (o != null) return o;
+    }
 
     if (dataId.equals(DataConstants.EDITOR)) {
       return e;
     }
-    if (dataId.equals(AnActionEvent.injectedId(DataConstants.EDITOR))) {
-      return InjectedLanguageUtil.getEditorForInjectedLanguage(e, getPsiFile());
-    }
-    if (dataId.equals(AnActionEvent.injectedId(DataConstants.PSI_ELEMENT))) {
-      return getPsiElementIn((Editor)getData(AnActionEvent.injectedId(DataConstants.EDITOR)));
-    }
-    if (DataConstants.PSI_ELEMENT.equals(dataId)){
-      return getPsiElementIn(e);
-    }
-    if (dataId.equals(AnActionEvent.injectedId(DataConstants.LANGUAGE))) {
-      PsiFile psiFile = (PsiFile)getData(AnActionEvent.injectedId(DataConstants.PSI_FILE));
-      Editor editor = (Editor)getData(AnActionEvent.injectedId(DataConstants.EDITOR));
-      if (psiFile == null || editor == null) return null;
-      return getLanguageAtCurrentPositionInEditor(editor, psiFile);
-    }
-    if (DataConstants.LANGUAGE.equals(dataId)) {
-      final PsiFile psiFile = getPsiFile();
-      if (psiFile == null) return null;
-      return getLanguageAtCurrentPositionInEditor(e, psiFile);
-    }
-    if (dataId.equals(AnActionEvent.injectedId(DataConstants.VIRTUAL_FILE))) {
-      PsiFile psiFile = (PsiFile)getData(AnActionEvent.injectedId(DataConstants.PSI_FILE));
-      if (psiFile == null) return null;
-      return psiFile.getVirtualFile();
-    }
     if (dataId.equals(DataConstants.VIRTUAL_FILE)) {
       return myFile.isValid()? myFile : null;  // fix for SCR 40329
     }
-    if (dataId.equals(AnActionEvent.injectedId(DataConstants.PSI_FILE))) {
-      Editor editor = (Editor)getData(AnActionEvent.injectedId(DataConstants.EDITOR));
-      if (editor == null) return null;
-      return PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-    }
-    if (dataId.equals(DataConstants.PSI_FILE)) {
-      return getPsiFile();
-    }
-    if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
-      /*
-      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
-      LOG.assertTrue(psiFile != null);
-      if (!(psiFile instanceof PsiJavaFile)) {
-        return null;
-      }
-
-      PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
-      PsiDirectory directory = psiJavaFile.getContainingDirectory();
-      if (directory == null) {
-        return null;
-      }
-      PsiPackage aPackage = directory.getPackage();
-      if (aPackage == null) {
-        return null;
-      }
-      return directory;
-      */
-      // [dsl] in Editor we do not have any specific target psi element
-      // we only guess
-      return null;
-    }
     return null;
   }
-
-  private static Language getLanguageAtCurrentPositionInEditor(final Editor editor, final PsiFile psiFile) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    int caretOffset = editor.getCaretModel().getOffset();
-    int mostProbablyCorrectLanguageOffset = caretOffset == selectionModel.getSelectionStart() ||
-                                            caretOffset == selectionModel.getSelectionEnd()
-                                            ? selectionModel.getSelectionStart()
-                                            : caretOffset;
-
-    return PsiUtil.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
-  }
-
-  private PsiElement getPsiElementIn(final Editor editor) {
-    final PsiFile psiFile = getPsiFile();
-    if (psiFile == null) return null;
-    return TargetElementUtil.findTargetElement(editor,
-                                          TargetElementUtil.THROW_STATEMENT_ACCEPTED |
-                                          TargetElementUtil.THROWS_ACCEPTED |
-                                          TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
-                                          TargetElementUtil.ELEMENT_NAME_ACCEPTED |
-                                          TargetElementUtil.NEW_AS_CONSTRUCTOR |
-                                          TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
-  }
-
-  private PsiFile getPsiFile() {
-    return myFile.isValid()? PsiManager.getInstance(myProject).findFile(myFile) : null; // fix for SCR 40329
-  }
-
 
   /**
    * Shows popup menu

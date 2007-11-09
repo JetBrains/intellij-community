@@ -715,17 +715,19 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   public void registerExtraEditorDataProvider(@NotNull final EditorDataProvider provider, Disposable parentDisposable) {
     myDataProviders.add(provider);
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        myDataProviders.remove(provider);
-      }
-    });
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, new Disposable() {
+        public void dispose() {
+          myDataProviders.remove(provider);
+        }
+      });
+    }
   }
 
   @Nullable
-  public final Object getData(String dataId, Editor editor) {
+  public final Object getData(String dataId, Editor editor, final VirtualFile file) {
     for (final EditorDataProvider dataProvider : myDataProviders) {
-      final Object o = dataProvider.getData(dataId, editor);
+      final Object o = dataProvider.getData(dataId, editor, file);
       if (o != null) return o;
     }
     return null;
