@@ -157,12 +157,23 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             StringBuffer text = new StringBuffer();
             final List<FileGroup> groups = updatedFiles.getTopLevelGroups();
             for (FileGroup group : groups) {
-              final int s = group.getFiles().size();
+              appendGroup(text, group);
+            }
+
+            return new NotificationInfo("VCS Update", "VCS Update Finished", text.toString(), true);
+          }
+
+          private void appendGroup(final StringBuffer text, final FileGroup group) {
+            final int s = group.getFiles().size();
+            if (s > 0) {
               if (text.length() > 0) text.append("\n");
               text.append(s + " Files " + group.getUpdateName());
             }
 
-            return new NotificationInfo("VCS Update", "VCS Update Finished", text.toString(), true);
+            final List<FileGroup> list = group.getChildren();
+            for (FileGroup g : list) {
+              appendGroup(text, g);
+            }
           }
 
           public void onSuccess() {

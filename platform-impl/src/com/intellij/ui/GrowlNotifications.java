@@ -40,9 +40,9 @@ class GrowlNotifications {
     return ourNotifications;
   }
 
-  public void notify(@NotNull String notificationName, String title, String description) {
-    if (!myNotifications.contains(notificationName)) {
-      myNotifications.add(notificationName);
+  public void notify(Set<String> allNotifications, @NotNull String notificationName, String title, String description) {
+    if (!myNotifications.equals(allNotifications)) {
+      myNotifications.addAll(allNotifications);
       register();
     }
 

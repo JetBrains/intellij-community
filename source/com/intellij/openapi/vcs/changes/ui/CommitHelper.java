@@ -89,7 +89,10 @@ public class CommitHelper {
 
           @Nullable
           public NotificationInfo getNotificationInfo() {
-            final String text = (myChangeList.getChanges().size() - changesFailedToCommit.size()) + " Change(s) Commited, " + changesFailedToCommit.size() + " Change(s) Failed To Commit";
+            String text = (myChangeList.getChanges().size() - changesFailedToCommit.size()) + " Change(s) Commited";
+            if (changesFailedToCommit.size() > 0) {
+              text += ", " + changesFailedToCommit.size() + " Change(s) Failed To Commit";
+            }
             return new NotificationInfo("VCS Commit",  "VCS Commit Finished", text, true);
           }
         };

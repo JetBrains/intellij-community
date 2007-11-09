@@ -4,6 +4,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
@@ -11,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
-import com.intellij.ui.Notifications;
+import com.intellij.ui.SystemNotifications;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -176,7 +177,7 @@ public class ProgressManagerImpl extends ProgressManager {
       if (notificationInfo != null) {
         final JFrame frame = WindowManager.getInstance().getFrame(task.getProject());
         if (!frame.hasFocus()) {
-          Notifications.notify(notificationInfo.getNotificationName(), notificationInfo.getNotificationTitle(), notificationInfo.getNotificationText());
+          systemNotify(notificationInfo);
         }
       }
 
@@ -186,6 +187,12 @@ public class ProgressManagerImpl extends ProgressManager {
       task.onCancel();
     }
     return result;
+  }
+
+  private static void systemNotify(final Task.NotificationInfo notificationInfo) {
+    final SystemNotifications notifications = ServiceManager.getService(SystemNotifications.class);
+    if (notifications == null) return;
+    notifications.notify(notificationInfo.getNotificationName(), notificationInfo.getNotificationTitle(), notificationInfo.getNotificationText());
   }
 
   public void runProcessWithProgressAsynchronously(@NotNull Project project,
@@ -254,7 +261,7 @@ public class ProgressManagerImpl extends ProgressManager {
           if (notificationInfo != null) {
             final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
             if (window == null || notificationInfo.isShowWhenFocused()) {
-              Notifications.notify(notificationInfo.getNotificationName(), notificationInfo.getNotificationTitle(), notificationInfo.getNotificationText());
+              systemNotify(notificationInfo);
             }
           }
 
