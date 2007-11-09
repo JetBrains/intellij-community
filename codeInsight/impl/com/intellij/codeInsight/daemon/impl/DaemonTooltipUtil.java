@@ -40,6 +40,6 @@ public class DaemonTooltipUtil {
       bestPoint,
       editor.getComponent().getRootPane().getLayeredPane()
     );
-    HintManager.getInstance().getTooltipController().showTooltip(editor, p, info, currentWidth, false, DAEMON_INFO_GROUP);
+    HintManager.getInstance().getTooltipController().showTooltip(editor, p, info.toolTip, currentWidth, false, DAEMON_INFO_GROUP);
   }
 }

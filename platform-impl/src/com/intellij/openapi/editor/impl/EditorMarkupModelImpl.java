@@ -154,7 +154,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           bigRenderer = new LineTooltipRenderer(composite.toolTip);
         }
         else {
-          final LineTooltipRenderer renderer = new LineTooltipRenderer(composite);
+          final LineTooltipRenderer renderer = new LineTooltipRenderer(composite.toolTip);
           renderer.addBelow(bigRenderer.getText());
           bigRenderer = renderer;
         }

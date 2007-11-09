@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -39,15 +38,6 @@ public class LineTooltipRenderer implements TooltipRenderer {
 
   public LineTooltipRenderer(String text) {
     myText = text;
-  }
-
-  public LineTooltipRenderer(HighlightInfo highlightInfo) {
-    this(highlightInfo.toolTip);
-  }
-
-  public LineTooltipRenderer(final HighlightInfo info, final int width) {
-    this(info);
-    myCurrentWidth = width;
   }
 
   public LineTooltipRenderer(final String text, final int width) {
