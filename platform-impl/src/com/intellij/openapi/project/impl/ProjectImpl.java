@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.PomModel;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
@@ -60,7 +59,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   private ArrayList<String> myConversionProblemsStorage = new ArrayList<String>();
 
   @NonNls private static final String PROJECT_LAYER = "project-components";
-  private PomModel myModel = null;
 
   public boolean myOptimiseTestLoadSpeed;
   private volatile GlobalSearchScope myAllScope;
@@ -392,7 +390,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     disposeComponents();
     Extensions.disposeArea(this);
     myManager = null;
-    myModel = null;
     myProjectManagerListener = null;
     super.dispose();
   }
