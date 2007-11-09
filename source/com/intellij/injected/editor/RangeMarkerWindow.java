@@ -7,16 +7,18 @@
 package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.RangeMarkerImpl;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-public class RangeMarkerWindow extends RangeMarkerImpl {
+public class RangeMarkerWindow implements RangeMarkerEx {
   private final DocumentWindow myDocumentWindow;
+  private final RangeMarkerEx myHostMarker;
 
-  public RangeMarkerWindow(DocumentWindow documentWindow, RangeMarker hostMarker) {
-    super(hostMarker.getDocument(), hostMarker.getStartOffset(), hostMarker.getEndOffset());
+  public RangeMarkerWindow(@NotNull DocumentWindow documentWindow, RangeMarkerEx hostMarker) {
     myDocumentWindow = documentWindow;
+    myHostMarker = hostMarker;
   }
 
   @NotNull
@@ -25,12 +27,37 @@ public class RangeMarkerWindow extends RangeMarkerImpl {
   }
 
   public int getStartOffset() {
-    int hostOffset = super.getStartOffset();
+    int hostOffset = myHostMarker.getStartOffset();
     return myDocumentWindow.hostToInjected(hostOffset);
   }
 
   public int getEndOffset() {
-    int hostOffset = super.getEndOffset();
+    int hostOffset = myHostMarker.getEndOffset();
     return myDocumentWindow.hostToInjected(hostOffset);
+  }
+
+  ////////////////////////////delegates
+  public boolean isValid() {
+    return myHostMarker.isValid();
+  }
+
+  public void setGreedyToLeft(final boolean greedy) {
+    myHostMarker.setGreedyToLeft(greedy);
+  }
+
+  public void setGreedyToRight(final boolean greedy) {
+    myHostMarker.setGreedyToRight(greedy);
+  }
+
+  public <T> T getUserData(final Key<T> key) {
+    return myHostMarker.getUserData(key);
+  }
+
+  public <T> void putUserData(final Key<T> key, final T value) {
+    myHostMarker.putUserData(key, value);
+  }
+
+  public void documentChanged(final DocumentEvent e) {
+    myHostMarker.documentChanged(e);
   }
 }

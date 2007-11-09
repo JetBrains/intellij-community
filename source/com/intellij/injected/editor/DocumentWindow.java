@@ -203,7 +203,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
     assert startOffset <= endOffset;
     TextRange hostRange = injectedToHost(new TextRange(startOffset, endOffset));
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
-    return new RangeMarkerWindow(this, hostMarker);
+    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
   }
 
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset, final boolean surviveOnExternalChange) {
