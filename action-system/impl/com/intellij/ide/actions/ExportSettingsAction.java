@@ -96,7 +96,7 @@ public class ExportSettingsAction extends AnAction {
         continue;
       }
       try {
-        final Class<?> aClass = Class.forName(serviceClass);
+        final Class<?> aClass = Class.forName(serviceClass, true, exportableBean.getPluginDescriptor().getPluginClassLoader());
         final Object service = ServiceManager.getService(aClass);
         if (service == null) {
           LOG.error("Can't find service: " + serviceClass);

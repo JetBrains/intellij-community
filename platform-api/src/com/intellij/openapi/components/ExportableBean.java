@@ -16,12 +16,23 @@
 
 package com.intellij.openapi.components;
 
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
  * @author mike
  */
-public class ExportableBean {
+public class ExportableBean implements PluginAware {
   @Attribute("serviceInterface")
   public String serviceInterface;
+  private PluginDescriptor myPluginDescriptor;
+
+  public void setPluginDescriptor(final PluginDescriptor pluginDescriptor) {
+    myPluginDescriptor = pluginDescriptor;
+  }
+
+  public PluginDescriptor getPluginDescriptor() {
+    return myPluginDescriptor;
+  }
 }
