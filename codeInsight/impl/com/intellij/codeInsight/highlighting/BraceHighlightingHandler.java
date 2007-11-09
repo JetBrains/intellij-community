@@ -10,6 +10,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
+import com.intellij.codeInsight.hint.DeclarationRangeUtil;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -374,7 +375,7 @@ public class BraceHighlightingHandler {
     if (parent instanceof PsiCodeBlock) {
       parent = parent.getParent();
       if (parent instanceof PsiMethod || parent instanceof PsiClassInitializer) {
-        TextRange range = EditorFragmentComponent.getDeclarationRange(parent);
+        TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
         return range.getStartOffset();
       }
       else if (parent instanceof PsiStatement) {
@@ -385,7 +386,7 @@ public class BraceHighlightingHandler {
       }
     }
     else if (parent instanceof PsiClass) {
-      TextRange range = EditorFragmentComponent.getDeclarationRange(parent);
+      TextRange range = DeclarationRangeUtil.getDeclarationRange(parent);
       return range.getStartOffset();
     }
     return lbraceOffset;

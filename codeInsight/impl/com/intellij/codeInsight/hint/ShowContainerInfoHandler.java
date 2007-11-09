@@ -68,7 +68,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
             }
 
             container = container.getParent();
-            while(container != null && EditorFragmentComponent.getPossibleDeclarationAtRange(container) == null) {
+            while(container != null && DeclarationRangeUtil.getPossibleDeclarationAtRange(container) == null) {
               container = container.getParent();
               if (container instanceof PsiFile) return;
             }
@@ -80,7 +80,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
       }
     }
 
-    final TextRange range = EditorFragmentComponent.getDeclarationRange(container);
+    final TextRange range = DeclarationRangeUtil.getDeclarationRange(container);
     final PsiElement _container = container;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
@@ -108,7 +108,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
 
   private boolean isDeclarationVisible(PsiElement container, Editor editor) {
     Rectangle viewRect = editor.getScrollingModel().getVisibleArea();
-    TextRange range = EditorFragmentComponent.getDeclarationRange(container);
+    TextRange range = DeclarationRangeUtil.getDeclarationRange(container);
     LogicalPosition pos = editor.offsetToLogicalPosition(range.getStartOffset());
     Point loc = editor.logicalPositionToXY(pos);
     return loc.y >= viewRect.y;
