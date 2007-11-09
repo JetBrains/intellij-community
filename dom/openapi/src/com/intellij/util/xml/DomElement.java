@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -31,7 +32,7 @@ import java.lang.reflect.Type;
  *
  * @author peter
  */
-public interface DomElement extends AnnotatedElement{
+public interface DomElement extends AnnotatedElement, UserDataHolder {
   DomElement[] EMPTY_ARRAY = new DomElement[0];
 
   @Nullable

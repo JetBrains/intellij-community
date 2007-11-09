@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -26,6 +27,7 @@ public class InvocationCache {
     addCoreInvocations(DomElement.class);
     addCoreInvocations(Navigatable.class);
     addCoreInvocations(AnnotatedElement.class);
+    addCoreInvocations(UserDataHolder.class);
     addCoreInvocations(Object.class);
     try {
       ourCoreInvocations.put(JavaMethodSignature.getSignature(GenericAttributeValue.class.getMethod("getXmlAttribute")), new Invocation() {
