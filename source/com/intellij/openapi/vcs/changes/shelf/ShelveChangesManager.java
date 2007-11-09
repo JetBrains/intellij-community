@@ -182,7 +182,17 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   }
 
   public static File suggestPatchName(final String commitMessage, final File file) {
-    @NonNls String defaultPath = commitMessage.replace(' ', '_').replace('.', '_').replace(File.separatorChar, '_').replace('\t', '_').replace('\n', '_').replace(':', '_').replace('/', '_');
+    @NonNls String defaultPath = commitMessage.replace(' ', '_')
+                                              .replace('.', '_')
+                                              .replace(File.separatorChar, '_')
+                                              .replace('\t', '_')
+                                              .replace('\n', '_')
+                                              .replace(':', '_')
+                                              .replace('*', '_')
+                                              .replace('?', '_')
+                                              .replace('<', '_')
+                                              .replace('>', '_')
+                                              .replace('/', '_');
     if (defaultPath.length() == 0) {
       defaultPath = "unnamed";
     }
