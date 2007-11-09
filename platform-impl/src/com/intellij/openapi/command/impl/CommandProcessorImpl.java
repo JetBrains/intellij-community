@@ -13,8 +13,10 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.impl.source.codeStyle.TooComplexPSIModificationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nls;
 
 import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -78,32 +80,71 @@ public class CommandProcessorImpl extends CommandProcessorEx {
       command.run();
       return;
     }
-    boolean failed = false;
+    Throwable throwable = null;
     try {
       myCurrentCommand = new CommandDescriptor(command, project, name, groupId, undoConfirmationPolicy);
       fireCommandStarted();
       command.run();
     }
-    catch (TooComplexPSIModificationException rollback) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new RuntimeException(rollback);
-      }
-      failed = true;
-    } catch (UnsupportedOperationException operation) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new RuntimeException(operation);
-      }
-      failed = true;
+    catch (Throwable th) {
+      throwable = th;
     }
-    catch (Throwable e) {
-      if (e instanceof Error) throw (Error)e;
-      else if (e instanceof RuntimeException) throw (RuntimeException)e;
-      LOG.error(e);
+    finally {
+      finishCommand(project, myCurrentCommand, throwable);
+    }
+  }
+
+  @Nullable
+  public Object startCommand(final Project project, @Nls final String name, final Object groupId, final UndoConfirmationPolicy undoConfirmationPolicy) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (project != null && project.isDisposed()) return null;
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("startCommand: name = " + name + ", groupId = " + groupId);
+    }
+
+    if (myCurrentCommand != null) {
+      return null;
+    }
+
+    myCurrentCommand = new CommandDescriptor(EmptyRunnable.INSTANCE, project, name, groupId, undoConfirmationPolicy);
+    fireCommandStarted();
+    return myCurrentCommand;
+  }
+
+  public void finishCommand(final Project project, final Object command, final Throwable throwable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
+    if (myCurrentCommand != command) return;
+    final boolean failed;
+    try {
+      if (throwable instanceof TooComplexPSIModificationException) {
+        final TooComplexPSIModificationException rollback = (TooComplexPSIModificationException)throwable;
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          throw new RuntimeException(rollback);
+        }
+        failed = true;
+      }
+      else if (throwable instanceof UnsupportedOperationException) {
+        final UnsupportedOperationException operation = (UnsupportedOperationException)throwable;
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          throw new RuntimeException(operation);
+        }
+        failed = true;
+      }
+      else if (throwable != null) {
+        failed = true;
+        if (throwable instanceof Error) throw (Error)throwable;
+        else if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
+        LOG.error(throwable);
+      }
+      else {
+        failed = false;
+      }
     }
     finally {
       fireCommandFinished();
     }
-
     if (failed) {
       if (project != null) {
         FileEditor editor = new FocusBasedCurrentEditorProvider().getCurrentEditor();
@@ -112,7 +153,6 @@ public class CommandProcessorImpl extends CommandProcessorEx {
           undoManager.undo(editor);
         }
       }
-
       Messages.showErrorDialog(project, "Cannot perform operation. Too complex, sorry.", "Failed to perform operation");
     }
   }

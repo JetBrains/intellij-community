@@ -23,10 +23,13 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
@@ -65,22 +68,6 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
-    if (myPsiFiles != null && myPsiFiles.length > 0) {
-      List<VirtualFile> list = new SmartList<VirtualFile>();
-      for (final PsiFile psiFile : myPsiFiles) {
-        if (psiFile == null) continue;
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile != null) {
-            list.add(virtualFile);
-          }
-      }
-      if (!list.isEmpty()) {
-        if (ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(list.toArray(new VirtualFile[list.size()])).hasReadonlyFiles()) {
-          return result;
-        }
-      }
-    }
-
     try {
       if (EventQueue.isDispatchThread()) {
         performWriteCommandAction(result);
@@ -100,7 +87,28 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return result;
   }
 
+  public static boolean ensureFilesWritable(@NotNull final Project project, @NotNull final Collection<PsiFile> psiFiles) {
+    if (!psiFiles.isEmpty()) {
+      List<VirtualFile> list = new SmartList<VirtualFile>();
+      for (final PsiFile psiFile : psiFiles) {
+        if (psiFile == null) continue;
+        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        if (virtualFile != null) {
+            list.add(virtualFile);
+          }
+      }
+      if (!list.isEmpty()) {
+        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(list.toArray(new VirtualFile[list.size()])).hasReadonlyFiles()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   private void performWriteCommandAction(final RunResult<T> result) {
+    if (!ensureFilesWritable(myProject, Arrays.asList(myPsiFiles))) return;
+
     //this is needed to prevent memory leak, since command
     // is put into undo queue
     final RunResult[] results = new RunResult[] {result};
