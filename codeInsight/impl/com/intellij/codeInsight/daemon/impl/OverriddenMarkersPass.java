@@ -41,7 +41,8 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
 
   private Collection<LineMarkerInfo> myMarkers;
 
-  public OverriddenMarkersPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Document document, int startOffset, int endOffset) {
+  public OverriddenMarkersPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Document document, int startOffset, int
+endOffset) {
     super(project, document);
     myFile = file;
     myStartOffset = startOffset;
@@ -67,22 +68,21 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, getId());
   }
 
-  private static void collectLineMarkers(List<PsiElement> elements, final Collection<LineMarkerInfo> result) throws ProcessCanceledException {
+  private static void collectLineMarkers(List<PsiElement> elements, final Collection<LineMarkerInfo> result) throws
+ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
-      if (element instanceof PsiIdentifier) {
-        if (element.getParent() instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)element.getParent();
-          if (element.equals(method.getNameIdentifier()) && PsiUtil.canBeOverriden(method)) {
-            methods.add(method);
-          }
+      if (element instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)element;
+        if (PsiUtil.canBeOverriden(method)) {
+          methods.add(method);
         }
-        else if (element.getParent() instanceof PsiClass && !(element.getParent() instanceof PsiTypeParameter)) {
-          collectInheritingClasses(element, result);
-        }
+      }
+      else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+        collectInheritingClasses((PsiClass)element, result);
       }
     }
     if (!methods.isEmpty()) {
@@ -90,19 +90,17 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static void collectInheritingClasses(PsiElement element, Collection<LineMarkerInfo> result) {
-    PsiClass aClass = (PsiClass) element.getParent();
-    if (element.equals(aClass.getNameIdentifier())) {
-      if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
-        if ("java.lang.Object".equals(aClass.getQualifiedName())) return; // It's useless to have overriden markers for object.
+  private static void collectInheritingClasses(PsiClass aClass, Collection<LineMarkerInfo> result) {
+    if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      if ("java.lang.Object".equals(aClass.getQualifiedName())) return; // It's useless to have overriden markers for object.
 
-        final PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
-        if (inheritor != null) {
-          int offset = element.getTextRange().getStartOffset();
-          LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.SUBCLASSED_CLASS, aClass, offset, aClass.isInterface() ? IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER);
+      final PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
+      if (inheritor != null) {
+        int offset = aClass.getTextOffset();
+        LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.SUBCLASSED_CLASS, aClass, offset, aClass.isInterface() ?
+IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER);
 
-          result.add(info);
-        }
+        result.add(info);
       }
     }
   }
@@ -132,10 +130,7 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     for (PsiMethod method : overridden) {
       boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
 
-      final PsiIdentifier ident = method.getNameIdentifier();
-      assert ident != null; // Can only be null for JspHolderMethod, which cannot be overriden.
-
-      int offset = ident.getTextRange().getStartOffset();
+      int offset = method.getTextOffset();
       LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.OVERRIDEN_METHOD, method, offset,
                                                overrides ? OVERRIDEN_METHOD_MARKER_RENDERER : IMPLEMENTED_METHOD_MARKER_RENDERER);
 
@@ -143,3 +138,4 @@ public class OverriddenMarkersPass extends TextEditorHighlightingPass {
     }
   }
 }
+
