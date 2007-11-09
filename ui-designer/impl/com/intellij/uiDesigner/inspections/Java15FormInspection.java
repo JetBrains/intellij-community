@@ -1,6 +1,8 @@
 package com.intellij.uiDesigner.inspections;
 
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.openapi.module.Module;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -39,8 +41,13 @@ public class Java15FormInspection extends BaseFormInspection {
 
     for(final IProperty prop: component.getModifiedProperties()) {
       final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, prop.getName(), false, true);
-      final Java15APIUsageInspection tool = (Java15APIUsageInspection)InspectionProjectProfileManager.getInstance(aClass.getProject()).getInspectionProfile(aClass)
-        .getInspectionTool(Java15APIUsageInspection.SHORT_NAME);
+      InspectionProfileEntry profileEntry =
+        InspectionProjectProfileManager.getInstance(aClass.getProject()).getInspectionProfile(aClass)
+          .getInspectionTool(Java15APIUsageInspection.SHORT_NAME);
+      if (profileEntry instanceof LocalInspectionToolWrapper) {
+        profileEntry = ((LocalInspectionToolWrapper) profileEntry).getTool();
+      }
+      final Java15APIUsageInspection tool = (Java15APIUsageInspection)profileEntry;
       if (tool.isJava15ApiUsage(getter)) {
         registerError(component, collector, prop, "@since 1.5");
       } else if (tool.isJava16ApiUsage(getter)) {
