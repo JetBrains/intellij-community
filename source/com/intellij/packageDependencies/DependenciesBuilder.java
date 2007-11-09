@@ -7,10 +7,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: anna
@@ -23,6 +20,7 @@ public abstract class DependenciesBuilder {
   private final Map<PsiFile, Set<PsiFile>> myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
   protected int myTotalFileCount;
   protected int myFileCount = 0;
+  protected boolean myTransitive = false;
 
   protected DependenciesBuilder(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     this(project, scope, null);
@@ -49,6 +47,10 @@ public abstract class DependenciesBuilder {
 
   public Map<PsiFile, Set<PsiFile>> getDependencies() {
     return myDependencies;
+  }
+
+  public Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
+    return getDependencies();
   }
 
   public AnalysisScope getScope() {
@@ -98,8 +100,41 @@ public abstract class DependenciesBuilder {
     return result;
   }
 
+  public List<List<PsiFile>> findPaths(PsiFile from, PsiFile to) {
+    return findPaths(from, to, new HashSet<PsiFile>());
+  }
+
+  private List<List<PsiFile>> findPaths(PsiFile from, PsiFile to, Set<PsiFile> processed) {
+    final List<List<PsiFile>> result = new ArrayList<List<PsiFile>>();
+    final Set<PsiFile> reachable = getDirectDependencies().get(from);
+    if (reachable != null) {
+      if (reachable.contains(to)) {
+        final ArrayList<PsiFile> path = new ArrayList<PsiFile>();
+        result.add(path);
+        return result;
+      }
+      if (!processed.contains(from)) {
+        processed.add(from);
+        for (PsiFile file : reachable) {
+          final List<List<PsiFile>> paths = findPaths(file, to, processed);
+          for (List<PsiFile> path : paths) {
+            path.add(0, file);
+          }
+          result.addAll(paths);
+        }
+      }
+    }
+    return result;
+  }
+
+
+
   public static void analyzeFileDependencies(PsiFile file, DependencyProcessor processor) {
     file.accept(new DependenciesWalker(processor));
+  }
+
+  public boolean isTransitive() {
+    return myTransitive;
   }
 
   public interface DependencyProcessor {

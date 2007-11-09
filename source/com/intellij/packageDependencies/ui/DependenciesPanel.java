@@ -4,6 +4,7 @@ import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -17,9 +18,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -33,7 +36,9 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.Function;
 import com.intellij.util.Icons;
+import com.intellij.util.Processor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -73,6 +78,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final boolean myForward;
   private final AnalysisScope myScopeOfInterest;
+  private final boolean myTransitive;
 
   public DependenciesPanel(Project project, final DependenciesBuilder builder){
     this(project, Collections.singletonList(builder), new HashSet<PsiFile>());
@@ -85,6 +91,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     final DependenciesBuilder main = myBuilders.get(0);
     myForward = !main.isBackward();
     myScopeOfInterest = main.getScopeOfInterest();
+    myTransitive = main.isTransitive();
     myDependencies = new HashMap<PsiFile, Set<PsiFile>>();
     myIllegalDependencies = new HashMap<PsiFile, Map<DependencyRule, Set<PsiFile>>>();
     for (DependenciesBuilder builder : builders) {
@@ -165,12 +172,18 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       public void valueChanged(TreeSelectionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            Set<PsiFile> searchIn = getSelectedScope(myLeftTree);
-            Set<PsiFile> searchFor = getSelectedScope(myRightTree);
+            final Set<PsiFile> searchIn = getSelectedScope(myLeftTree);
+            final Set<PsiFile> searchFor = getSelectedScope(myRightTree);
             if (searchIn.isEmpty() || searchFor.isEmpty()) {
               myUsagesPanel.setToInitialPosition();
             }
             else {
+              processDependencies(searchIn, searchFor, new Processor<List<PsiFile>>() {
+                public boolean process(final List<PsiFile> path) {
+                  searchFor.add(path.get(1));
+                  return true;
+                }
+              });
               myUsagesPanel.findUsages(searchIn, searchFor);
             }
           }
@@ -187,6 +200,31 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         Set<PsiFile> oneFileSet = myDependencies.keySet();
         if (oneFileSet.size() == 1) {
           selectElementInLeftTree(oneFileSet.iterator().next());
+          return;
+        }
+      }
+    }
+    TreeUtil.selectFirstNode(myLeftTree);
+  }
+
+  private void processDependencies(final Set<PsiFile> searchIn, final Set<PsiFile> searchFor, Processor<List<PsiFile>> processor) {
+    Set<PsiFile> initialSearchFor = new HashSet<PsiFile>(searchFor);
+    for (DependenciesBuilder builder : myBuilders) {
+      for (PsiFile from : searchIn) {
+        for (PsiFile to : initialSearchFor) {
+          final List<List<PsiFile>> paths = builder.findPaths(from, to);
+          Collections.sort(paths, new Comparator<List<PsiFile>>() {
+            public int compare(final List<PsiFile> p1, final List<PsiFile> p2) {
+              return p1.size() - p2.size();
+            }
+          });
+          for (List<PsiFile> path : paths) {
+            if (!path.isEmpty()){
+              path.add(0, from);
+              path.add(to);
+              if (!processor.process(path)) return;
+            }
+          }
         }
       }
     }
@@ -307,6 +345,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       group.add(actionManager.getAction(IdeActions.GROUP_ANALYZE));
       group.add(new AddToScopeAction());
       group.add(new SelectInLeftTreeAction());
+      group.add(new ShowDetailedInformationAction());
     } else {
       group.add(new RemoveFromScopeAction());
     }
@@ -553,7 +592,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
             new BackwardDependenciesHandler(myProject, scopes, myScopeOfInterest, myExcluded).analyze();
           }
           else {
-            new AnalyzeDependenciesHandler(myProject, scopes, myExcluded).analyze();
+            new AnalyzeDependenciesHandler(myProject, scopes, myTransitive, myExcluded).analyze();
           }
         }
       });
@@ -636,6 +675,49 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
+  private class ShowDetailedInformationAction extends AnAction {
+    private ShowDetailedInformationAction() {
+      super("Show indirect dependencies");
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      @NonNls final String delim = "&nbsp;-&gt;&nbsp;";
+      final StringBuffer buf = new StringBuffer();
+      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), new Processor<List<PsiFile>>() {
+        public boolean process(final List<PsiFile> path) {
+          if (buf.length() > 0) buf.append("<br>");
+          buf.append(StringUtil.join(path, new Function<PsiFile, String>() {
+            public String fun(final PsiFile psiFile) {
+              return psiFile.getName();
+            }
+          }, delim));
+          return true;
+        }
+      });
+      final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, "<html>" + buf.toString()+ "</html>");
+      pane.setForeground(Color.black);
+      pane.setBackground(HintUtil.INFORMATION_COLOR);
+      pane.setOpaque(true);
+      final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);
+      final Dimension dimension = pane.getPreferredSize();
+      scrollPane.setMinimumSize(new Dimension(dimension.width, dimension.height + 20));
+      scrollPane.setPreferredSize(new Dimension(dimension.width, dimension.height + 20));
+      JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, pane).setTitle("Dependencies")
+        .setMovable(true).createPopup().showInBestPositionFor(e.getDataContext());
+    }
+
+    public void update(final AnActionEvent e) {
+      final boolean[] direct = new boolean[]{true};
+      processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), new Processor<List<PsiFile>>() {
+        public boolean process(final List<PsiFile> path) {
+          direct [0] = false;
+          return false;
+        }
+      });
+      e.getPresentation().setEnabled(!direct[0]);
+    }
+  }
+
   private class RemoveFromScopeAction extends AnAction {
     private RemoveFromScopeAction() {
       super("Remove from scope");
@@ -674,7 +756,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       if (!myForward) {
         builder = new BackwardDependenciesBuilder(myProject, scope, myScopeOfInterest);
       } else {
-        builder = new ForwardDependenciesBuilder(myProject, scope);
+        builder = new ForwardDependenciesBuilder(myProject, scope, myTransitive);
       }
       ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"), new Runnable() {
         public void run() {
