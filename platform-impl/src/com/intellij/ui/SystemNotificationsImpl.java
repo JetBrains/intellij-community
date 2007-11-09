@@ -16,21 +16,18 @@ import java.util.Set;
   name = "SystemNotifications",
   storages = {
     @Storage(
-      id="DuplocatorSettings",
+      id="SystemNotifications",
       file="$APP_CONFIG$/other.xml"
     )}
 )
 public class SystemNotificationsImpl implements SystemNotifications, PersistentStateComponent<SystemNotificationsImpl.State> {
   private State myState = new State();
 
-  private SystemNotificationsImpl() {
-  }
-
   public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
     if (!SystemInfo.isMac) return;
 
-    myState.myNotifications.add(notificationName);
-    GrowlNotifications.getNofications().notify(myState.myNotifications, notificationName, title, text);
+    myState.NOTIFICATIONS.add(notificationName);
+    GrowlNotifications.getNofications().notify(myState.NOTIFICATIONS, notificationName, title, text);
   }
 
   public State getState() {
@@ -43,6 +40,6 @@ public class SystemNotificationsImpl implements SystemNotifications, PersistentS
 
 
   public static class State {
-    private Set<String> myNotifications = new HashSet<String>();
+    public Set<String> NOTIFICATIONS = new HashSet<String>();
   }
 }
