@@ -76,7 +76,7 @@ public class ConfigurationsTest {
     final RenameRefactoring renameClass = RefactoringFactory.getInstance(project).createRename(psiClass, newName);
     renameClass.setSearchInComments(false);
     renameClass.setSearchInNonJavaFiles(false);
-    new WriteCommandAction(project, null) {
+    new WriteCommandAction(project) {
       protected void run(final Result result) throws Throwable {
         renameClass.run();
       }
@@ -88,7 +88,7 @@ public class ConfigurationsTest {
     final RenameRefactoring renameNotATestMethod = RefactoringFactory.getInstance(project).createRename(notATestMethod, "aaaa");
     renameNotATestMethod.setSearchInComments(false);
     renameNotATestMethod.setSearchInNonJavaFiles(false);
-    new WriteCommandAction(project, null) {
+    new WriteCommandAction(project) {
       protected void run(final Result result) throws Throwable {
         renameNotATestMethod.run();
       }
@@ -112,7 +112,7 @@ public class ConfigurationsTest {
     final RenameRefactoring renameMethod = RefactoringFactory.getInstance(project).createRename(method, newMethodName);
     renameMethod.setSearchInComments(false);
     renameMethod.setSearchInNonJavaFiles(false);
-    new WriteCommandAction(project, null) {
+    new WriteCommandAction(project) {
       protected void run(final Result result) throws Throwable {
         renameMethod.run();
       }
@@ -125,7 +125,7 @@ public class ConfigurationsTest {
     final RenameRefactoring renameNotATestMethod1 = RefactoringFactory.getInstance(project).createRename(notATestMethod, "bbbbb");
     renameNotATestMethod1.setSearchInComments(false);
     renameNotATestMethod1.setSearchInNonJavaFiles(false);
-    new WriteCommandAction(project, null) {
+    new WriteCommandAction(project) {
       protected void run(final Result result) throws Throwable {
         renameNotATestMethod1.run();
       }
