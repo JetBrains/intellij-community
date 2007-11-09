@@ -156,6 +156,7 @@ public class PsiSuperMethodImplUtil {
           clearSupersForSiblingInherited.add(superSignature);
         }
         else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
+          if (existing.getMethod().equals(hierarchicalMethodSignature.getMethod())) continue;
           for (HierarchicalMethodSignature existingSuper : existing.getSuperSignatures()) {
             if (existingSuper.getMethod().equals(hierarchicalMethodSignature.getMethod())) continue nextSuperSignature;
           }
