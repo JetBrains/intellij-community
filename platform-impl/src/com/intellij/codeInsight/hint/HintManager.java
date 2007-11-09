@@ -5,10 +5,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupAdapter;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -716,7 +713,7 @@ public class HintManager implements ApplicationComponent {
     }
 
     public void execute(Editor editor, DataContext dataContext) {
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null || !getInstance().hideHints(HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY, true, false)) {
         myOriginalHandler.execute(editor, dataContext);
       }
@@ -724,7 +721,7 @@ public class HintManager implements ApplicationComponent {
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-      Project project = DataKeys.PROJECT.getData(dataContext);
+      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
       if (project != null) {
         HintManager hintManager = getInstance();
