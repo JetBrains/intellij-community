@@ -10,10 +10,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -21,13 +20,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -41,8 +40,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private EventListenerList myListeners;
   private List<Content> mySelection = new ArrayList<Content>();
   private boolean myCanCloseContents;
-
-  private final Project myProject;
 
   private MyContentComponent myContentComponent;
   private MyFocusProxy myFocusProxy;
@@ -63,7 +60,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myListeners = new EventListenerList();
     myUI = contentUI;
     myUI.setManager(this);
-    myProject = project;
 
     Disposer.register(project, this);
     Disposer.register(this, contentUI);
@@ -476,7 +472,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public ContentFactory getFactory() {
-    return PeerFactory.getInstance().getContentFactory();
+    return ContentFactory.getInstance();
   }
 
   public void dispose() {

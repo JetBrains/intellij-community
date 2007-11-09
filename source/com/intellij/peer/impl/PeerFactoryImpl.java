@@ -1,8 +1,8 @@
 package com.intellij.peer.impl;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
-import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewFactory;
@@ -51,7 +51,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentFactoryImpl;
 import com.intellij.ui.errorView.ErrorViewFactory;
 import com.intellij.ui.errorView.impl.ErrorViewFactoryImpl;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -77,7 +76,6 @@ public class PeerFactoryImpl extends PeerFactory {
   private PackageSetFactory myPackageSetFactory;
   private final UIHelper myUIHelper = new MyUIHelper();
   private final ErrorViewFactory myErrorViewFactory = new ErrorViewFactoryImpl();
-  private final ContentFactoryImpl myContentFactory = new ContentFactoryImpl();
   private final FileSystemTreeFactoryImpl myFileSystemTreeFactory = new FileSystemTreeFactoryImpl();
   private final DiffRequestFactoryImpl myDiffRequestFactory = new DiffRequestFactoryImpl();
 
@@ -109,7 +107,7 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public ContentFactory getContentFactory() {
-    return myContentFactory;
+    return ContentFactory.getInstance();
   }
 
   public FileSystemTreeFactory getFileSystemTreeFactory() {
