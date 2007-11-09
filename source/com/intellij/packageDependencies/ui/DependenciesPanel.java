@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
@@ -863,6 +864,27 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       final PackageDependenciesNode leftNode = myLeftTree.getSelectedNode();
       final PackageDependenciesNode rightNode = myRightTree.getSelectedNode();
       if (leftNode != null && rightNode != null) {
+        boolean hasDirectDependencies = !myTransitive;
+        if (myTransitive) {
+          final Set<PsiFile> searchIn = getSelectedScope(myLeftTree);
+          final Set<PsiFile> searchFor = getSelectedScope(myRightTree);
+          for (DependenciesBuilder builder : myBuilders) {
+            if (hasDirectDependencies) break;
+            for (PsiFile from : searchIn) {
+              if (hasDirectDependencies) break;
+              for (PsiFile to : searchFor) {
+                if (hasDirectDependencies) break;
+                final List<List<PsiFile>> paths = builder.findPaths(from, to);
+                for (List<PsiFile> path : paths) {
+                  if (path.isEmpty()) {
+                    hasDirectDependencies = true;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
         PackageSet leftPackageSet = ScopeEditorPanel.getNodePackageSet(leftNode, true);
         if (leftPackageSet == null) {
           leftPackageSet = ScopeEditorPanel.getNodePackageSet(leftNode, false);
@@ -873,10 +895,15 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
           rightPackageSet = ScopeEditorPanel.getNodePackageSet(rightNode, false);
         }
         LOG.assertTrue(rightPackageSet != null);
-        DependencyValidationManager.getInstance(myProject)
-          .addRule(new DependencyRule(new NamedScope.UnnamedScope(leftPackageSet),
-                                      new NamedScope.UnnamedScope(rightPackageSet), true));
-        rebuild();
+        if (hasDirectDependencies) {
+          DependencyValidationManager.getInstance(myProject)
+            .addRule(new DependencyRule(new NamedScope.UnnamedScope(leftPackageSet),
+                                        new NamedScope.UnnamedScope(rightPackageSet), true));
+          rebuild();
+        } else {
+          Messages.showErrorDialog(DependenciesPanel.this, "Rule was not added.\n There is no direct dependency between \'" + leftPackageSet.getText() + "\' and \'" + rightPackageSet.getText() + "\'",
+                                   AnalysisScopeBundle.message("mark.dependency.illegal.text"));
+        }
       }
     }
 

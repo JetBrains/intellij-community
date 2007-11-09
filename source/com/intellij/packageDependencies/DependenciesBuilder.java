@@ -76,8 +76,8 @@ public abstract class DependenciesBuilder {
   public Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> getIllegalDependencies(){
     Map<PsiFile, Map<DependencyRule, Set<PsiFile>>> result = new HashMap<PsiFile, Map<DependencyRule, Set<PsiFile>>>();
     DependencyValidationManager validator = DependencyValidationManager.getInstance(myProject);
-    for (PsiFile file : myDependencies.keySet()) {
-      Set<PsiFile> deps = myDependencies.get(file);
+    for (PsiFile file : getDirectDependencies().keySet()) {
+      Set<PsiFile> deps = getDirectDependencies().get(file);
       Map<DependencyRule, Set<PsiFile>> illegal = null;
       for (PsiFile dependency : deps) {
         final DependencyRule rule = isBackward() ?
