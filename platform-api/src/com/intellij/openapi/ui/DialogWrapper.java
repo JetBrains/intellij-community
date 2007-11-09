@@ -22,8 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -35,6 +37,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public abstract class DialogWrapper {
   /**
@@ -198,39 +201,56 @@ public abstract class DialogWrapper {
     Action[] actions = createActions();
     Action[] leftSideActions = createLeftSideActions();
     ArrayList<Component> buttons = new ArrayList<Component>();
-    final JPanel panel = new JPanel(new GridBagLayout());
+
+    boolean hasHelpToMoveToLeftSide = false;
+    if (SystemInfo.isMacOSLeopard && Arrays.asList(actions).contains(getHelpAction())) {
+      hasHelpToMoveToLeftSide = true;
+      actions = ArrayUtil.remove(actions, getHelpAction());
+    }
+
+    JPanel panel = new JPanel(new BorderLayout());
+    final JPanel lrButtonsPanel = new JPanel(new GridBagLayout());
+    final Insets insets = SystemInfo.isMacOSLeopard ? new Insets(0, 0, 0, 0) : new Insets(8, 0, 0, 0);
+
     if (actions.length > 0 || leftSideActions.length > 0) {
       int gridx = 0;
       if (leftSideActions.length > 0) {
         JPanel buttonsPanel = createButtons(leftSideActions, buttons);
-        panel.add(buttonsPanel,
-                  new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                         new Insets(8, 0, 0, 0), 0, 0));
+        lrButtonsPanel.add(buttonsPanel,
+                  new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0, 0));
 
       }
-      panel.add(// left strut
+      lrButtonsPanel.add(// left strut
                 Box.createHorizontalGlue(),
-                new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                       new Insets(8, 0, 0, 0), 0, 0));
+                new GridBagConstraints(gridx++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
       if (actions.length > 0) {
         JPanel buttonsPanel = createButtons(actions, buttons);
-        panel.add(buttonsPanel,
-                  new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                         new Insets(8, 0, 0, 0), 0, 0));
+        lrButtonsPanel.add(buttonsPanel,
+                  new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0, 0));
       }
       if (SwingConstants.CENTER == myButtonAlignment) {
-        panel.add(// right strut
+        lrButtonsPanel.add(// right strut
                   Box.createHorizontalGlue(),
-                  new GridBagConstraints(gridx, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                         new Insets(8, 0, 0, 0), 0, 0));
+                  new GridBagConstraints(gridx, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
       }
       myButtons = buttons.toArray(new Component[buttons.size()]);
     }
+
+    if (hasHelpToMoveToLeftSide) {
+      JButton helpButton = new JButton(getHelpAction());
+      helpButton.putClientProperty("JButton.buttonType", "help");
+      helpButton.setText("");
+      helpButton.setMargin(insets);
+      panel.add(helpButton, BorderLayout.WEST);
+    }
+
+    panel.add(lrButtonsPanel, BorderLayout.CENTER);
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(8, 0, 0, 0)));
     return panel;
   }
 
   private JPanel createButtons(Action[] actions, ArrayList<Component> buttons) {
-    JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, 5, 0));
+    JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? 0 : 5, 0));
     for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
       final Object value = action.getValue(Action.MNEMONIC_KEY);
@@ -260,12 +280,12 @@ public abstract class DialogWrapper {
    */
   protected JButton createJButtonForAction(Action action) {
     JButton button = new JButton(action);
+    String text = button.getText();
 
     if (SystemInfo.isMac) {
       button.putClientProperty("JButton.buttonType", "text");
-    }  
+    }
 
-    String text = button.getText();
     if (text != null) {
       int mnemonic = 0;
       StringBuilder plainText = new StringBuilder();
