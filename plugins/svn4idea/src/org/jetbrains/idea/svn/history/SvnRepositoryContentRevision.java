@@ -136,9 +136,14 @@ public class SvnRepositoryContentRevision implements ContentRevision {
         progress.setText2(SvnBundle.message("progress.text2.revision.information", myRevision));
       }
       try {
-        SVNRepository repository = myVcs.createRepository(myRepositoryRoot);
+        String fullPath = myRepositoryRoot;
+        if (!fullPath.endsWith("/") && !myPath.startsWith("/")) {
+          fullPath += "/";
+        }
+        fullPath += myPath;
+        SVNRepository repository = myVcs.createRepository(fullPath);
         try {
-          repository.getFile(myPath, myRevision, null, myDst);
+          repository.getFile("", myRevision, null, myDst);
         }
         finally {
           repository.closeSession();
