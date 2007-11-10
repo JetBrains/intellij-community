@@ -16,7 +16,6 @@
 
 package com.intellij.lang.refactoring;
 
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,13 @@ public class DefaultRefactoringSupportProvider implements RefactoringSupportProv
     return false;
   }
 
+  @Nullable
   public RefactoringActionHandler getIntroduceVariableHandler() {
+    return null;
+  }
+
+  @Nullable
+  public RefactoringActionHandler getExtractMethodHandler() {
     return null;
   }
 

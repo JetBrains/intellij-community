@@ -1,10 +1,11 @@
 
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 
 /**
  *
@@ -19,6 +20,15 @@ public class ExtractMethodAction extends BaseRefactoringAction {
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
-    return new ExtractMethodHandler();
+    final Language language = DataKeys.LANGUAGE.getData(dataContext);
+    if (language != null) {
+      return language.getRefactoringSupportProvider().getExtractMethodHandler();
+    }
+
+    return null;
+  }
+
+  protected boolean isAvailableForLanguage(final Language language) {
+    return language.getRefactoringSupportProvider().getExtractMethodHandler() != null;
   }
 }

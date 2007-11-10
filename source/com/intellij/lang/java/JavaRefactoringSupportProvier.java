@@ -4,6 +4,7 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,11 @@ public class JavaRefactoringSupportProvier implements RefactoringSupportProvider
 
   public RefactoringActionHandler getIntroduceVariableHandler() {
     return new IntroduceVariableHandler();
+  }
+
+  @Nullable
+  public RefactoringActionHandler getExtractMethodHandler() {
+    return new ExtractMethodHandler();
   }
 
   @Nullable

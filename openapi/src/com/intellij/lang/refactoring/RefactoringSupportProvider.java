@@ -45,6 +45,12 @@ public interface RefactoringSupportProvider {
   @Nullable RefactoringActionHandler getIntroduceVariableHandler();
 
   /**
+   * @return handler for extracting methods in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler;
+   */
+  @Nullable RefactoringActionHandler getExtractMethodHandler();
+
+  /**
    * @return language specific part for performing inline
    * @see com.intellij.lang.refactoring.InlineHandler
    */
