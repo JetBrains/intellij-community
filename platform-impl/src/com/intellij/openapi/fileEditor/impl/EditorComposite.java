@@ -1,6 +1,5 @@
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
@@ -181,7 +180,7 @@ public abstract class EditorComposite{
   private void fireSelectedEditorChanged(final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor){
     if (!myFileEditorManager.isInsideChange() && !Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
       final FileEditorManagerEvent event = new FileEditorManagerEvent(myFileEditorManager, myFile, oldSelectedEditor, myFile, newSelectedEditor);
-      final FileEditorManagerListener publisher = myFileEditorManager.getProject().getMessageBus().syncPublisher(ProjectTopics.FILE_EDITOR_MANAGER);
+      final FileEditorManagerListener publisher = myFileEditorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
       publisher.selectionChanged(event);
     }
   }

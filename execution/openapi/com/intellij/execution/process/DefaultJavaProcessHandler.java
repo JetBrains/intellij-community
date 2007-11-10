@@ -16,6 +16,7 @@
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,7 +28,7 @@ public class DefaultJavaProcessHandler extends OSProcessHandler {
   private final Charset myCharset;
 
   public DefaultJavaProcessHandler(final JavaParameters javaParameters) throws ExecutionException {
-    this(GeneralCommandLine.createFromJavaParameters(javaParameters));
+    this(CommandLineBuilder.createFromJavaParameters(javaParameters));
   }
 
   public DefaultJavaProcessHandler(final GeneralCommandLine commandLine) throws ExecutionException {

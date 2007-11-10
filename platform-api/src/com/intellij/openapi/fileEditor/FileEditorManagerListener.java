@@ -16,10 +16,13 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.Topic;
 
 import java.util.EventListener;
 
 public interface FileEditorManagerListener extends EventListener{
+  Topic<FileEditorManagerListener> FILE_EDITOR_MANAGER = new Topic<FileEditorManagerListener>("file editor events", FileEditorManagerListener.class);
+
   /**
    * TODO[vova] write javadoc
    */

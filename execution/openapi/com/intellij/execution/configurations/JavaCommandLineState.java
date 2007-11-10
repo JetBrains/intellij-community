@@ -35,7 +35,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    return GeneralCommandLine.createFromJavaParameters(getJavaParameters());
+    return CommandLineBuilder.createFromJavaParameters(getJavaParameters());
   }
 
 }

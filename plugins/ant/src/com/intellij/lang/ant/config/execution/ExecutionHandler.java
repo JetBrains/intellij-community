@@ -3,6 +3,7 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.junit.JUnitProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
@@ -63,7 +64,7 @@ public final class ExecutionHandler {
         builder.calculateProperties(dataContext);
         builder.addTargets(targets);
         messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets);
-        commandLine = GeneralCommandLine.createFromJavaParameters(builder.getCommandLine());
+        commandLine = CommandLineBuilder.createFromJavaParameters(builder.getCommandLine());
         messageView.setBuildCommandLine(commandLine.getCommandLineString());
         if (progress != null) progress.start();
       }

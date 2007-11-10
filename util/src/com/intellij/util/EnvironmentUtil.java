@@ -17,14 +17,13 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class EnvironmentUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.EnvironmentUtil");

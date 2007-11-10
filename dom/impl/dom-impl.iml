@@ -11,7 +11,6 @@
     <orderEntry type="module" module-name="dom-openapi" exported="" />
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="library" name="CGLIB" level="project" />
-    <orderEntry type="module" module-name="treeStructure" />
     <orderEntry type="module" module-name="ui-impl" />
     <orderEntry type="module" module-name="plugins-management" />
     <orderEntry type="module" module-name="ExtendedApi" />

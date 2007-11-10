@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntry type="library" name="CGLIB" level="project" />
-    <orderEntry type="module" module-name="treeStructure" />
     <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="module" module-name="resources" />
     <orderEntry type="module" module-name="resources_eng" />

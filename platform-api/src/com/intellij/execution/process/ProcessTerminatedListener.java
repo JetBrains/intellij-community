@@ -15,11 +15,11 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.execution.ExecutionBundle;
 import org.jetbrains.annotations.NonNls;
 
 /**

@@ -1,7 +1,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
-import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -529,7 +528,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       newSelectedComposite.getSelectedEditor().selectNotify();
 
       if (newEditorCreated) {
-        getProject().getMessageBus().syncPublisher(ProjectTopics.FILE_EDITOR_MANAGER).fileOpened(this, file);
+        getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER).fileOpened(this, file);
 
         //Add request to watch this editor's virtual file
         final VirtualFile parentDir = file.getParent();
@@ -912,7 +911,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public void addFileEditorManagerListener(@NotNull final FileEditorManagerListener listener) {
 /*    assertThread();*/
     final MessageBusConnection connection = getProject().getMessageBus().connect();
-    connection.subscribe(ProjectTopics.FILE_EDITOR_MANAGER, listener);
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     myListenerToConnectionMap.put(listener, connection);
   }
 
@@ -924,7 +923,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       }
     });
     final MessageBusConnection connection = getProject().getMessageBus().connect(parentDisposable);
-    connection.subscribe(ProjectTopics.FILE_EDITOR_MANAGER, listener);
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     myListenerToConnectionMap.put(listener, connection);
   }
 
@@ -1045,7 +1044,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     if (!filesEqual || !editorsEqual) {
       final FileEditorManagerEvent event =
         new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
-      final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(ProjectTopics.FILE_EDITOR_MANAGER);
+      final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
       publisher.selectionChanged(event);
     }
   }

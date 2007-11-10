@@ -1,6 +1,5 @@
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -142,7 +141,7 @@ public class EditorWindow {
     finally {
       editorManager.mySplitters.myInsideChange--;
       final FileEditorManagerListener publisher =
-        editorManager.getProject().getMessageBus().syncPublisher(ProjectTopics.FILE_EDITOR_MANAGER);
+        editorManager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
       publisher.fileClosed(editorManager, file);
     }
   }

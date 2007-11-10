@@ -1,6 +1,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.junit2.SegmentedInputStream;
@@ -53,7 +54,7 @@ public class JUnitProcessHandler extends OSProcessHandler {
   }
 
   public static JUnitProcessHandler runJava(final JavaParameters javaParameters) throws ExecutionException {
-    return runCommandLine(GeneralCommandLine.createFromJavaParameters(javaParameters));
+    return runCommandLine(CommandLineBuilder.createFromJavaParameters(javaParameters));
   }
 
   public static JUnitProcessHandler runCommandLine(final GeneralCommandLine commandLine) throws ExecutionException {
