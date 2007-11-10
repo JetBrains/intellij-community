@@ -141,6 +141,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.setErrorStripeRenderer(new TrafficLightRenderer(myProject, this, document, psiFile));
     markup.setErrorPanelPopupHandler(new DeamonEditorPopup(psiFile));
     markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject));
+    markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
   }
 
   private List<Pair<NamedScope, NamedScopesHolder>> myScopes = Collections.emptyList();

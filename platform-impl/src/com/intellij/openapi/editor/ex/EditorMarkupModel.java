@@ -20,4 +20,8 @@ public interface EditorMarkupModel extends MarkupModel {
   void setErrorPanelPopupHandler(PopupHandler handler);
 
   void setErrorStripTooltipRendererProvider(@NotNull ErrorStripTooltipRendererProvider provider);
+
+  int getMinMarkHeight();
+
+  void setMinMarkHeight(int minMarkHeight);
 }

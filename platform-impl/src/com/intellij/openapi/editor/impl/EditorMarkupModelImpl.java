@@ -8,7 +8,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,6 +56,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   };
 
   private @NotNull ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
+  private int myMinMarkHeight = 3;
 
   private int offsetToLine(int offset) {
     final Document document = myEditor.getDocument();
@@ -81,7 +81,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private boolean near(MouseEvent e, double width) {
       final int x = e.getX();
       final int y = e.getY();
-      return 0 <= x && x < width && yStart - getMinHeight() <= y && y < yEnd + getMinHeight();
+      return 0 <= x && x < width && yStart - getMinMarkHeight() <= y && y < yEnd + getMinMarkHeight();
     }
   }
 
@@ -143,8 +143,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int visEndLine = offsetToLine(mark.getEndOffset());
       int yStartPosition = visibleLineToYPosition(visStartLine);
       int yEndPosition = visibleLineToYPosition(visEndLine);
-      if (yEndPosition - yStartPosition < getMinHeight()) {
-        yEndPosition = yStartPosition + getMinHeight();
+      if (yEndPosition - yStartPosition < getMinMarkHeight()) {
+        yEndPosition = yStartPosition + getMinMarkHeight();
       }
       return new PositionedRangeHighlighter(mark, yStartPosition, yEndPosition);
     }
@@ -617,8 +617,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myMarkSpots.clear();
   }
 
-  private static int getMinHeight() {
-    return DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT;
+  public int getMinMarkHeight() {
+    return myMinMarkHeight;
+  }
+
+  public void setMinMarkHeight(final int minMarkHeight) {
+    myMinMarkHeight = minMarkHeight;
   }
 
   private static class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
