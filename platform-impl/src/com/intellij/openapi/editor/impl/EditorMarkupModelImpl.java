@@ -56,7 +56,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   };
 
   private @NotNull ErrorStripTooltipRendererProvider myTooltipRendererProvider = new BasicTooltipRendererProvider();
-  private int myMinMarkHeight = 3;
+  private static int myMinMarkHeight = 3;
 
   private int offsetToLine(int offset) {
     final Document document = myEditor.getDocument();
@@ -81,8 +81,12 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private boolean near(MouseEvent e, double width) {
       final int x = e.getX();
       final int y = e.getY();
-      return 0 <= x && x < width && yStart - getMinMarkHeight() <= y && y < yEnd + getMinMarkHeight();
+      return 0 <= x && x < width && yStart - getMinHeight() <= y && y < yEnd + getMinHeight();
     }
+  }
+
+  public static int getMinHeight() {
+    return myMinMarkHeight;
   }
 
   private class MarkSpots {
