@@ -224,24 +224,13 @@ public class PsiImplUtil {
     }
     
     if (type instanceof PsiWildcardType) {
-      final PsiWildcardType wildcardType = (PsiWildcardType)type;
-
-      if (PsiUtil.isAccessedForWriting(toplevel)) {
-        return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType, expression);
-      }
-      else {
-        if (wildcardType.isExtends()) {
-          return wildcardType.getBound();
-        }
-        else {
-          return PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
-        }
-      }
+      return notmalizeWildcardByPositionImpl(expression, toplevel, (PsiWildcardType)type);
     }
     else if (type instanceof PsiArrayType) {
-      final PsiType componentType = ((PsiArrayType)type).getComponentType();
-      final PsiType normalizedComponentType = normalizeWildcardTypeByPosition(componentType, expression);
-      if (normalizedComponentType != componentType) {
+      PsiType componentType = ((PsiArrayType)type).getComponentType();
+      if (componentType instanceof PsiCapturedWildcardType)  componentType = ((PsiCapturedWildcardType)componentType).getWildcard();
+      if (componentType instanceof PsiWildcardType) {
+        final PsiType normalizedComponentType = notmalizeWildcardByPositionImpl(expression, toplevel, (PsiWildcardType)componentType);
         return normalizedComponentType.createArrayType();
       }
     }
@@ -250,5 +239,19 @@ public class PsiImplUtil {
     }
 
     return type;
+  }
+
+  private static PsiType notmalizeWildcardByPositionImpl(final PsiExpression expression, final PsiExpression toplevel, final PsiWildcardType wildcard) {
+    if (PsiUtil.isAccessedForWriting(toplevel)) {
+      return wildcard.isSuper() ? wildcard.getBound() : PsiCapturedWildcardType.create(wildcard, expression);
+    }
+    else {
+      if (wildcard.isExtends()) {
+        return wildcard.getBound();
+      }
+      else {
+        return PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
+      }
+    }
   }
 }
