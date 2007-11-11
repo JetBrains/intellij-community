@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -804,7 +805,7 @@ public class InjectedLanguageUtil {
     if (virtualFile == null) {
       return null;
     }
-    if (virtualFile instanceof VirtualFileWindowImpl) {
+    if (virtualFile instanceof VirtualFileWindow) {
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
     }
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, -1), false);
