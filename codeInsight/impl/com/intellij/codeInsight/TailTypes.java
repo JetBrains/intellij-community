@@ -31,7 +31,7 @@ public class TailTypes {
   };
   public static final TailType CALL_RPARENTH = new RParenthTailType(){
     protected boolean isSpaceWithinParentheses(final CodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
-      return styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
+      return styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && editor.getDocument().getCharsSequence().charAt(tailOffset - 1) != '(';
     }
   };
   public static final TailType IF_RPARENTH = new RParenthTailType(){
