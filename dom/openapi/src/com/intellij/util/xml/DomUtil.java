@@ -195,6 +195,9 @@ public class DomUtil {
     }
 
     ProgressManager.getInstance().checkCanceled();
+
+    if (parent instanceof GenericAttributeValue) return Collections.emptyList();
+
     final XmlElement xmlElement = parent.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       XmlTag tag = (XmlTag) xmlElement;
