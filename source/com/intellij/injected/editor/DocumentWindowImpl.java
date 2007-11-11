@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Alexey
  */
-public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Disposable {
+public class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.editor.impl.injected.DocumentRangee");
   private final DocumentEx myDelegate;
   //sorted by startOffset
@@ -33,7 +33,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
   private final int myPrefixLineCount;
   private final int mySuffixLineCount;
 
-  public DocumentWindow(@NotNull DocumentEx delegate,
+  public DocumentWindowImpl(@NotNull DocumentEx delegate,
                         boolean oneLine,
                         @NotNull List<String> prefixes,
                         @NotNull List<String> suffixes,
@@ -458,7 +458,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
     return new TextRange(startOffset, endOffset);
   }
 
-  public boolean intersects(DocumentWindow documentWindow) {
+  public boolean intersects(DocumentWindowImpl documentWindow) {
     int i = 0;
     int j = 0;
     while (i < myRelevantRangesInHostDocument.length && j < documentWindow.myRelevantRangesInHostDocument.length) {
@@ -548,7 +548,7 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
     calculateMinEditSequence(hostText, newText, result, i+1, j-1);
   }
 
-  public boolean areRangesEqual(DocumentWindow window) {
+  public boolean areRangesEqual(DocumentWindowImpl window) {
     if (myRelevantRangesInHostDocument.length != window.myRelevantRangesInHostDocument.length) return false;
     for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
       if (!myPrefixes[i].equals(window.myPrefixes[i])) return false;
@@ -570,8 +570,8 @@ public class DocumentWindow extends UserDataHolderBase implements DocumentEx, Di
   }
 
   public boolean equals(Object o) {
-    if (!(o instanceof DocumentWindow)) return false;
-    DocumentWindow window = (DocumentWindow)o;
+    if (!(o instanceof DocumentWindowImpl)) return false;
+    DocumentWindowImpl window = (DocumentWindowImpl)o;
     return myDelegate.equals(window.getDelegate()) && areRangesEqual(window);
   }
 

@@ -404,7 +404,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   protected static void bringRealEditorBack() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     if (myEditor instanceof EditorWindow) {
-      DocumentEx document = ((DocumentWindow)myEditor.getDocument()).getDelegate();
+      Document document = ((DocumentWindow)myEditor.getDocument()).getDelegate();
       myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
       myEditor = ((EditorWindow)myEditor).getDelegate();
       myVFile = myFile.getVirtualFile();

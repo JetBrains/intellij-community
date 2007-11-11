@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
@@ -230,7 +231,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     AnnotationHolderImpl annotationHolder = createAnnotationHolder();
     for (PsiFile injectedPsi : injectedFiles) {
       highlightInjectedIn(injectedPsi, annotationHolder, refCountHolder);
-      DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
+      DocumentWindowImpl documentWindow = (DocumentWindowImpl)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
       for (Annotation annotation : annotationHolder) {
         HighlightInfo highlightInfo = HighlightUtil.convertToHighlightInfo(annotation);
         TextRange textRange = documentWindow.getHostRange(highlightInfo.startOffset);
@@ -246,7 +247,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private static void highlightInjectedIn(PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final RefCountHolder refCountHolder) {
-    final DocumentWindow documentRange = ((VirtualFileWindowImpl)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentWindow();
+    final DocumentWindowImpl documentRange = ((VirtualFileWindowImpl)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentWindow();
     assert documentRange != null;
     assert documentRange.getText().equals(injectedPsi.getText());
     LanguageDialect languageDialect = injectedPsi.getLanguageDialect();

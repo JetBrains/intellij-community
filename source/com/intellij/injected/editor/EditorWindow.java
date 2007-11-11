@@ -42,7 +42,7 @@ import java.util.Iterator;
  * @author Alexey
  */
 public class EditorWindow implements EditorEx, UserDataHolderEx {
-  private final DocumentWindow myDocumentWindow;
+  private final DocumentWindowImpl myDocumentWindow;
   private final EditorImpl myDelegate;
   private volatile PsiFile myInjectedFile;
   private final boolean myOneLine;
@@ -52,7 +52,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   private boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
 
-  public static Editor create(@NotNull final DocumentWindow documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
+  public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     for (EditorWindow editorWindow : allEditors) {
       if (editorWindow.getDocument() == documentRange && editorWindow.getDelegate() == editor) {
         editorWindow.myInjectedFile = injectedFile;
@@ -64,7 +64,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     return new EditorWindow(documentRange, editor, injectedFile, documentRange.isOneLine());
   }
 
-  private EditorWindow(@NotNull DocumentWindow documentWindow, @NotNull final EditorImpl delegate, @NotNull PsiFile injectedFile, boolean oneLine) {
+  private EditorWindow(@NotNull DocumentWindowImpl documentWindow, @NotNull final EditorImpl delegate, @NotNull PsiFile injectedFile, boolean oneLine) {
     myDocumentWindow = documentWindow;
     myDelegate = delegate;
     myInjectedFile = injectedFile;
@@ -291,7 +291,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
   }
 
   @NotNull
-  public DocumentWindow getDocument() {
+  public DocumentWindowImpl getDocument() {
     return myDocumentWindow;
   }
 

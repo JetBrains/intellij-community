@@ -1,6 +1,6 @@
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.lang.Language;
@@ -126,7 +126,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
 
   VirtualFileWindowImpl createVirtualFile(final Language language,
                                       final VirtualFile hostVirtualFile,
-                                      final DocumentWindow documentWindow,
+                                      final DocumentWindowImpl documentWindow,
                                       StringBuilder text) {
     VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(hostVirtualFile, documentWindow, language, text);
     List<VirtualFileWindowImpl> cachedList = cachedFiles.get(hostVirtualFile);
@@ -218,8 +218,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     PsiFile file = element.getContainingFile();
     if (file == null) return textRange;
     Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(file);
-    if (!(document instanceof DocumentWindow)) return textRange;
-    DocumentWindow documentWindow = (DocumentWindow)document;
+    if (!(document instanceof DocumentWindowImpl)) return textRange;
+    DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
     return documentWindow.injectedToHost(textRange);
   }
 
@@ -400,8 +400,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   private static int compareRanges(VirtualFileWindowImpl v1, VirtualFileWindowImpl v2) {
-    DocumentWindow d1 = v1.getDocumentWindow();
-    DocumentWindow d2 = v2.getDocumentWindow();
+    DocumentWindowImpl d1 = v1.getDocumentWindow();
+    DocumentWindowImpl d2 = v2.getDocumentWindow();
     RangeMarker[] ranges1 = d1.getHostRanges();
     RangeMarker[] ranges2 = d2.getHostRanges();
     if (ranges1.length == 0 || ranges2.length == 0) return -1;

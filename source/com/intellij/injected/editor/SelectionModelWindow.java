@@ -13,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SelectionModelWindow implements SelectionModel {
   private final SelectionModel myHostModel;
-  private final DocumentWindow myDocument;
+  private final DocumentWindowImpl myDocument;
   private final EditorWindow myInjectedEditor;
 
-  public SelectionModelWindow(final EditorEx delegate, final DocumentWindow document, EditorWindow injectedEditor) {
+  public SelectionModelWindow(final EditorEx delegate, final DocumentWindowImpl document, EditorWindow injectedEditor) {
     myDocument = document;
     myInjectedEditor = injectedEditor;
     myHostModel = delegate.getSelectionModel();

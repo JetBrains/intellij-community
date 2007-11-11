@@ -1,9 +1,6 @@
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.EditorWindow;
-import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.injected.editor.VirtualFileWindowImpl;
+import com.intellij.injected.editor.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
@@ -86,7 +83,7 @@ public class InjectedLanguageUtil {
                                                                                                                  List<LiteralTextEscaper<PsiLanguageInjectionHost>> escapers,
                                                                                                                  List<PsiLanguageInjectionHost.Shred> shreds,
                                                                                                                  VirtualFileWindow virtualFile,
-                                                                                                                 DocumentWindow documentWindow,
+                                                                                                                 DocumentWindowImpl documentWindow,
                                                                                                                  Project project) {
     List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = new ArrayList<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>(10);
     SyntaxHighlighter syntaxHighlighter = language.getSyntaxHighlighter(project, (VirtualFile)virtualFile);
@@ -168,7 +165,7 @@ public class InjectedLanguageUtil {
     public void rootChanged(PsiFile psiFile) {
       super.rootChanged(psiFile);
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
-      DocumentWindow documentWindow = (DocumentWindow)documentManager.getDocument(psiFile);
+      DocumentWindowImpl documentWindow = (DocumentWindowImpl)documentManager.getDocument(psiFile);
 
       String[] changes = documentWindow.calculateMinEditSequence(psiFile.getText());
       RangeMarker[] hostRanges = documentWindow.getHostRanges();
@@ -187,7 +184,7 @@ public class InjectedLanguageUtil {
     }
 
     public FileViewProvider clone() {
-      final DocumentWindow oldDocumentRange = ((VirtualFileWindowImpl)getVirtualFile()).getDocumentWindow();
+      final DocumentWindowImpl oldDocumentRange = ((VirtualFileWindowImpl)getVirtualFile()).getDocumentWindow();
       DocumentEx delegate = oldDocumentRange.getDelegate();
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
       PsiFile hostFile = documentManager.getPsiFile(delegate);
@@ -200,7 +197,7 @@ public class InjectedLanguageUtil {
       enumerate(elementCopy, hostPsiFileCopy, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           Document document = documentManager.getCachedDocument(injectedPsi);
-          if (document instanceof DocumentWindow && oldDocumentRange.areRangesEqual((DocumentWindow)document)) {
+          if (document instanceof DocumentWindowImpl && oldDocumentRange.areRangesEqual((DocumentWindowImpl)document)) {
             provider.set(injectedPsi.getViewProvider());
           }
         }
@@ -353,7 +350,7 @@ public class InjectedLanguageUtil {
     PsiFile injectedFile = findInjectedPsiAt(file, offset);
     if (injectedFile == null) return editor;
     Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
-    DocumentWindow documentWindow = (DocumentWindow)document;
+    DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       int selstart = selectionModel.getSelectionStart();
@@ -443,7 +440,7 @@ public class InjectedLanguageUtil {
         for (PsiLanguageInjectionHost.Shred place : places) {
           TextRange hostRange = place.host.getTextRange();
           if (hostRange.cutOut(place.getRangeInsideHost()).grown(1).contains(offset)) {
-            DocumentWindow document = (DocumentWindow)documentManager.getCachedDocument(injectedPsi);
+            DocumentWindowImpl document = (DocumentWindowImpl)documentManager.getCachedDocument(injectedPsi);
             int injectedOffset = document.hostToInjected(offset);
             PsiElement injElement = injectedPsi.findElementAt(injectedOffset);
             out.set(injElement == null ? injectedPsi : injElement);
@@ -612,7 +609,7 @@ public class InjectedLanguageUtil {
           if (shreds.isEmpty()) {
             throw new IllegalStateException("Seems you haven't called addPlace()");
           }
-          DocumentWindow documentWindow = new DocumentWindow(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
+          DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
           VirtualFileWindowImpl virtualFile = myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
 
           DocumentImpl decodedDocument = new DocumentImpl(outChars);
@@ -718,14 +715,14 @@ public class InjectedLanguageUtil {
     }
   }
 
-  private static PsiFile registerDocument(final DocumentWindow documentWindow, final PsiFile injectedPsi,
+  private static PsiFile registerDocument(final DocumentWindowImpl documentWindow, final PsiFile injectedPsi,
                                           List<PsiLanguageInjectionHost.Shred> shreds) {
     DocumentEx hostDocument = documentWindow.getDelegate();
     List<DocumentWindow> injected = getCachedInjectedDocuments(hostDocument);
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(injectedPsi.getProject());
     for (int i = injected.size()-1; i>=0; i--) {
-      DocumentWindow oldDocument = injected.get(i);
+      DocumentWindowImpl oldDocument = (DocumentWindowImpl)injected.get(i);
       PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
       FileViewProvider oldViewProvider;
 
@@ -810,8 +807,8 @@ public class InjectedLanguageUtil {
     }
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, -1), false);
     if (editor == null || editor instanceof EditorWindow) return editor;
-    if (document instanceof DocumentWindow) {
-      return EditorWindow.create((DocumentWindow)document, (EditorImpl)editor, file);
+    if (document instanceof DocumentWindowImpl) {
+      return EditorWindow.create((DocumentWindowImpl)document, (EditorImpl)editor, file);
     }
     return editor;
   }
@@ -829,8 +826,8 @@ public class InjectedLanguageUtil {
     PsiFile injectedFile = element.getContainingFile();
     if (injectedFile == null) return false;
     Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(injectedFile);
-    if (!(document instanceof DocumentWindow)) return false;
-    DocumentWindow documentWindow = (DocumentWindow)document;
+    if (!(document instanceof DocumentWindowImpl)) return false;
+    DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
     TextRange elementRange = element.getTextRange();
     TextRange editable = documentWindow.intersectWithEditable(elementRange);
     return !elementRange.equals(editable); //) throw new IncorrectOperationException("Can't change "+ UsageViewUtil.createNodeText(element, true));
