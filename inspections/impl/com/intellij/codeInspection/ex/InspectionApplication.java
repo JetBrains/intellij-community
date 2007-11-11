@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -128,7 +129,7 @@ public class InspectionApplication {
         InspectionMain.printHelp();
       }
 
-      ProjectUtil.patchProject(myProject);
+      PatchProjectUtil.patchProject(myProject);
 
       logMessageLn(1, InspectionsBundle.message("inspection.done"));
       logMessage(1, InspectionsBundle.message("inspection.application.initializing.project"));

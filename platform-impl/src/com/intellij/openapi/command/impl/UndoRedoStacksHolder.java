@@ -98,28 +98,6 @@ class UndoRedoStacksHolder {
     myGlobalStack.clear();
   }
 
-  public void clearStacksWithComplexCommands() {
-    clearGlobalStack();
-    for (DocumentReference r : getAffectedDocuments()) {
-      clearStackUpToLastComplexCommand(getStack(r));
-    }
-  }
-
-  private void clearStackUpToLastComplexCommand(LinkedList<UndoableGroup> stack) {
-    int removeUpTo = -1;
-
-    for (int i = stack.size() - 1; i >= 0; i--) {
-      if (stack.get(i).isComplex()) {
-        removeUpTo = i;
-        break;
-      }
-    }
-
-    while (removeUpTo-- >= 0) {
-      stack.removeFirst();
-    }
-  }
-
   public void dropHistory() {
     clearGlobalStack();
     for (DocumentReference r : getAffectedDocuments()) {

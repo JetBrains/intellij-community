@@ -6,6 +6,7 @@ package com.intellij.projectImport;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -113,7 +114,7 @@ public abstract class ProjectOpenProcessor {
           final String versionString = wizardContext.getProjectJdk().getVersionString();
           if (versionString != null) {
             rootManager.setProjectJdk(wizardContext.getProjectJdk());
-            rootManager.setLanguageLevel(ProjectUtil.getDefaultLanguageLevel(versionString));
+            rootManager.setLanguageLevel(NewProjectUtil.getDefaultLanguageLevel(versionString));
           }
         }
 
@@ -125,7 +126,7 @@ public abstract class ProjectOpenProcessor {
 
       getBuilder().commit(projectToUpdate);
       if (!forceOpenInNewFrame) {
-        ProjectUtil.closePreviousProject(projectToClose);
+        NewProjectUtil.closePreviousProject(projectToClose);
       }
       ProjectUtil.updateLastProjectLocation(newProjectPath);
       ProjectManagerEx.getInstanceEx().openProject(projectToUpdate);

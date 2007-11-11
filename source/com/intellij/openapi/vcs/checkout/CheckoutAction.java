@@ -1,6 +1,6 @@
 package com.intellij.openapi.vcs.checkout;
 
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -52,7 +52,7 @@ public class CheckoutAction extends AnAction {
     int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.create.project.prompt", directory.getAbsolutePath()),
                                       VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
     if (rc == 0) {
-      ProjectUtil.createNewProject(project, directory.getAbsolutePath());
+      NewProjectUtil.createNewProject(project, directory.getAbsolutePath());
     }
   }
 

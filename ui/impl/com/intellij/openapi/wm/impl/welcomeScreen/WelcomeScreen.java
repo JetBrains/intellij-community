@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.OpenProjectAction;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -361,7 +361,7 @@ public class WelcomeScreen {
   private void addDefaultQuickStartActions(final ActionGroupDescriptor quickStarts, final ActionManager actionManager) {
     MyActionButton newProject = new MyActionButton(NEW_PROJECT_ICON, null) {
       protected void onPress(InputEvent e) {
-        ProjectUtil.createNewProject(null, null);
+        NewProjectUtil.createNewProject(null, null);
       }
     };
     quickStarts.addButton(newProject, UIBundle.message("welcome.screen.create.new.project.action.name"),

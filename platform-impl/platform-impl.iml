@@ -32,6 +32,15 @@
     <orderEntry type="library" name="Mac" level="project" />
     <orderEntry type="module" module-name="license_common" />
     <orderEntry type="library" name="LicenseServerAPI" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/exe4jlib.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntryProperties />
   </component>
 </module>

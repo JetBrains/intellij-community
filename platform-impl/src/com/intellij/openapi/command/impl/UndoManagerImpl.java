@@ -19,9 +19,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -73,23 +70,18 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private final EditorFactory myEditorFactory;
   private final VirtualFileManager myVirtualFileManager;
   private final StartupManager myStartupManager;
-  private final ProjectRootManager myRootManager;
-  private ModuleRootListener myRootsChangesListener;
-
 
   public UndoManagerImpl(Project project,
                          Application application,
                          CommandProcessor commandProcessor,
                          EditorFactory editorFactory,
                          VirtualFileManager virtualFileManager,
-                         StartupManager startupManager,
-                         ProjectRootManager rm) {
+                         StartupManager startupManager) {
     myProject = (ProjectEx)project;
     myCommandProcessor = commandProcessor;
     myEditorFactory = editorFactory;
     myVirtualFileManager = virtualFileManager;
     myStartupManager = startupManager;
-    myRootManager = rm;
 
     init(application);
   }
@@ -98,7 +90,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
                          CommandProcessor commandProcessor,
                          EditorFactory editorFactory,
                          VirtualFileManager virtualFileManager) {
-    this(null, application, commandProcessor, editorFactory, virtualFileManager, null, null);
+    this(null, application, commandProcessor, editorFactory, virtualFileManager, null);
   }
 
 
@@ -172,27 +164,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myBeforeFileDeletionListener = new MyBeforeDeletionListener();
     myVirtualFileManager.addVirtualFileListener(myBeforeFileDeletionListener);
 
-    registerRootChangesListener();
-  }
-
-  private void registerRootChangesListener() {
-    if (myProject == null) return;
-
-    myRootsChangesListener = new ModuleRootListener() {
-      public void rootsChanged(ModuleRootEvent e) {
-      }
-
-      public void beforeRootsChange(ModuleRootEvent e) {
-        dropGlobalHistory();
-      }
-    };
-    myRootManager.addModuleRootListener(myRootsChangesListener);
-  }
-
-  private void unregisterRootChangesListener() {
-    if (myProject == null) return;
-
-    myRootManager.removeModuleRootListener(myRootsChangesListener);
   }
 
   private void onCommandFinished(final Project project, final String commandName, final Object commandGroupId) {
@@ -240,13 +211,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     });
   }
 
-  private void dropGlobalHistory() {
-    dropMergers();
-
-    myUndoStacksHolder.clearStacksWithComplexCommands();
-    myRedoStacksHolder.clearStacksWithComplexCommands();
-  }
-
   private void dropMergers() {
     // Run dummy command in order to drop all mergers...
     CommandProcessor.getInstance()
@@ -254,8 +218,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   public void disposeComponent() {
-    unregisterRootChangesListener();
-
     if (myCommandListener != null) {
       myCommandProcessor.removeCommandListener(myCommandListener);
       myDocumentEditingUndoProvider.dispose();
