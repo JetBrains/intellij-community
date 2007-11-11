@@ -89,7 +89,7 @@ public class InjectedLanguageUtil {
                                                                                                                  DocumentWindow documentWindow,
                                                                                                                  Project project) {
     List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = new ArrayList<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>(10);
-    SyntaxHighlighter syntaxHighlighter = language.getSyntaxHighlighter(project, virtualFile);
+    SyntaxHighlighter syntaxHighlighter = language.getSyntaxHighlighter(project, (VirtualFile)virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();
     lexer.start(outChars, 0, outChars.length(), 0);
     int hostNum = 0;
@@ -160,7 +160,7 @@ public class InjectedLanguageUtil {
     private Project myProject;
 
     private MyFileViewProvider(@NotNull Project project, @NotNull VirtualFileWindow virtualFile, List<PsiLanguageInjectionHost> hosts) {
-      super(PsiManager.getInstance(project), virtualFile);
+      super(PsiManager.getInstance(project), (VirtualFile)virtualFile);
       myHosts = hosts.toArray(new PsiLanguageInjectionHost[hosts.size()]);
       myProject = myHosts[0].getProject();
     }
@@ -711,7 +711,7 @@ public class InjectedLanguageUtil {
   public static void clearCaches(PsiFile injected) {
     VirtualFileWindow virtualFile = (VirtualFileWindow)injected.getVirtualFile();
     PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
-    psiManagerEx.getFileManager().setViewProvider(virtualFile, null);
+    psiManagerEx.getFileManager().setViewProvider((VirtualFile)virtualFile, null);
     Project project = psiManagerEx.getProject();
     if (!project.isDisposed()) {
       InjectedLanguageManagerImpl.getInstanceImpl(project).clearCaches(virtualFile);
