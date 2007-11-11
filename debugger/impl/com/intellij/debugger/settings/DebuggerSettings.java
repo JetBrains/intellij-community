@@ -12,9 +12,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 public class DebuggerSettings implements JDOMExternalizable, ApplicationComponent {
   public static final int SOCKET_TRANSPORT = 0;
@@ -48,7 +48,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public String RUN_HOTSWAP_AFTER_COMPILE;
   public boolean COMPILE_BEFORE_HOTSWAP;
 
-  public volatile boolean WATCH_RETURN_VALUES = true;
+  public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
