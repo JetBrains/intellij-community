@@ -29,6 +29,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -505,7 +506,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         }
       }
 
-      for (PsiClass aClass : getManager().findClasses(getQualifiedName() + ".package-info", getProject().getAllScope())) {
+      for (PsiClass aClass : getManager().findClasses(getQualifiedName() + ".package-info", ProjectScope.getAllScope(getProject()))) {
         ContainerUtil.addIfNotNull(aClass.getModifierList(), list);
       }
 

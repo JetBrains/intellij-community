@@ -79,11 +79,11 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   public static GlobalSearchScope allScope(@NotNull Project project) {
-    return project.getAllScope();
+    return ProjectScope.getAllScope(project);
   }
 
   public static GlobalSearchScope projectScope(@NotNull Project project) {
-    return project.getProjectScope();
+    return ProjectScope.getProjectScope(project);
   }
 
   public static GlobalSearchScope projectProductionScope(@NotNull Project project, final boolean includeNonJavaFiles) {

@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +85,4 @@ public interface Project extends ComponentManager, AreaInstance, Disposable {
   boolean isInitialized();
 
   boolean isDefault();
-
-  GlobalSearchScope getAllScope();
-  GlobalSearchScope getProjectScope();
 }

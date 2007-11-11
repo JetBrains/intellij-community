@@ -7,6 +7,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -36,7 +37,7 @@ public class InlineConstantFieldHandler {
       return;
     }
 
-    if (ReferencesSearch.search(field, project.getProjectScope(), false).findFirst() == null) {
+    if (ReferencesSearch.search(field, ProjectScope.getProjectScope(project), false).findFirst() == null) {
       String message = RefactoringBundle.message("field.0.is.never.used", field.getName());
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_FIELD, project);
       return;

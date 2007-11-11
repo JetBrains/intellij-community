@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -90,7 +91,7 @@ public class ShowUsagesAction extends AnAction {
   private static String searchScopePresentableName(PsiElement element) {
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
     SearchScope searchScope = findUsagesManager.getCurrentSearchScope(element);
-    if (searchScope == null) searchScope = element.getProject().getAllScope();
+    if (searchScope == null) searchScope = ProjectScope.getAllScope(element.getProject());
     return searchScope.getDisplayName();
   }
 

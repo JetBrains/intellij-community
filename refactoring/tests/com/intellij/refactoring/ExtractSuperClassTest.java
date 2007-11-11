@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassProcessor;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -45,7 +46,7 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
     String rootBefore = getRoot() + "/before";
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
     final VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
-    PsiClass psiClass = myPsiManager.findClass("Test", myProject.getAllScope());
+    PsiClass psiClass = myPsiManager.findClass("Test", ProjectScope.getAllScope(myProject));
     assertNotNull(psiClass);
     final MemberInfo[] members = PullUpTest.findMembers(psiClass, membersToFind);
     ExtractSuperClassProcessor processor = new ExtractSuperClassProcessor(myProject,

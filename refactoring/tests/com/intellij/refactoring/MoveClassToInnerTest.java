@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
@@ -108,8 +109,8 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
 
   private void doTestConflicts(String className, String targetClassName, String... expectedConflicts) throws Exception {
     prepareTest();
-    PsiClass classToMove = myPsiManager.findClass(className, myProject.getAllScope());
-    PsiClass targetClass = myPsiManager.findClass(targetClassName, myProject.getAllScope());
+    PsiClass classToMove = myPsiManager.findClass(className, ProjectScope.getAllScope(myProject));
+    PsiClass targetClass = myPsiManager.findClass(targetClassName, ProjectScope.getAllScope(myProject));
     MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myProject, classToMove, targetClass, true, true, null);
     UsageInfo[] usages = processor.findUsages();
     List<String> conflicts = processor.getConflicts(usages);
@@ -120,11 +121,11 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for(int i = 0; i < classes.length; i++){
       String className = classNames[i];
-      classes[i] = myPsiManager.findClass(className, myProject.getAllScope());
+      classes[i] = myPsiManager.findClass(className, ProjectScope.getAllScope(myProject));
       assertNotNull("Class " + className + " not found", classes[i]);
     }
 
-    PsiClass targetClass = myPsiManager.findClass(targetClassName, myProject.getAllScope());
+    PsiClass targetClass = myPsiManager.findClass(targetClassName, ProjectScope.getAllScope(myProject));
     assertNotNull(targetClass);
 
     for(PsiClass psiClass: classes) {

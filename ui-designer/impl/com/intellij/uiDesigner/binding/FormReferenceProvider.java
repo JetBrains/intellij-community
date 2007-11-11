@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValue;
@@ -242,7 +243,7 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
       FormEnumConstantReference reference = ApplicationManager.getApplication().runReadAction(new Computable<FormEnumConstantReference>() {
         @Nullable
         public FormEnumConstantReference compute() {
-          PsiClass psiClass = file.getManager().findClass(className, file.getProject().getAllScope());
+          PsiClass psiClass = file.getManager().findClass(className, ProjectScope.getAllScope(file.getProject()));
           if (psiClass != null) {
             PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, tag.getName(), false, true);
             if (getter != null) {

@@ -10,7 +10,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.annotation.Annotation;
@@ -246,7 +246,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private static void highlightInjectedIn(PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final RefCountHolder refCountHolder) {
-    final DocumentWindow documentRange = ((VirtualFileWindow)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentWindow();
+    final DocumentWindow documentRange = ((VirtualFileWindowImpl)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentWindow();
     assert documentRange != null;
     assert documentRange.getText().equals(injectedPsi.getText());
     LanguageDialect languageDialect = injectedPsi.getLanguageDialect();

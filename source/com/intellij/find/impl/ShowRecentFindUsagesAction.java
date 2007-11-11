@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.UsageView;
@@ -69,7 +70,7 @@ public class ShowRecentFindUsagesAction extends AnAction {
           return FindBundle.message("recent.find.usages.action.description",
                                     StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
                                     UsageViewUtil.getDescriptiveName(psiElement),
-                                    scopeString == null ? psiElement.getProject().getAllScope().getDisplayName() : scopeString);
+                                    scopeString == null ? ProjectScope.getAllScope(psiElement.getProject()).getDisplayName() : scopeString);
         }
 
         public PopupStep onChosen(final FindUsagesManager.SearchData selectedValue, final boolean finalChoice) {

@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
@@ -186,7 +186,7 @@ public class InjectedLanguageUtil {
     }
 
     public FileViewProvider clone() {
-      final DocumentWindow oldDocumentRange = ((VirtualFileWindow)getVirtualFile()).getDocumentWindow();
+      final DocumentWindow oldDocumentRange = ((VirtualFileWindowImpl)getVirtualFile()).getDocumentWindow();
       DocumentEx delegate = oldDocumentRange.getDelegate();
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
       PsiFile hostFile = documentManager.getPsiFile(delegate);
@@ -612,7 +612,7 @@ public class InjectedLanguageUtil {
             throw new IllegalStateException("Seems you haven't called addPlace()");
           }
           DocumentWindow documentWindow = new DocumentWindow(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
-          VirtualFileWindow virtualFile = myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
+          VirtualFileWindowImpl virtualFile = myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
 
           DocumentImpl decodedDocument = new DocumentImpl(outChars);
           FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
@@ -804,7 +804,7 @@ public class InjectedLanguageUtil {
     if (virtualFile == null) {
       return null;
     }
-    if (virtualFile instanceof VirtualFileWindow) {
+    if (virtualFile instanceof VirtualFileWindowImpl) {
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
     }
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, -1), false);

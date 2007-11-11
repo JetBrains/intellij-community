@@ -1,13 +1,14 @@
 
 package com.intellij.find.findUsages;
 
+import com.intellij.find.FindSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.find.FindSettings;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,7 +41,7 @@ public class FindUsagesOptions implements Cloneable {
 
   public FindUsagesOptions(@NotNull Project project) {
     NamedScope defaultScope = NamedScopesHolder.getScope(project, FindSettings.getInstance().getDefaultScopeName());
-    searchScope = defaultScope == null ? project.getProjectScope() : GlobalSearchScope.filterScope(project, defaultScope);
+    searchScope = defaultScope == null ? ProjectScope.getProjectScope(project) : GlobalSearchScope.filterScope(project, defaultScope);
   }
 
   public Object clone() {

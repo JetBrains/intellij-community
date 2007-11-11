@@ -2,7 +2,7 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInEditorManager;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -58,8 +58,8 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
   public void selectInEditor(VirtualFile file, final int startOffset, final int endOffset, final boolean toSelectLine, final boolean toUseNormalSelection){
     releaseAll();
     final TextRange textRange;
-    if (file instanceof VirtualFileWindow) {
-      DocumentWindow documentWindow = ((VirtualFileWindow)file).getDocumentWindow();
+    if (file instanceof VirtualFileWindowImpl) {
+      DocumentWindow documentWindow = ((VirtualFileWindowImpl)file).getDocumentWindow();
       textRange = documentWindow.injectedToHost(new TextRange(startOffset, endOffset));
       file = ((VirtualFileWindow)file).getDelegate();
     }

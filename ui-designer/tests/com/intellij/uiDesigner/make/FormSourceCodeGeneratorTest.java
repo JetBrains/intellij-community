@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -97,7 +98,7 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
       }
     }, "", null);
 
-    final PsiClass bindingTestClass = myPsiManager.findClass("BindingTest", myProject.getAllScope());
+    final PsiClass bindingTestClass = myPsiManager.findClass("BindingTest", ProjectScope.getAllScope(myProject));
     assertNotNull(bindingTestClass);
     final VirtualFile testAfter = myTestProjectRoot.findChild("BindingTest.java.after");
     assertNotNull(testAfter);

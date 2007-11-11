@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 
@@ -79,9 +80,9 @@ public class MoveMembersTest extends MultiFileTestCase {
   }
 
   private void performAction(String sourceClassName, String targetClassName, int[] memberIndices) throws Exception {
-    PsiClass sourceClass = myPsiManager.findClass(sourceClassName, myProject.getProjectScope());
+    PsiClass sourceClass = myPsiManager.findClass(sourceClassName, ProjectScope.getProjectScope(myProject));
     assertNotNull("Class " + sourceClassName + " not found", sourceClass);
-    PsiClass targetClass = myPsiManager.findClass(targetClassName, myProject.getProjectScope());
+    PsiClass targetClass = myPsiManager.findClass(targetClassName, ProjectScope.getProjectScope(myProject));
     assertNotNull("Class " + targetClassName + " not found", targetClass);
 
     PsiElement[] children = sourceClass.getChildren();

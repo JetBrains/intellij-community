@@ -1,12 +1,13 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.pom.java.LanguageLevel;
 
 /**
  * @author ven
@@ -24,7 +25,7 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
   public void testRenameBoundField() throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myPsiManager.findClass("UIClass", myProject.getAllScope());
+        PsiClass aClass = myPsiManager.findClass("UIClass", ProjectScope.getAllScope(myProject));
         assertNotNull(aClass);
         final PsiField field = aClass.findFieldByName("UIField", false);
         assertNotNull(field);
@@ -49,7 +50,7 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
   public void testRenameEnumConstant() throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myPsiManager.findClass("PropEnum", myProject.getAllScope());
+        PsiClass aClass = myPsiManager.findClass("PropEnum", ProjectScope.getAllScope(myProject));
         assertNotNull(aClass);
         PsiField enumConstant = aClass.findFieldByName("valueB", false);
         assertNotNull(enumConstant);

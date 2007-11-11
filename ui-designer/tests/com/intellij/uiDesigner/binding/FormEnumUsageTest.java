@@ -17,9 +17,10 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -67,11 +68,11 @@ public class FormEnumUsageTest extends PsiTestCase {
       }
     }, "", null);
 
-    PsiClass enumClass = myPsiManager.findClass("PropEnum", myProject.getAllScope());
+    PsiClass enumClass = myPsiManager.findClass("PropEnum", ProjectScope.getAllScope(myProject));
     PsiField valueBField = enumClass.findFieldByName("valueB", false);
     assertNotNull(valueBField);
     assertTrue(valueBField instanceof PsiEnumConstant);
-    final PsiClass componentClass = myPsiManager.findClass("CustomComponent", myProject.getAllScope());
+    final PsiClass componentClass = myPsiManager.findClass("CustomComponent", ProjectScope.getAllScope(myProject));
     assertNotNull(componentClass);
 
     Query<PsiReference> query = ReferencesSearch.search(componentClass);

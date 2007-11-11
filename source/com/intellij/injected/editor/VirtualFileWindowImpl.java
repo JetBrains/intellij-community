@@ -8,11 +8,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
  */
-public class VirtualFileWindow extends LightVirtualFile {
+public class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFileWindow {
   private final VirtualFile myDelegate;
   private final DocumentWindow myDocumentWindow;
 
-  public VirtualFileWindow(@NotNull VirtualFile delegate, @NotNull DocumentWindow window, @NotNull Language language, @NotNull CharSequence text) {
+  public VirtualFileWindowImpl(@NotNull VirtualFile delegate, @NotNull DocumentWindow window, @NotNull Language language, @NotNull CharSequence text) {
     super(delegate.getName(), language, text);
     setCharset(delegate.getCharset());
     myDelegate = delegate;

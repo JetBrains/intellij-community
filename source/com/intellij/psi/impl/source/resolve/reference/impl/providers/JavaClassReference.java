@@ -5,25 +5,25 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionVariantPeerImpl;
-import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.completion.scope.CompletionProcessor;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -33,6 +33,7 @@ import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -445,7 +446,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     if (scope != null) {
       packageScope = packageScope.intersectWith(scope);
     }
-    final GlobalSearchScope allScope = context.getProject().getAllScope();
+    final GlobalSearchScope allScope = ProjectScope.getAllScope(context.getProject());
     final boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(getOptions());
     final boolean notInterface = JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(getOptions());
     final boolean concrete = JavaClassReferenceProvider.CONCRETE.getBooleanValue(getOptions());

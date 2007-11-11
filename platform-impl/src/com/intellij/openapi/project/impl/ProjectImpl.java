@@ -3,7 +3,6 @@ package com.intellij.openapi.project.impl;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -16,7 +15,6 @@ import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -24,11 +22,9 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -160,107 +156,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public boolean isInitialized() {
     return isOpen() && !isDisposed() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
-  }
-
-  public GlobalSearchScope getAllScope() {
-    if (myAllScope == null) {
-      final ProjectRootManager projectRootManager = getComponent(ProjectRootManager.class);
-      myAllScope = new GlobalSearchScope() {
-        final ProjectFileIndex myProjectFileIndex = projectRootManager.getFileIndex();
-
-        public boolean contains(VirtualFile file) {
-          return true;
-        }
-
-        public int compare(VirtualFile file1, VirtualFile file2) {
-          List<OrderEntry> entries1 = myProjectFileIndex.getOrderEntriesForFile(file1);
-          List<OrderEntry> entries2 = myProjectFileIndex.getOrderEntriesForFile(file2);
-          if (entries1.size() != entries2.size()) return 0;
-
-          int res = 0;
-          for (OrderEntry entry1 : entries1) {
-            Module module = entry1.getOwnerModule();
-            ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-            OrderEntry entry2 = moduleFileIndex.getOrderEntryForFile(file2);
-            if (entry2 == null) {
-              return 0;
-            }
-            else {
-              int aRes = entry2.compareTo(entry1);
-              if (aRes == 0) return 0;
-              if (res == 0) {
-                res = aRes;
-              }
-              else if (res != aRes) {
-                return 0;
-              }
-            }
-          }
-
-          return res;
-        }
-
-        public boolean isSearchInModuleContent(@NotNull Module aModule) {
-          return true;
-        }
-
-        public boolean isSearchInLibraries() {
-          return true;
-        }
-
-        public String getDisplayName() {
-          return PsiBundle.message("psi.search.scope.project.and.libraries");
-        }
-
-        @NotNull
-        public GlobalSearchScope intersectWith(@NotNull final GlobalSearchScope scope) {
-          return scope;
-        }
-
-        public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
-          return this;
-        }
-
-        public String toString() {
-          return getDisplayName();
-        }
-      };
-    }
-    return myAllScope;
-  }
-
-  public GlobalSearchScope getProjectScope() {
-    if (myProjectScope == null) {
-      final ProjectRootManager projectRootManager = getComponent(ProjectRootManager.class);
-      myProjectScope = new GlobalSearchScope() {
-        private final ProjectFileIndex myFileIndex = projectRootManager.getFileIndex();
-
-        public boolean contains(VirtualFile file) {
-          return file instanceof VirtualFileWindow || myFileIndex.isInContent(file);
-        }
-
-        public int compare(VirtualFile file1, VirtualFile file2) {
-          return 0;
-        }
-
-        public boolean isSearchInModuleContent(@NotNull Module aModule) {
-          return true;
-        }
-
-        public boolean isSearchInLibraries() {
-          return false;
-        }
-
-        public String getDisplayName() {
-          return PsiBundle.message("psi.search.scope.project");
-        }
-
-        public String toString() {
-          return getDisplayName();
-        }
-      };
-    }
-    return myProjectScope;
   }
 
   public void setDummy(boolean isDummy) {

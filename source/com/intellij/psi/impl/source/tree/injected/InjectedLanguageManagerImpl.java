@@ -1,7 +1,7 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author cdr
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
-  private final ConcurrentMap<VirtualFile, List<VirtualFileWindow>> cachedFiles = new ConcurrentWeakHashMap<VirtualFile, List<VirtualFileWindow>>();
+  private final ConcurrentMap<VirtualFile, List<VirtualFileWindowImpl>> cachedFiles = new ConcurrentWeakHashMap<VirtualFile, List<VirtualFileWindowImpl>>();
   private final Project myProject;
   private final PsiManagerEx myPsiManager;
   private final AtomicReference<MultiHostInjector> myPsiManagerRegisteredInjectorsAdapter = new AtomicReference<MultiHostInjector>();
@@ -123,20 +123,20 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     }
   }
 
-  VirtualFileWindow createVirtualFile(final Language language,
+  VirtualFileWindowImpl createVirtualFile(final Language language,
                                       final VirtualFile hostVirtualFile,
                                       final DocumentWindow documentWindow,
                                       StringBuilder text) {
-    VirtualFileWindow virtualFile = new VirtualFileWindow(hostVirtualFile, documentWindow, language, text);
-    List<VirtualFileWindow> cachedList = cachedFiles.get(hostVirtualFile);
+    VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(hostVirtualFile, documentWindow, language, text);
+    List<VirtualFileWindowImpl> cachedList = cachedFiles.get(hostVirtualFile);
     if (cachedList == null) {
-      cachedList = ConcurrencyUtil.cacheOrGet(cachedFiles, hostVirtualFile, new ArrayList<VirtualFileWindow>());
+      cachedList = ConcurrencyUtil.cacheOrGet(cachedFiles, hostVirtualFile, new ArrayList<VirtualFileWindowImpl>());
     }
     return insertFileNear(cachedList, virtualFile);
   }
 
   private static final MyRangesIntersectionComparator rangesIntersectionComparator = new MyRangesIntersectionComparator();
-  private VirtualFileWindow insertFileNear(List<VirtualFileWindow> cachedList, VirtualFileWindow virtualFile) {
+  private VirtualFileWindowImpl insertFileNear(List<VirtualFileWindowImpl> cachedList, VirtualFileWindowImpl virtualFile) {
     FileManager fileManager = myPsiManager.getFileManager();
     synchronized (cachedList) {
       int insertionIndex = Collections.binarySearch(cachedList, virtualFile, rangesIntersectionComparator);
@@ -165,7 +165,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       boolean enoughChecking = false;
       int i = insertionIndex;
       while (i < cachedList.size()) {
-        VirtualFileWindow oldValidFile = checkAndRemoveInvalidFile(i,cachedList,fileManager);
+        VirtualFileWindowImpl oldValidFile = checkAndRemoveInvalidFile(i,cachedList,fileManager);
         if (oldValidFile == null) {
           enoughChecking = false;
         }
@@ -180,8 +180,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return virtualFile;
   }
   //returns null if file is invalid and has been removed
-  private static VirtualFileWindow checkAndRemoveInvalidFile(int index, List<VirtualFileWindow> cachedList, FileManager fileManager) {
-    VirtualFileWindow oldFile = cachedList.get(index);
+  private static VirtualFileWindowImpl checkAndRemoveInvalidFile(int index, List<VirtualFileWindowImpl> cachedList, FileManager fileManager) {
+    VirtualFileWindowImpl oldFile = cachedList.get(index);
     boolean isValid = oldFile.isValid();
     if (isValid) {
       PsiFile cached = fileManager.getCachedPsiFile(oldFile);
@@ -190,7 +190,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
         isValid = false;
       }
       else if (index < cachedList.size() - 1) {
-        VirtualFileWindow nextFile = cachedList.get(index + 1);
+        VirtualFileWindowImpl nextFile = cachedList.get(index + 1);
         if (oldFile.getDocumentWindow().areRangesEqual(nextFile.getDocumentWindow())) {
           PsiFile nextCached = fileManager.getCachedPsiFile(nextFile);
           if (nextCached != null && nextCached.isValid()) {
@@ -352,7 +352,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
 
   public void clearCaches(VirtualFileWindow virtualFile) {
     VirtualFile hostFile = virtualFile.getDelegate();
-    List<VirtualFileWindow> cachedList = cachedFiles.get(hostFile);
+    List<VirtualFileWindowImpl> cachedList = cachedFiles.get(hostFile);
     if (cachedList != null) {
       synchronized (cachedList) {
         cachedList.remove(virtualFile);
@@ -391,14 +391,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     }
   }
 
-  private static class MyRangesIntersectionComparator implements Comparator<VirtualFileWindow> {
-    public int compare(VirtualFileWindow v1, VirtualFileWindow v2) {
+  private static class MyRangesIntersectionComparator implements Comparator<VirtualFileWindowImpl> {
+    public int compare(VirtualFileWindowImpl v1, VirtualFileWindowImpl v2) {
       return compareRanges(v1, v2);
     }
 
   }
 
-  private static int compareRanges(VirtualFileWindow v1, VirtualFileWindow v2) {
+  private static int compareRanges(VirtualFileWindowImpl v1, VirtualFileWindowImpl v2) {
     DocumentWindow d1 = v1.getDocumentWindow();
     DocumentWindow d2 = v2.getDocumentWindow();
     RangeMarker[] ranges1 = d1.getHostRanges();

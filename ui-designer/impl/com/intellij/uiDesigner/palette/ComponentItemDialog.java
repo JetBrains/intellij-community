@@ -6,6 +6,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -13,9 +14,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -313,8 +314,8 @@ public final class ComponentItemDialog extends DialogWrapper {
         }
         return false;
       }
-      PsiClass psiClass = psiManager.findClass(myDocument.getText(), myProject.getAllScope());
-      PsiClass componentClass = psiManager.findClass(JComponent.class.getName(), myProject.getAllScope());
+      PsiClass psiClass = psiManager.findClass(myDocument.getText(), ProjectScope.getAllScope(myProject));
+      PsiClass componentClass = psiManager.findClass(JComponent.class.getName(), ProjectScope.getAllScope(myProject));
       if (psiClass != null && componentClass != null && !InheritanceUtil.isInheritorOrSelf(psiClass, componentClass, true)) {
         myErrorLabel.setText(UIDesignerBundle.message("add.component.error.component.required"));
         return false;
@@ -381,7 +382,7 @@ public final class ComponentItemDialog extends DialogWrapper {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       PsiFile formFile = null;
       if (myTextField.getText().length() > 0) {
-        VirtualFile formVFile = ModuleUtil.findResourceFileInScope(myTextField.getText(), myProject, myProject.getAllScope());
+        VirtualFile formVFile = ModuleUtil.findResourceFileInScope(myTextField.getText(), myProject, ProjectScope.getAllScope(myProject));
         if (formVFile != null) {
           formFile = PsiManager.getInstance(myProject).findFile(formVFile);
         }

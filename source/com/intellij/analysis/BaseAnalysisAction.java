@@ -1,6 +1,6 @@
 package com.intellij.analysis;
 
-import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -162,7 +162,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       Set<VirtualFile> files = new HashSet<VirtualFile>();
       for (VirtualFile vFile : virtualFiles) {
         if (fileIndex.isInContent(vFile)) {
-          if (vFile instanceof VirtualFileWindow) {
+          if (vFile instanceof VirtualFileWindowImpl) {
             files.add(vFile);
             vFile = ((VirtualFileWindow)vFile).getDelegate();
           }

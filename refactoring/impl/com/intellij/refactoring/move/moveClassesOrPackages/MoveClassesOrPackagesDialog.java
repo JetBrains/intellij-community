@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
@@ -134,7 +135,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myWithBrowseButtonReference = createPackageChooser();
     myClassPackageChooser = createPackageChooser();
 
-    myInnerClassChooser = new ClassNameReferenceEditor(PsiManager.getInstance(myProject), null, myProject.getProjectScope());
+    myInnerClassChooser = new ClassNameReferenceEditor(PsiManager.getInstance(myProject), null, ProjectScope.getProjectScope(myProject));
     myInnerClassChooser.addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         validateButtons();
@@ -264,7 +265,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   @Nullable
   private PsiClass findTargetClass() {
     String name = myInnerClassChooser.getText().trim();
-    return myManager.findClass(name, myProject.getProjectScope());
+    return myManager.findClass(name, ProjectScope.getProjectScope(myProject));
   }
 
   private boolean isMoveToPackage() {

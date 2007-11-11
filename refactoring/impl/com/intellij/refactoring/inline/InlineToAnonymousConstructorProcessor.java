@@ -13,9 +13,10 @@ import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement
 import com.intellij.patterns.impl.TraverseContext;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -432,7 +433,7 @@ class InlineToAnonymousConstructorProcessor {
           if (psiTypeParameters [i] == target) {
             PsiType substType = substitutedParameters[i];
             if (substType == null) {
-              substType = PsiType.getJavaLangObject(element.getManager(), element.getProject().getAllScope());
+              substType = PsiType.getJavaLangObject(element.getManager(), ProjectScope.getAllScope(element.getProject()));
             }
             elementsToReplace.put(element, myElementFactory.createTypeElement(substType));
           }

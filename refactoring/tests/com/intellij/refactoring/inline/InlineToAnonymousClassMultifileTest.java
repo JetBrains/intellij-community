@@ -1,19 +1,20 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.search.ProjectScope;
+import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.idea.IdeaTestUtil;
-import com.intellij.refactoring.MultiFileTestCase;
 
-import java.util.ArrayList;
 import java.io.File;
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -39,7 +40,7 @@ public class InlineToAnonymousClassMultifileTest extends CodeInsightTestCase {
     String rootBefore = getRoot() + "/before";
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
     final VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
-    PsiClass classToInline = myPsiManager.findClass(className, myProject.getAllScope());
+    PsiClass classToInline = myPsiManager.findClass(className, ProjectScope.getAllScope(myProject));
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(myProject, 
                                                                                     classToInline,

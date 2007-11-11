@@ -32,7 +32,7 @@
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -88,7 +88,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
     Set<VirtualFile> realFiles = new THashSet<VirtualFile>(files.length);
     for (VirtualFile file : files) {
-      if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
+      if (file instanceof VirtualFileWindowImpl) file = ((VirtualFileWindow)file).getDelegate();
       realFiles.add(file);
     }
     files = realFiles.toArray(new VirtualFile[realFiles.size()]);
