@@ -15,8 +15,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.impl.source.codeStyle.TooComplexPSIModificationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Stack;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -122,13 +122,6 @@ public class CommandProcessorImpl extends CommandProcessorEx {
         final TooComplexPSIModificationException rollback = (TooComplexPSIModificationException)throwable;
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           throw new RuntimeException(rollback);
-        }
-        failed = true;
-      }
-      else if (throwable instanceof UnsupportedOperationException) {
-        final UnsupportedOperationException operation = (UnsupportedOperationException)throwable;
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          throw new RuntimeException(operation);
         }
         failed = true;
       }
