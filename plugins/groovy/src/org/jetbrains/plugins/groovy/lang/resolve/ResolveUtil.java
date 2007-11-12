@@ -20,9 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspClass;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -36,14 +34,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -156,13 +151,13 @@ public class ResolveUtil {
     return manager.findClass("java.util.List", resolveScope);
   }
 
-  public static GrVariable resolveDuplicateLocalVariable(GrVariable variable) {
-    ResolverProcessor processor = new ResolverProcessor(variable.getName(), EnumSet.of(PROPERTY, METHOD), variable, false, PsiType.EMPTY_ARRAY);
-    treeWalkUp(variable, processor);
+  public static GrVariable resolveVariable(GroovyPsiElement place, String name) {
+    ResolverProcessor processor = new PropertyResolverProcessor(name, place,  false);
+    treeWalkUp(place, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (GroovyResolveResult candidate : candidates) {
       final PsiElement element = candidate.getElement();
-      if (element == variable) continue;
+      if (element == place) continue;
       if (element instanceof GrVariable) return (GrVariable) element;
     }
 

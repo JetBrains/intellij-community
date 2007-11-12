@@ -15,13 +15,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.*;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
@@ -86,6 +89,9 @@ public class ReachingDefinitionsCollector {
       }
     });
 
+    filterFields(inames, first);
+    filterFields(onames, first);
+
     final String[] iarr = inames.toArray(new String[inames.size()]);
     final String[] oarr = onames.toArray(new String[onames.size()]);
 
@@ -98,6 +104,14 @@ public class ReachingDefinitionsCollector {
         return oarr;
       }
     };
+  }
+
+  private static void filterFields(Set<String> names, GrStatement place) {
+    for (Iterator<String> iterator = names.iterator(); iterator.hasNext();) {
+      String name =  iterator.next();
+      final GrVariable variable = ResolveUtil.resolveVariable(place, name);
+      if (variable instanceof PsiField) iterator.remove();
+    }
   }
 
   private static TIntHashSet getFragmentReads(GrStatement first, GrStatement last, Instruction[] flow) {
