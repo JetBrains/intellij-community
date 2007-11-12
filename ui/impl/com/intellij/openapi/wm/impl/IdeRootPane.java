@@ -3,27 +3,25 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.GeneralPath;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Anton Katilin
@@ -39,8 +37,8 @@ public class IdeRootPane extends JRootPane{
   private StatusBarImpl myStatusBar;
 
   private JPanel myNorthPanel = new JPanel(new GridBagLayout());
-  private NavBarPanel myNavigationBar;
-  private JLabel myCloseNavBarLabel;
+  private List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<IdeRootPaneNorthExtension>();
+  private JPanel myNorthComponentsPanel = new JPanel(new GridBagLayout());
 
   /**
    * Current <code>ToolWindowsPane</code>. If there is no such pane then this field is null.
@@ -55,7 +53,6 @@ public class IdeRootPane extends JRootPane{
   private boolean myGlassPaneInitialized;
   private IdeGlassPaneImpl myGlassPane;
 
-  private static final Icon CROSS_ICON = IconLoader.getIcon("/actions/cross.png");
   private Application myApplication;
 
   IdeRootPane(ActionManager actionManager, UISettings uiSettings, DataManager dataManager, KeymapManager keymapManager,
@@ -86,6 +83,8 @@ public class IdeRootPane extends JRootPane{
 
     myGlassPane.setVisible(false);
     myApplication = application;
+
+    myNorthComponents.addAll(Arrays.asList(Extensions.getExtensions(IdeRootPaneNorthExtension.EP_NAME)));
   }
 
 
@@ -180,10 +179,6 @@ public class IdeRootPane extends JRootPane{
     return myStatusBar;
   }
 
-  public NavBarPanel getNavigationBar(){
-    return myNavigationBar;
-  }
-
   private void updateToolbarVisibility(){
     myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR);
   }
@@ -192,86 +187,36 @@ public class IdeRootPane extends JRootPane{
     myStatusBar.setVisible(myUISettings.SHOW_STATUS_BAR);
   }
 
-  private void updateNavigationBarVisibility(){
-    if (myNavigationBar != null) {
-      if (myUISettings.SHOW_NAVIGATION_BAR){
-        myNavigationBar.installListeners();
-      } else {
-        myNavigationBar.uninstallListeners();
-      }
-      myNavigationBar.setVisible(myUISettings.SHOW_NAVIGATION_BAR);
-      myCloseNavBarLabel.setVisible(myUISettings.SHOW_NAVIGATION_BAR);
-      myNavigationBar.updateState(myUISettings.SHOW_NAVIGATION_BAR);
+  public void installNorthComponents(final Project project) {
+    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
+      northComponent.installComponent(project, myNorthPanel);
+      northComponent.uiSettingsChanged(myUISettings);
     }
   }
 
-  public void installNavigationBar(final Project project) {
-    myNavigationBar = new NavBarPanel(project);
-    final int iconWidth = CROSS_ICON.getIconWidth();
-    final int iconHeight = CROSS_ICON.getIconHeight();
-    myNavigationBar.cutBorder(2 * iconWidth);
-    myNorthPanel.add(myNavigationBar, new GridBagConstraints(0, 1, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                                             new Insets(0, 0, 0, 0), 0, 0));
-    myCloseNavBarLabel = new JLabel(new Icon() {
-      public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-        final GraphicsConfig config = new GraphicsConfig(g);
-        config.setAntialiasing(true);
-
-        Graphics2D g2d = (Graphics2D)g;
-
-        final GeneralPath path = new GeneralPath();
-
-        path.moveTo( 0, iconHeight);
-        path.curveTo(2 * iconWidth/3, 2 * iconHeight/3, iconWidth/3, iconHeight/3, iconWidth, 0);
-        path.lineTo(2 * iconWidth - 2, 0);
-        path.lineTo(2 * iconWidth - 2, iconHeight);
-        path.lineTo(0, iconHeight);
-        path.closePath();
-
-        g2d.setPaint(UIUtil.getListBackground());
-        g2d.fill(path);
-
-        g2d.setPaint(myCloseNavBarLabel.getBackground().darker());
-        g2d.draw(path);
-
-        CROSS_ICON.paintIcon(c, g, x + iconWidth - 2, y + 1);
-
-        config.restore();
-      }
-
-      public int getIconWidth() {
-        return 2 * iconWidth;
-      }
-
-      public int getIconHeight() {
-        return iconHeight;
-      }
-    });
-    myCloseNavBarLabel.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        myUISettings.SHOW_NAVIGATION_BAR = false;
-        updateNavigationBarVisibility();
-      }
-    });
-    myNorthPanel.add(myCloseNavBarLabel, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.SOUTHEAST, GridBagConstraints.NONE,
-                                                                new Insets(0, 0, 0, 0), 0, 0));
-    updateNavigationBarVisibility();
+  public void deinstallNorthComponents(){
+    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
+      northComponent.dispose();
+    }
+    myNorthComponentsPanel.removeAll();
   }
 
-  public void deinstallNavigationBar(){
-    if (myNavigationBar != null) {
-      myNavigationBar.uninstallListeners();
-      myNorthPanel.remove(myNavigationBar);
-      myNorthPanel.remove(myCloseNavBarLabel);
-      myNavigationBar = null;
+  public IdeRootPaneNorthExtension findByName(String name) {
+    for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
+      if (Comparing.strEqual(name, northComponent.getKey())) {
+        return northComponent;
+      }
     }
+    return null;
   }
 
   private final class MyUISettingsListenerImpl implements UISettingsListener{
     public final void uiSettingsChanged(final UISettings source){
       updateToolbarVisibility();
       updateStatusBarVisibility();
-      updateNavigationBarVisibility();
+      for (IdeRootPaneNorthExtension component : myNorthComponents) {
+        component.uiSettingsChanged(source);
+      }
     }
   }
 

@@ -35,7 +35,7 @@ public class ActivateNavigationBarAction extends AnAction {
       if (UISettings.getInstance().SHOW_NAVIGATION_BAR){
         final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
         final IdeRootPane ideRootPane = ((IdeRootPane)frame.getRootPane());
-        ideRootPane.getNavigationBar().select();
+        ((NavBarPanel)ideRootPane.findByName(NavBarRootPaneExtension.NAV_BAR).getComponent()).select();
       }
     }
   }

@@ -60,7 +60,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper {
 
   protected void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus) {
     final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
-    ((IdeRootPane)frame.getRootPane()).getNavigationBar().select();
+    ((NavBarPanel)((IdeRootPane)frame.getRootPane()).findByName(NavBarRootPaneExtension.NAV_BAR).getComponent()).select();
   }
 
   protected boolean canWorkWithCustomObjects() {
@@ -69,7 +69,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper {
 
   protected void select(PsiElement element, boolean requestFocus) {
     final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(myProject);
-    ((IdeRootPane)frame.getRootPane()).getNavigationBar().select();
+    ((NavBarPanel)((IdeRootPane)frame.getRootPane()).findByName(NavBarRootPaneExtension.NAV_BAR).getComponent()).select();
   }
 
 }

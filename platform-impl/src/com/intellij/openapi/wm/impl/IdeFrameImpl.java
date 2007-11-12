@@ -186,13 +186,13 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){
         public void run() {
           if (myRootPane != null) {
-            myRootPane.installNavigationBar(project);
+            myRootPane.installNorthComponents(project);
           }
         }
       });
     } else {
       if (myRootPane != null) { //already disposed
-        myRootPane.deinstallNavigationBar();
+        myRootPane.deinstallNorthComponents();
       }
     }
 
