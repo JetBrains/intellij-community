@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 
@@ -41,7 +42,7 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
   }
 
   public void testProjectWithEnvProperty() throws IOException {
-    String ideaJDK = System.getenv("IDEA_JDK");
+    String ideaJDK = FileUtil.toSystemIndependentName(System.getenv("IDEA_JDK"));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -270,19 +271,56 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
   }
 
   public void testProjectWithBuiltExtension() throws Exception {
-  importProject("<groupId>test</groupId>" +
-                "<artifactId>project</artifactId>" +
-                "<version>1</version>" +
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-                "<build>" +
-                " <extensions>" +
-                "   <extension>" +
-                "     <groupId>org.apache.maven.wagon</groupId>" +
-                "     <artifactId>wagon-webdav</artifactId>" +
-                "     <version>1.0-beta-2</version>" +
-                "    </extension>" +
-                "  </extensions>" +
-                "</build>");
+                  "<build>" +
+                  " <extensions>" +
+                  "   <extension>" +
+                  "     <groupId>org.apache.maven.wagon</groupId>" +
+                  "     <artifactId>wagon-webdav</artifactId>" +
+                  "     <version>1.0-beta-2</version>" +
+                  "    </extension>" +
+                  "  </extensions>" +
+                  "</build>");
     assertModules("project");
+  }
+
+  public void testProjectUsingParentPropertyInBuildExtensionInChildModule() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <xxx>123</xxx>" +
+                     "</properties>" +
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    createModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m</artifactId>" +
+
+                         "<parent>" +
+                         "  <groupId>test</groupId>" +
+                         "  <artifactId>project</artifactId>" +
+                         "  <version>1</version>" +
+                         "</parent>" +
+
+                         "<build>" +
+                         "  <extensions>" +
+                         "    <extension>" +
+                         "      <groupId>some.groupId</groupId>" +
+                         "      <artifactId>some.artifactId</artifactId>" +
+                         "      <version>${xxx}</version>" +
+                         "    </extension>" +
+                         "  </extensions>" +
+                         "</build>");
+
+    importProject();
+    
+    // should fail when bug is fixed in embedder
+    assertModules();
   }
 }
