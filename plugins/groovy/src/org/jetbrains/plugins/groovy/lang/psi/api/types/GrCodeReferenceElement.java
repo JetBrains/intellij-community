@@ -30,11 +30,5 @@ public interface GrCodeReferenceElement extends GrReferenceElement {
   @Nullable
   GrCodeReferenceElement getQualifier();
 
-  @NotNull
-  PsiType[] getTypeArguments();
-
-  @Nullable
-  GrTypeArgumentList getTypeArgumentList();
-
   void setQualifier(@Nullable GrCodeReferenceElement newQualifier);
 }
