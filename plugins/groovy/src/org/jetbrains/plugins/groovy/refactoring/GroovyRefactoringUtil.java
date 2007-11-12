@@ -99,6 +99,21 @@ public abstract class GroovyRefactoringUtil {
 
   public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
     ArrayList<PsiElement> occurrences = new ArrayList<PsiElement>();
+    Comparator<PsiElement> comparator = new Comparator<PsiElement>() {
+      public int compare(PsiElement element1, PsiElement element2) {
+        if (element1.equals(element2)) return 0;
+
+        if (element1 instanceof GrParameter &&
+            element2 instanceof GrParameter) {
+          final String name1 = ((GrParameter) element1).getName();
+          final String name2 = ((GrParameter) element2).getName();
+          if (name1 != null && name2 != null) {
+            return name1.compareTo(name2);
+          }
+        }
+        return 1;
+      }
+    };
 
     if (isLoopOrForkStatement(scope)) {
       PsiElement son = expr;
@@ -106,15 +121,15 @@ public abstract class GroovyRefactoringUtil {
         son = son.getParent();
       }
       assert scope.equals(son.getParent());
-      collectOccurrences(expr, son, occurrences);
+      collectOccurrences(expr, son, occurrences, comparator);
     } else {
-      collectOccurrences(expr, scope, occurrences);
+      collectOccurrences(expr, scope, occurrences, comparator);
     }
     return occurrences.toArray(PsiElement.EMPTY_ARRAY);
   }
 
 
-  private static void collectOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc) {
+  private static void collectOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc, Comparator<PsiElement> comparator) {
     if (scope.equals(expr)) {
       acc.add(expr);
       return;
@@ -122,10 +137,10 @@ public abstract class GroovyRefactoringUtil {
     for (PsiElement child : scope.getChildren()) {
       if (!(child instanceof GrTypeDefinition) &&
           !(child instanceof GrMethod && scope instanceof GroovyFileBase)) {
-        if (PsiEquivalenceUtil.areElementsEquivalent(child, expr, null, false)) {
+        if (PsiEquivalenceUtil.areElementsEquivalent(child, expr, comparator, false)) {
           acc.add(child);
         } else {
-          collectOccurrences(expr, child, acc);
+          collectOccurrences(expr, child, acc, comparator);
         }
       }
     }
