@@ -17,12 +17,17 @@ package com.intellij.openapi.diff;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to initiate 3-way merge operations for multiple versions of content of a particular virtual file.
  */
-public interface DiffRequestFactory {
+public abstract class DiffRequestFactory {
+  public static DiffRequestFactory getInstance() {
+    return ServiceManager.getService(DiffRequestFactory.class);
+  }
+
   /**
    * Creates a request for a merge operation. To execute the request, obtain the diff tool instance by calling
    * {@link com.intellij.openapi.diff.DiffManager#getDiffTool()} and then call {@link DiffTool#show(DiffRequest)}.
@@ -37,6 +42,6 @@ public interface DiffRequestFactory {
    *                                 executed when the button is pressed.
    * @return The merge operation request.
    */
-  MergeRequest createMergeRequest(String leftText, String rightText, String originalContent, @NotNull VirtualFile file, Project project,
+  public abstract MergeRequest createMergeRequest(String leftText, String rightText, String originalContent, @NotNull VirtualFile file, Project project,
                                   ActionButtonPresentation actionButtonPresentation);
 }

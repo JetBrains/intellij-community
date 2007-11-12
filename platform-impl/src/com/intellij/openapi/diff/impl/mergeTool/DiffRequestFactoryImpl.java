@@ -49,7 +49,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class DiffRequestFactoryImpl implements DiffRequestFactory {
+public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl");
 

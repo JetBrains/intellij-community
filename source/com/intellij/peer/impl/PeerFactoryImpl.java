@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
-import com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -77,7 +76,6 @@ public class PeerFactoryImpl extends PeerFactory {
   private final UIHelper myUIHelper = new MyUIHelper();
   private final ErrorViewFactory myErrorViewFactory = new ErrorViewFactoryImpl();
   private final FileSystemTreeFactoryImpl myFileSystemTreeFactory = new FileSystemTreeFactoryImpl();
-  private final DiffRequestFactoryImpl myDiffRequestFactory = new DiffRequestFactoryImpl();
 
   public FileStatusFactory getFileStatusFactory() {
     return ServiceManager.getService(FileStatusFactory.class);
@@ -115,7 +113,7 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public DiffRequestFactory getDiffRequestFactory() {
-    return myDiffRequestFactory;
+    return DiffRequestFactory.getInstance();
   }
 
   private static class MyUIHelper implements UIHelper {

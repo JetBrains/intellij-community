@@ -41,7 +41,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 
 import java.io.IOException;
 
@@ -66,7 +65,7 @@ public class MergeFilesAction extends AnAction{
       return;
     }
 
-    DiffRequestFactory diffRequestFactory = PeerFactory.getInstance().getDiffRequestFactory();
+    DiffRequestFactory diffRequestFactory = DiffRequestFactory.getInstance();
 
     VirtualFile file = files[1];
     try {
