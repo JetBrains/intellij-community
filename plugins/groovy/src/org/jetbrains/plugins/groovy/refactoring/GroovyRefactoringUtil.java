@@ -98,22 +98,23 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
-    ArrayList<PsiElement> occurences = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> occurrences = new ArrayList<PsiElement>();
+
     if (isLoopOrForkStatement(scope)) {
       PsiElement son = expr;
       while (son.getParent() != null && !isLoopOrForkStatement(son.getParent())) {
         son = son.getParent();
       }
       assert scope.equals(son.getParent());
-      accumulateOccurences(expr, son, occurences);
+      collectOccurrences(expr, son, occurrences);
     } else {
-      accumulateOccurences(expr, scope, occurences);
+      collectOccurrences(expr, scope, occurrences);
     }
-    return occurences.toArray(PsiElement.EMPTY_ARRAY);
+    return occurrences.toArray(PsiElement.EMPTY_ARRAY);
   }
 
 
-  private static void accumulateOccurences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc) {
+  private static void collectOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<PsiElement> acc) {
     if (scope.equals(expr)) {
       acc.add(expr);
       return;
@@ -121,21 +122,10 @@ public abstract class GroovyRefactoringUtil {
     for (PsiElement child : scope.getChildren()) {
       if (!(child instanceof GrTypeDefinition) &&
           !(child instanceof GrMethod && scope instanceof GroovyFileBase)) {
-        Comparator<PsiElement> psiComparator = new Comparator<PsiElement>() {
-          public int compare(PsiElement psiElement, PsiElement psiElement1) {
-            if (psiElement instanceof GrParameter &&
-                psiElement1 instanceof GrParameter &&
-                PsiEquivalenceUtil.areElementsEquivalent(psiElement, psiElement1)) {
-              return 0;
-            } else {
-              return 1;
-            }
-          }
-        };
-        if (PsiEquivalenceUtil.areElementsEquivalent(child, expr, psiComparator, false)) {
+        if (PsiEquivalenceUtil.areElementsEquivalent(child, expr, null, false)) {
           acc.add(child);
         } else {
-          accumulateOccurences(expr, child, acc);
+          collectOccurrences(expr, child, acc);
         }
       }
     }

@@ -31,37 +31,23 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
@@ -201,10 +187,18 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(this);
       if (name != null) {
         CandidateInfo fieldInfo = fieldsMap.get(name);
-        if (fieldInfo != null && !processor.execute(fieldInfo.getElement(), fieldInfo.getSubstitutor())) return false;
+        if (fieldInfo != null) {
+          final PsiElement element = fieldInfo.getElement();
+          if (!(element instanceof GrField && PsiTreeUtil.isAncestor(element.getParent(), place, true))) { //the same variable declaration
+            if (!processor.execute(element, fieldInfo.getSubstitutor())) return false;
+          }
+        }
       } else {
         for (CandidateInfo info : fieldsMap.values()) {
-          if (!processor.execute(info.getElement(), info.getSubstitutor())) return false;
+          final PsiElement element = info.getElement();
+          if (!(element instanceof GrField && PsiTreeUtil.isAncestor(element.getParent(), place, true))) {  //the same variable declaration
+            if (!processor.execute(element, info.getSubstitutor())) return false;
+          }
         }
       }
     }
