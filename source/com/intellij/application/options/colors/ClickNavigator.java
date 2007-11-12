@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.tree.IElementType;
@@ -28,18 +29,10 @@ public class ClickNavigator {
     myOptionsList = optionsList;
   }
 
-  public static void setHandCursor(Editor view) {
-    Cursor c = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-    // XXX: Workaround, simply view.getContentComponent().setCursor(c) doesn't work
-    if (view.getContentComponent().getCursor() != c) {
-      view.getContentComponent().setCursor(c);
-    }
-  }
-
   public void addClickNavigatorToGeneralView(final Editor view) {
     view.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
       public void mouseMoved(MouseEvent e) {
-        setHandCursor(view);
+        EditorUtil.setHandCursor(view);
       }
     });
 

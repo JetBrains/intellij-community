@@ -1,6 +1,5 @@
 package com.intellij.openapi.diff.impl.settings;
 
-import com.intellij.application.options.colors.ClickNavigator;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.ColorAndFontPanel;
 import com.intellij.application.options.colors.EditorSchemeAttributeDescriptor;
@@ -15,6 +14,7 @@ import com.intellij.openapi.diff.impl.incrementalMerge.ui.EditorPlace;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.*;
@@ -207,7 +207,7 @@ public class DiffColorsForm {
     public void mouseMoved(EditorMouseEvent e) {
       MergePanel2 mergePanel = getMergePanel();
       Editor editor = mergePanel.getEditor(myIndex);
-      if (MergeSearchHelper.findChangeAt(e, mergePanel, myIndex) != null) ClickNavigator.setHandCursor(editor);
+      if (MergeSearchHelper.findChangeAt(e, mergePanel, myIndex) != null) EditorUtil.setHandCursor(editor);
     }
   }
 

@@ -167,6 +167,14 @@ public class EditorUtil {
     EditorEx editorImpl = (EditorEx) editor;
     return editorImpl.calcColumnNumber(text, start, offset, tabSize);
   }
+
+  public static void setHandCursor(Editor view) {
+    Cursor c = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+    // XXX: Workaround, simply view.getContentComponent().setCursor(c) doesn't work
+    if (view.getContentComponent().getCursor() != c) {
+      view.getContentComponent().setCursor(c);
+    }
+  }
 }
 
 
