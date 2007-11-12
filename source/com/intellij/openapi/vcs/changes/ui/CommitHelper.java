@@ -89,7 +89,7 @@ public class CommitHelper {
 
           @Nullable
           public NotificationInfo getNotificationInfo() {
-            String text = (myChangeList.getChanges().size() - changesFailedToCommit.size()) + " Change(s) Commited";
+            String text = (myIncludedChanges.size() - changesFailedToCommit.size()) + " Change(s) Commited";
             if (changesFailedToCommit.size() > 0) {
               text += ", " + changesFailedToCommit.size() + " Change(s) Failed To Commit";
             }
