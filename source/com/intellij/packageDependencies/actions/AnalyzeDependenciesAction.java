@@ -19,7 +19,7 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
 
   public AnalyzeDependenciesAction() {
     super(AnalysisScopeBundle.message("action.forward.dependency.analysis"), AnalysisScopeBundle.message("action.analysis.noun"));
-    myBorderChooser.setModel(new SpinnerNumberModel(5, 0, 20, 1));
+    myBorderChooser.setModel(new SpinnerNumberModel(5, 0, Integer.MAX_VALUE, 1));
     myTransitiveCB.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         myBorderChooser.setEnabled(myTransitiveCB.isSelected());

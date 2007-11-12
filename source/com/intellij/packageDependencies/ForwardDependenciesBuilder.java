@@ -53,7 +53,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     try {
       getScope().accept(new PsiRecursiveElementVisitor() {
         public void visitFile(final PsiFile file) {
-          visit(file, fileIndex, psiManager, null, new HashSet<PsiFile>(), 0);
+          visit(file, fileIndex, psiManager, 0);
         }
       });
     }
@@ -62,9 +62,8 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     }
   }
 
-  private void visit(final PsiFile file, final ProjectFileIndex fileIndex, final PsiManager psiManager, final Set<PsiFile> fileDeps,
-                     final HashSet<PsiFile> processed, int depth) {
-    if (depth++ > getTransitiveBorder()) return;
+  private void visit(final PsiFile file, final ProjectFileIndex fileIndex, final PsiManager psiManager, int depth) {
+
     final FileViewProvider viewProvider = file.getViewProvider();
     if (viewProvider.getBaseLanguage() != file.getLanguage()) return;
 
@@ -80,50 +79,54 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
       if (virtualFile != null) {
         indicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, getProject()));
       }
-      if (fileDeps == null && myTotalFileCount > 0) {
+      if ( myTotalFileCount > 0) {
         indicator.setFraction(((double)++ myFileCount) / myTotalFileCount);
       }
     }
 
     final Set<PsiFile> collectedDeps = new HashSet<PsiFile>();
-    analyzeFileDependencies(file, new DependencyProcessor() {
-      public void process(PsiElement place, PsiElement dependency) {
-        PsiFile dependencyFile = dependency.getContainingFile();
-        if (dependencyFile != null) {
-          if (viewProvider == dependencyFile.getViewProvider()) return;
-          if (dependencyFile.isPhysical()) {
-            final VirtualFile virtualFile = dependencyFile.getVirtualFile();
-            if (virtualFile != null && (fileIndex.isInContent(virtualFile)
-                                        || fileIndex.isInLibraryClasses(virtualFile)
-                                        || fileIndex.isInLibrarySource(virtualFile))) {
-              collectedDeps.add(dependencyFile);
-            }
-          }
-        }
-      }
-    });
-    final Set<PsiFile> deps;
-    if (fileDeps == null) {
-      deps = new HashSet<PsiFile>(collectedDeps);
-      getDependencies().put(file, deps);
-    }
-    else {
-      deps = fileDeps;
-      deps.addAll(collectedDeps);
-    }
-
-    getDirectDependencies().put(file, new HashSet<PsiFile>(collectedDeps));
-
-    psiManager.dropResolveCaches();
-
-    if (isTransitive()) {
-      for (final PsiFile psiFile : new HashSet<PsiFile>(deps)) {
-        if (!processed.contains(psiFile) && !getScope().contains(psiFile)) {
+    final HashSet<PsiFile> processed = new HashSet<PsiFile>();
+    collectedDeps.add(file);
+    do {
+      if (depth++ > getTransitiveBorder()) return;
+      for (PsiFile psiFile : new HashSet<PsiFile>(collectedDeps)) {
+        final Set<PsiFile> found = new HashSet<PsiFile>();
+        if (!processed.contains(psiFile)) {
           processed.add(psiFile);
-          visit(psiFile, fileIndex, psiManager, deps, processed, depth);
+          analyzeFileDependencies(psiFile, new DependencyProcessor() {
+            public void process(PsiElement place, PsiElement dependency) {
+              PsiFile dependencyFile = dependency.getContainingFile();
+              if (dependencyFile != null) {
+                if (viewProvider == dependencyFile.getViewProvider()) return;
+                if (dependencyFile.isPhysical()) {
+                  final VirtualFile virtualFile = dependencyFile.getVirtualFile();
+                  if (virtualFile != null &&
+                      (fileIndex.isInContent(virtualFile) ||
+                       fileIndex.isInLibraryClasses(virtualFile) ||
+                       fileIndex.isInLibrarySource(virtualFile))) {
+                    found.add(dependencyFile);
+                  }
+                }
+              }
+            }
+          });
+          Set<PsiFile> deps = getDependencies().get(file);
+          if (deps == null) {
+            deps = new HashSet<PsiFile>();
+            getDependencies().put(file, deps);
+          }
+          deps.addAll(found);
+
+          getDirectDependencies().put(psiFile, new HashSet<PsiFile>(found));
+
+          collectedDeps.addAll(found);
+
+          psiManager.dropResolveCaches();
         }
       }
+      collectedDeps.removeAll(processed);
     }
+    while (isTransitive() && !collectedDeps.isEmpty());
   }
 
   public Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
