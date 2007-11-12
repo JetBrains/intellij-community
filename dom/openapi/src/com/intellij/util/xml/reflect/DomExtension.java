@@ -16,10 +16,11 @@
 
 package com.intellij.util.xml.reflect;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.XmlName;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 
@@ -39,4 +40,7 @@ public interface DomExtension {
 
   DomExtension setExtendClass(@NotNull @NonNls String className);
 
+  <T> void putUserData(Key<T> key, T value);
+
+  DomExtension addExtender(final DomExtender extender);
 }

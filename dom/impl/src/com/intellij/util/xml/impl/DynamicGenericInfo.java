@@ -94,6 +94,17 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
         registrar = extenderEP.extend(myProject, domElement, registrar);
       }
 
+      final AbstractDomChildDescriptionImpl description = myInvocationHandler.getChildDescription();
+      if (description != null) {
+        final List<DomExtender> extenders = description.getUserData(DomExtensionImpl.DOM_EXTENDER_KEY);
+        if (extenders != null) {
+          if (registrar == null) registrar = new DomExtensionsRegistrarImpl();
+          for (final DomExtender extender : extenders) {
+            extender.registerExtensions(domElement, registrar);
+          }
+        }
+      }
+
       w.lock();
       try {
         if (myCachedValue.hasUpToDateValue()) return;

@@ -19,6 +19,7 @@ package com.intellij.util.xml.reflect;
 import com.intellij.util.xml.AnnotatedElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -39,4 +40,6 @@ public interface AbstractDomChildrenDescription extends AnnotatedElement {
 
   @NotNull
   DomNameStrategy getDomNameStrategy(@NotNull DomElement parent);
+
+  <T> T getUserData(Key<T> key);
 }

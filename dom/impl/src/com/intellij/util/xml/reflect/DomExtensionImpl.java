@@ -3,27 +3,34 @@
  */
 package com.intellij.util.xml.reflect;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.util.xml.Converter;
-import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.ExtendClass;
-import com.intellij.util.xml.impl.DomChildDescriptionImpl;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.ConvertAnnotationImpl;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.xml.impl.DomChildDescriptionImpl;
+import com.intellij.util.SmartList;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Type;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
  */
 public class DomExtensionImpl implements DomExtension {
+  public static final Key<List<DomExtender>> DOM_EXTENDER_KEY = Key.create("Dom.Extender");
   private final XmlName myXmlName;
   private final Type myType;
   private Converter myConverter;
   private String myExtendClass;
   private boolean mySoft;
   private int myCount = 1;
+  private Map myUserMap;
 
   public DomExtensionImpl(final Type type, final XmlName xmlName) {
     myType = type;
@@ -55,6 +62,19 @@ public class DomExtensionImpl implements DomExtension {
     return this;
   }
 
+  public <T> void putUserData(final Key<T> key, final T value) {
+    if (myUserMap == null) myUserMap = new THashMap();
+    myUserMap.put(key, value);
+  }
+
+  public DomExtension addExtender(final DomExtender extender) {
+    if (myUserMap == null || !myUserMap.containsKey(DOM_EXTENDER_KEY)) {
+      putUserData(DOM_EXTENDER_KEY, new SmartList<DomExtender>());
+    }
+    ((List<DomExtender>)myUserMap.get(DOM_EXTENDER_KEY)).add(extender);
+    return this;
+  }
+
   public final DomExtensionImpl setCount(final int count) {
     myCount = count;
     return this;
@@ -65,6 +85,7 @@ public class DomExtensionImpl implements DomExtension {
   }
 
   public final <T extends DomChildDescriptionImpl> T addAnnotations(T t) {
+    t.setUserMap(myUserMap);
     if (myConverter != null) {
       t.addCustomAnnotation(new ConvertAnnotationImpl(myConverter, mySoft));
     }

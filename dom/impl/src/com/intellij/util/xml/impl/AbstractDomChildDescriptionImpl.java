@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomNameStrategy;
@@ -25,6 +26,7 @@ import java.util.Map;
 public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChildrenDescription, Comparable<AbstractDomChildDescriptionImpl> {
   private final Type myType;
   private Map<Class, Annotation> myCustomAnnotations;
+  @Nullable private Map myUserMap;
 
   protected AbstractDomChildDescriptionImpl(final Type type) {
     myType = type;
@@ -35,9 +37,17 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
     myCustomAnnotations.put(annotation.annotationType(), annotation);
   }
 
+  public void setUserMap(final Map userMap) {
+    myUserMap = userMap;
+  }
+
   @Nullable
   public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
     return myCustomAnnotations == null ? null : (T)myCustomAnnotations.get(annotationClass);
+  }
+
+  public <T> T getUserData(final Key<T> key) {
+    return myUserMap == null ? null : (T)myUserMap.get(key);
   }
 
   @NotNull
