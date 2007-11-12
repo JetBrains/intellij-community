@@ -90,6 +90,9 @@
       <headless-implementation-class/>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
+    </component>
   </project-components>
 
   <module-components>
