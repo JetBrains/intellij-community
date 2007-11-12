@@ -210,6 +210,8 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
           pattern.append(".");
         } else if (myLexer.getTokenType() == JavaTokenType.MINUS) {
           pattern.append("-");
+        } else if (myLexer.getTokenType() == JavaTokenType.COLON) {
+          pattern.append(":");
         } else {
           error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
           break;

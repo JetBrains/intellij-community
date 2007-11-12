@@ -44,6 +44,7 @@ public class PatternPackageSet implements PackageSet {
 
   private Pattern myPattern;
   private Pattern myModulePattern;
+  private Pattern myModuleGroupPattern;
   private String myAspectJSyntaxPattern;
   private String myPathPattern;
   private Pattern myFilePattern;
@@ -53,15 +54,27 @@ public class PatternPackageSet implements PackageSet {
 
   public PatternPackageSet(@Nullable String aspectPattern,
                            String scope,
-                           String modulePattern,
+                           @NonNls String modulePattern,
                            @NonNls String filePattern) {
     myAspectJSyntaxPattern = aspectPattern;
     myPathPattern = filePattern;
     myScope = scope;
     myModulePatternText = modulePattern;
-    myModulePattern = modulePattern == null || modulePattern.length() == 0
-                      ? null
-                      : Pattern.compile(StringUtil.replace(modulePattern, "*", ".*"));
+    if (modulePattern == null || modulePattern.length() == 0) {
+      myModulePattern = null;
+    }
+    else {
+      if (modulePattern.startsWith("group:")) {
+        int idx = modulePattern.indexOf(':', 6);
+        if (idx == -1) idx = modulePattern.length();
+        myModuleGroupPattern = Pattern.compile(StringUtil.replace(modulePattern.substring(6, idx), "*", ".*"));
+        if (idx < modulePattern.length() - 1) {
+          myModulePattern = Pattern.compile(StringUtil.replace(modulePattern.substring(idx + 1), "*", ".*"));
+        }
+      } else {
+        myModulePattern = Pattern.compile(StringUtil.replace(modulePattern, "*", ".*"));
+      }
+    }
     myPattern = aspectPattern != null ? Pattern.compile(convertToRegexp(aspectPattern, '.')) : null;
     if (filePattern != null){
       myFilePattern = Pattern.compile(convertToRegexp(filePattern, '/'));
@@ -109,17 +122,16 @@ public class PatternPackageSet implements PackageSet {
   }
 
   private boolean matchesModule(VirtualFile file, ProjectFileIndex fileIndex) {
-    if (myModulePattern == null) return true;
     final Module module = fileIndex.getModuleForFile(file);
     LOG.assertTrue(module != null);
-    if (myModulePattern.matcher(module.getName()).matches()) return true;
+    if (myModulePattern != null && myModulePattern.matcher(module.getName()).matches()) return true;
     final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
     if (groupPath != null){
       for (String node : groupPath) {
-        if (myModulePattern.matcher(node).matches()) return true;
+        if (myModuleGroupPattern != null && myModuleGroupPattern.matcher(node).matches()) return true;
       }
     }
-    return false;
+    return myModulePattern == null && myModuleGroupPattern == null;
   }
 
   private static String getPackageName(PsiFile file, ProjectFileIndex fileIndex) {
@@ -195,7 +207,7 @@ public class PatternPackageSet implements PackageSet {
       buf.append(myScope);
     }
 
-    if (myModulePattern != null) {
+    if (myModulePattern != null || myModuleGroupPattern != null) {
       buf.append("[").append(myModulePatternText).append("]");
     }
 

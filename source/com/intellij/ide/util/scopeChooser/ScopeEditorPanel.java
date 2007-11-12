@@ -25,6 +25,7 @@ import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -247,13 +248,13 @@ public class ScopeEditorPanel {
     if (node instanceof ModuleGroupNode){
       if (!recursively) return null;
       final String scope = getSelectedScopeType(node);
-      final String modulePattern = node.toString();
-      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*") : new PatternPackageSet("*..*", scope, modulePattern, null);
+      @NonNls final String modulePattern = "group:" + ((ModuleGroupNode)node).getModuleGroup().toString();
+      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*//*") : new PatternPackageSet("*..*", scope, modulePattern, null);
     } else if (node instanceof ModuleNode) {
       if (!recursively) return null;
       final String scope = getSelectedScopeType(node);
       final String modulePattern = ((ModuleNode)node).getModuleName();
-      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*") : new PatternPackageSet("*..*", scope, modulePattern, null);
+      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*//*") : new PatternPackageSet("*..*", scope, modulePattern, null);
     }
     else if (node instanceof PackageNode) {
       String pattern = ((PackageNode)node).getPackageQName();
