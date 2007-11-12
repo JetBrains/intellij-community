@@ -478,7 +478,10 @@ public class AdvancedEnhancer extends AbstractClassGenerator
 
     final Set<JavaMethodSignature> finalMethods = new HashSet<JavaMethodSignature>();
     for(Class aClass = sc; aClass != null; aClass = aClass.getSuperclass()) {
-      if (myInterceptObjectMethodsFlag && Object.class.equals(aClass)) continue;
+      if (Object.class.equals(aClass)) {
+        actualMethods.remove(aClass.getDeclaredMethod("finalize"));
+        if (myInterceptObjectMethodsFlag) continue;
+      }
       for (final Method method : aClass.getDeclaredMethods()) {
         final int modifiers = method.getModifiers();
         final JavaMethodSignature signature = JavaMethodSignature.getSignature(method);
