@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -237,7 +236,7 @@ public class RefCountHolder {
     return result;
   }
 
-  public boolean analyzeAndStoreReferences(Runnable analyze, ProgressIndicator progress) {
+  public boolean analyzeAndStoreReferences(Runnable analyze) {
     myState.compareAndSet(State.READY, State.VIRGIN);
     if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) {
       return false;
@@ -254,7 +253,7 @@ public class RefCountHolder {
     return true;
   }
 
-  public boolean retrieveUnusedReferencesInfo(Runnable analyze, ProgressIndicator progress) {
+  public boolean retrieveUnusedReferencesInfo(Runnable analyze) {
     if (!myState.compareAndSet(State.READY, State.BEING_USED_BY_PHP)) {
       return false;
     }
