@@ -14,10 +14,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 
 /**
  * @author ven
@@ -32,4 +33,10 @@ public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantRefe
 
   @NotNull
   GroovyResolveResult[] multiResolve(boolean incompleteCode);
+
+  @NotNull
+  PsiType[] getTypeArguments();
+
+  @Nullable
+  GrTypeArgumentList getTypeArgumentList();
 }

@@ -16,18 +16,16 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 
 /**
  * @author ven
@@ -112,5 +110,25 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
 
   protected boolean bindsCorrectly(PsiElement element) {
     return isReferenceTo(element);
+  }
+
+  @NotNull
+  public PsiType[] getTypeArguments() {
+    final GrTypeArgumentList typeArgsList = getTypeArgumentList();
+    if (typeArgsList == null) return PsiType.EMPTY_ARRAY;
+
+    final GrTypeElement[] args = typeArgsList.getTypeArgumentElements();
+    if (args.length == 0) return PsiType.EMPTY_ARRAY;
+    PsiType[] result = new PsiType[args.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = args[i].getType();
+    }
+
+    return result;
+  }
+
+  @Nullable
+  public GrTypeArgumentList getTypeArgumentList() {
+    return findChildByClass(GrTypeArgumentList.class);
   }
 }

@@ -32,20 +32,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl.ReferenceKind.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -82,26 +77,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         getNode().replaceChild(qualifier.getNode(), newQualifier.getNode());
       }
     }
-  }
-
-  @NotNull
-  public PsiType[] getTypeArguments() {
-    final GrTypeArgumentList typeArgsList = getTypeArgumentList();
-    if (typeArgsList == null) return PsiType.EMPTY_ARRAY;
-
-    final GrTypeElement[] args = typeArgsList.getTypeArgumentElements();
-    if (args.length == 0) return PsiType.EMPTY_ARRAY;
-    PsiType[] result = new PsiType[args.length];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = args[i].getType();
-    }
-
-    return result;
-  }
-
-  @Nullable
-  public GrTypeArgumentList getTypeArgumentList() {
-    return findChildByClass(GrTypeArgumentList.class);
   }
 
   enum ReferenceKind {
@@ -260,7 +235,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
             return ((PsiClass) qualifierResolved).getInnerClasses();
           }
         } else {
-          ResolverProcessor processor = new ResolverProcessor(null, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), this, true, PsiType.EMPTY_ARRAY);
+          ResolverProcessor processor = new ClassResolverProcessor(null, this, true);
           ResolveUtil.treeWalkUp(this, processor);
           return GroovyCompletionUtil.getCompletionVariants(processor.getCandidates());
         }
@@ -341,8 +316,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
               }
             }
           } else {
-            ResolverProcessor processor =
-                new ResolverProcessor(refName, EnumSet.of(ClassHint.ResolveKind.CLASS_OR_PACKAGE), ref, false, ref.getTypeArguments());
+            ResolverProcessor processor = new ClassResolverProcessor(refName, ref, false);
             ResolveUtil.treeWalkUp(ref, processor);
             GroovyResolveResult[] candidates = processor.getCandidates();
             if (candidates.length > 0) return candidates;

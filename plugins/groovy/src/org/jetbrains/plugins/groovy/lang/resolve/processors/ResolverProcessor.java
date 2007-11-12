@@ -48,7 +48,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
 
   protected GroovyPsiElement myCurrentFileResolveContext;
 
-  public ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
+  protected ResolverProcessor(String name, EnumSet<ResolveKind> resolveTargets,
                            PsiElement place, boolean forCompletion,
                            @NotNull PsiType[] typeArguments) {
     myName = name;
