@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -174,6 +174,17 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
 
     return null;
+  }
+
+  protected boolean validateNode(final Object child) {
+    if (child instanceof ProjectViewNode) {
+      final ProjectViewNode projectViewNode = (ProjectViewNode)child;
+      projectViewNode.update();
+      if (projectViewNode.getValue() == null) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @NotNull

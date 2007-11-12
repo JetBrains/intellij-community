@@ -1,6 +1,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.todo.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -133,6 +134,17 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected abstract TodoTreeStructure createTreeStructure();
+
+  protected boolean validateNode(final Object child) {
+    if (child instanceof ProjectViewNode) {
+      final ProjectViewNode projectViewNode = (ProjectViewNode)child;
+      projectViewNode.update();
+      if (projectViewNode.getValue() == null) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   public final TodoTreeStructure getTodoTreeStructure() {
     return (TodoTreeStructure)myTreeStructure;
@@ -474,7 +486,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * Sets new <code>TodoFilter</code>, rebuild whole the caches and immediately update the tree.
-   * 
+   *
    * @see com.intellij.ide.todo.TodoTreeStructure#setTodoFilter
    */
   void setTodoFilter(TodoFilter filter) {

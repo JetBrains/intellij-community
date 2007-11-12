@@ -467,10 +467,15 @@ public abstract class AbstractTreeBuilder implements Disposable {
     Object[] children = myTreeStructure.getChildElements(getTreeStructureElement(descriptor));
     int index = 0;
     for (Object child : children) {
+      if (!validateNode(child)) continue;
       elementToIndexMap.put(child, Integer.valueOf(index));
       index++;
     }
     return elementToIndexMap;
+  }
+
+  protected boolean validateNode(final Object child) {
+    return true;
   }
 
   private void expand(final DefaultMutableTreeNode node, final NodeDescriptor descriptor, final boolean wasLeaf) {
