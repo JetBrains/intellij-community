@@ -1272,9 +1272,22 @@
     </group>
 
     <group id="WelcomeScreen.QuickStart">
+      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
+        icon="/general/createNewProject.png"/>
+      <action id="WelcomeScreen.OpenProject" class="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenOpenProjectAction"
+        icon="/general/openProject.png"/>
+      <action id="WelcomeScreen.ReopenRecent" class="com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsAction"
+        icon="/general/reopenRecentProject.png"/>
+      <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
+        icon="/general/getProjectfromVCS.png"/>
     </group>
 
     <group id="WelcomeScreen.Documentation">
+      <action id="WelcomeScreen.ReadHelp" class="com.intellij.openapi.wm.impl.welcomeScreen.ReadHelpAction"
+        icon="/general/readHelp.png"/>
+      <reference ref="Help.KeymapReference"/>
+      <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
+        icon="/general/pluginManager.png"/>
     </group>
 
     <group id="Vcs.MessageActionGroup">

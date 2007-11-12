@@ -2,20 +2,15 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.OpenProjectAction;
-import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +31,6 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.PixelGrabber;
-import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -75,13 +69,6 @@ public class WelcomeScreen {
 
   private static final Icon LEARN_MORE_ICON = IconLoader.getIcon("/general/learnMore.png");
   private static final Icon OPEN_PLUGINS_ICON = IconLoader.getIcon("/general/openPluginManager.png");
-  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/general/createNewProject.png");
-  private static final Icon OPEN_PROJECT_ICON = IconLoader.getIcon("/general/openProject.png");
-  private static final Icon REOPEN_RECENT_ICON = IconLoader.getIcon("/general/reopenRecentProject.png");
-  private static final Icon FROM_VCS_ICON = IconLoader.getIcon("/general/getProjectfromVCS.png");
-  private static final Icon IMPORT_ICON = IconLoader.getIcon("/general/importProjects.png");
-  private static final Icon READ_HELP_ICON = IconLoader.getIcon("/general/readHelp.png");
-  private static final Icon PLUGIN_ICON = IconLoader.getIcon("/general/pluginManager.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
   private static Icon CAPTION_IMAGE;
   private static Icon DEVELOPER_SLOGAN;
@@ -196,7 +183,7 @@ public class WelcomeScreen {
           final ActionManager actionManager = ActionManager.getInstance();
           AnActionEvent evt = new AnActionEvent(
             null,
-            DataManager.getInstance().getDataContext(this),
+            DataManager.getInstance().getDataContext(e.getComponent()),
             ActionPlaces.WELCOME_SCREEN,
             action.getTemplatePresentation(),
             actionManager,
@@ -235,7 +222,6 @@ public class WelcomeScreen {
     myMainPanel.setBackground(MAIN_PANEL_COLOR);
     // Create QuickStarts group of actions
     ActionGroupDescriptor quickStarts = new ActionGroupDescriptor(UIBundle.message("welcome.screen.quick.start.action.group.name"), 0);
-    addDefaultQuickStartActions(quickStarts, actionManager);
     // Append plug-in actions to the end of the QuickStart list
     quickStarts.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART));
     final JPanel quickStartPanel = quickStarts.getPanel();
@@ -246,7 +232,6 @@ public class WelcomeScreen {
 
     // Create Documentation group of actions
     ActionGroupDescriptor docsGroup = new ActionGroupDescriptor(UIBundle.message("welcome.screen.documentation.action.group.name"), 1);
-    addDefaultDocsActions(docsGroup, actionManager);
     // Append plug-in actions to the end of the QuickStart list
     docsGroup.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_DOC));
     final JPanel docsPanel = docsGroup.getPanel();
@@ -325,94 +310,6 @@ public class WelcomeScreen {
     myWelcomePanel = new JPanel(new GridBagLayout());
     myWelcomePanel.setBackground(MAIN_PANEL_BACKGROUND);
     return topPanel;
-  }
-
-  private void addDefaultDocsActions(final ActionGroupDescriptor docsGroup, final ActionManager actionManager) {
-    MyActionButton readHelp = new MyActionButton(READ_HELP_ICON, null) {
-      protected void onPress(InputEvent e) {
-        HelpManager.getInstance().invokeHelp("");
-      }
-    };
-    docsGroup.addButton(readHelp, UIBundle.message("welcome.screen.read.help.action.name"),
-                        UIBundle.message("welcome.screen.read.help.action.description", ApplicationNamesInfo.getInstance().getFullProductName()));
-
-
-    docsGroup.appendButtonForAction(actionManager.getAction(IdeActions.ACTION_KEYMAP_REFERENCE));
-
-    MyActionButton pluginDev = new MyActionButton(PLUGIN_ICON, null) {
-      protected void onPress(InputEvent e) {
-        try {
-          if (new File(PLUGIN_URL).isFile()) {
-            BrowserUtil.launchBrowser(PLUGIN_URL);
-          }
-          else {
-            BrowserUtil.launchBrowser(PLUGIN_WEBSITE);
-          }
-        }
-        catch(IllegalStateException ex) {
-          // ignore
-        }
-      }
-    };
-    docsGroup.addButton(pluginDev, UIBundle.message("welcome.screen.plugin.development.action.name"),
-                        UIBundle.message("welcome.screen.plugin.development.action.description", ApplicationNamesInfo.getInstance().getFullProductName()));
-  }
-
-  private void addDefaultQuickStartActions(final ActionGroupDescriptor quickStarts, final ActionManager actionManager) {
-    MyActionButton newProject = new MyActionButton(NEW_PROJECT_ICON, null) {
-      protected void onPress(InputEvent e) {
-        NewProjectUtil.createNewProject(null, null);
-      }
-    };
-    quickStarts.addButton(newProject, UIBundle.message("welcome.screen.create.new.project.action.name"),
-                          UIBundle.message("welcome.screen.create.new.project.action.description"));
-
-    MyActionButton openProject = new ButtonWithExtension(OPEN_PROJECT_ICON, null) {
-      protected void onPress(InputEvent e, final MyActionButton button) {
-        final AnAction action = new OpenProjectAction();
-        action.actionPerformed(new AnActionEvent(e, new DataContext() {
-          public Object getData(String dataId) {
-            if (DataConstants.PROJECT.equals(dataId)) {
-              return null;
-            }
-            return button;
-          }
-        }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
-      }
-    };
-
-    quickStarts.addButton(openProject, UIBundle.message("welcome.screen.open.project.action.name"),
-                          UIBundle.message("welcome.screen.open.project.action.description", ApplicationNamesInfo.getInstance().getFullProductName()));
-
-    MyActionButton openRecentProject = new ButtonWithExtension(REOPEN_RECENT_ICON, null) {
-      protected void onPress(InputEvent e, final MyActionButton button) {
-        new RecentProjectsAction().showPopup(button, e);
-      }
-    };
-    quickStarts.addButton(openRecentProject, UIBundle.message("welcome.screen.reopen.recent.project.action.name"),
-                          UIBundle.message("welcome.screen.reopen.recent.project.action.description"));
-
-    MyActionButton getFromVCS = new ButtonWithExtension(FROM_VCS_ICON, null) {
-      protected void onPress(InputEvent e, final MyActionButton button) {
-        new GetFromVcsAction().showPopup(button, e);
-      }
-    };
-
-    quickStarts.addButton(getFromVCS, UIBundle.message("welcome.screen.check.out.from.version.control.action.name"),
-                          UIBundle.message("welcome.screen.check.out.from.version.control.action.description"));
-
-
-    /*
-    MyActionButton checkForUpdate = new MyActionButton (CHECK_FOR_UPDATE_ICON, null) {
-      protected void onPress(InputEvent e) {
-        CheckForUpdateAction.actionPerformed(true);
-      }
-    };
-
-    quickStarts.addButton(checkForUpdate, "Check for Update", ApplicationNamesInfo.getInstance().getFullProductName() +
-                                                              " will check for a new available update of itself, " +
-                                                              "using your internet connection.");
-    */
   }
 
   private JScrollPane createPluginsPanel() {

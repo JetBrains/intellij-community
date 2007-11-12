@@ -8,12 +8,11 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 
 /**
  * @author Vladislav.Kaznacheev
  */
-public abstract class WelcomePopupAction {
+public abstract class WelcomePopupAction extends AnAction {
 
   protected abstract void fillActions(DefaultActionGroup group);
 
@@ -21,7 +20,11 @@ public abstract class WelcomePopupAction {
 
   protected abstract String getCaption();
 
-  public void showPopup(Component contextComponent, final InputEvent e) {
+  public void actionPerformed(final AnActionEvent e) {
+    showPopup(e.getDataContext());
+  }
+
+  private void showPopup(final DataContext context) {
     final DefaultActionGroup group = new DefaultActionGroup();
     fillActions(group);
 
@@ -36,12 +39,12 @@ public abstract class WelcomePopupAction {
     final ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(getCaption(),
                               group,
-                              createDataContext(contextComponent),
+                              context,
                               JBPopupFactory.ActionSelectionAid.NUMBERING,
                               true);
 
 
-    Component focusedComponent = e.getComponent();
+    Component focusedComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
     if (focusedComponent != null) {
       popup.showUnderneathOf(focusedComponent);
     }
@@ -60,14 +63,4 @@ public abstract class WelcomePopupAction {
     }
   }
 
-  private static DataContext createDataContext(final Component contextComponent) {
-    return new DataContext() {
-      public Object getData(String dataId) {
-        if (DataConstants.PROJECT.equals(dataId)) {
-          return null;
-        }
-        return contextComponent;
-      }
-    };
-  }
 }
