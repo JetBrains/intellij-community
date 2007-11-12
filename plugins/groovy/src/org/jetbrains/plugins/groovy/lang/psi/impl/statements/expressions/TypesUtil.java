@@ -214,48 +214,4 @@ public class TypesUtil {
 
     return null;
   }
-
-  @Nullable
-  public static PsiType getTypeForContextSpecificReferenceExpression(GrReferenceExpression expr) {
-    if (expr.getQualifierExpression() == null && expr.getContainingFile() instanceof GspGroovyFile) {
-      return getTypeForGspSpecificReferenceExpr(expr);
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiType getTypeForGspSpecificReferenceExpr(GrReferenceExpression expr) {
-    String name = expr.getName();
-    if (name == null) return null;
-    Project project = expr.getProject();
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = manager.getElementFactory();
-    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    if ("application".equals(name)) {
-      return factory.createTypeByFQClassName("javax.servlet.ServletContext", scope);
-    }
-    if ("flash".equals(name)) {
-      return factory.createTypeByFQClassName("org.codehaus.groovy.grails.web.servlet.FlashScope", scope);
-    }
-    if ("out".equals(name)) {
-      return factory.createTypeByFQClassName("java.io.Writer", scope);
-    }
-    if ("params".equals(name)) {
-      return factory.createTypeByFQClassName("java.util.Map", scope);
-    }
-    if ("request".equals(name)) {
-      return factory.createTypeByFQClassName("javax.servlet.http.HttpServletRequest", scope);
-    }
-    if ("response".equals(name)) {
-      return factory.createTypeByFQClassName("javax.servlet.http.HttpServletResponse", scope);
-    }
-    if ("session".equals(name)) {
-      return factory.createTypeByFQClassName("javax.servlet.http.HttpSession", scope);
-    }
-    if ("grailsApplication".equals(name)) {
-      return factory.createTypeByFQClassName("org.codehaus.groovy.grails.commons.GrailsApplication", scope);
-    }
-    return null;
-  }
-
 }

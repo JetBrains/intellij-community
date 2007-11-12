@@ -48,4 +48,8 @@ public class GroovyRefactoringSupportProvider extends DefaultRefactoringSupportP
     return new GroovyInlineHandler();
   }
 
+  @Nullable
+  public RefactoringActionHandler getExtractMethodHandler() {
+    return super.getExtractMethodHandler();
+  }
 }

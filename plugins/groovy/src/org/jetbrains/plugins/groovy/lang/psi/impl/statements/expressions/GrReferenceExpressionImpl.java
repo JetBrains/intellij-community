@@ -245,10 +245,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
       final PsiType nominal = refExpr.getNominalTypeImpl();
-      // For injected Grails expressions
-      if (inferred == null && nominal == null && refExpr.getQualifierExpression() == null) {
-        return TypesUtil.getTypeForContextSpecificReferenceExpression(refExpr);
-      }
       if (inferred == null) return nominal;
       if (nominal == null) return inferred;
       if (!nominal.isAssignableFrom(inferred)) {

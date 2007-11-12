@@ -17,21 +17,22 @@ package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -268,4 +269,96 @@ public abstract class GroovyRefactoringUtil {
     }
   }
 
+  public static void trimSpaces(Editor editor, PsiFile file) {
+    int start = editor.getSelectionModel().getSelectionStart();
+    int end = editor.getSelectionModel().getSelectionEnd();
+    while (file.findElementAt(start) instanceof PsiWhiteSpace ||
+        file.findElementAt(start) instanceof PsiComment ||
+        (file.findElementAt(start) != null &&
+            GroovyTokenTypes.mNLS.equals(file.findElementAt(start).getNode().getElementType()))) {
+      start++;
+    }
+    while (file.findElementAt(end - 1) instanceof PsiWhiteSpace ||
+        file.findElementAt(end - 1) instanceof PsiComment ||
+        (file.findElementAt(end - 1) != null &&
+            (GroovyTokenTypes.mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
+                GroovyTokenTypes.mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
+      end--;
+    }
+
+    editor.getSelectionModel().setSelection(start, end);
+
+  }
+
+  public static PsiElement[]  findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
+    if (!(file instanceof GroovyFileBase)) return PsiElement.EMPTY_ARRAY;
+    Language language = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
+    PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
+    PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
+    if (element1 instanceof PsiWhiteSpace) {
+      startOffset = element1.getTextRange().getEndOffset();
+      element1 = file.findElementAt(startOffset);
+    }
+    if (element2 instanceof PsiWhiteSpace) {
+      endOffset = element2.getTextRange().getStartOffset();
+      element2 = file.findElementAt(endOffset - 1);
+    }
+    if (element1 == null || element2 == null) return PsiElement.EMPTY_ARRAY;
+
+    PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
+    if (parent == null) return PsiElement.EMPTY_ARRAY;
+    while (true) {
+      if (parent instanceof PsiStatement) {
+        parent = parent.getParent();
+        break;
+      }
+      if (parent instanceof PsiCodeBlock) break;
+      if (PsiUtil.isInJspFile(parent) && parent instanceof PsiFile) break;
+      if (parent instanceof PsiCodeFragment) break;
+      if (parent == null || parent instanceof PsiFile) return PsiElement.EMPTY_ARRAY;
+      parent = parent.getParent();
+    }
+
+    if (!parent.equals(element1)) {
+      while (!parent.equals(element1.getParent())) {
+        element1 = element1.getParent();
+      }
+    }
+    if (startOffset != element1.getTextRange().getStartOffset()) return PsiElement.EMPTY_ARRAY;
+
+    if (!parent.equals(element2)) {
+      while (!parent.equals(element2.getParent())) {
+        element2 = element2.getParent();
+      }
+    }
+    if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
+
+    if (parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiBlockStatement &&
+        element1 == ((PsiCodeBlock)parent).getLBrace() && element2 == ((PsiCodeBlock)parent).getRBrace()) {
+      return new PsiElement[]{parent.getParent()};
+    }
+
+    PsiElement[] children = parent.getChildren();
+    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    boolean flag = false;
+    for (PsiElement child : children) {
+      if (child.equals(element1)) {
+        flag = true;
+      }
+      if (flag && !(child instanceof PsiWhiteSpace)) {
+        array.add(child);
+      }
+      if (child.equals(element2)) {
+        break;
+      }
+    }
+
+    for (PsiElement element : array) {
+      if (!(element instanceof PsiStatement || element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+        return PsiElement.EMPTY_ARRAY;
+      }
+    }
+
+    return array.toArray(new PsiElement[array.size()]);
+  }
 }

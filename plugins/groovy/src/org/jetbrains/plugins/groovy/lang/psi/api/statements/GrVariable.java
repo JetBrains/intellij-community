@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -40,7 +41,7 @@ public interface GrVariable extends PsiVariable, GroovyPsiElement {
   @Nullable
   PsiType getTypeGroovy();
 
-  void setType(@Nullable PsiType type);
+  void setType(@Nullable PsiType type) throws IncorrectOperationException;
 
   @Nullable
   GrTypeElement getTypeElementGroovy();

@@ -30,7 +30,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -59,7 +58,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     if (!editor.getSelectionModel().hasSelection()) {
       editor.getSelectionModel().selectLineAtCaret();
     }
-    trimSpaces(editor, file);
+    GroovyRefactoringUtil.trimSpaces(editor, file);
     if (invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())) {
       editor.getSelectionModel().removeSelection();
     }
@@ -395,27 +394,6 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
   protected abstract void highlightOccurrences(final Project project, Editor editor, final PsiElement[] replacedOccurrences);
 
   protected abstract boolean reportConflicts(final ArrayList<String> conflicts, final Project project);
-
-  private static void trimSpaces(Editor editor, PsiFile file) {
-    int start = editor.getSelectionModel().getSelectionStart();
-    int end = editor.getSelectionModel().getSelectionEnd();
-    while (file.findElementAt(start) instanceof PsiWhiteSpace ||
-        file.findElementAt(start) instanceof PsiComment ||
-        (file.findElementAt(start) != null &&
-            GroovyTokenTypes.mNLS.equals(file.findElementAt(start).getNode().getElementType()))) {
-      start++;
-    }
-    while (file.findElementAt(end - 1) instanceof PsiWhiteSpace ||
-        file.findElementAt(end - 1) instanceof PsiComment ||
-        (file.findElementAt(end - 1) != null &&
-            (GroovyTokenTypes.mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
-                GroovyTokenTypes.mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
-      end--;
-    }
-
-    editor.getSelectionModel().setSelection(start, end);
-
-  }
 
   public interface Validator {
     boolean isOK(GroovyIntroduceVariableDialog dialog);
