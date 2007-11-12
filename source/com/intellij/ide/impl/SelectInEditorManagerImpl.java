@@ -1,9 +1,8 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInEditorManager;
-import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -60,7 +59,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     releaseAll();
     final TextRange textRange;
     if (file instanceof VirtualFileWindow) {
-      DocumentWindowImpl documentWindow = ((VirtualFileWindowImpl)file).getDocumentWindow();
+      DocumentWindow documentWindow = ((VirtualFileWindow)file).getDocumentWindow();
       textRange = documentWindow.injectedToHost(new TextRange(startOffset, endOffset));
       file = ((VirtualFileWindow)file).getDelegate();
     }

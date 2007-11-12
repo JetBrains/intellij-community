@@ -5,10 +5,9 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.KeymapManagerListener;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.UniqueFileNamesProvider;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -245,7 +244,7 @@ public class KeymapManagerImpl extends KeymapManagerEx implements NamedJDOMExter
     JDOMUtil.updateFileSet(
       files,
       filePaths.toArray(new String[filePaths.size()]),
-      documents.toArray(new Document[documents.size()]), CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+      documents.toArray(new Document[documents.size()]), "\n");
   }
 
   private void fireActiveKeymapChanged() {

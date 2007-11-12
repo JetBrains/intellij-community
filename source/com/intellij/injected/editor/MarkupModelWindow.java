@@ -15,10 +15,10 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
 */
 class MarkupModelWindow extends UserDataHolderBase implements MarkupModelEx {
-  private final DocumentWindowImpl myDocument;
+  private final DocumentWindow myDocument;
   private final MarkupModelEx myHostModel;
 
-  public MarkupModelWindow(MarkupModelEx editorMarkupModel, final DocumentWindowImpl document) {
+  public MarkupModelWindow(MarkupModelEx editorMarkupModel, final DocumentWindow document) {
     myDocument = document;
     myHostModel = editorMarkupModel;
   }

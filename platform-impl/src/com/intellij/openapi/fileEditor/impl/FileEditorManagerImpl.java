@@ -4,7 +4,7 @@ import com.intellij.AppTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.injected.editor.VirtualFileWindowImpl;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -645,8 +645,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   @NotNull
   public List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
     assertThread();
-    if (descriptor.getFile() instanceof VirtualFileWindowImpl) {
-      VirtualFileWindowImpl delegate = (VirtualFileWindowImpl)descriptor.getFile();
+    if (descriptor.getFile() instanceof VirtualFileWindow) {
+      VirtualFileWindow delegate = (VirtualFileWindow)descriptor.getFile();
       int hostOffset = delegate.getDocumentWindow().injectedToHost(descriptor.getOffset());
       OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
       return openEditor(realDescriptor, focusEditor);

@@ -7,4 +7,5 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 public interface VirtualFileWindow {
   VirtualFile getDelegate();
+  DocumentWindow getDocumentWindow();
 }

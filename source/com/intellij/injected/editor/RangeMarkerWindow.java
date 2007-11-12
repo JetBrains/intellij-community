@@ -13,10 +13,10 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 public class RangeMarkerWindow implements RangeMarkerEx {
-  private final DocumentWindowImpl myDocumentWindow;
+  private final DocumentWindow myDocumentWindow;
   private final RangeMarkerEx myHostMarker;
 
-  public RangeMarkerWindow(@NotNull DocumentWindowImpl documentWindow, RangeMarkerEx hostMarker) {
+  public RangeMarkerWindow(@NotNull DocumentWindow documentWindow, RangeMarkerEx hostMarker) {
     myDocumentWindow = documentWindow;
     myHostMarker = hostMarker;
   }

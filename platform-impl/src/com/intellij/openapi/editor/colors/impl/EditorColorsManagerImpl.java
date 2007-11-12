@@ -15,7 +15,6 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.UniqueFileNamesProvider;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -178,7 +177,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
     JDOMUtil.updateFileSet(oldFiles,
                            filePaths.toArray(new String[filePaths.size()]),
-                           documents.toArray(new Document[documents.size()]), CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+                           documents.toArray(new Document[documents.size()]), "\n");
   }
 
   private static EditorColorsScheme loadScheme(File file) throws InvalidDataException, JDOMException, IOException {
