@@ -1,6 +1,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
@@ -21,7 +22,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
@@ -275,8 +275,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
             final @NonNls String searchPattern = mySearchField.getText();
             if (searchPattern != null && searchPattern.length() > 0) {
               myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern,
-                                                                     CodeStyleSettingsManager
-                                                                       .getInstance(myProject).USE_PER_PROJECT_SETTINGS);
+                                                                     CodeStyleFacade.getInstance(myProject).projectUsesOwnSettings());
             }
             else {
               myOptionContainers = null;

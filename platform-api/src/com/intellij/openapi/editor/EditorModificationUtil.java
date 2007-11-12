@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.MockDocumentEvent;
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Clipboard;
@@ -249,7 +249,7 @@ public class EditorModificationUtil {
       final int caretOffset = editor.getCaretModel().getOffset();
       boolean atLineStart = caretOffset >= doc.getTextLength() || doc.getLineStartOffset(doc.getLineNumber(caretOffset)) == caretOffset;
       if (atLineStart && project != null) {
-        String properIndent = CodeStyleManager.getInstance(project).getLineIndent(editor);
+        String properIndent = CodeStyleFacade.getInstance(project).getLineIndent(editor);
         if (properIndent != null) {
           int tabSize = editor.getSettings().getTabSize(project);
           for (int i = 0; i < properIndent.length(); i++) {

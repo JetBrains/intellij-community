@@ -8,6 +8,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
@@ -20,7 +21,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 public class UnindentSelectionAction extends EditorAction {
   public UnindentSelectionAction() {
@@ -64,7 +64,7 @@ public class UnindentSelectionAction extends EditorAction {
     VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
     final FileType fileType = vFile == null ? null : FileTypeManager.getInstance().getFileTypeByFile(vFile);
 
-    int blockIndent = CodeStyleSettingsManager.getSettings(project).getIndentSize(fileType);
+    int blockIndent = CodeStyleFacade.getInstance(project).getIndentSize(fileType);
     IndentSelectionAction.doIndent(endIndex, startIndex, document, project, editor, -blockIndent);
   }
 }

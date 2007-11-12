@@ -1,6 +1,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -32,7 +33,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.PsiExternalChangeAction;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EventDispatcher;
@@ -113,7 +113,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
                 myUnsavedDocuments.add(document);
                 final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
                 Project project = currentCommand != null ? CommandProcessor.getInstance().getCurrentCommandProject() : null;
-                String lineSeparator = CodeStyleSettingsManager.getSettings(project).getLineSeparator();
+                String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
                 document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
               }
             }
@@ -292,10 +292,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
     String lineSeparator = file != null ? file.getUserData(LoadTextUtil.DETECTED_LINE_SEPARATOR_KEY) : null;
     if (lineSeparator == null) {
-      CodeStyleSettingsManager settingsManager = project == null
-                                                 ? CodeStyleSettingsManager.getInstance()
-                                                 : CodeStyleSettingsManager.getInstance(project);
-      return settingsManager.getCurrentSettings().getLineSeparator();
+      CodeStyleFacade settingsManager = project == null
+                                        ? CodeStyleFacade.getInstance()
+                                        : CodeStyleFacade.getInstance(project);
+      return settingsManager.getLineSeparator();
     }
     else {
       return lineSeparator;

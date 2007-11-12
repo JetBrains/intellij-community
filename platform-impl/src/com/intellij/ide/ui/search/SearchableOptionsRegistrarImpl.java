@@ -6,6 +6,7 @@ package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.ProjectCodeStyleConfigurable;
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -15,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
@@ -269,7 +269,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
   public Map<String, Set<String>> findPossibleExtension(@NotNull String prefix, final Project project) {
-    final boolean perProject = CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
+    final boolean perProject = CodeStyleFacade.getInstance(project).projectUsesOwnSettings();
     final Map<String, Set<String>> result = new THashMap<String, Set<String>>();
     int count = 0;
     final Set<String> prefixes = getProcessedWordsWithoutStemming(prefix);

@@ -8,13 +8,13 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.Nullable;
 
 public class SettingsImpl implements EditorSettings {
@@ -90,7 +90,7 @@ public class SettingsImpl implements EditorSettings {
 
   public int getRightMargin(Project project) {
     return myRightMargin != null ? myRightMargin.intValue() :
-           CodeStyleSettingsManager.getSettings(project).RIGHT_MARGIN;
+           CodeStyleFacade.getInstance(project).getRightMargin();
   }
 
   public void setRightMargin(int rightMargin) {
@@ -138,8 +138,7 @@ public class SettingsImpl implements EditorSettings {
 
   public boolean isUseTabCharacter(Project project) {
     FileType fileType = getFileType();
-    return myUseTabCharacter != null ? myUseTabCharacter.booleanValue() : CodeStyleSettingsManager.getSettings(project)
-      .useTabCharacter(fileType);
+    return myUseTabCharacter != null ? myUseTabCharacter.booleanValue() : CodeStyleFacade.getInstance(project).useTabCharacter(fileType);
   }
 
   public void setUseTabCharacter(boolean val) {
@@ -156,7 +155,7 @@ public class SettingsImpl implements EditorSettings {
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
 
     FileType fileType = getFileType();
-    int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(fileType);
+    int tabSize = CodeStyleFacade.getInstance(project).getTabSize(fileType);
     myCachedTabSize = new Integer(tabSize);
     return tabSize;
   }

@@ -8,6 +8,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
@@ -21,8 +22,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 public class TabAction extends EditorAction {
   public TabAction() {
@@ -45,7 +44,7 @@ public class TabAction extends EditorAction {
   private static void insertTabAtCaret(Editor editor, Project project) {
     int columnNumber = editor.getCaretModel().getLogicalPosition().column;
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    CodeStyleFacade settings = CodeStyleFacade.getInstance(project);
 
     final Document doc = editor.getDocument();
     VirtualFile vFile = FileDocumentManager.getInstance().getFile(doc);
