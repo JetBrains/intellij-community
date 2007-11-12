@@ -4,42 +4,39 @@
 
 package com.intellij.openapi.fileChooser.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileSystemTree;
-import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
+import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.UIBundle;
 
-public class NewFileAction extends FileChooserDialogImpl.FileChooserAction {
-  private final FileType myFileType;
-  private final String myInitialContent;
-
-  public NewFileAction(FileSystemTree fileSystemTree, FileType fileType, String initialContent) {
-    super(UIBundle.message("file.chooser.new.file.action.name"), UIBundle.message("file.chooser.new.file.action.description"),
-          LayeredIcon.create(fileType.getIcon(), IconLoader.getIcon("/actions/new.png")), fileSystemTree, null);
-    myFileType = fileType;
-    myInitialContent = initialContent;
-    registerCustomShortcutSet(
-      ActionManager.getInstance().getAction("NewElement").getShortcutSet(),
-      fileSystemTree.getTree()
-    );
-  }
-
+public class NewFileAction extends FileChooserAction {
   protected void update(FileSystemTree fileSystemTree, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    VirtualFile selectedFile = fileSystemTree.getSelectedFile();
-    presentation.setEnabled(selectedFile != null && selectedFile.isDirectory());
+    final FileType fileType = e.getData(FileChooserKeys.NEW_FILE_TYPE);
+    if (fileType != null) {
+      presentation.setVisible(true);
+      VirtualFile selectedFile = fileSystemTree.getSelectedFile();
+      presentation.setEnabled(selectedFile != null && selectedFile.isDirectory());
+      presentation.setIcon(LayeredIcon.create(fileType.getIcon(), IconLoader.getIcon("/actions/new.png")));
+    }
+    else {
+      presentation.setVisible(false);
+    }
   }
 
   protected void actionPerformed(FileSystemTree fileSystemTree, AnActionEvent e) {
-    createNewFile(fileSystemTree, myFileType, myInitialContent);
+    final FileType fileType = e.getData(FileChooserKeys.NEW_FILE_TYPE);
+    final String initialContent = e.getData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT);
+    if (fileType != null && initialContent != null) {
+      createNewFile(fileSystemTree, fileType, initialContent);
+    }
   }
 
   private static void createNewFile(FileSystemTree fileSystemTree, final FileType fileType, final String initialContent) {

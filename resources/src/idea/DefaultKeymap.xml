@@ -873,6 +873,16 @@
     <action id="Debugger.DetachContent">
       <keyboard-shortcut first-keystroke="control alt ENTER" />
     </action>
+
+    <action id="FileChooser.GotoHome">
+      <keyboard-shortcut first-keystroke="control 1"/>
+    </action>
+    <action id="FileChooser.GotoProject">
+      <keyboard-shortcut first-keystroke="control 2"/>
+    </action>
+    <action id="FileChooser.GotoModule">
+      <keyboard-shortcut first-keystroke="control 3"/>
+    </action>
   </keymap>
 
   <!-- ############################################################################## -->

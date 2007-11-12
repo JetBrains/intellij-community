@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
+import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,24 +20,14 @@ import java.io.IOException;
 
 public class FileDeleteAction extends DeleteAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileDeleteAction");
-  private final DeleteProvider myDeleteProvider;
 
-  private FileDeleteAction(DeleteProvider fileChooser) {
-    super(UIBundle.message("file.chooser.delete.action.name"), UIBundle.message("file.chooser.delete.action.description"), IconLoader.getIcon("/actions/delete.png"));
-    myDeleteProvider = fileChooser;
-  }
-
-  public FileDeleteAction(FileSystemTree tree) {
-    this(new FileSystemDeleteProvider(tree));
+  public FileDeleteAction() {
     setEnabledInModalContext(true);
-    registerCustomShortcutSet(
-      ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE).getShortcutSet(),
-      tree.getTree()
-    );
   }
 
   protected DeleteProvider getDeleteProvider(DataContext dataContext) {
-    return myDeleteProvider;
+    final FileSystemTreeImpl fileSystemTree = FileChooserDialogImpl.FILE_SYSTEM_TREE.getData(dataContext);
+    return new FileSystemDeleteProvider(fileSystemTree);
   }
 
   private static final class FileSystemDeleteProvider implements DeleteProvider {

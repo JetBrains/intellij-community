@@ -5,12 +5,14 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.actions.NewFolderAction;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
+import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -27,6 +29,7 @@ import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -75,7 +78,7 @@ public class ContentEntryTreeEditor {
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
 
-    myTreePanel = new JPanel(new BorderLayout());
+    myTreePanel = new MyPanel(new BorderLayout());
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     myTreePanel.add(new ToolbarPanel(scrollPane, myEditingActionsGroup), BorderLayout.CENTER);
 
@@ -153,7 +156,7 @@ public class ContentEntryTreeEditor {
     Disposer.register(myProject, myFileSystemTree);
 
 
-    final NewFolderAction newFolderAction = new MyNewFolderAction(myFileSystemTree);
+    final NewFolderAction newFolderAction = new MyNewFolderAction();
     DefaultActionGroup mousePopupGroup = new DefaultActionGroup();
     mousePopupGroup.add(myEditingActionsGroup);
     mousePopupGroup.addSeparator();
@@ -221,10 +224,6 @@ public class ContentEntryTreeEditor {
   }
 
   private static class MyNewFolderAction extends NewFolderAction implements CustomComponentAction {
-    public MyNewFolderAction(FileSystemTreeImpl fileSystemTree) {
-      super(fileSystemTree);
-    }
-
     public JComponent createCustomComponent(Presentation presentation) {
       return IconWithTextAction.createCustomComponentImpl(this, presentation);
     }
@@ -237,6 +236,20 @@ public class ContentEntryTreeEditor {
 
     protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
       return false; // need this in order to not show plus for empty directories
+    }
+  }
+
+  private class MyPanel extends JPanel implements DataProvider {
+    private MyPanel(final LayoutManager layout) {
+      super(layout);
+    }
+
+    @Nullable
+    public Object getData(@NonNls final String dataId) {
+      if (dataId.equals(FileChooserDialogImpl.FILE_SYSTEM_TREE.getName())) {
+        return myFileSystemTree;
+      }
+      return null;
     }
   }
 }

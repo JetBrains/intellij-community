@@ -15,10 +15,9 @@
  */
 package com.intellij.openapi.fileChooser;
 
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FileChooserDescriptor implements Cloneable{
   private final boolean myChooseFiles;
@@ -46,10 +47,8 @@ public class FileChooserDescriptor implements Cloneable{
   private List<VirtualFile> myRoots = new ArrayList<VirtualFile>();
   private boolean myShowFileSystemRoots = true;
   private boolean myIsTreeRootVisible = false;
-  private Module myContextModule = null;
 
-  private String myNewFileTemplateText = null;
-  private FileType myNewFileType = null;
+  private Map<String, Object> myUserData = new HashMap<String, Object>();
 
   /**
    * @param chooseFiles controls whether files can be chosen
@@ -267,27 +266,11 @@ public class FileChooserDescriptor implements Cloneable{
     return myHideIgnored;
   }
 
-  public Module getContextModule() {
-    return myContextModule;
+  public Object getUserData(String dataId) {
+    return myUserData.get(dataId);
   }
 
-  public void setContextModule(final Module contextModule) {
-    myContextModule = contextModule;
-  }
-
-  public String getNewFileTemplateText() {
-    return myNewFileTemplateText;
-  }
-
-  public void setNewFileTemplateText(final String newFileTemplateText) {
-    myNewFileTemplateText = newFileTemplateText;
-  }
-
-  public FileType getNewFileType() {
-    return myNewFileType;
-  }
-
-  public void setNewFileType(final FileType newFileType) {
-    myNewFileType = newFileType;
+  public <T> void putUserData(DataKey<T> key, T data) {
+    myUserData.put(key.getName(), data);
   }
 }

@@ -49,11 +49,11 @@ public class FileSystemTreeFactoryImpl implements FileSystemTreeFactory{
 
   public DefaultActionGroup createDefaultFileSystemActions(FileSystemTree fileSystemTree) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new GotoHomeAction(fileSystemTree));
-    group.add(new GotoProjectDirectory(fileSystemTree));
+    group.add(new GotoHomeAction());
+    group.add(new GotoProjectDirectory());
     group.addSeparator();
-    group.add(new NewFolderAction(fileSystemTree));
-    group.add(new FileDeleteAction(fileSystemTree));
+    group.add(new NewFolderAction());
+    group.add(new FileDeleteAction());
     group.addSeparator();
     SynchronizeAction action1 = new SynchronizeAction();
     AnAction original = ActionManager.getInstance().getAction(IdeActions.ACTION_SYNCHRONIZE);

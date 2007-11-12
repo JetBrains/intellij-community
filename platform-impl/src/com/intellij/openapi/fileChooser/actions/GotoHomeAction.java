@@ -2,26 +2,15 @@ package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.FileSystemTree;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
-import com.intellij.ui.UIBundle;
-
-import javax.swing.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.InputEvent;
 
 /**
  * @author Vladimir Kondratyev
  */
-public final class GotoHomeAction extends FileChooserDialogImpl.FileChooserAction{
-  public GotoHomeAction(FileSystemTree fileSystemTree) {
-    super(UIBundle.message("file.chooser.goto.home.action.name"), UIBundle.message("file.chooser.goto.home.action.description"), IconLoader.getIcon("/nodes/homeFolder.png"), fileSystemTree, KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_MASK));
-  }
-
+public final class GotoHomeAction extends FileChooserAction {
   protected void actionPerformed(final FileSystemTree fileSystemTree, AnActionEvent e) {
     final VirtualFile homeDirectory = getHomeDirectory();
     fileSystemTree.select(homeDirectory, new Runnable() {

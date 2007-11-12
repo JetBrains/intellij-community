@@ -2,6 +2,7 @@ package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunJavaConfiguration;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -43,9 +44,9 @@ public class CommonJavaParameters extends JPanel {
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
-        fileChooserDescriptor.setContextModule(myModule);
+        fileChooserDescriptor.putUserData(DataKeys.MODULE_CONTEXT, myModule);
         VirtualFile[] files = FileChooser.chooseFiles(myWorkingDirectory, fileChooserDescriptor);
-        if (files != null && files.length != 0) {
+        if (files.length != 0) {
           setText(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY, files[0].getPresentableUrl());
         }
       }

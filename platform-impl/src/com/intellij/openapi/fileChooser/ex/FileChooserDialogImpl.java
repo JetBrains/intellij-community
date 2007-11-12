@@ -1,7 +1,6 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.SynchronizeAction;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -11,17 +10,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
-import com.intellij.openapi.fileChooser.actions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TitlePanel;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -29,6 +24,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +36,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,6 +64,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private boolean myTreeIsUpdating;
 
   public static DataKey<FileChooserDialogImpl> KEY = DataKey.create("FileChooserDialog");
+  public static DataKey<FileSystemTreeImpl> FILE_SYSTEM_TREE = DataKey.create("FileSystemTree");
 
   public FileChooserDialogImpl(FileChooserDescriptor chooserDescriptor, Project project) {
     super(project, true);
@@ -118,41 +114,24 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   protected DefaultActionGroup createActionGroup() {
-    final DefaultActionGroup group = new DefaultActionGroup();
+    registerFileChooserShortcut(IdeActions.ACTION_DELETE, "FileChooser.Delete");
+    registerFileChooserShortcut("NewElement", "FileChooser.NewFolder");
+    registerFileChooserShortcut(IdeActions.ACTION_SYNCHRONIZE, "FileChooser.Refresh");
 
-    addToGroup(group, new GotoHomeAction(myFileSystemTree));
-    addToGroup(group, new GotoProjectDirectory(myFileSystemTree));
-    addToGroup(group, new GotoModuleDirectory(myFileSystemTree, myChooserDescriptor.getContextModule()));
+    return (DefaultActionGroup) ActionManager.getInstance().getAction("FileChooserToolbar");
+  }
 
-    group.addSeparator();
-    if (myChooserDescriptor.getNewFileType() != null) {
-      addToGroup(group, new NewFileAction(myFileSystemTree, myChooserDescriptor.getNewFileType(), myChooserDescriptor.getNewFileTemplateText()));
-    }
-    addToGroup(group, new NewFolderAction(myFileSystemTree));
-    addToGroup(group, new FileDeleteAction(myFileSystemTree));
-    group.addSeparator();
-
-    final SynchronizeAction syncAction = new SynchronizeAction() {
-      public void actionPerformed(final AnActionEvent e) {
-        VirtualFileManager.getInstance().refresh(false);
-      }
-    };
-
-    AnAction original = ActionManager.getInstance().getAction(IdeActions.ACTION_SYNCHRONIZE);
-    syncAction.copyFrom(original);
+  private void registerFileChooserShortcut(@NonNls final String baseActionId, @NonNls final String fileChooserActionId) {
     final JTree tree = myFileSystemTree.getTree();
+    final AnAction syncAction = ActionManager.getInstance().getAction(fileChooserActionId);
+
+    AnAction original = ActionManager.getInstance().getAction(baseActionId);
     syncAction.registerCustomShortcutSet(original.getShortcutSet(), tree);
-    group.add(syncAction);
     myDisposables.add(new Disposable() {
       public void dispose() {
         syncAction.unregisterCustomShortcutSet(tree);
       }
     });
-
-    group.addSeparator();
-    addToGroup(group, new MyShowHiddensAction());
-
-    return group;
   }
 
   private void addToGroup(DefaultActionGroup group, AnAction action) {
@@ -367,61 +346,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
-  public static abstract class FileChooserAction extends AnAction implements Disposable {
-    private final FileSystemTree myFileSystemTree;
-    private Disposable myDisposable;
-
-    public FileChooserAction(String text, String description, Icon icon, FileSystemTree fileSystemTree, KeyStroke shortcut) {
-      super(text, description, (shortcut == null) ? icon : new LabeledIcon(icon, null, KeyEvent.getKeyText(shortcut.getKeyCode()) + ". "));
-      myFileSystemTree = fileSystemTree;
-      if (shortcut != null) {
-        final JTree tree = fileSystemTree.getTree();
-        registerCustomShortcutSet(new CustomShortcutSet(shortcut), tree);
-        myDisposable = new Disposable() {
-          public void dispose() {
-            unregisterCustomShortcutSet(tree);
-          }
-        };
-      }
-    }
-
-    public void dispose() {
-      if (myDisposable != null) {
-        myDisposable.dispose();
-        myDisposable = null;
-      }
-    }
-
-    final public void actionPerformed(AnActionEvent e) {
-      actionPerformed(myFileSystemTree, e);
-    }
-
-    final public void update(AnActionEvent e) {
-      update(myFileSystemTree, e);
-    }
-
-    protected abstract void update(FileSystemTree fileChooser, AnActionEvent e);
-
-    protected abstract void actionPerformed(FileSystemTree fileChooser, AnActionEvent e);
-  }
-
-  /**
-   * @author Vladimir Kondratyev
-   */
-  private final class MyShowHiddensAction extends ToggleAction{
-    public MyShowHiddensAction() {
-      super(UIBundle.message("file.chooser.show.hidden.action.name"), UIBundle.message("file.chooser.show.hidden.action.description"), IconLoader.getIcon("/actions/showHiddens.png"));
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return myFileSystemTree.areHiddensShown();
-    }
-
-    public void setSelected(AnActionEvent e, boolean state) {
-      myFileSystemTree.showHiddens(state);
-    }
-  }
-
   private final class MyPanel extends JPanel implements DataProvider {
     public MyPanel() {
       super(new BorderLayout(0, 0));
@@ -433,7 +357,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       } else if (KEY.getName().equals(dataId)) {
         return FileChooserDialogImpl.this;
       }
-      return null;
+      else if (FILE_SYSTEM_TREE.getName().equals(dataId)) {
+        return myFileSystemTree;
+      }
+      return myChooserDescriptor.getUserData(dataId);
     }
   }
 

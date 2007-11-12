@@ -1523,5 +1523,27 @@
       <reference ref="EditorToggleShowLineNumbers"/>
       <reference ref="Annotate"/>
     </group>
+
+    <group id="FileChooserToolbar">
+      <action id="FileChooser.GotoHome" class="com.intellij.openapi.fileChooser.actions.GotoHomeAction"
+        icon="/nodes/homeFolder.png"/>
+      <action id="FileChooser.GotoProject" class="com.intellij.openapi.fileChooser.actions.GotoProjectDirectory"
+        icon="/nodes/ideaProject.png"/>
+      <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
+        icon="/nodes/ModuleClosed.png"/>
+      <separator/>
+      <action id="FileChooser.NewFile" class="com.intellij.openapi.fileChooser.actions.NewFileAction"
+        icon="/actions/new.png"/>
+      <action id="FileChooser.NewFolder" class="com.intellij.openapi.fileChooser.actions.NewFolderAction"
+        icon="/actions/newFolder.png"/>
+      <action id="FileChooser.Delete" class="com.intellij.openapi.fileChooser.actions.FileDeleteAction"
+        icon="/actions/delete.png"/>
+      <separator/>
+      <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
+        icon="/actions/sync.png"/>
+      <separator/>
+      <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
+        icon="/actions/showHiddens.png"/>
+    </group>
   </actions>
 </component>

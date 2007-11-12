@@ -1,25 +1,14 @@
 package com.intellij.openapi.fileChooser.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileSystemTree;
-import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 
-public class NewFolderAction extends FileChooserDialogImpl.FileChooserAction {
-  public NewFolderAction(FileSystemTree fileSystemTree) {
-    super(UIBundle.message("file.chooser.new.folder.action.name"), UIBundle.message("file.chooser.new.folder.action.description"), IconLoader.getIcon("/actions/newFolder.png"), fileSystemTree, null);
-    registerCustomShortcutSet(
-      ActionManager.getInstance().getAction("NewElement").getShortcutSet(),
-      fileSystemTree.getTree()
-    );
-  }
-
+public class NewFolderAction extends FileChooserAction {
   protected void update(FileSystemTree fileSystemTree, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     VirtualFile selectedFile = fileSystemTree.getSelectedFile();

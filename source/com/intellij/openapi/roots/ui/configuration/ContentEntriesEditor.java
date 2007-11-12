@@ -5,6 +5,7 @@ import com.intellij.ide.util.JavaUtil;
 import com.intellij.ide.util.projectWizard.ToolbarPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -438,7 +439,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
           validateContentEntriesCandidates(files);
         }
       };
-      myDescriptor.setContextModule(getModule());
+      myDescriptor.putUserData(DataKeys.MODULE_CONTEXT, getModule());
       myDescriptor.setTitle(ProjectBundle.message("module.paths.add.content.title"));
       myDescriptor.setDescription(ProjectBundle.message("module.paths.add.content.prompt"));
     }
