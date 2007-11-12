@@ -41,6 +41,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="plugins-management" />
     <orderEntryProperties />
   </component>
 </module>
