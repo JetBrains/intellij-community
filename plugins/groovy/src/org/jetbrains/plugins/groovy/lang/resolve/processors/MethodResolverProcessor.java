@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -41,18 +42,16 @@ import java.util.*;
 public class MethodResolverProcessor extends ResolverProcessor {
   @Nullable
   private PsiType[] myArgumentTypes;
+  private PsiType[] myTypeArguments;
 
   private Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
   private boolean myIsConstructor;
 
-  public MethodResolverProcessor(String name, PsiElement place, boolean forCompletion, boolean isConstructor, PsiType[] argumentTypes) {
+  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean forCompletion, boolean isConstructor, PsiType[] argumentTypes, PsiType[] typeArguments) {
     super(name, EnumSet.of(ResolveKind.METHOD, ResolveKind.PROPERTY), place, forCompletion, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
     myArgumentTypes = argumentTypes;
-  }
-
-  public MethodResolverProcessor(String name, PsiElement place, boolean forCompletion, boolean isConstructor) {
-    this(name, place, forCompletion, isConstructor, PsiUtil.getArgumentTypes(place, isConstructor));
+    myTypeArguments = typeArguments;
   }
 
   public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
@@ -62,7 +61,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
       if (!isAccessible((PsiNamedElement) element)) return true;
 
-      substitutor = inferMethodTypeParameters(method, substitutor);
+      substitutor = obtainSubstitutor(substitutor, method);
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method);
       if (myForCompletion ||
@@ -85,6 +84,20 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return true;
   }
 
+  private PsiSubstitutor obtainSubstitutor(PsiSubstitutor substitutor, PsiMethod method) {
+    final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    if (myTypeArguments.length == typeParameters.length) {
+      for (int i = 0; i < typeParameters.length; i++) {
+        PsiTypeParameter typeParameter = typeParameters[i];
+        final PsiType typeArgument = myTypeArguments[i];
+        substitutor = substitutor.put(typeParameter, typeArgument);
+      }
+      return substitutor;
+    }
+
+    return inferMethodTypeParameters(method, substitutor, typeParameters);
+  }
+
   private boolean isClosure(PsiVariable variable) {
     if (variable instanceof GrVariable) {
       final PsiType type = ((GrVariable) variable).getTypeGroovy();
@@ -93,8 +106,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return variable.getType().equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE);
   }
 
-  private PsiSubstitutor inferMethodTypeParameters(PsiMethod method, PsiSubstitutor partialSubstitutor) {
-    final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+  private PsiSubstitutor inferMethodTypeParameters(PsiMethod method, PsiSubstitutor partialSubstitutor, final PsiTypeParameter[] typeParameters) {
     if (typeParameters.length == 0) return partialSubstitutor;
 
     if (argumentsSupplied()) {

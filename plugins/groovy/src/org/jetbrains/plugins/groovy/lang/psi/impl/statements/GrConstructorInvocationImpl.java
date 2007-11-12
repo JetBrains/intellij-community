@@ -74,7 +74,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
     PsiClass clazz = getDelegatedClass();
     if (clazz != null) {
       PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
-      MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, false, true, argTypes);
+      MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, false, true, argTypes, PsiType.EMPTY_ARRAY);
       clazz.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
       return processor.getCandidates();
     }

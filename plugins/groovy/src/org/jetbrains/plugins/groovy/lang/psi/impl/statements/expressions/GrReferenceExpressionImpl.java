@@ -41,11 +41,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.Collections;
-import java.util.EnumSet;
 
 /**
  * @author ilyas
@@ -396,7 +394,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     ResolverProcessor processor;
     if (kind == Kind.METHOD_OR_PROPERTY) {
       final PsiType[] argTypes = checkArguments ? PsiUtil.getArgumentTypes(refExpr, false) : null;
-      processor = new MethodResolverProcessor(name, refExpr, forCompletion, false, argTypes);
+      processor = new MethodResolverProcessor(name, refExpr, forCompletion, false, argTypes, refExpr.getTypeArguments());
     } else {
       processor = new PropertyResolverProcessor(name, refExpr, forCompletion);
     }

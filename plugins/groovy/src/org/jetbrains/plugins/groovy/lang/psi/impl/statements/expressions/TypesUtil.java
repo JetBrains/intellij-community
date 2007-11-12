@@ -56,7 +56,7 @@ public class TypesUtil {
       if (lClass != null) {
         final String operatorName = ourOperationsToOperatorNames.get(tokenType);
         if (operatorName != null) {
-          MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, place, false, false, argumentTypes);
+          MethodResolverProcessor processor = new MethodResolverProcessor(operatorName, place, false, false, argumentTypes, PsiType.EMPTY_ARRAY);
           lClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, place);
           final GroovyResolveResult[] candidates = processor.getCandidates();
           if (candidates.length == 1) {
