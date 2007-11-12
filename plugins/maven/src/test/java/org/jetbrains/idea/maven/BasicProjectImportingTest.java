@@ -41,8 +41,10 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
   }
 
   public void testProjectWithEnvProperty() throws IOException {
+    String ideaJDK = System.getenv("IDEA_JDK");
+
     importProject("<groupId>test</groupId>" +
-                  "<artifactId>env-properties</artifactId>" +
+                  "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
 
                   "<dependencies>" +
@@ -51,12 +53,14 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                   "    <artifactId>direct-system-dependency</artifactId>" +
                   "    <version>1.0</version>" +
                   "    <scope>system</scope>" +
-                  "    <systemPath>${env.JAVA_HOME}/lib/tools.jar</systemPath>" +
+                  "    <systemPath>${env.IDEA_JDK}/lib/tools.jar</systemPath>" +
                   "  </dependency>" +
                   "</dependencies>");
 
-    // This should fail when embedder will be able to handle env.XXX properties
-    assertModules();
+    assertModules("project");
+    assertModuleLibrary("project",
+                        "direct-system-dependency:direct-system-dependency:1.0",
+                        "jar://" + ideaJDK + "/lib/tools.jar!/");
   }
 
   public void testModulesWithSlashesRegularAndBack() throws IOException {
@@ -263,5 +267,22 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                   "</build>");
     assertModules("project");
     assertNull(getModule("project").getLanguageLevel());
+  }
+
+  public void testProjectWithBuiltExtension() throws Exception {
+  importProject("<groupId>test</groupId>" +
+                "<artifactId>project</artifactId>" +
+                "<version>1</version>" +
+
+                "<build>" +
+                " <extensions>" +
+                "   <extension>" +
+                "     <groupId>org.apache.maven.wagon</groupId>" +
+                "     <artifactId>wagon-webdav</artifactId>" +
+                "     <version>1.0-beta-2</version>" +
+                "    </extension>" +
+                "  </extensions>" +
+                "</build>");
+    assertModules("project");
   }
 }

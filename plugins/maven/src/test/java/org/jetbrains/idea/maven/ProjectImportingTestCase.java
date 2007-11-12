@@ -168,6 +168,20 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
     assertTrue(m.isCompilerOutputPathInherited());
   }
 
+  protected void assertModuleLibrary(String moduleName, String libName, String path) {
+    LibraryOrderEntry lib = null;
+
+    for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
+      if (e instanceof LibraryOrderEntry && e.getPresentableName().equals(libName)) {
+        lib = (LibraryOrderEntry)e;
+      }
+    }
+    assertNotNull(lib);
+    String[] urls = lib.getUrls(OrderRootType.CLASSES);
+    assertEquals(1, urls.length);
+    assertEquals(path, urls[0]);
+  }
+
   protected void assertModuleLibraries(String moduleName, String... expectedLibraries) {
     List<String> actual = new ArrayList<String>();
 

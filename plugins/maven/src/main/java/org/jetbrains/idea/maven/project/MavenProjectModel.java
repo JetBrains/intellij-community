@@ -78,6 +78,7 @@ public class MavenProjectModel {
     }
     catch (Exception e) {
       LOG.info(e);
+      e.printStackTrace();
       return null;
     }
 

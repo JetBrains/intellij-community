@@ -153,6 +153,8 @@ public class MavenEnv {
 
     Configuration configuration = new DefaultConfiguration();
 
+    configuration.setMavenEmbedderLogger(new MavenEmbedderConsoleLogger());
+
     final File userSettingsFile = resolveUserSettingsFile(userSettings);
     if (userSettingsFile != null) {
       configuration.setUserSettingsFile(userSettingsFile);
