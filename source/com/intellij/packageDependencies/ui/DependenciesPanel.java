@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -272,6 +273,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(new ShowModulesAction());
     group.add(new ShowModuleGroupsAction());
     group.add(new GroupByScopeTypeAction());
+    group.add(new GroupByFilesAction());
     group.add(new FilterLegalsAction());
     group.add(new MarkAsIllegalAction());
     group.add(new EditDependencyRulesAction());
@@ -504,6 +506,23 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
+  private final class GroupByFilesAction extends ToggleAction {
+    private GroupByFilesAction() {
+      super(IdeBundle.message("action.show.file.structure"),
+            IdeBundle.message("action.description.show.file.structure"), IconLoader.getIcon("/objectBrowser/showGlobalInspections.png"));
+    }
+
+    public boolean isSelected(final AnActionEvent e) {
+      return mySettings.UI_GROUP_BY_FILES;
+    }
+
+    public void setSelected(final AnActionEvent e, final boolean state) {
+      mySettings.UI_GROUP_BY_FILES = state;
+      mySettings.copyToApplicationDependencySettings();
+      rebuild();
+    }
+  }
+
   private final class ShowModulesAction extends ToggleAction {
     ShowModulesAction() {
       super(AnalysisScopeBundle.message("action.show.modules"), AnalysisScopeBundle.message("action.show.modules.description"), IconLoader.getIcon("/objectBrowser/showModules.png"));
@@ -554,6 +573,11 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE = flag;
       mySettings.UI_GROUP_BY_SCOPE_TYPE = flag;
       rebuild();
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(!mySettings.UI_GROUP_BY_FILES);
     }
   }
 
