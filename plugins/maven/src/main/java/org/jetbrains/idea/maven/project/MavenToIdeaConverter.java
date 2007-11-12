@@ -12,8 +12,11 @@ import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginExecution;
 import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
@@ -35,61 +38,110 @@ public class MavenToIdeaConverter {
   @NonNls public static final String JAVADOC_CLASSIFIER = "javadoc";
   @NonNls public static final String SOURCES_CLASSIFIER = "sources";
 
-  @NonNls private static final String TARGET = "target";
-  @NonNls private static final String GENERATED_SOURCES = "generated-sources";
-
   private final static String JAR_PREFIX = JarFileSystem.PROTOCOL + "://";
+
+  private ModifiableModuleModel myModuleModel;
+  private MavenProjectModel myProjectModel;
+  private MavenToIdeaMapping myMapping;
+  private Collection<String> myProfiles;
+  private MavenImporterPreferences myPrefs;
+  private boolean myMarkSynthetic;
+  private Pattern myIgnorePattern;
 
   private static Map<String, LanguageLevel> stringToLanguageLevel;
 
-  public static void convert(final ModifiableModuleModel modifiableModel,
-                             final MavenProjectModel projectModel,
-                             final Collection<String> profiles,
-                             final MavenToIdeaMapping mapping,
-                             final MavenImporterPreferences preferences,
-                             final boolean markSynthetic) {
+  public static void convert(ModifiableModuleModel moduleModel,
+                             MavenProjectModel projectModel,
+                             Collection<String> profiles,
+                             MavenToIdeaMapping mapping,
+                             MavenImporterPreferences prefs,
+                             boolean markSynthetic) {
+    MavenToIdeaConverter c = new MavenToIdeaConverter(moduleModel, projectModel, mapping, profiles, prefs, markSynthetic);
+    c.convert();
+  }
 
-    final MavenToIdeaConverter mavenToIdeaConverter = new MavenToIdeaConverter(modifiableModel, mapping, preferences, markSynthetic);
+  private MavenToIdeaConverter(ModifiableModuleModel model,
+                               MavenProjectModel projectModel,
+                               MavenToIdeaMapping mapping,
+                               Collection<String> profiles,
+                               MavenImporterPreferences preferences,
+                               boolean markSynthetic) {
+    myModuleModel = model;
+    myProjectModel = projectModel;
+    myMapping = mapping;
+    myProfiles = profiles;
+    myPrefs = preferences;
+    myMarkSynthetic = markSynthetic;
+    myIgnorePattern = Pattern.compile(Strings.translateMasks(preferences.getIgnoredDependencies()));
+  }
 
-    projectModel.visit(new MavenProjectModel.MavenProjectVisitorRoot() {
+  private void convert() {
+    convertModules();
+    createModuleGroups();
+    resolveDependenciesAndCommit();
+  }
+
+  private void convertModules() {
+    myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorRoot() {
       public void visit(final MavenProjectModel.Node node) {
-        mavenToIdeaConverter.convert(node, profiles);
-        for(MavenProjectModel.Node subnode : node.mavenModulesTopoSorted){
-          mavenToIdeaConverter.convert(subnode, profiles);
+        convertNode(node, myProfiles);
+        for (MavenProjectModel.Node subnode : node.mavenModulesTopoSorted) {
+          convertNode(subnode, myProfiles);
         }
       }
     });
+  }
 
-    createModuleGroups(modifiableModel, projectModel, mapping, preferences.isCreateModuleGroups());
+  private void convertNode(MavenProjectModel.Node node, Collection<String> profiles) {
+    final MavenProject mavenProject = node.getMavenProject();
 
-    for (Module module : mapping.getExistingModules()) {
-      new RootModelAdapter(module).resolveModuleDependencies(mapping.getLibraryNameToModuleName());
+    Module module = myMapping.getModule(node);
+    if (module == null) {
+      module = myModuleModel.newModule(myMapping.getModuleFilePath(node));
     }
 
-    try {
-      modifiableModel.commit();
-    }
-    catch (ModuleCircularDependencyException ignore) {
+    convertRootModel(module, mavenProject);
+    createFacets(module, mavenProject);
+    SyntheticModuleUtil.setSynthetic(module, myMarkSynthetic && !node.isLinked());
+  }
+
+  private void convertRootModel(Module module, MavenProject mavenProject) {
+    RootModelAdapter rootModel = new RootModelAdapter(module);
+    rootModel.init(mavenProject.getFile().getParent());
+    configFolders(rootModel, mavenProject);
+    configOutputDirs(rootModel, mavenProject);
+    createDependencies(rootModel, mavenProject);
+    rootModel.setLanguageLevel(getLanguageLevel(getLanguageLevel(mavenProject)));
+    rootModel.commit();
+  }
+
+  private void createFacets(Module module, MavenProject mavenProject) {
+    final String packaging = mavenProject.getPackaging();
+    if (!packaging.equals("jar")) {
+      for (PackagingConverter converter : Extensions.getExtensions(PackagingConverter.EXTENSION_POINT_NAME)) {
+        if (converter.isApplicable(packaging)) {
+          converter.convert(module, mavenProject, myProfiles, myMapping, myModuleModel);
+        }
+      }
     }
   }
 
-  private static void createModuleGroups(final ModifiableModuleModel modifiableModel,
-                                         final MavenProjectModel projectModel,
-                                         final MavenToIdeaMapping mapping,
-                                         final boolean createModuleGroups) {
+  private void createModuleGroups() {
+    final boolean createModuleGroups = myPrefs.isCreateModuleGroups();
+
     final Stack<String> groups = new Stack<String>();
-    projectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
+    myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(final MavenProjectModel.Node node) {
-        final String name = mapping.getModuleName(node.getId());
+        final String name = myMapping.getModuleName(node.getId());
         LOG.assertTrue(name != null);
 
         if (createModuleGroups && !node.mavenModules.isEmpty()) {
           groups.push(ProjectBundle.message("module.group.name", name));
         }
 
-        final Module module = modifiableModel.findModuleByName(name);
+        final Module module = myModuleModel.findModuleByName(name);
         if (module != null) {
-          modifiableModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
+          myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : groups.toArray(new String[groups.size()]));
         }
         else {
           LOG.info("Cannot find module " + name);
@@ -104,106 +156,87 @@ public class MavenToIdeaConverter {
     });
   }
 
-  final private ModifiableModuleModel modifiableModuleModel;
-  final private MavenToIdeaMapping mavenToIdeaMapping;
-  final private MavenImporterPreferences preferences;
-  final private boolean markSynthetic;
-  final private Pattern ignorePattern;
-
-  private MavenToIdeaConverter(ModifiableModuleModel model,
-                               final MavenToIdeaMapping mavenToIdeaMapping,
-                               final MavenImporterPreferences preferences,
-                               final boolean markSynthetic) {
-    this.modifiableModuleModel = model;
-    this.mavenToIdeaMapping = mavenToIdeaMapping;
-    this.preferences = preferences;
-    this.markSynthetic = markSynthetic;
-    this.ignorePattern = Pattern.compile(Strings.translateMasks(preferences.getIgnoredDependencies()));
-  }
-
-  private void convert(MavenProjectModel.Node node, Collection<String> profiles) {
-    final MavenProject mavenProject = node.getMavenProject();
-
-    Module module = mavenToIdeaMapping.getModule(node);
-    if (module == null) {
-      module = modifiableModuleModel.newModule(mavenToIdeaMapping.getModuleFilePath(node));
+  private void resolveDependenciesAndCommit() {
+    for (Module module : myMapping.getExistingModules()) {
+      new RootModelAdapter(module).resolveModuleDependencies(myMapping.getLibraryNameToModuleName());
     }
-
-    convertRootModel(module, mavenProject, profiles);
-
-    createFacets(module, mavenProject, profiles);
-
-    SyntheticModuleUtil.setSynthetic(module, markSynthetic && !node.isLinked());
-  }
-
-  void convertRootModel(Module module, MavenProject mavenProject, final Collection<String> profiles) {
-    RootModelAdapter rootModel = new RootModelAdapter(module);
-    rootModel.init(mavenProject.getFile().getParent());
-    createRoots(rootModel, mavenProject);
-    createOutput(rootModel, mavenProject);
-    createDependencies(rootModel, mavenProject);
-    rootModel.setLanguageLevel(getLanguageLevel(getLanguageLevel(mavenProject, profiles)));
-    rootModel.commit();
-  }
-
-  private void createFacets(Module module, MavenProject mavenProject, Collection<String> profiles) {
-    final String packaging = mavenProject.getPackaging();
-    if (!packaging.equals("jar")) {
-      for (PackagingConverter converter : Extensions.getExtensions(PackagingConverter.EXTENSION_POINT_NAME)) {
-        if (converter.isApplicable(packaging)) {
-          converter.convert(module, mavenProject, profiles, mavenToIdeaMapping, modifiableModuleModel);
-        }
-      }
+    try {
+      myModuleModel.commit();
+    }
+    catch (ModuleCircularDependencyException ignore) {
     }
   }
 
   @Nullable
-  private String getLanguageLevel(MavenProject mavenProject, final Collection<String> profiles) {
-    return ProjectUtil.findPluginConfiguration(mavenProject, profiles, "org.apache.maven.plugins", "maven-compiler-plugin", "source");
+  private String getLanguageLevel(MavenProject mavenProject) {
+    return ProjectUtil.findPluginConfiguration(mavenProject, myProfiles, "org.apache.maven.plugins", "maven-compiler-plugin", "source");
   }
 
-  private static void createRoots(final RootModelAdapter rootModel, final MavenProject mavenProject) {
-    createSourceRoots(rootModel, mavenProject);
-    createGeneratedSourceRoots(rootModel, mavenProject);
+  private void configFolders(RootModelAdapter m, MavenProject p) {
+    configSourceFolders(m, p);
+    configBuildHelperPluginSources(m, p);
+    configAntRunPluginSources(m, p);
   }
 
-  static void createSourceRoots(RootModelAdapter rootModel, MavenProject mavenProject) {
-    for (Object o : mavenProject.getCompileSourceRoots()) {
-      rootModel.createSrcDir((String)o, false);
+  private void configSourceFolders(RootModelAdapter m, MavenProject p) {
+    for (Object o : p.getCompileSourceRoots()) {
+      m.createSrcDir((String)o, false);
     }
-    for (Object o : mavenProject.getTestCompileSourceRoots()) {
-      rootModel.createSrcDir((String)o, true);
+    for (Object o : p.getTestCompileSourceRoots()) {
+      m.createSrcDir((String)o, true);
     }
 
-    for (Object o : mavenProject.getResources()) {
-      rootModel.createSrcDir(((Resource)o).getDirectory(), false);
+    for (Object o : p.getResources()) {
+      m.createSrcDir(((Resource)o).getDirectory(), false);
     }
-    for (Object o : mavenProject.getTestResources()) {
-      rootModel.createSrcDir(((Resource)o).getDirectory(), true);
+    for (Object o : p.getTestResources()) {
+      m.createSrcDir(((Resource)o).getDirectory(), true);
     }
   }
 
-  private static void createGeneratedSourceRoots(RootModelAdapter rootModel, MavenProject mavenProject) {
-    final File targetDir = new File(mavenProject.getFile().getParent(), TARGET);
-    if (targetDir.isDirectory()) {
-      for (File file : targetDir.listFiles()) {
-        if (file.isDirectory()) {
-          if (file.getName().equals(GENERATED_SOURCES)) {
-            for (File genSrcDir : file.listFiles()) {
-              rootModel.createSrcDir(genSrcDir.getPath(), false);
-            }
-          }
-          else {
-            rootModel.excludeRoot(file.getPath());
-          }
-        }
+  private void configBuildHelperPluginSources(RootModelAdapter m, MavenProject p) {
+    Plugin plugin = ProjectUtil.findPlugin(p, myProfiles, "org.codehaus.mojo", "build-helper-maven-plugin");
+    if (plugin == null) return;
+
+    for (PluginExecution e : (List<PluginExecution>)plugin.getExecutions()) {
+      for (String goal : (List<String>)e.getGoals()) {
+        Xpp3Dom config = (Xpp3Dom)e.getConfiguration();
+        if (config == null) continue;
+        
+        if (goal.equals("add-source")) addBuildHelperPluginSource(m, config, false);
+        if (goal.equals("add-test-source")) addBuildHelperPluginSource(m, config, true);
       }
     }
   }
 
-  private void createOutput(RootModelAdapter rootModel, MavenProject mavenProject) {
+  private void addBuildHelperPluginSource(RootModelAdapter m, Xpp3Dom config, boolean isTestSources) {
+    Xpp3Dom sources = config.getChild("sources");
+    if (sources == null) return;
+
+    for (Xpp3Dom source : sources.getChildren("source")) {
+      m.createSrcDir(source.getValue(), isTestSources);
+    }
+  }
+
+  private void configAntRunPluginSources(RootModelAdapter m, MavenProject p) {
+    Plugin plugin = ProjectUtil.findPlugin(p, myProfiles, "org.apache.maven.plugins", "maven-antrun-plugin");
+    if (plugin == null) return;
+
+    for (PluginExecution e : (List<PluginExecution>)plugin.getExecutions()) {
+      Xpp3Dom config = (Xpp3Dom)e.getConfiguration();
+      if (config == null) continue;
+
+      Xpp3Dom src = config.getChild("sourceRoot");
+      Xpp3Dom test = config.getChild("testSourceRoot");
+      
+      if (src != null) m.createSrcDir(src.getValue(), false);
+      if (test != null) m.createSrcDir(test.getValue(), true);
+    }
+  }
+
+  private void configOutputDirs(RootModelAdapter rootModel, MavenProject mavenProject) {
     Build build = mavenProject.getBuild();
-    if (preferences.isUseMavenOutput()) {
+    if (myPrefs.isUseMavenOutput()) {
       rootModel.useModuleOutput(build.getOutputDirectory(), build.getTestOutputDirectory());
     }
     else {
@@ -214,33 +247,70 @@ public class MavenToIdeaConverter {
     rootModel.excludeRoot(build.getDirectory());
   }
 
-  void createDependencies(RootModelAdapter rootModel, MavenProject mavenProject) {
+  private void createDependencies(RootModelAdapter rootModel, MavenProject mavenProject) {
     for (Artifact artifact : extractDependencies(mavenProject)) {
       MavenId id = new MavenId(artifact);
-      if(ignorePattern.matcher(id.toString()).matches()){
+      if (myIgnorePattern.matcher(id.toString()).matches()) {
         continue;
       }
-      final String moduleName = mavenToIdeaMapping.getModuleName(id);
+      final String moduleName = myMapping.getModuleName(id);
       if (moduleName != null) {
         rootModel.createModuleDependency(moduleName);
       }
       else {
-        final String artifactPath = artifact.getFile().getPath();
-        rootModel.createModuleLibrary(mavenToIdeaMapping.getLibraryName(id), getUrl(artifactPath, null),
-                                      getUrl(artifactPath, SOURCES_CLASSIFIER), getUrl(artifactPath, JAVADOC_CLASSIFIER));
+        String artifactPath = artifact.getFile().getPath();
+        rootModel.createModuleLibrary(myMapping.getLibraryName(id), getUrl(artifactPath, null), getUrl(artifactPath, SOURCES_CLASSIFIER),
+                                      getUrl(artifactPath, JAVADOC_CLASSIFIER));
       }
     }
   }
 
-  static void updateModel(Module module, MavenProject mavenProject) {
+  private List<Artifact> extractDependencies(MavenProject mavenProject) {
+    Map<String, Artifact> projectIdToArtifact = new TreeMap<String, Artifact>();
+
+    for (Artifact artifact : (Collection<Artifact>)mavenProject.getArtifacts()) {
+      if (isSupportedArtifact(artifact)) {
+        String projectId = artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getClassifier();
+
+        Artifact existing = projectIdToArtifact.get(projectId);
+        if (existing == null ||
+            new DefaultArtifactVersion(existing.getVersion()).compareTo(new DefaultArtifactVersion(artifact.getVersion())) < 0) {
+          projectIdToArtifact.put(projectId, artifact);
+        }
+      }
+    }
+    return new ArrayList<Artifact>(projectIdToArtifact.values());
+  }
+
+  private boolean isSupportedArtifact(Artifact a) {
+    String t = a.getType();
+    return t.equalsIgnoreCase(JAR_TYPE) ||
+           t.equalsIgnoreCase("test-jar") ||
+           t.equalsIgnoreCase("ejb") ||
+           t.equalsIgnoreCase("ear") ||
+           t.equalsIgnoreCase("sar") ||
+           t.equalsIgnoreCase("war") ||
+           t.equalsIgnoreCase("ejb-client");
+  }
+
+  private static LanguageLevel getLanguageLevel(final String level) {
+    if (stringToLanguageLevel == null) {
+      stringToLanguageLevel = new HashMap<String, LanguageLevel>();
+      stringToLanguageLevel.put("1.3", LanguageLevel.JDK_1_3);
+      stringToLanguageLevel.put("1.4", LanguageLevel.JDK_1_4);
+      stringToLanguageLevel.put("1.5", LanguageLevel.JDK_1_5);
+      stringToLanguageLevel.put("1.6", LanguageLevel.JDK_1_5);
+    }
+    return stringToLanguageLevel.get(level);
+  }
+
+  public static void updateModel(Module module, MavenProject mavenProject) {
     RootModelAdapter rootModel = new RootModelAdapter(module);
-    rootModel.resetRoots();
-    createRoots(rootModel, mavenProject);
     updateSourcesAndJavadoc(rootModel);
     rootModel.commit();
   }
 
-  private static void updateSourcesAndJavadoc(final RootModelAdapter rootModel) {
+  private static void updateSourcesAndJavadoc(RootModelAdapter rootModel) {
     for (Map.Entry<String, String> entry : rootModel.getModuleLibraries().entrySet()) {
       final String url = entry.getValue();
       if (url.startsWith(JAR_PREFIX) && url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
@@ -251,34 +321,7 @@ public class MavenToIdeaConverter {
     }
   }
 
-  private static List<Artifact> extractDependencies(final MavenProject mavenProject) {
-    Map<String, Artifact> projectIdToArtifact = new TreeMap<String, Artifact>();
-
-    for (Artifact artifact : (Collection<Artifact>)mavenProject.getArtifacts()) {
-      if (isSupportedArtifact(artifact)) {
-        String projectId = artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getClassifier();
-
-        Artifact existing = projectIdToArtifact.get(projectId);
-        if (existing == null || new DefaultArtifactVersion(existing.getVersion()).compareTo(new DefaultArtifactVersion(artifact.getVersion())) < 0) {
-          projectIdToArtifact.put(projectId, artifact);
-        }
-      }
-    }
-    return new ArrayList<Artifact>(projectIdToArtifact.values());
-  }
-
-  private static boolean isSupportedArtifact(final Artifact newArtifact) {
-    String t = newArtifact.getType();
-    return t.equalsIgnoreCase(JAR_TYPE)
-           || t.equalsIgnoreCase("test-jar")
-           || t.equalsIgnoreCase("ejb")
-           || t.equalsIgnoreCase("ear")
-           || t.equalsIgnoreCase("sar")
-           || t.equalsIgnoreCase("war")
-           || t.equalsIgnoreCase("ejb-client");
-  }
-
-  private static String getUrl(final String artifactPath, final String classifier) {
+  private static String getUrl(String artifactPath, String classifier) {
     String path = artifactPath;
     if (classifier != null) {
       path = MessageFormat.format("{0}-{1}.jar", path.substring(0, path.lastIndexOf(".")), classifier);
@@ -288,16 +331,5 @@ public class MavenToIdeaConverter {
     }
     String normalizedPath = FileUtil.toSystemIndependentName(path);
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, normalizedPath) + JarFileSystem.JAR_SEPARATOR;
-  }
-
-  public static LanguageLevel getLanguageLevel(final String level) {
-    if(stringToLanguageLevel==null){
-      stringToLanguageLevel = new HashMap<String, LanguageLevel>();
-      stringToLanguageLevel.put("1.3", LanguageLevel.JDK_1_3);
-      stringToLanguageLevel.put("1.4", LanguageLevel.JDK_1_4);
-      stringToLanguageLevel.put("1.5", LanguageLevel.JDK_1_5);
-      stringToLanguageLevel.put("1.6", LanguageLevel.JDK_1_5);
-    }
-    return stringToLanguageLevel.get(level);
   }
 }

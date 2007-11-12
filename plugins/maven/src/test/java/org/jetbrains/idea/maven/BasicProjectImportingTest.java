@@ -6,85 +6,6 @@ import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import java.io.IOException;
 
 public class BasicProjectImportingTest extends ProjectImportingTestCase {
-  public void testSimpleProjectStructure() throws IOException {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    assertModules("project");
-    assertContentRoots("project", root.getPath());
-
-    assertSources("project", "src/main/java", "src/main/resources");
-    assertTestSources("project", "src/test/java", "src/test/resources");
-  }
-
-  public void testExcludingOutputDirectories() throws IOException {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-    assertModules("project");
-
-    assertExcludes("project", "target");
-    assertModuleOutput("project",
-                       root.getPath() + "/target/classes",
-                       root.getPath() + "/target/test-classes");
-  }
-
-  public void testExcludingOutputDirectoriesIfProjectOutputIsUsed() throws IOException {
-    prefs.setUseMavenOutput(false);
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-    assertModules("project");
-
-    assertExcludes("project",
-                   "target",
-                   "target/classes",
-                   "target/test-classes");
-    assertProjectOutput("project");
-  }
-
-  public void testExcludingCustomOutputDirectories() throws IOException {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <directory>targetCustom</directory>" +
-                  "  <outputDirectory>outputCustom</outputDirectory>" +
-                  "  <testOutputDirectory>testCustom</testOutputDirectory>" +
-                  "</build>");
-
-    assertModules("project");
-
-    assertExcludes("project", "targetCustom");
-    assertModuleOutput("project",
-                       root.getPath() + "/outputCustom",
-                       root.getPath() + "/testCustom");
-  }
-
-  public void testOutputDirsOutsideOfContentRoot() throws IOException {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <directory>../target</directory>" +
-                  "  <outputDirectory>../target/classes</outputDirectory>" +
-                  "  <testOutputDirectory>../target/test-classes</testOutputDirectory>" +
-                  "</build>");
-
-    String parentPath = root.getParent().getPath();
-    assertContentRoots("project", root.getPath(), parentPath + "/target");
-    assertContentRootExcludes("project", root.getPath());
-    assertContentRootExcludes("project", parentPath + "/target", "");
-
-    assertModuleOutput("project",
-                       parentPath + "/target/classes",
-                       parentPath + "/target/test-classes");
-  }
-
   public void testProjectWithDependency() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -166,6 +87,31 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
     assertEquals("project", r.pomNodes.get(0).mavenProject.getArtifactId());
 
     assertEquals(2, r.pomNodes.get(0).modulePomsNode.pomNodes.size());
+  }
+
+  public void testModulesAreNamedAfterArtifactIds() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+                     "<name>name</name>" +
+
+                     "<modules>" +
+                     "  <module>dir1</module>" +
+                     "  <module>dir2</module>" +
+                     "</modules>");
+
+    createModulePom("dir1", "<groupId>test</groupId>" +
+                            "<artifactId>m1</artifactId>" +
+                            "<version>1</version>" +
+                            "<name>name1</name>");
+
+    createModulePom("dir2", "<groupId>test</groupId>" +
+                            "<artifactId>m2</artifactId>" +
+                            "<version>1</version>" +
+                            "<name>name2</name>");
+    importProject();
+    assertModules("project", "m1", "m2");
   }
 
   public void testModulesWithSlashesAtTheEnds() throws Exception {
