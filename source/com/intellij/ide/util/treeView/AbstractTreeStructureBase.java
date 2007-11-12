@@ -1,5 +1,6 @@
 package com.intellij.ide.util.treeView;
 
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
@@ -35,6 +37,19 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     for (AbstractTreeNode node : modified) {
       node.setParent(treeNode);
     }
+
+    final Iterator<AbstractTreeNode> verifier = modified.iterator();
+    while (verifier.hasNext()) {
+      AbstractTreeNode child = verifier.next();
+      if (child instanceof ProjectViewNode) {
+        final ProjectViewNode projectViewNode = (ProjectViewNode)child;
+        projectViewNode.update();
+        if (projectViewNode.getValue() == null) {
+          verifier.remove();
+        }
+      }
+    }
+
     return modified.toArray(new Object[modified.size()]);
   }
 

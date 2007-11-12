@@ -18,7 +18,6 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -28,6 +27,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.ui.LoadingNode;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashMap;
@@ -37,7 +37,6 @@ import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import com.intellij.ui.LoadingNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -468,11 +467,6 @@ public abstract class AbstractTreeBuilder implements Disposable {
     Object[] children = myTreeStructure.getChildElements(getTreeStructureElement(descriptor));
     int index = 0;
     for (Object child : children) {
-      if (child instanceof ProjectViewNode) {
-        final ProjectViewNode projectViewNode = (ProjectViewNode)child;
-        updateNodeDescriptor(projectViewNode);
-        if (projectViewNode.getValue() == null) continue;
-      }
       elementToIndexMap.put(child, Integer.valueOf(index));
       index++;
     }
