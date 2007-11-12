@@ -41,6 +41,7 @@ public class TreeModelBuilder {
   private PsiManager myPsiManager;
   private Project myProject;
   private static final Logger LOG = Logger.getInstance("com.intellij.packageDependencies.ui.TreeModelBuilder");
+  private boolean myShowModuleGroups;
 
   private static enum ScopeType {
     TEST, SOURCE, LIB
@@ -89,6 +90,7 @@ public class TreeModelBuilder {
     myShowFiles = settings.UI_SHOW_FILES;
     myGroupByFiles = settings.UI_GROUP_BY_FILES;
     myShowIndividualLibs = showIndividualLibs;
+    myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS;
     myMarker = marker;
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
     myRoot = new RootNode();
@@ -655,7 +657,11 @@ public class TreeModelBuilder {
       return node;
     }
     getMap(myModuleNodes, scopeType).put(module, node);
-    getParentModuleGroup(groupPath, scopeType).add(node);
+    if (myShowModuleGroups) {
+      getParentModuleGroup(groupPath, scopeType).add(node);
+    } else {
+      getRootNode(scopeType).add(node);
+    }
     return node;
   }
 

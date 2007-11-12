@@ -18,6 +18,7 @@ public class DependencyUISettings implements PersistentStateComponent<Dependency
   public boolean UI_FLATTEN_PACKAGES = true;
   public boolean UI_SHOW_FILES = true;
   public boolean UI_SHOW_MODULES = true;
+  public boolean UI_SHOW_MODULE_GROUPS = true;
   public boolean UI_FILTER_LEGALS = false;
   public boolean UI_GROUP_BY_SCOPE_TYPE = true;
   public boolean UI_GROUP_BY_FILES = false;

@@ -270,6 +270,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(new FlattenPackagesAction());
     group.add(new ShowFilesAction());
     group.add(new ShowModulesAction());
+    group.add(new ShowModuleGroupsAction());
     group.add(new GroupByScopeTypeAction());
     group.add(new FilterLegalsAction());
     group.add(new MarkAsIllegalAction());
@@ -516,6 +517,27 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       DependencyUISettings.getInstance().UI_SHOW_MODULES = flag;
       mySettings.UI_SHOW_MODULES = flag;
       rebuild();
+    }
+  }
+  
+  private final class ShowModuleGroupsAction extends ToggleAction {
+    ShowModuleGroupsAction() {
+      super("Show module groups", "Show module groups", IconLoader.getIcon("/nodes/moduleGroupClosed.png"));
+    }
+
+    public boolean isSelected(AnActionEvent event) {
+      return mySettings.UI_SHOW_MODULE_GROUPS;
+    }
+
+    public void setSelected(AnActionEvent event, boolean flag) {
+      DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = flag;
+      mySettings.UI_SHOW_MODULE_GROUPS = flag;
+      rebuild();
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(mySettings.UI_SHOW_MODULES);
     }
   }
 
@@ -924,6 +946,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public boolean UI_FLATTEN_PACKAGES = true;
     public boolean UI_SHOW_FILES = false;
     public boolean UI_SHOW_MODULES = true;
+    public boolean UI_SHOW_MODULE_GROUPS = true;
     public boolean UI_FILTER_LEGALS = false;
     public boolean UI_GROUP_BY_SCOPE_TYPE = true;
     public boolean UI_GROUP_BY_FILES = false;
@@ -934,6 +957,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       UI_FLATTEN_PACKAGES = settings.UI_FLATTEN_PACKAGES;
       UI_SHOW_FILES = settings.UI_SHOW_FILES;
       UI_SHOW_MODULES = settings.UI_SHOW_MODULES;
+      UI_SHOW_MODULE_GROUPS = settings.UI_SHOW_MODULE_GROUPS;
       UI_FILTER_LEGALS = settings.UI_FILTER_LEGALS;
       UI_GROUP_BY_SCOPE_TYPE = settings.UI_GROUP_BY_SCOPE_TYPE;
       UI_GROUP_BY_FILES = settings.UI_GROUP_BY_FILES;
@@ -945,6 +969,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       settings.UI_FLATTEN_PACKAGES = UI_FLATTEN_PACKAGES;
       settings.UI_SHOW_FILES = UI_SHOW_FILES;
       settings.UI_SHOW_MODULES = UI_SHOW_MODULES;
+      settings.UI_SHOW_MODULE_GROUPS = UI_SHOW_MODULE_GROUPS;
       settings.UI_FILTER_LEGALS = UI_FILTER_LEGALS;
       settings.UI_GROUP_BY_SCOPE_TYPE = UI_GROUP_BY_SCOPE_TYPE;
       settings.UI_GROUP_BY_FILES = UI_GROUP_BY_FILES;

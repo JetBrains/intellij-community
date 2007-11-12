@@ -347,6 +347,7 @@ public class ScopeEditorPanel {
     group.add(new CompactEmptyMiddlePackagesAction());
     group.add(new ShowFilesAction());
     group.add(new ShowModulesAction());
+    group.add(new ShowModuleGroupsAction());
     group.add(new GroupByScopeTypeAction());
     group.add(new GroupByFilesAction());
     group.add(new FilterLegalsAction());
@@ -674,6 +675,28 @@ public class ScopeEditorPanel {
     public void update(final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!DependencyUISettings.getInstance().UI_GROUP_BY_FILES);
+    }
+  }
+
+  private final class ShowModuleGroupsAction extends ToggleAction {
+    ShowModuleGroupsAction() {
+      super("Show module groups",
+            "Show/hide module groups", IconLoader.getIcon("/nodes/moduleGroupClosed.png"));
+    }
+
+    public boolean isSelected(AnActionEvent event) {
+      return DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS;
+    }
+
+    public void setSelected(AnActionEvent event, boolean flag) {
+      DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = flag;
+      rebuild(true);
+    }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final DependencyUISettings settings = DependencyUISettings.getInstance();
+      e.getPresentation().setEnabled(!settings.UI_GROUP_BY_FILES && settings.UI_SHOW_MODULES);
     }
   }
 
