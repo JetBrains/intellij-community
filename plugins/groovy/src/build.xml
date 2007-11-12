@@ -132,7 +132,7 @@
       <pathelement path="${stubsOutput}"/>
     </path>
 
-    <javac2 destdir="${production.dest.groovy}">
+    <javac2 destdir="${production.dest.groovy}" debug = "on">
       <src refId="javaToCompile"/>
 
       <classpath refid="idea.lib.path"/>
