@@ -34,7 +34,7 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
 
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
-    myTransitiveCB.setText("Show transitive dependencies simpler than");
+    myTransitiveCB.setText("Show transitive dependencies. Do not travel deeper than");
     return myWholePanel;
   }
 }
