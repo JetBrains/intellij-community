@@ -139,6 +139,10 @@
             text="GSP" description="Create new Groovy Server Page">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
+    <action id="Grails.WAR" class="org.jetbrains.plugins.grails.actions.GrailsWarAction"
+            text="Grails Make Web Archive" description="Generate Web Archive">
+      <add-to-group group-id="BuildMenu" anchor="last"/>
+    </action>
   </actions>
 
 
