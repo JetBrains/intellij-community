@@ -21,6 +21,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
+import com.intellij.util.PsiIconUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +41,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
     final PsiElement element = (PsiElement)this;
 
-    final Icon providersIcon = IconUtil.getProvidersIcon(element, flags);
+    final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
       final RowIcon rowIcon = providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
       return addVisibilityIcon(element, flags, rowIcon);
@@ -127,7 +128,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static Icon addVisibilityIcon(final PsiElement element, final int flags, final RowIcon baseIcon) {
     if ((flags & ICON_FLAG_VISIBILITY) != 0) {
       PsiModifierList modifierList = element instanceof PsiModifierListOwner ? ((PsiModifierListOwner)element).getModifierList() : null;
-      IconUtil.setVisibilityIcon(modifierList, baseIcon);
+      PsiIconUtil.setVisibilityIcon(modifierList, baseIcon);
     }
     return baseIcon;
   }

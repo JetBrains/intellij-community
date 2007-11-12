@@ -8,28 +8,28 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.MemberInfoChangeListener;
 import com.intellij.refactoring.util.classMembers.MemberInfoModel;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.Table;
 import com.intellij.util.IconUtil;
+import com.intellij.util.PsiIconUtil;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.ArrayList;
-
-import org.jetbrains.annotations.NotNull;
 
 public class MemberSelectionTable extends Table {
   private static final int CHECKED_COLUMN = 0;
@@ -312,7 +312,7 @@ public class MemberSelectionTable extends Table {
             icon.setIcon(memberIcon, 0);
             PsiModifierList modifiers = member instanceof PsiModifierListOwner ? ((PsiModifierListOwner)member).getModifierList() : null;
             if (modifiers != null) {
-              IconUtil.setVisibilityIcon(modifiers, icon);
+              PsiIconUtil.setVisibilityIcon(modifiers, icon);
             }
             else {
               icon.setIcon(IconUtil.getEmptyIcon(true), 1);
