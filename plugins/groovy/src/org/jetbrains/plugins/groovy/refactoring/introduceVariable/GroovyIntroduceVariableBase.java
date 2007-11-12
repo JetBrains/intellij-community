@@ -40,7 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -96,6 +96,20 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
     if (type == PsiType.VOID) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
+      showErrorMessage(message, project);
+      return false;
+    }
+
+
+    // Cannot perform refactoring in parameter default values
+    PsiElement parent = selectedExpr.getParent();
+    while (parent != null &&
+        !(parent instanceof GroovyFileBase) &&
+        !(parent instanceof GrParameter)) {
+      parent = parent.getParent();
+    }
+    if (parent instanceof GrParameter) {
+      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.method.parameters"));
       showErrorMessage(message, project);
       return false;
     }
