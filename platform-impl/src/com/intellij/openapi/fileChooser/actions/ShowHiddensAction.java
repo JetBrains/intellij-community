@@ -6,9 +6,9 @@ import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 
 /**
-   * @author Vladimir Kondratyev
+ * @author Vladimir Kondratyev
  */
-final class ShowHiddensAction extends ToggleAction {
+public final class ShowHiddensAction extends ToggleAction {
   public boolean isSelected(AnActionEvent e) {
     final FileSystemTreeImpl fileSystemTree = e.getData(FileChooserDialogImpl.FILE_SYSTEM_TREE);
     return fileSystemTree != null && fileSystemTree.areHiddensShown();
