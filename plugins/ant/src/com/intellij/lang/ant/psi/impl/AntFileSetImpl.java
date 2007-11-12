@@ -44,7 +44,7 @@ public class AntFileSetImpl extends AntFilesProviderImpl{
         if (singleFile != null) {
           files.add(singleFile);
         }
-        collectFiles(files, root, "", pattern);
+        new FilesCollector().collectFiles(files, root, "", pattern);
         return files;
       }
     }
@@ -54,31 +54,42 @@ public class AntFileSetImpl extends AntFilesProviderImpl{
     return Collections.emptyList();
   }
   
-  private static void collectFiles(List<File> container, File from, String relativePath, final AntPattern pattern) {
-    final File[] children = from.listFiles();
-    if (children != null) {
-      for (File child : children) {
-        final String childPath = makePath(relativePath, child.getName());
-        if (pattern.acceptPath(childPath)) {
-          container.add(child);
-        }
-        if (child.isDirectory() && pattern.couldBeIncluded(childPath)) {
-          collectFiles(container, child, childPath, pattern);
+  private static class FilesCollector {
+    private static final int MAX_DIRS_TO_PROCESS = 100;
+    private int myDirsProcessed = 0;
+    
+    public void collectFiles(List<File> container, File from, String relativePath, final AntPattern pattern) {
+      if (myDirsProcessed > MAX_DIRS_TO_PROCESS) {
+        return;
+      }
+      myDirsProcessed++;
+      final File[] children = from.listFiles();
+      if (children != null) {
+        for (File child : children) {
+          final String childPath = makePath(relativePath, child.getName());
+          if (pattern.acceptPath(childPath)) {
+            container.add(child);
+          }
+          if (child.isDirectory() && pattern.couldBeIncluded(childPath)) {
+            collectFiles(container, child, childPath, pattern);
+          }
         }
       }
     }
-  }
 
-  private static String makePath(final String parentPath, final String name) {
-    if (parentPath.length() == 0) {
-      return name;
+    private static String makePath(final String parentPath, final String name) {
+      if (parentPath.length() == 0) {
+        return name;
+      }
+      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+      try {
+        return builder.append(parentPath).append("/").append(name).toString();
+      }
+      finally {
+        StringBuilderSpinAllocator.dispose(builder);
+      }
     }
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      return builder.append(parentPath).append("/").append(name).toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    
   }
+  
 }
