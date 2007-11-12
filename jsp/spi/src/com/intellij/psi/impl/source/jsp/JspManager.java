@@ -44,12 +44,12 @@ public abstract class JspManager {
   public abstract XmlFile getTldFileByUri(String uri, @Nullable Module module, @Nullable JspFile jspFile);
 
   @Nullable
-  public abstract XmlElementDescriptor getDirectiveDescriptorByName(String name);
+  public abstract XmlElementDescriptor getDirectiveDescriptorByName(String name, final @NotNull PsiFile context);
 
   public abstract ModificationTracker getRootsModificationTracker();
 
   public abstract XmlFile getImplicitXmlTagLibraryFile();
 
   @Nullable
-  public abstract XmlNSDescriptor getActionsLibrary();
+  public abstract XmlNSDescriptor getActionsLibrary(final @NotNull PsiFile context);
 }

@@ -1047,7 +1047,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         }
 
         if (file.getFileType() == StdFileTypes.JSPX && possibleUris.isEmpty()) {
-          final XmlElementDescriptor descriptor = ((XmlNSDescriptorImpl)jspManager.getActionsLibrary()).getElementDescriptor(localName, XmlUtil.JSP_URI);
+          final XmlElementDescriptor descriptor = ((XmlNSDescriptorImpl)jspManager.getActionsLibrary(file)).getElementDescriptor(localName, XmlUtil.JSP_URI);
           if (descriptor != null) possibleUris.add(XmlUtil.JSP_URI);
         }
       }
