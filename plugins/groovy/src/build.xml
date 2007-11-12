@@ -80,17 +80,17 @@
 
 
   <path id="rtFiles">
-      <pathelement path="../rt/src/"/>
+    <pathelement path="../rt/src/"/>
   </path>
 
   <path id="rtFiles.output">
-      <pathelement path="${production.dest.groovy_rt}"/>
+    <pathelement path="${production.dest.groovy_rt}"/>
   </path>
 
   <target name="make.rt" description="makes runtime classes" depends="build.lexer, unzip.last.successful.IDEA.build">
     <mkdir dir="${production.dest.groovy_rt}"/>
-    
-    <javac destdir="${production.dest.groovy_rt}" target="1.3">
+
+    <javac destdir="${production.dest.groovy_rt}" target="1.3" debug="on">
       <src refId="rtFiles"/>
       <classpath refid="groovy.path"/>
     </javac>
@@ -221,7 +221,8 @@
     <mkdir dir="${test.dest}/Groovy"/>
 
     <javac srcdir="../test"
-           destdir="${test.dest}">
+           destdir="${test.dest}"
+           debug="on">
 
       <classpath refid="idea.lib.path"/>
       <classpath refid="groovy.path"/>
