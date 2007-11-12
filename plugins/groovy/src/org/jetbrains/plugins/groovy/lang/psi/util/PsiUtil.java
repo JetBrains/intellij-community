@@ -129,7 +129,7 @@ public class PsiUtil {
     return true;
   }
 
-  private static PsiType[] skipOptionalParametersAndSubstitute(int argNum, PsiParameter[] parameters, PsiSubstitutor substitutor) {
+  public static PsiType[] skipOptionalParametersAndSubstitute(int argNum, PsiParameter[] parameters, PsiSubstitutor substitutor) {
     int diff = parameters.length - argNum;
     List<PsiType> result = new ArrayList<PsiType>(argNum);
     for (PsiParameter parameter : parameters) {

@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -840,9 +841,11 @@ public class GroovyAnnotator implements Annotator {
     final GrVariable variable = (GrVariable) element;
     final PsiType type = variable.getTypeGroovy();
     if (!(type instanceof GrClosureType)) return;
-    final PsiType[] paramTypes = ((GrClosureType) type).getClosureParameterTypes();
+    GrParameter[] parameters = ((GrClosureType) type).getClosureParameters();
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, false);
     if (argumentTypes == null) return;
+
+    final PsiType[] paramTypes = PsiUtil.skipOptionalParametersAndSubstitute(argumentTypes.length, parameters, PsiSubstitutor.EMPTY);
     if (!areTypesCompatibleForCallingClosure(argumentTypes, paramTypes, place.getManager(), place.getResolveScope())) {
       final String typesString = buildArgTypesList(argumentTypes);
       String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
