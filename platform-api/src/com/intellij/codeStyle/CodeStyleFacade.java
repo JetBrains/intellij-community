@@ -16,6 +16,7 @@ public abstract class CodeStyleFacade {
   }
 
   public static CodeStyleFacade getInstance(Project project) {
+    if (project == null) return getInstance();
     return ServiceManager.getService(project, CodeStyleFacade.class);
   }
 
