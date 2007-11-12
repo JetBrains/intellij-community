@@ -105,7 +105,7 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public ContentFactory getContentFactory() {
-    return ContentFactory.getInstance();
+    return ServiceManager.getService(ContentFactory.class);
   }
 
   public FileSystemTreeFactory getFileSystemTreeFactory() {

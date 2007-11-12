@@ -1,6 +1,7 @@
 package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -472,7 +473,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public ContentFactory getFactory() {
-    return ContentFactory.getInstance();
+    return ServiceManager.getService(ContentFactory.class);
   }
 
   public void dispose() {

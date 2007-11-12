@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 
-public class ContentFactoryImpl extends ContentFactory {
+public class ContentFactoryImpl implements ContentFactory {
   public ContentImpl createContent(JComponent component, String displayName, boolean isLockable) {
     return new ContentImpl(component, displayName, isLockable);
   }

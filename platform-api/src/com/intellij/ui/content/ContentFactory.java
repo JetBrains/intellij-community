@@ -16,18 +16,13 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.components.ServiceManager;
 
 import javax.swing.*;
 
-public abstract class ContentFactory {
-  public static ContentFactory getInstance() {
-    return ServiceManager.getService(ContentFactory.class);
-  }
+public interface ContentFactory {
+  Content createContent(JComponent component, String displayName, boolean isLockable);
 
-  public abstract Content createContent(JComponent component, String displayName, boolean isLockable);
+  ContentManager createContentManager(ContentUI contentUI, boolean canCloseContents, Project project);
 
-  public abstract ContentManager createContentManager(ContentUI contentUI, boolean canCloseContents, Project project);
-
-  public abstract ContentManager createContentManager(boolean canCloseContents, Project project);
+  ContentManager createContentManager(boolean canCloseContents, Project project);
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -43,7 +44,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     myId = id;
     myAvailable = true;
 
-    final ContentFactory contentFactory = ContentFactory.getInstance();
+    final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
     myContentUI = new ToolWindowContentUi(this);
     myContentManager =
       contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject());
