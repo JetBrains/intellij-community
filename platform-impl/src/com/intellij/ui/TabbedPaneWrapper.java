@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.TabbedPaneUI;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
@@ -509,17 +510,43 @@ public class TabbedPaneWrapper {
       doLayout();
     }
 
+   //http://www.jetbrains.net/jira/browse/IDEADEV-22331
+   //to let repaint happen since AIOBE is thrown from Mac OSX's UI
+    protected void fireStateChanged() {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==ChangeListener.class) {
+                // Lazily create the event:
+                if (changeEvent == null)
+                    changeEvent = new ChangeEvent(this);
+              final ChangeListener each = (ChangeListener)listeners[i + 1];
+              if (each != null && each.getClass().getName().indexOf("apple.laf.CUIAquaTabbedPane") >= 0) {
+
+                SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                    revalidate();
+                    repaint();
+                  }
+                });
+
+                continue;
+              }
+
+              each.stateChanged(changeEvent);
+            }
+        }
+    }
+
+
     public final void removeTabAt (final int index) {
       super.removeTabAt (index);
       //This event should be fired necessarily because when swing fires an event
       // page to be removed is still in the tabbed pane. There can be a situation when
       // event fired according to swing event contains invalid information about selected page.
-      try {
-        fireStateChanged();
-      }
-      catch (Exception e) {
-        // Causes exceptions under Aqua LnF...
-      }
+      fireStateChanged();
     }
 
     private void _requestDefaultFocus() {
