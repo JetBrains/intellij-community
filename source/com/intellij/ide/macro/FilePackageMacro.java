@@ -4,7 +4,7 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
 
 public final class FilePackageMacro extends Macro {
   public String getName() {
@@ -16,7 +16,7 @@ public final class FilePackageMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    PsiPackage aPackage = DataAccessor.FILE_PACKAGE.from(dataContext);
+    PsiPackage aPackage = DataAccessors.FILE_PACKAGE.from(dataContext);
     if (aPackage == null) return null;
     return aPackage.getName();
   }

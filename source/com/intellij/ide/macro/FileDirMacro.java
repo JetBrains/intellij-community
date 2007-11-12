@@ -4,7 +4,7 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
 
 public final class FileDirMacro extends Macro {
   public String getName() {
@@ -24,7 +24,7 @@ public final class FileDirMacro extends Macro {
     //  file = file.getParent();
     //  if (file == null) return null;
     //}
-    VirtualFile dir = DataAccessor.VIRTUAL_DIR_OR_PARENT.from(dataContext);
+    VirtualFile dir = DataAccessors.VIRTUAL_DIR_OR_PARENT.from(dataContext);
     if (dir == null) return null;
     return getPath(dir);
   }

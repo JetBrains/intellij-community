@@ -2,7 +2,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
 
 public final class ModuleFilePathMacro extends Macro {
   public String getName() {
@@ -14,6 +14,6 @@ public final class ModuleFilePathMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    return DataAccessor.MODULE_FILE_PATH.from(dataContext);
+    return DataAccessors.MODULE_FILE_PATH.from(dataContext);
   }
 }

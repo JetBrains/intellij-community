@@ -6,10 +6,7 @@ import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DataAccessor;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -717,7 +714,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   private static final DataAccessor<ConsoleViewImpl> CONSOLE = new DataAccessor<ConsoleViewImpl>() {
     public ConsoleViewImpl getImpl(final DataContext dataContext) throws NoDataException {
-      return EDITOR.getNotNull(dataContext).getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
+      return DataAccessors.EDITOR.getNotNull(dataContext).getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
     }
   };
 

@@ -1,7 +1,7 @@
 package com.intellij.ide.macro;
 
-import com.intellij.ide.DataAccessor;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.DataAccessors;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +18,7 @@ public final class ProjectFileDirMacro extends Macro {
 
   @Nullable
   public String expand(DataContext dataContext) {
-    final VirtualFile baseDir = DataAccessor.PROJECT_BASE_DIR.from(dataContext);
+    final VirtualFile baseDir = DataAccessors.PROJECT_BASE_DIR.from(dataContext);
     if (baseDir == null) {
       return null;
     }

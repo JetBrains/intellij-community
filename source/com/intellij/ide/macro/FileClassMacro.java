@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
 
 public final class FileClassMacro extends Macro {
   public String getName() {
@@ -29,7 +29,7 @@ public final class FileClassMacro extends Macro {
     //if (!(psiFile instanceof PsiJavaFile)) {
     //  return null;
     //}
-    final PsiJavaFile javaFile = DataAccessor.PSI_JAVA_FILE.from(dataContext);
+    final PsiJavaFile javaFile = DataAccessors.PSI_JAVA_FILE.from(dataContext);
     if (javaFile == null) return null;
     PsiClass[] classes = javaFile.getClasses();
     if (classes.length == 1) {

@@ -2,7 +2,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
 
 import java.io.File;
 
@@ -16,7 +16,7 @@ public final class ModuleFileDirMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    final String path = DataAccessor.MODULE_FILE_PATH.from(dataContext);
+    final String path = DataAccessors.MODULE_FILE_PATH.from(dataContext);
     if (path == null) {
       return null;
     }

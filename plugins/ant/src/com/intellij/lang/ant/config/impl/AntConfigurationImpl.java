@@ -2,7 +2,7 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
@@ -547,7 +547,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
 
         public void run() {
-          Project project = DataAccessor.PROJECT.from(dataContext);
+          Project project = DataAccessors.PROJECT.from(dataContext);
           if (project == null || project.isDisposed()) {
             result[0] = false;
             return;

@@ -3,7 +3,7 @@ package com.intellij.ide.macro;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
 
 public final class ProjectNameMacro extends Macro {
   public String getName() {
@@ -15,7 +15,7 @@ public final class ProjectNameMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    final Project project = DataAccessor.PROJECT.from(dataContext);
+    final Project project = DataAccessors.PROJECT.from(dataContext);
     if (project == null) {
       return null;
     }

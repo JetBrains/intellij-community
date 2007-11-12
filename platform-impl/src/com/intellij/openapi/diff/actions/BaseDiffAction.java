@@ -1,6 +1,7 @@
 package com.intellij.openapi.diff.actions;
 
 import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -31,7 +32,7 @@ abstract class BaseDiffAction extends AnAction {
   };
 
   protected static final DataAccessor<PsiElement[]> PRIMARY_SOURCES =
-    DataAccessor.createArrayConvertor(DataAccessor.PSI_ELEMENT_ARRAY, SOURCE_ELEMENT, PsiElement.class);
+    DataAccessor.createArrayConvertor(DataAccessors.PSI_ELEMENT_ARRAY, SOURCE_ELEMENT, PsiElement.class);
 
   protected static final DataAccessor<PsiElement> PRIMARY_SOURCE =
     DataAccessor.createConvertor(PRIMARY_SOURCES, new Function<PsiElement[], PsiElement>() {

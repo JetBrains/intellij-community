@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.module.Module;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
 
 public final class ModulePathMacro extends Macro {
   public String getName() {
@@ -17,7 +17,7 @@ public final class ModulePathMacro extends Macro {
   }
 
   public String expand(DataContext dataContext) {
-    final Module module = DataAccessor.MODULE.from(dataContext);
+    final Module module = DataAccessors.MODULE.from(dataContext);
     if (module == null) {
       return null;
     }

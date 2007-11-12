@@ -1,6 +1,7 @@
 package com.intellij.openapi.diff.actions;
 
 import com.intellij.ide.DataAccessor;
+import com.intellij.ide.DataAccessors;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -18,7 +19,7 @@ import com.intellij.util.text.ElementPresentation;
 public class CompareFileWithEditor extends BaseDiffAction {
   private static final DataAccessor<Document> EDITING_DOCUMENT = new DataAccessor<Document>() {
     public Document getImpl(DataContext dataContext) throws NoDataException {
-      VirtualFile[] selectedFiles = FILE_EDITOR_MANAGER.getNotNull(dataContext).getSelectedFiles();
+      VirtualFile[] selectedFiles = DataAccessors.FILE_EDITOR_MANAGER.getNotNull(dataContext).getSelectedFiles();
       if (selectedFiles.length == 0) return null;
       if (!DiffContentUtil.isTextFile(selectedFiles[0])) return null;
       return FileDocumentManager.getInstance().getDocument(selectedFiles[0]);
@@ -48,7 +49,7 @@ public class CompareFileWithEditor extends BaseDiffAction {
   protected FileEditorContents getDiffData(DataContext dataContext) throws DataAccessor.NoDataException {
     if (!checkSelection(dataContext)) throw new DataAccessor.NoDataException(
       DiffBundle.message("diff.file.whith.editor.action.wrong.selection.error.message"));
-    Project project = DataAccessor.PROJECT.getNotNull(dataContext);
+    Project project = DataAccessors.PROJECT.getNotNull(dataContext);
     PsiElement element = PRIMARY_SOURCE.getNotNull(dataContext);
     PsiFile psiFile = element.getContainingFile();
     if (psiFile != null) element = psiFile;
@@ -71,9 +72,9 @@ public class CompareFileWithEditor extends BaseDiffAction {
   }
 
   private boolean checkSelection(DataContext dataContext) {
-    VirtualFile[] virtualFiles = DataAccessor.VIRTUAL_FILE_ARRAY.from(dataContext);
+    VirtualFile[] virtualFiles = DataAccessors.VIRTUAL_FILE_ARRAY.from(dataContext);
     if (virtualFiles != null && virtualFiles.length != 1) return false;
-    PsiElement[] psiElements = DataAccessor.PSI_ELEMENT_ARRAY.from(dataContext);
+    PsiElement[] psiElements = DataAccessors.PSI_ELEMENT_ARRAY.from(dataContext);
     return !(psiElements != null && psiElements.length != 1);
   }
 
