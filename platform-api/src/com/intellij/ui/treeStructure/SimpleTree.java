@@ -21,8 +21,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.peer.PeerFactory;
-import com.intellij.ui.UIHelper;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +59,7 @@ public class SimpleTree extends JTree implements CellEditorListener {
     setModel(new DefaultTreeModel(new PatchedDefaultMutableTreeNode()));
     TreeUtil.installActions(this);
 
-    final UIHelper helper = PeerFactory.getInstance().getUIHelper();
+    final TreeUIHelper helper = TreeUIHelper.getInstance();
     helper.installTreeSpeedSearch(this);
     helper.installToolTipHandler(this);
 
