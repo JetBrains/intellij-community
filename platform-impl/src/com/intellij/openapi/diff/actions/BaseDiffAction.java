@@ -1,7 +1,5 @@
 package com.intellij.openapi.diff.actions;
 
-import com.intellij.ide.DataAccessor;
-import com.intellij.ide.DataAccessors;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -13,42 +11,13 @@ import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 abstract class BaseDiffAction extends AnAction {
-  protected static final Function<PsiElement, PsiElement> SOURCE_ELEMENT = new Function<PsiElement, PsiElement>() {
-    public PsiElement fun(PsiElement psiElement) {
-      if (psiElement == null || !psiElement.isValid()) return null;
-      PsiElement navigationElement = psiElement.getNavigationElement();
-      if (navigationElement != null) psiElement = navigationElement;
-      PsiElement parent = psiElement.getParent();
-      if (parent instanceof PsiFile) psiElement = parent;
-      return psiElement.getNavigationElement();
-    }
-  };
-
-  protected static final DataAccessor<PsiElement[]> PRIMARY_SOURCES =
-    DataAccessor.createArrayConvertor(DataAccessors.PSI_ELEMENT_ARRAY, SOURCE_ELEMENT, PsiElement.class);
-
-  protected static final DataAccessor<PsiElement> PRIMARY_SOURCE =
-    DataAccessor.createConvertor(PRIMARY_SOURCES, new Function<PsiElement[], PsiElement>() {
-      public PsiElement fun(PsiElement[] psiElements) {
-        return psiElements.length == 1 ? psiElements[0] : null;
-      }
-    });
-
   public void actionPerformed(AnActionEvent e) {
-    DiffRequest diffData;
-    try {
-      diffData = getDiffData(e.getDataContext());
-    }
-    catch (DataAccessor.NoDataException e1) {
-      diffData = null;
-    }
+    DiffRequest diffData = getDiffData(e.getDataContext());
     if (diffData == null) return;
     final DiffContent[] contents = diffData.getContents();
     final FileDocumentManager documentManager = FileDocumentManager.getInstance();
@@ -66,13 +35,7 @@ abstract class BaseDiffAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    DiffRequest diffData;
-    try {
-      diffData = getDiffData(e.getDataContext());
-    }
-    catch (DataAccessor.NoDataException e1) {
-      diffData = null;
-    }
+    DiffRequest diffData = getDiffData(e.getDataContext());
     boolean enabled;
     if (diffData == null || diffData.getContents() == null) enabled = false;
     else enabled = DiffManager.getInstance().getDiffTool().canShow(diffData);
@@ -85,7 +48,7 @@ abstract class BaseDiffAction extends AnAction {
   protected void disableAction(Presentation presentation) {}
 
   @Nullable
-  protected abstract DiffRequest getDiffData(DataContext dataContext) throws DataAccessor.NoDataException;
+  protected abstract DiffRequest getDiffData(DataContext dataContext);
 
   protected static VirtualFile getDocumentFile(Document document) {
     return FileDocumentManager.getInstance().getFile(document);
@@ -105,5 +68,14 @@ abstract class BaseDiffAction extends AnAction {
     if (editorFile == null || !editorFile.isValid())
       return DiffBundle.message("diff.content.editor.content.title");
     return editorFile.getPresentableUrl();
+  }
+
+  protected static String getVirtualFileContentTitle(final VirtualFile documentFile) {
+    String name = documentFile.getName();
+    VirtualFile parent = documentFile.getParent();
+    if (parent != null) {
+      return name + " (" + FileUtil.toSystemDependentName(parent.getPath()) + ")";
+    }
+    return name;
   }
 }

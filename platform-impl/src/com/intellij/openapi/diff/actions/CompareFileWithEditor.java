@@ -1,13 +1,11 @@
 package com.intellij.openapi.diff.actions;
 
-import com.intellij.ide.DataAccessor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +24,9 @@ public class CompareFileWithEditor extends BaseDiffAction {
     boolean enabled = true;
     Presentation presentation = e.getPresentation();
     presentation.setText(DiffBundle.message("diff.compare.element.type.with.editor.action.name"));
+    if (getDiffData(e.getDataContext()) == null) {
+      enabled = false;
+    }
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(enabled);
     }
@@ -34,7 +35,7 @@ public class CompareFileWithEditor extends BaseDiffAction {
     }
   }
 
-  protected FileEditorContents getDiffData(DataContext dataContext) throws DataAccessor.NoDataException {
+  protected FileEditorContents getDiffData(DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     VirtualFile[] array = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     Document document = getEditingDocument(dataContext);
@@ -56,15 +57,6 @@ public class CompareFileWithEditor extends BaseDiffAction {
 
   protected void disableAction(Presentation presentation) {
     presentation.setVisible(false);
-  }
-
-  private static String getVirtualFileContentTitle(final VirtualFile documentFile) {
-    String name = documentFile.getName();
-    VirtualFile parent = documentFile.getParent();
-    if (parent != null) {
-      return name + " (" + FileUtil.toSystemDependentName(parent.getPath()) + ")";
-    }
-    return name;
   }
 
 
