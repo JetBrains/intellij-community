@@ -16,8 +16,11 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.zip.ZipFile;
@@ -35,4 +38,11 @@ public abstract class JarFileSystem extends NewVirtualFileSystem {
   public abstract ZipFile getJarFile(VirtualFile entryVFile) throws IOException;
 
   public abstract void setNoCopyJarForPath(String pathInJar);
+
+  @Nullable
+  public VirtualFile getJarRootForLocalFile(@NotNull VirtualFile virtualFile) {
+    if (virtualFile.getFileType() != FileTypes.ARCHIVE) return null;
+    return findFileByPath(virtualFile.getPath() + JarFileSystem.JAR_SEPARATOR);
+
+  }
 }
