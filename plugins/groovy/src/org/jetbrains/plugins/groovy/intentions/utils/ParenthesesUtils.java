@@ -112,7 +112,7 @@ public class ParenthesesUtils {
       final GrBinaryExpression binaryExpression =
           (GrBinaryExpression) expression;
       final IElementType sign = binaryExpression.getOperationTokenType();
-      return precedenceForBinaryOperator(sign);
+      if (sign != null) return precedenceForBinaryOperator(sign);
     }
     if (expression instanceof GrConditionalExpression) {
       return CONDITIONAL_PRECEDENCE;
