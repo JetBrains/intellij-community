@@ -36,10 +36,13 @@ public interface XmlElementDescriptor extends PsiMetaData{
 
   //todo: refactor to support full DTD spec
   XmlElementDescriptor[] getElementsDescriptors(XmlTag context);
+  @Nullable
   XmlElementDescriptor getElementDescriptor(XmlTag childTag);
 
   XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context);
+  @Nullable
   XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final @Nullable XmlTag context);
+  @Nullable
   XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute);
 
   XmlNSDescriptor getNSDescriptor();
