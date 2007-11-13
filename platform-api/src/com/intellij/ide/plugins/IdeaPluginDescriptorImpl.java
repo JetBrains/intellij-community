@@ -10,8 +10,10 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +80,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void readExternal(final URL url) throws InvalidDataException, FileNotFoundException {
     try {
-      readExternal(JDOMUtil.loadDocument(url).getRootElement());
+      Document document = JDOMUtil.loadDocument(url);
+      document = JDOMXIncluder.resolve(document, url.toExternalForm());
+      readExternal(document.getRootElement());
     }
     catch (FileNotFoundException e) {
       throw e;

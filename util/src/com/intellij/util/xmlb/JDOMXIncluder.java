@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class JDOMXIncluder {
+public class JDOMXIncluder {
   @NonNls private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude";
   @NonNls private static final String XI = "xi";
   @NonNls private static final String INCLUDE = "include";
