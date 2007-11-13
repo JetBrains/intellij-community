@@ -1,6 +1,6 @@
 <component>
   <!-- <version name="IntelliJ IDEA" major="6" minor="0.2 Beta"/> -->
-  <version codename="Selena" major="7" minor="0M1" eap="true"/>
+  <version codename="Diana" major="8" minor="0M1" eap="true"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_logo.png"/>
   <about url="/idea_about.png"/>
