@@ -16,8 +16,8 @@ public class KeyedLazyInstanceEP extends AbstractExtensionPointBean {
   @Attribute("implementationClass")
   public String implementationClass;
 
-  private final LazyInstance myHandler = new LazyInstance<GetDataRule>() {
-    protected Class<GetDataRule> getInstanceClass() throws ClassNotFoundException {
+  private final LazyInstance myHandler = new LazyInstance() {
+    protected Class getInstanceClass() throws ClassNotFoundException {
       return findClass(implementationClass);
     }
   };
