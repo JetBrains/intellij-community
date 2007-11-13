@@ -4,12 +4,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.PomModel;
 import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
@@ -35,6 +36,17 @@ import com.intellij.util.diff.DiffTree;
 
 public class BlockSupportImpl extends BlockSupport {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.BlockSupportImpl");
+
+  public BlockSupportImpl(Project project) {
+    project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener() {
+      public void updateStarted(final Document doc) {
+        doc.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
+      }
+
+      public void updateFinished(final Document doc) {
+      }
+    });
+  }
 
   public void reparseRange(PsiFile file, int startOffset, int endOffset, CharSequence newTextS) throws IncorrectOperationException {
     LOG.assertTrue(file.isValid());

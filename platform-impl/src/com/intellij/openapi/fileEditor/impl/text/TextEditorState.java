@@ -1,6 +1,5 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.codeInsight.folding.CodeFoldingState;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 

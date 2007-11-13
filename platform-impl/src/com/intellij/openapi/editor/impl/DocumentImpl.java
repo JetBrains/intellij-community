@@ -1,6 +1,5 @@
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,7 +17,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +61,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myEventsHandling = false;
   private boolean myAssertWriteAccess = true;
   private static final Key<Boolean> DOING_BULK_UPDATE = Key.create("DoingBulkRefromat");
+  private static DocumentBulkUpdateListener ourBulkChangePublisher = null;
+
 
   private DocumentImpl() {
     setCyclicBufferSize(0);
@@ -691,11 +691,21 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   public final void setInBulkUpdate(boolean value) {
-    putUserData(DOING_BULK_UPDATE,value ? Boolean.TRUE : null);
     if (value) {
-      CodeFoldingManagerImpl.resetFoldingInfo(this);
-      putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
+      putUserData(DOING_BULK_UPDATE, Boolean.TRUE);
+      getPublisher().updateStarted(this);
     }
+    else {
+      putUserData(DOING_BULK_UPDATE, null);
+      getPublisher().updateFinished(this);
+    }
+  }
+
+  private static DocumentBulkUpdateListener getPublisher() {
+    if (ourBulkChangePublisher == null) {
+      ourBulkChangePublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(DocumentBulkUpdateListener.TOPIC);
+    }
+    return ourBulkChangePublisher;
   }
 }
 

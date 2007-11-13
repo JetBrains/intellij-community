@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
-import com.intellij.codeInsight.folding.CodeFoldingState;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -10,8 +9,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
@@ -42,6 +43,14 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   CodeFoldingManagerImpl(Project project) {
     myProject = project;
+    project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener() {
+      public void updateStarted(final Document doc) {
+        resetFoldingInfo(doc);
+      }
+
+      public void updateFinished(final Document doc) {
+      }
+    });
   }
 
   @NotNull
