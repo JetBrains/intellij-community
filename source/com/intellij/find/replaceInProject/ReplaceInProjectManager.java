@@ -111,15 +111,19 @@ public class ReplaceInProjectManager {
           return new UsageSearcher() {
 
           public void generate(final Processor<Usage> processor) {
-            myIsFindInProgress = true;
+            try {
+              myIsFindInProgress = true;
 
-            FindInProjectUtil.findUsages(
+              FindInProjectUtil.findUsages(
               findModelCopy,
               psiDirectory,
               myProject,
               new FindInProjectUtil.AsyncFindUsagesProcessListener2ProcessorAdapter(processor)
-            );
-            myIsFindInProgress = false;
+              );
+            }
+            finally {
+              myIsFindInProgress = false;
+            }
           }
         };
         }
