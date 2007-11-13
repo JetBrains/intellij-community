@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 
@@ -32,4 +33,11 @@ public interface GrCodeBlock extends GrControlFlowOwner, GrVariableDeclarationOw
   GrStatement[] getStatements();
 
   GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException;
+
+  @Nullable
+  PsiElement getLBrace();
+
+  @Nullable
+  PsiElement getRBrace();
+
 }

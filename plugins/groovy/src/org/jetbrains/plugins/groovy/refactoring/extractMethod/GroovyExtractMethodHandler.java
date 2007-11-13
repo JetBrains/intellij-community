@@ -15,7 +15,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +30,10 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -40,9 +42,9 @@ import java.util.ArrayList;
 /**
  * @author ilyas
  */
-public class GroovyExtarctMethodHandler implements RefactoringActionHandler {
+public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.refactoring.extractMethod.GroovyExtarctMethodHandler");
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.refactoring.extractMethod.GroovyExtractMethodHandler");
   protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("extract.method.title");
 
   protected void showErrorMessage(String message, final Project project) {
@@ -70,7 +72,7 @@ public class GroovyExtarctMethodHandler implements RefactoringActionHandler {
 
   private boolean invokeOnEditor(Project project, Editor editor, PsiFile file) {
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+//    PsiDocumentManager.getInstance(project).commitAllDocuments();
     //todo implement in GSP files
     if (!(file instanceof GroovyFileBase /* || file instanceof GspFile*/)) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("only.in.groovy.files"));
@@ -82,19 +84,31 @@ public class GroovyExtarctMethodHandler implements RefactoringActionHandler {
     int endOffset = editor.getSelectionModel().getSelectionEnd();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    PsiElement[] statements = PsiElement.EMPTY_ARRAY;
+    PsiElement[] elements;
     GrExpression expr = GroovyRefactoringUtil.findElementInRange(((GroovyFileBase) file), startOffset, endOffset, GrExpression.class);
 
-    return false;
-/*
     if (expr != null) {
-      statements = new PsiElement[]{expr};
+      elements = new PsiElement[]{expr};
     } else {
-      statements = GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset);
+      elements = GroovyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset);
     }
-*/
 
-    // find statements in selected range
+    ArrayList<GrStatement> statementList = new ArrayList<GrStatement>();
+    for (PsiElement element : elements) {
+      if (element instanceof GrStatement) {
+        statementList.add(((GrStatement) element));
+      }
+    }
+
+    GrStatement[] statements = statementList.toArray(new GrStatement[statementList.size()]);
+
+
+    if (statements.length > 0) {
+      VariableInfo info = ReachingDefinitionsCollector.obtainVariableFlowInformation(statements[0], statements[statements.length - 1]);
+      System.out.println("preved!");
+    }
+
+    return elements.length > 0;
 
 
   }

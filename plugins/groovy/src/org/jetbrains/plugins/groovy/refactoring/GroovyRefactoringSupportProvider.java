@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduceVariable.GroovyIntroduceVariableHandler;
+import org.jetbrains.plugins.groovy.refactoring.extractMethod.GroovyExtractMethodHandler;
 
 /**
  * @author ilyas
@@ -50,6 +51,6 @@ public class GroovyRefactoringSupportProvider extends DefaultRefactoringSupportP
 
   @Nullable
   public RefactoringActionHandler getExtractMethodHandler() {
-    return super.getExtractMethodHandler();
+    return new GroovyExtractMethodHandler();
   }
 }

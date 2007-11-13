@@ -26,13 +26,13 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -290,7 +290,7 @@ public abstract class GroovyRefactoringUtil {
 
   }
 
-  public static PsiElement[]  findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
+  public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
     if (!(file instanceof GroovyFileBase)) return PsiElement.EMPTY_ARRAY;
     Language language = GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
@@ -308,14 +308,13 @@ public abstract class GroovyRefactoringUtil {
     PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
     if (parent == null) return PsiElement.EMPTY_ARRAY;
     while (true) {
-      if (parent instanceof PsiStatement) {
+      if (parent instanceof GrStatement) {
         parent = parent.getParent();
         break;
       }
-      if (parent instanceof PsiCodeBlock) break;
-      if (PsiUtil.isInJspFile(parent) && parent instanceof PsiFile) break;
-      if (parent instanceof PsiCodeFragment) break;
-      if (parent == null || parent instanceof PsiFile) return PsiElement.EMPTY_ARRAY;
+      if (parent instanceof GrCodeBlock) break;
+      if (parent instanceof GroovyFileBase) break;
+      if (parent == null) return PsiElement.EMPTY_ARRAY;
       parent = parent.getParent();
     }
 
@@ -333,32 +332,34 @@ public abstract class GroovyRefactoringUtil {
     }
     if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
 
-    if (parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiBlockStatement &&
-        element1 == ((PsiCodeBlock)parent).getLBrace() && element2 == ((PsiCodeBlock)parent).getRBrace()) {
+    if (parent instanceof GrCodeBlock && parent.getParent() instanceof GrBlockStatement &&
+        element1 == ((GrCodeBlock) parent).getLBrace() && element2 == ((GrCodeBlock) parent).getRBrace()) {
       return new PsiElement[]{parent.getParent()};
     }
 
     PsiElement[] children = parent.getChildren();
-    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> possibleStatements = new ArrayList<PsiElement>();
     boolean flag = false;
     for (PsiElement child : children) {
       if (child.equals(element1)) {
         flag = true;
       }
-      if (flag && !(child instanceof PsiWhiteSpace)) {
-        array.add(child);
+      if (flag &&
+          !(child instanceof PsiWhiteSpace ||
+          TokenSets.SEPARATORS.contains(child.getNode().getElementType()))) {
+        possibleStatements.add(child);
       }
       if (child.equals(element2)) {
         break;
       }
     }
 
-    for (PsiElement element : array) {
-      if (!(element instanceof PsiStatement || element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+    for (PsiElement element : possibleStatements) {
+      if (!(element instanceof GrStatement || element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
         return PsiElement.EMPTY_ARRAY;
       }
     }
 
-    return array.toArray(new PsiElement[array.size()]);
+    return possibleStatements.toArray(new PsiElement[possibleStatements.size()]);
   }
 }

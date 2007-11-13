@@ -21,7 +21,9 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -91,6 +93,16 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
       getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchor.getNode());
     }
     return (GrStatement) elemNode.getPsi();
+  }
+
+  @Nullable
+  public PsiElement getLBrace() {
+    return findChildByType(GroovyTokenTypes.mLCURLY);
+  }
+
+  @Nullable
+  public PsiElement getRBrace() {
+    return findChildByType(GroovyTokenTypes.mRCURLY);
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
