@@ -119,45 +119,6 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   @Nullable
-  private static String getInternalToolsPath(final Sdk sdk){
-    if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      final @NonNls String toolsJar = "tools.jar";
-      final File tools = new File(new File(new File(sdk.getHomePath(), JRE_DIR_NAME), LIB_DIR_NAME), toolsJar);
-      if (tools.exists()){
-        return tools.getPath();
-      }
-    }
-
-    final ProjectJdk jdk = getInternalJavaSdk(sdk);
-    if (jdk != null && jdk.getVersionString() != null){
-      return jdk.getToolsPath();
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String getInternalRtPath(final Sdk sdk) {
-    if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      final @NonNls String rtJar = "rt.jar";
-      final String oldJrePath = sdk.getHomePath() + File.separator + JRE_DIR_NAME + File.separator;
-      final String pathSuffix = LIB_DIR_NAME + File.separator + rtJar;
-      String rtPath = oldJrePath + pathSuffix;
-      if (new File(rtPath).exists()) {
-        return rtPath;
-      }
-      rtPath = oldJrePath + JRE_DIR_NAME + File.separator + pathSuffix;
-      if (new File(rtPath).exists()) {
-        return rtPath;
-      }
-    }
-    final ProjectJdk jdk = getInternalJavaSdk(sdk);
-    if (jdk != null && jdk.getVersionString() != null){
-      return jdk.getRtLibraryPath();
-    }
-    return null;
-  }
-
-  @Nullable
   private static ProjectJdk getInternalJavaSdk(final Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof Sandbox) {
@@ -466,7 +427,11 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   @Nullable
   public String getToolsPath(Sdk sdk) {
-    return getInternalToolsPath(sdk);
+    final ProjectJdk jdk = getInternalJavaSdk(sdk);
+    if (jdk != null && jdk.getVersionString() != null){
+      return jdk.getToolsPath();
+    }
+    return null;
   }
 
   @Nullable
@@ -477,7 +442,11 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   @Nullable
   public String getRtLibraryPath(Sdk sdk) {
-    return getInternalRtPath(sdk);
+    final ProjectJdk jdk = getInternalJavaSdk(sdk);
+    if (jdk != null && jdk.getVersionString() != null){
+      return jdk.getRtLibraryPath();
+    }
+    return null;
   }
 
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
