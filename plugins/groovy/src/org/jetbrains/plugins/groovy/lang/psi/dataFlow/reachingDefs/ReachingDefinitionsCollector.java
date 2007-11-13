@@ -138,9 +138,9 @@ public class ReachingDefinitionsCollector {
   }
 
   private static boolean isBetween(PsiElement first, PsiElement last, PsiElement run) {
-    while (first != run) first = first.getNextSibling();
+    while (first != null && first != run) first = first.getNextSibling();
     if (first == null) return false;
-    while (last != run) last = last.getPrevSibling();
+    while (last != null && last != run) last = last.getPrevSibling();
     if (last == null) return false;
 
     return true;
