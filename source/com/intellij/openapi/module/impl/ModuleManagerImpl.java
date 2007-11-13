@@ -14,6 +14,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.impl.ProjectLifecycleAdapter;
+import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -27,8 +29,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.pom.PomModel;
 import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -100,7 +102,14 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         cleanCachedStuff();
       }
     });
+
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
+    myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleAdapter() {
+      public void projectComponentsInitialized(final Project project) {
+        loadModules();
+      }
+    });
+
     myPomModel = pomModel;
   }
 

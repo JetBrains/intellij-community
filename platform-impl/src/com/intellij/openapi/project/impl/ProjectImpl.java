@@ -15,8 +15,6 @@ import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -252,8 +250,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public void init() {
     super.init();
-
-    ((ModuleManagerImpl)ModuleManager.getInstance(this)).loadModules();
+    getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
     myProjectManagerListener = new MyProjectManagerListener();
     myManager.addProjectManagerListener(this, myProjectManagerListener);
   }
