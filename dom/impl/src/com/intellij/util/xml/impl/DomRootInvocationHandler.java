@@ -24,7 +24,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
 
   public DomRootInvocationHandler(final Class aClass,
                                   final XmlTag tag,
-                                  final DomFileElementImpl fileElement,
+                                  @NotNull final DomFileElementImpl fileElement,
                                   @NotNull final EvaluatedXmlName tagName
   ) {
     super(aClass, tag, null, tagName, null, fileElement.getManager());

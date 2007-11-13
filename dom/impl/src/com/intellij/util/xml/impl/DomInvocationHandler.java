@@ -299,6 +299,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public boolean isValid() {
+    ProgressManager.getInstance().checkCanceled();
     r.lock();
     try {
       return _isValid();
@@ -709,6 +710,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @Nullable
   public XmlTag getXmlTag() {
+    ProgressManager.getInstance().checkCanceled();
     r.lock();
     try {
       return myXmlTag;
