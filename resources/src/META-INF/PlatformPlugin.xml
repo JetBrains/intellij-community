@@ -1,0 +1,15 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij</id>
+  <name>IDEA CORE</name>
+
+  <extensionPoints>
+    <xi:include href="PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <xi:include href="PlatformExtensions.xml" xpointer="xpointer(/extensions/*)"/>
+
+    <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
+                        serviceImplementation="com.intellij.codeStyle.DefaultCodeStyleFacade"/>
+  </extensions>
+</idea-plugin>
