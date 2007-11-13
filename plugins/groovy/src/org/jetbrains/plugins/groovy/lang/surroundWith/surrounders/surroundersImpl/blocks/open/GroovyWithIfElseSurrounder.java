@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -8,8 +8,8 @@ import com.intellij.lang.ASTNode;
  */
 public class GroovyWithIfElseSurrounder extends GroovyWithIfSurrounder {
   @Override
-  protected String getElementsTemplateAsString(ASTNode[] nodes) {
-    return super.getElementsTemplateAsString(nodes) + " else { \n }";
+  protected String getElementsTemplateAsString(PsiElement[] elements) {
+    return super.getElementsTemplateAsString(elements) + " else { \n }";
   }
 
   @Override

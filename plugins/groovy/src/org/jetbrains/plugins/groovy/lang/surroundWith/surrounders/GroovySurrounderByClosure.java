@@ -1,10 +1,8 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -18,7 +16,7 @@ public class GroovySurrounderByClosure extends GroovyManyStatementsSurrounder {
     return "{ -> ... }.call()";
   }
 
-  protected String getElementsTemplateAsString(ASTNode[] nodes) {
+  protected String getElementsTemplateAsString(PsiElement[] nodes) {
     return "{ -> \n" + getListElementsTemplateAsString(nodes) + "}.call()";
   }
 

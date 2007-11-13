@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPrimitiveType;
@@ -17,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * Date: 25.05.2007
  */
 public class GroovyWithWhileSurrounder extends GroovyOpenBlockSurrounder {
-  protected String getElementsTemplateAsString(ASTNode[] nodes) {
+  protected String getElementsTemplateAsString(PsiElement[] nodes) {
     return "while (a) { \n" + getListElementsTemplateAsString(nodes) + "}";
   }
 

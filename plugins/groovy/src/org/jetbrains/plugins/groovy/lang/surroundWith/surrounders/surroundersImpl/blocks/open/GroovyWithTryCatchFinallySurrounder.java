@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -12,7 +12,7 @@ public class GroovyWithTryCatchFinallySurrounder extends GroovyWithTryCatchSurro
     return super.getTemplateDescription() + " / finally";
   }
 
-  protected String getElementsTemplateAsString(ASTNode[] nodes) {
+  protected String getElementsTemplateAsString(PsiElement[] nodes) {
     return super.getElementsTemplateAsString(nodes) + " finally { handler \n }";
   }
 }

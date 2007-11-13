@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -17,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
  * Date: 23.05.2007
  */
 public class GroovyWithIfSurrounder extends GroovyOpenBlockSurrounder {
-  protected String getElementsTemplateAsString(ASTNode[] nodes) {
-    return "if (a) { \n" + getListElementsTemplateAsString(nodes) + "}";
+  protected String getElementsTemplateAsString(PsiElement[] elements) {
+    return "if (a) { \n" + getListElementsTemplateAsString(elements) + "}";
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {

@@ -44,10 +44,10 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
     return isStatements(elements);
   }
 
-  protected String getListElementsTemplateAsString(ASTNode... nodes) {
+  protected String getListElementsTemplateAsString(PsiElement... elements) {
     StringBuffer result = new StringBuffer();
-    for (ASTNode node : nodes) {
-      result.append(node.getText());
+    for (PsiElement element : elements) {
+      result.append(element.getText());
       result.append("\n");
     }
     return result.toString();
@@ -57,14 +57,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
   public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException {
     if (elements.length == 0) return null;
 
-//    StringBuffer elementsBuffer = new StringBuffer();
-    ASTNode[] nodes = new ASTNode[elements.length];
-
-    for (int i = 0; i < elements.length; i++) {
-      nodes[i] = elements[i].getNode();
-    }
-
-    GroovyPsiElement newStmt = GroovyElementFactory.getInstance(project).createTopElementFromText(getElementsTemplateAsString(nodes));
+    GroovyPsiElement newStmt = GroovyElementFactory.getInstance(project).createTopElementFromText(getElementsTemplateAsString(elements));
     assert newStmt != null;
 
     PsiElement element1 = elements[0];
@@ -85,7 +78,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
     return getSurroundSelectionRange(newStmt);
   }
 
-  protected abstract String getElementsTemplateAsString(ASTNode[] node);
+  protected abstract String getElementsTemplateAsString(PsiElement[] elements);
 
   protected abstract TextRange getSurroundSelectionRange(GroovyPsiElement element);
 

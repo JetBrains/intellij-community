@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * Date: 22.05.2007
  */
 public abstract class GroovyWithTrySurrounder extends GroovyOpenBlockSurrounder {
-  protected String getElementsTemplateAsString(ASTNode[] nodes) {
+  protected String getElementsTemplateAsString(PsiElement[] nodes) {
     return "try { \n" + getListElementsTemplateAsString(nodes) + "}";
   }
 

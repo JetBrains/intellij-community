@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWithStatement;
@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovyManyStat
  * Date: 25.05.2007
  */
 public class GroovyWithWithStatementsSurrounder extends GroovyManyStatementsSurrounder {
-  protected String getElementsTemplateAsString(ASTNode... nodes) {
+  protected String getElementsTemplateAsString(PsiElement[] nodes) {
     return "with (a) {\n " + super.getListElementsTemplateAsString(nodes) + "}";
   }
 
