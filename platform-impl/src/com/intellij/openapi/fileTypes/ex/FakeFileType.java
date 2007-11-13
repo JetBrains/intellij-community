@@ -6,9 +6,7 @@
  */
 package com.intellij.openapi.fileTypes.ex;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,9 +35,4 @@ public abstract class FakeFileType implements FileType {
   public String getCharset(@NotNull VirtualFile file) {
     return null;
   }
-
-  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
-    return null;
-  }
-
 }

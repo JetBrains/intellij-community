@@ -16,8 +16,6 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 
 public class UserBinaryFileType extends UserFileType<UserBinaryFileType> {
   public SettingsEditor<UserBinaryFileType> getEditor() {
@@ -27,9 +25,4 @@ public class UserBinaryFileType extends UserFileType<UserBinaryFileType> {
   public boolean isBinary() {
     return true;
   }
-
-  public SyntaxHighlighter getHighlighter(Project project, final VirtualFile virtualFile) {
-    return null;
-  }
-
 }

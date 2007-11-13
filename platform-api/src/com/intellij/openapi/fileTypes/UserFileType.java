@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
@@ -82,9 +80,5 @@ public abstract class UserFileType <T extends UserFileType> implements FileType,
 
   public void setIcon(Icon icon) {
     myIcon = icon;
-  }
-
-  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
-    return null;
   }
 }

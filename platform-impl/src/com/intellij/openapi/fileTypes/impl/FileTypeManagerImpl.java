@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.UniqueFileNamesProvider;
@@ -128,11 +127,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public FileType getStdFileType(@NotNull @NonNls String name) {
     Pair<FileType, String> pair = ourStandardFileTypes.get(name);
     return pair != null ? pair.first : new PlainTextFileType();
-  }
-
-  @NotNull
-  public LanguageFileType getLanguageStdFileType(@NotNull @NonNls final String name) {
-    return (LanguageFileType)getStdFileType(name);
   }
 
   @NotNull
@@ -375,7 +369,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     JDOMUtil.updateFileSet(files,
                            filePaths.toArray(new String[filePaths.size()]),
                            documents.toArray(new Document[documents.size()]),
-                           CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+                           "\n");
   }
 
   @SuppressWarnings({"SimplifiableIfStatement"})
