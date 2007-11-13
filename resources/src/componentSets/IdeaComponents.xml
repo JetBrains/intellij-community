@@ -41,4 +41,11 @@
   <xi:include href="Profiles.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Xml.xml" xpointer="xpointer(/components/*)"/>
 
+  <application-components>
+    <component>
+      <interface-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</interface-class>
+      <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider</implementation-class>
+    </component>
+  </application-components>
 </components>
+  

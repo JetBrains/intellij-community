@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<components xmlns:xi="http://www.w3.org/2001/XInclude"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.w3.org/2001/XInclude
+   http://www.w3.org/2001/XInclude.xsd">
+
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
+  </application-components>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
+  </project-components>
+
+  <xi:include href="Platform.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="UICore.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="WindowManagement.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Editor.xml" xpointer="xpointer(/components/*)"/>
+
+  <application-components>
+    <component>
+      <interface-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</interface-class>
+      <implementation-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</implementation-class>
+    </component>
+  </application-components>
+
+</components>
