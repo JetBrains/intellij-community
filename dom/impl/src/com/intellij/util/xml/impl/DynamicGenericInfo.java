@@ -36,7 +36,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   @NotNull private final DomInvocationHandler myInvocationHandler;
   private final CachedValue<Object> myCachedValue;
   private final Project myProject;
-  private boolean myComputing;
+  private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
   private ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
   private ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
@@ -71,7 +71,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   private void _checkInitialized() {
     myStaticGenericInfo.buildMethodMaps();
     if (myCachedValue.hasUpToDateValue()) return;
-    if (myComputing) return;
+    if (myComputing.get() != null) return;
     r.unlock();
     boolean rlocked = false;
     try {
@@ -83,7 +83,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
         myFixeds = myStaticGenericInfo.getFixed();
         myCollections = myStaticGenericInfo.getCollections();
 
-        myComputing = true;
+        myComputing.set(Boolean.TRUE);
       } finally {
         w.unlock();
       }
@@ -135,7 +135,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
         myCachedValue.getValue();
       }
       finally {
-        myComputing = false;
+        myComputing.set(null);
         r.lock();
         rlocked = true;
         w.unlock();
