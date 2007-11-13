@@ -547,7 +547,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (element instanceof PsiVariable ||
         element instanceof XmlAttributeValue ||
         element instanceof XmlTag ||
-        element instanceof XmlElementDecl
+        element instanceof XmlElementDecl ||
+        element instanceof XmlComment // e.g. <!--@elvariable name="xxx" type="yyy"-->
        ) {
       List<PsiReference> readRefs = new ArrayList<PsiReference>();
       List<PsiReference> writeRefs = new ArrayList<PsiReference>();
