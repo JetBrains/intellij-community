@@ -252,7 +252,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
     statusBar.setPosition(editor.getCaretModel().getLogicalPosition().line + 1 +
       ":" + (editor.getCaretModel().getLogicalPosition().column + 1)
     );
-    statusBar.updateEditorHighlightingStatus(false);
+    statusBar.updateFileStatusComponents();
   }
 
   @Nullable

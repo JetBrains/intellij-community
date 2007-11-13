@@ -409,10 +409,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     frame.setFileTitle(null);
 
     final StatusBarEx statusBar = frame.getStatusBar();
-    statusBar.setStatus(null);
-    statusBar.setWriteStatus(false);
-    statusBar.setPosition(null);
-    statusBar.updateEditorHighlightingStatus(true);
+    statusBar.clear();
 
     myProject2Frame.remove(project);
     if (myProject2Frame.isEmpty()) {

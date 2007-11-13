@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ui.UIUtil;
 
@@ -207,10 +206,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   public void dispose() {
     if (myRootPane != null) {
-      final StatusBarImpl statusBar = (StatusBarImpl)myRootPane.getStatusBar();
-      if (statusBar != null) {
-        statusBar.disposeListeners();
-      }
       myRootPane = null;
     }
     super.dispose();

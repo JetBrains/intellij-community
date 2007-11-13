@@ -68,7 +68,9 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     public void removeCustomIndicationComponent(final JComponent c) {
     }
 
-    public final void updateEditorHighlightingStatus(final boolean isClear) {}
+    public final void updateFileStatusComponents() {}
+    public void addFileStatusComponent(final JComponent component, final Runnable onStatusChange) {}
+    public void removeFileStatusComponent(final JComponent component) {}
 
     public void cleanupCustomComponents() {
     }

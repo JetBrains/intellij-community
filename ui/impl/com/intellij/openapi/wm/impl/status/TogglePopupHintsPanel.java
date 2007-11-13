@@ -86,7 +86,7 @@ public class TogglePopupHintsPanel extends JPanel {
 
     new StatusBarInformer(myHectorLabel, null) {
       protected String getText() {
-        updateStatus(false);
+        updateStatus();
         final String text = myHectorLabel.getToolTipText();
         setCursor(Cursor.getPredefinedCursor(text == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));
         return text;
@@ -95,7 +95,7 @@ public class TogglePopupHintsPanel extends JPanel {
 
     new StatusBarInformer(myInspectionProfileLabel, null) {
       protected String getText() {
-        updateStatus(false);
+        updateStatus();
         final String text = myInspectionProfileLabel.getToolTipText();
         setCursor(Cursor.getPredefinedCursor(text == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));
         return text;
@@ -103,12 +103,12 @@ public class TogglePopupHintsPanel extends JPanel {
     };
   }
 
-  void updateStatus(boolean isClear) {
-    updateStatus(isClear, getCurrentFile());
+  public void updateStatus() {
+    updateStatus(getCurrentFile());
   }
 
-  void updateStatus(boolean isClear, PsiFile file) {
-    if (!isClear && isStateChangeable(file)) {
+  void updateStatus(PsiFile file) {
+    if (isStateChangeable(file)) {
       if (HighlightUtil.shouldInspect(file)) {
         myHectorLabel.setIcon(INSPECTIONS_ICON);
         String text = InspectionProjectProfileManager.getInstance(file.getProject()).getProfileName(file);
@@ -171,7 +171,8 @@ public class TogglePopupHintsPanel extends JPanel {
     return new Point(0, -20);
   }
 
-  public void dispose() {
+  public void removeNotify() {
+    super.removeNotify();
     ProjectManager.getInstance().removeProjectManagerListener(myProjectManagerListener);
   }
 
@@ -181,10 +182,10 @@ public class TogglePopupHintsPanel extends JPanel {
       if (project != null) {
         final VirtualFile vFile = e.getNewFile();
         if (vFile != null) {
-          updateStatus(false, PsiManager.getInstance(project).findFile(vFile));
+          updateStatus(PsiManager.getInstance(project).findFile(vFile));
         }
         else {
-          updateStatus(true, null);
+          updateStatus(null);
         }
       }
     }

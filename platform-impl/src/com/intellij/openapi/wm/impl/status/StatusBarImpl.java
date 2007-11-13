@@ -17,6 +17,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class StatusBarImpl extends JPanel implements StatusBarEx {
 
@@ -26,7 +28,6 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   protected final MemoryUsagePanel myMemoryUsagePanel = new MemoryUsagePanel();
   protected final TextPanel myStatusPanel = new TextPanel(new String[]{UIBundle.message("status.bar.insert.status.text"),
     UIBundle.message("status.bar.overwrite.status.text")},false);
-  protected final TogglePopupHintsPanel myEditorHighlightingPanel;
   protected final IdeMessagePanel myMessagePanel = new IdeMessagePanel(MessagePool.getInstance());
   private final JPanel myCustomIndicationsPanel = new JPanel(new GridBagLayout());
   protected String myInfo = "";
@@ -39,10 +40,11 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   private UISettings myUISettings;
   private AsyncProcessIcon myRefreshIcon;
   private EmptyIcon myEmptyRefreshIcon;
+  private JPanel myFileStatusPanel = new JPanel(new GridBagLayout());
+  private final Map<JComponent, Runnable> myFileStatusComponents = new HashMap<JComponent, Runnable>();
 
   public StatusBarImpl(UISettings uiSettings) {
     super();
-    myEditorHighlightingPanel = new TogglePopupHintsPanel();
     myUISettings = uiSettings;
     constructUI();
 
@@ -81,7 +83,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
 
-    final JPanel rightPanel = new JPanel(new GridBagLayout());
+    JPanel rightPanel = new JPanel(new GridBagLayout());
     rightPanel.setOpaque(false);
 
     gbConstraints.fill = GridBagConstraints.VERTICAL;
@@ -101,9 +103,10 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myStatusPanel.setOpaque(false);
     rightPanel.add(myStatusPanel, gbConstraints);
 
-    myEditorHighlightingPanel.setBorder(separatorLeft);
-    myEditorHighlightingPanel.setOpaque(false);
-    rightPanel.add(myEditorHighlightingPanel, gbConstraints);
+    myFileStatusPanel.setBorder(separatorLeft);
+    myFileStatusPanel.setOpaque(false);
+    myFileStatusPanel.setVisible(false);
+    rightPanel.add(myFileStatusPanel, gbConstraints);
 
     myCustomIndicationsPanel.setVisible(false); // Will become visible when any of indications really adds.
     myCustomIndicationsPanel.setBorder(separatorLeft);
@@ -239,11 +242,29 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     setStatusEnabled(false);
     setWriteStatus(false);
     setPosition(null);
-    updateEditorHighlightingStatus(true);
+    updateFileStatusComponents();
   }
 
-  public final void updateEditorHighlightingStatus(final boolean isClear) {
-    myEditorHighlightingPanel.updateStatus(isClear);
+  public void addFileStatusComponent(final JComponent component, final Runnable update) {
+    myFileStatusPanel.add(component, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 1, GridBagConstraints.WEST,
+                                                           GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
+    myFileStatusPanel.setVisible(true);
+    myFileStatusComponents.put(component, update);
+  }
+
+  public final void updateFileStatusComponents() {
+    for (JComponent component : myFileStatusComponents.keySet()) {
+      final Runnable update = myFileStatusComponents.get(component);
+      if (update != null) update.run();
+    }
+  }
+
+  public void removeFileStatusComponent(final JComponent component) {
+    myFileStatusComponents.remove(component);
+    myFileStatusPanel.remove(component);
+    if (myFileStatusPanel.getComponentCount() == 0) {
+      myFileStatusPanel.setVisible(false);
+    }
   }
 
   public void cleanupCustomComponents() {
@@ -266,10 +287,6 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     if (myMemoryUsagePanel != null) {
       myMemoryUsagePanel.setVisible(state);
     }
-  }
-
-  public void disposeListeners() {
-    myEditorHighlightingPanel.dispose();
   }
 
   private final class MyUISettingsListener implements UISettingsListener{

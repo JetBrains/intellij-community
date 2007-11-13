@@ -1,7 +1,9 @@
 package com.intellij.openapi.wm.ex;
 
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.wm.StatusBar;
+
+import javax.swing.*;
 
 public interface StatusBarEx extends StatusBar{
   String getInfo();
@@ -16,7 +18,11 @@ public interface StatusBarEx extends StatusBar{
 
   void clear();
 
-  void updateEditorHighlightingStatus(final boolean isClear);
+  void addFileStatusComponent(JComponent component, final Runnable onStatusChange);
+
+  void updateFileStatusComponents();
+
+  void removeFileStatusComponent(final JComponent component);
 
   void cleanupCustomComponents();
 

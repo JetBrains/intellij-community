@@ -26,6 +26,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
@@ -57,6 +60,8 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   private Map<String, InspectionProfileWrapper>  myName2Profile = new HashMap<String, InspectionProfileWrapper>();
   private Project myProject;
   private SeverityRegistrar mySeverityRegistrar;
+  private StatusBarEx myStatusBar;
+  private TogglePopupHintsPanel myTogglePopupHintsPanel;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public InspectionProjectProfileManager(final Project project, EditorColorsManager manager) {
@@ -162,6 +167,13 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public void projectOpened() {
+    myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
+    myTogglePopupHintsPanel = new TogglePopupHintsPanel();
+    myStatusBar.addFileStatusComponent(myTogglePopupHintsPanel, new Runnable(){
+      public void run() {
+        myTogglePopupHintsPanel.updateStatus();
+      }
+    });
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){
       public void run() {
         Set<Profile> profiles = new HashSet<Profile>();
@@ -182,6 +194,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   public void projectClosed() {
+    myStatusBar.removeFileStatusComponent(myTogglePopupHintsPanel);
     for (InspectionProfileWrapper wrapper : myName2Profile.values()) {
       wrapper.cleanup(myProject);
     }
@@ -207,6 +220,10 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
     mySeverityRegistrar.writeExternal(element);
+  }
+
+  public void updateStatusBar() {
+    myTogglePopupHintsPanel.updateStatus();
   }
 
 }
