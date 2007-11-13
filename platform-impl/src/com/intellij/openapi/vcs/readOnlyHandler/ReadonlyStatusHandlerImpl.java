@@ -38,18 +38,15 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.vcs.EditFileProvider;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.ReadOnlyAttributeUtil;
 import gnu.trove.THashSet;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 @State(
   name="ReadonlyStatusHandler",
@@ -154,51 +151,13 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   public static void processFiles(final List<FileInfo> fileInfos) {
     FileInfo[] copy = fileInfos.toArray(new FileInfo[fileInfos.size()]);
-    MultiValuesMap<EditFileProvider, VirtualFile> providerToFile = new MultiValuesMap<EditFileProvider, VirtualFile>();
-    final List<VirtualFile> unknown = new ArrayList<VirtualFile>();
+    MultiValuesMap<HandleType, VirtualFile> handleTypeToFile = new MultiValuesMap<HandleType, VirtualFile>();
     for (FileInfo fileInfo : copy) {
-      if (fileInfo.getUseVersionControl()) {
-        providerToFile.put(fileInfo.getEditFileProvider(), fileInfo.getFile());
-      }
-      else {
-        unknown.add(fileInfo.getFile());
-      }
+      handleTypeToFile.put(fileInfo.getSelectedHandleType(), fileInfo.getFile());
     }
 
-    if (!unknown.isEmpty()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          try {
-            for (VirtualFile file : unknown) {
-              ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
-              file.refresh(false, false);
-            }
-          }
-          catch (IOException e) {
-            //ignore
-          }
-        }
-      });      
-    }
-
-    for (EditFileProvider editFileProvider : providerToFile.keySet()) {
-      final Collection<VirtualFile> files = providerToFile.get(editFileProvider);
-      try {
-        editFileProvider.editFiles(files.toArray(new VirtualFile[files.size()]));
-      }
-      catch (VcsException e) {
-        Messages.showErrorDialog(VcsBundle.message("message.text.cannot.edit.file", e.getLocalizedMessage()),
-                                 VcsBundle.message("message.title.edit.files"));
-      }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          for (final VirtualFile file : files) {
-            file.refresh(false, false);
-          }
-
-        }
-      });
-
+    for (HandleType handleType : handleTypeToFile.keySet()) {
+      handleType.processFiles(handleTypeToFile.get(handleType));
     }
 
     for (FileInfo fileInfo : copy) {

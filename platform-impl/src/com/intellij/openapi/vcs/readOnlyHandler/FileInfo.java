@@ -31,62 +31,42 @@
  */
 package com.intellij.openapi.vcs.readOnlyHandler;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.EditFileProvider;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ListWithSelection;
 
 class FileInfo {
   private final VirtualFile myFile;
-  private final EditFileProvider myEditFileProvider;
   private final ListWithSelection<HandleType> myHandleType = new ListWithSelection<HandleType>();
 
   public FileInfo(VirtualFile file, Project project) {
     myFile = file;
     myHandleType.add(HandleType.USE_FILE_SYSTEM);
     myHandleType.selectFirst();
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-    if (vcs == null) {
-      myEditFileProvider = null;
-    }
-    else {
-      boolean fileExistsInVcs = vcs.fileExistsInVcs(new FilePathImpl(file));
-      if (fileExistsInVcs) {
-        myEditFileProvider = vcs.getEditFileProvider();
-        if (myEditFileProvider != null) {
-          HandleType handleType = HandleType.createForVcs(vcs);
-          myHandleType.add(handleType);
-          myHandleType.select(handleType);
-        }
-      }
-      else {
-        myEditFileProvider = null;
+    final HandleTypeFactory[] typeFactories = Extensions.getExtensions(HandleTypeFactory.EP_NAME, project);
+    for(HandleTypeFactory factory: typeFactories) {
+      final HandleType handleType = factory.createHandleType(file);
+      if (handleType != null) {
+        myHandleType.add(handleType);
+        myHandleType.select(handleType);
       }
     }
-
-
   }
 
   public VirtualFile getFile() {
     return myFile;
   }
 
-  public boolean getUseVersionControl() {
-    return myHandleType.getSelection().getUseVcs();
+  public HandleType getSelectedHandleType() {
+    return myHandleType.getSelection();
   }
 
   public boolean hasVersionControl() {
-    return myEditFileProvider != null;
+    return myHandleType.size() > 1;
   }
 
   public ListWithSelection<HandleType> getHandleType(){
     return myHandleType;
-  }
-
-  public EditFileProvider getEditFileProvider() {
-    return myEditFileProvider;
   }
 }

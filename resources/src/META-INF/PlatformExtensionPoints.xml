@@ -38,5 +38,8 @@
   <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ExportableBean"/>
 
   <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.impl.IdeRootPaneNorthExtension"/>
+
+  <extensionPoint name="handleTypeFactory" interface="com.intellij.openapi.vcs.readOnlyHandler.HandleTypeFactory"
+                  area="IDEA_PROJECT"/>
 </extensionPoints>
   
