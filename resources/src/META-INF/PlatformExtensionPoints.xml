@@ -1,0 +1,42 @@
+<extensionPoints>
+  <extensionPoint name="applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
+  <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
+
+  <extensionPoint name="appStarter"
+                  interface="com.intellij.openapi.application.ApplicationStarter"/>
+
+  <extensionPoint name="errorHandler"
+                  interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter"/>
+
+  <extensionPoint name="projectConfigurable"
+                  interface="com.intellij.openapi.options.Configurable"
+                  area="IDEA_PROJECT"/>
+
+  <extensionPoint name="applicationConfigurable"
+                  interface="com.intellij.openapi.options.Configurable"/>
+
+  <extensionPoint name="selectInTarget"
+                  interface="com.intellij.ide.SelectInTarget"
+                  area="IDEA_PROJECT"/>
+
+  <extensionPoint name="fileEditorProvider"
+                  interface="com.intellij.openapi.fileEditor.FileEditorProvider"/>
+
+  <extensionPoint name="fileTypeFactory"
+                  interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
+
+  <extensionPoint name="keymapExtension"
+                  interface="com.intellij.openapi.keymap.KeymapExtension"/>
+
+  <extensionPoint name="getDataRule"
+                  beanClass="com.intellij.ide.impl.dataRules.KeyedLazyInstanceEP"/>
+  <extensionPoint name="dataValidator"
+                  beanClass="com.intellij.ide.impl.dataRules.KeyedLazyInstanceEP"/>
+  <extensionPoint name="cutElementMarker"
+                  interface="com.intellij.openapi.ide.CutElementMarker"/>
+
+  <extensionPoint name="exportable" beanClass="com.intellij.openapi.components.ExportableBean"/>
+
+  <extensionPoint name="ideRootPaneNorth" interface="com.intellij.openapi.wm.impl.IdeRootPaneNorthExtension"/>
+</extensionPoints>
+  
