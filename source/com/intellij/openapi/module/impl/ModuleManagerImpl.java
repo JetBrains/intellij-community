@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.impl.ProjectLifecycleAdapter;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
@@ -104,7 +103,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     });
 
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
-    myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleAdapter() {
+    myConnection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
       public void projectComponentsInitialized(final Project project) {
         loadModules();
       }
