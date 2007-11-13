@@ -18,27 +18,33 @@ package com.intellij.facet.ui.libraries;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.IdeBundle;
 
 /**
  * @author nik
  */
 public class MavenLibraryUtil {
-  @NonNls private static final String IBIBLIO_MAVEN = "http://www.ibiblio.org/maven2/";
+  @NonNls private static final String[] MAVEN_MIRRORS = {
+    "http://www.ibiblio.org/maven2/",
+    "http://repo1.maven.org/maven2/",
+  };
+  private static final RemoteRepositoryInfo MAVEN = new RemoteRepositoryInfo("maven", IdeBundle.message("maven.repository.presentable.name"), MAVEN_MIRRORS);
 
   private MavenLibraryUtil() {
   }
 
   public static LibraryInfo createSubMavenJarInfo(@NonNls String project, @NonNls String jarName, @NonNls String version, @NonNls String... requiredClasses) {
-    return createMavenJarInfo(jarName, version, MavenLibraryUtil.IBIBLIO_MAVEN + project, requiredClasses);
+    return createMavenJarInfo(jarName, version, project, requiredClasses);
   }
 
   private static LibraryInfo createMavenJarInfo(final String jarName, final String version, final String downloadingPrefix, 
-                                                 final String... requiredClasses) {
-    return new LibraryInfo(jarName+ ".jar", version, downloadingPrefix + "/" + jarName + "/" + version + "/" + jarName + "-" + version + ".jar",
-          MavenLibraryUtil.IBIBLIO_MAVEN, requiredClasses);
+                                                final String... requiredClasses) {
+    LibraryDownloadInfo downloadInfo = new LibraryDownloadInfo(MAVEN, downloadingPrefix + "/" + jarName + "/" + version + "/" + jarName + "-" + version + ".jar",
+                                                               jarName, ".jar");
+    return new LibraryInfo(jarName+ ".jar", downloadInfo, requiredClasses);
   }
 
   public static LibraryInfo createMavenJarInfo(@NonNls String jarName, @NonNls String version, @NotNull @NonNls String... requiredClasses) {
-    return createMavenJarInfo(jarName, version, MavenLibraryUtil.IBIBLIO_MAVEN + jarName, requiredClasses);
+    return createMavenJarInfo(jarName, version, jarName, requiredClasses);
   }
 }

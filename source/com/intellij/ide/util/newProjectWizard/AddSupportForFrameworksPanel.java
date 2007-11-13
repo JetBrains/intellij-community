@@ -8,8 +8,10 @@ import com.intellij.facet.impl.ui.FacetEditorContextBase;
 import com.intellij.facet.impl.ui.FacetTypeFrameworkSupportProvider;
 import com.intellij.facet.impl.ui.libraries.LibraryDownloader;
 import com.intellij.facet.impl.ui.libraries.RequiredLibrariesInfo;
+import com.intellij.facet.impl.ui.libraries.LibraryDownloadingMirrorsMap;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
+import com.intellij.facet.ui.libraries.RemoteRepositoryInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -49,22 +51,48 @@ public class AddSupportForFrameworksPanel {
   private List<FrameworkSupportSettings> myRoots;
   private final Computable<String> myBaseDirForLibrariesGetter;
   private List<FrameworkSupportProvider> myProviders;
+  private LibraryDownloadingMirrorsMap myMirrorsMap;
 
   public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, Computable<String> baseDirForLibrariesGetter) {
     myBaseDirForLibrariesGetter = baseDirForLibrariesGetter;
     myProviders = providers;
     createNodes();
+    myMirrorsMap = creatMirrorsMap();
 
     final JPanel treePanel = new JPanel(new GridBagLayout());
     addSettingsComponents(myRoots, treePanel, 0);
     myFrameworksTreePanel.add(treePanel, BorderLayout.WEST);
     myChangeButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        new LibraryDownloadingSettingsDialog(myMainPanel, getFrameworkWithLibraries()).show();
+        HashSet<RemoteRepositoryInfo> repositories = new HashSet<RemoteRepositoryInfo>(getRemoteRepositories(true));
+        new LibraryDownloadingSettingsDialog(myMainPanel, getFrameworkWithLibraries(), myMirrorsMap, repositories).show();
         updateDownloadingOptionsPanel();
       }
     });
     updateDownloadingOptionsPanel();
+  }
+
+  private LibraryDownloadingMirrorsMap creatMirrorsMap() {
+    List<RemoteRepositoryInfo> repositoryInfos = getRemoteRepositories(false);
+    return new LibraryDownloadingMirrorsMap(repositoryInfos.toArray(new RemoteRepositoryInfo[repositoryInfos.size()]));
+  }
+
+  private List<RemoteRepositoryInfo> getRemoteRepositories(final boolean fromSelectedOnly) {
+    List<RemoteRepositoryInfo> repositoryInfos = new ArrayList<RemoteRepositoryInfo>();
+    List<FrameworkSupportSettings> frameworksSettingsList = getFrameworksSettingsList(fromSelectedOnly);
+    for (FrameworkSupportSettings settings : frameworksSettingsList) {
+      LibraryInfo[] libraries = settings.getConfigurable().getLibraries();
+      for (LibraryInfo library : libraries) {
+        LibraryDownloadInfo downloadInfo = library.getDownloadingInfo();
+        if (downloadInfo != null) {
+          RemoteRepositoryInfo repository = downloadInfo.getRemoteRepository();
+          if (repository != null) {
+            repositoryInfos.add(repository);
+          }
+        }
+      }
+    }
+    return repositoryInfos;
   }
 
   private void updateDownloadingOptionsPanel() {
@@ -74,7 +102,7 @@ public class AddSupportForFrameworksPanel {
 
   private List<FrameworkSupportSettings> getFrameworkWithLibraries() {
     List<FrameworkSupportSettings> frameworkLibrariesInfos = new ArrayList<FrameworkSupportSettings>();
-    List<FrameworkSupportSettings> selected = getSelectedFrameworks();
+    List<FrameworkSupportSettings> selected = getFrameworksSettingsList(true);
     for (FrameworkSupportSettings settings : selected) {
       LibraryInfo[] libraries = settings.getConfigurable().getLibraries();
       if (libraries.length > 0) {
@@ -100,7 +128,7 @@ public class AddSupportForFrameworksPanel {
 
             LibraryDownloader downloader = new LibraryDownloader(downloadingInfos, null, myMainPanel,
                                                                  settings.getDirectoryForDownloadedLibrariesPath(),
-                                                                 libraryName);
+                                                                 libraryName, myMirrorsMap);
             VirtualFile[] files = downloader.download();
             if (files.length != downloadingInfos.length) {
               return false;
@@ -226,26 +254,27 @@ public class AddSupportForFrameworksPanel {
     return myMainPanel;
   }
 
-  private List<FrameworkSupportSettings> getSelectedFrameworks() {
+  private List<FrameworkSupportSettings> getFrameworksSettingsList(final boolean selectedOnly) {
     ArrayList<FrameworkSupportSettings> list = new ArrayList<FrameworkSupportSettings>();
     if (myRoots != null) {
-      addSelectedFrameworks(myRoots, list);
+      addChildFrameworks(myRoots, list, selectedOnly);
     }
     return list;
   }
 
-  private static void addSelectedFrameworks(final List<FrameworkSupportSettings> list, final ArrayList<FrameworkSupportSettings> selected) {
+  private static void addChildFrameworks(final List<FrameworkSupportSettings> list, final ArrayList<FrameworkSupportSettings> selected,
+                                         final boolean selectedOnly) {
     for (FrameworkSupportSettings settings : list) {
-      if (settings.myCheckBox.isSelected()) {
+      if (!selectedOnly || settings.myCheckBox.isSelected()) {
         selected.add(settings);
-        addSelectedFrameworks(settings.myChildren, selected);
+        addChildFrameworks(settings.myChildren, selected, selectedOnly);
       }
     }
   }
 
   public void addSupport(final Module module, final ModifiableRootModel rootModel) {
     List<Library> addedLibraries = new ArrayList<Library>();
-    List<FrameworkSupportSettings> selectedFrameworks = getSelectedFrameworks();
+    List<FrameworkSupportSettings> selectedFrameworks = getFrameworksSettingsList(true);
     for (FrameworkSupportSettings settings : selectedFrameworks) {
       Library library = null;
       FrameworkSupportConfigurable configurable = settings.getConfigurable();

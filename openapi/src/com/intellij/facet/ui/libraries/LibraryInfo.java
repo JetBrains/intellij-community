@@ -41,7 +41,7 @@ public class LibraryInfo {
     }
   }
 
-  public LibraryInfo(final String presentableName, final @Nullable LibraryDownloadInfo downloadInfo, String... requiredClasses) {
+  public LibraryInfo(final @NonNls String presentableName, final @Nullable LibraryDownloadInfo downloadInfo, String... requiredClasses) {
     myPresentableName = presentableName;
     myRequiredClasses = requiredClasses;
     myDownloadInfo = downloadInfo;

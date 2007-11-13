@@ -49,28 +49,32 @@ public class LibraryDownloader {
   @NonNls private static final String LIB_SCHEMA = "lib://";
 
   private LibraryDownloadInfo[] myLibraryInfos;
+  private final LibraryDownloadingMirrorsMap myMirrorsMap;
   private JComponent myParent;
   private @Nullable Project myProject;
   private String myDirectoryForDownloadedLibrariesPath;
   private final @Nullable String myLibraryPresentableName;
 
   public LibraryDownloader(final LibraryDownloadInfo[] libraryInfos, final @Nullable Project project, JComponent parent, @Nullable String directoryForDownloadedLibrariesPath,
-                           @Nullable String libraryPresentableName) {
+                           @Nullable String libraryPresentableName,
+                           final LibraryDownloadingMirrorsMap mirrorsMap) {
     myProject = project;
     myLibraryInfos = libraryInfos;
     myParent = parent;
     myDirectoryForDownloadedLibrariesPath = directoryForDownloadedLibrariesPath;
     myLibraryPresentableName = libraryPresentableName;
+    myMirrorsMap = mirrorsMap;
   }
 
   public LibraryDownloader(final LibraryDownloadInfo[] libraryInfos, final @Nullable Project project, @NotNull JComponent parent) {
-    this(libraryInfos, project, parent, null, null);
+    this(libraryInfos, project, parent, null, null, new LibraryDownloadingMirrorsMap());
   }
 
   public LibraryDownloader(final LibraryDownloadInfo[] libraryInfos, final @NotNull Project project) {
     myLibraryInfos = libraryInfos;
     myProject = project;
     myLibraryPresentableName = null;
+    myMirrorsMap = new LibraryDownloadingMirrorsMap();
   }
 
   public VirtualFile[] download() {
@@ -152,7 +156,7 @@ public class LibraryDownloader {
     if (exception.get() instanceof IOException) {
       String message = IdeBundle.message("error.library.download.failed");
       if (currentLibrary.get() != null) {
-        message += ": " + currentLibrary.get().getDownloadUrl();
+        message += ": " + myMirrorsMap.getDownloadingUrl(currentLibrary.get());
       }
       final boolean tryAgain = IOExceptionDialog.showErrorDialog((IOException)exception.get(),
                                                                  IdeBundle.message("progress.download.libraries.title"), message);
@@ -240,10 +244,10 @@ public class LibraryDownloader {
     pairs.clear();
   }
 
-  private static boolean download(final LibraryDownloadInfo libraryInfo, final long existingFileSize, final List<Pair<LibraryDownloadInfo, File>> downloadedFiles) throws IOException {
+  private boolean download(final LibraryDownloadInfo libraryInfo, final long existingFileSize, final List<Pair<LibraryDownloadInfo, File>> downloadedFiles) throws IOException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final String presentableUrl = libraryInfo.getPresentableUrl();
-    final String url = libraryInfo.getDownloadUrl();
+    final String presentableUrl = myMirrorsMap.getPresentableUrl(libraryInfo);
+    final String url = myMirrorsMap.getDownloadingUrl(libraryInfo);
     if (url.startsWith(LIB_SCHEMA)) {
       indicator.setText2(IdeBundle.message("progress.locate.jar.text", getExpectedFileName(libraryInfo)));
       final String path = url.substring(LIB_SCHEMA.length()).replace('/', File.separatorChar);

@@ -16,22 +16,35 @@
 
 package com.intellij.facet.ui.libraries;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public class LibraryDownloadInfo {
-  private final String myDownloadUrl;
+  private final RemoteRepositoryInfo myRemoteRepository;
+  private final String myRelativeDownloadUrl;
   private final String myFileNamePrefix;
   private final String myFileNameSuffix;
   private final String myPresentableUrl;
 
+  public LibraryDownloadInfo(final @NotNull RemoteRepositoryInfo remoteRepository,
+                             final @NotNull @NonNls String relativeDownloadUrl,
+                             final @NotNull @NonNls String fileNamePrefix,
+                             final @NotNull @NonNls String fileNameSuffix) {
+    myRemoteRepository = remoteRepository;
+    myRelativeDownloadUrl = relativeDownloadUrl;
+    myFileNamePrefix = fileNamePrefix;
+    myFileNameSuffix = fileNameSuffix;
+    myPresentableUrl = null;
+  }
+
   public LibraryDownloadInfo(final @NotNull String downloadUrl, final @Nullable String presentableUrl,
                                 @NotNull @NonNls String fileNamePrefix, @NotNull @NonNls String fileNameSuffix) {
-    myDownloadUrl = downloadUrl;
+    myRemoteRepository = null;
+    myRelativeDownloadUrl = downloadUrl;
     myFileNamePrefix = fileNamePrefix;
     myFileNameSuffix = fileNameSuffix;
     myPresentableUrl = presentableUrl != null ? presentableUrl : downloadUrl;
@@ -48,7 +61,17 @@ public class LibraryDownloadInfo {
 
   @NotNull
   public String getDownloadUrl() {
-    return myDownloadUrl;
+    return myRelativeDownloadUrl;
+  }
+
+  @NotNull
+  public String getDownloadUrl(String mirror) {
+    return mirror + myRelativeDownloadUrl;
+  }
+
+  @Nullable
+  public RemoteRepositoryInfo getRemoteRepository() {
+    return myRemoteRepository;
   }
 
   @NotNull
@@ -64,5 +87,11 @@ public class LibraryDownloadInfo {
   @NotNull
   public String getPresentableUrl() {
     return myPresentableUrl;
+  }
+
+
+  @NotNull
+  public String getPresentableUrl(String mirror) {
+    return myPresentableUrl != null ? myPresentableUrl : mirror;
   }
 }
