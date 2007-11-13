@@ -1,16 +1,12 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.AppTopics;
-import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.FakeFileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,7 +49,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final Set<String> myIgnoredFileMasksSet = new LinkedHashSet<String>();
   private final Set<String> myNotIgnoredFiles = new ConcurrentHashSet<String>();
   private final Set<String> myIgnoredFiles = new ConcurrentHashSet<String>();
-  private final Map<FileType, SyntaxTable> myDefaultTables = new THashMap<FileType, SyntaxTable>();
   private final FileTypeAssocTable myInitialAssociations = new FileTypeAssocTable();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();
 
@@ -73,24 +68,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @NonNls private static final String ATTRIBUTE_DESCRIPTION = "description";
   @NonNls private static final String ATTRIBUTE_ICON = "icon";
   @NonNls private static final String ATTRIBUTE_EXTENSIONS = "extensions";
-  @NonNls private static final String ELEMENT_HIGHLIGHTING = "highlighting";
-  @NonNls private static final String ELEMENT_OPTIONS = "options";
-  @NonNls private static final String ELEMENT_OPTION = "option";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
-  @NonNls private static final String VALUE_LINE_COMMENT = "LINE_COMMENT";
-  @NonNls private static final String VALUE_COMMENT_START = "COMMENT_START";
-  @NonNls private static final String VALUE_COMMENT_END = "COMMENT_END";
-  @NonNls private static final String VALUE_HEX_PREFIX = "HEX_PREFIX";
-  @NonNls private static final String VALUE_NUM_POSTFIXES = "NUM_POSTFIXES";
-  @NonNls private static final String VALUE_HAS_BRACES = "HAS_BRACES";
-  @NonNls private static final String VALUE_HAS_BRACKETS = "HAS_BRACKETS";
-  @NonNls private static final String VALUE_HAS_PARENS = "HAS_PARENS";
-  @NonNls private static final String ELEMENT_KEYWORDS = "keywords";
-  @NonNls private static final String ATTRIBUTE_IGNORE_CASE = "ignore_case";
-  @NonNls private static final String ELEMENT_KEYWORD = "keyword";
-  @NonNls private static final String ELEMENT_KEYWORDS2 = "keywords2";
-  @NonNls private static final String ELEMENT_KEYWORDS3 = "keywords3";
-  @NonNls private static final String ELEMENT_KEYWORDS4 = "keywords4";
   @NonNls private static final String ATTRIBUTE_BINARY = "binary";
   @NonNls private static final String ATTRIBUTE_DEFAULT_EXTENSION = "default_extension";
   @NonNls private static final String XML_EXTENSION = ".xml";
@@ -351,14 +328,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     while (iterator.hasNext()) {
       FileType fileType = iterator.next();
 
-      if (!(fileType instanceof CustomFileType) || !shouldSave(fileType)) continue;
+      if (!(fileType instanceof JDOMExternalizable) || !shouldSave(fileType)) continue;
       if (myDefaultTypes.contains(fileType) && !isDefaultModified(fileType)) continue;
 
       Element root = new Element(ELEMENT_FILETYPE);
 
       writeHeader(root, fileType);
 
-      writeSyntaxTableData(root, fileType);
+      try {
+        ((JDOMExternalizable) fileType).writeExternal(root);
+      }
+      catch (WriteExternalException e) {
+        continue;  // unmodified
+      }
 
       String name = namesProvider.suggestName(fileType.getName());
       String filePath = dir.getAbsolutePath() + File.separator + name + XML_EXTENSION;
@@ -373,9 +355,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   @SuppressWarnings({"SimplifiableIfStatement"})
-  private boolean isDefaultModified(FileType fileType) {
-    if (fileType instanceof CustomFileType) {
-      return !Comparing.equal(myDefaultTables.get(fileType), ((CustomFileType)fileType).getSyntaxTable());
+  private static boolean isDefaultModified(FileType fileType) {
+    if (fileType instanceof ExternalizableFileType) {
+      return ((ExternalizableFileType) fileType).isModified();
     }
     return true; //TODO?
   }
@@ -656,16 +638,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     String iconPath = typeElement.getAttributeValue(ATTRIBUTE_ICON);
     String extensionsStr = typeElement.getAttributeValue(ATTRIBUTE_EXTENSIONS); // TODO: support wildcards
 
-    SyntaxTable table = null;
-    Element element = typeElement.getChild(ELEMENT_HIGHLIGHTING);
-    if (element != null) {
-      table = readSyntaxTable(element);
-    }
-
     FileType type = getFileTypeByName(fileTypeName);
 
     List<FileNameMatcher> exts = parse(extensionsStr);
     if (type != null) {
+      if (isDefaults) return type;
       if (extensionsStr != null) {
         removeAllAssociations(type);
         for (FileNameMatcher ext : exts) {
@@ -673,16 +650,23 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
       }
 
-      if (table != null && type instanceof CustomFileType) {
-        ((CustomFileType)type).setSyntaxTable(table);
+      if (type instanceof JDOMExternalizable) {
+        try {
+          ((JDOMExternalizable) type).readExternal(typeElement);
+        }
+        catch (InvalidDataException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
     else {
-      if (table != null) {
-        type = new CustomFileType(table);
-        ((CustomFileType)type).initSupport();
+      for(CustomFileTypeFactory factory: Extensions.getExtensions(CustomFileTypeFactory.EP_NAME)) {
+        type = factory.createFileType(typeElement);
+        if (type != null) {
+          break;
+        }
       }
-      else {
+      if (type == null) {
         type = new UserBinaryFileType();
       }
       registerFileTypeWithoutNotification(type, exts);
@@ -701,80 +685,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     if (isDefaults) {
       myDefaultTypes.add(type);
-      if (table != null) {
-        myDefaultTables.put(type, table);
+      if (type instanceof ExternalizableFileType) {
+        ((ExternalizableFileType) type).markDefaultSettings();
       }
     }
 
     return type;
-  }
-
-  private static SyntaxTable readSyntaxTable(Element root) {
-    SyntaxTable table = new SyntaxTable();
-
-    for (final Object o : root.getChildren()) {
-      Element element = (Element)o;
-
-      if (ELEMENT_OPTIONS.equals(element.getName())) {
-        for (final Object o1 : element.getChildren(ELEMENT_OPTION)) {
-          Element e = (Element)o1;
-          String name = e.getAttributeValue(ATTRIBUTE_NAME);
-          String value = e.getAttributeValue(ATTRIBUTE_VALUE);
-          if (VALUE_LINE_COMMENT.equals(name)) {
-            table.setLineComment(value);
-          }
-          else if (VALUE_COMMENT_START.equals(name)) {
-            table.setStartComment(value);
-          }
-          else if (VALUE_COMMENT_END.equals(name)) {
-            table.setEndComment(value);
-          }
-          else if (VALUE_HEX_PREFIX.equals(name)) {
-            table.setHexPrefix(value);
-          }
-          else if (VALUE_NUM_POSTFIXES.equals(name)) {
-            table.setNumPostfixChars(value);
-          }
-          else if (VALUE_HAS_BRACES.equals(name)) {
-            table.setHasBraces(Boolean.valueOf(value).booleanValue());
-          }
-          else if (VALUE_HAS_BRACKETS.equals(name)) {
-            table.setHasBrackets(Boolean.valueOf(value).booleanValue());
-          }
-          else if (VALUE_HAS_PARENS.equals(name)) {
-            table.setHasParens(Boolean.valueOf(value).booleanValue());
-          }
-        }
-      }
-      else if (ELEMENT_KEYWORDS.equals(element.getName())) {
-        boolean ignoreCase = Boolean.valueOf(element.getAttributeValue(ATTRIBUTE_IGNORE_CASE)).booleanValue();
-        table.setIgnoreCase(ignoreCase);
-        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
-          Element e = (Element)o1;
-          table.addKeyword1(e.getAttributeValue(ATTRIBUTE_NAME));
-        }
-      }
-      else if (ELEMENT_KEYWORDS2.equals(element.getName())) {
-        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
-          Element e = (Element)o1;
-          table.addKeyword2(e.getAttributeValue(ATTRIBUTE_NAME));
-        }
-      }
-      else if (ELEMENT_KEYWORDS3.equals(element.getName())) {
-        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
-          Element e = (Element)o1;
-          table.addKeyword3(e.getAttributeValue(ATTRIBUTE_NAME));
-        }
-      }
-      else if (ELEMENT_KEYWORDS4.equals(element.getName())) {
-        for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
-          Element e = (Element)o1;
-          table.addKeyword4(e.getAttributeValue(ATTRIBUTE_NAME));
-        }
-      }
-    }
-
-    return table;
   }
 
   private static File getOrCreateFileTypesDir() {
@@ -799,84 +715,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     root.setAttribute(ATTRIBUTE_DESCRIPTION, fileType.getDescription());
     root.setAttribute(ATTRIBUTE_NAME, fileType.getName());
-  }
-
-  private static void writeSyntaxTableData(Element root, FileType fileType) {
-    if (!(fileType instanceof CustomFileType)) return;
-
-    SyntaxTable table = ((CustomFileType)fileType).getSyntaxTable();
-    Element highlightingElement = new Element(ELEMENT_HIGHLIGHTING);
-
-    Element optionsElement = new Element(ELEMENT_OPTIONS);
-
-    Element lineComment = new Element(ELEMENT_OPTION);
-    lineComment.setAttribute(ATTRIBUTE_NAME, VALUE_LINE_COMMENT);
-    lineComment.setAttribute(ATTRIBUTE_VALUE, table.getLineComment());
-    optionsElement.addContent(lineComment);
-
-    Element commentStart = new Element(ELEMENT_OPTION);
-    commentStart.setAttribute(ATTRIBUTE_NAME, VALUE_COMMENT_START);
-    commentStart.setAttribute(ATTRIBUTE_VALUE, table.getStartComment());
-    optionsElement.addContent(commentStart);
-
-    Element commentEnd = new Element(ELEMENT_OPTION);
-    commentEnd.setAttribute(ATTRIBUTE_NAME, VALUE_COMMENT_END);
-    commentEnd.setAttribute(ATTRIBUTE_VALUE, table.getEndComment());
-    optionsElement.addContent(commentEnd);
-
-    Element hexPrefix = new Element(ELEMENT_OPTION);
-    hexPrefix.setAttribute(ATTRIBUTE_NAME, VALUE_HEX_PREFIX);
-    hexPrefix.setAttribute(ATTRIBUTE_VALUE, table.getHexPrefix());
-    optionsElement.addContent(hexPrefix);
-
-    Element numPostfixes = new Element(ELEMENT_OPTION);
-    numPostfixes.setAttribute(ATTRIBUTE_NAME, VALUE_NUM_POSTFIXES);
-    numPostfixes.setAttribute(ATTRIBUTE_VALUE, table.getNumPostfixChars());
-    optionsElement.addContent(numPostfixes);
-
-    Element supportBraces = new Element(ELEMENT_OPTION);
-    supportBraces.setAttribute(ATTRIBUTE_NAME, VALUE_HAS_BRACES);
-    supportBraces.setAttribute(ATTRIBUTE_VALUE, String.valueOf(table.isHasBraces()));
-    optionsElement.addContent(supportBraces);
-
-    Element supportBrackets = new Element(ELEMENT_OPTION);
-    supportBrackets.setAttribute(ATTRIBUTE_NAME, VALUE_HAS_BRACKETS);
-    supportBrackets.setAttribute(ATTRIBUTE_VALUE, String.valueOf(table.isHasBrackets()));
-    optionsElement.addContent(supportBrackets);
-
-    Element supportParens = new Element(ELEMENT_OPTION);
-    supportParens.setAttribute(ATTRIBUTE_NAME, VALUE_HAS_PARENS);
-    supportParens.setAttribute(ATTRIBUTE_VALUE, String.valueOf(table.isHasParens()));
-    optionsElement.addContent(supportParens);
-
-    highlightingElement.addContent(optionsElement);
-
-    Element keywordsElement = new Element(ELEMENT_KEYWORDS);
-    keywordsElement.setAttribute(ATTRIBUTE_IGNORE_CASE, String.valueOf(table.isIgnoreCase()));
-    writeKeywords(table.getKeywords1(), keywordsElement);
-    highlightingElement.addContent(keywordsElement);
-
-    Element keywordsElement2 = new Element(ELEMENT_KEYWORDS2);
-    writeKeywords(table.getKeywords2(), keywordsElement2);
-    highlightingElement.addContent(keywordsElement2);
-
-    Element keywordsElement3 = new Element(ELEMENT_KEYWORDS3);
-    writeKeywords(table.getKeywords3(), keywordsElement3);
-    highlightingElement.addContent(keywordsElement3);
-
-    Element keywordsElement4 = new Element(ELEMENT_KEYWORDS4);
-    writeKeywords(table.getKeywords4(), keywordsElement4);
-    highlightingElement.addContent(keywordsElement4);
-
-    root.addContent(highlightingElement);
-  }
-
-  private static void writeKeywords(Set keywords, Element keywordsElement) {
-    for (final Object keyword : keywords) {
-      Element e = new Element(ELEMENT_KEYWORD);
-      e.setAttribute(ATTRIBUTE_NAME, (String)keyword);
-      keywordsElement.addContent(e);
-    }
   }
 
   // -------------------------------------------------------------------------

@@ -41,5 +41,6 @@
 
   <extensionPoint name="handleTypeFactory" interface="com.intellij.openapi.vcs.readOnlyHandler.HandleTypeFactory"
                   area="IDEA_PROJECT"/>
+  <extensionPoint name="customFileTypeFactory" interface="com.intellij.openapi.fileTypes.ex.CustomFileTypeFactory"/>
 </extensionPoints>
   
