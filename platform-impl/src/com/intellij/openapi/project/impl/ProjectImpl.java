@@ -25,7 +25,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,8 +56,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   @NonNls private static final String PROJECT_LAYER = "project-components";
 
   public boolean myOptimiseTestLoadSpeed;
-  private volatile GlobalSearchScope myAllScope;
-  private volatile GlobalSearchScope myProjectScope;
   @NonNls private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
   @NonNls private static final String DUMMY_PROJECT_NAME = "Dummy (Mock) Project";
   private boolean myDefault;
