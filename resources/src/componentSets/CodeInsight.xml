@@ -26,10 +26,6 @@
       <implementation-class>com.intellij.codeInsight.lookup.impl.LookupManagerActions</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.codeInsight.hint.HintManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.hint.HintManager</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings</implementation-class>
     </component>
   </application-components>
@@ -115,6 +111,13 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.WolfPassFactory</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</interface-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
   </project-components>
 </components>

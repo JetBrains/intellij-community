@@ -39,11 +39,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.ui.content.MessageView</interface-class>
-      <implementation-class>com.intellij.ui.content.impl.MessageViewImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.ide.todo.TodoView</interface-class>
       <implementation-class>com.intellij.ide.todo.TodoView</implementation-class>
       <option name="workspace" value="true"/>

@@ -20,9 +20,9 @@
     </component>
   </module-components>
 
+  <xi:include href="Platform.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="LocalHistory.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Core.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="UILaf.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="UICore.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="WindowManagement.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Configurables.xml" xpointer="xpointer(/components/*)"/>
@@ -35,7 +35,6 @@
   <xi:include href="Compiler.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Execution.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="VCS.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Util.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="StructuralSearch.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Css.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="PropertiesFile.xml" xpointer="xpointer(/components/*)"/>

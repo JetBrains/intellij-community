@@ -4,10 +4,6 @@
       <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
     </component>
 
-    <component>
-      <interface-class>com.intellij.openapi.application.ApplicationInfo</interface-class>
-      <implementation-class>com.intellij.openapi.application.impl.ApplicationInfoImpl</implementation-class>
-    </component>
     <!--
     <component>
       <interface-class>com.intellij.lang.jsp.jspxLike.JspxLikeTreeParserDefinition</interface-class>
@@ -19,50 +15,7 @@
       <implementation-class>com.intellij.ide.XmlRpcServerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
-      <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.fileTypes.FileTypeManager</interface-class>
-      <implementation-class>com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.vfs.VirtualFileManager</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.VirtualFileManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.vfs.newvfs.ManagingFS</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.PersistentFS</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.vfs.watcher.FileSystemTracker</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.watcher.FileSystemTrackerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.vfs.pointers.VirtualFilePointerManager</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.vfs.LocalFileSystem</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.vfs.JarFileSystem</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vfs.ex.dummy.DummyFileSystem</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vfs.ex.http.HttpFileSystem</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.fileEditor.FileDocumentManager</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.editor.EditorFactory</interface-class>
-      <implementation-class>com.intellij.openapi.editor.impl.EditorFactoryImpl</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.psi.codeStyle.CodeStyleSettingsManager</implementation-class>
@@ -76,10 +29,6 @@
       <implementation-class>com.intellij.ide.todo.TodoConfiguration</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
-      <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.projectRoots.ProjectJdkTable</interface-class>
       <implementation-class>com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl</implementation-class>
     </component>
@@ -88,20 +37,12 @@
       <implementation-class>com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
-      <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.javaee.ExternalResourceManager</interface-class>
       <implementation-class>com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.psi.codeStyle.CodeStyleSchemes</interface-class>
       <implementation-class>com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.application.PathMacros</interface-class>
-      <implementation-class>com.intellij.application.options.PathMacrosImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.psi.impl.PsiManagerConfiguration</interface-class>
@@ -122,8 +63,15 @@
       <implementation-class>com.intellij.ide.OpenFileXmlRpcHandler</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.ide.Exe4jListener</implementation-class>
-      <headless-implementation-class/>
+      <interface-class>com.intellij.codeEditor.printing.PrintSettings</interface-class>
+      <implementation-class>com.intellij.codeEditor.printing.PrintSettings</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.ide.FileIconPatcherImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.ide.RecentProjectsManager</interface-class>
+      <implementation-class>com.intellij.ide.RecentProjectsManager</implementation-class>
     </component>
   </application-components>
 
@@ -155,12 +103,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.ide.util.PropertiesComponent</interface-class>
-      <implementation-class>com.intellij.ide.util.PropertiesComponentImpl</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerImpl</implementation-class>
     </component>
@@ -182,11 +124,6 @@
     <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
       <implementation-class>com.intellij.openapi.module.impl.ModuleManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
-      <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
-      <skipForDummyProject/>
     </component>
     <component>
       <interface-class>com.intellij.openapi.roots.libraries.LibraryTable</interface-class>
@@ -214,12 +151,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.psi.search.scope.packageSet.NamedScopeManager</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.openapi.project.ProjectReloadState</interface-class>
-      <implementation-class>com.intellij.openapi.project.impl.ProjectReloadStateImpl</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
@@ -264,6 +195,9 @@
       <implementation-class>com.intellij.lang.jsp.jspxLike.impl.JspxLikeXmlTextSynchronizer</implementation-class>
     </component>
     -->
+    <component>
+      <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiTextEditorConnector</implementation-class>
+    </component>
   </project-components>
 
 

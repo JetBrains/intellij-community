@@ -1,26 +1,29 @@
 
 package com.intellij.ui.content.impl;
 
-import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.MessageView;
+import com.intellij.ide.impl.ContentManagerWatcher;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Belyaev
  */
 public class MessageViewImpl implements ProjectComponent, MessageView {
-  private Project myProject;
+  private StartupManager myStartupManager;
+  private ToolWindowManager myToolWindowManager;
   private ToolWindow myToolWindow;
 
-  public MessageViewImpl(Project project) {
-    myProject = project;
+  public MessageViewImpl(final StartupManager startupManager, final ToolWindowManager toolWindowManager) {
+    myStartupManager = startupManager;
+    myToolWindowManager = toolWindowManager;
   }
 
   public void initComponent() {
@@ -30,10 +33,13 @@ public class MessageViewImpl implements ProjectComponent, MessageView {
   }
 
   public void projectOpened() {
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM);
-    myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowMessages.png"));
-    new ContentManagerWatcher(myToolWindow, getContentManager());
+    myStartupManager.registerPostStartupActivity(new Runnable() {
+      public void run() {
+        myToolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM);
+        myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowMessages.png"));
+        new ContentManagerWatcher(myToolWindow, getContentManager());
+      }
+    });
   }
 
   public ContentManager getContentManager() {
@@ -41,9 +47,10 @@ public class MessageViewImpl implements ProjectComponent, MessageView {
   }
 
   public void projectClosed() {
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.MESSAGES_WINDOW);
+    myToolWindowManager.unregisterToolWindow(ToolWindowId.MESSAGES_WINDOW);
   }
 
+  @NotNull
   public String getComponentName() {
     return "MessageViewImpl";
   }

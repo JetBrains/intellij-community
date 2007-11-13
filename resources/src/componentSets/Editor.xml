@@ -17,10 +17,6 @@
       <implementation-class>com.intellij.openapi.editor.impl.EditorActionManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.codeEditor.printing.PrintSettings</interface-class>
-      <implementation-class>com.intellij.codeEditor.printing.PrintSettings</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.actionMacro.ActionMacroManager</implementation-class>
     </component>
     <component>
@@ -64,15 +60,6 @@
       <interface-class>com.intellij.ide.SelectInEditorManager</interface-class>
       <implementation-class>com.intellij.ide.impl.SelectInEditorManagerImpl</implementation-class>
       <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</interface-class>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiTextEditorConnector</implementation-class>
     </component>
   </project-components>
 </components>

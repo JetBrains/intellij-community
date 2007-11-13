@@ -9,19 +9,8 @@
       <implementation-class>com.intellij.tools.ToolManager</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.featureStatistics.ProductivityFeaturesRegistry</interface-class>
-      <implementation-class>com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.EvaluationSupport</implementation-class>
       <headless-implementation-class/>
-    </component>
-    <component>
-      <interface-class>com.intellij.featureStatistics.FeatureUsageTracker</interface-class>
-      <implementation-class>com.intellij.featureStatistics.FeatureUsageTrackerImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.TipOfTheDayManager</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.projectRoots.JavaSdk</interface-class>
@@ -34,9 +23,6 @@
     <component>
       <interface-class>com.intellij.usages.rules.UsageFilteringRuleProvider</interface-class>
       <implementation-class>com.intellij.usages.impl.UsageFilteringRuleProviderImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.ui.customization.CustomizableActionsSchemas</implementation-class>
     </component>
   </application-components>
 
