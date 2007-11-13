@@ -118,6 +118,10 @@ public class CachedValueImpl<T> implements CachedValue<T> {
     }
   }
 
+  public void clear() {
+    myData.set(null);
+  }
+
   public void setDataLocked(boolean value) {
     myData.setIsLocked(value);
   }
