@@ -106,7 +106,8 @@ public class DaemonListeners {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
     myDocumentListener = new DocumentAdapter() {
-      public void documentChanged(DocumentEvent e) {
+      // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
+      public void beforeDocumentChange(final DocumentEvent e) {
         Document document = e.getDocument();
         if (!worthBothering(document)) return; //no need to stop daemon if something happened in the console
 

@@ -310,14 +310,10 @@ public class UpdateHighlightersUtil {
 
     HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(document, project);
 
-    if (highlights == null || highlights.length == 0) {
-      return;
-    }
+    if (highlights == null || highlights.length == 0) return;
     int offset = e.getOffset();
     Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
-    if (editors.length == 0) {
-      return;
-    }
+    if (editors.length == 0) return;
     Editor editor = editors[0]; // use any editor - just to fetch SelectInEditorManager
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(Math.max(0, offset - 1));
     if (iterator.atEnd()) return;
@@ -329,7 +325,7 @@ public class UpdateHighlightersUtil {
     int end = iterator.getEnd();
 
     List<HighlightInfo> array = new ArrayList<HighlightInfo>(highlights.length);
-    boolean changes = false;
+    boolean changed = false;
     for (HighlightInfo info : highlights) {
       RangeHighlighter highlighter = info.highlighter;
       boolean toRemove = false;
@@ -369,14 +365,14 @@ public class UpdateHighlightersUtil {
 
       if (toRemove) {
         document.getMarkupModel(project).removeHighlighter(highlighter);
-        changes = true;
+        changed = true;
       }
       else {
         array.add(info);
       }
     }
 
-    if (changes) {
+    if (changed) {
       HighlightInfo[] newHighlights = array.toArray(new HighlightInfo[array.size()]);
       DaemonCodeAnalyzerImpl.setHighlights(document, newHighlights, project);
     }
