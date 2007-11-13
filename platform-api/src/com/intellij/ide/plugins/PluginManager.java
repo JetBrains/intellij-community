@@ -51,7 +51,7 @@ public class PluginManager {
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
   private static String myPluginError = null;
-  @NonNls private static final String CORE_PLUGIN_ID = "com.intellij";
+  @NonNls public static final String CORE_PLUGIN_ID = "com.intellij";
 
   @NonNls public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
 
