@@ -42,6 +42,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.IntArrayList;
@@ -558,7 +559,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
             ( refElement instanceof XmlAttributeValue &&
               (!(element instanceof XmlTag) || refElement.getParent().getParent() == element)
             ) ||
-            refElement instanceof XmlElementDecl) {
+            refElement instanceof XmlElementDecl ||
+            refElement instanceof XmlComment // e.g. <!--@elvariable name="xxx" type="yyy"-->
+           ) {
           writeRefs.add(ref);
         }
         else {
