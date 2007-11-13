@@ -1,28 +1,28 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -31,17 +31,16 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class TextEditorProvider implements FileEditorProvider {
-
-  @NonNls private static final String TYPE_ID = "text-editor";
+public class TextEditorProvider implements FileEditorProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorProvider");
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
+
+  @NonNls private static final String TYPE_ID = "text-editor";
   @NonNls private static final String LINE_ATTR = "line";
   @NonNls private static final String COLUMN_ATTR = "column";
   @NonNls private static final String SELECTION_START_ATTR = "selection-start";
   @NonNls private static final String SELECTION_END_ATTR = "selection-end";
   @NonNls private static final String VERTICAL_SCROLL_PROPORTION_ATTR = "vertical-scroll-proportion";
-  @NonNls private static final String FOLDING_ELEMENT = "folding";
 
   public static TextEditorProvider getInstance() {
     return ApplicationManager.getApplication().getComponent(TextEditorProvider.class);
@@ -51,14 +50,13 @@ public final class TextEditorProvider implements FileEditorProvider {
     if (file.isDirectory() || !file.isValid()) {
       return false;
     }
-    FileType fileType = file.getFileType();
-    return !fileType.isBinary() || fileType == StdFileTypes.CLASS;
+    return !file.getFileType().isBinary();
   }
 
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
     LOG.assertTrue(accept(project, file));
-    return new TextEditorImpl(project, file);
+    return new TextEditorImpl(project, file, this);
   }
 
   public void disposeEditor(@NotNull FileEditor editor) {
@@ -79,19 +77,6 @@ public final class TextEditorProvider implements FileEditorProvider {
     catch (NumberFormatException ignored) {
     }
 
-    // Foldings
-    if (project != null) {
-      Element child = element.getChild(FOLDING_ELEMENT);
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (child != null && document != null) {
-        //PsiDocumentManager.getInstance(project).commitDocument(document);
-        state.FOLDING_STATE = CodeFoldingManager.getInstance(project).readFoldingState(child, document);
-      }
-      else {
-        state.FOLDING_STATE = null;
-      }
-    }
-
     return state;
   }
 
@@ -103,17 +88,6 @@ public final class TextEditorProvider implements FileEditorProvider {
     element.setAttribute(SELECTION_START_ATTR, Integer.toString(state.SELECTION_START));
     element.setAttribute(SELECTION_END_ATTR, Integer.toString(state.SELECTION_END));
     element.setAttribute(VERTICAL_SCROLL_PROPORTION_ATTR, Float.toString(state.VERTICAL_SCROLL_PROPORTION));
-
-    // Foldings
-    if (state.FOLDING_STATE != null) {
-      Element e = new Element(FOLDING_ELEMENT);
-      try {
-        CodeFoldingManager.getInstance(project).writeFoldingState(state.FOLDING_STATE, e);
-      }
-      catch (WriteExternalException e1) {
-      }
-      element.addContent(e);
-    }
   }
 
   @NotNull
@@ -129,13 +103,18 @@ public final class TextEditorProvider implements FileEditorProvider {
   @NotNull public TextEditor getTextEditor(@NotNull Editor editor) {
     TextEditor textEditor = editor.getUserData(TEXT_EDITOR_KEY);
     if (textEditor == null) {
-      textEditor = new DummyTextEditor(editor);
+      textEditor = createWrapperForEditor(editor);
       putTextEditor(editor, textEditor);
     }
 
     return textEditor;
   }
 
+  protected EditorWrapper createWrapperForEditor(final Editor editor) {
+    return new EditorWrapper(editor);
+  }
+
+  @Nullable
   public static Document[] getDocuments(@NotNull FileEditor editor) {
     if (editor instanceof DocumentsEditor) {
       DocumentsEditor documentsEditor = (DocumentsEditor)editor;
@@ -171,15 +150,48 @@ public final class TextEditorProvider implements FileEditorProvider {
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
-  private static final class DummyTextEditor extends UserDataHolderBase implements TextEditor {
-    private final Editor myEditor;
-    private TextEditorBackgroundHighlighter myBackgroundHighlighter;
+  protected TextEditorState getStateImpl(final Project project, final Editor editor, @NotNull FileEditorStateLevel level){
+    TextEditorState state = new TextEditorState();
+    state.LINE = editor.getCaretModel().getLogicalPosition().line;
+    state.COLUMN = editor.getCaretModel().getLogicalPosition().column;
+    state.SELECTION_START = editor.getSelectionModel().getSelectionStart();
+    state.SELECTION_END = editor.getSelectionModel().getSelectionEnd();
 
-    public DummyTextEditor(Editor editor) {
+    // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
+    // scrolling proportion restored sligtly differs from what have been saved.
+    state.VERTICAL_SCROLL_PROPORTION = level == FileEditorStateLevel.UNDO ? -1 : EditorUtil.calcVerticalScrollProportion(editor);
+    return state;
+  }
+
+  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state){
+    LogicalPosition pos = new LogicalPosition(state.LINE, state.COLUMN);
+    editor.getCaretModel().moveToLogicalPosition(pos);
+    editor.getSelectionModel().removeSelection();
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+
+    if (state.VERTICAL_SCROLL_PROPORTION != -1) {
+      EditorUtil.setVerticalScrollProportion(editor, state.VERTICAL_SCROLL_PROPORTION);
+    }
+
+    final Document document = editor.getDocument();
+
+    if (state.SELECTION_START == state.SELECTION_END) {
+      editor.getSelectionModel().removeSelection();
+    }
+    else {
+      int startOffset = Math.min(state.SELECTION_START, document.getTextLength());
+      int endOffset = Math.min(state.SELECTION_END, document.getTextLength());
+      editor.getSelectionModel().setSelection(startOffset, endOffset);
+    }
+    ((EditorEx) editor).stopOptimizedScrolling();
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+  }
+
+  protected class EditorWrapper extends UserDataHolderBase implements TextEditor {
+    private final Editor myEditor;
+
+    public EditorWrapper(Editor editor) {
       myEditor = editor;
-      myBackgroundHighlighter = myEditor.getProject() == null
-                                ? null
-                                : new TextEditorBackgroundHighlighter(myEditor.getProject(), myEditor);
     }
 
     @NotNull
@@ -210,13 +222,11 @@ public final class TextEditorProvider implements FileEditorProvider {
 
     @NotNull
     public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-      TextEditorState state = new TextEditorState();
-      TextEditorImpl.getStateImpl(null, myEditor, state, level);
-      return state;
+      return getStateImpl(null, myEditor, level);
     }
 
     public void setState(@NotNull FileEditorState state) {
-      TextEditorImpl.setStateImpl(null, myEditor, (TextEditorState)state);
+      setStateImpl(null, myEditor, (TextEditorState)state);
     }
 
     public boolean isModified() {
@@ -238,7 +248,7 @@ public final class TextEditorProvider implements FileEditorProvider {
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     public BackgroundEditorHighlighter getBackgroundHighlighter() {
-      return myBackgroundHighlighter;
+      return null;
     }
 
     public FileEditorLocation getCurrentLocation() {

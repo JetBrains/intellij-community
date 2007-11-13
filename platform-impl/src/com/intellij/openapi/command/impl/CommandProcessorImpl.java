@@ -2,10 +2,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessorEx;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.*;
 import com.intellij.openapi.command.undo.DummyComplexUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.psi.impl.source.codeStyle.TooComplexPSIModificationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,8 +114,8 @@ public class CommandProcessorImpl extends CommandProcessorEx {
     if (myCurrentCommand != command) return;
     final boolean failed;
     try {
-      if (throwable instanceof TooComplexPSIModificationException) {
-        final TooComplexPSIModificationException rollback = (TooComplexPSIModificationException)throwable;
+      if (throwable instanceof AbnormalCommandTerminationException) {
+        final AbnormalCommandTerminationException rollback = (AbnormalCommandTerminationException)throwable;
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           throw new RuntimeException(rollback);
         }

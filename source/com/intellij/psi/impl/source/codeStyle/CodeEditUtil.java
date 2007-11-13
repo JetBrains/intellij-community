@@ -9,6 +9,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.command.AbnormalCommandTerminationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -110,7 +111,7 @@ public class CodeEditUtil {
   }
 
   public static void checkForOuters(final ASTNode element) {
-    if (element instanceof OuterLanguageElement && element.getCopyableUserData(OUTER_OK) == null) throw new TooComplexPSIModificationException();
+    if (element instanceof OuterLanguageElement && element.getCopyableUserData(OUTER_OK) == null) throw new AbnormalCommandTerminationException();
     if (element instanceof CompositeElement) {
       TreeElement child = ((CompositeElement)element).firstChild;
       while (child != null) {

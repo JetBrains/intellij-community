@@ -23,7 +23,8 @@
       <implementation-class>com.intellij.openapi.actionSystem.ex.QuickListsManager</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</implementation-class>
+      <interface-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</interface-class>
+      <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.openapi.editor.impl.VisibleEditorsTracker</implementation-class>
