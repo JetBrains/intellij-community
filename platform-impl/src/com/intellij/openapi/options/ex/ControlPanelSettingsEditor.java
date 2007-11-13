@@ -30,6 +30,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -198,9 +199,13 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     return 0;
   }
 
+  @Nullable
   private Configurable getSelectedConfigurable() {
     if (mySelectedColumn == -1 || mySelectedRow == -1 || mySelectedGroup == -1) return null;
-    return myGroups[mySelectedGroup].getConfigurables()[mySelectedColumn + mySelectedRow * ICONS_PER_ROW];
+    final Configurable[] configurables = myGroups[mySelectedGroup].getConfigurables();
+    final int index = mySelectedColumn + mySelectedRow * ICONS_PER_ROW;
+    if (index >= configurables.length) return null;
+    return configurables[index];
   }
 
   private JComponent createActionButton(final Configurable configurable,

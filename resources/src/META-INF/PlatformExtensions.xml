@@ -65,7 +65,7 @@
   <projectService serviceInterface="com.intellij.ide.SelectInManager" serviceImplementation="com.intellij.ide.SelectInManager"/>
 
   <!-- Appearance -->
-  <applicationConfigurable implementation="com.intellij.application.options.EditorOptions"/>
+  <applicationConfigurable implementation="com.intellij.ide.ui.AppearanceConfigurable"/>
 
   <!-- Keymap -->
   <applicationConfigurable implementation="com.intellij.openapi.keymap.impl.ui.KeymapConfigurable"/>

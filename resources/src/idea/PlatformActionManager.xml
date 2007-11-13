@@ -1,5 +1,9 @@
 <component>
   <actions>
+    <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
+    <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="/actions/expandall.png"/>
+    <action id="CollapseAll" class="com.intellij.ide.actions.CollapseAllAction" icon="/actions/collapseall.png"/>
+
     <group id="EditorActions">
       <action id="EditorEscape" class="com.intellij.openapi.editor.actions.EscapeAction"/>
     </group>
@@ -15,7 +19,13 @@
 
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
+        <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="/general/ideOptions.png"/>
         <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
+      </group>
+
+      <group id="WindowMenu" popup="true">
+        <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
+        <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
       </group>
     </group>
   </actions>
