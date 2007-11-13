@@ -873,7 +873,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
 
   @NotNull
   public String getComponentName() {
-    return "ActionManager";
+    return System.getProperty("idea.platform") != null ? "PlatformActionManager" : "ActionManager";
   }
 
   public Comparator<String> getRegistrationOrderComparator() {

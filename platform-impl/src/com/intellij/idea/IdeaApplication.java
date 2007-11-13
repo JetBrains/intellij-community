@@ -49,7 +49,10 @@ public class IdeaApplication {
       new CommandLineApplication(isInternal, false, Main.isHeadless(args), "componentSets/IdeaComponents");
     }
     else {
-      ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, false, false, "idea");
+      @NonNls final String componentsDescriptor = System.getProperty("idea.platform") != null
+                                                  ? "componentSets/PlatformComponents"
+                                                  : "componentSets/IdeaComponents";
+      ApplicationManagerEx.createApplication(componentsDescriptor, isInternal, false, false, false, "idea");
     }
 
     myStarter = getStarter();

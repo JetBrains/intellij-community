@@ -1,0 +1,23 @@
+<component>
+  <actions>
+    <group id="EditorActions">
+      <action id="EditorEscape" class="com.intellij.openapi.editor.actions.EscapeAction"/>
+    </group>
+
+    <group id="MainToolBar" configurable="true">
+    </group>
+
+    <group id="WelcomeScreen.QuickStart">
+    </group>
+
+    <group id="WelcomeScreen.Documentation">
+    </group>
+
+    <group id="MainMenu">
+      <group id="FileMenu" popup="true">
+        <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
+      </group>
+    </group>
+  </actions>
+</component>
+
