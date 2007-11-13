@@ -52,4 +52,6 @@ public abstract class JspManager {
 
   @Nullable
   public abstract XmlNSDescriptor getActionsLibrary(final @NotNull PsiFile context);
+
+  public abstract boolean isJsp_2_1_OrBetter(final @NotNull PsiFile context);
 }
