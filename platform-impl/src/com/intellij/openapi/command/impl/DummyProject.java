@@ -7,8 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.PomModel;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -138,19 +136,6 @@ public class DummyProject extends UserDataHolderBase implements Project {
 
   public boolean isDefault() {
     return false;
-  }
-
-  @NotNull
-  public PomModel getModel() {
-    throw new UnsupportedOperationException("not implemented");
-  }
-
-  public GlobalSearchScope getAllScope() {
-    return null;
-  }
-
-  public GlobalSearchScope getProjectScope() {
-    return null;
   }
 
   public MessageBus getMessageBus() {
