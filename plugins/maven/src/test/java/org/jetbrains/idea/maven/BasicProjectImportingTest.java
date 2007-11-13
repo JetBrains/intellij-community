@@ -287,7 +287,7 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
     assertModules("project");
   }
 
-  public void testProjectUsingParentPropertyInBuildExtensionInChildModule() throws Exception {
+  public void testUsingPropertyInBuildExtensionsOfChildModule() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
