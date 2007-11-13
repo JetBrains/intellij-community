@@ -1,6 +1,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -11,7 +12,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.*;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.ui.SortableColumnModel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -35,7 +35,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements JDOME
   public int INSTALLED_SORT_COLUMN_ORDER = SortableColumnModel.SORT_ASCENDING;
   public int CART_SORT_COLUMN_ORDER = SortableColumnModel.SORT_ASCENDING;
 
-  private SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
+  private SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
   private TableColumnsProportionData myAvailableTableProportions = new TableColumnsProportionData();
   private TableColumnsProportionData myInstalledTableProportions = new TableColumnsProportionData();
 
