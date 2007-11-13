@@ -8,11 +8,10 @@ import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,7 +116,6 @@ public class PsiSuperMethodImplUtil {
         }
       }
     });
-    Set<MethodSignature> clearSupersForSiblingInherited = new THashSet<MethodSignature>();
 
     for (PsiMethod method : aClass.getMethods()) {
       if (!includePrivates && method.hasModifierProperty(PsiModifier.PRIVATE)) continue;
@@ -153,15 +151,12 @@ public class PsiSuperMethodImplUtil {
         HierarchicalMethodSignatureImpl existing = map.get(superSignature);
         if (existing == null) {
           map.put(superSignature, copy(hierarchicalMethodSignature));
-          clearSupersForSiblingInherited.add(superSignature);
         }
         else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
-          if (existing.getMethod().equals(hierarchicalMethodSignature.getMethod())) continue;
+          PsiMethod existingMethod = existing.getMethod();
+          if (existingMethod.equals(hierarchicalMethodSignature.getMethod())) continue;
           for (HierarchicalMethodSignature existingSuper : existing.getSuperSignatures()) {
             if (existingSuper.getMethod().equals(hierarchicalMethodSignature.getMethod())) continue nextSuperSignature;
-          }
-          if (clearSupersForSiblingInherited.remove(superSignature)) {
-            existing.getSuperSignatures().clear();
           }
           existing.addSuperSignature(copy(hierarchicalMethodSignature)); //method inherited from class or first interface from extends list is considered to be overriding subsequent signatures
         }
