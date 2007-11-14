@@ -46,7 +46,7 @@ public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureVie
       children.add(new GroovyMethodStructureViewElement(superMethod, true));
     }
 
-    return children.toArray(new StructureViewTreeElement[children.size()]);
+    return children.toArray(new GroovyStructureViewElement[children.size()]);
   }
 }
 
