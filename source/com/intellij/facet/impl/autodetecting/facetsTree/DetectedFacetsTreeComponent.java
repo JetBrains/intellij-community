@@ -103,9 +103,10 @@ public class DetectedFacetsTreeComponent {
       if (createFacet) {
         //noinspection unchecked
         facet = FacetManagerImpl.createFacet(type, module, facetInfo.getName(), facetInfo.getConfiguration(), underlyingFacet);
-        facetModel.addFacet(facet);
         FacetDetector facetDetector = detectedFacetInfo.getFacetDetector();
-        facetDetector.beforeFacetAdded(facet, rootModel);
+        facetDetector.beforeFacetAdded(facet, facetModel, rootModel);
+        
+        facetModel.addFacet(facet);
         createdFacets.add(Pair.create(facetDetector, facet));
       }
       else {
