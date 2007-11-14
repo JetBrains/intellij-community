@@ -7,8 +7,6 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
@@ -479,23 +477,11 @@ public class EditorWindow {
     setIconAt(index, getFileIcon(file));
   }
 
-  private String getFileTooltipText(final VirtualFile file) {
-    final StringBuilder tooltipText = new StringBuilder();
-    final Module module = ModuleUtil.findModuleForFile(file, getManager().myProject);
-    if (module != null) {
-      tooltipText.append("[");
-      tooltipText.append(module.getName());
-      tooltipText.append("] ");
-    }
-    tooltipText.append(file.getPresentableUrl());
-    return tooltipText.toString();
-  }
-
   protected void updateFileName(VirtualFile file) {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
       setTitleAt(index, file.getPresentableName());
-      setToolTipTextAt(index, getFileTooltipText(file));
+      setToolTipTextAt(index, getManager().getFileTooltipText(file));
     }
   }
 

@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -52,6 +54,18 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
       return new Color(color.getRed(), color.getGreen(), color.getBlue(), WaverGraphicsDecorator.WAVE_ALPHA_KEY);
     }
     return color;
+  }
+
+  public String getFileTooltipText(final VirtualFile file) {
+    final StringBuilder tooltipText = new StringBuilder();
+    final Module module = ModuleUtil.findModuleForFile(file, myProject);
+    if (module != null) {
+      tooltipText.append("[");
+      tooltipText.append(module.getName());
+      tooltipText.append("] ");
+    }
+    tooltipText.append(file.getPresentableUrl());
+    return tooltipText.toString();
   }
 
   /**

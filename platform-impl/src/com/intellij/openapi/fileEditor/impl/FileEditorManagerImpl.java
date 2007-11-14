@@ -134,6 +134,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (statusColor == null) statusColor = Color.BLACK;
     return statusColor;
   }
+  
+  public String getFileTooltipText(VirtualFile file) {
+    return file.getPresentableUrl();
+  }
 
 
   /**
