@@ -1308,6 +1308,7 @@
     </action>
 
     <action id="Graph.ActualZoom" class="com.intellij.openapi.graph.builder.actions.ActualZoomAction" text="Actual size"/>
+    <action id="Graph.ExportToFile" class="com.intellij.openapi.graph.builder.actions.export.ExportToFileAction" text="Export to file..."/>
 
     <action id="Graph.ShowHideGrid" class="com.intellij.openapi.graph.builder.actions.ShowHideGridAction" text="Show/Hide Grid"/>
     <action id="Graph.SnapToGrid" class="com.intellij.openapi.graph.builder.actions.SnapToGridAction" text="Snap to Grid"/>
@@ -1365,6 +1366,7 @@
       <reference ref="Graph.ZoomOut"/>
       <reference ref="Graph.ActualZoom"/>
       <reference ref="Graph.FitContent"/>
+      <reference ref="Graph.ExportToFile"/>
 
       <separator/>
       <reference ref="Graph.Delete"/>
