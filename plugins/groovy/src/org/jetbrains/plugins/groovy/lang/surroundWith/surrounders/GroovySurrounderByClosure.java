@@ -65,7 +65,7 @@ public class GroovySurrounderByClosure extends GroovyManyStatementsSurrounder {
         final GroovyResolveResult newResult = ref.advancedResolve();
         final PsiElement oldElement = oldResult.getElement();
         final PsiElement newElement = newResult.getElement();
-        if (oldElement != newElement) {
+        if (oldElement != newElement || oldResult.getCurrentFileResolveContext() != newResult.getCurrentFileResolveContext()) {
           final GrReferenceExpression qualifier = GroovyElementFactory.getInstance(ref.getProject()).createReferenceExpressionFromText("owner");
           ref.setQualifierExpression(qualifier);
         }

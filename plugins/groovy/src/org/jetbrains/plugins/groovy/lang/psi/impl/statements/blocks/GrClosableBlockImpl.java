@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
  * @author ilyas
@@ -57,18 +58,23 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
+    if (processor instanceof ResolverProcessor) ((ResolverProcessor) processor).setCurrentFileResolveContext(this);
+    try {
+      if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
 
-    for (final GrParameter parameter : getParameters()) {
-      if (!ResolveUtil.processElement(processor, parameter)) return false;
+      for (final GrParameter parameter : getParameters()) {
+        if (!ResolveUtil.processElement(processor, parameter)) return false;
+      }
+
+      if (!ResolveUtil.processElement(processor, getOwner())) return false;
+
+      final PsiClass closureClass = getManager().findClass(GROOVY_LANG_CLOSURE, getResolveScope());
+      if (closureClass != null && !closureClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
+
+      return true;
+    } finally {
+      if (processor instanceof ResolverProcessor) ((ResolverProcessor) processor).setCurrentFileResolveContext(null);
     }
-
-    if (!ResolveUtil.processElement(processor, getOwner())) return false;
-
-    final PsiClass closureClass = getManager().findClass(GROOVY_LANG_CLOSURE, getResolveScope());
-    if (closureClass != null && !closureClass.processDeclarations(processor, substitutor, lastParent, place)) return false;
-
-    return true;
   }
 
   public String toString() {
