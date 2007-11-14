@@ -14,8 +14,8 @@ int yyy = xxx + p</selection>
 System.out.println(yyy);
 -----
 input:
-jjj
-xxx
 p
+xxx
+jjj
 output:
 yyy

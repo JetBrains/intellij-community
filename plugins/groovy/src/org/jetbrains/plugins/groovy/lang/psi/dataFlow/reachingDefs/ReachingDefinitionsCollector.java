@@ -46,8 +46,8 @@ public class ReachingDefinitionsCollector {
     TIntHashSet fragmentReads = getFragmentReads(first, last, flow);
     TIntHashSet reachableFromFragmentReads = getReachable(fragmentReads, flow);
 
-    final Set<String> inames = new HashSet<String>();
-    final Set<String> onames = new HashSet<String>();
+    final Set<String> inames = new LinkedHashSet<String>();
+    final Set<String> onames = new LinkedHashSet<String>();
 
     addNames(fragmentReads, inames, flow, dfaResult, first, last, false);
     addNames(reachableFromFragmentReads, onames, flow, dfaResult, first, last, true);
