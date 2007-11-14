@@ -54,15 +54,15 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
 
     mavenProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
-        final MavenId projectId = node.getId();
+        final MavenId id = node.getId();
         final String name =
-          node.getLinkedModule() != null ? node.getLinkedModule().getName() : generateModuleName(projectId, duplicateNames);
+          node.getLinkedModule() != null ? node.getLinkedModule().getName() : generateModuleName(id, duplicateNames);
 
-        projectIdToModuleName.put(projectId, name);
+        projectIdToModuleName.put(id, name);
 
         projectToModuleName.put(node, name);
 
-        libraryNameToModuleName.put(getLibraryName(projectId), name);
+        libraryNameToModuleName.put(getLibraryName(id), name);
 
         Set<MavenProjectModel.Node> projects = nameToProject.get(name);
         if (projects == null) {
@@ -151,7 +151,8 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
 
   public String getModuleName(MavenId id) {
     final String moduleName = projectIdToModuleName.get(id);
-    return nameToModule.get(moduleName) != null || nameToProject.get(moduleName) != null ? moduleName : null;
+    return nameToModule.get(moduleName) != null
+           || nameToProject.get(moduleName) != null ? moduleName : null;
   }
 
   public Collection<MavenId> getMappedToModules() {

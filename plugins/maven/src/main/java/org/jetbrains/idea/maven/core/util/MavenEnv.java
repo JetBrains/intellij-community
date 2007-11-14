@@ -148,11 +148,12 @@ public class MavenEnv {
   }
 
   @NotNull
-  public static MavenEmbedder createEmbedder(final String mavenHome, final String userSettings, ClassLoader classLoader)
+  public static MavenEmbedder createEmbedder(String mavenHome, File localRepo, String userSettings, ClassLoader classLoader)
     throws MavenEmbedderException {
 
     Configuration configuration = new DefaultConfiguration();
 
+    configuration.setLocalRepository(localRepo);
     configuration.setMavenEmbedderLogger(new MavenEmbedderConsoleLogger());
 
     final File userSettingsFile = resolveUserSettingsFile(userSettings);

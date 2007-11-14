@@ -9,7 +9,7 @@ public class ContentRootsImportingTest extends ProjectImportingTestCase {
                   "<version>1</version>");
 
     assertModules("project");
-    assertContentRoots("project", root.getPath());
+    assertContentRoots("project", getProjectPath());
 
     assertSources("project", "src/main/java", "src/main/resources");
     assertTestSources("project", "src/test/java", "src/test/resources");
@@ -34,7 +34,7 @@ public class ContentRootsImportingTest extends ProjectImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertContentRoots("project", root.getPath());
+    assertContentRoots("project", getProjectPath());
 
     assertSources("project", "src", "res1", "res2");
     assertTestSources("project", "test", "testRes1", "testRes2");
@@ -286,8 +286,8 @@ public class ContentRootsImportingTest extends ProjectImportingTestCase {
 
     assertExcludes("project", "target");
     assertModuleOutput("project",
-                       root.getPath() + "/target/classes",
-                       root.getPath() + "/target/test-classes");
+                       getProjectPath() + "/target/classes",
+                       getProjectPath() + "/target/test-classes");
   }
 
   public void testExcludingOutputDirectoriesIfProjectOutputIsUsed() throws IOException {
@@ -317,8 +317,8 @@ public class ContentRootsImportingTest extends ProjectImportingTestCase {
 
     assertExcludes("project", "targetCustom");
     assertModuleOutput("project",
-                       root.getPath() + "/outputCustom",
-                       root.getPath() + "/testCustom");
+                       getProjectPath() + "/outputCustom",
+                       getProjectPath() + "/testCustom");
   }
 
   public void testOutputDirsOutsideOfContentRoot() throws IOException {
@@ -332,9 +332,9 @@ public class ContentRootsImportingTest extends ProjectImportingTestCase {
                   "  <testOutputDirectory>../target/test-classes</testOutputDirectory>" +
                   "</build>");
 
-    String parentPath = root.getParent().getPath();
-    assertContentRoots("project", root.getPath(), parentPath + "/target");
-    assertContentRootExcludes("project", root.getPath());
+    String parentPath = getParentPath();
+    assertContentRoots("project", getProjectPath(), parentPath + "/target");
+    assertContentRootExcludes("project", getProjectPath());
     assertContentRootExcludes("project", parentPath + "/target", "");
 
     assertModuleOutput("project",

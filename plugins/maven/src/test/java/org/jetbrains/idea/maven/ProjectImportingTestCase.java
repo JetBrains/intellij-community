@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
@@ -26,14 +27,18 @@ import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
 public abstract class ProjectImportingTestCase extends IdeaTestCase {
-  protected VirtualFile root;
-  private VirtualFile projectPom;
-  private List<VirtualFile> poms = new ArrayList<VirtualFile>();
+  private File dir;
+  private File repoDir;
 
+  private VirtualFile projectRoot;
+  private VirtualFile projectPom;
+
+  private List<VirtualFile> poms = new ArrayList<VirtualFile>();
   protected MavenImporterPreferences prefs;
   protected MavenProjectModel projectModel;
 
@@ -43,25 +48,48 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          File dir = createTempDirectory();
-          root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+          init();
         }
-        catch (IOException e) {
+        catch (Exception e) {
           throw new RuntimeException(e);
         }
       }
     });
   }
 
-  @Override
-  protected void setUpProject() throws Exception {
-    super.setUpProject();
+  private void init() throws Exception {
+    initDirs();
+    configMaven();
+  }
+
+  private void initDirs() throws IOException {
+    dir = createTempDirectory();
+
+    repoDir = new File(dir, "local");
+    repoDir.mkdirs();
+
+    File projectDir = new File(dir, "project");
+    projectDir.mkdirs();
+    projectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
+  }
+
+  private void configMaven() {
+    myProject.getComponent(MavenCore.class).getState().setLocalRepository(repoDir.getPath());
+
     MavenWorkspacePreferencesComponent c = myProject.getComponent(MavenWorkspacePreferencesComponent.class);
     prefs = c.getState().myImporterPreferences;
   }
 
   @Override
   protected void setUpModule() {
+  }
+
+  protected String getProjectPath() {
+    return projectRoot.getPath();
+  }
+
+  protected String getParentPath() {
+    return projectRoot.getParent().getPath();
   }
 
   protected PomTreeStructure.RootNode createMavenTree() {
@@ -168,11 +196,11 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
     assertTrue(m.isCompilerOutputPathInherited());
   }
 
-  protected void assertModuleLibrary(String moduleName, String libName, String path) {
+  protected void assertModuleLibDep(String moduleName, String depName, String path) {
     LibraryOrderEntry lib = null;
 
     for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
-      if (e instanceof LibraryOrderEntry && e.getPresentableName().equals(libName)) {
+      if (e instanceof LibraryOrderEntry && e.getPresentableName().equals(depName)) {
         lib = (LibraryOrderEntry)e;
       }
     }
@@ -182,16 +210,24 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
     assertEquals(path, urls[0]);
   }
 
-  protected void assertModuleLibraries(String moduleName, String... expectedLibraries) {
+  protected void assertModuleLibDeps(String moduleName, String... expectedDeps) {
+    assertModuleDeps(moduleName, LibraryOrderEntry.class, expectedDeps);
+  }
+
+  protected void assertModuleModuleDeps(String moduleName, String... expectedDeps) {
+    assertModuleDeps(moduleName, ModuleOrderEntry.class, expectedDeps);
+  }
+
+  private void assertModuleDeps(String moduleName, Class clazz, String... expectedDeps) {
     List<String> actual = new ArrayList<String>();
 
     for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
-      if (e instanceof LibraryOrderEntry) {
+      if (clazz.isInstance(e)) {
         actual.add(e.getPresentableName());
       }
     }
 
-    assertElementsAreEqual(expectedLibraries, actual);
+    assertElementsAreEqual(expectedDeps, actual);
   }
 
   protected <T, U> void assertElementsAreEqual(T[] expected, Collection<U> actual) {
@@ -236,11 +272,11 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
   }
 
   protected void createProjectPom(String xml) throws IOException {
-    projectPom = createPomFile(root, xml);
+    projectPom = createPomFile(projectRoot, xml);
   }
 
   protected void createModulePom(String relativePath, String xml) throws IOException {
-    File externalDir = new File(root.getPath(), relativePath);
+    File externalDir = new File(getProjectPath(), relativePath);
     externalDir.mkdirs();
 
     VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalDir);
@@ -279,5 +315,42 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
     p.resolve(myProject, profiles);
     p.commit(myProject, profiles, false);
     projectModel = p.getMavenProjectModel();
+  }
+
+  protected void putArtefactInLocalRepository(String groupId, String artefactId, String version, String timestamp, String build) {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata>" +
+                 "  <groupId>%s</groupId>" +
+                 "  <artifactId>%s</artifactId>" +
+                 "  <version>%s</version>" +
+                 "  <versioning>" +
+                 "    <snapshot>" +
+                 "      <timestamp>%s</timestamp>" +
+                 "      <buildNumber>%s</buildNumber>" +
+                 "    </snapshot>" +
+                 "    <lastUpdated>00000000000000</lastUpdated>" +
+                 "  </versioning>" +
+                 "</metadata>";
+
+    String formatted = String.format(xml, groupId, artefactId, version, timestamp, build);
+    String name = groupId + "/" + artefactId + "/" + version + "/maven-metadata-internal.xml";
+
+    writeFile(new File(repoDir, name), formatted);
+  }
+
+  private void writeFile(File f, String string) {
+    try {
+      f.getParentFile().mkdirs();
+      f.createNewFile();
+      FileWriter w = new FileWriter(f);
+      try {
+        w.write(string);
+      }
+      finally {
+        w.close();
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

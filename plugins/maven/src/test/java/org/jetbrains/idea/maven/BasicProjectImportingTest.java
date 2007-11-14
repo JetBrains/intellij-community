@@ -59,9 +59,9 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                   "</dependencies>");
 
     assertModules("project");
-    assertModuleLibrary("project",
-                        "direct-system-dependency:direct-system-dependency:1.0",
-                        "jar://" + ideaJDK + "/lib/tools.jar!/");
+    assertModuleLibDep("project",
+                       "direct-system-dependency:direct-system-dependency:1.0",
+                       "jar://" + ideaJDK + "/lib/tools.jar!/");
   }
 
   public void testModulesWithSlashesRegularAndBack() throws IOException {
@@ -185,7 +185,7 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                   "</dependencies>");
 
     assertModules("project");
-    assertModuleLibraries("project", "group:artifact:1:tests");
+    assertModuleLibDeps("project", "group:artifact:1:tests");
   }
 
   public void testDependencyWithClassifier() throws IOException {
@@ -202,7 +202,7 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
     assertModules("project");
-    assertModuleLibraries("project", "group:artifact:1:bar");
+    assertModuleLibDeps("project", "group:artifact:1:bar");
   }
 
   public void testLanguageLevel() throws Exception {
@@ -319,8 +319,76 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                          "</build>");
 
     importProject();
-    
+
     // should fail when bug is fixed in embedder
     assertModules();
+  }
+
+  public void testSnapshotDependencyToLibrary() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<repositories>" +
+                     "  <repository>" +
+                     "    <id>internal</id>" +
+                     "    <url>file://" + getParentPath() + "</url>" +
+                     "  </repository>" +
+                     "</repositories>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>someGroup</groupId>" +
+                     "    <artifactId>someArtifact</artifactId>" +
+                     "    <version>1-SNAPSHOT</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    putArtefactInLocalRepository("someGroup", "someArtifact", "1-SNAPSHOT", "20000101120000", "1");
+    importProject();
+
+    assertModules("project");
+    assertModuleLibDeps("project", "someGroup:someArtifact:1-20000101120000-1");
+  }
+
+  public void testSnapshotDependencyToModule() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<repositories>" +
+                          "  <repository>" +
+                          "    <id>internal</id>" +
+                          "    <url>file://" + getParentPath() + "</url>" +
+                          "  </repository>" +
+                          "</repositories>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1-SNAPSHOT</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1-SNAPSHOT</version>");
+
+    putArtefactInLocalRepository("test", "m2", "1-SNAPSHOT", "20000101120000", "2");
+    importProject();
+
+    assertModules("project", "m1", "m2");
+    assertModuleModuleDeps("m1", "m2");
   }
 }

@@ -110,7 +110,7 @@ public class MavenToIdeaConverter {
     rootModel.init(mavenProject.getFile().getParent());
     configFolders(rootModel, mavenProject);
     configOutputDirs(rootModel, mavenProject);
-    createDependencies(rootModel, mavenProject);
+    configDependencies(rootModel, mavenProject);
     rootModel.setLanguageLevel(getLanguageLevel(getLanguageLevel(mavenProject)));
     rootModel.commit();
   }
@@ -247,13 +247,14 @@ public class MavenToIdeaConverter {
     rootModel.excludeRoot(build.getDirectory());
   }
 
-  private void createDependencies(RootModelAdapter rootModel, MavenProject mavenProject) {
+  private void configDependencies(RootModelAdapter rootModel, MavenProject mavenProject) {
     for (Artifact artifact : extractDependencies(mavenProject)) {
       MavenId id = new MavenId(artifact);
       if (myIgnorePattern.matcher(id.toString()).matches()) {
         continue;
       }
-      final String moduleName = myMapping.getModuleName(id);
+
+      String moduleName = findModuleFor(artifact);
       if (moduleName != null) {
         rootModel.createModuleDependency(moduleName);
       }
@@ -263,6 +264,13 @@ public class MavenToIdeaConverter {
                                       getUrl(artifactPath, JAVADOC_CLASSIFIER));
       }
     }
+  }
+
+  private String findModuleFor(Artifact artifact) {
+    // we should find module by base version, since it might be X-SNAPSHOT
+    // which is resolved in X-timestamp-build. But mapping contains base artefact versions.
+    MavenId baseVersionId = new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getBaseVersion());
+    return myMapping.getModuleName(baseVersionId);
   }
 
   private List<Artifact> extractDependencies(MavenProject mavenProject) {

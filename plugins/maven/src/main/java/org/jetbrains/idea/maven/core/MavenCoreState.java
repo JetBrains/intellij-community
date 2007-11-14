@@ -182,6 +182,9 @@ public class MavenCoreState implements Cloneable {
   }
 
   public MavenEmbedder createEmbedder () throws MavenEmbedderException {
-    return MavenEnv.createEmbedder(getMavenHome(), getMavenSettingsFile(), getClass().getClassLoader());
+    return MavenEnv.createEmbedder(getMavenHome(),
+                                   getEffectiveLocalRepository(),
+                                   getMavenSettingsFile(),
+                                   getClass().getClassLoader());
   }
 }
