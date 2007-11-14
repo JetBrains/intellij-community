@@ -45,20 +45,16 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
   private final Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
   private ApplicationListener myApplicationListener = new ApplicationAdapter() {
-    private boolean myInWriteAction = false;
-
     public void writeActionStarted(final Object action) {
-      assert !myInWriteAction;
       final Project project = CommandProcessor.getInstance().getCurrentCommandProject();
       if(project == myProject) {
-        myInWriteAction = true;
         myPostponedCounter++;
       }
     }
 
     public void writeActionFinished(final Object action) {
-      if (myInWriteAction) {
-        myInWriteAction = false;
+      final Project project = CommandProcessor.getInstance().getCurrentCommandProject();
+      if(project == myProject) {
         decrementPostponedCounter();
       }
     }
