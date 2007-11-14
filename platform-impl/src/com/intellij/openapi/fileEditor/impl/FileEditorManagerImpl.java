@@ -85,13 +85,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    */
   private final MyUISettingsListener myUISettingsListener;
 
-  /**
-   * Updates icons for open files when project roots change
-   */
-  private final MyPsiTreeChangeListener myPsiTreeChangeListener;
-
-  private final WolfTheProblemSolver.ProblemListener myProblemListener;
-
   final EditorsSplitters mySplitters;
   private boolean myDoNotTransferFocus = false;
 
@@ -110,8 +103,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     myEditorPropertyChangeListener = new MyEditorPropertyChangeListener();
     myVirtualFileListener = new MyVirtualFileListener();
     myUISettingsListener = new MyUISettingsListener();
-    myPsiTreeChangeListener = new MyPsiTreeChangeListener();
-    myProblemListener = new MyProblemListener();
   }
 
   //-------------------------------------------------------------------------------
@@ -162,7 +153,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * Updates tab icon for the specified <code>file</code>. The <code>file</code>
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
-  private void updateFileIcon(final VirtualFile file) {
+  public void updateFileIcon(final VirtualFile file) {
     mySplitters.updateFileIcon(file);
   }
 
@@ -950,8 +941,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     myConnection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
     UISettings.getInstance().addUISettingsListener(myUISettingsListener);
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
-    WolfTheProblemSolver.getInstance(getProject()).addProblemListener(myProblemListener);
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
@@ -1284,51 +1273,6 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     }
   }
 
-  /**
-   * Updates attribute of open files when roots change
-   */
-  private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-    public void propertyChanged(final PsiTreeChangeEvent e) {
-      if (PsiTreeChangeEvent.PROP_ROOTS.equals(e.getPropertyName())) {
-        assertThread();
-        final VirtualFile[] openFiles = getOpenFiles();
-        for (int i = openFiles.length - 1; i >= 0; i--) {
-          final VirtualFile file = openFiles[i];
-          LOG.assertTrue(file != null);
-          updateFileIcon(file);
-        }
-      }
-    }
-
-    public void childAdded(PsiTreeChangeEvent event) {
-      doChange(event);
-    }
-
-    public void childRemoved(PsiTreeChangeEvent event) {
-      doChange(event);
-    }
-
-    public void childReplaced(PsiTreeChangeEvent event) {
-      doChange(event);
-    }
-
-    public void childMoved(PsiTreeChangeEvent event) {
-      doChange(event);
-    }
-
-    public void childrenChanged(PsiTreeChangeEvent event) {
-      doChange(event);
-    }
-
-    private void doChange(final PsiTreeChangeEvent event) {
-      final PsiFile psiFile = event.getFile();
-      final VirtualFile currentFile = getCurrentFile();
-      if (currentFile != null && psiFile != null && psiFile.getVirtualFile() == currentFile) {
-        updateFileIcon(currentFile);
-      }
-    }
-  }
-
   public void closeAllFiles() {
     final VirtualFile[] openFiles = mySplitters.getOpenFiles();
     for (VirtualFile openFile : openFiles) {
@@ -1351,30 +1295,14 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     return getOpenFiles();
   }
 
-  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
-
-    public void problemsAppeared(final VirtualFile file) {
-      updateFile(file);
-    }
-
-    public void problemsDisappeared(VirtualFile file) {
-      updateFile(file);
-    }
-
-    public void problemsChanged(VirtualFile file) {
-      updateFile(file);
-    }
-
-    private void updateFile(final VirtualFile file) {
-      myQueue.queue(new Update(file) {
-        public void run() {
-          if (isFileOpen(file)) {
-            updateFileIcon(file);
-            updateFileColor(file);
-          }
+  public void queueUpdateFile(final VirtualFile file) {
+    myQueue.queue(new Update(file) {
+      public void run() {
+        if (isFileOpen(file)) {
+          updateFileIcon(file);
+          updateFileColor(file);
         }
-      });
-    }
-
+      }
+    });
   }
 }
