@@ -36,7 +36,6 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -56,7 +55,7 @@ import java.util.List;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable {
+public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<LocalFileSystem.WatchRequest> WATCH_REQUEST_KEY = Key.create("WATCH_REQUEST_KEY");
 
@@ -91,9 +90,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   private List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
   private MessageBusConnection myConnection;
-  private Function<VirtualFile, Color> myExtraColorProvider = null;
 
-  FileEditorManagerImpl(final Project project) {
+  public FileEditorManagerImpl(final Project project) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
     myProject = project;
     myPanels = new JPanel(new BorderLayout());
@@ -126,24 +124,14 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   //-------------------------------------------------------
 
-  public void setExtraColorProvider(final Function<VirtualFile, Color> extraColorProvider) {
-    myExtraColorProvider = extraColorProvider;
-  }
-
   /**
    * @return color of the <code>file</code> which corresponds to the
    *         file's status
    */
-  Color getFileColor(@NotNull final VirtualFile file) {
+  public Color getFileColor(@NotNull final VirtualFile file) {
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : Color.BLACK;
     if (statusColor == null) statusColor = Color.BLACK;
-    if (myExtraColorProvider != null) {
-      final Color color = myExtraColorProvider.fun(file);
-      if (color != null) {
-        return color;
-      }
-    }
     return statusColor;
   }
 

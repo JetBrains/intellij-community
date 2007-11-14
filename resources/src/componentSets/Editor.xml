@@ -37,13 +37,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.testFramework.TestEditorManagerImpl</headless-implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.fileEditor.impl.EditorHistoryManager</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>

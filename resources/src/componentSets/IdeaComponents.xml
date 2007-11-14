@@ -47,5 +47,15 @@
       <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider</implementation-class>
     </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
+      <implementation-class>com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl</implementation-class>
+      <headless-implementation-class>com.intellij.testFramework.TestEditorManagerImpl</headless-implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+  </project-components>
 </components>
   

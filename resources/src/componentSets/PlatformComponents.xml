@@ -27,4 +27,14 @@
     </component>
   </application-components>
 
+  <project-components>
+    <component>
+      <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
+      <implementation-class>com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl</implementation-class>
+      <headless-implementation-class>com.intellij.testFramework.TestEditorManagerImpl</headless-implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+  </project-components>
+
 </components>
