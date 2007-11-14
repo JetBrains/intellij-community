@@ -34,4 +34,6 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement,
   //not caching!
   @NotNull
   GroovyResolveResult[] getSameNameVariants();
+
+  void setQualifierExpression(GrReferenceExpression qualifierExpression);
 }

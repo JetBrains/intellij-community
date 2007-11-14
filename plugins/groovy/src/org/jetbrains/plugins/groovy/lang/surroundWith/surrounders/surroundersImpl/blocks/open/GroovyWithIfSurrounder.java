@@ -4,9 +4,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +17,11 @@ import org.jetbrains.annotations.NotNull;
  * Date: 23.05.2007
  */
 public class GroovyWithIfSurrounder extends GroovyOpenBlockSurrounder {
-  protected String getElementsTemplateAsString(PsiElement[] elements) {
-    return "if (a) { \n" + getListElementsTemplateAsString(elements) + "}";
+  protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
+    GroovyElementFactory factory = GroovyElementFactory.getInstance(elements[0].getProject());
+    GrIfStatement ifStatement = (GrIfStatement) factory.createTopElementFromText("if (a) {\n}");
+    addStatements(((GrBlockStatement)ifStatement.getThenBranch()).getBlock(), elements);
+    return ifStatement;
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {

@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersIm
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
@@ -15,32 +16,12 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * Date: 22.05.2007
  */
 public abstract class GroovyWithTrySurrounder extends GroovyOpenBlockSurrounder {
-  protected String getElementsTemplateAsString(PsiElement[] nodes) {
-    return "try { \n" + getListElementsTemplateAsString(nodes) + "}";
-  }
-
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrTryCatchStatement;
     int endOffset = element.getTextRange().getEndOffset();
     GrTryCatchStatement tryCatchStatement = (GrTryCatchStatement) element;
 
-    GrFinallyClause finallyClause = tryCatchStatement.getFinallyClause();
-
-    if (finallyClause != null) {
-      GrOpenBlock block = finallyClause.getBody();
-      assert block != null;
-      GrStatement[] statements = block.getStatements();
-      assert statements.length > 0;
-
-      GrStatement grStatement = statements[0];
-      assert grStatement != null;
-
-      endOffset = grStatement.getTextRange().getStartOffset();
-      grStatement.getParent().getNode().removeChild(grStatement.getNode());
-    }
-
     GrCatchClause[] catchClauses = tryCatchStatement.getCatchClauses();
-
     if (catchClauses != null && catchClauses.length > 0) {
       GrParameter parameter = catchClauses[0].getParameter();
       if (parameter == null) {
@@ -50,6 +31,14 @@ public abstract class GroovyWithTrySurrounder extends GroovyOpenBlockSurrounder 
       } else {
         endOffset = parameter.getTextRange().getStartOffset();
         parameter.getParent().getNode().removeChild(parameter.getNode());
+      }
+    } else {
+      GrOpenBlock block = tryCatchStatement.getTryBlock();
+      if (block != null) {
+        GrStatement[] statements = block.getStatements();
+        if (statements.length > 0) {
+          endOffset = statements[0].getTextRange().getStartOffset();
+        }
       }
     }
 

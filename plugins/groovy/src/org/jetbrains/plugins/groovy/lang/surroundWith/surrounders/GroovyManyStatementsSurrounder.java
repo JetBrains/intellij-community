@@ -2,16 +2,17 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.surroundWith.Surrounder;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -57,7 +58,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
   public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException {
     if (elements.length == 0) return null;
 
-    GroovyPsiElement newStmt = GroovyElementFactory.getInstance(project).createTopElementFromText(getElementsTemplateAsString(elements));
+    final GroovyPsiElement newStmt = doSurroundElements(elements);
     assert newStmt != null;
 
     PsiElement element1 = elements[0];
@@ -75,10 +76,23 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
       }
     }
 
-    return getSurroundSelectionRange(newStmt);
+    final TextRange range = newStmt.getTextRange();
+    final TextRange selectionRange = getSurroundSelectionRange(newStmt);
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(newStmt.getContainingFile());
+    final RangeMarker marker = document.createRangeMarker(selectionRange);
+    newStmt.getManager().getCodeStyleManager().reformatText(newStmt.getContainingFile(), range.getStartOffset(), range.getEndOffset());
+    return new TextRange(marker.getStartOffset(), marker.getEndOffset());
   }
 
-  protected abstract String getElementsTemplateAsString(PsiElement[] elements);
+  protected void addStatements(GrCodeBlock block, PsiElement[] elements) throws IncorrectOperationException {
+    for (int i = 0; i < elements.length; i++) {
+      PsiElement element = elements[i];
+      final GrStatement statement = (GrStatement) element;
+      block.addStatementBefore((GrStatement) statement.copy(), null);
+    }
+  }
+
+  protected abstract GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException;
 
   protected abstract TextRange getSurroundSelectionRange(GroovyPsiElement element);
 

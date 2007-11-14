@@ -1,6 +1,10 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -12,7 +16,10 @@ public class GroovyWithTryCatchFinallySurrounder extends GroovyWithTryCatchSurro
     return super.getTemplateDescription() + " / finally";
   }
 
-  protected String getElementsTemplateAsString(PsiElement[] nodes) {
-    return super.getElementsTemplateAsString(nodes) + " finally { handler \n }";
+  protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
+    GroovyElementFactory factory = GroovyElementFactory.getInstance(elements[0].getProject());
+    GrTryCatchStatement tryStatement = (GrTryCatchStatement) factory.createTopElementFromText("try {\n} catch(exception e){\n} finally{\n}");
+    addStatements(tryStatement.getTryBlock(), elements);
+    return tryStatement;
   }
 }
