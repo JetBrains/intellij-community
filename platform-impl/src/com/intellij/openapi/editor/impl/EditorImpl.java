@@ -3790,13 +3790,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
                 EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                Transferable backup = clipboard.getContents(this);
-                clipboard.setContents(t, EmptyClipboardOwner.INSTANCE);
+
+                Transferable backup = null;
+                try {
+                  backup = clipboard.getContents(this);
+                  clipboard.setContents(t, EmptyClipboardOwner.INSTANCE);
+                }
+                catch (Exception e) {
+                  LOG.info("Error communicating with system clipboard", e);
+                }
 
                 editor.putUserData(LAST_PASTED_REGION, null);
                 pasteHandler.execute(editor, editor.getDataContext());
                 try {
-                  clipboard.setContents(backup, EmptyClipboardOwner.INSTANCE);
+                  if (backup != null) {
+                    clipboard.setContents(backup, EmptyClipboardOwner.INSTANCE);
+                  }
                 }
                 catch (IllegalStateException e) {
                   LOG.info(e);
