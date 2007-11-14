@@ -585,4 +585,11 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
       processParentWindowMoved();
     }
   }
+
+  public boolean isPersistent() {
+    return false;
+  }
+
+  public void setUiVisible(final boolean visible) {
+  }
 }

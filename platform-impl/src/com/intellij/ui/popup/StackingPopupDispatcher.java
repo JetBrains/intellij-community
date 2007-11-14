@@ -8,6 +8,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.IdePopup;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -20,6 +21,8 @@ import java.util.Stack;
 public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher, IdePopup {
 
   private Stack<JBPopupImpl> myStack = new Stack<JBPopupImpl>();
+  private WeakList<JBPopup> myPersistentPopups = new WeakList<JBPopup>();
+
 
   private static StackingPopupDispatcher ourInstance = new StackingPopupDispatcher();
 
@@ -30,20 +33,39 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
     return StackingPopupDispatcher.ourInstance;
   }
 
-  public static void onPopupShown(JBPopup popup) {
-    ourInstance.myStack.push((JBPopupImpl)popup);
-    if (ApplicationManager.getApplication() != null) {
-      IdeEventQueue.getInstance().getPopupManager().setActivePopup(ourInstance);
+  public static void onPopupShown(JBPopup popup, boolean inStack) {
+    if (inStack) {
+      ourInstance.myStack.push((JBPopupImpl)popup);
+      if (ApplicationManager.getApplication() != null) {
+        IdeEventQueue.getInstance().getPopupManager().setActivePopup(ourInstance);
+      }
+    } else if (popup.isPersistent()) {
+      ourInstance.myPersistentPopups.add(popup);
     }
   }
 
   public static void onPopupHidden(JBPopup popup) {
-    ourInstance.myStack.remove(popup);
+    boolean wasInStack = ourInstance.myStack.remove(popup);
+    ourInstance.myPersistentPopups.remove(popup);
 
-    if (ourInstance.myStack.isEmpty()) {
+    if (wasInStack && ourInstance.myStack.isEmpty()) {
       if (ApplicationManager.getApplication() != null) {
         IdeEventQueue.getInstance().getPopupManager().resetActivePopup();
       }
+    }
+  }
+
+  public static void hidePersistentPopups() {
+    final WeakList<JBPopup> list = ourInstance.myPersistentPopups;
+    for (JBPopup each : list) {
+      each.setUiVisible(false);
+    }
+  }
+
+  public static void restorePersistentPopups() {
+    final WeakList<JBPopup> list = ourInstance.myPersistentPopups;
+    for (JBPopup each : list) {
+      each.setUiVisible(true);
     }
   }
 

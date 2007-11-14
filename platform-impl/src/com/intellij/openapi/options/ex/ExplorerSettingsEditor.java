@@ -176,7 +176,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
     else {
       String displayName = mySelectedConfigurable.getDisplayName();
       setTitle(mySelectedGroup.getDisplayName() + " - " + (displayName != null ? displayName.replace('\n', ' ') : ""));
-      myHelpButton.setEnabled(mySelectedConfigurable.getHelpTopic() != null);
+      if (myHelpButton != null) {
+        myHelpButton.setEnabled(mySelectedConfigurable.getHelpTopic() != null);
+      }
     }
   }
 

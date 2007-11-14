@@ -121,4 +121,8 @@ public interface JBPopup extends Disposable {
 
   void setSize(@NotNull Dimension size);
 
+  boolean isPersistent();
+
+  void setUiVisible(boolean visible);
+
 }

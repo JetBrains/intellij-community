@@ -15,12 +15,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.popup.StackingPopupDispatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,9 +110,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       myWindowManager = (WindowManagerEx)WindowManager.getInstance();
     }
 
-    Window owner = parent instanceof Window
-                   ? (Window)parent
-                   : (Window)SwingUtilities.getAncestorOfClass(Window.class, parent);
+    Window owner = parent instanceof Window ? (Window)parent : (Window)SwingUtilities.getAncestorOfClass(Window.class, parent);
     if (!(owner instanceof Dialog) && !(owner instanceof Frame)) {
       owner = JOptionPane.getRootFrame();
     }
@@ -306,6 +306,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       LaterInvocator.enterModal(myDialog);
     }
 
+    hidePopupsIfNeeded();
+
     try {
       myDialog.show();
     }
@@ -315,6 +317,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         LaterInvocator.leaveModal(myDialog);
       }
     }
+  }
+
+//[kirillk] for now it only deals with the TaskWindow under Mac OS X: modal dialogs are shown behind JBPopup
+//hopefully this whole code will go away
+  private void hidePopupsIfNeeded() {
+    if (!SystemInfo.isMac) return;
+
+    StackingPopupDispatcher.hidePersistentPopups();
+    myDisposeActions.add(new Runnable() {
+      public void run() {
+        StackingPopupDispatcher.restorePersistentPopups();
+      }
+    });
   }
 
   public FocusTrackback getFocusTrackback() {
@@ -402,7 +417,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         return ((DataProvider)wrapper).getData(dataId);
       }
       else if (wrapper instanceof TypeSafeDataProvider) {
-        TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter((TypeSafeDataProvider) wrapper);
+        TypeSafeDataProviderAdapter adapter = new TypeSafeDataProviderAdapter((TypeSafeDataProvider)wrapper);
         return adapter.getData(dataId);
       }
       return null;
@@ -440,8 +455,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       final DialogWrapper dialogWrapper = getDialogWrapper();
 
       pack();
-      setSize((int)(getWidth() * dialogWrapper.getHorizontalStretch()),
-              (int)(getHeight() * dialogWrapper.getVerticalStretch()));
+      setSize((int)(getWidth() * dialogWrapper.getHorizontalStretch()), (int)(getHeight() * dialogWrapper.getVerticalStretch()));
 
       // Restore dialog's size and location
 
@@ -486,7 +500,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                 return wrapper.getPreferredFocusedComponent();
               }
             });
-          } 
+          }
         }
       });
 
@@ -521,7 +535,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           Method method = strategy.getClass().getMethod("dispose");   // added in JDK 1.6 so cannot call directly
           method.invoke(strategy);
         }
-        catch(Exception ex) {
+        catch (Exception ex) {
           // ignore
         }
       }
@@ -542,7 +556,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           field.setAccessible(true);
           field.set(this, null);
         }
-        catch (Exception e) {}
+        catch (Exception e) {
+        }
       }
     }
 
@@ -579,7 +594,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       public void saveSize() {
-        if (myDimensionServiceKey != null && myInitialSize != null && myOpened) { // myInitialSize can be null only if dialog is disposed before first showing
+        if (myDimensionServiceKey != null &&
+            myInitialSize != null &&
+            myOpened) { // myInitialSize can be null only if dialog is disposed before first showing
           final Project projectGuess = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(MyDialog.this));
 
           // Save location
@@ -652,7 +669,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     private class MyComponentListener extends ComponentAdapter {
       @SuppressWarnings({"RefusedBequest"})
-        public void componentResized(ComponentEvent e) {
+      public void componentResized(ComponentEvent e) {
         final JRootPane pane = getRootPane();
         if (pane == null) return;
         final Dimension minSize = pane.getMinimumSize();

@@ -743,5 +743,16 @@ public class UIUtil {
       }
     }
   }
+
+  public static @Nullable Component findUltimateParent(Component c) {
+    if (c == null) return null;
+
+    Component eachParent = c;
+    while (true) {
+      if (eachParent.getParent() == null) return eachParent;
+      eachParent = eachParent.getParent();
+    }
+  }
+
 }
 
