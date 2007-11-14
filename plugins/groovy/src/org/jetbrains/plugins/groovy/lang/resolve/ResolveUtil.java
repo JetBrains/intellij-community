@@ -21,8 +21,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspClass;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -34,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 
@@ -51,14 +49,6 @@ public class ResolveUtil {
       if (!run.processDeclarations(processor, PsiSubstitutor.EMPTY, lastParent, place)) return false;
       lastParent = run;
       run = run.getParent();
-
-      // Little hack for GSP declaration holders
-      if (run instanceof GrGspDeclarationHolder) {
-        while (run != null && !(run instanceof GrGspClass)) {
-          run = run.getParent();
-          lastParent = run;
-        }
-      }
     }
 
     return true;
