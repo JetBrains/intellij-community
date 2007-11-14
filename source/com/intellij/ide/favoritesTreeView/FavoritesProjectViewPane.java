@@ -133,7 +133,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     if (!list.equals(getSubId())) {
       ProjectView.getInstance(myProject).changeView(ID, list);
     }
-    myViewPanel.selectElement(originalElement, virtualFile);
+    myViewPanel.selectElement(originalElement, virtualFile, requestFocus);
   }
 
   public int getWeight() {

@@ -2,7 +2,10 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.*;
+import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
@@ -143,8 +146,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     myTreePopupHandler = PopupHandler.installPopupHandler(myTree, group, ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
   }
 
-  public void selectElement(final Object selector, final VirtualFile file) {
-    myBuilder.select(selector, file, true);
+  public void selectElement(final Object selector, final VirtualFile file, final boolean requestFocus) {
+    myBuilder.select(selector, file, requestFocus);
   }
 
   public void dispose() {
