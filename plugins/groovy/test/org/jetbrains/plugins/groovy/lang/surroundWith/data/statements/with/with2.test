@@ -1,7 +1,7 @@
-a - b
-a - b
+<selection>a - b
+a - b<selection>
 -----
-with () {
-  a - b
-  a - b
+with ( ) {
+a - b
+a - b
 }

@@ -1,4 +1,4 @@
-a = b
+<selection>a = b<selection>
 -----
 if () {
   a = b
