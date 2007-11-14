@@ -1,15 +1,10 @@
-<component>
+<component xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="PlatformActionManager.xml" xpointer="xpointer(/component/*)"/>
   <actions>
-    <action id="CaptureMemorySnapShot" class="com.intellij.util.CaptureMemorySnapshotAction" icon="/actions/profileMemory.png"/>
-    <action id="CaptureCPUUsageData" class="com.intellij.util.CaptureCPUUsageDataAction" icon="/actions/profuleCPU.png"/>
-    <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
+
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationAction"/>
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
-    <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
     <action id="TogglePopupHints" class="com.intellij.ide.actions.TogglePopupHintsAction"/>
-    <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
-    <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
-    <action id="CloseWindow" class="com.intellij.ide.actions.CloseWindowAction"/>
     <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
     <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="/actions/menu-find.png"/>
 
@@ -18,7 +13,6 @@
       icon="/_cvs/showAsTree.png"/>
 
     <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
-    <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
 
     <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesPopupAction"/>
     <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesActionGroup" popup="true"/>
@@ -32,9 +26,8 @@
     <group id="RunContextPopupGroup" popup="false">
       <reference ref="RunContextGroup"/>
     </group>
-    <!--Editor -->
-    <group id="EditorActions">
 
+    <group id="CodeInsightEditorActions">
       <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction"/>
       <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemReplaceAction"/>
       <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemCompleteStatementAction"/>
@@ -45,83 +38,17 @@
       <action id="NextParameter" class="com.intellij.codeInsight.hint.actions.NextParameterAction"/>
       <action id="PrevParameter" class="com.intellij.codeInsight.hint.actions.PrevParameterAction"/>
 
-      <action id="EditorPageUp" class="com.intellij.openapi.editor.actions.PageUpAction"/>
-      <action id="EditorPageDown" class="com.intellij.openapi.editor.actions.PageDownAction"/>
-      <action id="EditorPageUpWithSelection" class="com.intellij.openapi.editor.actions.PageUpWithSelectionAction"/>
-      <action id="EditorPageDownWithSelection" class="com.intellij.openapi.editor.actions.PageDownWithSelectionAction"/>
-      <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction"/>
-      <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction"/>
-      <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction"/>
-      <action id="EditorPasteSimple" class="com.intellij.openapi.editor.actions.SimplePasteAction"/>
-      <action id="EditorPasteFromX11" class="com.intellij.openapi.editor.actions.PasteFromX11Action"/>
-      <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction"/>
-      <action id="EditorBackSpace" class="com.intellij.openapi.editor.actions.BackspaceAction"/>
-      <action id="EditorMoveToPageTop" class="com.intellij.openapi.editor.actions.PageTopAction"/>
-      <action id="EditorMoveToPageBottom" class="com.intellij.openapi.editor.actions.PageBottomAction"/>
-      <action id="EditorMoveToPageTopWithSelection" class="com.intellij.openapi.editor.actions.PageTopWithSelectionAction"/>
-      <action id="EditorMoveToPageBottomWithSelection" class="com.intellij.openapi.editor.actions.PageBottomWithSelectionAction"/>
-      <action id="EditorEnter" class="com.intellij.openapi.editor.actions.EnterAction"/>
-      <action id="EditorEscape" class="com.intellij.openapi.editor.actions.EscapeAction"/>
-      <action id="EditorUp" class="com.intellij.openapi.editor.actions.MoveCaretUpAction"/>
-      <action id="EditorDown" class="com.intellij.openapi.editor.actions.MoveCaretDownAction"/>
-      <action id="EditorLeft" class="com.intellij.openapi.editor.actions.MoveCaretLeftAction"/>
-      <action id="EditorRight" class="com.intellij.openapi.editor.actions.MoveCaretRightAction"/>
-      <action id="EditorUpWithSelection" class="com.intellij.openapi.editor.actions.MoveCaretUpWithSelectionAction"/>
-      <action id="EditorDownWithSelection" class="com.intellij.openapi.editor.actions.MoveCaretDownWithSelectionAction"/>
-      <action id="EditorLeftWithSelection" class="com.intellij.openapi.editor.actions.MoveCaretLeftWithSelectionAction"/>
-      <action id="EditorRightWithSelection" class="com.intellij.openapi.editor.actions.MoveCaretRightWithSelectionAction"/>
-      <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.IndentSelectionAction"/>
-      <action id="EditorUnindentSelection" class="com.intellij.openapi.editor.actions.UnindentSelectionAction"/>
-      <action id="EditorTab" class="com.intellij.openapi.editor.actions.TabAction"/>
       <action id="EmacsStyleIndent" class="com.intellij.codeInsight.editorActions.EmacsStyleIndentAction"/>
-      <action id="EditorScrollUp" class="com.intellij.openapi.editor.actions.ScrollUpAction"/>
-      <action id="EditorScrollDown" class="com.intellij.openapi.editor.actions.ScrollDownAction"/>
-      <action id="EditorMoveUpAndScroll" class="com.intellij.openapi.editor.actions.MoveUpAndScrollAction"/>
-      <action id="EditorMoveDownAndScroll" class="com.intellij.openapi.editor.actions.MoveDownAndScrollAction"/>
-      <action id="EditorMoveUpAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction"/>
-      <action id="EditorMoveDownAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveDownWithSelectionAndScrollAction"/>
-      <action id="EditorLineStart" class="com.intellij.openapi.editor.actions.LineStartAction"/>
-      <action id="EditorLineEnd" class="com.intellij.openapi.editor.actions.LineEndAction"/>
-      <action id="EditorCutLineEnd" class="com.intellij.openapi.editor.actions.CutLineEndAction"/>
-      <action id="EditorTextStart" class="com.intellij.openapi.editor.actions.TextStartAction"/>
-      <action id="EditorTextEnd" class="com.intellij.openapi.editor.actions.TextEndAction"/>
-      <action id="EditorLineStartWithSelection" class="com.intellij.openapi.editor.actions.LineStartWithSelectionAction"/>
-      <action id="EditorLineEndWithSelection" class="com.intellij.openapi.editor.actions.LineEndWithSelectionAction"/>
-      <action id="EditorTextStartWithSelection" class="com.intellij.openapi.editor.actions.TextStartWithSelectionAction"/>
-      <action id="EditorTextEndWithSelection" class="com.intellij.openapi.editor.actions.TextEndWithSelectionAction"/>
-      <action id="EditorNextWord" class="com.intellij.openapi.editor.actions.NextWordAction"/>
-      <action id="EditorPreviousWord" class="com.intellij.openapi.editor.actions.PreviousWordAction"/>
-      <action id="EditorNextWordWithSelection" class="com.intellij.openapi.editor.actions.NextWordWithSelectionAction"/>
-      <action id="EditorPreviousWordWithSelection" class="com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction"/>
       <action id="EditorCodeBlockStart" class="com.intellij.codeInsight.editorActions.CodeBlockStartAction"/>
       <action id="EditorCodeBlockEnd" class="com.intellij.codeInsight.editorActions.CodeBlockEndAction"/>
       <action id="EditorCodeBlockStartWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockStartWithSelectionAction"/>
       <action id="EditorCodeBlockEndWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockEndWithSelectionAction"/>
-      <action id="EditorDeleteToWordStart" class="com.intellij.openapi.editor.actions.DeleteToWordStartAction"/>
-      <action id="EditorDeleteToWordEnd" class="com.intellij.openapi.editor.actions.DeleteToWordEndAction"/>
-      <action id="EditorDeleteLine" class="com.intellij.openapi.editor.actions.DeleteLineAtCaretAction"/>
-      <action id="EditorDuplicate" class="com.intellij.openapi.editor.actions.DuplicateAction"/>
       <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
       <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
-      <action id="EditorToggleInsertState" class="com.intellij.openapi.editor.actions.ToggleInsertStateAction"/>
-      <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction"/>
-      <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction"/>
-      <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
-      <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
-      <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
-      <action id="EditorJoinLines" class="com.intellij.openapi.editor.actions.JoinLinesAction"/>
-      <action id="EditorSelectLine" class="com.intellij.openapi.editor.actions.SelectLineAction"/>
-      <action id="EditorSplitLine" class="com.intellij.openapi.editor.actions.SplitLineAction"/>
-      <action id="EditorStartNewLine" class="com.intellij.openapi.editor.actions.StartNewLineAction"/>
       <action id="EditorCompleteStatement" class="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterAction"/>
-    </group>
 
-    <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="/actions/expandall.png"/>
-    <action id="CollapseAll" class="com.intellij.ide.actions.CollapseAllAction" icon="/actions/collapseall.png"/>
-    <action id="ExportToTextFile" class="com.intellij.ide.actions.ExportToTextFileAction" icon="/actions/export.png"/>
-    <action id="ExpandTreeNode" class="com.intellij.ide.actions.tree.ExpandTreeNodeAction"/>
-    <action id="CollapseTreeNode" class="com.intellij.ide.actions.tree.CollapseTreeNodeAction"/>
-    <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
+      <add-to-group group-id="EditorActions" anchor="last"/>
+    </group>
 
     <group id="GenerateGroup">
       <action id="GenerateConstructor" class="com.intellij.codeInsight.generation.actions.GenerateConstructorAction"/>
@@ -135,10 +62,6 @@
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
     </group>
 
-    <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="/actions/moveDown.png"/>
-    <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="/actions/moveUp.png"/>
-
-    <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"/>
     <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction" icon="/actions/commit.png">
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
     </action>
@@ -167,15 +90,417 @@
       <separator/>
     </group>
 
-    <action id="CompareTwoFiles" class="com.intellij.openapi.diff.actions.CompareFiles"/>
-    <action id="CompareFileWithEditor" class="com.intellij.openapi.diff.actions.CompareFileWithEditor"/>
-
     <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">
       <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction"/>
       <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction"/>
       <action id="LocalHistory.PutLabel" class="com.intellij.history.integration.ui.actions.PutLabelAction"/>
     </group>
 
+    <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" test="Version Control"/>
+
+    <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" test="Version Control"
+           popup="true">
+    </group>
+
+    <group id="VersionControlsGroup">
+      <reference ref="LocalHistory"/>
+      <reference ref="VcsFileGroupPopup"/>
+    </group>
+
+    <!-- File -->
+    <group id="OpenProjectGroup">
+      <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction"/>
+      <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction"/>
+      <action id="OpenProject" class="com.intellij.ide.actions.OpenProjectAction"/>
+
+      <add-to-group group-id="FileOpenGroup" anchor="first"/>
+    </group>
+
+    <group id="CloseProjectGroup">
+      <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" popup="true"/>
+      <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
+
+      <add-to-group group-id="FileOpenGroup" anchor="last"/>
+    </group>
+
+    <group id="ProjectSettingsGroup">
+      <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
+      <action id="ConvertProject" class="com.intellij.ide.impl.convert.ConvertProjectAction"/>
+
+      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+    </group>
+
+    <group id="ExportImportGroup">
+      <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
+      <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
+
+      <add-to-group group-id="FileSaveGroup" anchor="last"/>
+    </group>
+
+    <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction">
+      <add-to-group group-id="SynchronizeGroup" anchor="last"/>
+    </action>
+
+    <group id="PrintExportGroup">
+      <separator/>
+      <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
+      <action id="Print" class="com.intellij.codeEditor.printing.PrintAction"/>
+
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="SynchronizeGroup"/>
+
+    </group>
+
+    <!-- Edit -->
+    <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
+    </action>
+
+    <group id="EditSelectWordGroup">
+      <reference ref="EditorSelectWord"/>
+      <reference ref="EditorUnSelectWord"/>
+
+      <add-to-group group-id="EditSelectGroup" anchor="last"/>
+    </group>
+
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+      <add-to-group group-id="EditCreateDeleteGroup" anchor="first"/>
+    </action>
+
+    <group id="EditBookmarksGroup">
+      <action id="ToggleBookmark" class="com.intellij.ide.bookmarks.actions.ToggleBookmarkAction"/>
+      <action id="ShowBookmarks" class="com.intellij.ide.bookmarks.actions.ShowBookmarksAction"/>
+      <separator/>
+
+      <add-to-group group-id="EditMenu" anchor="after" relative-to-action="EditCreateDeleteGroup"/>
+    </group>
+
+    <group id="EditSmartGroupEx">
+      <reference ref="EditorCompleteStatement"/>
+
+      <add-to-group group-id="EditSmartGroup" anchor="first"/>
+    </group>
+
+    <!-- Search -->
+    <group id="SearchMenu" popup="true">
+      <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="/actions/menu-find.png"/>
+      <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" icon="/actions/menu-replace.png"/>
+      <action id="FindNext" class="com.intellij.ide.actions.SearchAgainAction"/>
+      <action id="FindPrevious" class="com.intellij.ide.actions.SearchBackAction"/>
+      <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
+      <separator/>
+      <action id="FindUsages" class="com.intellij.find.actions.FindUsagesAction"/>
+      <action id="ShowUsages" class="com.intellij.find.actions.ShowUsagesAction"/>
+      <action id="FindUsagesInFile" class="com.intellij.find.actions.FindUsagesInFileAction"/>
+      <action id="HighlightUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction"/>
+      <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>
+      <separator/>
+      <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
+      <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="EditMenu"/>
+    </group>
+
+    <!-- View -->
+
+    <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
+      <add-to-group group-id="ViewMenu" relative-to-action="ViewStatusBar" anchor="after"/>
+    </action>
+
+    <group id="ViewCodeGroup">
+      <separator/>
+      <group id="CodeEditorViewGroup" class="com.intellij.ide.actions.CodeEditorActionGroup">
+        <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
+        <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
+        <action id="QuickJavaDoc" class="com.intellij.codeInsight.javadoc.actions.ShowJavaDocInfoAction"/>
+        <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
+        <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
+        <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
+        <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
+        <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
+      </group>
+      <separator/>
+      <group id="ProjectViewGroup" class="com.intellij.ide.projectView.actions.ProjectViewActionGroup">
+        <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
+      </group>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator/>
+
+      <add-to-group group-id="ViewMenu" relative-to-action="ToggleFullScreenMode" anchor="after"/>
+    </group>
+
+    <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
+      <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
+      <add-to-group group-id="ViewRecentActions" anchor="last"/>
+    </action>
+
+    <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction">
+      <add-to-group group-id="ViewModeActions" anchor="last"/>
+    </action>
+
+    <group id="HierarchyGroup">
+      <separator/>
+      <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
+      <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
+      <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
+      <separator/>
+
+      <add-to-group group-id="ViewMenu" anchor="last"/>
+    </group>
+
+    <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingGroup" popup="true">
+      <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
+      <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
+      <separator/>
+      <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
+      <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
+      <separator/>
+      <action id="ExpandJavadocs" class="com.intellij.codeInsight.folding.impl.actions.ExpandJavadocsAction"/>
+      <action id="CollapseJavadocs" class="com.intellij.codeInsight.folding.impl.actions.CollapseJavadocsAction"/>
+      <separator/>
+      <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
+      <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction"/>
+
+      <add-to-group group-id="ViewMenu" anchor="last"/>
+    </group>
+
+    <!-- Go To -->
+    <group id="GoToTargetEx">
+      <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
+      <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction"/>
+      <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction"/>
+      <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
+
+      <add-to-group group-id="GoToTarget" anchor="first"/>
+    </group>
+
+    <group id="GoToMenuEx">
+      <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
+      <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
+      <action id="GotoDefinition" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoDefinitionAction"/>
+      <action id="GotoUsage" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoUsageAction"/>
+      <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
+      <action id="SmartGotoImplementation" internal="true"
+              class="com.intellij.codeInsight.navigation.actions.SmartGotoImplementationAction"/>
+      <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
+      <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
+      <separator/>
+      <action id="GotoNextError" class="com.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction"/>
+      <action id="GotoPreviousError" class="com.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction"/>
+      <separator/>
+      <action id="MethodDown" class="com.intellij.codeInsight.navigation.actions.MethodDownAction"/>
+      <action id="MethodUp" class="com.intellij.codeInsight.navigation.actions.MethodUpAction"/>
+      <separator/>
+      <action id="GotoNextBookmark" class="com.intellij.ide.bookmarks.actions.NextBookmarkAction"/>
+      <action id="GotoPreviousBookmark" class="com.intellij.ide.bookmarks.actions.PreviousBookmarkAction"/>
+
+      <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="Back"/>
+    </group>
+
+    <group id="GoToChangeMarkerGroup">
+      <separator/>
+      <action id="VcsShowNextChangeMarker" class="com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction"
+              icon="/actions/nextOccurence.png"/>
+      <action id="VcsShowPrevChangeMarker" class="com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction"
+              icon="/actions/previousOccurence.png"/>
+
+      <add-to-group group-id="GoToMenu" anchor="last"/>
+    </group>
+
+    <group id="CodeMenu" class="com.intellij.codeInsight.actions.CodeGroup" popup="true">
+      <reference ref="OverrideMethods"/>
+      <reference ref="ImplementMethods"/>
+      <reference ref="DelegateMethods"/>
+      <separator/>
+      <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
+      <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
+      <separator/>
+      <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
+        <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
+        <action id="WordCompletion" class="com.intellij.codeInsight.completion.actions.WordCompletionAction"/>
+        <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction"/>
+        <action id="ClassNameCompletion" class="com.intellij.codeInsight.completion.actions.ClassNameCompletionAction"/>
+        <separator/>
+        <action id="HippieCompletion" class="com.intellij.codeInsight.completion.actions.HippieCompletionAction"/>
+        <action id="HippieBackwardCompletion" class="com.intellij.codeInsight.completion.actions.HippieBackwardCompletionAction"/>
+      </group>
+      <separator/>
+      <action id="InsertLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.ListTemplatesAction"/>
+      <action id="SurroundWithLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction"/>
+      <separator/>
+      <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"/>
+      <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction"/>
+      <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction"/>
+      <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction"/>
+      <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
+      <separator/>
+      <action id="MoveStatementDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction"/>
+      <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>
+      <action id="RemoveEnclosingTag" class="com.intellij.xml.util.actions.RemoveEnclosingTagAction"/>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
+    </group>
+
+    <group id="AnalyzeMenu" popup="true">
+      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+      <separator/>
+      <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
+      <separator/>
+      <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
+      <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
+      <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
+      <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction"/>
+      <separator/>
+      <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction"/>
+      <separator/>
+      <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
+    </group>
+
+    <group id="RefactoringMenu" class="com.intellij.refactoring.actions.RefactoringGroup" popup="true">
+      <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
+      <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
+      <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>
+      <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction"/>
+      <separator/>
+      <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
+      <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
+      <action id="CloneElement" class="com.intellij.ide.actions.CloneElementAction"/>
+      <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
+      <separator/>
+      <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
+      <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
+      <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
+      <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
+      <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
+      <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
+      <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
+      <separator/>
+      <action id="ExtractInterface" class="com.intellij.refactoring.actions.ExtractInterfaceAction"/>
+      <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
+      <action id="TurnRefsToSuper" class="com.intellij.refactoring.actions.TurnRefsToSuperAction"/>
+      <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction"/>
+      <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
+      <action id="InheritanceToDelegation" class="com.intellij.refactoring.actions.InheritanceToDelegationAction"/>
+      <separator/>
+      <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
+      <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
+      <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
+      <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction"/>
+      <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction"/>
+      <separator/>
+      <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
+      <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>
+      <action id="Type Migration" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAction"/>
+      <separator/>
+      <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
+      <separator/>
+      <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction"/>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="AnalyzeMenu"/>
+    </group>
+
+    <group id="BuildMenu" popup="true">
+      <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction"/>
+      <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="/actions/compile.png"/>
+      <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
+      <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
+      <separator/>
+      <action id="GenerateAntBuild" class="com.intellij.compiler.actions.GenerateAntBuildAction"/>
+      <separator/>
+      <action id="BuildJar" class="com.intellij.jar.BuildJarAction"/>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
+    </group>
+
+
+    <group id="RunMenu" popup="true">
+      <group id="RunnerActions"/>
+      <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
+      <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="/actions/suspend.png"/>
+      <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
+      <separator/>
+      <action id="StepOver" class="com.intellij.debugger.actions.StepOverAction" icon="/actions/traceOver.png"/>
+      <action id="StepInto" class="com.intellij.debugger.actions.StepIntoAction" icon="/actions/traceInto.png"/>
+      <action id="SmartStepInto" class="com.intellij.debugger.actions.SmartStepIntoAction" icon="/actions/traceInto.png"/>
+      <action id="StepOut" class="com.intellij.debugger.actions.StepOutAction" icon="/actions/stepOut.png"/>
+      <action id="ForceStepOver" class="com.intellij.debugger.actions.ForceStepOverAction" icon="/actions/traceOver.png"/>
+      <action id="ForceStepInto" class="com.intellij.debugger.actions.ForceStepIntoAction" icon="/actions/forceStepInto.png"/>
+      <action id="RunToCursor" class="com.intellij.debugger.actions.RunToCursorAction" icon="/actions/runToCursor.png"/>
+      <action id="ForceRunToCursor" class="com.intellij.debugger.actions.ForceRunToCursorAction"/>
+      <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="/actions/popFrame.png"/>
+      <action id="Pause" class="com.intellij.debugger.actions.PauseAction" icon="/actions/pause.png"/>
+      <action id="Resume" class="com.intellij.debugger.actions.ResumeAction" icon="/actions/resume.png"/>
+      <separator/>
+      <action id="EvaluateExpression" class="com.intellij.debugger.actions.EvaluateAction" icon="/debugger/evaluateExpression.png"/>
+      <action id="QuickEvaluateExpression" class="com.intellij.debugger.actions.QuickEvaluateAction"/>
+      <action id="ShowExecutionPoint" class="com.intellij.debugger.actions.ShowExecutionPointAction"
+              icon="/debugger/showCurrentFrame.png"/>
+      <separator/>
+      <action id="ToggleLineBreakpoint" class="com.intellij.debugger.actions.ToggleLineBreakpointAction"/>
+      <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
+      <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction"/>
+      <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>
+      <action id="ViewBreakpoints" class="com.intellij.debugger.actions.ViewBreakpointsAction" icon="/debugger/viewBreakpoints.png"/>
+      <separator/>
+      <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="/actions/export.png"/>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="BuildMenu"/>
+    </group>
+
+    <!-- Tools -->
+    <group id="ToolsBasicGroup">
+      <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction"/>
+      <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction"/>
+      <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction"/>
+      <separator/>
+
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </group>
+
+    <group id="ToolsXmlGroup">
+      <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction"/>
+      <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
+      <separator/>
+
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+
+    <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+
+    <group text="Internal Actions" internal="true" popup="true">
+      <separator/>
+      <action id="PsiViewer" internal="true" class="com.intellij.internal.psiView.ViewerAction"/>
+      <action id="DebugListen" internal="true" class="com.intellij.debugger.actions.ThrowDebugExceptionAction"/>
+      <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
+      <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
+      <separator/>
+      <group id="MemoryManagement" popup="true">
+        <action id="DumpPsiMemoryCaches" internal="true" class="com.intellij.psi.impl.DumpPsiMemoryCaches"/>
+      </group>
+      <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
+      <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
+      <separator/>
+      <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
+      <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.diagnostic.DumpInspectionDescriptionsAction"/>
+      <separator/>
+      <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"
+              text="Add Test Process"/>
+      <action id="AddTestProcessActionIndefinte" internal="true"
+              class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
+      <separator/>
+      <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"
+              text="Mark File Dirty"/>
+      <action id="DumpIntentions" internal="true" class="com.intellij.internal.DumpIntentionsAction" text="Dupm Intentions"/>
+
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+
+    <!-- Version Control -->
     <group id="VcsGroups" popup="true">
       <reference ref="LocalHistory"/>
       <separator/>
@@ -196,483 +521,44 @@
       </group>
 
       <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" popup="true"/>
-    </group>
-    <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" test="Version Control"/>
 
-    <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" test="Version Control"
-           popup="true">
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="ToolsMenu"/>
     </group>
 
-    <group id="VersionControlsGroup">
-      <reference ref="LocalHistory"/>
-      <reference ref="VcsFileGroupPopup"/>
-    </group>
+    <!-- Window -->
+    <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
+      <add-to-group group-id="CloseEditorsGroup" anchor="last"/>
+    </action>
+    <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction">
+      <add-to-group group-id="CloseEditorsGroup" anchor="last"/>
+    </action>
 
-    <group id="MainMenu">
+    <!-- Help -->
+    <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction">
+      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="OnlineDocAction"/>
+    </action>
+    <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction">
+      <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="About"/>
+    </action>
 
-      <!-- File  -->
-      <group id="FileMenu" popup="true">
-        <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction"/>
-        <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction"/>
-        <action id="OpenProject" class="com.intellij.ide.actions.OpenProjectAction"/>
-        <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="/actions/menu-open.png"/>
-        <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" popup="true"/>
-        <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
+    <!-- Toolbar -->
 
-        <separator/>
-        <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="/general/ideOptions.png"/>
-        <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
-        <action id="ConvertProject" class="com.intellij.ide.impl.convert.ConvertProjectAction"/>
-        <separator/>
-        <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
-        <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
-        <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
-        <separator/>
-        <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
-        <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction"/>
-        <separator/>
-        <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
-        <action id="Print" class="com.intellij.codeEditor.printing.PrintAction"/>
-        <separator/>
-        <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
-      </group>
-
-      <!-- Edit -->
-      <group id="EditMenu" popup="true">
-        <action id="$Undo" class="com.intellij.ide.actions.UndoAction" icon="/actions/undo.png"/>
-        <action id="$Redo" class="com.intellij.ide.actions.RedoAction" icon="/actions/redo.png"/>
-        <separator/>
-        <group id="CutCopyPasteGroup">
-          <action id="$Cut" class="com.intellij.ide.actions.CutAction" icon="/actions/menu-cut.png"/>
-          <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="/actions/menu-copy.png"/>
-          <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
-          <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction"/>
-          <action id="$Paste" class="com.intellij.ide.actions.PasteAction" icon="/actions/menu-paste.png"/>
-          <action id="PasteMultiple" class="com.intellij.openapi.editor.actions.MultiplePasteAction"/>
-          <reference ref="EditorPasteSimple"/>
-          <reference ref="EditorToggleColumnMode"/>
-        </group>
-        <separator/>
-        <action id="$SelectAll" class="com.intellij.ide.actions.SelectAllAction"/>
-        <reference ref="EditorSelectWord"/>
-        <reference ref="EditorUnSelectWord"/>
-        <separator/>
-        <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
-        <action id="$Delete" class="com.intellij.ide.actions.DeleteAction"/>
-        <separator/>
-        <action id="ToggleBookmark" class="com.intellij.ide.bookmarks.actions.ToggleBookmarkAction"/>
-        <action id="ShowBookmarks" class="com.intellij.ide.bookmarks.actions.ShowBookmarksAction"/>
-        <separator/>
-        <reference ref="EditorCompleteStatement"/>
-        <reference ref="EditorJoinLines"/>
-        <reference ref="EditorDuplicate"/>
-        <reference ref="EditorIndentSelection"/>
-        <reference ref="EditorUnindentSelection"/>
-        <reference ref="EditorToggleCase"/>
-      </group>
-
-      <!-- Search -->
-      <group id="SearchMenu" popup="true">
-        <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="/actions/menu-find.png"/>
-        <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" icon="/actions/menu-replace.png"/>
-        <action id="FindNext" class="com.intellij.ide.actions.SearchAgainAction"/>
-        <action id="FindPrevious" class="com.intellij.ide.actions.SearchBackAction"/>
-        <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
-        <separator/>
-        <action id="FindUsages" class="com.intellij.find.actions.FindUsagesAction"/>
-        <action id="ShowUsages" class="com.intellij.find.actions.ShowUsagesAction"/>
-        <action id="FindUsagesInFile" class="com.intellij.find.actions.FindUsagesInFileAction"/>
-        <action id="HighlightUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction"/>
-        <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>
-        <separator/>
-        <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
-        <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
-      </group>
-
-      <!-- View -->
-      <group id="ViewMenu" popup="true">
-        <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
-        <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
-        <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction"/>
-        <reference ref="EditorToggleShowWhitespaces"/>
-        <reference ref="EditorToggleShowLineNumbers"/>
-        <separator/>
-        <action id="ToggleFullScreenMode" class="com.intellij.ide.actions.ToggleFullScreenModeAction"/>
-        <separator/>
-        <group id="CodeEditorViewGroup" class="com.intellij.ide.actions.CodeEditorActionGroup">
-          <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
-          <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
-          <action id="QuickJavaDoc" class="com.intellij.codeInsight.javadoc.actions.ShowJavaDocInfoAction"/>
-          <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
-          <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
-          <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
-          <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
-        </group>
-        <separator/>
-        <group id="ProjectViewGroup" class="com.intellij.ide.projectView.actions.ProjectViewActionGroup">
-          <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
-        </group>
-        <separator/>
-        <reference ref="AddToFavorites"/>
-        <separator/>
-        <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
-        <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
-        <separator/>
-        <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
-        <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
-
-        <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
-        <separator/>
-        <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
-        <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
-        <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
-        <separator/>
-        <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingGroup" popup="true">
-          <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
-          <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
-          <separator/>
-          <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
-          <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
-          <separator/>
-          <action id="ExpandJavadocs" class="com.intellij.codeInsight.folding.impl.actions.ExpandJavadocsAction"/>
-          <action id="CollapseJavadocs" class="com.intellij.codeInsight.folding.impl.actions.CollapseJavadocsAction"/>
-          <separator/>
-          <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
-          <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction"/>
-        </group>
-
-        <separator/>
-
-        <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
-          <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
-        </action>
-      </group>
-
-      <!-- Go to -->
-      <group id="GoToMenu" popup="true">
-        <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
-        <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction"/>
-        <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction"/>
-        <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
-        <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction"/>
-        <separator/>
-        <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
-        <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
-        <action id="GotoDefinition" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoDefinitionAction"/>
-        <action id="GotoUsage" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoUsageAction"/>
-        <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
-        <action id="SmartGotoImplementation" internal="true"
-                class="com.intellij.codeInsight.navigation.actions.SmartGotoImplementationAction"/>
-        <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
-        <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
-        <separator/>
-        <action id="GotoNextError" class="com.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction"/>
-        <action id="GotoPreviousError" class="com.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction"/>
-        <separator/>
-        <action id="MethodDown" class="com.intellij.codeInsight.navigation.actions.MethodDownAction"/>
-
-
-        <action id="MethodUp" class="com.intellij.codeInsight.navigation.actions.MethodUpAction"/>
-        <separator/>
-        <action id="GotoNextBookmark" class="com.intellij.ide.bookmarks.actions.NextBookmarkAction"/>
-        <action id="GotoPreviousBookmark" class="com.intellij.ide.bookmarks.actions.PreviousBookmarkAction"/>
-        <separator/>
-        <action id="Back" class="com.intellij.ide.actions.BackAction" icon="/actions/back.png"/>
-        <action id="Forward" class="com.intellij.ide.actions.ForwardAction" icon="/actions/forward.png"/>
-        <action id="JumpToLastChange" class="com.intellij.ide.actions.JumpToLastEditAction"/>
-        <separator/>
-        <action id="PreviousOccurence" class="com.intellij.ide.actions.PreviousOccurenceAction" icon="/actions/previousOccurence.png"/>
-        <action id="NextOccurence" class="com.intellij.ide.actions.NextOccurenceAction" icon="/actions/nextOccurence.png"/>
-        <separator/>
-        <action id="VcsShowNextChangeMarker" class="com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction"
-                icon="/actions/nextOccurence.png"/>
-        <action id="VcsShowPrevChangeMarker" class="com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction"
-                icon="/actions/previousOccurence.png"/>
-      </group>
-
-      <!--  Code  -->
-      <group id="CodeMenu" class="com.intellij.codeInsight.actions.CodeGroup" popup="true">
-        <reference ref="OverrideMethods"/>
-        <reference ref="ImplementMethods"/>
-        <reference ref="DelegateMethods"/>
-        <separator/>
-        <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
-        <!-- Alt-Ins in Java code-->
-        <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
-        <separator/>
-        <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
-          <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
-          <action id="WordCompletion" class="com.intellij.codeInsight.completion.actions.WordCompletionAction"/>
-          <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction"/>
-          <action id="ClassNameCompletion" class="com.intellij.codeInsight.completion.actions.ClassNameCompletionAction"/>
-          <separator/>
-          <action id="HippieCompletion" class="com.intellij.codeInsight.completion.actions.HippieCompletionAction"/>
-          <action id="HippieBackwardCompletion" class="com.intellij.codeInsight.completion.actions.HippieBackwardCompletionAction"/>
-        </group>
-        <separator/>
-        <action id="InsertLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.ListTemplatesAction"/>
-        <action id="SurroundWithLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction"/>
-        <separator/>
-        <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"/>
-        <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction"/>
-        <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction"/>
-        <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction"/>
-        <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
-        <separator/>
-        <action id="MoveStatementDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction"/>
-        <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>
-        <action id="RemoveEnclosingTag" class="com.intellij.xml.util.actions.RemoveEnclosingTagAction"/>
-      </group>
-
-      <group id="AnalyzeMenu" popup="true">
-        <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
-        <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
-        <separator/>
-        <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
-        <separator/>
-        <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
-        <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
-        <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
-        <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction"/>
-        <separator/>
-        <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction"/>
-        <separator/>
-        <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>
-      </group>
-
-      <!-- Refactor -->
-      <group id="RefactoringMenu" class="com.intellij.refactoring.actions.RefactoringGroup" popup="true">
-        <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
-        <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
-        <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>
-        <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction"/>
-        <separator/>
-        <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
-        <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
-        <action id="CloneElement" class="com.intellij.ide.actions.CloneElementAction"/>
-        <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
-        <separator/>
-        <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
-        <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
-        <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
-        <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
-        <action id="IntroduceField" class="com.intellij.refactoring.actions.IntroduceFieldAction"/>
-        <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
-        <action id="IntroduceParameter" class="com.intellij.refactoring.actions.IntroduceParameterAction"/>
-        <separator/>
-        <action id="ExtractInterface" class="com.intellij.refactoring.actions.ExtractInterfaceAction"/>
-        <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
-        <action id="TurnRefsToSuper" class="com.intellij.refactoring.actions.TurnRefsToSuperAction"/>
-        <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction"/>
-        <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
-        <action id="InheritanceToDelegation" class="com.intellij.refactoring.actions.InheritanceToDelegationAction"/>
-        <separator/>
-        <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
-        <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
-        <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
-        <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction"/>
-        <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction"/>
-        <separator/>
-        <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
-        <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction"/>
-        <action id="Type Migration" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAction"/>
-        <separator/>
-        <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction"/>
-        <separator/>
-        <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction"/>
-      </group>
-
-      <!-- Build -->
-      <group id="BuildMenu" popup="true">
-        <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction"/>
-        <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="/actions/compile.png"/>
-        <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
-        <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
-        <separator/>
-        <action id="GenerateAntBuild" class="com.intellij.compiler.actions.GenerateAntBuildAction"/>
-        <separator/>
-        <action id="BuildJar" class="com.intellij.jar.BuildJarAction"/>
-      </group>
-
-
-      <group id="RunMenu" popup="true">
-        <group id="RunnerActions"/>
-        <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
-        <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="/actions/suspend.png"/>
-        <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
-        <separator/>
-        <action id="StepOver" class="com.intellij.debugger.actions.StepOverAction" icon="/actions/traceOver.png"/>
-        <action id="StepInto" class="com.intellij.debugger.actions.StepIntoAction" icon="/actions/traceInto.png"/>
-        <action id="SmartStepInto" class="com.intellij.debugger.actions.SmartStepIntoAction" icon="/actions/traceInto.png"/>
-        <action id="StepOut" class="com.intellij.debugger.actions.StepOutAction" icon="/actions/stepOut.png"/>
-        <action id="ForceStepOver" class="com.intellij.debugger.actions.ForceStepOverAction" icon="/actions/traceOver.png"/>
-        <action id="ForceStepInto" class="com.intellij.debugger.actions.ForceStepIntoAction" icon="/actions/forceStepInto.png"/>
-        <action id="RunToCursor" class="com.intellij.debugger.actions.RunToCursorAction" icon="/actions/runToCursor.png"/>
-        <action id="ForceRunToCursor" class="com.intellij.debugger.actions.ForceRunToCursorAction"/>
-        <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="/actions/popFrame.png"/>
-        <action id="Pause" class="com.intellij.debugger.actions.PauseAction" icon="/actions/pause.png"/>
-        <action id="Resume" class="com.intellij.debugger.actions.ResumeAction" icon="/actions/resume.png"/>
-        <separator/>
-        <action id="EvaluateExpression" class="com.intellij.debugger.actions.EvaluateAction" icon="/debugger/evaluateExpression.png"/>
-        <action id="QuickEvaluateExpression" class="com.intellij.debugger.actions.QuickEvaluateAction"/>
-        <action id="ShowExecutionPoint" class="com.intellij.debugger.actions.ShowExecutionPointAction"
-                icon="/debugger/showCurrentFrame.png"/>
-        <separator/>
-        <action id="ToggleLineBreakpoint" class="com.intellij.debugger.actions.ToggleLineBreakpointAction"/>
-        <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
-        <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction"/>
-        <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>
-        <action id="ViewBreakpoints" class="com.intellij.debugger.actions.ViewBreakpointsAction" icon="/debugger/viewBreakpoints.png"/>
-        <separator/>
-        <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="/actions/export.png"/>
-      </group>
-
-      <!-- Tools -->
-      <group id="ToolsMenu" configurable="true" popup="true">
-        <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction"/>
-        <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction"/>
-        <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction"/>
-        <separator/>
-        <group id="Macros" popup="false">
-          <group id="StanardMacroActions">
-            <action id="PlaybackLastMacro" class="com.intellij.ide.actionMacro.actions.PlaybackLastMacroAction"/>
-            <action id="StartStopMacroRecording" class="com.intellij.ide.actionMacro.actions.StartStopMacroRecordingAction"/>
-            <action id="EditMacros" class="com.intellij.ide.actionMacro.actions.EditMacrosAction"/>
-          </group>
-          <separator/>
-          <group id="PlaySavedMacroActions" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
-        </group>
-        <separator/>
-        <group id="ToolsXmlGroup">
-          <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction"/>
-          <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
-        </group>
-
-        <separator/>
-        <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup"/>
-        <separator/>
-
-        <group text="Internal Actions" internal="true" popup="true">
-          <action id="PsiViewer" internal="true" class="com.intellij.internal.psiView.ViewerAction"/>
-          <action id="DebugListen" internal="true" class="com.intellij.debugger.actions.ThrowDebugExceptionAction"/>
-          <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
-          <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
-          <!--
-          <action class="com.intellij.localVcs.CheckFileContentProviderAction" id="CheckFileContentProvider" text="Check File Content Provider"></action>
-          -->
-          <separator/>
-          <group id="MemoryManagement" popup="true">
-            <action id="DumpPsiMemoryCaches" internal="true" class="com.intellij.psi.impl.DumpPsiMemoryCaches"/>
-          </group>
-          <action internal="true" id="DecodeBytesAction" class="com.intellij.internal.encodings.DecodeBytesAction"/>
-          <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
-          <separator/>
-          <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
-          <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.diagnostic.DumpInspectionDescriptionsAction"/>
-          <separator/>
-          <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"
-                  text="Add Test Process"/>
-          <action id="AddTestProcessActionIndefinte" internal="true"
-                  class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
-          <separator/>
-          <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"
-                  text="Mark File Dirty"/>
-          <action id="DumpIntentions" internal="true" class="com.intellij.internal.DumpIntentionsAction" text="Dupm Intentions"/>
-        </group>
-      </group>
-
-      <reference ref="VcsGroups"/>
-
-      <!-- Window -->
-      <group id="WindowMenu" popup="true">
-        <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
-        <action id="ShowProcessWindow" class="com.intellij.openapi.wm.impl.status.ShowProcessWindowAction"/>
-        <separator/>
-        <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
-        <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
-        <separator/>
-        <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction"/>
-        <action id="HideSideWindows" class="com.intellij.ide.actions.HideSideWindowsAction"/>
-        <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction"/>
-        <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
-        <separator/>
-        <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction"/>
-        <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction"/>
-        <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction"/>
-        <separator/>
-        <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
-        <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
-        <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
-        <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
-        <separator/>
-        <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
-        <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
-        <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
-        <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction"/>
-        <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>
-        <separator/>
-        <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="/actions/splitVertically.png"/>
-        <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="/actions/splitHorizontally.png"/>
-        <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction"/>
-        <action id="Unsplit" class="com.intellij.ide.actions.UnsplitAction"/>
-        <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
-        <action id="NextSplitter" class="com.intellij.ide.actions.NextSplitAction"/>
-        <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
-      </group>
-
-      <!-- Help -->
-      <group id="HelpMenu" popup="true">
-        <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="/actions/menu-help.png"/>
-        <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
-        <action id="ProductivityGude" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
-        <separator/>
-        <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
-        <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
-        <separator/>
-        <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
-        <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction"/>
-        <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"
-                icon="/general/defaultKeymap.png"/>
-        <separator/>
-        <action id="Register" class="com.intellij.ide.actions.RegisterAction"/>
-        <action id="ObtainPermanentTicket" class="com.intellij.ide.actions.ObtainPermanentTicketAction"/>
-        <action id="ReleasePermanentTicket" class="com.intellij.ide.actions.ReleasePermanentTicketAction"/>
-        <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
-        <action id="About" class="com.intellij.ide.actions.AboutAction"/>
-      </group>
-
-      <group id="OtherMenu" class="com.intellij.ide.actions.OtherGroup"/>
-    </group>
-
-    <group id="MainToolBar" configurable="true">
-      <reference ref="OpenFile"/>
-      <reference ref="SaveAll"/>
-      <reference ref="Synchronize"/>
-      <separator/>
-      <reference ref="$Undo"/>
-      <reference ref="$Redo"/>
-      <separator/>
-      <reference ref="$Cut"/>
-      <reference ref="$Copy"/>
-      <reference ref="$Paste"/>
+    <group id="ToolbarFindGroup">
       <separator/>
 
       <reference ref="Find"/>
       <reference ref="Replace"/>
-      <separator/>
-      <reference ref="Back"/>
-      <reference ref="Forward"/>
+
+      <add-to-group group-id="MainToolBar" relative-to-action="$Paste" anchor="after"/>
+    </group>
+
+    <group id="ToolbarMakeGroup">
       <separator/>
       <reference ref="CompileDirty"/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
-      <separator/>
-      <reference ref="ShowSettings"/>
-      <separator/>
-      <reference ref="HelpTopics"/>
-      <separator/>
-      <reference ref="CaptureMemorySnapShot"/>
-      <reference ref="CaptureCPUUsageData"/>
+
+      <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
     </group>
 
     <group id="Bookmarks">
@@ -740,20 +626,22 @@
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
     </group>
 
-    <group id="EditorPopupMenu" configurable="true">
-      <action id="Add to migration roots" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAddRootAction"/>
-      <reference ref="CutCopyPasteGroup"/>
+    <group id="EditorPopupMenu1">
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="AnalyzeMenu"/>
       <reference ref="RefactoringMenu"/>
+      <action id="Add to migration roots" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAddRootAction"/>
       <separator/>
       <reference ref="AddToFavorites"/>
       <action id="MoveToChangeList" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"/>
       <separator/>
       <reference ref="FoldingGroup"/>
-      <separator/>
-      <reference ref="CloseEditor"/>
+
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="CutCopyPasteGroup" anchor="after"/>
+    </group>
+
+    <group id="EditorPopupMenu2">
       <separator/>
       <group id="EditorPopupMenu.GoTo" popup="true">
         <reference ref="ShowNavBar"/>
@@ -777,10 +665,12 @@
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
-      <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
       <reference ref="ExternalToolsGroup"/>
       <action id="ShowAppliedStylesAction" class="com.intellij.psi.css.actions.ShowAppliedStylesAction"/>
+
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="CloseEditor" anchor="after"/>
     </group>
+
 
     <group id="ChangeScheme">
       <action id="ChangeColorScheme" class="com.intellij.ide.actions.QuickChangeColorSchemeAction"/>
@@ -792,24 +682,7 @@
 
     </group>
 
-    <group id="EditorTabPopupMenu">
-      <reference ref="CloseEditor"/>
-      <reference ref="CloseAllEditorsButActive"/>
-      <reference ref="CloseAllEditors"/>
-      <reference ref="CloseAllUnmodifiedEditors"/>
-      <reference ref="CloseAllUnpinnedEditors"/>
-      <separator/>
-      <reference ref="SplitVertically"/>
-      <reference ref="SplitHorizontally"/>
-      <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction"/>
-      <reference ref="ChangeSplitOrientation"/>
-      <reference ref="PinActiveTab"/>
-      <separator/>
-      <reference ref="NextTab"/>
-      <reference ref="PreviousTab"/>
-      <separator/>
-      <reference ref="Unsplit"/>
-      <reference ref="UnsplitAll"/>
+    <group id="EditorTabPopupMenuEx">
       <separator/>
       <reference ref="AddToFavorites"/>
       <reference ref="MoveToChangeList"/>
@@ -823,6 +696,8 @@
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
+
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
     </group>
 
     <action id="ModuleSettings" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
@@ -1271,7 +1146,7 @@
       </action>
     </group>
 
-    <group id="WelcomeScreen.QuickStart">
+    <group id="WelcomeScreen.QuickStart.IDEA">
       <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
         icon="/general/createNewProject.png"/>
       <action id="WelcomeScreen.OpenProject" class="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenOpenProjectAction"
@@ -1280,14 +1155,18 @@
         icon="/general/reopenRecentProject.png"/>
       <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
         icon="/general/getProjectfromVCS.png"/>
-    </group>
 
-    <group id="WelcomeScreen.Documentation">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
+</group>
+
+    <group id="WelcomeScreen.Documentation.IDEA">
       <action id="WelcomeScreen.ReadHelp" class="com.intellij.openapi.wm.impl.welcomeScreen.ReadHelpAction"
         icon="/general/readHelp.png"/>
       <reference ref="Help.KeymapReference"/>
       <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
         icon="/general/pluginManager.png"/>
+
+      <add-to-group group-id="WelcomeScreen.Documentation" anchor="last"/>
     </group>
 
     <group id="Vcs.MessageActionGroup">
@@ -1523,51 +1402,24 @@
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
 
-    <group id="FileChooser">
-      <action id="FileChooser.TogglePathShowing" class="com.intellij.openapi.fileChooser.actions.TooglePathShowingAction"/>
-    </group>
-
-    <action id="Diff.FocusOppositePane" class="com.intellij.openapi.diff.actions.FocusOppositePaneAction"
-      use-shortcut-of="NextSplitter"/>
     <action id="Diff.PrevChange" class="com.intellij.openapi.vcs.changes.actions.ShowPrevChangeAction"
       icon="/actions/prevfile.png" use-shortcut-of="PreviousTab"/>
     <action id="Diff.NextChange" class="com.intellij.openapi.vcs.changes.actions.ShowNextChangeAction"
       icon="/actions/nextfile.png" use-shortcut-of="NextTab"/>
 
-    <group id="EditorGutterPopupMenu">
-      <reference ref="EditorToggleShowLineNumbers"/>
+    <group id="EditorGutterVcsPopupMenu">
       <reference ref="Annotate"/>
+      <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
     </group>
 
-    <group id="FileChooserToolbar">
-      <action id="FileChooser.GotoHome" class="com.intellij.openapi.fileChooser.actions.GotoHomeAction"
-        icon="/nodes/homeFolder.png"/>
-      <action id="FileChooser.GotoProject" class="com.intellij.openapi.fileChooser.actions.GotoProjectDirectory"
-        icon="/nodes/ideaProject.png"/>
-      <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
-        icon="/nodes/ModuleClosed.png"/>
-      <separator/>
-      <action id="FileChooser.NewFile" class="com.intellij.openapi.fileChooser.actions.NewFileAction"
-        icon="/actions/new.png"/>
-      <action id="FileChooser.NewFolder" class="com.intellij.openapi.fileChooser.actions.NewFolderAction"
-        icon="/actions/newFolder.png"/>
-      <action id="FileChooser.Delete" class="com.intellij.openapi.fileChooser.actions.FileDeleteAction"
-        icon="/actions/delete.png"/>
-      <separator/>
-      <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
-        icon="/actions/sync.png"/>
-      <separator/>
-      <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
-        icon="/actions/showHiddens.png"/>
-    </group>
+    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
+      icon="/nodes/ModuleClosed.png">
+      <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
+    </action>
 
-    <group id="DiffPanel.Toolbar">
-      <reference ref="$Copy"/>
+    <group id="DiffPanel.Toolbar.IDEA">
       <reference ref="Find"/>
-      <reference ref="PreviousDiff"/>
-      <reference ref="NextDiff"/>
-      <separator/>
-      <action id="Diff.IgnoreWhitespace" class="com.intellij.openapi.diff.actions.IgnoreWhiteSpacesAction" text=""/>
+      <add-to-group group-id="DiffPanel.Toolbar" anchor="after" relative-to-action="$Copy"/>
     </group>
   </actions>
 </component>

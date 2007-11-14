@@ -1,7 +1,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
@@ -47,8 +46,8 @@ public class OpenFileAction extends AnAction {
     if (project == null) return;
 
     String lastFilePath = getLastFilePath(project);
-    String path = lastFilePath != null ? lastFilePath : RecentProjectsManager.getInstance().getLastProjectPath();
-    JFileChooser fileChooser = new JFileChooser(path);
+    //TODO String path = lastFilePath != null ? lastFilePath : RecentProjectsManager.getInstance().getLastProjectPath();
+    JFileChooser fileChooser = new JFileChooser(lastFilePath);
     FileView fileView = new FileView() {
       public Icon getIcon(File f) {
         if (f.isDirectory()) return super.getIcon(f);
