@@ -33,9 +33,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -744,12 +741,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       if (fileEditor instanceof TextEditor) {
         setSelectedEditor(descriptor.getFile(), TextEditorProvider.getInstance().getEditorTypeId());
         Editor editor = ((TextEditor)fileEditor).getEditor();
-        PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(editor.getDocument());
-        return focusEditor ? InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile) : editor;
+        return getOpenedEditor(editor, focusEditor);
       }
     }
 
     return null;
+  }
+
+  protected Editor getOpenedEditor(final Editor editor, final boolean focusEditor) {
+    return editor;
   }
 
   public Editor getSelectedTextEditor() {

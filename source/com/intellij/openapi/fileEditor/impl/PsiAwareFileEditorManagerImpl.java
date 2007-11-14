@@ -8,11 +8,10 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTreeChangeAdapter;
-import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -72,7 +71,12 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   @Override
   protected String getFileTitle(final VirtualFile file) {
     return ProjectUtil.calcRelativeToProjectPath(file, myProject);
+  }
 
+  @Override
+  protected Editor getOpenedEditor(final Editor editor, final boolean focusEditor) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(editor.getDocument());
+    return focusEditor ? InjectedLanguageUtil.getEditorForInjectedLanguage(editor, psiFile) : editor;
   }
 
   /**
