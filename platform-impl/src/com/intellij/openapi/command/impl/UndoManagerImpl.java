@@ -12,6 +12,7 @@ import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +63,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private DocumentEditingUndoProvider myDocumentEditingUndoProvider;
   private CommandMerger myCurrentMerger;
   private CurrentEditorProvider myCurrentEditorProvider;
-  private FileOperationsUndoProvider myFileOperationUndoProvider;
 
   private Project myCurrentActionProject = DummyProject.getInstance();
   private int myCommandCounter = 1;
@@ -70,6 +71,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private final EditorFactory myEditorFactory;
   private final VirtualFileManager myVirtualFileManager;
   private final StartupManager myStartupManager;
+  private UndoProvider[] myUndoProviders;
 
   public UndoManagerImpl(Project project,
                          Application application,
@@ -159,7 +161,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myDocumentEditingUndoProvider = new DocumentEditingUndoProvider(myProject, myEditorFactory);
     myMerger = new CommandMerger(this, myEditorFactory);
 
-    myFileOperationUndoProvider = new FileOperationsUndoProvider(this, myProject);
+    if (myProject != null) {
+      myUndoProviders = Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
+    }
+    else {
+      myUndoProviders = Extensions.getExtensions(UndoProvider.EP_NAME);
+    }
 
     myBeforeFileDeletionListener = new MyBeforeDeletionListener();
     myVirtualFileManager.addVirtualFileListener(myBeforeFileDeletionListener);
@@ -169,7 +176,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private void onCommandFinished(final Project project, final String commandName, final Object commandGroupId) {
     commandFinished(commandName, commandGroupId);
     if (myCommandLevel == 0) {
-      myFileOperationUndoProvider.commandFinished(project);
+      for(UndoProvider undoProvider: myUndoProviders) {
+        undoProvider.commandFinished(project);
+      }
       myCurrentActionProject = DummyProject.getInstance();
       if (myProject == null) myMerger.clearDocumentRefs(); //do not leak document refs at app level
     }
@@ -178,7 +187,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
 
   private void onCommandStarted(final Project project, UndoConfirmationPolicy undoConfirmationPolicy) {
     if (myCommandLevel == 0) {
-      myFileOperationUndoProvider.commandStarted(project);
+      for(UndoProvider undoProvider: myUndoProviders) {
+        undoProvider.commandStarted(project);
+      }
       myCurrentActionProject = project;
     }
 
@@ -222,7 +233,11 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       myCommandProcessor.removeCommandListener(myCommandListener);
       myDocumentEditingUndoProvider.dispose();
       myMerger.dispose();
-      myFileOperationUndoProvider.dispose();
+      for(UndoProvider provider: myUndoProviders) {
+        if (provider instanceof Disposable) {
+          ((Disposable) provider).dispose();
+        }
+      }
     }
     if (myBeforeFileDeletionListener != null) {
       myVirtualFileManager.removeVirtualFileListener(myBeforeFileDeletionListener);

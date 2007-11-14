@@ -2,6 +2,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.history.Checkpoint;
 import com.intellij.history.LocalHistory;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -11,17 +12,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-class FileOperationsUndoProvider extends VirtualFileAdapter {
+class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvider, Disposable {
   private Key<Boolean> DELETE_WAS_UNDOABLE = new Key<Boolean>("DeletionWasUndoable");
 
   private Project myProject;
-  private UndoManagerImpl myUndoManager;
   private boolean myIsInsideCommand;
 
   private List<MyUndoableAction> myCommandActions;
 
-  public FileOperationsUndoProvider(UndoManagerImpl m, Project p) {
-    myUndoManager = m;
+  FileOperationsUndoProvider() {
+    this(null);
+  }
+
+  public FileOperationsUndoProvider(Project p) {
     myProject = p;
 
     if (myProject == null) return;
@@ -129,16 +132,16 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
     DocumentReference r = createDocumentReference(f, isDeletion);
     registerNonUndoableAction(r);
 
-    DocumentReference oldRef = myUndoManager.findInvalidatedReferenceByUrl(f.getUrl());
+    DocumentReference oldRef = getUndoManager().findInvalidatedReferenceByUrl(f.getUrl());
     if (oldRef != null && !oldRef.equals(r)) {
       registerNonUndoableAction(oldRef);
     }
   }
 
   private void registerNonUndoableAction(final DocumentReference r) {
-    if (myUndoManager.undoableActionsForDocumentAreEmpty(r)) return;
+    if (getUndoManager().undoableActionsForDocumentAreEmpty(r)) return;
 
-    myUndoManager.undoableActionPerformed(new NonUndoableAction() {
+    getUndoManager().undoableActionPerformed(new NonUndoableAction() {
       public DocumentReference[] getAffectedDocuments() {
         return new DocumentReference[]{r};
       }
@@ -155,7 +158,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
     DocumentReference ref = createDocumentReference(e.getFile(), isDeletion);
     MyUndoableAction a = new MyUndoableAction(ref);
 
-    myUndoManager.undoableActionPerformed(a);
+    getUndoManager().undoableActionPerformed(a);
     myCommandActions.add(a);
   }
 
@@ -163,6 +166,13 @@ class FileOperationsUndoProvider extends VirtualFileAdapter {
     DocumentReference r = new DocumentReferenceByVirtualFile(f);
     if (isDeletion) r.beforeFileDeletion(f);
     return r;
+  }
+
+  private UndoManagerImpl getUndoManager() {
+    if (myProject != null) {
+      return (UndoManagerImpl) UndoManager.getInstance(myProject);
+    }
+    return (UndoManagerImpl) UndoManager.getGlobalInstance();
   }
 
   private class MyUndoableAction implements UndoableAction {
