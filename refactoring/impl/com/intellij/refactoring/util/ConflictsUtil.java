@@ -84,13 +84,13 @@ public class ConflictsUtil {
     return Character.toUpperCase(text.charAt(0)) + text.substring(1);
   }
 
-  public static void checkMethodConflicts(PsiClass aClass,
+  public static void checkMethodConflicts(@Nullable PsiClass aClass,
                                           PsiMethod refactoredMethod,
                                           PsiMethod prototype,
                                           final Collection<String> conflicts) {
     if (prototype == null) return;
 
-    PsiMethod method = aClass.findMethodBySignature(prototype, true);
+    PsiMethod method = aClass != null ? aClass.findMethodBySignature(prototype, true) : null;
 
     if (method != null && method != refactoredMethod) {
       if (aClass.equals(method.getContainingClass())) {
@@ -130,8 +130,8 @@ public class ConflictsUtil {
     );
   }
 
-  public static void checkFieldConflicts(PsiClass aClass, String newName, final Collection<String> conflicts) {
-    PsiField existingField = aClass.findFieldByName(newName, true);
+  public static void checkFieldConflicts(@Nullable PsiClass aClass, String newName, final Collection<String> conflicts) {
+    PsiField existingField = aClass != null ? aClass.findFieldByName(newName, true) : null;
     if (existingField != null) {
       if (aClass.equals(existingField.getContainingClass())) {
         String className = aClass instanceof PsiAnonymousClass ?
