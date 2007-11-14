@@ -4,8 +4,10 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.xmlb.JDOMXIncluder;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +30,9 @@ class DefaultsStateStorage implements StateStorage {
     if (url == null) return null;
 
     try {
-      final Element documentElement = JDOMUtil.loadDocument(url).getRootElement();
+      Document document = JDOMUtil.loadDocument(url);
+      document = JDOMXIncluder.resolve(document, url.toExternalForm());
+      final Element documentElement = document.getRootElement();
 
       if (myPathMacroManager != null) {
         myPathMacroManager.expandPaths(documentElement);
