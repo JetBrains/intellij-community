@@ -585,7 +585,13 @@ public class XmlUtil {
       if (element instanceof XmlTag) {
         XmlTag xmlTag = (XmlTag)element;
 
-        return xmlTag.getLocalName().equals("include") && xmlTag.getNamespace().equals(XINCLUDE_URI);
+        if (xmlTag.getParent() instanceof XmlDocument) return false;
+
+        if (xmlTag.getLocalName().equals("include")) {
+          if (xmlTag.getNamespace().equals(XINCLUDE_URI)) {
+            return true;
+          }
+        }
       }
 
       return false;
