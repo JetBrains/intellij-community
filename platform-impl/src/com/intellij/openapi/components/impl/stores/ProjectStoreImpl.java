@@ -700,6 +700,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     if (moduleManager instanceof ModuleManagerImpl) {
       return ((ModuleManagerImpl)moduleManager).getPersistentModules();
     }
+    else if (moduleManager == null) {
+      return Module.EMPTY_ARRAY;
+    }
     else {
       return moduleManager.getModules();
     }
