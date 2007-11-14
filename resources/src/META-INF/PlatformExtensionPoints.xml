@@ -46,5 +46,8 @@
   <extensionPoint name="undoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"/>
   <extensionPoint name="projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"
                   area="IDEA_PROJECT"/>
+
+  <extensionPoint name="syntaxHighlighter"
+                  beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
 </extensionPoints>
   
