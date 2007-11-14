@@ -73,9 +73,6 @@ public class WelcomeScreen {
   private static Icon CAPTION_IMAGE;
   private static Icon DEVELOPER_SLOGAN;
 
-  @NonNls private static final String PLUGIN_URL = PathManager.getHomePath() + "/Plugin Development Readme.html";
-  @NonNls private static final String PLUGIN_WEBSITE = "http://www.jetbrains.com/idea/plugins/plugin_developers.html";
-
   @NonNls protected static final String TAHOMA_FONT_NAME = "Tahoma";
   private static final Font TEXT_FONT = new Font(TAHOMA_FONT_NAME, Font.PLAIN, 11);
   private static final Font LINK_FONT = new Font(TAHOMA_FONT_NAME, Font.BOLD, 12);
@@ -167,10 +164,16 @@ public class WelcomeScreen {
       return "<html><nobr><u>" + commandLink + "</u></nobr></html>";
     }
 
-    private void appendActionsFromGroup(final DefaultActionGroup group) {
+    private void appendActionsFromGroup(final ActionGroup group) {
       final AnAction[] actions = group.getChildren(null);
       for (final AnAction action : actions) {
-        appendButtonForAction(action);
+        if (action instanceof ActionGroup) {
+          final ActionGroup childGroup = (ActionGroup)action;
+          appendActionsFromGroup(childGroup);
+        }
+        else {
+          appendButtonForAction(action);
+        }
       }
     }
 
