@@ -174,9 +174,23 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         final IdeFrameImpl frame = windowManagerEx.getFrame(myProject);
         LOG.assertTrue(frame != null);
         mySplitters.updateFileName(file);
-        frame.setFileTitle(file);
+        frame.setFileTitle(file == null ? null : getFileTitle(file));
       }
     });
+  }
+
+  @Nullable
+  protected String getFileTitle(final VirtualFile file) {
+    String url = file.getPresentableUrl();
+    final VirtualFile baseDir = myProject.getBaseDir();
+    if (baseDir != null) {
+      //noinspection ConstantConditions
+      final String projectHomeUrl = baseDir.getPresentableUrl();
+      if (url.startsWith(projectHomeUrl)) {
+        url = "..." + url.substring(projectHomeUrl.length());
+      }
+    }
+    return url;
   }
 
   //-------------------------------------------------------

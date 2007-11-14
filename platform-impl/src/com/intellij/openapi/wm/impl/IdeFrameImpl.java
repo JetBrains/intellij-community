@@ -19,7 +19,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -150,8 +149,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     super.setTitle(text);
   }
 
-  public void setFileTitle(final VirtualFile file) {
-    myFileTitle = file != null ? com.intellij.openapi.project.ProjectUtil.calcRelativeToProjectPath(file, myProject) : null;
+  public void setFileTitle(final String fileTitle) {
+    myFileTitle = fileTitle;
     updateTitle();
   }
 

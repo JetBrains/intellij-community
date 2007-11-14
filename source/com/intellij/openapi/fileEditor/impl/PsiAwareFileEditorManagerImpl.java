@@ -3,10 +3,11 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -66,6 +67,12 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     }
     tooltipText.append(file.getPresentableUrl());
     return tooltipText.toString();
+  }
+
+  @Override
+  protected String getFileTitle(final VirtualFile file) {
+    return ProjectUtil.calcRelativeToProjectPath(file, myProject);
+
   }
 
   /**
