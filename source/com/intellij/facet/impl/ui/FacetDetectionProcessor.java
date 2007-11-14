@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -28,7 +27,7 @@ import java.util.*;
  */
 public class FacetDetectionProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.FacetDetectionProcessor");
-  private Map<FacetConfiguration, Pair<FacetInfo, VirtualFile>> myDetectedFacets = new LinkedHashMap<FacetConfiguration, Pair<FacetInfo, VirtualFile>>();
+  private Map<FacetConfiguration, DetectedFacetInfo> myDetectedFacets = new LinkedHashMap<FacetConfiguration, DetectedFacetInfo>();
   private Map<FacetTypeId, List<FacetConfiguration>> myDetectedConfigurations = new HashMap<FacetTypeId, List<FacetConfiguration>>();
   private final ProgressIndicator myProgressIndicator;
   private FileTypeManager myFileTypeManager;
@@ -96,14 +95,14 @@ public class FacetDetectionProcessor {
     }
   }
 
-  public List<Pair<FacetInfo, VirtualFile>> getDetectedFacetsWithFiles() {
-    return new ArrayList<Pair<FacetInfo, VirtualFile>>(myDetectedFacets.values());
+  public List<DetectedFacetInfo> getDetectedFacetsInfos() {
+    return new ArrayList<DetectedFacetInfo>(myDetectedFacets.values());
   }
 
   public List<FacetInfo> getDetectedFacets() {
     List<FacetInfo> list = new ArrayList<FacetInfo>();
-    for (Pair<FacetInfo, VirtualFile> pair : myDetectedFacets.values()) {
-      list.add(pair.getFirst());
+    for (DetectedFacetInfo info : myDetectedFacets.values()) {
+      list.add(info.getFacetInfo());
     }
     return list;
   }
@@ -142,7 +141,7 @@ public class FacetDetectionProcessor {
         if (underlying == null) {
           return;
         }
-        underlyingFacet = myDetectedFacets.get(underlying).getFirst();
+        underlyingFacet = myDetectedFacets.get(underlying).getFacetInfo();
       }
 
       List<C> configurations = (List<C>)myDetectedConfigurations.get(myFacetType.getId());
@@ -153,7 +152,7 @@ public class FacetDetectionProcessor {
 
       FacetInfo facetInfo = new FacetInfo(myFacetType, generateFacetName(), newConfiguration, underlyingFacet);
       configurations.add(newConfiguration);
-      myDetectedFacets.put(newConfiguration, Pair.create(facetInfo, file));
+      myDetectedFacets.put(newConfiguration, new DetectedFacetInfo(facetInfo, file, myDetector));
     }
 
     private String generateFacetName() {
@@ -173,7 +172,7 @@ public class FacetDetectionProcessor {
       List<FacetConfiguration> configurations = myDetectedConfigurations.get(myFacetType.getId());
       if (configurations != null) {
         for (FacetConfiguration configuration : configurations) {
-          if (name.equals(myDetectedFacets.get(configuration).getFirst().getName())) {
+          if (name.equals(myDetectedFacets.get(configuration).getFacetInfo().getName())) {
             return true;
           }
         }
@@ -224,6 +223,31 @@ public class FacetDetectionProcessor {
       MyFacetDetectorWrapper<C, U> detector = new MyFacetDetectorWrapper<C, U>(myFacetType, fileType, virtualFileFilter,
                                                                                facetDetector, underlyingFacetSelector);
       getDetectorsMap() .put(fileType, detector);
+    }
+  }
+
+
+  public static class DetectedFacetInfo {
+    private FacetInfo myFacetInfo;
+    private VirtualFile myFile;
+    private FacetDetector myFacetDetector;
+
+    public DetectedFacetInfo(final FacetInfo facetInfo, final VirtualFile file, final FacetDetector facetDetector) {
+      myFacetInfo = facetInfo;
+      myFile = file;
+      myFacetDetector = facetDetector;
+    }
+
+    public FacetInfo getFacetInfo() {
+      return myFacetInfo;
+    }
+
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
+    public FacetDetector getFacetDetector() {
+      return myFacetDetector;
     }
   }
 }

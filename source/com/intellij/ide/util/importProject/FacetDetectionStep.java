@@ -4,9 +4,8 @@
 
 package com.intellij.ide.util.importProject;
 
-import com.intellij.facet.FacetInfo;
-import com.intellij.facet.impl.ui.FacetDetectionProcessor;
 import com.intellij.facet.impl.autodetecting.facetsTree.DetectedFacetsTreeComponent;
+import com.intellij.facet.impl.ui.FacetDetectionProcessor;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.openapi.module.Module;
@@ -15,8 +14,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 
@@ -31,7 +28,7 @@ import java.util.Map;
 /**
  * @author nik
  */
-public class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescriptor, Map<File, List<Pair<FacetInfo, VirtualFile>>>>>
+public class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>>>
   implements ProjectFromSourcesBuilder.ProjectConfigurationUpdater {
   private Icon myIcon;
   private ProjectFromSourcesBuilder myProjectBuilder;
@@ -66,19 +63,19 @@ public class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescr
     return myMainPanel;
   }
 
-  protected Map<ModuleDescriptor, Map<File, List<Pair<FacetInfo, VirtualFile>>>> calculate() {
+  protected Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>> calculate() {
     myLastRoots = getRoots();
 
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
-    Map<ModuleDescriptor, Map<File, List<Pair<FacetInfo, VirtualFile>>>> result = new HashMap<ModuleDescriptor, Map<File, List<Pair<FacetInfo, VirtualFile>>>>();
+    Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>> result = new HashMap<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>>();
     for (ModuleDescriptor moduleDescriptor : myProjectBuilder.getModules()) {
 
-      Map<File, List<Pair<FacetInfo, VirtualFile>>> root2Facets = new HashMap<File, List<Pair<FacetInfo, VirtualFile>>>();
+      Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>> root2Facets = new HashMap<File, List<FacetDetectionProcessor.DetectedFacetInfo>>();
       for (File root : moduleDescriptor.getContentRoots()) {
         FacetDetectionProcessor processor = new FacetDetectionProcessor(progressIndicator);
         processor.process(root);
-        List<Pair<FacetInfo, VirtualFile>> facets = processor.getDetectedFacetsWithFiles();
+        List<FacetDetectionProcessor.DetectedFacetInfo> facets = processor.getDetectedFacetsInfos();
         if (!facets.isEmpty()) {
           root2Facets.put(root, facets);
         }
@@ -100,7 +97,7 @@ public class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescr
     return roots;
   }
 
-  protected void onFinished(final Map<ModuleDescriptor, Map<File, List<Pair<FacetInfo, VirtualFile>>>> result, final boolean canceled) {
+  protected void onFinished(final Map<ModuleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>>> result, final boolean canceled) {
     myDetectedFacetsComponent.clear();
     for (ModuleDescriptor moduleDescriptor : result.keySet()) {
       myDetectedFacetsComponent.addFacets(moduleDescriptor, result.get(moduleDescriptor));

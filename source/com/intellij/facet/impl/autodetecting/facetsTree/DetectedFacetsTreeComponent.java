@@ -5,7 +5,9 @@
 package com.intellij.facet.impl.autodetecting.facetsTree;
 
 import com.intellij.facet.*;
+import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
+import com.intellij.facet.impl.ui.FacetDetectionProcessor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -39,21 +41,21 @@ public class DetectedFacetsTreeComponent {
     return myMainPanel;
   }
 
-  public void addFacets(ModuleDescriptor moduleDescriptor, Map<File, List<Pair<FacetInfo, VirtualFile>>> root2Facets) {
+  public void addFacets(ModuleDescriptor moduleDescriptor, Map<File, List<FacetDetectionProcessor.DetectedFacetInfo>> root2Facets) {
     for (File root : root2Facets.keySet()) {
       ModuleDescriptorNode moduleNode = new ModuleDescriptorNode(moduleDescriptor, root);
 
       Map<FacetInfo, DetectedFacetsTree.FacetNode> facetInfos = new HashMap<FacetInfo, DetectedFacetsTree.FacetNode>();
-      for (Pair<FacetInfo, VirtualFile> pair : root2Facets.get(root)) {
+      for (FacetDetectionProcessor.DetectedFacetInfo detectedFacetInfo : root2Facets.get(root)) {
         DetectedFacetsTree.FacetNode parent = null;
-        FacetInfo underlyingFacet = pair.getFirst().getUnderlyingFacet();
+        FacetInfo underlyingFacet = detectedFacetInfo.getFacetInfo().getUnderlyingFacet();
         if (underlyingFacet != null) {
           parent = facetInfos.get(underlyingFacet);
         }
 
         VirtualFile virtualRoot = LocalFileSystem.getInstance().findFileByIoFile(root);
-        DetectedFacetsTree.FacetNode detectedFacet = new FacetInfoNode(pair.getFirst(), virtualRoot, pair.getSecond(), parent);
-        facetInfos.put(pair.getFirst(), detectedFacet);
+        DetectedFacetsTree.FacetNode detectedFacet = new FacetInfoNode(detectedFacetInfo, virtualRoot, parent);
+        facetInfos.put(detectedFacetInfo.getFacetInfo(), detectedFacet);
         if (parent == null) {
           moduleNode.addRootFacet(detectedFacet);
         }
@@ -75,20 +77,26 @@ public class DetectedFacetsTreeComponent {
   }
 
   public void createFacets(final ModuleDescriptor descriptor, final Module module, final ModifiableRootModel rootModel) {
+    List<Pair<FacetDetector, Facet>> createdFacets = new ArrayList<Pair<FacetDetector, Facet>>();
     ModifiableFacetModel modifiableModel = FacetManager.getInstance(module).createModifiableModel();
     for (ModuleDescriptorNode moduleNode : myModuleNodes) {
       if (moduleNode.myModuleDescriptor.equals(descriptor)) {
-        processFacetsInfos(moduleNode.getRootFacets(), module, rootModel, modifiableModel, null, moduleNode.isChecked());
+        processFacetsInfos(moduleNode.getRootFacets(), module, rootModel, modifiableModel, null, createdFacets, moduleNode.isChecked());
       }
     }
     modifiableModel.commit();
+    for (Pair<FacetDetector, Facet> createdFacet : createdFacets) {
+      createdFacet.getFirst().afterFacetAdded(createdFacet.getSecond());
+    }
   }
 
   private static void processFacetsInfos(final List<DetectedFacetsTree.FacetNode> facets, final Module module, final ModifiableRootModel rootModel,
-                                   final ModifiableFacetModel facetModel, Facet underlyingFacet, boolean createFacets) {
+                                         final ModifiableFacetModel facetModel, Facet underlyingFacet,
+                                         final List<Pair<FacetDetector, Facet>> createdFacets, boolean createFacets) {
     for (DetectedFacetsTree.FacetNode facetNode : facets) {
       boolean createFacet = createFacets && facetNode.isChecked();
-      FacetInfo facetInfo = ((FacetInfoNode)facetNode).getFacetInfo();
+      FacetDetectionProcessor.DetectedFacetInfo detectedFacetInfo = ((FacetInfoNode)facetNode).getDetectedFacetInfo();
+      FacetInfo facetInfo = detectedFacetInfo.getFacetInfo();
       FacetType type = facetInfo.getFacetType();
       Facet facet = null;
 
@@ -96,6 +104,9 @@ public class DetectedFacetsTreeComponent {
         //noinspection unchecked
         facet = FacetManagerImpl.createFacet(type, module, facetInfo.getName(), facetInfo.getConfiguration(), underlyingFacet);
         facetModel.addFacet(facet);
+        FacetDetector facetDetector = detectedFacetInfo.getFacetDetector();
+        facetDetector.beforeFacetAdded(facet, rootModel);
+        createdFacets.add(Pair.create(facetDetector, facet));
       }
       else {
         VirtualFile[] files = facetNode.getFiles();
@@ -106,20 +117,20 @@ public class DetectedFacetsTreeComponent {
         FacetAutodetectingManager.getInstance(module.getProject()).disableAutodetectionInFiles(type, module, urls);
       }
 
-      processFacetsInfos(facetNode.getChildren(), module, rootModel, facetModel, facet, createFacet);
+      processFacetsInfos(facetNode.getChildren(), module, rootModel, facetModel, facet, createdFacets, createFacet);
     }
   }
 
   private static class FacetInfoNode extends DetectedFacetsTree.FacetNode {
-    private FacetInfo myFacetInfo;
+    private FacetDetectionProcessor.DetectedFacetInfo myDetectedFacetInfo;
 
-    private FacetInfoNode(final FacetInfo facetInfo, final VirtualFile root, final VirtualFile file, @Nullable final DetectedFacetsTree.FacetNode parent) {
-      super(facetInfo, facetInfo.getFacetType(), root, new VirtualFile[]{file}, parent);
-      myFacetInfo = facetInfo;
+    private FacetInfoNode(final FacetDetectionProcessor.DetectedFacetInfo detectedFacetInfo, final VirtualFile root, @Nullable final DetectedFacetsTree.FacetNode parent) {
+      super(detectedFacetInfo.getFacetInfo(), detectedFacetInfo.getFacetInfo().getFacetType(), root, new VirtualFile[]{detectedFacetInfo.getFile()}, parent);
+      myDetectedFacetInfo = detectedFacetInfo;
     }
 
-    public FacetInfo getFacetInfo() {
-      return myFacetInfo;
+    public FacetDetectionProcessor.DetectedFacetInfo getDetectedFacetInfo() {
+      return myDetectedFacetInfo;
     }
   }
 

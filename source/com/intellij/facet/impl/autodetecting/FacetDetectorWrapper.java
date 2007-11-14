@@ -8,11 +8,13 @@ import com.intellij.facet.*;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +99,18 @@ public abstract class FacetDetectorWrapper<S, C extends FacetConfiguration, F ex
         facet.setImplicit(true);
         ModifiableFacetModel model = FacetManager.getInstance(facet.getModule()).createModifiableModel();
         model.addFacet(facet);
+        ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+        myFacetDetector.beforeFacetAdded(facet, rootModel);
+        if (rootModel.isChanged()) {
+          rootModel.commit();
+        }
+        else {
+          rootModel.dispose();
+        }
+
         model.commit();
+        myFacetDetector.afterFacetAdded(facet);
+
         result.setResult(facet);
       }
     }.execute().getResultObject();

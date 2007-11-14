@@ -16,8 +16,11 @@
 
 package com.intellij.facet.autodetecting;
 
+import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -28,5 +31,11 @@ public abstract class FacetDetector<T, C extends FacetConfiguration> {
 
   @Nullable
   public abstract C detectFacet(T source, Collection<C> existentFacetConfigurations);
+
+  public void beforeFacetAdded(@NotNull Facet facet, @NotNull ModifiableRootModel modifiableRootModel) {
+  }
+
+  public void afterFacetAdded(@NotNull Facet facet) {
+  }
 
 }

@@ -6,6 +6,7 @@ package com.intellij.facet.impl.autodetecting;
 
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetType;
+import com.intellij.facet.Facet;
 import com.intellij.facet.autodetecting.FacetDetector;
 import com.intellij.facet.autodetecting.FacetDetectorRegistry;
 import com.intellij.facet.autodetecting.DetectedFacetPresentation;
@@ -14,6 +15,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.patterns.impl.Pattern;
 import com.intellij.patterns.impl.VirtualFilePattern;
 import com.intellij.patterns.impl.StandardPatterns;
@@ -128,6 +130,14 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
       public C detectFacet(final PsiFile source, final Collection<C> existentFacetConfigurations) {
         VirtualFile virtualFile = source.getVirtualFile();
         return virtualFile != null ? detector.detectFacet(virtualFile, existentFacetConfigurations) : null;
+      }
+
+      public void beforeFacetAdded(@NotNull final Facet facet, @NotNull final ModifiableRootModel modifiableRootModel) {
+        detector.beforeFacetAdded(facet, modifiableRootModel);
+      }
+
+      public void afterFacetAdded(@NotNull final Facet facet) {
+        detector.afterFacetAdded(facet);
       }
     };
   }
