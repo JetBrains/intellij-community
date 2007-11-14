@@ -33,9 +33,10 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -90,7 +91,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   private List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
   private MessageBusConnection myConnection;
-
+  private Function<VirtualFile, Color> myExtraColorProvider = null;
 
   FileEditorManagerImpl(final Project project) {
 /*    ApplicationManager.getApplication().assertIsDispatchThread(); */
@@ -125,6 +126,10 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   //-------------------------------------------------------
 
+  public void setExtraColorProvider(final Function<VirtualFile, Color> extraColorProvider) {
+    myExtraColorProvider = extraColorProvider;
+  }
+
   /**
    * @return color of the <code>file</code> which corresponds to the
    *         file's status
@@ -133,8 +138,11 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : Color.BLACK;
     if (statusColor == null) statusColor = Color.BLACK;
-    if (WolfTheProblemSolver.getInstance(getProject()).isProblemFile(file)) {
-      return new Color(statusColor.getRed(), statusColor.getGreen(), statusColor.getBlue(), WaverGraphicsDecorator.WAVE_ALPHA_KEY);
+    if (myExtraColorProvider != null) {
+      final Color color = myExtraColorProvider.fun(file);
+      if (color != null) {
+        return color;
+      }
     }
     return statusColor;
   }
