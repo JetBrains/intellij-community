@@ -41,9 +41,7 @@ public class GroovySurrounderByClosure extends GroovyManyStatementsSurrounder {
     element.accept(new MyRestoringVisitor());
     assert element instanceof GrMethodCallExpression;
 
-    final GrExpression invoked = ((GrMethodCallExpression) element).getInvokedExpression();
-    assert invoked instanceof GrReferenceExpression;
-    final int offset = ((GrReferenceExpression) invoked).getReferenceNameElement().getTextRange().getStartOffset();
+    final int offset = element.getTextRange().getEndOffset();
     return new TextRange(offset, offset);
   }
 
