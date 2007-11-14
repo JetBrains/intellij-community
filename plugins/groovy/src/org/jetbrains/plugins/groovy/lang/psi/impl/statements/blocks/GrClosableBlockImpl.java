@@ -25,13 +25,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
@@ -129,16 +128,21 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   private GrVariable getOwner() {
     if (myOwner == null) {
-      final GrTopStatement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GrClosableBlock.class);
+      final GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
       final PsiElementFactory factory = getManager().getElementFactory();
-      PsiType type;
+      PsiType type = null;
       if (context instanceof GrTypeDefinition) {
         type = factory.createType((PsiClass) context);
       } else if (context instanceof GrClosableBlock) {
         type = GrClosureType.create((GrClosableBlock) context);
-      } else {
+      } else if (context instanceof GroovyFile) {
+        final PsiClass scriptClass = ((GroovyFile) context).getScriptClass();
+        if (scriptClass != null) type = factory.createType(scriptClass);
+      }
+      if (type == null) {
         type = factory.createTypeByFQClassName("java.lang.Object", getResolveScope());
       }
+
       myOwner = GroovyElementFactory.getInstance(getProject()).createVariableDeclaration(null, OWNER_NAME, null, type).getVariables()[0];
     }
 
