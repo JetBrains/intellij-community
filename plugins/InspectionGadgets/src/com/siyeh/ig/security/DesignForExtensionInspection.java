@@ -69,7 +69,7 @@ public class DesignForExtensionInspection extends BaseInspection {
                 return;
             }
             final PsiStatement[] statements = body.getStatements();
-            if(statements.length!=0) {
+            if(statements.length==0) {
                 return;
             }
             registerMethodError(method);
