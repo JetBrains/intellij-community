@@ -27,11 +27,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
-import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
+import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import javax.swing.*;
@@ -50,7 +50,8 @@ public class DevKitPlugin implements ApplicationComponent, InspectionToolProvide
 
   public Class[] getInspectionClasses() {
     return new Class[] {
-            RegistrationProblemsInspection.class,
+            //RegistrationProblemsInspection.class,
+            PluginXmlDomInspection.class,
             ComponentNotRegisteredInspection.class,
     };
   }
