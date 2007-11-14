@@ -34,7 +34,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
@@ -657,17 +656,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       synchronized (myWriteActionsStack) {
         myWriteActionsStack.push(action);
       }
-      final Project project = CommandProcessor.getInstance().getCurrentCommandProject();
-      if(project != null/* && !(action instanceof PsiExternalChangeAction)*/) {
-        // run postprocess formatting inside commands only
-        PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Computable<Object>() {
-          public Object compute() {
-            action.run();
-            return null;
-          }
-        });
-      }
-      else action.run();
+      action.run();
     }
     finally {
       synchronized (myWriteActionsStack) {

@@ -1,6 +1,10 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -10,8 +14,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.ChangeInfo;
@@ -31,18 +35,46 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class PostprocessReformattingAspect implements PomModelAspect {
+public class PostprocessReformattingAspect implements PomModelAspect, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PostprocessReformatingAspect");
+  private final Project myProject;
   private final PsiManager myPsiManager;
   private final TreeAspect myTreeAspect;
   private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
   private volatile int myDisabledCounter = 0;
   private final Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
 
-  public PostprocessReformattingAspect(PsiManager psiManager, TreeAspect treeAspect) {
+  private ApplicationListener myApplicationListener = new ApplicationAdapter() {
+    private boolean myInWriteAction = false;
+
+    public void writeActionStarted(final Object action) {
+      assert !myInWriteAction;
+      final Project project = CommandProcessor.getInstance().getCurrentCommandProject();
+      if(project == myProject) {
+        myInWriteAction = true;
+        myPostponedCounter++;
+      }
+    }
+
+    public void writeActionFinished(final Object action) {
+      if (myInWriteAction) {
+        myInWriteAction = false;
+        decrementPostponedCounter();
+      }
+    }
+  };
+
+  public PostprocessReformattingAspect(Project project, PsiManager psiManager, TreeAspect treeAspect) {
+    myProject = project;
     myPsiManager = psiManager;
     myTreeAspect = treeAspect;
     PomManager.getModel(psiManager.getProject()).registerAspect(PostprocessReformattingAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
+
+    ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
+  }
+
+  public void dispose() {
+    ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
   }
 
   public void disablePostprocessFormattingInside(final Runnable runnable) {
@@ -82,17 +114,21 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       return computable.compute();
     }
     finally {
-      if (--myPostponedCounter == 0) {
-        if(!ApplicationManager.getApplication().isWriteAccessAllowed()){
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              doPostponedFormatting();
-            }
-          });
-        }
-        else doPostponedFormatting();
-        //myDisabled = true;
+      decrementPostponedCounter();
+    }
+  }
+
+  private void decrementPostponedCounter() {
+    if (--myPostponedCounter == 0) {
+      if(!ApplicationManager.getApplication().isWriteAccessAllowed()){
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            doPostponedFormatting();
+          }
+        });
       }
+      else doPostponedFormatting();
+      //myDisabled = true;
     }
   }
 
