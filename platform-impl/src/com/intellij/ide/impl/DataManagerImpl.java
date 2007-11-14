@@ -129,10 +129,10 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   private GetDataRule getRuleFromMap(final String dataId) {
     GetDataRule rule = myDataConstantToRuleMap.get(dataId);
     if (rule == null && !myDataConstantToRuleMap.containsKey(dataId)) {
-      final KeyedLazyInstanceEP[] eps = Extensions.getExtensions(GetDataRule.EP_NAME);
-      for(KeyedLazyInstanceEP ruleEP: eps) {
+      final KeyedLazyInstanceEP<GetDataRule>[] eps = Extensions.getExtensions(GetDataRule.EP_NAME);
+      for(KeyedLazyInstanceEP<GetDataRule> ruleEP: eps) {
         if (ruleEP.key.equals(dataId)) {
-          rule = (GetDataRule) ruleEP.getInstance();
+          rule = ruleEP.getInstance();
         }
       }
       myDataConstantToRuleMap.put(dataId, rule);

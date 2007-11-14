@@ -29,9 +29,9 @@
                   interface="com.intellij.openapi.keymap.KeymapExtension"/>
 
   <extensionPoint name="getDataRule"
-                  beanClass="com.intellij.ide.impl.dataRules.KeyedLazyInstanceEP"/>
+                  beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
   <extensionPoint name="dataValidator"
-                  beanClass="com.intellij.ide.impl.dataRules.KeyedLazyInstanceEP"/>
+                  beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
   <extensionPoint name="cutElementMarker"
                   interface="com.intellij.openapi.ide.CutElementMarker"/>
 

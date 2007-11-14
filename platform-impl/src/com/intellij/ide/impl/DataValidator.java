@@ -15,7 +15,7 @@ import java.util.Map;
 public abstract class DataValidator <T> {
   private static boolean ourExtensionsLoaded;
 
-  public static final ExtensionPointName<KeyedLazyInstanceEP> EP_NAME = ExtensionPointName.create("com.intellij.dataValidator");
+  public static final ExtensionPointName<KeyedLazyInstanceEP<DataValidator>> EP_NAME = ExtensionPointName.create("com.intellij.dataValidator");
 
   Logger LOG = Logger.getInstance("#com.intellij.ide.impl.DataValidator");
 
@@ -32,8 +32,8 @@ public abstract class DataValidator <T> {
   private static <T> DataValidator<T> getValidator(String dataId) {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
-      for(KeyedLazyInstanceEP ep: Extensions.getExtensions(EP_NAME)) {
-        ourValidators.put(ep.key, (DataValidator) ep.getInstance());
+      for(KeyedLazyInstanceEP<DataValidator> ep: Extensions.getExtensions(EP_NAME)) {
+        ourValidators.put(ep.key, ep.getInstance());
       }
     }
     return ourValidators.get(dataId);

@@ -6,7 +6,7 @@ import com.intellij.util.KeyedLazyInstanceEP;
 import org.jetbrains.annotations.Nullable;
 
 public interface GetDataRule {
-  ExtensionPointName<KeyedLazyInstanceEP> EP_NAME = ExtensionPointName.create("com.intellij.getDataRule");
+  ExtensionPointName<KeyedLazyInstanceEP<GetDataRule>> EP_NAME = ExtensionPointName.create("com.intellij.getDataRule");
 
   @Nullable
   Object getData(DataProvider dataProvider);
