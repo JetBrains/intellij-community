@@ -18,4 +18,10 @@ public abstract class FacetAutodetectingManager {
   }
 
   public abstract void disableAutodetectionInFiles(@NotNull FacetType type, @NotNull Module module, @NotNull String... fileUrls);
+
+  public abstract void disableAutodetectionInModule(FacetType type, Module module);
+
+  public abstract void disableAutodetectionInProject();
+
+  public abstract void disableAutodetectionInProject(FacetType type);
 }

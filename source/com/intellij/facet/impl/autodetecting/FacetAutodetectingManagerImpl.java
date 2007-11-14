@@ -260,6 +260,12 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
     getState().addDisabled(type.getStringId(), module.getName());
   }
 
+  public void disableAutodetectionInProject() {
+    for (FacetType facetType : FacetTypeRegistry.getInstance().getFacetTypes()) {
+      disableAutodetectionInProject(facetType);
+    }
+  }
+
   public void disableAutodetectionInProject(final FacetType type) {
     getState().addDisabled(type.getStringId());
   }
