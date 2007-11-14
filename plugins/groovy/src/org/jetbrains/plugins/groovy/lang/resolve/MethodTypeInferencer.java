@@ -50,18 +50,18 @@ public class MethodTypeInferencer implements Computable<PsiType> {
       }
     }
 
-    boolean isVoid = returns.size() == 0;
+    boolean isObject = returns.size() == 0;
 
     GrStatement[] statements = myBlock.getStatements();
     if (statements.length > 0) {
       GrStatement last = statements[statements.length - 1];
       if (last instanceof GrExpression) {
         result = upperBound(((GrExpression) last).getType(), result, manager);
-        isVoid = false;
+        isObject = false;
       }
     }
 
-    if (isVoid) return PsiType.VOID;
+    if (isObject) return myBlock.getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", myBlock.getResolveScope());
     
     return result;
   }
