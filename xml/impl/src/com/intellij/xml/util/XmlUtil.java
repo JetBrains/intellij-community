@@ -34,8 +34,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -51,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * @author Mike
@@ -97,12 +101,13 @@ public class XmlUtil {
   @NonNls public static final String STRUTS_LOGIC_URI = "http://struts.apache.org/tags-logic";
   @NonNls public static final String STRUTS_HTML_URI = "http://struts.apache.org/tags-html";
   @NonNls public static final String STRUTS_HTML_URI2 = "http://jakarta.apache.org/struts/tags-html";
-  
+
   @NonNls public static final String APACHE_TRINIDAD_URI = "http://myfaces.apache.org/trinidad";
   @NonNls public static final String APACHE_TRINIDAD_HTML_URI = "http://myfaces.apache.org/trinidad/html";
 
 
-  @NonNls public static final String[] HIBERNATE_URIS = {"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd", "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"};
+  @NonNls public static final String[] HIBERNATE_URIS =
+    {"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd", "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"};
 
   @NonNls public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
   public static final @NonNls String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
@@ -146,7 +151,7 @@ public class XmlUtil {
           }
         }
       }
-      if (tag.getParent()instanceof XmlTag) {
+      if (tag.getParent() instanceof XmlTag) {
         tag = (XmlTag)tag.getParent();
       }
       else {
@@ -239,13 +244,14 @@ public class XmlUtil {
           if (result == null && JSTL_CORE_URI2.equals(uri)) {
             result = jspManager.getTldFileByUri(JSTL_CORE_URI, jspFile);
           }
-        } else {
+        }
+        else {
           // check facelets file
           if (base instanceof XmlFile && base.getUserData(findXmlFileInProgressKey) == null) {
             base.putUserData(findXmlFileInProgressKey, "");
             try {
               final XmlDocument document = ((XmlFile)base).getDocument();
-              final XmlTag rootTag = document != null ? document.getRootTag():null;
+              final XmlTag rootTag = document != null ? document.getRootTag() : null;
 
               if (rootTag != null && rootTag.getPrefixByNamespace(FACELETS_URI) != null) {
                 result = jspManager.getTldFileByUri(uri, ModuleUtil.findModuleForPsiElement(base), null);
@@ -296,20 +302,38 @@ public class XmlUtil {
     return processXmlElements(element, processor, deepFlag, wideFlag, baseFile);
   }
 
-  public static boolean processXmlElements(final XmlElement element, final PsiElementProcessor processor,
-                                            final boolean deepFlag,
-                                            final boolean wideFlag,
-                                            final PsiFile baseFile) {
+  public static boolean processXmlElements(final XmlElement element,
+                                           final PsiElementProcessor processor,
+                                           final boolean deepFlag,
+                                           final boolean wideFlag,
+                                           final PsiFile baseFile) {
     return new XmlElementProcessor(processor, baseFile).processXmlElements(element, deepFlag, wideFlag);
   }
 
-  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexerInXml(final ASTNode left, final ASTNode right, final Lexer lexer, int state) {
-    if(left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || right.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)
+  public static boolean processXmlElementChildren(final XmlElement element, final PsiElementProcessor processor, final boolean deepFlag) {
+    final XmlElementProcessor p = new XmlElementProcessor(processor, element.getContainingFile());
+
+    final boolean wideFlag = false;
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (!p.processElement(child, deepFlag, wideFlag) && !wideFlag) return false;
+    }
+
+    return true;
+  }
+
+  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexerInXml(final ASTNode left,
+                                                                                      final ASTNode right,
+                                                                                      final Lexer lexer,
+                                                                                      int state) {
+    if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || right.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
       return ParserDefinition.SpaceRequirements.MUST_NOT;
-    if(left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER && right.getElementType() == XmlTokenType.XML_NAME)
+    }
+    if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER && right.getElementType() == XmlTokenType.XML_NAME) {
       return ParserDefinition.SpaceRequirements.MUST;
-    if(left.getElementType() == XmlTokenType.XML_NAME && right.getElementType() == XmlTokenType.XML_NAME)
+    }
+    if (left.getElementType() == XmlTokenType.XML_NAME && right.getElementType() == XmlTokenType.XML_NAME) {
       return ParserDefinition.SpaceRequirements.MUST;
+    }
     return ParserDefinition.SpaceRequirements.MAY;
   }
 
@@ -322,6 +346,7 @@ public class XmlUtil {
     return XSLT_URI.equals(ns) || XINCLUDE_URI.equals(ns);
   }
 
+
   public static char getCharFromEntityRef(@NonNls String text) {
     //LOG.assertTrue(text.startsWith("&#") && text.endsWith(";"));
     if (text.charAt(1) != '#') {
@@ -330,7 +355,7 @@ public class XmlUtil {
     }
     text = text.substring(2, text.length() - 1);
     int code;
-    if (StringUtil.startsWithChar(text,'x')) {
+    if (StringUtil.startsWithChar(text, 'x')) {
       text = text.substring(1);
       code = Integer.parseInt(text, 16);
     }
@@ -344,7 +369,9 @@ public class XmlUtil {
     return "jsfc".equals(name) && tag.getNSDescriptor(JSF_HTML_URI, true) != null;
   }
 
-  public static @Nullable String getTargetSchemaNsFromTag(@Nullable final XmlTag xmlTag) {
+  public static
+  @Nullable
+  String getTargetSchemaNsFromTag(@Nullable final XmlTag xmlTag) {
     if (xmlTag == null) return null;
     String targetNamespace = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME, XML_SCHEMA_URI);
     if (targetNamespace == null) targetNamespace = xmlTag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME, XML_SCHEMA_URI2);
@@ -364,7 +391,8 @@ public class XmlUtil {
 
         processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor() {
           public boolean execute(final PsiElement element) {
-            if (element instanceof XmlTag && ((XmlTag)element).getLocalName().equals(XSD_SIMPLE_CONTENT_TAG) &&
+            if (element instanceof XmlTag &&
+                ((XmlTag)element).getLocalName().equals(XSD_SIMPLE_CONTENT_TAG) &&
                 ((XmlTag)element).getNamespace().equals(XML_SCHEMA_URI)) {
               simpleContent[0] = (XmlTag)element;
               return false;
@@ -381,30 +409,29 @@ public class XmlUtil {
   }
 
   public static <T extends PsiElement> void doDuplicationCheckForElements(final T[] elements,
-                                           final HashMap<String, T> presentNames,
-                                           DuplicationInfoProvider<T> provider,
-                                           final Validator.ValidationHost host) {
-    for(T t:elements) {
-      final String name = provider.getName( t );
+                                                                          final HashMap<String, T> presentNames,
+                                                                          DuplicationInfoProvider<T> provider,
+                                                                          final Validator.ValidationHost host) {
+    for (T t : elements) {
+      final String name = provider.getName(t);
       if (name == null) continue;
 
-      final String nameKey = provider.getNameKey(t,name);
+      final String nameKey = provider.getNameKey(t, name);
 
       if (presentNames.containsKey(nameKey)) {
         final T psiElement = presentNames.get(nameKey);
         final String message = XmlBundle.message("duplicated.declaration", nameKey);
 
         if (psiElement != null) {
-          presentNames.put(nameKey,null);
+          presentNames.put(nameKey, null);
 
-          host.addMessage(
-            provider.getNodeForMessage(psiElement), message, Validator.ValidationHost.ERROR
-          );
+          host.addMessage(provider.getNodeForMessage(psiElement), message, Validator.ValidationHost.ERROR);
         }
 
         host.addMessage(provider.getNodeForMessage(t), message, Validator.ValidationHost.ERROR);
-      } else {
-        presentNames.put(nameKey,t);
+      }
+      else {
+        presentNames.put(nameKey, t);
       }
     }
   }
@@ -426,6 +453,7 @@ public class XmlUtil {
   private static class XmlElementProcessor {
     private PsiElementProcessor processor;
     private PsiFile targetFile;
+    private static final Key<CachedValue<PsiElement[]>> KEY_RESOLVED_XINCLUDE = Key.create("RESOLVED_XINCLUDE");
 
     XmlElementProcessor(PsiElementProcessor _processor, PsiFile _targetFile) {
       processor = _processor;
@@ -461,12 +489,106 @@ public class XmlUtil {
         if (!xmlConditionalSection.isIncluded(targetFile)) return true;
         startFrom = xmlConditionalSection.getBodyStart();
       }
+      else if (isXInclude(element)) {
+        XmlTag tag = (XmlTag)element;
+
+        if (!processXInclude(deepFlag, wideFlag, tag)) return false;
+      }
 
       for (PsiElement child = startFrom; child != null; child = child.getNextSibling()) {
         if (!processElement(child, deepFlag, wideFlag) && !wideFlag) return false;
       }
 
       return true;
+    }
+
+    private boolean processXInclude(final boolean deepFlag, final boolean wideFlag, final XmlTag xincludeTag) {
+      final PsiElement[] inclusion = xincludeTag.getManager().getCachedValuesManager()
+        .getCachedValue(xincludeTag, KEY_RESOLVED_XINCLUDE, new Function<XmlTag, CachedValueProvider<PsiElement[]>>() {
+          public CachedValueProvider<PsiElement[]> fun(final XmlTag xmlTag) {
+            return new CachedValueProvider<PsiElement[]>() {
+              public Result<PsiElement[]> compute() {
+
+                //System.err.println("************ recomputing xInclude:" + xincludeTag.getText() + " : " + System.identityHashCode(this));
+                //Thread.dumpStack();
+                //
+                PsiElement[] result = null;
+                List<Object> deps = new ArrayList<Object>();
+                deps.add(xincludeTag.getContainingFile());
+
+                final XmlAttribute hrefAttribute = xincludeTag.getAttribute("href", XINCLUDE_URI);
+                if (hrefAttribute != null) {
+                  final XmlAttributeValue xmlAttributeValue = hrefAttribute.getValueElement();
+                  if (xmlAttributeValue != null) {
+                    final PsiReference reference = xmlAttributeValue.getReference();
+                    if (reference != null) {
+                      final PsiElement target = reference.resolve();
+                      if (target instanceof XmlFile) {
+                        XmlFile xmlFile = (XmlFile)target;
+
+                        deps.add(xmlFile);
+                        final XmlDocument document = xmlFile.getDocument();
+                        if (document != null) {
+                          XmlTag rootTag = document.getRootTag();
+                          if (rootTag != null) {
+                            final XmlTag[] includeTag = extractXpointer(rootTag, xincludeTag);
+                            result = ContainerUtil.map(includeTag, new Function<XmlTag, PsiElement>() {
+                              public PsiElement fun(final XmlTag xmlTag) {
+                                final PsiElement psiElement = xmlTag.copy();
+                                psiElement.putUserData(XmlElement.ORIGINAL_ELEMENT, xincludeTag.getParentTag());
+                                return psiElement;
+                              }
+                            }, new PsiElement[includeTag.length]);
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+
+                return new Result<PsiElement[]>(result, deps.toArray());
+              }
+            };
+          }
+        }, false);
+
+      if (inclusion != null) {
+        for (PsiElement psiElement : inclusion) {
+          if (!processElement(psiElement, deepFlag, wideFlag)) return false;
+        }
+      }
+
+      return true;
+    }
+
+    private static XmlTag[] extractXpointer(XmlTag rootTag, final XmlTag xincludeTag) {
+      final String xpointer = xincludeTag.getAttributeValue("xpointer", XINCLUDE_URI);
+
+      if (xpointer != null) {
+        Matcher matcher = JDOMXIncluder.XPOINTER_PATTERN.matcher(xpointer);
+        if (matcher.matches()) {
+          String pointer = matcher.group(1);
+          matcher = JDOMXIncluder.CHILDREN_PATTERN.matcher(pointer);
+
+          if (matcher.matches()) {
+            final String rootTagName = matcher.group(1);
+
+            if (rootTagName.equals(rootTag.getName())) return rootTag.getSubTags();
+          }
+        }
+      }
+
+      return new XmlTag[]{rootTag};
+    }
+
+    private static boolean isXInclude(PsiElement element) {
+      if (element instanceof XmlTag) {
+        XmlTag xmlTag = (XmlTag)element;
+
+        return xmlTag.getLocalName().equals("include") && xmlTag.getNamespace().equals(XINCLUDE_URI);
+      }
+
+      return false;
     }
 
     private boolean processElement(PsiElement child, boolean deepFlag, boolean wideFlag) {
@@ -480,6 +602,9 @@ public class XmlUtil {
           if (!processXmlElements(child, false, wideFlag)) return false;
         }
         else if (child instanceof XmlConditionalSection) {
+          if (!processXmlElements(child, false, wideFlag)) return false;
+        }
+        else if (isXInclude(child)) {
           if (!processXmlElements(child, false, wideFlag)) return false;
         }
         else if (!processor.execute(child)) return false;
@@ -569,9 +694,9 @@ public class XmlUtil {
                                             final XmlEntityRef entityRef) {
     if (!cacheValue) return entityDecl.parse(targetFile, type, entityRef);
 
-    synchronized(PsiLock.LOCK) { // we depend on targetFile and entityRef
+    synchronized (PsiLock.LOCK) { // we depend on targetFile and entityRef
       CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
-  //    return entityDecl.parse(targetFile, type);
+      //    return entityDecl.parse(targetFile, type);
 
       if (value == null) {
         value = entityDecl.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiElement>() {
@@ -707,7 +832,7 @@ public class XmlUtil {
     final XmlFile file = getContainingFile(document);
 
     final XmlTag tag = document.getRootTag();
-    if (tag == null) return new String[][]{new String[]{"",EMPTY_URI}};
+    if (tag == null) return new String[][]{new String[]{"", EMPTY_URI}};
 
     if (file != null) {
       final @NotNull XmlFileNSInfoProvider[] nsProviders = ApplicationManager.getApplication().getComponents(XmlFileNSInfoProvider.class);
@@ -911,7 +1036,8 @@ public class XmlUtil {
       String tagStart;
       try {
         tagStartBuilder.append(qname);
-        if (xmlTag.getPrefixByNamespace(namespace) == null && !(StringUtil.isEmpty(xmlTag.getNamespacePrefix()) && namespace.equals(xmlTag.getNamespace()))) {
+        if (xmlTag.getPrefixByNamespace(namespace) == null &&
+            !(StringUtil.isEmpty(xmlTag.getNamespacePrefix()) && namespace.equals(xmlTag.getNamespace()))) {
           tagStartBuilder.append(" xmlns=\"");
           tagStartBuilder.append(namespace);
           tagStartBuilder.append("\"");
@@ -1027,7 +1153,7 @@ public class XmlUtil {
     PsiElement currentElement = _element;
     final XmlEntityRef lastEntityRef = PsiTreeUtil.getParentOfType(currentElement, XmlEntityRef.class);
 
-    while(!(currentElement instanceof XmlFile)) {
+    while (!(currentElement instanceof XmlFile)) {
       PsiElement dependingElement = currentElement.getUserData(XmlElement.DEPENDING_ELEMENT);
       if (dependingElement == null) dependingElement = currentElement.getContext();
       currentElement = dependingElement;
@@ -1051,9 +1177,10 @@ public class XmlUtil {
             if (elementName.equals(name) && _element.getClass().isInstance(element)) {
               result[0] = (PsiNamedElement)element;
               return false;
-            } else if (lastEntityRef != null &&
-                       element instanceof XmlEntityDecl &&
-                       elementName.equals(lastEntityRef.getText().substring(1, lastEntityRef.getTextLength() - 1))) {
+            }
+            else if (lastEntityRef != null &&
+                     element instanceof XmlEntityDecl &&
+                     elementName.equals(lastEntityRef.getText().substring(1, lastEntityRef.getTextLength() - 1))) {
               result[0] = (PsiNamedElement)element;
               return false;
             }
@@ -1343,15 +1470,20 @@ public class XmlUtil {
     }
     return start;
   }
-    
+
   @Nullable
   public static String extractXmlEncodingFromProlog(String text) {
     return detect(CharsetToolkit.getUtf8Bytes(text));
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {
-    @Nullable String getName(T t);
-    @NotNull String getNameKey(T t, String name);
-    @NotNull PsiElement getNodeForMessage(T t);
+    @Nullable
+    String getName(T t);
+
+    @NotNull
+    String getNameKey(T t, String name);
+
+    @NotNull
+    PsiElement getNodeForMessage(T t);
   }
 }

@@ -406,7 +406,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   @NotNull
   protected XmlAttribute[] calculateAttributes(final Map<String, String> attributesValueMap) {
     final List<XmlAttribute> result = new ArrayList<XmlAttribute>(10);
-    processElements(
+    processChildren(
       new PsiElementProcessor() {
         public boolean execute(PsiElement element) {
           if (element instanceof XmlAttribute){
@@ -420,7 +420,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
           }
           return true;
         }
-      }, this
+      }
     );
     if (result.isEmpty()) {
       return XmlAttribute.EMPTY_ARRAY;

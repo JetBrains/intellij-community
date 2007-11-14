@@ -252,10 +252,10 @@ public class JDOMXIncluder {
   }
 
   //xpointer($1)
-  @NonNls private static Pattern XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)");
+  @NonNls public static Pattern XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)");
 
   // /$1/*
-  private static Pattern CHILDREN_PATTERN = Pattern.compile("\\/(.*)\\/\\*");
+  public static Pattern CHILDREN_PATTERN = Pattern.compile("\\/(.*)\\/\\*");
 
   @Nullable
   private static List<Object> extractNeededChildren(final Element element, List<Object> remoteElements) {
