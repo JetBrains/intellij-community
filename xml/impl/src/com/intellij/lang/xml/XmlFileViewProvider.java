@@ -1,7 +1,7 @@
 package com.intellij.lang.xml;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.LanguageFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CompositeLanguageFileViewProvider;
 import com.intellij.psi.PsiManager;
@@ -34,7 +34,7 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
 
 
   @NotNull
-  public LanguageExtension[] getLanguageExtensions() {
+  public LanguageFilter[] getLanguageExtensions() {
     return myLanguage.getLanguageExtensions();
   }
 

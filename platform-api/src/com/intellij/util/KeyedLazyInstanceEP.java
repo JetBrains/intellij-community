@@ -1,4 +1,4 @@
-package com.intellij.ide.impl.dataRules;
+package com.intellij.util;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.util.LazyInstance;
@@ -7,7 +7,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 /**
  * @author yole
  */
-public class KeyedLazyInstanceEP extends AbstractExtensionPointBean {
+public class KeyedLazyInstanceEP<T> extends AbstractExtensionPointBean {
 
   // these must be public for scrambling compatibility
   @Attribute("key")
@@ -16,13 +16,13 @@ public class KeyedLazyInstanceEP extends AbstractExtensionPointBean {
   @Attribute("implementationClass")
   public String implementationClass;
 
-  private final LazyInstance myHandler = new LazyInstance() {
-    protected Class getInstanceClass() throws ClassNotFoundException {
+  private final LazyInstance<T> myHandler = new LazyInstance<T>() {
+    protected Class<T> getInstanceClass() throws ClassNotFoundException {
       return findClass(implementationClass);
     }
   };
 
-  public Object getInstance() {
+  public T getInstance() {
     return myHandler.getValue();
   }
 }

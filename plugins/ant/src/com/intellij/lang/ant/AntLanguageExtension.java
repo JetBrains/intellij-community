@@ -1,7 +1,7 @@
 package com.intellij.lang.ant;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.LanguageFilter;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,7 +10,7 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 
-public class AntLanguageExtension implements LanguageExtension {
+public class AntLanguageExtension implements LanguageFilter {
 
   public static Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");
 

@@ -557,14 +557,4 @@ public abstract class Language {
   public LanguageCodeInsightActionHandler getGotoSuperHandler() {
     return null;
   }
-
-  @Nullable
-  public LanguageCodeInsightActionHandler getImplementMethodsHandler() {
-    return null;
-  }
-
-  @Nullable
-  public LanguageCodeInsightActionHandler getOverrideMethodsHandler() {
-    return null;
-  }
 }

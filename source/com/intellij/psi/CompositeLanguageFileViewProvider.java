@@ -2,7 +2,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.LanguageFilter;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -181,8 +181,8 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     }
   }
 
-  public LanguageExtension[] getLanguageExtensions() {
-    return new LanguageExtension[0];
+  public LanguageFilter[] getLanguageExtensions() {
+    return new LanguageFilter[0];
   }
 
   protected void removeFile(Language lang) {

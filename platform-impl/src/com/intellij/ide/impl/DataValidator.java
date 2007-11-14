@@ -1,17 +1,16 @@
 package com.intellij.ide.impl;
 
-import com.intellij.ide.impl.dataRules.KeyedLazyInstanceEP;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.Map;
-
-import org.jetbrains.annotations.Nullable;
 
 public abstract class DataValidator <T> {
   private static boolean ourExtensionsLoaded;

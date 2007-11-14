@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.StringSetSpinAllocator;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;

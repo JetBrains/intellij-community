@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.lang.CodeInsightActions;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.editor.Document;
@@ -21,7 +22,7 @@ public class OverrideMethodsHandler implements CodeInsightActionHandler{
     }
 
     Language language = PsiUtil.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
-    final LanguageCodeInsightActionHandler codeInsightActionHandler = language.getOverrideMethodsHandler();
+    final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.OVERRIDE_METHOD.forLanguage(language);
     if (codeInsightActionHandler != null) {
       codeInsightActionHandler.invoke(project, editor, file);
       return;

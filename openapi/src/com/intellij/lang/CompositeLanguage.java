@@ -18,11 +18,11 @@ package com.intellij.lang;
 
 import com.intellij.psi.PsiFile;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CompositeLanguage extends Language{
-  private List<LanguageExtension> myExtensions = new ArrayList<LanguageExtension>();
+  private List<LanguageFilter> myFilters = new ArrayList<LanguageFilter>();
 
   protected CompositeLanguage(final String id) {
     super(id);
@@ -32,19 +32,19 @@ public class CompositeLanguage extends Language{
     super(ID, mimeTypes);
   }
 
-  public void registerLanguageExtension(LanguageExtension extension){
-    if(!myExtensions.contains(extension)) myExtensions.add(extension);
+  public void registerLanguageExtension(LanguageFilter filter){
+    if(!myFilters.contains(filter)) myFilters.add(filter);
   }
 
   public Language[] getLanguageExtensionsForFile(final PsiFile psi) {
     final List<Language> extensions = new ArrayList<Language>(1);
-    for (LanguageExtension extension : myExtensions) {
-      if(extension.isRelevantForFile(psi)) extensions.add(extension.getLanguage());
+    for (LanguageFilter filter : myFilters) {
+      if(filter.isRelevantForFile(psi)) extensions.add(filter.getLanguage());
     }
     return extensions.toArray(new Language[extensions.size()]);
   }
 
-  public LanguageExtension[] getLanguageExtensions() {
-    return myExtensions.toArray(new LanguageExtension[myExtensions.size()]);
+  public LanguageFilter[] getLanguageExtensions() {
+    return myFilters.toArray(new LanguageFilter[myFilters.size()]);
   }
 }

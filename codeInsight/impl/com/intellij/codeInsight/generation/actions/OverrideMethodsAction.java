@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.OverrideMethodsHandler;
+import com.intellij.lang.CodeInsightActions;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +24,7 @@ public class OverrideMethodsAction extends BaseCodeInsightAction {
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     Language language = PsiUtil.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
-    final LanguageCodeInsightActionHandler codeInsightActionHandler = language.getOverrideMethodsHandler();
+    final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.OVERRIDE_METHOD.forLanguage(language);
     if (codeInsightActionHandler != null) {
       return codeInsightActionHandler.isValidFor(editor, file);
     }

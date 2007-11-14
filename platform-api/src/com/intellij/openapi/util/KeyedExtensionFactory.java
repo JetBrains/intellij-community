@@ -1,9 +1,11 @@
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
-import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -16,9 +18,9 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
   private final Class<T> myInterfaceClass;
   private final ExtensionPointName<KeyedFactoryEPBean> myEpName;
 
-  public KeyedExtensionFactory(final Class<T> interfaceClass, final ExtensionPointName<KeyedFactoryEPBean> epName) {
+  public KeyedExtensionFactory(@NotNull final Class<T> interfaceClass, @NonNls @NotNull final String epName) {
     myInterfaceClass = interfaceClass;
-    myEpName = epName;
+    myEpName = new ExtensionPointName<KeyedFactoryEPBean>(epName);
   }
 
   public T get() {
