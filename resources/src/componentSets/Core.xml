@@ -197,6 +197,8 @@
     -->
     <component>
       <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiTextEditorConnector</implementation-class>
+      <headless-implementation-class/>
+      <skipForDummyProject/>
     </component>
   </project-components>
 
