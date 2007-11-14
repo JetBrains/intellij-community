@@ -58,14 +58,10 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   }
 
   public void executeWriteAction(final Editor editor, final DataContext dataContext) {
-    try {
-      executeWriteActionInner(editor, dataContext);
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    executeWriteActionInner(editor, dataContext);
   }
 
-  private void executeWriteActionInner(Editor editor, DataContext dataContext) throws IncorrectOperationException {
+  private void executeWriteActionInner(Editor editor, DataContext dataContext) {
     Project project = DataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -78,7 +74,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     }
   }
 
-  private boolean handleEnter(Editor editor, DataContext dataContext, @NotNull Project project) throws IncorrectOperationException {
+  private boolean handleEnter(Editor editor, DataContext dataContext, @NotNull Project project) {
     if (!HandlerUtils.canBeInvoked(editor, dataContext)) {
       return false;
     }
@@ -154,7 +150,7 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
   );
 
 
-  private boolean handleInString(Editor editor, int caretOffset, DataContext dataContext) throws IncorrectOperationException {
+  private boolean handleInString(Editor editor, int caretOffset, DataContext dataContext) {
     PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
     Project project = DataKeys.PROJECT.getData(dataContext);
 
@@ -170,8 +166,6 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     if (stringElement == null) return false;
     ASTNode node = stringElement.getNode();
     if (node == null) return false;
-
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
 
     // For simple String literals like 'abcdef'
     if (GroovyTokenTypes.mSTRING_LITERAL == node.getElementType()) {

@@ -140,7 +140,6 @@ public class ReachingDefinitionsCollector {
 
   private static TIntHashSet getReachable(final TIntHashSet fragmentReads, final Instruction[] flow) {
     final TIntHashSet visited = new TIntHashSet();
-    final int[] insnNums = fragmentReads.toArray();
     final TIntHashSet result = new TIntHashSet();
     final CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
     fragmentReads.forEach(new TIntProcedure() {

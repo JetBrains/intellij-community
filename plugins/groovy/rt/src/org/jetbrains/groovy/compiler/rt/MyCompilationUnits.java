@@ -93,8 +93,7 @@ public class MyCompilationUnits {
         Object className = listOfClasses.get(i);
         ClassNode classNode = (ClassNode) className;
 
-        String pathToClass = "";
-        pathToClass = classNode.getName().replace('.', File.separatorChar);
+        String pathToClass = classNode.getName().replace('.', File.separatorChar);
 
         String outputPathClass = outputPath + File.separator + pathToClass + ".class";
         outputPathClass = outputPathClass.replace(File.separatorChar, '/');
