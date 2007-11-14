@@ -3,6 +3,7 @@ package com.intellij.openapi.diff.impl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffToolbar;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -44,7 +45,7 @@ public class DiffToolbarImpl implements DiffToolbar {
     return myActionToolbar.getComponent();
   }
 
-  public void addAction(AnAction action) {
+  public void addAction(@NotNull AnAction action) {
     myActionGroup.add(action);
     updateToolbar();
   }

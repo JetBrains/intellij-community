@@ -8,12 +8,13 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
+import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Map;
 import java.awt.*;
+import java.util.Map;
 
 public class IgnoreWhiteSpacesAction extends ComboBoxAction {
   private final Map<ComparisonPolicy, AnAction> myActions = new HashMap<ComparisonPolicy, AnAction>();
@@ -21,14 +22,12 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction {
     ComparisonPolicy.DEFAULT,
     ComparisonPolicy.TRIM_SPACE,
     ComparisonPolicy.IGNORE_SPACE};
-  private final DiffPanelEx myDiffPanel;
 
-  public IgnoreWhiteSpacesAction(DiffPanelEx diffPanel) {
+  public IgnoreWhiteSpacesAction() {
     myActions.put(ComparisonPolicy.DEFAULT, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.qhitespace.policy.do.not.ignore"), ComparisonPolicy.DEFAULT));
     myActions.put(ComparisonPolicy.TRIM_SPACE, new IgnoringPolicyAction(
       DiffBundle.message("diff.acton.ignore.qhitespace.policy.leading.and.trailing"), ComparisonPolicy.TRIM_SPACE));
     myActions.put(ComparisonPolicy.IGNORE_SPACE, new IgnoringPolicyAction(DiffBundle.message("diff.acton.ignore.qhitespace.policy.all"), ComparisonPolicy.IGNORE_SPACE));
-    myDiffPanel = diffPanel;
   }
 
   @Override
@@ -50,7 +49,7 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction {
 
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    DiffPanelEx diffPanel = myDiffPanel;
+    DiffPanelEx diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
     if (diffPanel != null && diffPanel.getComponent().isDisplayable()) {
       AnAction actoin = myActions.get(diffPanel.getComparisonPolicy());
       Presentation templatePresentation = actoin.getTemplatePresentation();
@@ -64,7 +63,7 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction {
     }
   }
 
-  private class IgnoringPolicyAction extends AnAction {
+  private static class IgnoringPolicyAction extends AnAction {
     private final ComparisonPolicy myPolicy;
 
     public IgnoringPolicyAction(String text, ComparisonPolicy policy) {
@@ -73,7 +72,10 @@ public class IgnoreWhiteSpacesAction extends ComboBoxAction {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      myDiffPanel.setComparisonPolicy(myPolicy);
+      final DiffPanelImpl diffPanel = DiffPanelImpl.fromDataContext(e.getDataContext());
+      if (diffPanel != null) {
+        diffPanel.setComparisonPolicy(myPolicy);
+      }
     }
   }
 }

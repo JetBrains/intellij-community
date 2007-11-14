@@ -4,10 +4,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
-import com.intellij.openapi.diff.actions.IgnoreWhiteSpacesAction;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
-import com.intellij.openapi.diff.actions.NextDiffAction;
-import com.intellij.openapi.diff.actions.PreviousDiffAction;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
@@ -56,12 +53,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final DiffRequest.ToolbarAddons TOOL_BAR = new DiffRequest.ToolbarAddons() {
     public void customize(DiffToolbar toolbar) {
       ActionManager actionManager = ActionManager.getInstance();
-      toolbar.addAction(actionManager.getAction(IdeActions.ACTION_COPY));
-      toolbar.addAction(actionManager.getAction(IdeActions.ACTION_FIND));
-      toolbar.addAction(PreviousDiffAction.find());
-      toolbar.addAction(NextDiffAction.find());
-      toolbar.addSeparator();
-      toolbar.addAction(new IgnoreWhiteSpacesAction(DiffPanelImpl.this));
+      toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
     }
   };
   private boolean myDisposed = false;

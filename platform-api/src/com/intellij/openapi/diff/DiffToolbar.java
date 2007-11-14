@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.NotNull;
 
 public interface DiffToolbar {
   /**
@@ -25,7 +26,7 @@ public interface DiffToolbar {
    * @see AnAction#actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent)
    * @see com.intellij.openapi.actionSystem.DataContext
    */ 
-  void addAction(AnAction action);
+  void addAction(@NotNull AnAction action);
   void addSeparator();
 
   /**

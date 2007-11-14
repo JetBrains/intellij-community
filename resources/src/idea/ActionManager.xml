@@ -1560,5 +1560,14 @@
       <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
         icon="/actions/showHiddens.png"/>
     </group>
+
+    <group id="DiffPanel.Toolbar">
+      <reference ref="$Copy"/>
+      <reference ref="Find"/>
+      <reference ref="PreviousDiff"/>
+      <reference ref="NextDiff"/>
+      <separator/>
+      <action id="Diff.IgnoreWhitespace" class="com.intellij.openapi.diff.actions.IgnoreWhiteSpacesAction" text=""/>
+    </group>
   </actions>
 </component>
