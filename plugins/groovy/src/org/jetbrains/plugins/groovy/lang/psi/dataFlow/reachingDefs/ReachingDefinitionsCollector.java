@@ -49,45 +49,8 @@ public class ReachingDefinitionsCollector {
     final Set<String> inames = new HashSet<String>();
     final Set<String> onames = new HashSet<String>();
 
-    fragmentReads.forEach(new TIntProcedure() {
-      public boolean execute(int insNum) {
-        final TIntObjectHashMap<TIntHashSet> info = dfaResult.get(insNum);
-        info.forEachValue(new TObjectProcedure<TIntHashSet>() {
-          public boolean execute(TIntHashSet defs) {
-            defs.forEach(new TIntProcedure() {
-              public boolean execute(int def) {
-                if (!isInFragment(flow[def], first, last)) {
-                  inames.add(((ReadWriteVariableInstruction) flow[def]).getVariableName());
-                }
-                return true;
-              }
-            });
-            return true;
-          }
-        });
-        return true;
-      }
-    });
-
-    reachableFromFragmentReads.forEach(new TIntProcedure() {
-      public boolean execute(int insNum) {
-        final TIntObjectHashMap<TIntHashSet> info = dfaResult.get(insNum);
-        info.forEachValue(new TObjectProcedure<TIntHashSet>() {
-          public boolean execute(TIntHashSet defs) {
-            defs.forEach(new TIntProcedure() {
-              public boolean execute(int def) {
-                if (isInFragment(flow[def], first, last)) {
-                  onames.add(((ReadWriteVariableInstruction) flow[def]).getVariableName());
-                }
-                return true;
-              }
-            });
-            return true;
-          }
-        });
-        return true;
-      }
-    });
+    addNames(fragmentReads, inames, flow, dfaResult, first, last, false);
+    addNames(reachableFromFragmentReads, onames, flow, dfaResult, first, last, true);
 
     filterFields(inames, first);
     filterFields(onames, first);
@@ -104,6 +67,35 @@ public class ReachingDefinitionsCollector {
         return oarr;
       }
     };
+  }
+
+  private static void addNames(final TIntHashSet reads,
+                               final Set<String> names,
+                               final Instruction[] flow,
+                               final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult,
+                               final GrStatement first,
+                               final GrStatement last, final boolean isInfragment) {
+    reads.forEach(new TIntProcedure() {
+      public boolean execute(int insNum) {
+        final TIntObjectHashMap<TIntHashSet> info = dfaResult.get(insNum);
+        final String useName = ((ReadWriteVariableInstruction) flow[insNum]).getVariableName();
+        info.forEachValue(new TObjectProcedure<TIntHashSet>() {
+          public boolean execute(TIntHashSet defs) {
+            defs.forEach(new TIntProcedure() {
+              public boolean execute(int def) {
+                final String defName = ((ReadWriteVariableInstruction) flow[def]).getVariableName();
+                if (defName.equals(useName) && isInFragment(flow[def], first, last) == isInfragment) {
+                  names.add(((ReadWriteVariableInstruction) flow[def]).getVariableName());
+                }
+                return true;
+              }
+            });
+            return true;
+          }
+        });
+        return true;
+      }
+    });
   }
 
   private static void filterFields(Set<String> names, GrStatement place) {
