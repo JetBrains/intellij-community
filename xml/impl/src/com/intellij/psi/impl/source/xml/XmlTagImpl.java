@@ -6,8 +6,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.pom.PomModel;
 import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
@@ -31,8 +31,12 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DefinesXml;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.impl.dom.DomElementXmlDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagTextUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -304,6 +308,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   public XmlElementDescriptor getDescriptor() {
     final String namespace = getNamespace();
     XmlElementDescriptor elementDescriptor;
+
+    final DomElement domElement = DomManager.getDomManager(getProject()).getDomElement(this);
+    if (domElement != null) {
+      final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
+      if (definesXml != null) {
+        return new DomElementXmlDescriptor(domElement);
+      }
+    }
 
     if (XmlUtil.EMPTY_URI.equals(namespace)) { //nonqualified items
       final PsiElement parent = getParent();

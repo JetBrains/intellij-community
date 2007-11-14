@@ -18,6 +18,7 @@ package com.intellij.util.xml.reflect;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import java.lang.reflect.Type;
  * @author peter
  */
 public interface DomExtension {
+  Key<DomElement> KEY_DECLARATION = new Key<DomElement>("DOM_DECLARATION");
   @NotNull
   XmlName getXmlName();
 

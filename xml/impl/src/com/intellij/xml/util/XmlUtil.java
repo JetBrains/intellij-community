@@ -21,9 +21,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -843,6 +843,7 @@ public class XmlUtil {
     return findXmlDescriptorByType(xmlTag, null);
   }
 
+  @Nullable
   public static XmlElementDescriptor findXmlDescriptorByType(final XmlTag xmlTag, @Nullable XmlTag context) {
     XmlElementDescriptor elementDescriptor = null;
     String type = xmlTag.getAttributeValue("type", XML_SCHEMA_INSTANCE_URI);
@@ -958,6 +959,7 @@ public class XmlUtil {
     return null;
   }
 
+  @Nullable
   public static Pair<XmlTagChild, XmlTagChild> findTagChildrenInRange(final PsiFile file, int startOffset, int endOffset) {
     PsiElement elementAtStart = file.findElementAt(startOffset);
     PsiElement elementAtEnd = file.findElementAt(endOffset - 1);
@@ -1020,6 +1022,7 @@ public class XmlUtil {
     return "<&>\u00a0".indexOf(ch) >= 0;
   }
 
+  @Nullable
   public static PsiNamedElement findRealNamedElement(final @NotNull PsiNamedElement _element) {
     PsiElement currentElement = _element;
     final XmlEntityRef lastEntityRef = PsiTreeUtil.getParentOfType(currentElement, XmlEntityRef.class);
@@ -1209,6 +1212,7 @@ public class XmlUtil {
     return (XmlFile)element;
   }
 
+  @Nullable
   public static String getSubTagValue(XmlTag tag, final String subTagName) {
     final XmlTag subTag = tag.findFirstSubTag(subTagName);
     if (subTag != null) {

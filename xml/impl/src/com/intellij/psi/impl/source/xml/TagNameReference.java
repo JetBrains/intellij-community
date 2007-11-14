@@ -6,8 +6,8 @@ import com.intellij.codeInsight.daemon.quickFix.TagFileQuickFixProvider;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -199,13 +199,14 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
   }
 
   public static Object[] getTagNameVariants(final XmlTag element, final List<XmlElementDescriptor> variants) {
-    final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
     XmlElementDescriptor elementDescriptor = null;
     String elementNamespace = null;
 
+    final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
+    PsiElement context = element.getParent();
+    PsiElement curElement = element.getParent();
+
     {
-      PsiElement curElement = element.getParent();
-      
       while(curElement instanceof XmlTag){
         final XmlTag declarationTag = (XmlTag)curElement;
         final String namespace = declarationTag.getNamespace();
@@ -231,62 +232,8 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
     final Set<XmlNSDescriptor> visited = new HashSet<XmlNSDescriptor>();
     while (nsIterator.hasNext()) {
       final String namespace = nsIterator.next();
-
-      if(descriptorsMap.containsKey(namespace)){
-        final XmlElementDescriptor descriptor = descriptorsMap.get(namespace);
-        
-        if(isAcceptableNs(element, elementDescriptor, elementNamespace, namespace)){
-          for(XmlElementDescriptor containedDescriptor:descriptor.getElementsDescriptors(element)) {
-            if (containedDescriptor != null) variants.add(containedDescriptor);
-          }
-        }
-
-        if (element instanceof HtmlTag) {
-          HtmlUtil.addHtmlSpecificCompletions(descriptor, element, variants);
-        }
-        visited.add(descriptor.getNSDescriptor());
-      }
-      else{
-        // Don't use default namespace in case there are other namespaces in scope
-        // If there are tags from default namespace they will be handeled via
-        // their element descriptors (prev if section)
-        if (namespace == null) continue;
-        if(namespace.length() == 0 && !visited.isEmpty()) continue;
-
-        XmlNSDescriptor nsDescriptor = getDescriptor(element, namespace, true);
-        if (nsDescriptor == null) {
-          if(!descriptorsMap.isEmpty()) continue;
-          nsDescriptor = getDescriptor(element, namespace, false);
-        }
-
-        if(nsDescriptor != null && !visited.contains(nsDescriptor) &&
-           isAcceptableNs(element, elementDescriptor, elementNamespace, namespace)
-          ){
-          visited.add(nsDescriptor);
-          final XmlElementDescriptor[] rootElementsDescriptors =
-            nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class));
-
-          XmlTag parentTag = element.getParentTag();
-          XmlElementDescriptor parentDescriptor = elementDescriptor;
-
-          if (XmlUtil.JSP_URI.equals(namespace)) {
-            JspFile file = PsiUtil.getJspFile(element);
-
-            if (file.getFileType() == StdFileTypes.JSP) {
-              final XmlTag jspRootTag = file.getDocument().getRootTag(); // jsp implicit root tag
-              if (jspRootTag != null) {
-                parentDescriptor = (parentTag = jspRootTag).getDescriptor();
-              }
-            }
-          }
-
-          for(XmlElementDescriptor containedDescriptor:rootElementsDescriptors) {
-            if (containedDescriptor != null && couldContainDescriptor(parentTag, parentDescriptor, containedDescriptor, namespace)) {
-              variants.add(containedDescriptor);
-            }
-          }
-        }
-      }
+      processVariantsInNamespace(namespace, element, variants, elementDescriptor, elementNamespace, descriptorsMap, visited,
+                                 context instanceof XmlTag ? (XmlTag)context : element);
     }
 
     final Iterator<XmlElementDescriptor> iterator = variants.iterator();
@@ -297,6 +244,68 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
       ret[index++] = descriptor.getName(element);
     }
     return ret;
+  }
+
+  private static void processVariantsInNamespace(final String namespace, final XmlTag element, final List<XmlElementDescriptor> variants,
+                                                 final XmlElementDescriptor elementDescriptor,
+                                                 final String elementNamespace,
+                                                 final Map<String, XmlElementDescriptor> descriptorsMap, final Set<XmlNSDescriptor> visited,
+                                                 XmlTag parent) {
+    if(descriptorsMap.containsKey(namespace)){
+        final XmlElementDescriptor descriptor = descriptorsMap.get(namespace);
+
+      if(isAcceptableNs(element, elementDescriptor, elementNamespace, namespace)){
+        for(XmlElementDescriptor containedDescriptor:descriptor.getElementsDescriptors(parent)) {
+          if (containedDescriptor != null) variants.add(containedDescriptor);
+        }
+      }
+
+      if (element instanceof HtmlTag) {
+        HtmlUtil.addHtmlSpecificCompletions(descriptor, element, variants);
+      }
+      visited.add(descriptor.getNSDescriptor());
+    }
+    else{
+      // Don't use default namespace in case there are other namespaces in scope
+      // If there are tags from default namespace they will be handeled via
+      // their element descriptors (prev if section)
+      if (namespace == null) return;
+      if(namespace.length() == 0 && !visited.isEmpty()) return;
+
+      XmlNSDescriptor nsDescriptor = getDescriptor(element, namespace, true);
+      if (nsDescriptor == null) {
+        if(!descriptorsMap.isEmpty()) return;
+        nsDescriptor = getDescriptor(element, namespace, false);
+      }
+
+      if(nsDescriptor != null && !visited.contains(nsDescriptor) &&
+         isAcceptableNs(element, elementDescriptor, elementNamespace, namespace)
+        ){
+        visited.add(nsDescriptor);
+        final XmlElementDescriptor[] rootElementsDescriptors =
+          nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(element, XmlDocument.class));
+
+        XmlTag parentTag = element.getParentTag();
+        XmlElementDescriptor parentDescriptor = elementDescriptor;
+
+        if (XmlUtil.JSP_URI.equals(namespace)) {
+          JspFile file = PsiUtil.getJspFile(element);
+
+          if (file.getFileType() == StdFileTypes.JSP) {
+            final XmlTag jspRootTag = file.getDocument().getRootTag(); // jsp implicit root tag
+            if (jspRootTag != null) {
+              parentDescriptor = (parentTag = jspRootTag).getDescriptor();
+            }
+          }
+        }
+
+        for(XmlElementDescriptor containedDescriptor:rootElementsDescriptors) {
+          if (containedDescriptor != null && couldContainDescriptor(parentTag, parentDescriptor, containedDescriptor, namespace)) {
+            variants.add(containedDescriptor);
+          }
+        }
+      }
+    }
   }
 
   private static XmlNSDescriptor getDescriptor(final XmlTag element, final String namespace, final boolean strict) {

@@ -1,19 +1,19 @@
 package com.intellij.xml.impl.schema;
 
+import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.codeInsight.daemon.Validator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -171,11 +171,10 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    final XmlTag parentTag = context != null ? context.getParentTag():null;
-    if (parentTag != null) {
-      final XmlElementDescriptor parentDescriptorByType = XmlUtil.findXmlDescriptorByType(parentTag);
-      if (parentDescriptorByType != null) {
-        return parentDescriptorByType.getElementsDescriptors(parentTag);
+    if (context != null) {
+      final XmlElementDescriptor parentDescriptorByType = XmlUtil.findXmlDescriptorByType(context);
+      if (parentDescriptorByType != null && !parentDescriptorByType.equals(this)) {
+        return parentDescriptorByType.getElementsDescriptors(context);
       }
     }
 
@@ -190,7 +189,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
       if (context != null && !containingFile.isPhysical() && containingFile.getOriginalFile() != null) {
         containingFile = containingFile.getOriginalFile();
-        context = context.getParentTag();
+        //context = context.getParentTag();
       }
 
       if (context != null &&

@@ -62,4 +62,19 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
   protected boolean askParentDescriptorViaXsi() {
     return false;
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (!(o instanceof XmlElementDescriptorByType)) return false;
+
+    final XmlElementDescriptorByType that = (XmlElementDescriptorByType)o;
+
+    if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return (myType != null ? myType.hashCode() : 0);
+  }
 }
