@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ModifiableModel;
@@ -22,7 +21,6 @@ import javax.swing.*;
 public class Descriptor {
   private String myText;
   private String myGroup;
-  private String myDescriptorFileName;
   private HighlightDisplayKey myKey;
   private JComponent myAdditionalConfigPanel;
   private Element myConfig;
@@ -53,7 +51,6 @@ public class Descriptor {
     myConfig = config;
     myText = tool.getDisplayName();
     myGroup = tool.getGroupDisplayName() != null && tool.getGroupDisplayName().length() == 0 ? GroupNames.GENERAL_GROUP_NAME : tool.getGroupDisplayName();
-    myDescriptorFileName = ((InspectionTool)tool).getDescriptionFileName();
     myKey = HighlightDisplayKey.find(tool.getShortName());
     myLevel = inspectionProfile.getErrorLevel(myKey);
     myEnabled = inspectionProfile.isToolEnabled(myKey);
@@ -116,8 +113,9 @@ public class Descriptor {
     return myTool;
   }
 
-  public String getDescriptorFileName() {
-    return myDescriptorFileName;
+  public String loadDescription() {
+    if (!(myTool instanceof InspectionTool)) return null;
+    return myTool.loadDescription();
   }
 
   public String getGroup() {

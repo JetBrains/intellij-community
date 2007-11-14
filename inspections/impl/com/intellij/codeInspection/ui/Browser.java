@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -374,37 +373,23 @@ public class Browser extends JPanel {
     page.append("</td></tr>");
     page.append("<tr><td width='37'></td>" +
                 "<td>");
-    final URL descriptionUrl = getDescriptionUrl(tool);
     @NonNls final String underConstruction = "<b>" + UNDER_CONSTRUCTION + "</b></html>";
     try {
-      if (descriptionUrl != null){
-        @NonNls final String description = ResourceUtil.loadText(descriptionUrl);
-        if (description.startsWith("<html>")) {
-          page.append(description.substring(description.indexOf("<html>") + 6));
-        } else {
-          page.append(underConstruction);
-        }
+      @NonNls String description = tool.loadDescription();
+      if (description == null) {
+        description = underConstruction;
+      }
+      if (description.startsWith("<html>")) {
+        page.append(description.substring(description.indexOf("<html>") + 6));
       } else {
         page.append(underConstruction);
       }
+
       page.append("</td></tr></table>");
       myHTMLViewer.setText(page.toString());
-    }
-    catch (IOException e) {
-      try {
-        myHTMLViewer.read(new StringReader(page.append(underConstruction).toString()), null);
-      }
-      catch (IOException e1) {
-        //Can't be
-      }
     } finally {
       myCurrentEntity = null;
     }
-  }
-
-  private static URL getDescriptionUrl(InspectionTool tool) {
-    Class aClass = tool instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)tool).getTool().getClass() : tool.getClass();
-    return ResourceUtil.getResource(aClass, "/inspectionDescriptions", tool.getDescriptionFileName());
   }
 
   @Nullable

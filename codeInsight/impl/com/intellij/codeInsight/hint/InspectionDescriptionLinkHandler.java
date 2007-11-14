@@ -7,13 +7,11 @@ import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,8 +19,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.net.URL;
 
 /**
  * @author peter
@@ -37,15 +33,11 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
     final InspectionProfileEntry tool =
       ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getInspectionTool(shortName);
     if (tool == null) return null;
-    final URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(tool);
-    final String description = InspectionsBundle.message("inspection.tool.description.under.construction.text");
-    if (descriptionUrl != null) {
-      try {
-        return ResourceUtil.loadText(descriptionUrl);
-      }
-      catch (IOException e) {
-        //show under construction
-      }
+
+    String description;
+    description = tool.loadDescription();
+    if (description == null) {
+      description = InspectionsBundle.message("inspection.tool.description.under.construction.text");
     }
     return description;
   }

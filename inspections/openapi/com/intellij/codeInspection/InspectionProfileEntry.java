@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ResourceUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.net.URL;
 
 /**
  * User: anna
@@ -100,5 +103,46 @@ public abstract class InspectionProfileEntry {
    * @param project to be disassociated from this entry
    */
   public void projectClosed(Project project) {
+  }
+
+
+
+  /**
+   * Override this method to return a html inspection description. Otherwise it will be loaded from resources using ID.
+   */
+  @Nullable
+  public String getStaticDescription() {
+    return null;
+  }
+
+  @Nullable
+  public String getDescriptionFileName() {
+    return null;
+  }
+
+  @Nullable
+  private URL getDescriptionUrl() {
+    final String fileName = getDescriptionFileName();
+    if (fileName == null) return null;
+    return ResourceUtil.getResource(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
+  }
+
+  protected Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+    return getClass();
+  }
+
+  @Nullable
+  public String loadDescription() {
+    final String description = getStaticDescription();
+    if (description != null) return description;
+
+    try {
+      URL descriptionUrl = getDescriptionUrl();
+      if (descriptionUrl == null) return null;
+      return ResourceUtil.loadText(descriptionUrl);
+    }
+    catch (IOException e2) { }
+
+    return null;
   }
 }

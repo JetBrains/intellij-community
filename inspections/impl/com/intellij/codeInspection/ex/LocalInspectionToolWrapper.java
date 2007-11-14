@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -154,5 +155,14 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
   public void projectClosed(Project project) {
     myTool.projectClosed(project);
+  }
+
+  protected Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+    return myTool.getClass();
+  }
+
+  @Nullable
+  public String getStaticDescription() {
+    return myTool.getStaticDescription();
   }
 }

@@ -172,4 +172,12 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
     return null;
   }
 
+  protected Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+    return myTool.getClass();
+  }
+
+  @Nullable
+  public String getStaticDescription() {
+    return myTool.getStaticDescription();
+  }
 }

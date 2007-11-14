@@ -193,5 +193,4 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
     return null;
   }
-
 }

@@ -1,7 +1,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.GlobalInspectionTool;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -15,16 +14,13 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ResourceUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
@@ -159,21 +155,15 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
 
       app.executeOnPooledThread(new Runnable(){
         public void run() {
-          try {
-            for (InspectionTool tool : tools) {
-              processText(tool.getDisplayName().toLowerCase(), tool);
-              final URL description = getDescriptionUrl(tool);
-              if (description != null) {
-                @NonNls String descriptionText = ResourceUtil.loadText(description).toLowerCase();
-                if (descriptionText != null) {
-                  descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-                  processText(descriptionText, tool);
-                }
-              }
+          for (InspectionTool tool : tools) {
+            processText(tool.getDisplayName().toLowerCase(), tool);
+
+            final String description = tool.loadDescription();
+            if (description != null) {
+              @NonNls String descriptionText;
+              descriptionText = HTML_PATTERN.matcher(description).replaceAll(" ");
+              processText(descriptionText, tool);
             }
-          }
-          catch (IOException e) {
-            LOG.error(e);
           }
         }
       });
@@ -188,19 +178,5 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
     for (String word : words) {
       optionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), ErrorOptionsConfigurable.ID, ErrorOptionsConfigurable.DISPLAY_NAME);
     }
-  }
-
-  public static URL getDescriptionUrl(@NotNull InspectionProfileEntry tool) {
-    Class aClass;
-    if (tool instanceof LocalInspectionToolWrapper) {
-      aClass = ((LocalInspectionToolWrapper)tool).getTool().getClass();
-    }
-    else if (tool instanceof GlobalInspectionToolWrapper) {
-      aClass = ((GlobalInspectionToolWrapper)tool).getTool().getClass();
-    }
-    else {
-      aClass = tool.getClass();
-    }
-    return ResourceUtil.getResource(aClass, "/inspectionDescriptions", ((InspectionTool)tool).getDescriptionFileName());
   }
 }

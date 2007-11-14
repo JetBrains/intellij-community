@@ -28,7 +28,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ResourceUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -353,9 +351,8 @@ public class InspectionApplication {
           xmlWriter.startNode("inspection");
           xmlWriter.addAttribute("shortName", entry.getShortName());
           xmlWriter.addAttribute("displayName", entry.getDisplayName());
-          final URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(entry);
-          if (descriptionUrl!=null) {
-            final String description = ResourceUtil.loadText(descriptionUrl);
+          final String description = entry.loadDescription();
+          if (description != null) {
             xmlWriter.setValue(description);
           } else {
             LOG.error(entry.getShortName() + " descriptionUrl==null");

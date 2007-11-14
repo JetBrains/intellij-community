@@ -36,7 +36,6 @@ import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
@@ -55,7 +54,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URL;
 import java.util.*;
 import java.util.List;
 
@@ -570,14 +568,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (StringUtil.containsIgnoreCase(descriptor.getGroup(),stripped)) {
         return true;
       }
-      try {
-        if (StringUtil.containsIgnoreCase(ResourceUtil.loadText(InspectionToolRegistrar.getDescriptionUrl(descriptor.getTool())).toLowerCase(), stripped)) {
-          if (!forceInclude) return true;
-        } else if (forceInclude) return false;
-      }
-      catch (IOException e) {
-        //skip then
-      }
+      final String description = descriptor.getTool().loadDescription();
+      if (description != null && StringUtil.containsIgnoreCase(description.toLowerCase(), stripped)) {
+        if (!forceInclude) return true;
+      } else if (forceInclude) return false;
     }
     for (Set<String> keySet : keySetList) {
       if (keySet.contains(descriptor.getKey().toString())) {
@@ -677,13 +671,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     final Object userObject = node.getUserObject();
     if (userObject instanceof Descriptor) {
       final Descriptor descriptor = (Descriptor)userObject;
-      if (descriptor.getDescriptorFileName() != null) {
+      final String description = descriptor.loadDescription();
+
+      if (description != null) {
         // need this in order to correctly load plugin-supplied descriptions
-        final InspectionProfileEntry tool = descriptor.getTool();
         try {
-          URL descriptionUrl = InspectionToolRegistrar.getDescriptionUrl(tool);
-          if (descriptionUrl == null) throw new IOException();
-          myBrowser.read(new StringReader(SearchUtil.markup(ResourceUtil.loadText(descriptionUrl), myProfileFilter.getFilter())), null);
+          myBrowser.read(new StringReader(SearchUtil.markup(description, myProfileFilter.getFilter())), null);
         }
         catch (IOException e2) {
           try {
