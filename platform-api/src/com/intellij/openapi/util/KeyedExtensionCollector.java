@@ -89,7 +89,8 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
   }
 
   private List<T> buildExtensions(final String key) {
-    List<T> result = new ArrayList<T>(myExplicitExtensions.get(key));
+    final List<T> explicit = myExplicitExtensions.get(key);
+    List<T> result = explicit != null ? new ArrayList<T>(explicit) : new ArrayList<T>();
     final List<KeyedLazyInstanceEP<T>> beans = myRegistry.get(key);
     if (beans != null) {
       for (KeyedLazyInstanceEP<T> bean : beans) {
