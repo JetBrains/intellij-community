@@ -6,6 +6,7 @@ import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -320,7 +321,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
     final PsiElement psiElement = parent.getPsi();
 
     final PsiFile containingFile = psiElement.getContainingFile();
-    final FormattingModelBuilder builder = containingFile.getLanguage().getEffectiveFormattingModelBuilder(containingFile);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(containingFile);
 
     if (builder != null) {
       final FormattingModel model = builder.createModel(containingFile, getSettings());
@@ -365,12 +366,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
     if (element != null && !(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
       return CharArrayUtil.shiftForward(file.getViewProvider().getContents(), offset, " \t");
     }
-    final Language fileLanguage = file.getLanguage();
-    final FormattingModelBuilder builder = fileLanguage.getEffectiveFormattingModelBuilder(file);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     FormattingModelBuilder elementBuilder = builder;
     if (element != null) {
-      final Language elementLanguage = element.getLanguage();
-      elementBuilder = elementLanguage.getEffectiveFormattingModelBuilder(element);
+      elementBuilder = LanguageFormatting.INSTANCE.forContext(element);
     }
     if (builder != null && elementBuilder != null) {
       final CodeStyleSettings settings = getSettings();
@@ -394,7 +393,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
   @Nullable
   private static PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
     final PsiElement bottomost = file.findElementAt(offset);
-    if (bottomost != null && bottomost.getLanguage().getEffectiveFormattingModelBuilder(bottomost) != null) {
+    if (bottomost != null && LanguageFormatting.INSTANCE.forContext(bottomost) != null){
       return bottomost;
     }
 
@@ -436,12 +435,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
     if (element != null && !(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
       return CharArrayUtil.shiftForward(file.getViewProvider().getContents(), offset, " \t");
     }
-    final Language fileLanguage = file.getLanguage();
-    final FormattingModelBuilder builder = fileLanguage.getEffectiveFormattingModelBuilder(file);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     FormattingModelBuilder elementBuilder = builder;
     if (element != null) {
-      final Language elementLanguage = element.getLanguage();
-      elementBuilder = elementLanguage.getEffectiveFormattingModelBuilder(element);
+      elementBuilder = LanguageFormatting.INSTANCE.forContext(element);
     }
     if (builder != null && elementBuilder != null) {
       final CodeStyleSettings settings = getSettings();
@@ -467,7 +464,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
 
   public void adjustLineIndent(@NotNull PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
     final Language fileLanguage = file.getLanguage();
-    final FormattingModelBuilder builder = fileLanguage.getEffectiveFormattingModelBuilder(file);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     if (builder != null) {
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
@@ -493,10 +490,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx {
     if (!(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
       return null;
     }
-    final Language fileLanguage = file.getLanguage();
-    final FormattingModelBuilder builder = fileLanguage.getEffectiveFormattingModelBuilder(file);
-    final Language elementLanguage = element.getLanguage();
-    final FormattingModelBuilder elementBuilder = elementLanguage.getEffectiveFormattingModelBuilder(element);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
+    final FormattingModelBuilder elementBuilder = LanguageFormatting.INSTANCE.forContext(element);
     if (builder != null && elementBuilder != null) {
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());

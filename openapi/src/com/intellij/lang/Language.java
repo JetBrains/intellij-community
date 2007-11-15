@@ -15,8 +15,6 @@
  */
 package com.intellij.lang;
 
-import com.intellij.formatting.CustomFormattingModelBuilder;
-import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
@@ -31,7 +29,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.TokenSet;
@@ -39,7 +36,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The base class for all programming language support implementations. Specific language implementations should inherit from this class
@@ -59,7 +59,6 @@ public abstract class Language {
   public static final Language ANY = new Language("", "") { };
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
-  private final List<CustomFormattingModelBuilder> myCustomFormatters = new ArrayList<CustomFormattingModelBuilder>();
   private DocumentationProvider myDocumentationProvider;
 
   private FileType myFileType;
@@ -96,51 +95,6 @@ public abstract class Language {
     return (T)ourRegisteredLanguages.get(klass);
   }
 
-  /**
-   * Returns a final incarnation of the formatting facilities with language's default formatting probably overriden by
-   * ones injected with {@link #registerCustomFormattingModelBuilder(com.intellij.formatting.CustomFormattingModelBuilder)}.
-   *
-   * @param context to ask {@link com.intellij.formatting.CustomFormattingModelBuilder} if they're willing to take part in actuall formatting
-   * @return a <code>FormattingModelBuilder</code> this <code>context</code> shall be formatted with.
-   */
-  @Nullable
-  public final FormattingModelBuilder getEffectiveFormattingModelBuilder(PsiElement context) {
-    for (CustomFormattingModelBuilder builder : myCustomFormatters) {
-      if (builder.isEngagedToFormat(context)) return builder;
-    }
-
-    return getFormattingModelBuilder();
-  }
-
-  /**
-   * Inject a custom (context specific) formatting.
-   * @param builder a context sensitive formatting model builder to override a language's default.
-   */
-  public final void registerCustomFormattingModelBuilder(@NotNull CustomFormattingModelBuilder builder) {
-    myCustomFormatters.add(builder);
-  }
-
-  /**
-   * Unregister previously injected context sensitive formatting.
-   * @param builder a @{CustomFormattingModelBuilder} to exclude from formatting voting races.
-   */
-  public final void unregisterCustomFormattingModelBuilder(@NotNull CustomFormattingModelBuilder builder) {
-    myCustomFormatters.remove(builder);
-  }
-
-  /**
-   * Override this method to provide code formatter (aka pretty print, aka code beauitifier) for your language implementation.
-   * Language's default implementation of the FormatterModelBuilder can be overriden for certain contexts by external injections
-   * with {@link #registerCustomFormattingModelBuilder(com.intellij.formatting.CustomFormattingModelBuilder)}.
-   * Note that formatter implementation is necessary to make smart enter and smart end functions to work properly.
-   *
-   * @return <code>FormattingModelBuilder</code> interface implementation for this particular language or <code>null</code>
-   *         if no formatting capabilities provided.
-   */
-  @Nullable
-  public FormattingModelBuilder getFormattingModelBuilder() {
-    return null;
-  }
 
   /**
    * Override this method to provide parser implementation.

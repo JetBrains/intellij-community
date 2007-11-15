@@ -2,6 +2,7 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -163,7 +164,7 @@ public class ReformatCodeAction extends AnAction {
         return;
       }
 
-      if (file.getLanguage().getEffectiveFormattingModelBuilder(file) != null) {
+      if (LanguageFormatting.INSTANCE.forContext(file)  != null) {
         presentation.setEnabled(true);
         return;
       }
@@ -179,7 +180,7 @@ public class ReformatCodeAction extends AnAction {
           presentation.setEnabled(false);
           return;
         }
-        final FormattingModelBuilder builder = psiFile.getLanguage().getEffectiveFormattingModelBuilder(psiFile);
+        final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(psiFile);
         if (builder == null) {
           presentation.setEnabled(false);
           return;

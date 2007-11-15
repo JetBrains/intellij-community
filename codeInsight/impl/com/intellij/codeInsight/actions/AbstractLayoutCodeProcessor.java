@@ -2,7 +2,7 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -311,8 +311,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private static boolean isFormatable(PsiFile file) {
-    final Language language = file.getLanguage();
-    return language.getEffectiveFormattingModelBuilder(file) != null;
+    return LanguageFormatting.INSTANCE.forContext(file) != null;
   }
 
   private static void collectFilesToProcess(ArrayList<PsiFile> array, PsiDirectory dir, boolean recursive) {

@@ -4,6 +4,7 @@ import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -279,7 +280,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                                                     final List<Block> result,
                                                     final Indent indent) {
     final PsiElement childPsi = child.getPsi();
-    final FormattingModelBuilder builder = childLanguage.getEffectiveFormattingModelBuilder(childPsi);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childPsi);
     LOG.assertTrue(builder != null);
     final FormattingModel childModel = builder.createModel(childPsi, getSettings());
     result.add(new AnotherLanguageBlockWrapper(child,
@@ -377,7 +378,7 @@ private boolean canBeAnotherTreeTagStart(final ASTNode child) {
            || childLanguage == StdLanguages.XML
            || childLanguage == StdLanguages.JSP
            || childLanguage == StdLanguages.JSPX
-           || childLanguage.getEffectiveFormattingModelBuilder(childPsi) == null;
+           || LanguageFormatting.INSTANCE.forContext(childPsi) == null;
   }
 
   protected boolean isJspxJavaContainingNode(final ASTNode child) {

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -399,7 +400,7 @@ public class PasteHandler extends EditorActionHandler {
 
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (file.getLanguage().getEffectiveFormattingModelBuilder(file) != null) {
+      if (LanguageFormatting.INSTANCE.forContext(file) != null) {
         adjustBlockIndent(project, document, file, startOffset, endOffset);
       }
       else {

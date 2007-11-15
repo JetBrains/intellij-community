@@ -4,6 +4,7 @@ package com.intellij.codeInsight.generation.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.AutoIndentLinesHandler;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -21,6 +22,7 @@ public class AutoIndentLinesAction extends BaseCodeInsightAction{
 
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     final FileType fileType = file.getFileType();
-    return fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().getEffectiveFormattingModelBuilder(file) != null;
+    return fileType instanceof LanguageFileType &&
+           LanguageFormatting.INSTANCE.forContext(((LanguageFileType)fileType).getLanguage(), file) != null;
   }
 }

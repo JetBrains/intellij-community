@@ -5,6 +5,7 @@ import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -91,7 +92,7 @@ public class CodeFormatterFacade implements Constants {
 
   public ASTNode process(ASTNode element, int parent_indent) {
     final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
-    final FormattingModelBuilder builder = file.getLanguage().getEffectiveFormattingModelBuilder(file);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     if (builder != null) {
       TextRange range = element.getTextRange();
       return processRange(element, range.getStartOffset(), range.getEndOffset());
@@ -105,7 +106,7 @@ public class CodeFormatterFacade implements Constants {
 
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
     final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
-    final FormattingModelBuilder builder = file.getLanguage().getEffectiveFormattingModelBuilder(file);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     final Document document = file.getViewProvider().getDocument();
     final RangeMarker rangeMarker = document != null && endOffset < document.getTextLength()? document.createRangeMarker(startOffset, endOffset):null;
 
@@ -150,7 +151,7 @@ public class CodeFormatterFacade implements Constants {
   private void processText(final PsiFile file, final int startOffset, final int endOffset, boolean headWhitespace) {
     final FileType fileType = myHelper.getFileType();
 
-    final FormattingModelBuilder builder = file.getLanguage().getEffectiveFormattingModelBuilder(file);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
 
     if (builder != null) {
       if (file.getTextLength() > 0) {
@@ -177,7 +178,7 @@ public class CodeFormatterFacade implements Constants {
   public void processTextWithoutHeadWhitespace(final PsiFile file, final int startOffset, final int endOffset) {
     final FileType fileType = myHelper.getFileType();
 
-    final FormattingModelBuilder builder = file.getLanguage().getEffectiveFormattingModelBuilder(file);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
 
     if (builder != null) {
       if (file.getTextLength() > 0) {

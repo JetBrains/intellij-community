@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>For certain aspects of the custom formatting to work properly, it is recommended to use TokenType.WHITE_SPACE
  * as the language's whitespace tokens. See {@link com.intellij.lang.ParserDefinition}
  *
- * @see com.intellij.lang.Language#getFormattingModelBuilder()
+ * @see com.intellij.lang.LanguageFormatting
  * @see FormattingModelProvider#createFormattingModelForPsiFile(com.intellij.psi.PsiFile, Block, com.intellij.psi.codeStyle.CodeStyleSettings)
  */
 

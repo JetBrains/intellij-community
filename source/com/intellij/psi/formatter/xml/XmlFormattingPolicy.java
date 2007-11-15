@@ -6,6 +6,7 @@ import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -39,7 +40,7 @@ public abstract class XmlFormattingPolicy {
   }
 
   private Block createBlockFor(final Pair<PsiElement,Language> root) {
-    final FormattingModelBuilder builder = root.getSecond().getEffectiveFormattingModelBuilder(root.getFirst());
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(root.getSecond(), root.getFirst());
     if (builder != null) {
       final Block result = builder.createModel(root.getFirst(), getSettings()).getRootBlock();
       if (result instanceof XmlBlock) {

@@ -5,8 +5,6 @@ import com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDe
 import com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -27,15 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.formatter.FormattingDocumentModelImpl;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
-import com.intellij.psi.formatter.java.AbstractJavaBlock;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,22 +41,10 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public class JavaLanguage extends Language {
-  private final FormattingModelBuilder myFormattingModelBuilder;
-
   private SurroundDescriptor[] mySurroundDescriptors;
 
   public JavaLanguage() {
     super("JAVA", "text/java", "application/x-java", "text/x-java");
-    myFormattingModelBuilder = new FormattingModelBuilder() {
-      @NotNull
-      public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-        final FileElement fileElement = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
-        return new PsiBasedFormattingModel(element.getContainingFile(), AbstractJavaBlock.createJavaBlock(fileElement,
-                                                                                                          settings),
-                                           FormattingDocumentModelImpl.createOn(element.getContainingFile()));
-      }
-    };
-    
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SyntaxHighlighterFactory() {
       @NotNull
       public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
@@ -96,10 +77,6 @@ public class JavaLanguage extends Language {
   @NotNull
   public FindUsagesProvider getFindUsagesProvider() {
     return new JavaFindUsagesProvider();
-  }
-
-  public FormattingModelBuilder getFormattingModelBuilder() {
-    return myFormattingModelBuilder;
   }
 
   @NotNull
@@ -155,4 +132,5 @@ public class JavaLanguage extends Language {
     }
     return myHandlers;
   }
+
 }
