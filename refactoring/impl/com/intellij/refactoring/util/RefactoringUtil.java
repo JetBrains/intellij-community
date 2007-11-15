@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
@@ -191,7 +192,7 @@ public class RefactoringUtil {
     Language language = f == null ? null : f.getLanguageDialect();
     if (language == null) language = psiElement.getLanguage();
 
-    return language.getNamesValidator().isIdentifier(newName.trim(), project);
+    return LanguageNamesValidation.INSTANCE.forLanguage(language).isIdentifier(newName.trim(), project);
   }
 
   //order of usages accross different files is irrelevant

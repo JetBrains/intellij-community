@@ -19,6 +19,7 @@
     <extendWordSelectionHandler implementation="com.intellij.lang.ant.AntPropertyRefSelectioner"/>
     <annotator language="ANT" implementationClass="com.intellij.lang.ant.validation.AntAnnotator"/>
     <lang.documentationProvider language="ANT" implementationClass="com.intellij.lang.ant.doc.AntDocumentationProvider"/>
+    <lang.namesValidator language="ANT" implementationClass="com.intellij.lang.ant.AntNamesValidator"/>
   </extensions>
 
   <application-components>

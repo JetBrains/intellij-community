@@ -20,8 +20,6 @@ import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.lang.refactoring.JavaNamesValidator;
-import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -180,20 +178,6 @@ public abstract class Language {
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {
     return null;
-  }
-
-  /**
-   * Override this method to customize algorithm of identifier validation and language keyword set.
-   * Default implementation provides java language identifier validation and java language keyword set.
-   * For the time being the information provided is used in rename refactoring only.
-   *
-   * @return <code>NamesValidator</code> interface implementation for this particular language. <code>null</code> value must
-   *         not be returned.
-   * @since 5.0.1
-   */
-  @NotNull
-  public NamesValidator getNamesValidator() {
-    return new JavaNamesValidator();
   }
 
   /**
