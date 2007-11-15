@@ -19,7 +19,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -97,11 +96,6 @@ public class JavaLanguage extends Language {
   @NotNull
   public FindUsagesProvider getFindUsagesProvider() {
     return new JavaFindUsagesProvider();
-  }
-
-  @NotNull
-  public RefactoringSupportProvider getRefactoringSupportProvider() {
-    return new JavaRefactoringSupportProvier();
   }
 
   public FormattingModelBuilder getFormattingModelBuilder() {

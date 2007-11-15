@@ -6,6 +6,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,7 +52,7 @@ public class InlineHandler implements RefactoringActionHandler {
     PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
     if (element != null) {
       final com.intellij.lang.refactoring.InlineHandler languageSpecific =
-        element.getLanguage().getRefactoringSupportProvider().getInlineHandler();
+        LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage()).getInlineHandler();
       if (languageSpecific != null) {
         GenericInlineHandler.invoke(element, editor, languageSpecific);
         return;

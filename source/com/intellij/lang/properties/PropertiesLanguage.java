@@ -14,8 +14,6 @@ import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewComponent;
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -126,16 +124,8 @@ public class PropertiesLanguage extends Language {
     return new PropertiesCommenter();
   }
 
-  @NotNull
-  public RefactoringSupportProvider getRefactoringSupportProvider() {
-    return new DefaultRefactoringSupportProvider() {
-      public boolean isSafeDeleteAvailable(PsiElement element) {
-        return true;
-      }
-    };
-  }
-
   protected DocumentationProvider createDocumentationProvider() {
     return myDocumentationProvider;
   }
+
 }

@@ -1,6 +1,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -782,7 +783,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   public static boolean validElement(PsiElement element) {
     if (element instanceof PsiFile) return true;
     if (!element.isPhysical()) return false;
-    final RefactoringSupportProvider provider = element.getLanguage().getRefactoringSupportProvider();
+    final RefactoringSupportProvider provider = LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage());
     return provider.isSafeDeleteAvailable(element);
   }
 

@@ -23,10 +23,8 @@ import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.lang.refactoring.JavaNamesValidator;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -231,17 +229,6 @@ public abstract class Language {
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {
     return null;
-  }
-
-  /**
-   * Override this method to provide common refactorings implementation for the elements of your language.
-   * Note that rename refactoring will be automatically enabled with <code>FindUsagesProvider</code> and <code>ParserDefinition</code>.
-   *
-   * @return <code>RefactoringSupportProvider</code> interface implementation for this particular language
-   */
-  @NotNull
-  public RefactoringSupportProvider getRefactoringSupportProvider() {
-    return new DefaultRefactoringSupportProvider();
   }
 
   /**

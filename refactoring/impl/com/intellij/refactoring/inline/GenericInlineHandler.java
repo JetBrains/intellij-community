@@ -2,17 +2,18 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
@@ -38,7 +39,7 @@ public class GenericInlineHandler {
       final Language language = ref.getElement().getLanguage();
       if (inliners.containsKey(language)) continue;
 
-      final InlineHandler inlineHandler = language.getRefactoringSupportProvider().getInlineHandler();
+      final InlineHandler inlineHandler = LanguageRefactoringSupport.INSTANCE.forLanguage(language).getInlineHandler();
       if (inlineHandler == null) {
         conflicts.add("Cannot inline reference from " + language.getID());
       }
