@@ -28,17 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.util.List;
-
 public interface KeymapExtension {
   @NonNls ExtensionPointName<KeymapExtension> EXTENSION_POINT_NAME = new ExtensionPointName<KeymapExtension>("com.intellij.keymapExtension");
 
-  String getGroupName ();
-
-  Icon getIcon ();
-
-  Icon getOpenIcon ();
-
-  List<KeymapGroup> createSubGroups(Condition<AnAction> filtered, Project project);
+  KeymapGroup createGroup(Condition<AnAction> filtered, Project project);
 }

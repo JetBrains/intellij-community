@@ -65,7 +65,8 @@ public class Group implements KeymapGroup {
     myChildren.add(list);
   }
 
-  public void addGroup(Group group) {
+  public void addGroup(KeymapGroup keymapGroup) {
+    Group group = (Group) keymapGroup;
     myChildren.add(group);
     group.myParent = this;
   }

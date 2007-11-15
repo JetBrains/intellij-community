@@ -5,4 +5,6 @@ package com.intellij.openapi.keymap;
  */
 public interface KeymapGroup {
   void addActionId(String id);
+
+  void addGroup(KeymapGroup keymapGroup);
 }

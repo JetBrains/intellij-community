@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapExtension;
-import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -78,17 +77,6 @@ public class ActionsTreeUtil {
       }
     }
     return pluginsGroup;
-  }
-
-  private static Group createBookmarksActionsGroup(Condition<AnAction> filtered) {
-    return createGroup((ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_BOOKMARKS), true, filtered);
-  }
-
-  private static Group createVcsGroup(Condition<AnAction> filtered) {
-    Group group = new Group(KeyMapBundle.message("version.control.group.title"), VCS_GROUP_ID, null, null);
-    ActionGroup versionControls = (ActionGroup)ActionManager.getInstance().getActionOrStub(VCS_GROUP_ID);
-    fillGroupIgnorePopupFlag(versionControls, group, filtered);
-    return group;
   }
 
   private static Group createMainMenuGroup(Condition<AnAction> filtered) {
@@ -163,28 +151,6 @@ public class ActionsTreeUtil {
     return group;
   }
 
-  private static Group createDebuggerActionsGroup(Condition<AnAction> filtered) {
-    ActionManager actionManager = ActionManager.getInstance();
-    DefaultActionGroup debuggerGroup = (DefaultActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_DEBUGGER);
-    AnAction[] debuggerActions = debuggerGroup.getChildActionsOrStubs(null);
-
-    ArrayList<String> ids = new ArrayList<String>();
-    for (AnAction debuggerAction : debuggerActions) {
-      String actionId = debuggerAction instanceof ActionStub ? ((ActionStub)debuggerAction).getId() : actionManager.getId(debuggerAction);
-      if (filtered == null || filtered.value(debuggerAction)) {
-        ids.add(actionId);
-      }
-    }
-
-    Collections.sort(ids);
-    Group group = new Group(KeyMapBundle.message("debugger.actions.group.title"), IdeActions.GROUP_DEBUGGER, null, null);
-    for (String id : ids) {
-      group.addActionId(id);
-    }
-
-    return group;
-  }
-
   private static Group createEditorActionsGroup(Condition<AnAction> filtered) {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup editorGroup = (DefaultActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_EDITOR);
@@ -213,13 +179,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createExtensionGroup(Condition<AnAction> filtered, final Project project, KeymapExtension provider) {
-    Group group = new Group(provider.getGroupName(), provider.getOpenIcon(), provider.getIcon());
-
-    for (KeymapGroup entry : provider.createSubGroups(filtered, project)) {
-      group.addGroup((Group) entry);
-    }
-
-    return group;
+    return (Group) provider.createGroup(filtered, project);
   }
 
   private static Group createMacrosGroup(Condition<AnAction> filtered) {
@@ -412,12 +372,9 @@ public class ActionsTreeUtil {
     Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"), null, null);
     mainGroup.addGroup(createEditorActionsGroup(filtered));
     mainGroup.addGroup(createMainMenuGroup(filtered));
-    mainGroup.addGroup(createVcsGroup(filtered));
     for (KeymapExtension extension : Extensions.getExtensions(KeymapExtension.EXTENSION_POINT_NAME)) {
       mainGroup.addGroup(createExtensionGroup(filtered, project, extension));
     }
-    mainGroup.addGroup(createDebuggerActionsGroup(filtered));
-    mainGroup.addGroup(createBookmarksActionsGroup(filtered));
     mainGroup.addGroup(createExternalToolsGroup(filtered));
     mainGroup.addGroup(createMacrosGroup(filtered));
     mainGroup.addGroup(createQuickListsGroup(filtered, filter, forceFiltering, quickLists));

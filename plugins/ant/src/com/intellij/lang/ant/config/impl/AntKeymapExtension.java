@@ -15,9 +15,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,21 +27,10 @@ class AntKeymapExtension implements KeymapExtension {
   private static final Icon ANT_ICON = IconLoader.getIcon("/nodes/keymapAnt.png");
   private static final Icon ANT_OPEN_ICON = IconLoader.getIcon("/nodes/keymapAntOpen.png");
 
-  public String getGroupName() {
-    return KeyMapBundle.message("ant.targets.group.title");
-  }
-
-  public Icon getIcon() {
-    return ANT_ICON;
-  }
-
-  public Icon getOpenIcon() {
-    return ANT_OPEN_ICON;
-  }
-
-  public List<KeymapGroup> createSubGroups(Condition<AnAction> filtered, Project project) {
+  public KeymapGroup createGroup(Condition<AnAction> filtered, Project project) {
     final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<AntBuildFile, KeymapGroup>();
-    final List<KeymapGroup> result = new ArrayList<KeymapGroup>();
+    final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(KeyMapBundle.message("ant.targets.group.title"),
+                                                                            ANT_ICON, ANT_OPEN_ICON);
 
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     String[] ids = actionManager.getActionIds(project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX);
@@ -63,7 +50,7 @@ class AntKeymapExtension implements KeymapExtension {
           if (subGroup == null) {
             subGroup = KeymapGroupFactory.getInstance().createGroup(buildFile.getPresentableName());
             buildFileToGroup.put(buildFile, subGroup);
-            result.add(subGroup);
+            result.addGroup(subGroup);
           }
           subGroup.addActionId(id);
         }

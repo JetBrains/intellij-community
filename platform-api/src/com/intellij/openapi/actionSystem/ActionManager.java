@@ -146,5 +146,5 @@ public abstract class ActionManager implements ApplicationComponent {
    */
   public abstract JComponent createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup);
 
-  public abstract AnAction getActionOrStub(String id);
+  public abstract AnAction getActionOrStub(@NonNls String id);
 }
