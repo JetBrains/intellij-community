@@ -6,9 +6,9 @@ import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -46,11 +46,12 @@ public class XHTMLLanguage extends XMLLanguage {
       }
     };
 
-  }
-
-  @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
-    return new XmlFileHighlighter(false,true);
+    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
+      @NotNull
+      protected SyntaxHighlighter createHighlighter() {
+        return new XmlFileHighlighter(false, true);
+      }
+    });
   }
 
   public XmlPsiPolicy getPsiPolicy() {

@@ -16,19 +16,18 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewComponent;
 import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
-import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,15 +85,16 @@ public class PropertiesLanguage extends Language {
 
   public PropertiesLanguage() {
     super("Properties", "text/properties");
+    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
+      @NotNull
+      protected SyntaxHighlighter createHighlighter() {
+        return new PropertiesHighlighter();
+      }
+    });
   }
 
   public ParserDefinition getParserDefinition() {
     return new PropertiesParserDefinition();
-  }
-
-  @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
-    return new PropertiesHighlighter();
   }
 
   private TokenSet myReadableTextContainerElements;

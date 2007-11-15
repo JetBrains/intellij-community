@@ -37,9 +37,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.SmartExtensionPoint;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -143,22 +141,6 @@ public abstract class Language {
   public static <T extends Language> T findInstance(Class<T> klass) {
     //noinspection unchecked
     return (T)ourRegisteredLanguages.get(klass);
-  }
-
-  /**
-   * Override this method to provide syntax highlighting (coloring) capabilities for your language implementation.
-   * By syntax highlighting we mean highlighting of keywords, comments, braces etc. where lexing the file content is enough
-   * to identify proper highlighting attributes.
-   * <p/>
-   * Default implementation doesn't highlight anything.
-   *
-   * @param project might be necessary to gather various project settings from.
-   * @param virtualFile might be necessary to collect file specific settings
-   * @return <code>SyntaxHighlighter</code> interface implementation for this particular language.
-   */
-  @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
-    return new PlainSyntaxHighlighter();
   }
 
   /**

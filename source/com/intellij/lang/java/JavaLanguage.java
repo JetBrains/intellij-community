@@ -22,6 +22,7 @@ import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -63,23 +64,26 @@ public class JavaLanguage extends Language {
                                            FormattingDocumentModelImpl.createOn(element.getContainingFile()));
       }
     };
-  }
+    
+    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SyntaxHighlighterFactory() {
+      @NotNull
+      public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
+        LanguageLevel languageLevel;
+        if (project != null && virtualFile != null) {
+          final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
+          if (module != null) {
+            languageLevel = module.getEffectiveLanguageLevel();
+          } else {
+            languageLevel = LanguageLevel.HIGHEST;
+          }
+        } else {
+          languageLevel = LanguageLevel.HIGHEST;
+        }
 
-  @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
-    LanguageLevel languageLevel;
-    if (project != null && virtualFile != null) {
-      final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
-      if (module != null) {
-        languageLevel = module.getEffectiveLanguageLevel();
-      } else {
-        languageLevel = LanguageLevel.HIGHEST;
+        return new JavaFileHighlighter(languageLevel);
       }
-    } else {
-      languageLevel = LanguageLevel.HIGHEST;
-    }
+    });
 
-    return new JavaFileHighlighter(languageLevel);
   }
 
   public ParserDefinition getParserDefinition() {

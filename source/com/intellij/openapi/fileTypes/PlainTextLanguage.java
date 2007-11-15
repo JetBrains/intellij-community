@@ -8,7 +8,6 @@ import com.intellij.lang.*;
 import com.intellij.lexer.EmptyLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,11 +34,6 @@ public class PlainTextLanguage extends Language {
 
   protected PlainTextLanguage() {
     super("TEXT", "text/plain");
-  }
-
-  @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
-    return new PlainSyntaxHighlighter();
   }
 
   @Nullable

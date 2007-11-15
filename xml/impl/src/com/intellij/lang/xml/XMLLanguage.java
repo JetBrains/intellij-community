@@ -17,8 +17,9 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -57,6 +58,13 @@ public class XMLLanguage extends CompositeLanguage {
 
   public XMLLanguage() {
     this("XML", "text/xml");
+
+    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
+      @NotNull
+      protected SyntaxHighlighter createHighlighter() {
+        return new XmlFileHighlighter();
+      }
+    });
   }
 
   protected XMLLanguage(@NonNls String name, @NonNls String... mime) {
@@ -71,11 +79,6 @@ public class XMLLanguage extends CompositeLanguage {
                                            documentModel);
       }
     };
-  }
-
-  @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
-    return new XmlFileHighlighter();
   }
 
   public XmlPsiPolicy getPsiPolicy() {

@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -308,7 +309,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
     if (tokens == null) return;
 
-    SyntaxHighlighter syntaxHighlighter = injectedLanguage.getSyntaxHighlighter(injectedPsi.getProject(), injectedPsi.getVirtualFile());
+    SyntaxHighlighter syntaxHighlighter =
+      SyntaxHighlighterFactory.getSyntaxHighlighter(injectedLanguage, injectedPsi.getProject(), injectedPsi.getVirtualFile());
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes defaultAttrs = globalScheme.getAttributes(HighlighterColors.TEXT);
 

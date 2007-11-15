@@ -6,9 +6,9 @@ import com.intellij.ide.highlighter.HtmlFileHighlighter;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class HTMLLanguage extends XMLLanguage {
   private final FormattingModelBuilder myFormattingModelBuilder;
-  private HtmlFileHighlighter myHighlighter;
 
   public HTMLLanguage() {
     super("HTML", "text/html","text/htmlh");
@@ -46,12 +45,12 @@ public class HTMLLanguage extends XMLLanguage {
       }
     };
 
-  }
-
-  @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(Project project, final VirtualFile virtualFile) {
-    if (myHighlighter == null) myHighlighter = new HtmlFileHighlighter();
-    return myHighlighter;
+    SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SingleLazyInstanceSyntaxHighlighterFactory() {
+      @NotNull
+      protected SyntaxHighlighter createHighlighter() {
+        return new HtmlFileHighlighter();
+      }
+    });
   }
 
   public XmlPsiPolicy getPsiPolicy() {

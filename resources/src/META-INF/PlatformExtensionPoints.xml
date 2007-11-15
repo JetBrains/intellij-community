@@ -49,5 +49,8 @@
 
   <extensionPoint name="syntaxHighlighter"
                   beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
+
+  <extensionPoint name="lang.syntaxHighlighterFactory"
+                  beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
 </extensionPoints>
   

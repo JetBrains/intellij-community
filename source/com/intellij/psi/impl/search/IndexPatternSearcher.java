@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -114,7 +115,9 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       // collect comment offsets to prevent long locks by PsiManagerImpl.LOCK
       synchronized (PsiLock.LOCK) {
         final Language lang = file.getLanguage();
-        Lexer lexer = lang.getSyntaxHighlighter(file.getProject(), file.getVirtualFile()).getHighlightingLexer();
+        final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(lang, file.getProject(), file.getVirtualFile());
+
+        Lexer lexer = syntaxHighlighter.getHighlightingLexer();
         TokenSet commentTokens = null;
         if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
           lexer = new JavaLexer(((PsiJavaFile)file).getLanguageLevel());
