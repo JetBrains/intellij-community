@@ -15,7 +15,7 @@ public class AntParserDefinition implements ParserDefinition {
 
   private final ParserDefinition myXmlParserDef;
 
-  AntParserDefinition() {
+  public AntParserDefinition() {
     myXmlParserDef = LanguageParserDefinitions.INSTANCE.forLanguage(StdLanguages.XML);
   }
 
