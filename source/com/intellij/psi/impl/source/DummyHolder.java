@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
@@ -173,7 +174,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
       javaLanguageLevel = context != null ? PsiUtil.getLanguageLevel(context) : getManager().getEffectiveLanguageLevel();
       return new JavaLexer(javaLanguageLevel);
     }
-    final ParserDefinition parserDefinition = language.getParserDefinition();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     return parserDefinition.createLexer(getManager().getProject());
   }
 

@@ -10,7 +10,6 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -56,11 +55,6 @@ public class JavaLanguage extends Language {
         return new JavaFileHighlighter(languageLevel);
       }
     });
-
-  }
-
-  public ParserDefinition getParserDefinition() {
-    return new JavaParserDefinition();
   }
 
   public Commenter getCommenter() {

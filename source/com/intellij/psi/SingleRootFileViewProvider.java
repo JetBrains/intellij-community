@@ -6,6 +6,7 @@ package com.intellij.psi;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.Lexer;
@@ -24,9 +25,9 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
@@ -284,7 +285,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @Nullable
   protected PsiFile createFile(Language lang) {
     if (lang != getBaseLanguage()) return null;
-    final ParserDefinition parserDefinition = lang.getParserDefinition();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     if (parserDefinition != null) {
       try {
         return parserDefinition.createFile(this);
@@ -303,7 +304,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private PsiFile createFileIridaAPI(final Language lang) throws Exception {
-    ParserDefinition parserDefinition = lang.getParserDefinition();
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     assert parserDefinition != null;
     //noinspection HardCodedStringLiteral
     Method m = parserDefinition.getClass().getMethod("createFile", Project.class, VirtualFile.class);
@@ -380,7 +381,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public Lexer createLexer(@NotNull final Language language) {
     if (language != getBaseLanguage() && language != Language.ANY) return null;
-    final ParserDefinition parserDefinition = language.getParserDefinition();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (parserDefinition == null) return ((PsiFileImpl)getPsi(getBaseLanguage())).createLexer();
     return parserDefinition.createLexer(getManager().getProject());
   }

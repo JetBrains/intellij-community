@@ -314,7 +314,8 @@ public class EnterHandler extends EditorWriteActionHandler {
 
     final PsiFile containingFile = comment.getContainingFile();
     final Language language = comment.getParent().getLanguage();
-    Lexer lexer = language == StdLanguages.JAVA ? new JavaLexer(PsiUtil.getLanguageLevel(comment)):language.getParserDefinition().createLexer(containingFile.getProject());
+    Lexer lexer = language == StdLanguages.JAVA ? new JavaLexer(PsiUtil.getLanguageLevel(comment)): LanguageParserDefinitions.INSTANCE
+      .forLanguage(language).createLexer(containingFile.getProject());
     lexer.start(commentText, commenter.getDocumentationCommentPrefix().length(), commentText.length(),0);
     QuoteHandler fileTypeHandler = TypedHandler.getQuoteHandler(containingFile);
     TypedHandler.JavaLikeQuoteHandler javaLikeQuoteHandler = fileTypeHandler instanceof TypedHandler.JavaLikeQuoteHandler ?

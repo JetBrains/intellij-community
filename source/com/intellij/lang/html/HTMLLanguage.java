@@ -1,7 +1,6 @@
 package com.intellij.lang.html;
 
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -30,9 +29,5 @@ public class HTMLLanguage extends XMLLanguage {
 
   public XmlPsiPolicy getPsiPolicy() {
     return ENCODE_EACH_SYMBOL_POLICY;
-  }
-
-  public ParserDefinition getParserDefinition() {
-    return new HTMLParserDefinition();
   }
 }

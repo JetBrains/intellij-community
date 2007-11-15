@@ -1,9 +1,6 @@
 package com.intellij.psi;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageFilter;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -194,7 +191,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
     final PsiFile psiFile = super.createFile(lang);
     if (psiFile != null) return psiFile;
     if (getRelevantLanguages().contains(lang)) {
-      final ParserDefinition parserDefinition = lang.getParserDefinition();
+      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
       assert parserDefinition != null;
       return parserDefinition.createFile(this);
     }

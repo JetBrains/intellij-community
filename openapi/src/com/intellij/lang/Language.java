@@ -90,20 +90,6 @@ public abstract class Language {
 
 
   /**
-   * Override this method to provide parser implementation.
-   * Parsed tree (AST) and program structure interface (PSI) based on AST is necessary for most of IDEA smart functions like
-   * in-editor error highlighting, advanced syntax highlighting, error-checking, intention actions, inspections, folding,
-   * finding usages, refactoring, file structure view etc.
-   *
-   * @return <code>ParserDefinition</code> interface implementation for this particular language or <code>null</code>
-   *         if no parsing capabilities provided.
-   */
-  @Nullable
-  public ParserDefinition getParserDefinition() {
-    return null;
-  }
-
-  /**
    * Override this method to provide code folding capabilities when editing files of this language.
    * Please note {@link #getParserDefinition()} should return parser implementation for folding building to work properly.
    *
@@ -148,7 +134,7 @@ public abstract class Language {
    */
   @NotNull
   public TokenSet getReadableTextContainerElements() {
-    final ParserDefinition parserDefinition = getParserDefinition();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(this);
     if (parserDefinition != null) return parserDefinition.getCommentTokens();
     return TokenSet.EMPTY;
   }

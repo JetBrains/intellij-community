@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -305,7 +306,7 @@ public class Helper {
   private static  boolean isComment(final ASTNode node) {
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(node);
     if (psiElement instanceof PsiComment) return true;
-    final ParserDefinition parserDefinition = psiElement.getLanguage().getParserDefinition();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(psiElement.getLanguage());
     if (parserDefinition == null) return false;
     final TokenSet commentTokens = parserDefinition.getCommentTokens();
     return commentTokens.contains(node.getElementType());

@@ -3,6 +3,7 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.extapi.psi.PsiFileBase;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -1230,12 +1231,13 @@ public class FileManagerImpl implements FileManager {
   // We could detect it right now with checks of parser definition equivalence
   // The file name under passed psi file is "new" but parser def is from old name
   private static boolean languageDialectChanged(final PsiFile newPsiFile, String oldFileName) {
-    return ( newPsiFile.getLanguageDialect() != null && 
-             newPsiFile.getLanguageDialect().getParserDefinition().getClass() != newPsiFile.getLanguage().getParserDefinition().getClass()
+    return ( newPsiFile.getLanguageDialect() != null &&
+             LanguageParserDefinitions.INSTANCE.forLanguage(newPsiFile.getLanguageDialect()).getClass() != LanguageParserDefinitions
+               .INSTANCE.forLanguage(newPsiFile.getLanguage()).getClass()
            ) ||
            ( newPsiFile.getLanguageDialect() == null &&
              newPsiFile instanceof PsiFileBase &&
-             newPsiFile.getLanguage().getParserDefinition().getClass() == ((PsiFileBase)newPsiFile).getParserDefinition().getClass() &&
+             LanguageParserDefinitions.INSTANCE.forLanguage(newPsiFile.getLanguage()).getClass() == ((PsiFileBase)newPsiFile).getParserDefinition().getClass() &&
              !FileUtil.getExtension(newPsiFile.getName()).equals(FileUtil.getExtension(oldFileName))
            );
   }

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
@@ -126,7 +127,7 @@ public class Factory implements Constants, XmlElementType {
       }
 
       if (element == null) {
-        final ParserDefinition definition = type.getLanguage().getParserDefinition();
+        final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(type.getLanguage());
         if (definition != null && definition.getCommentTokens().contains(type)) {
           element = new PsiCommentImpl(type, buffer, startOffset, endOffset, table);
         }

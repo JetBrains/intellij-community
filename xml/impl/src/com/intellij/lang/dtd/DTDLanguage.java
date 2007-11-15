@@ -7,7 +7,6 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.xml.XmlCommenter;
@@ -37,10 +36,6 @@ public class DTDLanguage extends Language {
         return new XmlFileHighlighter(true);
       }
     });
-  }
-
-  public ParserDefinition getParserDefinition() {
-    return new DTDParserDefinition();
   }
 
   @NotNull

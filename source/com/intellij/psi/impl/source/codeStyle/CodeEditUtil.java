@@ -4,10 +4,7 @@ import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.IndentInfo;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageFormatting;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.*;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.command.AbnormalCommandTerminationException;
@@ -89,7 +86,7 @@ public class CodeEditUtil {
   }
 
   private static boolean isComment(IElementType type) {
-    final ParserDefinition def = type.getLanguage().getParserDefinition();
+    final ParserDefinition def = LanguageParserDefinitions.INSTANCE.forLanguage(type.getLanguage());
     return def != null && def.getCommentTokens().contains(type);
   }
 
@@ -274,7 +271,7 @@ public class CodeEditUtil {
   private static void markToReformatBeforeOrInsertWhitespace(final ASTNode left, @NotNull final ASTNode right, PsiManager manager) {
     final Language leftLang = left != null ? left.getElementType().getLanguage() : null;
     final Language rightLang = right.getElementType().getLanguage();
-    final ParserDefinition parserDefinition = rightLang.getParserDefinition();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(rightLang);
     LeafElement generatedWhitespace = null;
     if(leftLang == rightLang && parserDefinition != null){
       //noinspection EnumSwitchStatementWhichMissesCases

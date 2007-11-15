@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.*;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.*;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lexer.Lexer;
@@ -538,7 +535,7 @@ public class InjectedLanguageUtil {
           clear();
           throw new IllegalStateException("Seems you haven't called doneInjecting()");
         }
-        ParserDefinition parserDefinition = language.getParserDefinition();
+        ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
         if (parserDefinition == null) {
           throw new UnsupportedOperationException("Cannot inject language '" + language + "' since its getParserDefinition() returns null");
         }
@@ -617,7 +614,7 @@ public class InjectedLanguageUtil {
           FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
 
           SingleRootFileViewProvider viewProvider = new MyFileViewProvider(myProject, virtualFile, injectionHosts);
-          ParserDefinition parserDefinition = myLanguage.getParserDefinition();
+          ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
           assert parserDefinition != null;
           PsiFile psiFile = parserDefinition.createFile(viewProvider);
           assert psiFile.getViewProvider() instanceof MyFileViewProvider : psiFile.getViewProvider();

@@ -1,6 +1,7 @@
 package com.intellij.extapi.psi;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,9 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +51,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
 
   private void initLanguage(final Language language) {
     myLanguage = language;
-    final ParserDefinition parserDefinition = language.getParserDefinition();
+    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (parserDefinition == null) {
       throw new RuntimeException("PsiFileBase: language.getParserDefinition() returned null.");
     }

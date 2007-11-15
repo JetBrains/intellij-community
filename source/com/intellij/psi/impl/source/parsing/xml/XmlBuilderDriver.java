@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.impl.source.parsing.xml;
 
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
@@ -63,7 +64,7 @@ public class XmlBuilderDriver {
   }
 
   protected PsiBuilderImpl createBuilderAndParse() {
-    final ParserDefinition xmlParserDefinition = StdLanguages.XML.getParserDefinition();
+    final ParserDefinition xmlParserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(StdLanguages.XML);
     assert xmlParserDefinition != null;
 
     PsiBuilderImpl b = new PsiBuilderImpl(xmlParserDefinition.createLexer(null), xmlParserDefinition.getWhitespaceTokens(), TokenSet.EMPTY, null, myText);

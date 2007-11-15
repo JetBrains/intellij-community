@@ -5,7 +5,6 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.config.impl.configuration.AntStructureViewTreeModel;
 import com.intellij.lang.ant.psi.AntFile;
@@ -20,7 +19,6 @@ public class AntLanguage extends Language {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.AntLanguage");
   private final Language myXmlLanguage;
-  private AntParserDefinition myParserDefinition;
   private AntUsagesProvider myUsagesProvider;
 
   public AntLanguage() {
@@ -28,14 +26,6 @@ public class AntLanguage extends Language {
     myXmlLanguage = StdLanguages.XML;
     LOG.assertTrue(myXmlLanguage != null, "AntLanguage should be created after XmlLanguage has created.");
     StdLanguages.ANT = this;
-  }
-
-  @Nullable
-  public ParserDefinition getParserDefinition() {
-    if (myParserDefinition == null) {
-      myParserDefinition = new AntParserDefinition(myXmlLanguage.getParserDefinition());
-    }
-    return myParserDefinition;
   }
 
   @Nullable

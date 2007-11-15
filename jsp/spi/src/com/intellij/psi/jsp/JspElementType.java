@@ -3,18 +3,15 @@
  */
 package com.intellij.psi.jsp;
 
-import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.peer.PeerFactory;
 import com.intellij.psi.tree.IChameleonElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.jsp.el.IELElementType;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiParser;
-import com.intellij.peer.PeerFactory;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 
 /**
  * @author peter
@@ -28,7 +25,7 @@ public interface JspElementType extends JspTokenType {
       final PeerFactory factory = PeerFactory.getInstance();
       final Project project = chameleon.getTreeParent().getPsi().getManager().getProject();
       final PsiBuilder builder = factory.createBuilder(chameleon, getLanguage(), chameleon.getText(), project);
-      final PsiParser parser = getLanguage().getParserDefinition().createParser(project);
+      final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(project);
 
       builder.putUserData(ourContextNodeKey, chameleon.getTreeParent());
       final ASTNode result = parser.parse(this, builder).getFirstChildNode();

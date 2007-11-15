@@ -7,8 +7,9 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.LanguageDialect;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -58,7 +59,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   }
 
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text) {
-    ParserDefinition parserDefinition = language.getParserDefinition();
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     SingleRootFileViewProvider viewProvider = new SingleRootFileViewProvider(myManager, new LightVirtualFile(name, language, text));
     assert parserDefinition != null;
     final PsiFile psiFile = parserDefinition.createFile(viewProvider);
@@ -84,7 +85,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
     if(fileType instanceof LanguageFileType){
       final Language language = ((LanguageFileType)fileType).getLanguage();
-      final ParserDefinition parserDefinition = language.getParserDefinition();
+      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
       FileViewProvider viewProvider = language.createViewProvider(virtualFile, myManager, physical);
       if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){
@@ -121,7 +122,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
     if(fileType instanceof LanguageFileType){
       final Language language = ((LanguageFileType)fileType).getLanguage();
-      final ParserDefinition parserDefinition = language.getParserDefinition();
+      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
       FileViewProvider viewProvider = language.createViewProvider(virtualFile, myManager, physical);
       if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){

@@ -17,7 +17,6 @@ package com.intellij.lang;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class LanguageDialect extends Language {
   private final Language myBaseLanguage;
@@ -30,10 +29,4 @@ public abstract class LanguageDialect extends Language {
   public Language getBaseLanguage() {
     return myBaseLanguage;
   }
-
-  @Nullable
-  public ParserDefinition getParserDefinition() {
-    return myBaseLanguage.getParserDefinition();
-  }
-
 }

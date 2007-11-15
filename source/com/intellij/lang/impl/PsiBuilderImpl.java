@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.pom.PomModel;
 import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
@@ -104,7 +104,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     myLanguage = lang;
-    ParserDefinition parserDefinition = lang.getParserDefinition();
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     assert parserDefinition != null;
     myLexer = lexer != null ? lexer : parserDefinition.createLexer(project);
     myWhitespaces = parserDefinition.getWhitespaceTokens();

@@ -4,6 +4,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
@@ -241,7 +242,7 @@ public class IdTableBuilding {
       if (scanner == null) {
         scanner = new SimpleWordsScanner();
       }
-      final ParserDefinition parserDef = lang.getParserDefinition();
+      final ParserDefinition parserDef = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
       final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
       return new WordsScannerIdCacheBuilderAdapter(scanner, highlighter, commentTokens, virtualFile);
     }

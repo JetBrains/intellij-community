@@ -1,8 +1,6 @@
 package com.intellij.lang.ant;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.PsiParser;
+import com.intellij.lang.*;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
@@ -17,8 +15,8 @@ public class AntParserDefinition implements ParserDefinition {
 
   private final ParserDefinition myXmlParserDef;
 
-  AntParserDefinition(ParserDefinition xmlParserDefinition) {
-    myXmlParserDef = xmlParserDefinition;
+  AntParserDefinition() {
+    myXmlParserDef = LanguageParserDefinitions.INSTANCE.forLanguage(StdLanguages.XML);
   }
 
   @NotNull

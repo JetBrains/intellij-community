@@ -3,14 +3,15 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
@@ -413,7 +414,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     synchronized (PsiLock.LOCK) {
       if (myWrapper != null) return myWrapper;
       final Language lang = getElementType().getLanguage();
-      final ParserDefinition parserDefinition = lang.getParserDefinition();
+      final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
       if (parserDefinition != null) {
         myWrapper = parserDefinition.createElement(this);
         //noinspection ConstantConditions

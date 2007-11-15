@@ -3,6 +3,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
@@ -126,7 +127,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         else if (PsiUtil.isInJspFile(file)) {
           final JspFile jspFile = PsiUtil.getJspFile(file);
           commentTokens = TokenSet.orSet(XML_COMMENT_BIT_SET, StdTokenSets.COMMENT_BIT_SET);
-          final ParserDefinition parserDefinition = jspFile.getViewProvider().getTemplateDataLanguage().getParserDefinition();
+          final ParserDefinition parserDefinition =
+            LanguageParserDefinitions.INSTANCE.forLanguage(jspFile.getViewProvider().getTemplateDataLanguage());
           if (parserDefinition != null) {
             commentTokens = TokenSet.orSet(commentTokens, parserDefinition.getCommentTokens());
           }
@@ -138,7 +140,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
           commentTokens = XML_COMMENT_BIT_SET;
         }
         else {
-          final ParserDefinition parserDefinition = lang.getParserDefinition();
+          final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
           if (parserDefinition != null) {
             commentTokens = parserDefinition.getCommentTokens();
           }
@@ -168,7 +170,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       boolean isComment = commentTokens.contains(tokenType);
       if (!isComment) {
         final Language commentLang = tokenType.getLanguage();
-        final ParserDefinition parserDefinition = commentLang.getParserDefinition();
+        final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(commentLang);
         if (parserDefinition != null) {
           final TokenSet langCommentTokens = parserDefinition.getCommentTokens();
           isComment = langCommentTokens.contains(tokenType);
