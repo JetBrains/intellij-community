@@ -30,7 +30,7 @@ import java.util.Collection;
 /**
  * @author cdr
  */
-class PropertiesAnnotator implements Annotator {
+public class PropertiesAnnotator implements Annotator {
 
   public void annotate(PsiElement element, AnnotationHolder holder) {
     if (!(element instanceof Property)) return;
