@@ -69,4 +69,7 @@
 
   <!-- Keymap -->
   <applicationConfigurable implementation="com.intellij.openapi.keymap.impl.ui.KeymapConfigurable"/>
+
+  <!-- Customizations -->
+  <applicationConfigurable implementation="com.intellij.ide.ui.customization.CustomizationConfigurable"/>
 </extensions>
