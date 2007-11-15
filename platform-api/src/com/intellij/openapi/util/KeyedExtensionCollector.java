@@ -24,30 +24,32 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
 
   public KeyedExtensionCollector(@NonNls String epName) {
     ExtensionPointName<KeyedLazyInstanceEP<T>> typesafe = ExtensionPointName.create(epName);
-    final ExtensionPoint<KeyedLazyInstanceEP<T>> point = Extensions.getRootArea().getExtensionPoint(typesafe);
-    point.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstanceEP<T>>() {
-      public void extensionAdded(final KeyedLazyInstanceEP<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
-        synchronized (lock) {
-          List<KeyedLazyInstanceEP<T>> beans = myRegistry.get(bean.key);
-          if (beans == null) {
-            beans = new CopyOnWriteArrayList<KeyedLazyInstanceEP<T>>();
-            myRegistry.put(bean.key, beans);
+    if (Extensions.getRootArea().hasExtensionPoint(epName)) {
+      final ExtensionPoint<KeyedLazyInstanceEP<T>> point = Extensions.getRootArea().getExtensionPoint(typesafe);
+      point.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstanceEP<T>>() {
+        public void extensionAdded(final KeyedLazyInstanceEP<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
+          synchronized (lock) {
+            List<KeyedLazyInstanceEP<T>> beans = myRegistry.get(bean.key);
+            if (beans == null) {
+              beans = new CopyOnWriteArrayList<KeyedLazyInstanceEP<T>>();
+              myRegistry.put(bean.key, beans);
+            }
+            beans.add(bean);
+            myCache.remove(bean.key);
           }
-          beans.add(bean);
-          myCache.remove(bean.key);
         }
-      }
 
-      public void extensionRemoved(final KeyedLazyInstanceEP<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
-        synchronized (lock) {
-          List<KeyedLazyInstanceEP<T>> beans = myRegistry.get(bean.key);
-          if (beans != null) {
-            beans.remove(bean);
+        public void extensionRemoved(final KeyedLazyInstanceEP<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
+          synchronized (lock) {
+            List<KeyedLazyInstanceEP<T>> beans = myRegistry.get(bean.key);
+            if (beans != null) {
+              beans.remove(bean);
+            }
+            myCache.remove(bean.key);
           }
-          myCache.remove(bean.key);
         }
-      }
-    });
+      });
+    }
   }
 
   public void addExpicitExtension(KeyT key, T t) {
