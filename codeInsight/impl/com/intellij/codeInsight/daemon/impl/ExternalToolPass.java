@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -42,7 +43,11 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     for (Language language : relevantLanguages) {
       PsiFile psiRoot = viewProvider.getPsi(language);
       if (!HighlightUtil.shouldInspect(psiRoot)) continue;
-      final List<ExternalAnnotator> externalAnnotators = language.getExternalAnnotators();
+      final List<ExternalAnnotator> result;
+      synchronized (language) {
+        result = ExternalLanguageAnnotators.INSTANCE.allForLanguage(language);
+      }
+      final List<ExternalAnnotator> externalAnnotators = result;
 
       if (!externalAnnotators.isEmpty()) {
         boolean errorFound = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().wasErrorFound(myDocument);

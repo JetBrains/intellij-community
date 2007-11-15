@@ -18,7 +18,6 @@ package com.intellij.lang;
 import com.intellij.formatting.CustomFormattingModelBuilder;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -38,7 +37,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.TokenSet;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,9 +61,6 @@ public abstract class Language {
   public static final Language ANY = new Language("", "") { };
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
-  private Set<ExternalAnnotator> myInjectedExternalAnnotators;
-  private ExternalAnnotator myLastExternalAnnotator;
-  private List<ExternalAnnotator> myCachedExternalAnnotators;
   private final List<CustomFormattingModelBuilder> myCustomFormatters = new ArrayList<CustomFormattingModelBuilder>();
   private DocumentationProvider myDocumentationProvider;
 
@@ -211,73 +206,6 @@ public abstract class Language {
     final ParserDefinition parserDefinition = getParserDefinition();
     if (parserDefinition != null) return parserDefinition.getCommentTokens();
     return TokenSet.EMPTY;
-  }
-
-  /**
-   * Same as {@link #getAnnotator()} but is being run once against whole file. It's most proper to use when integrating external
-   * validation tools like xerces schema validator for XML.
-   *
-   * @return external annotator for a whole file.
-   *         Since this annotating is expensive due to nonincrementality, it is run last
-   */
-  @Nullable
-  public ExternalAnnotator getExternalAnnotator() {
-    return null;
-  }
-
-  /**
-   * Registers an external annotator to provide additional error highlighting for files in the language.
-   * Can be used, for example, to provide additional highlighting in Java files.
-   *
-   * @param annotator the annotator to inject.
-   */
-  public final synchronized void injectExternalAnnotator(@NotNull ExternalAnnotator annotator) {
-    if (myInjectedExternalAnnotators == null) {
-      myInjectedExternalAnnotators = new THashSet<ExternalAnnotator>();
-    }
-    myInjectedExternalAnnotators.add(annotator);
-    myCachedExternalAnnotators = null;
-  }
-
-  /**
-   * Unregisters an injected annotator.
-   *
-   * @param annotator the annotator to remove.
-   */
-  public final synchronized void removeExternalAnnotator(@NotNull ExternalAnnotator annotator) {
-    if (myInjectedExternalAnnotators != null) {
-      myInjectedExternalAnnotators.remove(annotator);
-      myCachedExternalAnnotators = null;
-    }
-  }
-
-  /**
-   * Returns a list containing the language's own annotator and injected annotators.
-   *
-   * @return a list of all annotators for the language.
-   */
-  @NotNull
-  public final synchronized List<ExternalAnnotator> getExternalAnnotators() {
-    ExternalAnnotator annotator = getExternalAnnotator();
-    if (annotator == myLastExternalAnnotator && myCachedExternalAnnotators != null) {
-      return myCachedExternalAnnotators;
-    }
-    myLastExternalAnnotator = annotator;
-    int injectCount = myInjectedExternalAnnotators == null ? 0 : myInjectedExternalAnnotators.size();
-    if (annotator == null && injectCount == 0) {
-      myCachedExternalAnnotators = ExternalAnnotator.EMPTY_LIST;
-    }
-    else {
-      myCachedExternalAnnotators = new ArrayList<ExternalAnnotator>();
-      if (annotator != null) {
-        myCachedExternalAnnotators.add(annotator);
-      }
-      if (myInjectedExternalAnnotators != null) {
-        myCachedExternalAnnotators.addAll(myInjectedExternalAnnotators);
-      }
-
-    }
-    return myCachedExternalAnnotators;
   }
 
   /**

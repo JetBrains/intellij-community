@@ -10,7 +10,6 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewBuilderProvider;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.*;
-import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -159,11 +158,6 @@ public class XMLLanguage extends CompositeLanguage {
       }
     }
     return null;
-  }
-
-  @Nullable
-  public ExternalAnnotator getExternalAnnotator() {
-    return new XMLExternalAnnotator();
   }
 
   public FileViewProvider createViewProvider(final VirtualFile file, final PsiManager manager, final boolean physical) {
