@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericValue;
+import com.intellij.util.xml.DomFileElement;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,6 +184,10 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
 
   @Nullable
   private PsiElement getPsiElement() {
+    if (myDomElement instanceof DomFileElement) {
+      return ((DomFileElement)myDomElement).getFile();
+    }
+
     if (myDomElement instanceof GenericAttributeValue) {
       final GenericAttributeValue attributeValue = (GenericAttributeValue)myDomElement;
       final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
