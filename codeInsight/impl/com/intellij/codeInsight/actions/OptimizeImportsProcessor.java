@@ -2,6 +2,7 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lang.ImportOptimizer;
+import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -36,7 +37,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   @NotNull
   protected Runnable preprocessFile(final PsiFile file) throws IncorrectOperationException {
-    final ImportOptimizer optimizer = file.getLanguage().getImportOptimizer();
+    final ImportOptimizer optimizer = LanguageImportStatements.INSTANCE.forLanguage(file.getLanguage());
     return optimizer != null ? optimizer.processFile(file) : EmptyRunnable.getInstance();
   }
 }

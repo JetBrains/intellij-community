@@ -11,7 +11,6 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.Commenter;
-import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -108,11 +107,6 @@ public class JavaLanguage extends Language {
         return false;
       }
     };
-  }
-
-  @NotNull
-  public ImportOptimizer getImportOptimizer() {
-    return new JavaImportOptimizer();
   }
 
   private ParameterInfoHandler[] myHandlers;

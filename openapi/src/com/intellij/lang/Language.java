@@ -192,15 +192,6 @@ public abstract class Language {
     return EMPTY_SURROUND_DESCRIPTORS_ARRAY;
   }
 
-  /**
-   * Override this method to provide 'optimize imports' feature implementation
-   * @return <code>ImportOptimizer</code> interface implementations for this particular language.
-   */
-  @Nullable
-  public ImportOptimizer getImportOptimizer() {
-    return null;
-  }
-
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "Language: " + myID;

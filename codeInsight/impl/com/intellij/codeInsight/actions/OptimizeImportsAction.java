@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -146,6 +147,6 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   private boolean isOptimizeImportsAvailable(final PsiFile file) {
-    return file.getLanguage().getImportOptimizer() != null;
+    return LanguageImportStatements.INSTANCE.forLanguage(file.getLanguage()) != null;
   }
 }
