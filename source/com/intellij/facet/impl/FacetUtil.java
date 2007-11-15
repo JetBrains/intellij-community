@@ -25,6 +25,14 @@ public class FacetUtil {
     return FacetManagerImpl.createFacet(type, module, type.getDefaultFacetName(), type.createDefaultConfiguration(), underlying);
   }
 
+  public static <F extends Facet> F addFacet(FacetType<F, ?> type, Module module, final Facet underlying) {
+    final ModifiableFacetModel model = FacetManager.getInstance(module).createModifiableModel();
+    final F facet = createFacet(type, module, underlying);
+    model.addFacet(facet);
+    model.commit();
+    return facet;
+  }
+ 
   public static void deleteFacet(final Facet facet) {
     new WriteAction() {
       protected void run(final Result result) {
