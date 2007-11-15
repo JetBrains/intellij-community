@@ -72,6 +72,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    */
   void enableInspections(LocalInspectionTool... inspections);
 
+  void enableInspections(Class<? extends LocalInspectionTool>... inspections);
+
   void disableInspections(LocalInspectionTool... inspections);
 
   /**

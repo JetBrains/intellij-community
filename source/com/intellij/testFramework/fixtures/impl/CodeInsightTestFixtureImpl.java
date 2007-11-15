@@ -120,6 +120,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myInspections = inspections;
   }
 
+  public void enableInspections(final Class<? extends LocalInspectionTool>... inspections) {
+    final ArrayList<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
+    for (Class clazz: inspections) {
+      try {
+        LocalInspectionTool inspection = (LocalInspectionTool)clazz.getConstructor().newInstance();
+        tools.add(inspection);
+      }
+      catch (Exception e) {
+        throw new RuntimeException("Cannot instantiate " + clazz);
+      }
+    }
+    myInspections = tools.toArray(new LocalInspectionTool[tools.size()]);
+
+  }
+
   public void disableInspections(LocalInspectionTool... inspections) {
     myAvailableTools.clear();
     myAvailableLocalTools.clear();
@@ -249,6 +264,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         configureByFiles(fileBefore);
         final Ref<LookupItem[]> myItems = Ref.create(null);
         new CodeCompletionHandler(){
+          @Nullable
           protected Lookup showLookup(Project project,
                                       Editor editor,
                                       LookupItem[] items,
@@ -596,7 +612,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           final IntentionAction action = actionDescriptor.getAction();
           if (action.isAvailable(project, editor, file)) {
             availableActions.add(action);
-            final List<IntentionAction> actions = actionDescriptor.getOptions(file.findElementAt(editor.getCaretModel().getOffset()));
+            final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+            assert element != null;
+            final List<IntentionAction> actions = actionDescriptor.getOptions(element);
             if (actions != null) {
               for (IntentionAction intentionAction : actions) {
                 if (intentionAction.isAvailable(project, editor, file)) {
