@@ -5,6 +5,8 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.hint.EditorHintListener;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.components.ProjectComponent;
@@ -16,8 +18,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,8 +41,34 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   private boolean myIsDisposed;
   private EditorFactoryAdapter myEditorFactoryListener;
 
-  public LookupManagerImpl(Project project) {
+  public LookupManagerImpl(Project project, MessageBus bus) {
     myProject = project;
+
+    bus.connect().subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
+      public void hintShown(final Project project, final LightweightHint hint, final int flags) {
+        if (project == myProject) {
+          Lookup lookup = getActiveLookup();
+          if (lookup != null && (flags & HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE) != 0) {
+            lookup.addLookupListener(
+              new LookupAdapter() {
+                public void currentItemChanged(LookupEvent event) {
+                  hint.hide();
+                }
+
+                public void itemSelected(LookupEvent event) {
+                  hint.hide();
+                }
+
+                public void lookupCanceled(LookupEvent event) {
+                  hint.hide();
+                }
+              }
+            );
+          }
+        }
+      }
+    });
+    
   }
 
   @NotNull

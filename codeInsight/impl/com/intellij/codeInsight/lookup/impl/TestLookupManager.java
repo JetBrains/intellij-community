@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.messages.MessageBus;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,8 +22,8 @@ import com.intellij.psi.xml.XmlFile;
  */
 public class TestLookupManager extends LookupManagerImpl{
   private Project myProject;
-  public TestLookupManager(Project project){
-    super(project);
+  public TestLookupManager(Project project, MessageBus bus){
+    super(project, bus);
     myProject = project;
   }
 

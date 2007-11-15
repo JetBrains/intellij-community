@@ -2,10 +2,11 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupAdapter;
-import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,6 +73,8 @@ public class HintManager implements ApplicationComponent {
   private final List<HintInfo> myHintsStack = new ArrayList<HintInfo>();
   private Editor myLastEditor = null;
   private final Alarm myHideAlarm = new Alarm();
+
+  private static EditorHintListener ourEditorHintPublisher = null;
 
   public static interface ActionToIgnore {
   }
@@ -273,28 +276,7 @@ public class HintManager implements ApplicationComponent {
 
     updateLastEditor(editor);
 
-    Project project = editor.getProject();
-    if (project != null) {
-      LookupManager lookupManager = LookupManager.getInstance(project);
-      Lookup lookup = lookupManager.getActiveLookup();
-      if (lookup != null && (flags & HIDE_BY_LOOKUP_ITEM_CHANGE) != 0) {
-        lookup.addLookupListener(
-          new LookupAdapter() {
-            public void currentItemChanged(LookupEvent event) {
-              hint.hide();
-            }
-
-            public void itemSelected(LookupEvent event) {
-              hint.hide();
-            }
-
-            public void lookupCanceled(LookupEvent event) {
-              hint.hide();
-            }
-          }
-        );
-      }
-    }
+    getPublisher().hintShown(editor.getProject(), hint, flags);
 
     Component component = hint.getComponent();
 
@@ -771,5 +753,12 @@ public class HintManager implements ApplicationComponent {
         updateLastEditor(null);
       }
     }
+  }
+
+  private static EditorHintListener getPublisher() {
+    if (ourEditorHintPublisher == null) {
+      ourEditorHintPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorHintListener.TOPIC);
+    }
+    return ourEditorHintPublisher;
   }
 }
