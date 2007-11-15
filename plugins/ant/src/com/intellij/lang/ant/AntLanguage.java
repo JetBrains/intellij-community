@@ -8,10 +8,8 @@ import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.config.impl.configuration.AntStructureViewTreeModel;
-import com.intellij.lang.ant.doc.AntDocumentationProvider;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.usages.AntUsagesProvider;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -83,9 +81,5 @@ public class AntLanguage extends Language {
       };
     }
     return null;
-  }
-
-  protected DocumentationProvider createDocumentationProvider() {
-    return new AntDocumentationProvider();
   }
 }

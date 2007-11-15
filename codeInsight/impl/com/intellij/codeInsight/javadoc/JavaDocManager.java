@@ -12,6 +12,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -752,9 +753,10 @@ public class JavaDocManager implements ProjectComponent {
     PsiElement originalElement = originalElementPointer != null ? originalElementPointer.getElement() : null;
     PsiFile containingFile = originalElement != null ? originalElement.getContainingFile() : element != null ? element.getContainingFile() : null;
 
-    DocumentationProvider originalProvider = containingFile != null ? containingFile.getLanguage().getDocumentationProvider() : null;
+    DocumentationProvider originalProvider = containingFile != null ? LanguageDocumentation.INSTANCE
+      .forLanguage(containingFile.getLanguage()) : null;
     final Language elementLanguage = element != null ?element.getLanguage():null;
-    DocumentationProvider elementProvider = element == null ? null : elementLanguage.getDocumentationProvider();
+    DocumentationProvider elementProvider = element == null ? null : LanguageDocumentation.INSTANCE.forLanguage(elementLanguage);
 
     if (elementProvider == null ||
         // If resolve result (element) goes into xml (schema of some sort) then prefer picking up original element provider

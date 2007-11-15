@@ -16,7 +16,6 @@
 package com.intellij.lang;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -58,8 +57,6 @@ public abstract class Language {
   private final String[] myMimeTypes;
   public static final Language ANY = new Language("", "") { };
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
-
-  private DocumentationProvider myDocumentationProvider;
 
   private FileType myFileType;
 
@@ -257,37 +254,6 @@ public abstract class Language {
   @Nullable
   public FileViewProvider createViewProvider(final VirtualFile file, final PsiManager manager, final boolean physical) {
     return null;
-  }
-
-  @Nullable
-  protected DocumentationProvider createDocumentationProvider() {
-    return null;
-  }
-
-  /**
-   * Calls {@link Language#createDocumentationProvider} lazily and returns {@link com.intellij.lang.documentation.DocumentationProvider }
-   * @return instance of DocumentationProvider associated with this language
-   */
-  @Nullable
-  public DocumentationProvider getDocumentationProvider() {
-    if ( myDocumentationProvider == null ) {
-      myDocumentationProvider = createDocumentationProvider();
-    }
-    return myDocumentationProvider;
-  }
-
-  /**
-   * Replaces the documentation provider.<br>
-   * One interesting use of this method is passing an instance of
-   * {@link com.intellij.lang.documentation.CompositeDocumentationProvider}.<br>
-   * Here is how to set up some sort of Chain of Responsibility:
-   * <blockquote>
-   * language.setDocumentationProvider ( new CompositeDocumentationProvider ( new InjectedProvider (), language.getDocumentationProvider () ));
-   * </blockquote>
-   * @param documentationProvider new documentation provider
-   */
-  public void setDocumentationProvider(DocumentationProvider documentationProvider) {
-    myDocumentationProvider = documentationProvider;
   }
 
   @Nullable

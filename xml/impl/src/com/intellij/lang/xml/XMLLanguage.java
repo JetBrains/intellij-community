@@ -11,7 +11,6 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
@@ -32,7 +31,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.xml.util.documentation.XmlDocumentationProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,10 +145,6 @@ public class XMLLanguage extends CompositeLanguage {
     }
 
     return new XmlFileViewProvider(manager, file, physical, this);
-  }
-
-  protected DocumentationProvider createDocumentationProvider() {
-    return new XmlDocumentationProvider();
   }
 
   private ParameterInfoHandler[] myHandlers;

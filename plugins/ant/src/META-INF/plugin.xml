@@ -18,6 +18,7 @@
     <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
     <extendWordSelectionHandler implementation="com.intellij.lang.ant.AntPropertyRefSelectioner"/>
     <annotator language="ANT" implementationClass="com.intellij.lang.ant.validation.AntAnnotator"/>
+    <lang.documentationProvider language="ANT" implementationClass="com.intellij.lang.ant.doc.AntDocumentationProvider"/>
   </extensions>
 
   <application-components>

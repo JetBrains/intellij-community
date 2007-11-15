@@ -8,6 +8,7 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
@@ -208,7 +209,7 @@ public class CtrlMouseHandler implements ProjectComponent {
   private static String generateInfo(PsiElement element) {
     final PsiFile file = element.getContainingFile();
     final Language language = (file != null ? file : element).getLanguage();
-    final DocumentationProvider documentationProvider = language.getDocumentationProvider();
+    final DocumentationProvider documentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
     if (documentationProvider != null) {
       String info = documentationProvider.getQuickNavigateInfo(element);
       if (info != null) {

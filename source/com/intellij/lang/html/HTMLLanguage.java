@@ -2,13 +2,11 @@ package com.intellij.lang.html;
 
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
-import com.intellij.xml.util.documentation.HtmlDocumentationProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,9 +35,4 @@ public class HTMLLanguage extends XMLLanguage {
   public ParserDefinition getParserDefinition() {
     return new HTMLParserDefinition();
   }
-
-  protected DocumentationProvider createDocumentationProvider() {
-    return new HtmlDocumentationProvider();
-  }
-
 }

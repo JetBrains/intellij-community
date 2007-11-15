@@ -14,7 +14,6 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
@@ -114,10 +113,6 @@ public class JavaLanguage extends Language {
   @NotNull
   public ImportOptimizer getImportOptimizer() {
     return new JavaImportOptimizer();
-  }
-
-  protected DocumentationProvider createDocumentationProvider() {
-    return new JavaDocumentationProvider();
   }
 
   private ParameterInfoHandler[] myHandlers;

@@ -635,7 +635,8 @@ public class EnterHandler extends EditorWriteActionHandler {
                                             final PsiComment comment,
                                             final Project project) {
       if (settings.JAVADOC_STUB_ON_ENTER) {
-        final DocumentationProvider langDocumentationProvider = comment.getParent().getLanguage().getDocumentationProvider();
+        final DocumentationProvider langDocumentationProvider =
+          LanguageDocumentation.INSTANCE.forLanguage(comment.getParent().getLanguage());
         final CodeDocumentationProvider docProvider = langDocumentationProvider instanceof CodeDocumentationProvider ?
                                                           (CodeDocumentationProvider)langDocumentationProvider:null;
         if (docProvider != null) {
