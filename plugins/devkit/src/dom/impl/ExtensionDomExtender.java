@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.dom.impl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -120,9 +121,13 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final String qName = annotation.getQualifiedName();
       if (qName != null && qName.equals(Attribute.class.getName())) {
         final PsiAnnotationMemberValue attributeName = annotation.findAttributeValue("value");
-        if (attributeName != null) {
+        if (attributeName != null && attributeName instanceof PsiExpression) {
           final Class<String> type = String.class;
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(attributeName.getText()), type);
+          PsiExpression expression = (PsiExpression)attributeName;
+          final Object evaluatedExpression = ConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
+          if (evaluatedExpression != null) {
+            registrar.registerGenericAttributeValueChildExtension(new XmlName(evaluatedExpression.toString()), type);
+          }
         }
       }
     }

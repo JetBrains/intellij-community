@@ -30,6 +30,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="dom-openapi" />
+    <orderEntry type="module" module-name="idea" />
     <orderEntryProperties />
   </component>
   <component name="VcsManagerConfiguration">
