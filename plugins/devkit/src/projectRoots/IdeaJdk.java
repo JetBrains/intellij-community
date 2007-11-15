@@ -228,7 +228,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   private static int getIdeaClassFileVersion(final Sdk ideaSdk) {
     int result = -1;
     final VirtualFile mainClassFile =
-      JarFileSystem.getInstance().findFileByPath(ideaSdk.getHomePath() + "/lib/openapi.jar!/com/intellij/openapi/project/Project.class");
+      JarFileSystem.getInstance().findFileByPath(ideaSdk.getHomePath() + "/lib/openapi.jar!/com/intellij/psi/PsiManager.class");
     if (mainClassFile != null) {
       final BytePointer ptr;
       try {
