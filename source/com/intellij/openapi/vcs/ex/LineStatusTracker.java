@@ -57,7 +57,7 @@ public class LineStatusTracker {
   private final Project myProject;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private int myHighlighterCount = 0;
 
-  private final MyDocumentListener myDocumentListener = new MyDocumentListener();
+  private MyDocumentListener myDocumentListener;
 
   private boolean myIsReleased = false;
   private boolean myIsInitialized = false;
@@ -85,6 +85,7 @@ public class LineStatusTracker {
       myUpToDateDocument.setReadOnly(true);
       reinstallRanges();
 
+      myDocumentListener = new MyDocumentListener();
       myDocument.addDocumentListener(myDocumentListener);
     }
     finally {
