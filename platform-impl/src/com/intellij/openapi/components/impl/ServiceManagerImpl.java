@@ -7,7 +7,6 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.extensions.*;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.pico.AssignableToComponentAdapter;
@@ -19,7 +18,6 @@ import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 public class ServiceManagerImpl implements BaseComponent {
   private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.applicationService");
   private static final ExtensionPointName<ServiceDescriptor> PROJECT_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.projectService");
-  private static final ExtensionPointName<ServiceDescriptor> MODULE_SERVICES = new ExtensionPointName<ServiceDescriptor>("com.intellij.moduleService");
   private ExtensionPointName<ServiceDescriptor> myExtensionPointName;
   private ExtensionPointListener<ServiceDescriptor> myExtensionPointListener;
 
@@ -31,13 +29,10 @@ public class ServiceManagerImpl implements BaseComponent {
     installEP(PROJECT_SERVICES, project);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  public ServiceManagerImpl(Project project, Module module) {
-    installEP(MODULE_SERVICES, module);
+  protected ServiceManagerImpl(boolean ignoreInit) {
   }
 
-
-  private void installEP(final ExtensionPointName<ServiceDescriptor> pointName, final ComponentManager componentManager) {
+  protected void installEP(final ExtensionPointName<ServiceDescriptor> pointName, final ComponentManager componentManager) {
     myExtensionPointName = pointName;
     final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(pointName);
     assert extensionPoint != null;
