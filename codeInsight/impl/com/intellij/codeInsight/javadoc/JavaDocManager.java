@@ -48,6 +48,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.ui.popup.JBPopupImpl;
+import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +141,7 @@ public class JavaDocManager implements ProjectComponent {
     final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
 
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-      .setRequestFocusIfNotLookupOrSearch(getProject(element))
+      .setRequestFocusCondition(getProject(element), NotLookupOrSearchCondition.INSTANCE)
       .setLookupAndSearchUpdater(new Condition<PsiElement>() {
         public boolean value(final PsiElement element) {
           showJavaDocInfo(element);
@@ -247,7 +248,7 @@ public class JavaDocManager implements ProjectComponent {
     storeOriginalElement(project, originalElement, element);
 
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-      .setRequestFocusIfNotLookupOrSearch(project)
+      .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
       .setLookupAndSearchUpdater(new Condition<PsiElement>() {
         public boolean value(final PsiElement element) {
           if (myEditor != null){

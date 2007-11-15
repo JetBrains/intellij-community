@@ -49,6 +49,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.ui.popup.NotLookupOrSearchCondition;
 
 import java.util.*;
 
@@ -161,7 +162,7 @@ public class ShowImplementationsAction extends AnAction {
     final ImplementationViewComponent component = new ImplementationViewComponent(impls);
     if (component.hasElementsToShow()) {
       final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
-        .setRequestFocusIfNotLookupOrSearch(project)
+        .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
         .setLookupAndSearchUpdater(new Condition<PsiElement>() {
           public boolean value(final PsiElement element) {
             updateElementImplementations(element, editor, project);

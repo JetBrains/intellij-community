@@ -4,21 +4,18 @@
 
 package com.intellij.ui.popup;
 
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * User: anna
@@ -154,10 +151,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
-  public ComponentPopupBuilder setRequestFocusIfNotLookupOrSearch(Project project) {
-    final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
-    boolean fromQuickSearch =  focusedComponent != null && focusedComponent.getParent() instanceof ChooseByNameBase.JPanelProvider;
-    myRequestFocus = !fromQuickSearch && LookupManager.getInstance(project).getActiveLookup() == null;
+  public ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<Project> condition) {
+    myRequestFocus = condition.value(project);
     return this;
   }
 

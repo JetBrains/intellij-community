@@ -44,7 +44,7 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setRequestFocus(boolean requestFocus);
 
   @NotNull
-  ComponentPopupBuilder setRequestFocusIfNotLookupOrSearch(Project project);
+  ComponentPopupBuilder setRequestFocusCondition(Project project, Condition<Project> condition);
 
   @NotNull
   ComponentPopupBuilder setForceHeavyweight(boolean forceHeavyweight);
