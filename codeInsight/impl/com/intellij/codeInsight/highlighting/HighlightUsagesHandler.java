@@ -440,7 +440,12 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   private static Runnable createExceptionChoosingRunnable(final Project project, final PsiClassType[] psiClassTypes,
                                           final PsiElement place, final PsiElement target, final Editor editor,
                                           final PsiFile file, final TypeFilter typeFilter, final boolean clearHighlights) {
-    if (psiClassTypes == null || psiClassTypes.length == 0) return EMPTY_HIGHLIGHT_RUNNABLE;
+    if (psiClassTypes == null || psiClassTypes.length == 0) return new Runnable() {
+      public void run() {
+        String text = CodeInsightBundle.message("highlight.exceptions.thrown.notfound");
+        HintManager.getInstance().showInformationHint(editor, text);
+      }
+    };
     return new ChooseClassAndDoHighlightRunnable(psiClassTypes, editor, CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")) {
       protected void selected(PsiClass... classes) {
         List<PsiReference> refs = new ArrayList<PsiReference>();
