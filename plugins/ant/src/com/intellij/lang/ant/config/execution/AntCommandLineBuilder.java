@@ -31,6 +31,8 @@ public class AntCommandLineBuilder {
   private boolean myDone = false;
   @NonNls private final List<String> myExpandedProperties = new ArrayList<String>();
   @NonNls private static final String INPUT_HANDLER_PARAMETER = "-inputhandler";
+  @NonNls private static final String LOGFILE_PARAMETER = "-logfile";
+  @NonNls private static final String LOGFILE_SHORT_PARAMETER = "-l";
 
   public void calculateProperties(final DataContext dataContext) throws Macro.ExecutionCancelledException {
     for (BuildFileProperty property : myProperties) {
@@ -100,11 +102,13 @@ public class AntCommandLineBuilder {
     PathUtilEx.addRtJar(myCommandLine.getClassPath());
 
     myCommandLine.setMainClass(AntMain2.class.getName());
-    ParametersList programParameters = myCommandLine.getProgramParametersList();
-    programParameters.add("-logger", IdeaAntLogger2.class.getName());
+    final ParametersList programParameters = myCommandLine.getProgramParametersList();
     programParameters.addParametersString(AntBuildFileImpl.ANT_COMMAND_LINE_PARAMETERS.get(container));
     if (!programParameters.getList().contains(INPUT_HANDLER_PARAMETER)) {
       programParameters.add(INPUT_HANDLER_PARAMETER, IdeaInputHandler.class.getName());
+    }
+    if (!(programParameters.getList().contains(LOGFILE_SHORT_PARAMETER) || programParameters.getList().contains(LOGFILE_PARAMETER)) ) {
+      programParameters.add("-logger", IdeaAntLogger2.class.getName());
     }
 
     myProperties = AntBuildFileImpl.ANT_PROPERTIES.get(container);
