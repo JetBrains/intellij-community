@@ -103,18 +103,20 @@ abstract class Mover {
           codeStyleManager.adjustLineIndent(document, lineStart);
         }
       }
-    } else {
+    }
+    else {
       int realLine1 = line1;
       int realLine2 = line2;
 
-      while(!lineContainsNonSpaces(document, realLine1) && realLine1 <= line2) realLine1++;
-      while(!lineContainsNonSpaces(document, realLine2) && realLine2 > realLine1) realLine2--;
+      while (!lineContainsNonSpaces(document, realLine1) && realLine1 <= line2) realLine1++;
+      while (!lineContainsNonSpaces(document, realLine2) && realLine2 > realLine1) realLine2--;
 
       try {
         final FileViewProvider provider = file.getViewProvider();
         PsiFile rootToAdjustIndentIn = provider.getPsi(provider.getBaseLanguage());
         codeStyleManager.adjustLineIndent(rootToAdjustIndentIn, new TextRange(document.getLineStartOffset(realLine1), document.getLineStartOffset(realLine2)));
-      } catch (IncorrectOperationException ex) {
+      }
+      catch (IncorrectOperationException ex) {
         throw new RuntimeException(ex);
       }
     }

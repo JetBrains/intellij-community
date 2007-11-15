@@ -54,8 +54,8 @@ public class AddVariableInitializerFix implements IntentionAction {
     else {
       LOG.error("Unknown variable type: "+myVariable);
     }
-    CodeInsightUtil.forcePsiPostprocessAndRestoreElement(myVariable);
-    TextRange range = myVariable.getInitializer().getTextRange();
+    PsiVariable var = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(myVariable);
+    TextRange range = var.getInitializer().getTextRange();
     int offset = range.getStartOffset();
     editor.getCaretModel().moveToOffset(offset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

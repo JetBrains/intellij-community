@@ -94,15 +94,14 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
+    if (targetClass == null) return;
     PsiMethodCallExpression expression = getMethodCall();
     if (expression == null) return;
     PsiManager psiManager = expression.getManager();
     final Project project = psiManager.getProject();
     PsiReferenceExpression ref = expression.getMethodExpression();
 
-    if (isValidElement(expression)) {
-      return;
-    }
+    if (isValidElement(expression)) return;
 
     PsiClass parentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
     PsiMember enclosingContext = PsiTreeUtil.getParentOfType(expression,
@@ -110,9 +109,6 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       PsiField.class,
       PsiClassInitializer.class);
 
-    if (targetClass == null) {
-      return;
-    }
 
     final PsiFile targetFile = targetClass.getContainingFile();
 
@@ -128,13 +124,10 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       }
       else {
         PsiElement anchor = enclosingContext;
-
         while (anchor != null && anchor.getParent() != null && !anchor.getParent().equals(targetClass)) {
           anchor = anchor.getParent();
         }
-
         if (anchor != null && anchor.getParent() == null) anchor = null;
-
         if (anchor != null) {
           method = (PsiMethod)targetClass.addAfter(method, anchor);
         }
@@ -158,18 +151,21 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final Document document = documentManager.getDocument(targetFile);
 
+      targetClass = method.getContainingClass();
+      final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
 
       method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
       if (method == null) return;
       body = method.getBody();
       TemplateBuilder builder = new TemplateBuilder(method);
 
-      targetClass = method.getContainingClass();
-      final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(expression, true);
-      final PsiSubstitutor substitutor = getTargetSubstitutor(expression);
-      final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
-
-      CreateFromUsageUtils.setupMethodParameters(method, builder, expression.getArgumentList(), substitutor);
+      PsiMethodCallExpression methodCall = getMethodCall();
+      if (methodCall == null) return;
+      PsiExpressionList argumentList = methodCall.getArgumentList();
+      
+      final PsiSubstitutor substitutor = getTargetSubstitutor(methodCall);
+      CreateFromUsageUtils.setupMethodParameters(method, builder, argumentList, substitutor);
+      final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(methodCall, true);
       new GuessTypeParameters(factory).setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
       builder.setEndVariableAfter(targetClass.isInterface() ? method : body.getLBrace());
       method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
