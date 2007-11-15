@@ -32,21 +32,10 @@ public class MavenKeymapExtension implements KeymapExtension {
   private static final Icon iconOpen = IconLoader.getIcon("/images/phasesOpen.png");
   private static final Icon iconClosed = IconLoader.getIcon("/images/phasesClosed.png");
 
-  public String getGroupName() {
-    return EventsBundle.message("maven.event.action.group.name");
-  }
-
-  public Icon getIcon() {
-    return iconClosed;
-  }
-
-  public Icon getOpenIcon() {
-    return iconOpen;
-  }
-
-  public List<KeymapGroup> createSubGroups(Condition<AnAction> condition, Project project) {
+  public KeymapGroup createGroup(Condition<AnAction> condition, Project project) {
     final Map<String, KeymapGroup> pomPathToActionId = new HashMap<String, KeymapGroup>();
-    final List<KeymapGroup> result = new ArrayList<KeymapGroup>();
+    final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(EventsBundle.message("maven.event.action.group.name"),
+                                                                            iconClosed, iconOpen);
 
     if (project != null) {
       final ActionManager actionManager = ActionManager.getInstance();
@@ -64,7 +53,7 @@ public class MavenKeymapExtension implements KeymapExtension {
                                               LocalFileSystem.getInstance().findFileByPath(pomPath));
             subGroup = KeymapGroupFactory.getInstance().createGroup(name);
             pomPathToActionId.put(pomPath, subGroup);
-            result.add(subGroup);
+            result.addGroup(subGroup);
           }
           subGroup.addActionId(id);
         }
