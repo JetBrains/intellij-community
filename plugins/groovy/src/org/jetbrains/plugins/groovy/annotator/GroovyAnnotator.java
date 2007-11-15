@@ -378,7 +378,7 @@ public class GroovyAnnotator implements Annotator {
         PsiModifierList modifierList = psiClass.getModifierList();
         if (modifierList != null) {
           if (modifierList.hasExplicitModifier(PsiModifier.FINAL)) {
-            holder.createErrorAnnotation(modifiersList, GroovyBundle.message("final.class.cannot.be.extended"));
+            holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("final.class.cannot.be.extended"));
           }
         }
       }
