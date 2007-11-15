@@ -75,4 +75,12 @@ public abstract class NodeDescriptor<E> {
   public boolean expandOnDoubleClick() {
     return true;
   }
+
+  public int getWeight() {
+    E element = getElement();
+    if (element instanceof WeighedItem) {
+      return ((WeighedItem) element).getWeight();
+    }
+    return 30;
+  }
 }

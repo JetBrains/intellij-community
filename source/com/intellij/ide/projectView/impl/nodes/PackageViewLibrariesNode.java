@@ -31,25 +31,24 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Icons;
 import com.intellij.projectView.LibrariesElement;
+import com.intellij.util.Icons;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   public PackageViewLibrariesNode(final Project project, Module module, final ViewSettings viewSettings) {
@@ -107,5 +106,9 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
 
   public boolean shouldUpdateData() {
     return true;
+  }
+
+  public int getWeight() {
+    return 60;
   }
 }

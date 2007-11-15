@@ -51,4 +51,8 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
     }
     return children;
   }
+
+  public int getWeight() {
+    return 10;
+  }
 }

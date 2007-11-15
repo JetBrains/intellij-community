@@ -36,4 +36,8 @@ public class PsiMethodNode extends BasePsiNode<PsiMethod>{
     final PsiMethod psiMethod = getValue();
     return psiMethod != null && psiMethod.isConstructor();
   }
+
+  public int getWeight() {
+    return isConstructor() ? 40 : 50;
+  }
 }

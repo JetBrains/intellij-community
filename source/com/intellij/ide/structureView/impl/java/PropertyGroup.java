@@ -1,5 +1,6 @@
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
@@ -19,7 +20,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvider {
+public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvider, WeighedItem {
   private final String myPropertyName;
   private final PsiType myPropertyType;
 
@@ -231,5 +232,9 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
 
   public Object getValue() {
     return this;
+  }
+
+  public int getWeight() {
+    return 60;
   }
 }

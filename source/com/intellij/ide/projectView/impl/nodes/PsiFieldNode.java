@@ -29,4 +29,8 @@ public class PsiFieldNode extends BasePsiNode<PsiField>{
     }
     data.setPresentableText(name);
   }
+
+  public int getWeight() {
+    return 70;
+  }
 }

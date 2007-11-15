@@ -97,4 +97,8 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       ModulesConfigurator.showDialog(getProject(), module.getName(), ContentEntriesEditor.NAME, false);
     }
   }
+
+  public int getWeight() {
+    return isFQNameShown() ? 70 : 0;
+  }
 }

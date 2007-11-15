@@ -58,4 +58,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   public String getToolTip() {
     return IdeBundle.message("tooltip.module.group");
   }
+
+  public int getWeight() {
+    return 0;
   }
+}

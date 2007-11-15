@@ -195,4 +195,8 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     }
     return false;
   }
+
+  public int getWeight() {
+    return 0;
+  }
 }

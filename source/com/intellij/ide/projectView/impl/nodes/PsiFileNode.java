@@ -41,4 +41,8 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   public VirtualFile getVirtualFile() {
     return getValue().getVirtualFile();
   }
+
+  public int getWeight() {
+    return 20;
+  }
 }

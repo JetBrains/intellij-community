@@ -75,4 +75,8 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
   public boolean isAlwaysExpand() {
     return getParentValue() instanceof PsiFile;
   }
+
+  public int getWeight() {
+    return 20;
+  }
 }
