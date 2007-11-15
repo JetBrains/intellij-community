@@ -316,7 +316,7 @@ public abstract class PassExecutorService {
   protected void applyInformationToEditors(final List<FileEditor> fileEditors, final TextEditorHighlightingPass pass, final DaemonProgressIndicator updateProgress) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (updateProgress.isCanceled()) {
-      log(updateProgress, pass, " is canceled, sorry");
+      log(updateProgress, pass, " is canceled during apply, sorry");
       return;
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -328,6 +328,7 @@ public abstract class PassExecutorService {
           if (fileEditor.getComponent().isDisplayable()) {
             if (!applied) {
               applied = true;
+              log(updateProgress, pass, " Applied");
               pass.applyInformationToEditor();
               if (pass instanceof GeneralHighlightingPass && pass.getId() == Pass.UPDATE_ALL) {
                 ((GeneralHighlightingPass)pass).reportErrorsToWolf();
@@ -371,7 +372,7 @@ public abstract class PassExecutorService {
                   + s
                   + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
                   + " " + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
-                  + " : '"+(pass == null ? "" : StringUtil.first(pass.getDocument().getText(), 10, true))
+                  + " : '"+(pass == null ? "" : StringUtil.first(pass.getDocument().getText(), 10, true)) + "'"
         );
       }
     }

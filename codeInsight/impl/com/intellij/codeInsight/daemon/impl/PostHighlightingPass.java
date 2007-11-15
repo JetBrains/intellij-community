@@ -157,6 +157,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     };
     if (!myRefCountHolder.retrieveUnusedReferencesInfo(doCollectInfo)) {
       progress.cancel();
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          DaemonCodeAnalyzer.getInstance(myProject).restart();
+        }
+      }, myProject.getDisposed());
       throw new ProcessCanceledException();
     }
   }
