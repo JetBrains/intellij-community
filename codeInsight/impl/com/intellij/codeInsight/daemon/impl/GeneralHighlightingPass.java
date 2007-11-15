@@ -12,6 +12,7 @@ import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
@@ -254,7 +255,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     assert documentRange.getText().equals(injectedPsi.getText());
     LanguageDialect languageDialect = injectedPsi.getLanguageDialect();
     Language injectedLanguage = languageDialect == null ? injectedPsi.getLanguage() : languageDialect;
-    final List<Annotator> annotators = injectedLanguage.getAnnotators();
+    final List<Annotator> result;
+    synchronized (injectedLanguage) {
+      result = LanguageAnnotators.INSTANCE.allForLanguage(injectedLanguage);
+    }
+    final List<Annotator> annotators = result;
 
     final AnnotationHolderImpl fixingOffsetsHolder = new AnnotationHolderImpl() {
       public boolean add(final Annotation annotation) {

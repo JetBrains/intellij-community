@@ -18,7 +18,6 @@ package com.intellij.lang;
 import com.intellij.formatting.CustomFormattingModelBuilder;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
@@ -30,16 +29,9 @@ import com.intellij.lang.refactoring.JavaNamesValidator;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.SmartExtensionPoint;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -71,39 +63,7 @@ public abstract class Language {
   public static final Language ANY = new Language("", "") { };
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
-  private final NotNullLazyValue<SmartExtensionPoint<AnnotatorEP, Annotator>> myAnnotatorsSmartEP = new NotNullLazyValue<SmartExtensionPoint<AnnotatorEP, Annotator>>() {
-    @NotNull
-    protected SmartExtensionPoint<AnnotatorEP, Annotator> compute() {
-      return new SmartExtensionPoint<AnnotatorEP, Annotator>(new THashSet<Annotator>()) {
-        @NotNull
-        protected ExtensionPoint<AnnotatorEP> getExtensionPoint() {
-          return Extensions.getRootArea().getExtensionPoint(AnnotatorEP.EP_NAME);
-        }
-
-        protected Annotator getExtension(@NotNull final AnnotatorEP ep) {
-          if (ep.language.equals(getID())) {
-            try {
-              Annotator epAnnotator = ep.getAnnotator();
-              if (epAnnotator == null) {
-                PluginDescriptor descriptor = ep.getPluginDescriptor();
-                epAnnotator = (Annotator)Class.forName(ep.annotatorClass, true,
-                                                       descriptor == null ? getClass().getClassLoader() : descriptor.getPluginClassLoader()).newInstance();
-                ep.setAnnotator(epAnnotator);
-              }
-              return epAnnotator;
-            }
-            catch(Exception e) {
-              LOG.error(e);
-            }
-          }
-          return null;
-        }
-      };
-    }
-  };
-
   private Set<ExternalAnnotator> myInjectedExternalAnnotators;
-  private Annotator myLastAnnotator;
   private ExternalAnnotator myLastExternalAnnotator;
   private List<ExternalAnnotator> myCachedExternalAnnotators;
   private final List<CustomFormattingModelBuilder> myCustomFormatters = new ArrayList<CustomFormattingModelBuilder>();
@@ -251,70 +211,6 @@ public abstract class Language {
     final ParserDefinition parserDefinition = getParserDefinition();
     if (parserDefinition != null) return parserDefinition.getCommentTokens();
     return TokenSet.EMPTY;
-  }
-
-  /**
-   * Override this method to provide on-the-fly error highlighting with quickfixes as well as parse tree based syntax annotations
-   * like highlighting instance variables in java.
-   * For this functionality to work properly {@link ParserDefinition} implementation is necessary.
-   * Note that syntax errors flagged by parser in ParserDefinition are highlighted automatically.
-   * Annotator is run against changed parts of the parse tree incrementally.
-   *
-   * @return <code>Annotator</code> interface implementation for this particular language or <code>null</code>
-   *         if no error and syntax highlighting capabilities provided.
-   */
-  @Nullable
-  public Annotator getAnnotator() {
-    return null;
-  }
-
-  /**
-   * Registers an annotator to provide additional error highlighting for files in the language.
-   * Can be used, for example, to provide additional highlighting in Java files.
-   *
-   * @param annotator the annotator to inject.
-   */
-  public final synchronized void injectAnnotator(@NotNull Annotator annotator) {
-    myAnnotatorsSmartEP.getValue().addExplicitExtension(annotator);
-  }
-
-  public final synchronized void injectAnnotator(@NotNull final Annotator annotator, Disposable parentDisposable) {
-    injectAnnotator(annotator);
-    Disposer.register(parentDisposable, new Disposable() {
-      public void dispose() {
-        removeAnnotator(annotator);
-      }
-    });
-  }
-
-  /**
-   * Unregisters an injected annotator.
-   *
-   * @param annotator the annotator to remove.
-   */
-  public final synchronized void removeAnnotator(@NotNull Annotator annotator) {
-    myAnnotatorsSmartEP.getValue().removeExplicitExtension(annotator);
-  }
-
-  /**
-   * Returns a list containing the language's own annotator and injected annotators.
-   *
-   * @return a list of all annotators for the language.
-   */
-  @NotNull
-  public final synchronized List<Annotator> getAnnotators() {
-    final SmartExtensionPoint<AnnotatorEP, Annotator> smartEP = myAnnotatorsSmartEP.getValue();
-    Annotator annotator = getAnnotator();
-    if (annotator != myLastAnnotator) {
-      if (myLastAnnotator != null) {
-        smartEP.removeExplicitExtension(myLastAnnotator);
-      }
-      if (annotator != null) {
-        smartEP.addExplicitExtension(annotator);
-      }
-      myLastAnnotator = annotator;
-    }
-    return smartEP.getExtensions();
   }
 
   /**

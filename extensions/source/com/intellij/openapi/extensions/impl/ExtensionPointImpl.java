@@ -308,7 +308,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
       }
       catch (ClassNotFoundException e) {
-        myExtensionClass = Object.class;
+        throw new RuntimeException(e);
       }
     }
     return myExtensionClass;

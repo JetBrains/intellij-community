@@ -5,7 +5,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -39,7 +38,6 @@ import java.awt.*;
  * @author max
  */
 public class PropertiesLanguage extends Language {
-  private static final Annotator ANNOTATOR = new PropertiesAnnotator();
   private final DocumentationProvider myDocumentationProvider = new QuickDocumentationProvider() {
     @Nullable
     public String getQuickNavigateInfo(PsiElement element) {
@@ -108,10 +106,6 @@ public class PropertiesLanguage extends Language {
       );
     }
     return myReadableTextContainerElements;
-  }
-
-  public Annotator getAnnotator() {
-    return ANNOTATOR;
   }
 
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {

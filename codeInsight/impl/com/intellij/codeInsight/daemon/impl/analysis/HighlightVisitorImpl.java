@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
@@ -122,7 +123,11 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitElement(PsiElement element) {
-    List<Annotator> annotators = element.getLanguage().getAnnotators();
+    final List<Annotator> result;
+    synchronized (element.getLanguage()) {
+      result = LanguageAnnotators.INSTANCE.allForLanguage(element.getLanguage());
+    }
+    List<Annotator> annotators = result;
     boolean hasAnnotators = !annotators.isEmpty();
 
     if (!annotators.isEmpty()) {

@@ -7,12 +7,10 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.ant.config.impl.configuration.AntStructureViewTreeModel;
 import com.intellij.lang.ant.doc.AntDocumentationProvider;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.usages.AntUsagesProvider;
-import com.intellij.lang.ant.validation.AntAnnotator;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -27,7 +25,6 @@ public class AntLanguage extends Language {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.AntLanguage");
   private final Language myXmlLanguage;
   private AntParserDefinition myParserDefinition;
-  private AntAnnotator myAnnotator;
   private NamesValidator myNamesValidator;
   private AntUsagesProvider myUsagesProvider;
 
@@ -44,14 +41,6 @@ public class AntLanguage extends Language {
       myParserDefinition = new AntParserDefinition(myXmlLanguage.getParserDefinition());
     }
     return myParserDefinition;
-  }
-
-  @Nullable
-  public Annotator getAnnotator() {
-    if (myAnnotator == null) {
-      myAnnotator = new AntAnnotator();
-    }
-    return myAnnotator;
   }
 
   @NotNull

@@ -4,9 +4,10 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.extensions.*;
-import com.intellij.util.KeyedLazyInstanceEP;
+import com.intellij.util.KeyedLazyInstance;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -15,37 +16,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
 public abstract class KeyedExtensionCollector<T, KeyT> {
-  private final Map<String, List<KeyedLazyInstanceEP<T>>> myRegistry = new THashMap<String, List<KeyedLazyInstanceEP<T>>>();
+  private final Map<String, List<KeyedLazyInstance<T>>> myRegistry = new THashMap<String, List<KeyedLazyInstance<T>>>();
   private final Map<String, List<T>> myExplicitExtensions = new THashMap<String, List<T>>();
   private final Map<String, List<T>> myCache = new HashMap<String, List<T>>();
   private final Object lock = new Object();
 
   public KeyedExtensionCollector(@NonNls String epName) {
-    ExtensionPointName<KeyedLazyInstanceEP<T>> typesafe = ExtensionPointName.create(epName);
+    ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(epName);
     if (Extensions.getRootArea().hasExtensionPoint(epName)) {
-      final ExtensionPoint<KeyedLazyInstanceEP<T>> point = Extensions.getRootArea().getExtensionPoint(typesafe);
-      point.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstanceEP<T>>() {
-        public void extensionAdded(final KeyedLazyInstanceEP<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
+      final ExtensionPoint<KeyedLazyInstance<T>> point = Extensions.getRootArea().getExtensionPoint(typesafe);
+      point.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
+        public void extensionAdded(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
           synchronized (lock) {
-            List<KeyedLazyInstanceEP<T>> beans = myRegistry.get(bean.key);
+            List<KeyedLazyInstance<T>> beans = myRegistry.get(bean.getKey());
             if (beans == null) {
-              beans = new CopyOnWriteArrayList<KeyedLazyInstanceEP<T>>();
-              myRegistry.put(bean.key, beans);
+              beans = new CopyOnWriteArrayList<KeyedLazyInstance<T>>();
+              myRegistry.put(bean.getKey(), beans);
             }
             beans.add(bean);
-            myCache.remove(bean.key);
+            myCache.remove(bean.getKey());
           }
         }
 
-        public void extensionRemoved(final KeyedLazyInstanceEP<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
+        public void extensionRemoved(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
           synchronized (lock) {
-            List<KeyedLazyInstanceEP<T>> beans = myRegistry.get(bean.key);
+            List<KeyedLazyInstance<T>> beans = myRegistry.get(bean.getKey());
             if (beans != null) {
               beans.remove(bean);
             }
-            myCache.remove(bean.key);
+            myCache.remove(bean.getKey());
           }
         }
       });
@@ -78,6 +78,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
 
   protected abstract String keyToString(KeyT key);
 
+  @NotNull
   public List<T> forKey(KeyT key) {
     synchronized (lock) {
       final String stringKey = keyToString(key);
@@ -93,9 +94,9 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
   private List<T> buildExtensions(final String key) {
     final List<T> explicit = myExplicitExtensions.get(key);
     List<T> result = explicit != null ? new ArrayList<T>(explicit) : new ArrayList<T>();
-    final List<KeyedLazyInstanceEP<T>> beans = myRegistry.get(key);
+    final List<KeyedLazyInstance<T>> beans = myRegistry.get(key);
     if (beans != null) {
-      for (KeyedLazyInstanceEP<T> bean : beans) {
+      for (KeyedLazyInstance<T> bean : beans) {
         result.add(bean.getInstance());
       }
     }

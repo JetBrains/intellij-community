@@ -17,6 +17,7 @@
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntStepsBeforeRunProvider"/>
     <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
     <extendWordSelectionHandler implementation="com.intellij.lang.ant.AntPropertyRefSelectioner"/>
+    <annotator language="ANT" implementationClass="com.intellij.lang.ant.validation.AntAnnotator"/>
   </extensions>
 
   <application-components>

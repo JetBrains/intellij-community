@@ -5,6 +5,7 @@ package com.intellij.lang;
 
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     }
   }
 
+  @NotNull
   public List<T> allForLanguage(Language l) {
     return forKey(l);
   }

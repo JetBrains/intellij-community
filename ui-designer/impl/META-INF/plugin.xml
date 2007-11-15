@@ -83,7 +83,7 @@
 
     <projectService serviceInterface="com.intellij.uiDesigner.GuiDesignerConfiguration"
                serviceImplementation="com.intellij.uiDesigner.GuiDesignerConfiguration"/>
-    <annotator language="JAVA" annotatorClass="com.intellij.uiDesigner.binding.FormClassAnnotator"/>
+    <annotator language="JAVA" implementationClass="com.intellij.uiDesigner.binding.FormClassAnnotator"/>
 
     <cacheBuilder fileType="GUI_DESIGNER_FORM" wordsScannerClass="com.intellij.uiDesigner.binding.FormWordsScanner"/>
 

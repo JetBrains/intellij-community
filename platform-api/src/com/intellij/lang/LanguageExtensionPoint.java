@@ -1,18 +1,19 @@
-package com.intellij.util;
+package com.intellij.lang;
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.util.LazyInstance;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
  * @author yole
  */
-public class KeyedLazyInstanceEP<T> extends AbstractExtensionPointBean implements KeyedLazyInstance<T> {
+public class LanguageExtensionPoint<T> extends AbstractExtensionPointBean implements KeyedLazyInstance<T> {
 
   // these must be public for scrambling compatibility
-  @Attribute("key")
-  public String key;
-  
+  @Attribute("language")
+  public String language;
+
   @Attribute("implementationClass")
   public String implementationClass;
 
@@ -27,6 +28,6 @@ public class KeyedLazyInstanceEP<T> extends AbstractExtensionPointBean implement
   }
 
   public String getKey() {
-    return key;
+    return language;
   }
 }
