@@ -2,6 +2,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.keymap.KeymapGroup;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.Set;
  * User: anna
  * Date: Mar 18, 2005
  */
-public class Group {
+public class Group implements KeymapGroup {
   private Group myParent;
   private String myName;
   private String myId;

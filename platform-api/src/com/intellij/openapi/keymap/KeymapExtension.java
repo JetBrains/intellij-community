@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Map;
 
 public interface KeymapExtension {
   @NonNls ExtensionPointName<KeymapExtension> EXTENSION_POINT_NAME = new ExtensionPointName<KeymapExtension>("com.intellij.keymapExtension");
@@ -41,7 +40,5 @@ public interface KeymapExtension {
 
   Icon getOpenIcon ();
 
-  String getSubgroupName(Object key, Project project);
-
-  Map<Object, List<String>> createSubGroups(Condition<AnAction> filtered, Project project);
+  List<KeymapGroup> createSubGroups(Condition<AnAction> filtered, Project project);
 }

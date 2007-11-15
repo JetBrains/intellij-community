@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapExtension;
+import com.intellij.openapi.keymap.KeymapGroup;
+import com.intellij.openapi.keymap.KeymapGroupFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -39,12 +41,9 @@ class AntKeymapExtension implements KeymapExtension {
     return ANT_OPEN_ICON;
   }
 
-  public String getSubgroupName(final Object key, Project project) {
-    return ((AntBuildFile)key).getPresentableName();
-  }
-
-  public Map<Object, List<String>> createSubGroups(Condition<AnAction> filtered, Project project) {
-    final Map<Object, List<String>> buildFileToGroup = new HashMap<Object, List<String>>();
+  public List<KeymapGroup> createSubGroups(Condition<AnAction> filtered, Project project) {
+    final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<AntBuildFile, KeymapGroup>();
+    final List<KeymapGroup> result = new ArrayList<KeymapGroup>();
 
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     String[] ids = actionManager.getActionIds(project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX);
@@ -60,16 +59,17 @@ class AntKeymapExtension implements KeymapExtension {
             LOG.info("no buildfile found for actionId=" + id);
             continue;
           }
-          List<String> subGroup = buildFileToGroup.get(buildFile);
+          KeymapGroup subGroup = buildFileToGroup.get(buildFile);
           if (subGroup == null) {
-            subGroup = new ArrayList<String>();
+            subGroup = KeymapGroupFactory.getInstance().createGroup(buildFile.getPresentableName());
             buildFileToGroup.put(buildFile, subGroup);
+            result.add(subGroup);
           }
-          subGroup.add(id);
+          subGroup.addActionId(id);
         }
       }
     }
 
-    return buildFileToGroup;
+    return result;
   }
 }

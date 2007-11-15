@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapExtension;
+import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -214,12 +215,8 @@ public class ActionsTreeUtil {
   private static Group createExtensionGroup(Condition<AnAction> filtered, final Project project, KeymapExtension provider) {
     Group group = new Group(provider.getGroupName(), provider.getOpenIcon(), provider.getIcon());
 
-    for (Map.Entry<Object, List<String>> entry : provider.createSubGroups(filtered, project).entrySet()) {
-      final Group subGroup = new Group(provider.getSubgroupName(entry.getKey(), project), null, null);
-      for (String id : entry.getValue()) {
-        subGroup.addActionId(id);
-      }
-      group.addGroup(subGroup);
+    for (KeymapGroup entry : provider.createSubGroups(filtered, project)) {
+      group.addGroup((Group) entry);
     }
 
     return group;
