@@ -335,11 +335,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   public AbstractVcs getVcsFor(final FilePath file) {
-    VirtualFile vFile = ChangesUtil.findValidParent(file);
-    if (vFile != null) {
-      return getVcsFor(vFile);
-    }
-    return null;
+    return ApplicationManager.getApplication().runReadAction(new Computable<AbstractVcs>() {
+      @Nullable
+      public AbstractVcs compute() {
+        VirtualFile vFile = ChangesUtil.findValidParent(file);
+        if (vFile != null) {
+          return getVcsFor(vFile);
+        }
+        return null;
+      }
+    });
   }
 
   @Nullable
@@ -364,11 +369,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Nullable
   public VirtualFile getVcsRootFor(final FilePath file) {
-    VirtualFile vFile = ChangesUtil.findValidParent(file);
-    if (vFile != null) {
-      return getVcsRootFor(vFile);
-    }
-    return null;
+    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Nullable
+      public VirtualFile compute() {
+        VirtualFile vFile = ChangesUtil.findValidParent(file);
+        if (vFile != null) {
+          return getVcsRootFor(vFile);
+        }
+        return null;
+      }
+    });
   }
 
   private void dispose() {
