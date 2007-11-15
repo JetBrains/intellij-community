@@ -38,7 +38,7 @@
   <applicationService serviceInterface="com.intellij.ide.ui.search.SearchableOptionsRegistrar"
                       serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
 
-  <applicationService serviceInterface="com.intellij.diagnostic.ErrorReportConfigurable"
+  <applicationService serviceInterfaNce="com.intellij.diagnostic.ErrorReportConfigurable"
                       serviceImplementation="com.intellij.diagnostic.ErrorReportConfigurable"/>
   <applicationService serviceInterface="com.intellij.util.net.HttpConfigurable"
                       serviceImplementation="com.intellij.util.net.HttpConfigurable"/>
@@ -72,4 +72,7 @@
 
   <!-- Customizations -->
   <applicationConfigurable implementation="com.intellij.ide.ui.customization.CustomizationConfigurable"/>
+
+  <!-- Path Variables -->
+  <applicationConfigurable implementation="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
 </extensions>
