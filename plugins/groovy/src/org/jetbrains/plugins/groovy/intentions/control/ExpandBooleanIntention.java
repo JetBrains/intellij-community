@@ -4,8 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -35,7 +34,7 @@ public class ExpandBooleanIntention extends Intention {
           "if(" + rhsText + "){" + lhsText + " = true;}else{" +
               lhsText +
               " = false;}";
-      replaceStatement(statement, containingStatement);
+      IntentionUtils.replaceStatement(statement, containingStatement);
     } else if (ExpandBooleanPredicate.isBooleanReturn(containingStatement)) {
       final GrReturnStatement returnStatement =
           (GrReturnStatement) containingStatement;
@@ -43,7 +42,7 @@ public class ExpandBooleanIntention extends Intention {
       final String valueText = returnValue.getText();
       @NonNls final String statement =
           "if(" + valueText + "){return true;}else{return false;}";
-      replaceStatement(statement, containingStatement);
+      IntentionUtils.replaceStatement(statement, containingStatement);
     }
   }
 }

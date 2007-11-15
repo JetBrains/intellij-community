@@ -3,8 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.closure;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -34,6 +33,6 @@ public class MakeClosureCallExplicitIntention extends Intention {
         for (GrClosableBlock closureArg : closureArgs) {
             newExpression.append(closureArg.getText());
         }
-        replaceExpression(newExpression.toString(), expression);
+        IntentionUtils.replaceExpression(newExpression.toString(), expression);
     }
 }

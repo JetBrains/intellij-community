@@ -6,17 +6,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 
@@ -48,32 +44,6 @@ public abstract class Intention implements IntentionAction {
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
-
-  protected static void replaceExpression(@NotNull String newExpression,
-                                          @NotNull GrExpression expression)
-      throws IncorrectOperationException {
-    final PsiManager mgr = expression.getManager();
-    final GroovyElementFactory factory = GroovyElementFactory.getInstance(expression.getProject());
-    final GrExpression newCall =
-        factory.createExpressionFromText(newExpression);
-    final PsiElement insertedElement = expression.replaceWithExpression(newCall, true);
-    //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
-    // codeStyleManager.reformat(insertedElement);
-  }
-
-
-  protected static void replaceStatement(
-      @NonNls @NotNull String newStatement,
-      @NonNls @NotNull GrStatement statement)
-      throws IncorrectOperationException {
-    final PsiManager mgr = statement.getManager();
-    final GroovyElementFactory factory = GroovyElementFactory.getInstance(statement.getProject());
-    final GrStatement newCall =
-        (GrStatement) factory.createTopElementFromText(newStatement);
-    final PsiElement insertedElement = statement.replaceWithStatement(newCall);
-    //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
-    // codeStyleManager.reformat(insertedElement);
-  }
 
 
   protected static void replaceExpressionWithNegatedExpressionString(

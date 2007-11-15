@@ -4,8 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -32,11 +31,11 @@ public class IndexingMethodConversionIntention extends Intention {
       final GrExpression qualifier = methodExpression.getQualifierExpression();
       if("getAt".equals(methodName)|| "get".equals(methodName))
       {
-          replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + ']',
+          IntentionUtils.replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + ']',
                   callExpression);
       }
       else{
-          replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + "]=" +arguments[1].getText(),
+          IntentionUtils.replaceExpression(qualifier.getText() + '[' + arguments[0].getText() + "]=" +arguments[1].getText(),
                   callExpression);
       }
   }

@@ -3,8 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 public class ConvertGStringToStringIntention extends Intention {
@@ -19,7 +18,7 @@ public class ConvertGStringToStringIntention extends Intention {
         final GrLiteral exp = (GrLiteral) element;
         final String textString = exp.getText();
 
-        replaceExpression(convertGStringLiteralToStringLiteral(textString), exp);
+        IntentionUtils.replaceExpression(convertGStringLiteralToStringLiteral(textString), exp);
     }
 
     private static String convertGStringLiteralToStringLiteral(String stringLiteral){

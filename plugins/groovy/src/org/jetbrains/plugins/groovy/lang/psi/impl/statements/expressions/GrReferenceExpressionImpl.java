@@ -447,8 +447,22 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   @Nullable
+  public PsiElement getDotToken() {
+    return findChildByType(GroovyTokenTypes.DOTS);
+  }
+
+  public void replaceDotToken(PsiElement newDot) {
+    if (newDot == null)  return;
+    if (!GroovyTokenTypes.DOTS.contains(newDot.getNode().getElementType())) return;
+    final PsiElement oldDot = getDotToken();
+    if (oldDot == null) return;
+
+    getNode().replaceChild(oldDot.getNode(), newDot.getNode());
+  }
+
+  @Nullable
   public IElementType getDotTokenType() {
-    PsiElement dot = findChildByType(GroovyTokenTypes.DOTS);
+    PsiElement dot = getDotToken();
     return dot == null ? null : dot.getNode().getElementType();
   }
 

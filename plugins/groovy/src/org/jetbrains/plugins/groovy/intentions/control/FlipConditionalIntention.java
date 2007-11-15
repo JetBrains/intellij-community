@@ -4,8 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
@@ -32,7 +31,7 @@ public class FlipConditionalIntention extends Intention {
             elseExpression.getText() +
             ':' +
             thenExpression.getText();
-    replaceExpression(newExpression, exp);
+    IntentionUtils.replaceExpression(newExpression, exp);
   }
 
 }

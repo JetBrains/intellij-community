@@ -3,8 +3,7 @@ package org.jetbrains.plugins.groovy.intentions.closure;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -45,7 +44,7 @@ public class ConvertClosureArgToItIntention extends Intention {
         closure.accept(visitor);
         parameter.delete();
         for (GrReferenceExpression referenceExpression : referencesToChange) {
-            replaceExpression("it", referenceExpression );
+            IntentionUtils.replaceExpression("it", referenceExpression );
         }
     }
 

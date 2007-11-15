@@ -4,8 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
 import java.math.BigInteger;
@@ -39,6 +38,6 @@ public class ConvertIntegerToDecimalIntention extends Intention {
     if (isLong) {
       decimalString += 'L';
     }
-    replaceExpression(decimalString, exp);
+    IntentionUtils.replaceExpression(decimalString, exp);
   }
 }

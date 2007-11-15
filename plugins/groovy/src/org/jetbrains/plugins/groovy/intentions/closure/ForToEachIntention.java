@@ -4,8 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -41,6 +40,6 @@ public class ForToEachIntention extends Intention {
     final GrExpression collection = clause.getIteratedExpression();
     assert collection != null;
     @NonNls final String statement = collection.getText() + ".each{" + var.getText() + " -> " + bodyText + " }";
-    replaceStatement(statement, parentStatement);
+    IntentionUtils.replaceStatement(statement, parentStatement);
   }
 }

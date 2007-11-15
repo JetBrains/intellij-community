@@ -6,8 +6,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.utils.ComparisonUtils;
-import org.jetbrains.plugins.groovy.intentions.base.MutablyNamedIntention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
@@ -43,7 +42,7 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
 
     final String newExpression =
         rhsText + flippedComparison + lhsText;
-    replaceExpression(newExpression, exp);
+    IntentionUtils.replaceExpression(newExpression, exp);
   }
 
 }

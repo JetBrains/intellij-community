@@ -5,8 +5,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.intentions.base.MutablyNamedIntention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -52,7 +51,7 @@ public class FlipConjunctionIntention extends MutablyNamedIntention {
 
     final String newExpression =
         rhsText + conjunction + lhsText;
-    replaceExpression(newExpression, exp);
+    IntentionUtils.replaceExpression(newExpression, exp);
   }
 
 }

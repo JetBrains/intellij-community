@@ -18,6 +18,7 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.openapi.components.ApplicationComponent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection;
 
 /**
  * @author ilyas
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class GroovyInspectionProvider implements InspectionToolProvider, ApplicationComponent {
   public Class[] getInspectionClasses() {
     return new Class[] {
+        SecondUnsafeCallInspection.class
     };
   }
 

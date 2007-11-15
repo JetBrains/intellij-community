@@ -6,8 +6,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.utils.ConditionalUtils;
 import org.jetbrains.plugins.groovy.intentions.utils.ParenthesesUtils;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -51,6 +50,6 @@ public class MergeIfAndIntention extends Intention {
     @NonNls final String statement =
         "if(" + parentConditionText + "&&" + childConditionText + ')' +
             childThenBranch.getText();
-    replaceStatement(statement, parentStatement);
+    IntentionUtils.replaceStatement(statement, parentStatement);
   }
 }

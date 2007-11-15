@@ -222,6 +222,10 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return ((GrPackageDefinition) createDummyFile("package " + newPackageName).getTopStatements()[0]).getPackageReference();
   }
 
+  public PsiElement createDotToken(String newDot) {
+    return createReferenceExpressionFromText("a" + newDot + "b").getDotToken();
+  }
+
   private PsiFile createGroovyFile(String idText) {
     return createDummyFile(idText);
   }

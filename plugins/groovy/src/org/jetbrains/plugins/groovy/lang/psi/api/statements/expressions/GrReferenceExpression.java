@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -30,6 +31,11 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement,
 
   @Nullable
   IElementType getDotTokenType();
+
+  @Nullable
+  PsiElement getDotToken();
+
+  void replaceDotToken(PsiElement newDotToken);
 
   //not caching!
   @NotNull
