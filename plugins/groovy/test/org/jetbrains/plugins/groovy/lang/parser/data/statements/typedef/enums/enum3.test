@@ -42,12 +42,16 @@ Groovy script
               PsiElement(@)('@')
               Reference element
                 PsiElement(identifier)('NotNull')
-            PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              Annotation arguments
+                <empty list>
             Annotation
               PsiElement(@)('@')
               Reference element
                 PsiElement(identifier)('Property')
-          PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              Annotation arguments
+                <empty list>
           PsiElement(identifier)('item1')
           PsiWhiteSpace(' ')
           Arguments

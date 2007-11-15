@@ -8,8 +8,8 @@ Groovy script
         Reference element
           PsiElement(identifier)('Notnull')
         PsiWhiteSpace(' ')
-        PsiElement(()('(')
         Annotation arguments
+          PsiElement(()('(')
           Annotation member value pairs
             Annotation member value pair
               PsiElement(identifier)('a')
@@ -33,7 +33,7 @@ Groovy script
                 PsiWhiteSpace(' ')
                 Reference expression
                   PsiElement(identifier)('c')
-        PsiElement())(')')
+          PsiElement())(')')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
     PsiWhiteSpace(' ')

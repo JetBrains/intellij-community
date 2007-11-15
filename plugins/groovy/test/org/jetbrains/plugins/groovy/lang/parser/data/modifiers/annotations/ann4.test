@@ -8,8 +8,8 @@ Groovy script
         Reference element
           PsiElement(identifier)('Nullable')
         PsiWhiteSpace(' ')
-        PsiElement(()('(')
         Annotation arguments
+          PsiElement(()('(')
           Annotation member value pairs
             Annotation member value pair
               PsiElement(identifier)('a')
@@ -20,7 +20,9 @@ Groovy script
                 PsiElement(@)('@')
                 Reference element
                   PsiElement(identifier)('b')
-        PsiElement())(')')
+                Annotation arguments
+                  <empty list>
+          PsiElement())(')')
     PsiWhiteSpace(' ')
     PsiElement(class)('class')
     PsiWhiteSpace(' ')

@@ -4,7 +4,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 
 class SplitElseIfPredicate implements PsiElementPredicate {
 
@@ -13,11 +12,11 @@ class SplitElseIfPredicate implements PsiElementPredicate {
       return false;
     }
     final GrIfStatement ifStatement = (GrIfStatement) element;
-    final GrCondition thenBranch = ifStatement.getThenBranch();
-    if (!(thenBranch instanceof GrStatement)) {
+    final GrStatement thenBranch = ifStatement.getThenBranch();
+    if (thenBranch == null) {
       return false;
     }
-    final GrCondition elseBranch = ifStatement.getElseBranch();
+    final GrStatement elseBranch = ifStatement.getElseBranch();
     return elseBranch instanceof GrIfStatement;
   }
 }

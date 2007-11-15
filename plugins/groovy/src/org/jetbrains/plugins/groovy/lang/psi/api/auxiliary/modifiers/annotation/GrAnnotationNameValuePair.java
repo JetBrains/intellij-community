@@ -16,10 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import com.intellij.psi.PsiNameValuePair;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007
  */
-public interface GrAnnotationNameValuePair extends GroovyPsiElement {
+public interface GrAnnotationNameValuePair extends GroovyPsiElement, PsiNameValuePair {
 }

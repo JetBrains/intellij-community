@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -23,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author ilyas
  */
-public interface GrExpression extends GrStatement {
+public interface GrExpression extends GrStatement, PsiAnnotationMemberValue {
   GrExpression[] EMPTY_ARRAY = new GrExpression[0];
 
   @Nullable

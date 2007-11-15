@@ -5,7 +5,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 public class SplitElseIfIntention extends Intention {
 
@@ -18,7 +18,7 @@ public class SplitElseIfIntention extends Intention {
       throws IncorrectOperationException {
     final GrIfStatement parentStatement = (GrIfStatement) element;
     assert parentStatement != null;
-    final GrCondition elseBranch = parentStatement.getElseBranch();
+    final GrStatement elseBranch = parentStatement.getElseBranch();
     IntentionUtils.replaceStatement("if(" + parentStatement.getCondition().getText()+ ")"+ parentStatement.getThenBranch().getText() +
         "else{\n" + elseBranch.getText() +"\n}", parentStatement);
   }

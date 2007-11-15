@@ -16,9 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaDataBase;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -36,5 +39,46 @@ public class GrAnnotationImpl extends GroovyPsiElementImpl implements GrAnnotati
 
   public String toString() {
     return "Annotation";
+  }
+
+  @NotNull
+  public PsiAnnotationParameterList getParameterList() {
+    return findChildByClass(PsiAnnotationParameterList.class);
+  }
+
+  @Nullable
+  @NonNls
+  public String getQualifiedName() {
+    final GrCodeReferenceElement nameRef = getNameReferenceElementGroovy();
+    if (nameRef != null) {
+      final PsiElement resolved = nameRef.resolve();
+      if (resolved instanceof PsiClass) return ((PsiClass) resolved).getQualifiedName();
+    }
+    return null;
+  }
+
+  @Nullable
+  public GrCodeReferenceElement getNameReferenceElementGroovy() {
+    return findChildByClass(GrCodeReferenceElement.class);
+  }
+
+  @Nullable
+  public PsiJavaCodeReferenceElement getNameReferenceElement() {
+    return null;
+  }
+
+  @Nullable
+  public PsiAnnotationMemberValue findAttributeValue(@NonNls String attributeName) {
+    return null; //todo
+  }
+
+  @Nullable
+  public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls String attributeName) {
+    return null; //todo
+  }
+
+  @Nullable
+  public PsiMetaDataBase getMetaData() {
+    return null;
   }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiNameValuePair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
@@ -36,5 +37,10 @@ public class GrAnnotationArgumentListImpl extends GroovyPsiElementImpl implement
 
   public String toString() {
     return "Annotation arguments";
+  }
+
+  @NotNull
+  public PsiNameValuePair[] getAttributes() {
+    return findChildrenByClass(PsiNameValuePair.class);
   }
 }

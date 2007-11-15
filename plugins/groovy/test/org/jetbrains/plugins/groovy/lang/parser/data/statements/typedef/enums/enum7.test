@@ -20,7 +20,9 @@ Groovy script
               PsiElement(@)('@')
               Reference element
                 PsiElement(identifier)('Property')
-          PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              Annotation arguments
+                <empty list>
           PsiElement(identifier)('a')
       PsiElement(new line)('\n')
       PsiElement(})('}')

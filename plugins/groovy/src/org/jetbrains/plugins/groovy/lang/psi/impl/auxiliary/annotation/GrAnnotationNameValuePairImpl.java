@@ -16,10 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.*;
+import com.intellij.codeInsight.intention.IntentionAction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -36,5 +40,24 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   public String toString() {
     return "Annotation member value pair";
+  }
+
+  @Nullable
+  public String getName() {
+    final PsiElement nameId = getNameIdentifierGroovy();
+    return nameId != null ? nameId.getText() : null;
+  }
+
+  @Nullable
+  private PsiElement getNameIdentifierGroovy() {
+    return findChildByType(GroovyElementTypes.mIDENT);
+  }
+
+  public PsiIdentifier getNameIdentifier() {
+    return null;
+  }
+
+  public PsiAnnotationMemberValue getValue() {
+    return findChildByClass(PsiAnnotationMemberValue.class);
   }
 }

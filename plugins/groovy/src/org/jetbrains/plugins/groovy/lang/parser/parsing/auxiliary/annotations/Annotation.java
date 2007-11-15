@@ -47,19 +47,7 @@ public class Annotation implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (!ParserUtils.getToken(builder, mLPAREN)) {
-      annMarker.done(ANNOTATION);
-      return ANNOTATION;
-    }
-
     AnnotationArguments.parse(builder);
-
-    ParserUtils.getToken(builder, mNLS);
-
-    if (!ParserUtils.getToken(builder, mRPAREN)) {
-      annMarker.rollbackTo();
-      return WRONGWAY;
-    }
 
     annMarker.done(ANNOTATION);
     return ANNOTATION;

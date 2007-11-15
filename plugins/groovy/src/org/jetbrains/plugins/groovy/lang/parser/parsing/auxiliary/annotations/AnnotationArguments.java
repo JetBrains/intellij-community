@@ -20,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -32,23 +33,31 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 
 public class AnnotationArguments implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static void parse(PsiBuilder builder) {
 
     PsiBuilder.Marker annArgs = builder.mark();
-    if (parseAnnotationMemberValueInitializer(builder)) {
+    if (!ParserUtils.getToken(builder, mLPAREN)) {
       annArgs.done(ANNOTATION_ARGUMENTS);
-      return ANNOTATION_ARGUMENTS;
-    }
-    annArgs.rollbackTo();
-
-    annArgs = builder.mark();
-    if (!WRONGWAY.equals(parseAnnotationMemberValuePairs(builder))) {
-      annArgs.done(ANNOTATION_ARGUMENTS);
-      return ANNOTATION_ARGUMENTS;
+      return;
     }
 
-    annArgs.rollbackTo();
-    return WRONGWAY;
+    final PsiBuilder.Marker marker = builder.mark();
+    if (!parseAnnotationMemberValueInitializer(builder)) {
+      marker.rollbackTo();
+
+      if (WRONGWAY.equals(parseAnnotationMemberValuePairs(builder))) {
+        annArgs.rollbackTo();
+        return;
+      }
+    } else marker.drop();
+
+
+    ParserUtils.getToken(builder, mNLS);
+
+    if (!ParserUtils.getToken(builder, mRPAREN)) {
+      builder.error(GroovyBundle.message("rparen.expected"));
+    }
+    annArgs.done(ANNOTATION_ARGUMENTS);
   }
 
   /*

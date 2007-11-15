@@ -33,7 +33,9 @@ Groovy script
               PsiElement(@)('@')
               Reference element
                 PsiElement(identifier)('Nullable')
-          PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              Annotation arguments
+                <empty list>
           PsiElement(identifier)('foo')
           PsiWhiteSpace(' ')
           Arguments
@@ -71,7 +73,9 @@ Groovy script
               PsiElement(@)('@')
               Reference element
                 PsiElement(identifier)('Nullable')
-          PsiWhiteSpace(' ')
+              PsiWhiteSpace(' ')
+              Annotation arguments
+                <empty list>
           PsiElement(identifier)('bar')
           PsiWhiteSpace(' ')
           Arguments

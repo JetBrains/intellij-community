@@ -2,10 +2,8 @@ package org.jetbrains.plugins.groovy.intentions.control;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 
 class MergeElseIfPredicate implements PsiElementPredicate {
 
@@ -14,15 +12,15 @@ class MergeElseIfPredicate implements PsiElementPredicate {
       return false;
     }
     final GrIfStatement ifStatement = (GrIfStatement) element;
-    final GrCondition thenBranch = ifStatement.getThenBranch();
-    if (!(thenBranch instanceof GrStatement)) {
+    final GrStatement thenBranch = ifStatement.getThenBranch();
+    if (thenBranch == null) {
       return false;
     }
-    final GrCondition elseBranch = ifStatement.getElseBranch();
-    if (!(elseBranch instanceof GrOpenBlock)) {
+    final GrStatement elseBranch = ifStatement.getElseBranch();
+    if (!(elseBranch instanceof GrBlockStatement)) {
       return false;
     }
-    final GrOpenBlock block = ((GrOpenBlock) elseBranch);
+    final GrOpenBlock block = ((GrBlockStatement) elseBranch).getBlock();
     final GrStatement[] statements = block.getStatements();
     return statements.length == 1 &&
         statements[0] instanceof GrIfStatement;
