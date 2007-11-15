@@ -104,11 +104,11 @@ public class AntCommandLineBuilder {
     myCommandLine.setMainClass(AntMain2.class.getName());
     final ParametersList programParameters = myCommandLine.getProgramParametersList();
     programParameters.addParametersString(AntBuildFileImpl.ANT_COMMAND_LINE_PARAMETERS.get(container));
-    if (!programParameters.getList().contains(INPUT_HANDLER_PARAMETER)) {
-      programParameters.add(INPUT_HANDLER_PARAMETER, IdeaInputHandler.class.getName());
-    }
     if (!(programParameters.getList().contains(LOGFILE_SHORT_PARAMETER) || programParameters.getList().contains(LOGFILE_PARAMETER)) ) {
       programParameters.add("-logger", IdeaAntLogger2.class.getName());
+    }
+    if (!programParameters.getList().contains(INPUT_HANDLER_PARAMETER)) {
+      programParameters.add(INPUT_HANDLER_PARAMETER, IdeaInputHandler.class.getName());
     }
 
     myProperties = AntBuildFileImpl.ANT_PROPERTIES.get(container);
