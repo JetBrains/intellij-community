@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageSurrounders;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -21,6 +22,6 @@ public class SurroundWithAction extends BaseCodeInsightAction{
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     if (file instanceof PsiJavaFile) return true;
     final Language language = file.getLanguage();
-    return language.getSurroundDescriptors().length > 0;
+    return !LanguageSurrounders.INSTANCE.allForLanguage(language).isEmpty();
   }
 }

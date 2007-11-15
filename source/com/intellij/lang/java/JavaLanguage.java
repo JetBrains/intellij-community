@@ -1,7 +1,5 @@
 package com.intellij.lang.java;
 
-import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor;
-import com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor;
 import com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler;
@@ -15,7 +13,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.module.Module;
@@ -39,8 +36,6 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public class JavaLanguage extends Language {
-  private SurroundDescriptor[] mySurroundDescriptors;
-
   public JavaLanguage() {
     super("JAVA", "text/java", "application/x-java", "text/x-java");
     SyntaxHighlighterFactory.LANGUAGE_FACTORY.addExpicitExtension(this, new SyntaxHighlighterFactory() {
@@ -81,17 +76,6 @@ public class JavaLanguage extends Language {
   public TokenSet getReadableTextContainerElements() {
     return TokenSet.create(JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT,
                            JavaDocTokenType.DOC_COMMENT_DATA, JavaTokenType.STRING_LITERAL);
-  }
-
-  @NotNull
-  public SurroundDescriptor[] getSurroundDescriptors() {
-    if (mySurroundDescriptors == null) {
-      mySurroundDescriptors = new SurroundDescriptor[] {
-        new JavaExpressionSurroundDescriptor(),
-        new JavaStatementsSurroundDescriptor()
-      };
-    }
-    return mySurroundDescriptors;
   }
 
   @Nullable

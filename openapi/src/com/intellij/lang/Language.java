@@ -20,7 +20,6 @@ import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -49,7 +48,6 @@ import java.util.Map;
 public abstract class Language {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
 
-  private static final SurroundDescriptor[] EMPTY_SURROUND_DESCRIPTORS_ARRAY = new SurroundDescriptor[0];
   private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
   private final String myID;
   private final String[] myMimeTypes;
@@ -178,18 +176,6 @@ public abstract class Language {
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {
     return null;
-  }
-
-  /**
-   * Override this method to provide 'surround with...' feature implementation for editors of the files in your language.
-   * <p/>
-   * Default implementation returns empty array of SurroundDescriptor implementations thus disabling the feature.
-   *
-   * @return <code>SurroundDescriptor</code> interface implementations for this particular language.
-   */
-  @NotNull
-  public SurroundDescriptor[] getSurroundDescriptors() {
-    return EMPTY_SURROUND_DESCRIPTORS_ARRAY;
   }
 
   public String toString() {

@@ -14,7 +14,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -75,11 +74,6 @@ public class XMLLanguage extends CompositeLanguage {
   public FindUsagesProvider getFindUsagesProvider() {
     if (myXmlFindUsagesProvider == null) myXmlFindUsagesProvider = new XmlFindUsagesProvider();
     return myXmlFindUsagesProvider;
-  }
-
-  @NotNull
-  public SurroundDescriptor[] getSurroundDescriptors() {
-    return new SurroundDescriptor[]{new XmlSurroundDescriptor()};
   }
 
   public Commenter getCommenter() {

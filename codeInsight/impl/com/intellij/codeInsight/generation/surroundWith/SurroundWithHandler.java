@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
@@ -21,6 +22,8 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
+
+import java.util.List;
 
 public class SurroundWithHandler implements CodeInsightActionHandler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler");
@@ -82,8 +85,8 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
 
     if(lang != lang2) return;
 
-    final SurroundDescriptor[] surroundDescriptors = element1.getLanguage().getSurroundDescriptors();
-    if (surroundDescriptors.length == 0) return;
+    final List<SurroundDescriptor> surroundDescriptors = LanguageSurrounders.INSTANCE.allForLanguage(element1.getLanguage());
+    if (surroundDescriptors.isEmpty()) return;
 
     for (SurroundDescriptor descriptor : surroundDescriptors) {
       final PsiElement[] elements = descriptor.getElementsToSurround(file, startOffset, endOffset);

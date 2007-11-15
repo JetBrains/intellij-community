@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * is prompted to choose a specific surrounder for that surround descriptor.
  *
  * @author ven
- * @see com.intellij.lang.Language#getSurroundDescriptors()
+ * @see com.intellij.lang.LanguageSurrounders
  */
 public interface SurroundDescriptor {
   /**
