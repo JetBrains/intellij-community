@@ -2,6 +2,8 @@ package org.jetbrains.idea.maven.events;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapExtension;
+import com.intellij.openapi.keymap.KeymapGroup;
+import com.intellij.openapi.keymap.KeymapGroupFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
@@ -42,15 +44,11 @@ public class MavenKeymapExtension implements KeymapExtension {
     return iconOpen;
   }
 
-  public String getSubgroupName(Object o, Project project) {
-    return getMavenProjectName(project.getComponent(MavenProjectsState.class), LocalFileSystem.getInstance().findFileByPath((String)o));
-  }
-
-  public Map<Object, List<String>> createSubGroups(Condition<AnAction> condition, Project project) {
-    final Map<Object, List<String>> pomPathToActionId = new HashMap<Object, List<String>>();
+  public List<KeymapGroup> createSubGroups(Condition<AnAction> condition, Project project) {
+    final Map<String, KeymapGroup> pomPathToActionId = new HashMap<String, KeymapGroup>();
+    final List<KeymapGroup> result = new ArrayList<KeymapGroup>();
 
     if (project != null) {
-
       final ActionManager actionManager = ActionManager.getInstance();
       String[] ids = actionManager.getActionIds(getProjectPrefix(project));
       Arrays.sort(ids);
@@ -60,17 +58,20 @@ public class MavenKeymapExtension implements KeymapExtension {
         final AnAction anAction = actionManager.getAction(id);
         if (anAction instanceof MavenGoalAction) {
           final String pomPath = ((MavenGoalAction)anAction).myPomPath;
-          List<String> subGroup = pomPathToActionId.get(pomPath);
+          KeymapGroup subGroup = pomPathToActionId.get(pomPath);
           if (subGroup == null) {
-            subGroup = new ArrayList<String>();
+            String name = getMavenProjectName(project.getComponent(MavenProjectsState.class),
+                                              LocalFileSystem.getInstance().findFileByPath(pomPath));
+            subGroup = KeymapGroupFactory.getInstance().createGroup(name);
             pomPathToActionId.put(pomPath, subGroup);
+            result.add(subGroup);
           }
-          subGroup.add(id);
+          subGroup.addActionId(id);
         }
       }
     }
 
-    return pomPathToActionId;
+    return result;
   }
 
   private static String getProjectPrefix(@NotNull Project project) {
