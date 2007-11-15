@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,7 +29,11 @@ public class CompositeDocumentationProvider implements DocumentationProvider {
   private final Set<DocumentationProvider> myProviders;
 
   public CompositeDocumentationProvider (DocumentationProvider ... documentationProviders) {
-     myProviders = new HashSet<DocumentationProvider>(Arrays.asList(documentationProviders) );
+    this(Arrays.asList(documentationProviders));
+  }
+
+  public CompositeDocumentationProvider(Collection<DocumentationProvider> providers) {
+    myProviders = new HashSet<DocumentationProvider>(providers);
   }
 
   public void inject (DocumentationProvider provider) {
