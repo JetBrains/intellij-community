@@ -4,6 +4,8 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.lang.CodeInsightActions;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -12,7 +14,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.lang.Language;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +35,7 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
     int offset = editor.getCaretModel().getOffset();
     final Language language = PsiUtil.getLanguageAtOffset(file, offset);
 
-    final CodeInsightActionHandler codeInsightActionHandler = language.getGotoSuperHandler();
+    final CodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.GOTO_SUPER.forLanguage(language);
     if (codeInsightActionHandler != null) {
       codeInsightActionHandler.invoke(project, editor, file);
       return;

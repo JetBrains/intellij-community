@@ -212,9 +212,4 @@ public abstract class Language {
   public ParameterInfoHandler[] getParameterInfoHandlers() {
     return null;
   }
-
-  @Nullable
-  public LanguageCodeInsightActionHandler getGotoSuperHandler() {
-    return null;
-  }
 }
