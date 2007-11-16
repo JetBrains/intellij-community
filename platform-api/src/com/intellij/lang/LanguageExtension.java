@@ -26,10 +26,12 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   public T forLanguage(Language l) {
-    final List<T> extensions = forKey(l);
+    List<T> extensions = forKey(l);
     if (extensions.isEmpty()) {
-      if (l instanceof LanguageDialect) {
-        return forLanguage(((LanguageDialect)l).getBaseLanguage());
+
+      Language base = l.getBaseLanguage();
+      if (base != null) {
+        return forLanguage(base);
       }
 
       return myDefaultImplementation;
@@ -41,9 +43,12 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   @NotNull
   public List<T> allForLanguage(Language l) {
-    final List<T> list = forKey(l);
-    if (list.isEmpty() && l instanceof LanguageDialect) {
-      return allForLanguage(((LanguageDialect)l).getBaseLanguage());
+    List<T> list = forKey(l);
+    if (list.isEmpty()) {
+      Language base = l.getBaseLanguage();
+      if (base != null) {
+        return allForLanguage(base);
+      }
     }
     return list;
   }
