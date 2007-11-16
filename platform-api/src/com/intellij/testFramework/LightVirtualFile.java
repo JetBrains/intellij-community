@@ -7,7 +7,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.LocalTimeCounter;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,7 +193,7 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
     }
     catch (IOException e) {
       e.printStackTrace();
-      Assert.assertTrue(false);
+      assert false;
       return 0;
     }
   }
