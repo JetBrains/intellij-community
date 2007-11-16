@@ -47,7 +47,6 @@ public class FileIconPatcherImpl implements ApplicationComponent, FileIconProvid
     return psiFile == null ? null : PsiIconUtil.getProvidersIcon(psiFile, flags);
   }
 
-  @NotNull
   public Icon patchIcon(final Icon baseIcon, final VirtualFile file, final int flags, final Project project) {
     Icon icon = baseIcon;
     if (project != null) {
