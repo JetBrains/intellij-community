@@ -26,11 +26,11 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -43,6 +43,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
 
   private LightReferenceList myThrowsList;
   private LightParameterList myParameterList = null;
+  public LightModifierList myModifierList = null;
 
 
   public AccessorMethod(GrField property, boolean isSetter) {
@@ -148,9 +149,17 @@ public class AccessorMethod extends LightElement implements PsiMethod {
 
   @NotNull
   public PsiModifierList getModifierList() {
-    final PsiModifierList list = myProperty.getModifierList();
-    assert list != null;
-    return list;
+    if (myModifierList == null) {
+      Set<String> modifiers = new HashSet<String>();
+      modifiers.add(PsiModifier.PUBLIC);
+      final PsiModifierList original = myProperty.getModifierList();
+      if (original.hasExplicitModifier(PsiModifier.STATIC)) modifiers.add(PsiModifier.STATIC);
+      if (original.hasExplicitModifier(PsiModifier.ABSTRACT)) modifiers.add(PsiModifier.ABSTRACT);
+      if (original.hasExplicitModifier(PsiModifier.FINAL)) modifiers.add(PsiModifier.FINAL);
+      myModifierList = new LightModifierList(getManager(), modifiers);
+    }
+
+    return myModifierList;
   }
 
   public boolean hasModifierProperty(@NonNls @NotNull String name) {

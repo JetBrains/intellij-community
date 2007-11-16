@@ -75,11 +75,11 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
 
   public boolean hasModifierProperty(@NotNull @NonNls String modifier) {
     final PsiElement parent = getParent();
-    /*if (parent instanceof GrVariableDeclaration && !hasExplicitVisibilityModifiers()) { //properties are backed by private fields
+    if (parent instanceof GrVariableDeclaration && !hasExplicitVisibilityModifiers()) { //properties are backed by private fields
       if (modifier.equals(PsiModifier.PUBLIC)) return false;
       if (modifier.equals(PsiModifier.PROTECTED)) return false;
       if (modifier.equals(PsiModifier.PRIVATE)) return true;
-    }*/
+    }
 
     if (modifier.equals(PsiModifier.PUBLIC)) {
       //groovy type definitions and methods are public by default

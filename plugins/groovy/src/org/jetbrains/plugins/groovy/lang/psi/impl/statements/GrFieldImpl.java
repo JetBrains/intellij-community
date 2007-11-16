@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner, PsiMetaData {
+public class GrFieldImpl extends GrVariableImpl implements GrField {
   private AccessorMethod mySetter;
   private AccessorMethod myGetter;
   private boolean myGetterInitialized = false;
@@ -127,47 +127,6 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
   @NotNull
   public SearchScope getUseScope() {
     return PsiImplUtil.getUseScope(this);
-  }
-
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place) {
-    return false;
-  }
-
-  public PsiElement getDeclaration() {
-    return this;
-  }
-
-  @NonNls
-  public String getName(PsiElement context) {
-    final String name = getName();
-    if (isProperty()) {
-      if (context instanceof PsiMethodCallExpression) {
-        final String refName = ((PsiMethodCallExpression) context).getMethodExpression().getReferenceName();
-        if (name != null && refName != null) {
-          if (refName.startsWith("get") || refName.startsWith("set")) {
-            return refName.substring(0, 3) + StringUtil.capitalize(name);
-          }
-        }
-      }
-    }
-
-    return name;
-  }
-
-  public void init(PsiElement element) {
-  }
-
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  @Nullable
-  public PsiMetaData getMetaData() {
-    return this;
-  }
-
-  public boolean isMetaEnough() {
-    return true;
   }
 
   public PsiElement getOriginalElement() {
