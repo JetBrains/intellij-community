@@ -80,9 +80,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public final void dropCaches() {
+  public final void notifyAreaReplaced() {
     for (final ExtensionPointImpl point : myExtensionPoints.values()) {
-      point.dropCaches();
+      point.notifyAreaReplaced(this);
     }
   }
 

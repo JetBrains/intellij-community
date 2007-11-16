@@ -9,6 +9,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +26,7 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
     ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(epName);
     if (Extensions.getRootArea().hasExtensionPoint(epName)) {
       myPoint = Extensions.getRootArea().getExtensionPoint(typesafe);
-      myPoint.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
+      myPoint.addExtensionPointListener(new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
         public void extensionAdded(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
           synchronized (lock) {
             myCache.remove(bean.getKey());
@@ -35,6 +36,12 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
         public void extensionRemoved(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
           synchronized (lock) {
             myCache.remove(bean.getKey());
+          }
+        }
+
+        public void areaReplaced(final ExtensionsArea area) {
+          synchronized (lock) {
+            dropCaches();
           }
         }
       });
@@ -92,5 +99,10 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
       }
     }
     return result;
+  }
+
+  @TestOnly
+  public void dropCaches() {
+    myCache.clear();
   }
 }

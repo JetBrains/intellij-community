@@ -343,10 +343,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @TestOnly
-  final void dropCaches() {
+  final void notifyAreaReplaced(final ExtensionsArea area) {
     for (final ExtensionPointListener<T> listener : getListenersCopy()) {
-      if (listener instanceof SmartExtensionPoint) {
-        ((SmartExtensionPoint)listener).dropCache();
+      if (listener instanceof ExtensionPointAndAreaListener) {
+        ((ExtensionPointAndAreaListener)listener).areaReplaced(area);
       }
     }
   }
