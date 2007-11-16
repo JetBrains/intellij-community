@@ -3,7 +3,6 @@ package com.intellij.ide.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -164,18 +163,7 @@ public class ProjectUtil {
     f.requestFocus();
   }
 
-  public static String mainModulePathByProjectPath(String path) {
-    int dotIdx = path.lastIndexOf('.');
-    return dotIdx >= 0 ? path.substring(0, dotIdx) + ModuleFileType.DOT_DEFAULT_EXTENSION : "";
-  }
-
   public static String getInitialModuleRootPath(String projectFilePath) {
     return new File(projectFilePath).getParentFile().getAbsolutePath();
   }
-
-  public static String getInitialModuleLocation(final String projectFilePath) {
-    int dotIdx = projectFilePath.lastIndexOf('.');
-    return dotIdx >= 0 ? projectFilePath.substring(0, dotIdx) + ModuleFileType.DOT_DEFAULT_EXTENSION : "";
-  }
-
 }
