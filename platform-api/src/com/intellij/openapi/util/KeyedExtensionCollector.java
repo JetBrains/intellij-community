@@ -9,7 +9,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,30 +36,6 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
         myPoint.removeExtensionPointListener(myListener);
         myPoint = null;
         myListener = null;
-      }
-
-      if (Extensions.getRootArea().hasExtensionPoint(myEpName)) {
-        ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(myEpName);
-        myPoint = Extensions.getRootArea().getExtensionPoint(typesafe);
-        myListener = new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
-          public void extensionAdded(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
-            synchronized (lock) {
-              myCache.remove(bean.getKey());
-            }
-          }
-
-          public void extensionRemoved(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
-            synchronized (lock) {
-              myCache.remove(bean.getKey());
-            }
-          }
-
-          public void areaReplaced(final ExtensionsArea area) {
-            resetAreaListener();
-          }
-        };
-
-        myPoint.addExtensionPointListener(myListener);
       }
     }
   }
@@ -107,8 +82,9 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
   private List<T> buildExtensions(final String key) {
     final List<T> explicit = myExplicitExtensions.get(key);
     List<T> result = explicit != null ? new ArrayList<T>(explicit) : new ArrayList<T>();
-    if (myPoint != null) {
-      final KeyedLazyInstance<T>[] beans = myPoint.getExtensions();
+    final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
+    if (point != null) {
+      final KeyedLazyInstance<T>[] beans = point.getExtensions();
       for (KeyedLazyInstance<T> bean : beans) {
         if (key.equals(bean.getKey())) {
           result.add(bean.getInstance());
@@ -118,8 +94,34 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
     return result;
   }
 
-  @TestOnly
-  public void dropCaches() {
-    myCache.clear();
+  @Nullable
+  private ExtensionPoint<KeyedLazyInstance<T>> getPoint() {
+    if (myPoint == null) {
+      if (Extensions.getRootArea().hasExtensionPoint(myEpName)) {
+        ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(myEpName);
+        myPoint = Extensions.getRootArea().getExtensionPoint(typesafe);
+        myListener = new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
+          public void extensionAdded(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
+            synchronized (lock) {
+              myCache.remove(bean.getKey());
+            }
+          }
+
+          public void extensionRemoved(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
+            synchronized (lock) {
+              myCache.remove(bean.getKey());
+            }
+          }
+
+          public void areaReplaced(final ExtensionsArea area) {
+            resetAreaListener();
+          }
+        };
+
+        myPoint.addExtensionPointListener(myListener);
+      }
+    }
+
+    return myPoint;
   }
 }
