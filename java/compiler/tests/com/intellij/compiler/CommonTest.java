@@ -25,6 +25,4 @@ public class CommonTest extends CompilerTestCase {
   public void testChangeDefinitionToClass() throws Exception  {doTest();}
 
   public void testChangeDefinitionToClass2() throws Exception  {doTest();}
-  
-  public void testChangeDefinitionToInterface() throws Exception  {doTest();}
 }
