@@ -1,6 +1,5 @@
 package com.intellij.lang.xml;
 
-import com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -9,7 +8,6 @@ import com.intellij.ide.structureView.impl.xml.XmlStructureViewBuilderProvider;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
-import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -115,16 +113,4 @@ public class XMLLanguage extends CompositeLanguage {
 
     return new XmlFileViewProvider(manager, file, physical, this);
   }
-
-  private ParameterInfoHandler[] myHandlers;
-
-  public @Nullable ParameterInfoHandler[] getParameterInfoHandlers() {
-    if (myHandlers == null) {
-      myHandlers = new ParameterInfoHandler[] {
-        new XmlParameterInfoHandler()
-      };
-    }
-    return myHandlers;
-  }
-
 }

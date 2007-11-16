@@ -1,15 +1,11 @@
 package com.intellij.lang.java;
 
-import com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler;
-import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
-import com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.Language;
-import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.module.Module;
@@ -75,18 +71,4 @@ public class JavaLanguage extends Language {
       }
     };
   }
-
-  private ParameterInfoHandler[] myHandlers;
-
-  public @Nullable ParameterInfoHandler[] getParameterInfoHandlers() {
-    if (myHandlers == null) {
-      myHandlers = new ParameterInfoHandler[] {
-        new MethodParameterInfoHandler(),
-        new ReferenceParameterInfoHandler(),
-        new AnnotationParameterInfoHandler()
-      };
-    }
-    return myHandlers;
-  }
-
 }

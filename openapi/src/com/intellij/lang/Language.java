@@ -16,7 +16,6 @@
 package com.intellij.lang;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -151,11 +150,6 @@ public abstract class Language {
 
   @Nullable
   public LanguageDialect[] getAvailableLanguageDialects() {
-    return null;
-  }
-
-  @Nullable
-  public ParameterInfoHandler[] getParameterInfoHandlers() {
     return null;
   }
 }

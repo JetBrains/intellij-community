@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -101,8 +102,10 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   }
 
   public static ParameterInfoHandler[] getHandlers(final Language language) {
-    final ParameterInfoHandler[] infoHandlersFromLanguage = language.getParameterInfoHandlers();
-    if (infoHandlersFromLanguage != null) return infoHandlersFromLanguage;
+    final Collection<ParameterInfoHandler> infoHandlersFromLanguage = LanguageParameterInfo.INSTANCE.allForLanguage(language);
+    if (infoHandlersFromLanguage.size() > 0) {
+      return infoHandlersFromLanguage.toArray(new ParameterInfoHandler[infoHandlersFromLanguage.size()]);
+    }
     return ourHandlers.get(language);
   }
 
