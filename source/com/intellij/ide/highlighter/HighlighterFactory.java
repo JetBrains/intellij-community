@@ -4,10 +4,11 @@ import com.intellij.ide.highlighter.custom.CustomFileHighlighter;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -46,11 +47,11 @@ public class HighlighterFactory {
   }
 
   public static EditorHighlighter createHighlighter(Project project, VirtualFile file) {
-    return createHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file);
   }
 
   public static EditorHighlighter createHighlighter(Project project, FileType fileType) {
-    return createHighlighter(fileType, EditorColorsManager.getInstance().getGlobalScheme(), project);
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType);
   }
 
   public static EditorHighlighter createHighlighter(EditorColorsScheme settings, String fileName, Project project) {
@@ -59,21 +60,10 @@ public class HighlighterFactory {
   }
 
   public static EditorHighlighter createHighlighter(FileType fileType, EditorColorsScheme settings, Project project) {
-    if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).getEditorHighlighter(project, null, settings);
-    }
-
-    SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, null);
-    return createHighlighter(highlighter, settings);
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(fileType, settings, project);
   }
 
   public static EditorHighlighter createHighlighter(VirtualFile vFile, EditorColorsScheme settings, Project project) {
-    final FileType fileType = vFile.getFileType();
-    if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).getEditorHighlighter(project, vFile, settings);
-    }
-
-    SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, vFile);
-    return createHighlighter(highlighter, settings);
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(vFile, settings, project);
   }
 }

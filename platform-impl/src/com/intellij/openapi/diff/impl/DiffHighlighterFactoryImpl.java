@@ -1,7 +1,7 @@
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 
@@ -16,6 +16,6 @@ public class DiffHighlighterFactoryImpl implements DiffHighlighterFactory {
 
   public EditorHighlighter createHighlighter() {
     return (myFileType == null || myProject == null) ?
-        null : HighlighterFactory.createHighlighter(myProject, myFileType);
+        null : EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFileType);
   }
 }

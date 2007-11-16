@@ -1,7 +1,6 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.AppTopics;
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +13,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -155,7 +155,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
   private Editor createEditor(){
     Editor editor=EditorFactory.getInstance().createEditor(myDocument, myProject);
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myFile, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
     ((EditorEx) editor).setHighlighter(highlighter);
     ((EditorEx) editor).setFile(myFile);
 
@@ -230,7 +230,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
    * changes its file type.
    */
   private void updateHighlighters(){
-    final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, myFile);
+    final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile);
     ((EditorEx)myEditor).setHighlighter(highlighter);
   }
 

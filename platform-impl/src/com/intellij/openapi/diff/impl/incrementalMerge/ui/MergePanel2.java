@@ -1,6 +1,5 @@
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
@@ -8,11 +7,11 @@ import com.intellij.openapi.diff.actions.NextDiffAction;
 import com.intellij.openapi.diff.actions.PreviousDiffAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.EditingSides;
-import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeList;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
+import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
@@ -23,11 +22,12 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -78,7 +78,7 @@ public class MergePanel2 implements DiffViewer {
       if (settings == null) settings = EditorColorsManager.getInstance().getGlobalScheme();
       DiffEditorState editorState = (DiffEditorState)state;
       editorEx.setHighlighter(
-        HighlighterFactory.createHighlighter(editorState.getFileType(), settings, editorState.getProject()));
+        EditorHighlighterFactory.getInstance().createEditorHighlighter(editorState.getFileType(), settings, editorState.getProject()));
     }
   };
   private static final Collection<EditorPlace.ViewProperty> ALL_PROPERTIES = Arrays.asList(new EditorPlace.ViewProperty[]{
