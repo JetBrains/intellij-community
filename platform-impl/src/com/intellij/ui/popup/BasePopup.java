@@ -26,11 +26,13 @@ import com.intellij.ui.popup.util.SpeedSearch;
 import com.intellij.util.ui.BlockBorder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 public abstract class BasePopup implements ActionListener, ElementFilter, JBPopup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.BasePopup");
@@ -591,5 +593,13 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   }
 
   public void setUiVisible(final boolean visible) {
+  }
+
+  public void setUserData(ArrayList<Object> userData) {
+  }
+
+  @Nullable
+  public <T> T getUserData(final Class<T> userDataClass) {
+    return null;
   }
 }

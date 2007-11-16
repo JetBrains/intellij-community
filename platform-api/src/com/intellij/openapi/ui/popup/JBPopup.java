@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -125,7 +126,8 @@ public interface JBPopup extends Disposable {
 
   void setUiVisible(boolean visible);
 
-  <T>
+  @Nullable
+    <T>
   T getUserData(Class<T> userDataClass);
 
 }
