@@ -4,10 +4,6 @@ public class StoresFactory {
   private StoresFactory() {
   }
 
-  public static Class getModuleStoreClass() {
-    return ModuleStoreImpl.class;
-  }
-
   public static Class getProjectStoreClass(final boolean aDefault) {
     return aDefault ? DefaultProjectStoreImpl.class : ProjectStoreImpl.class;
   }

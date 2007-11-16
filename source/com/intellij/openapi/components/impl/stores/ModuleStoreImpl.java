@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
+public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IModuleStore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.ModuleStoreImpl");
   @NonNls private static final String MODULE_FILE_MACRO = "MODULE_FILE";
 

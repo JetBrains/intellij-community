@@ -9,10 +9,6 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -28,7 +24,6 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -57,7 +52,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @NonNls private static final String WORKSPACE_EXTENSION = ".iws";
   @NonNls static final String OPTION_WORKSPACE = "workspace";
 
-  private ProjectEx myProject;
+  protected ProjectEx myProject;
 
   @NonNls static final String PROJECT_FILE_MACRO = "PROJECT_FILE";
   @NonNls static final String WS_FILE_MACRO = "WORKSPACE_FILE";
@@ -544,40 +539,18 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return new ProjectSaveSession();
   }
 
-  private class ProjectSaveSession extends SaveSessionImpl {
-    List<SaveSession> myModuleSaveSessions = new ArrayList<SaveSession>();
+  protected class ProjectSaveSession extends SaveSessionImpl {
 
     public ProjectSaveSession() throws StateStorage.StateStorageException {
-      try {
-        for (Module module : getPersistentModules()) {
-          myModuleSaveSessions.add(((ModuleImpl)module).getStateStore().startSave());
-        }
-      }
-      catch (IOException e) {
-        throw new StateStorage.StateStorageException(e.getMessage());
-      }
-    }
-
-    public Collection<String> getUsedMacros() throws StateStorage.StateStorageException {
-      Set<String> result = new HashSet<String>(super.getUsedMacros());
-
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        result.addAll(moduleSaveSession.getUsedMacros());
-      }
-
-      return result;
     }
 
     public List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
       List<IFile> result = new ArrayList<IFile>();
 
-      boolean moduleSaves = false;
+      boolean subStructuresSave = false;
       if (includingSubStructures) {
-        for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-          final List<IFile> moduleFiles = moduleSaveSession.getAllStorageFilesToSave(true);
-          if (moduleFiles.size() > 0) moduleSaves = true;
-          result.addAll(moduleFiles);
-        }
+        collectSubfilesToSave(result);
+        subStructuresSave = !result.isEmpty();
       }
 
       final StateStorage.SaveSession defaultSaveSession = myStorageManagerSaveSession.getSaveSession(DEFAULT_STATE_STORAGE);
@@ -585,7 +558,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       if (defaultSaveSession instanceof FileBasedStorage.FileSaveSession) {
         final FileBasedStorage.FileSaveSession session = (FileBasedStorage.FileSaveSession)defaultSaveSession;
 
-        if (moduleSaves) {
+        if (subStructuresSave) {
           updateUsedMacros();
           session.clearHash();
         }
@@ -599,17 +572,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return result;
     }
 
-    public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
-      final List<IFile> result = super.getAllStorageFiles(includingSubStructures);
-
-      if (includingSubStructures) {
-        for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-          result.addAll(moduleSaveSession.getAllStorageFiles(true));
-        }
-      }
-
-      return result;
-    }
+    protected void collectSubfilesToSave(final List<IFile> result) throws IOException { }
 
     public SaveSession save() throws IOException {
       final ReadonlyStatusHandler.OperationStatus operationStatus = ensureConfigFilesWritable();
@@ -621,13 +584,14 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         throw new SaveCancelledException();
       }
 
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        moduleSaveSession.save();
-      }
+      beforeSave();
 
       super.save();
 
       return this;
+    }
+
+    protected void beforeSave() throws IOException {
     }
 
     private void updateUsedMacros() {
@@ -645,27 +609,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       super.commit();
     }
 
-    @Nullable
-    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
-      final Set<String> result = super.analyzeExternalChanges(changedFiles);
-      if (result == null) return null;
-
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        final Set<String> s = moduleSaveSession.analyzeExternalChanges(changedFiles);
-        if (s == null) return null;
-        result.addAll(s);
-      }
-
-      return result;
-    }
-
-    public void finishSave() {
-      for (SaveSession moduleSaveSession : myModuleSaveSessions) {
-        moduleSaveSession.finishSave();
-      }
-
-      super.finishSave();
-    }
 
     private ReadonlyStatusHandler.OperationStatus ensureConfigFilesWritable() {
       return ApplicationManager.getApplication().runWriteAction(new Computable<ReadonlyStatusHandler.OperationStatus>() {
@@ -695,18 +638,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
-  private Module[] getPersistentModules() {
-    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    if (moduleManager instanceof ModuleManagerImpl) {
-      return ((ModuleManagerImpl)moduleManager).getPersistentModules();
-    }
-    else if (moduleManager == null) {
-      return Module.EMPTY_ARRAY;
-    }
-    else {
-      return moduleManager.getModules();
-    }
-  }
 
   private StateStorageChooser myStateStorageChooser = new StateStorageChooser() {
     public Storage[] selectStorages(final Storage[] storages, final Object component, final StateStorageOperation operation) {
@@ -753,32 +684,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   @Nullable
   protected StateStorageChooser getDefaultStateStorageChooser() {
     return myStateStorageChooser;
-  }
-
-  protected void doReload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull final Set<String> componentNames) throws StateStorage.StateStorageException {
-    super.doReload(changedFiles, componentNames);
-
-    for (Module module : getPersistentModules()) {
-      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).doReload(changedFiles, componentNames);
-    }
-  }
-
-  protected void reinitComponents(final Set<String> componentNames) {
-    super.reinitComponents(componentNames);
-
-    for (Module module : getPersistentModules()) {
-      ((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).reinitComponents(componentNames);
-    }
-  }
-
-  protected boolean isReloadPossible(final Set<String> componentNames) {
-    if (!super.isReloadPossible(componentNames)) return false;
-
-    for (Module module : getPersistentModules()) {
-      if (!((ModuleStoreImpl)((ModuleImpl)module).getStateStore()).isReloadPossible(componentNames)) return false;
-    }
-
-    return true;
   }
 
   @NotNull

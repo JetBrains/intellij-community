@@ -11,7 +11,6 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
-import com.intellij.openapi.components.impl.stores.StoresFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -84,6 +83,10 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     super.boostrapPicoContainer();
     final MutablePicoContainer picoContainer = getPicoContainer();
 
+    ProjectStoreClassProvider projectStoreClassProvider = (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
+
+    final Class storeClass = projectStoreClassProvider.getProjectStoreClass(myDefault);
+
     picoContainer.registerComponentImplementation(ProjectPathMacroManager.class);
     picoContainer.registerComponent(new ComponentAdapter() {
       ComponentAdapter myDelegate;
@@ -91,7 +94,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
       public ComponentAdapter getDelegate() {
         if (myDelegate == null) {
-          Class storeClass = StoresFactory.getProjectStoreClass(myDefault);
 
           myDelegate = new CachingComponentAdapter(
             new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true));
