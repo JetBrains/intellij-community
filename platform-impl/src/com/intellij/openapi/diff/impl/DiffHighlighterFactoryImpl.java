@@ -5,11 +5,11 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 
-public class DiffHighliterFactoryImpl implements DiffHighliterFactory {
+public class DiffHighlighterFactoryImpl implements DiffHighlighterFactory {
   private final Project myProject;
   private final FileType myFileType;
 
-  public DiffHighliterFactoryImpl(FileType fileType, Project project) {
+  public DiffHighlighterFactoryImpl(FileType fileType, Project project) {
     myFileType = fileType;
     myProject = project;
   }
