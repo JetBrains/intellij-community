@@ -1,6 +1,5 @@
 package com.intellij.ui;
 
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
@@ -12,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -323,7 +323,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
     setupEditorFont(editor);
 
     if (myProject != null) {
-      editor.setHighlighter(HighlighterFactory.createHighlighter(myProject, myFileType));
+      editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFileType));
     }
     editor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, null);
     editor.setOneLineMode(true);
