@@ -9,8 +9,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
@@ -23,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -170,8 +167,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (tools.length == 0) return;
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
-    final Job<?> job = JobScheduler.getInstance().createJob("Inspection tools", Job.DEFAULT_PRIORITY); // TODO: Better name, handle priority
-
     setProgressLimit(1L * tools.length * elements.length);
 
     JobUtil.invokeConcurrentlyForAll(tools, new Processor<LocalInspectionTool>() {
@@ -188,24 +183,20 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             ApplicationManager.getApplication().assertReadAccessAllowed();
 
             ProblemsHolder holder = new ProblemsHolder(iManager);
-            try {
-              progressManager.checkCanceled();
-              PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
-              if(elementVisitor == null) {
-                LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
-              }
-              for (PsiElement element : elements) {
-                progressManager.checkCanceled();
-                element.accept(elementVisitor);
-              }
-              advanceProgress(elements.length);
-
-              if (holder.hasResults()) {
-                appendDescriptors(holder.getResults(), tool);
-              }
+            progressManager.checkCanceled();
+            PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
+            //noinspection ConstantConditions
+            if(elementVisitor == null) {
+              LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
             }
-            catch (ProcessCanceledException e) {
-              job.cancel();
+            for (PsiElement element : elements) {
+              progressManager.checkCanceled();
+              element.accept(elementVisitor);
+            }
+            advanceProgress(elements.length);
+
+            if (holder.hasResults()) {
+              appendDescriptors(holder.getResults(), tool);
             }
           }
         },progress);
