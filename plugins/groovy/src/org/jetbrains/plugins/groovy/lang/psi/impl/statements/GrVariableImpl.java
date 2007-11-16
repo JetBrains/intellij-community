@@ -99,7 +99,6 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
             final PsiClass initializerClass = initializerResult.getElement();
             if (initializerClass != null) {
               if (declaredClass == initializerClass) return initializerType;
-              
               final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(declaredClass, initializerClass, initializerResult.getSubstitutor());
               if (superSubstitutor != null) {
                 return getManager().getElementFactory().createType(declaredClass, superSubstitutor);

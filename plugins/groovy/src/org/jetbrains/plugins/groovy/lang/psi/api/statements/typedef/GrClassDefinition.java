@@ -16,10 +16,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.annotations.NotNull;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrClassDefinition extends GrTypeDefinition, GrTypeParameterListOwner {
+public interface GrClassDefinition extends GrTypeDefinition, GrTypeParameterListOwner, GrMethodOwner {
+
+  GrMethod addMethod (@NotNull GrMethod method) throws IncorrectOperationException;
+
 }

@@ -105,11 +105,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
 
     if (!processChildrenScopes(this, processor, substitutor, lastParent, place)) return false;
-    
+
     final GrImportStatement[] imports = getImportStatements();
 
     for (GrImportStatement importStatement : imports) {
-      if (!importStatement.isOnDemand() && !importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
+      if (!importStatement.isOnDemand() && !importStatement.processDeclarations(processor, substitutor, lastParent, place))
+        return false;
     }
 
     String currentPackageName = getPackageName();
@@ -118,7 +119,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       return false;
 
     for (GrImportStatement importStatement : imports) {
-      if (importStatement.isOnDemand() && !importStatement.processDeclarations(processor, substitutor, lastParent, place)) return false;
+      if (importStatement.isOnDemand() && !importStatement.processDeclarations(processor, substitutor, lastParent, place))
+        return false;
     }
 
     for (final String implicitlyImported : IMPLICITLY_IMPORTED_PACKAGES) {
@@ -261,6 +263,30 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       fileNode.addChild(newNode, anchor);
       fileNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchor);
     }
+  }
+
+  public GrMethod addMethod(@NotNull GrMethod method) throws IncorrectOperationException {
+    PsiElement[] children = getChildren();
+    PsiElement element;
+    if (children.length == 0) {
+      element = add(method);
+    } else {
+      PsiElement anchor = children[children.length - 1];
+      if (!anchor.getText().matches("\n\n")) {
+        GroovyElementFactory factory = GroovyElementFactory.getInstance(getProject());
+        PsiElement separator = factory.createLineTerminator();
+        if (anchor.getText().matches("(\\s*\n\\s*)+")) {
+          anchor = anchor.replace(separator);
+        } else {
+          anchor = addAfter(separator, anchor);
+        }
+        separator = factory.createLineTerminator();
+        anchor = addAfter(separator, anchor);
+      }
+      element = addAfter(method, anchor);
+    }
+    assert element instanceof GrMethod;
+    return ((GrMethod) element);
   }
 
   public void clearCaches() {

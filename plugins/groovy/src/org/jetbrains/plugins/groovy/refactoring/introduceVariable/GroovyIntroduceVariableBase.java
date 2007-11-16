@@ -58,7 +58,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     if (!editor.getSelectionModel().hasSelection()) {
       editor.getSelectionModel().selectLineAtCaret();
     }
-    GroovyRefactoringUtil.trimSpaces(editor, file);
+    GroovyRefactoringUtil.trimSpacesAndComments(editor, file, true);
     if (invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())) {
       editor.getSelectionModel().removeSelection();
     }

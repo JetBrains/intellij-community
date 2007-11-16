@@ -206,13 +206,13 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public GrVariableDeclaration createSimpleVariableDeclaration(String name, String typeText) {
-      String classText = "";
-      if (Character.isLowerCase(typeText.charAt(0))) {
-          classText = "class A { def " + typeText + " " + name + "}";
-      } else {
-          classText = "class A { " + typeText + " " + name + "}";
-      }
-      
+    String classText = "";
+    if (Character.isLowerCase(typeText.charAt(0))) {
+      classText = "class A { def " + typeText + " " + name + "}";
+    } else {
+      classText = "class A { " + typeText + " " + name + "}";
+    }
+
     GroovyFileBase file = (GroovyFileBase) createGroovyFile(classText);
     final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
     return (GrVariableDeclaration) body.getMemberDeclarations()[0];
@@ -224,6 +224,13 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
   public PsiElement createDotToken(String newDot) {
     return createReferenceExpressionFromText("a" + newDot + "b").getDotToken();
+  }
+
+  public GrMethod createMethodFromText(@NotNull String methodText) {
+    GroovyFileBase file = createDummyFile(methodText);
+    GrTopLevelDefintion defintion = file.getTopLevelDefinitions()[0];
+    assert defintion != null && defintion instanceof GrMethod;
+    return ((GrMethod) defintion);
   }
 
   private PsiFile createGroovyFile(String idText) {
@@ -258,7 +265,9 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   public PsiElement createLineTerminator() {
     PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         "\n");
-    return dummyFile.getFirstChild();
+    PsiElement child = dummyFile.getFirstChild();
+    assert child != null;
+    return child;
   }
 
   public GrArgumentList createExpressionArgumentList(GrExpression... expressions) {

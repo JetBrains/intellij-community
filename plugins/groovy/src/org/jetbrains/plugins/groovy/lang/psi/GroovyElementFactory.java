@@ -19,21 +19,31 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.util.MethodArgument;
+import org.jetbrains.plugins.groovy.refactoring.extractMethod.ExtractMethodUtil;
+import org.jetbrains.plugins.groovy.refactoring.extractMethod.ExtractMethodInfoHelper;
+import org.jetbrains.plugins.groovy.refactoring.extractMethod.ExtractMethodUtil.*;
 
 /**
  * @author dimaskin
@@ -57,7 +67,7 @@ public abstract class GroovyElementFactory {
   @NotNull
   public abstract PsiElement createLineTerminator();
 
-  public abstract GrArgumentList createExpressionArgumentList(GrExpression ... expressions);
+  public abstract GrArgumentList createExpressionArgumentList(GrExpression... expressions);
 
   public abstract GrBlockStatement createBlockStatement(GrStatement... statements);
 
@@ -97,5 +107,7 @@ public abstract class GroovyElementFactory {
 
   public abstract GrReferenceElement createPackegeReferenceElementFromText(String newPackageName);
 
-  public abstract PsiElement createDotToken(String newDot);  
+  public abstract PsiElement createDotToken(String newDot);
+
+  public abstract GrMethod createMethodFromText(String methodText);
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * @author ilyas
@@ -269,17 +267,17 @@ public abstract class GroovyRefactoringUtil {
     }
   }
 
-  public static void trimSpaces(Editor editor, PsiFile file) {
+  public static void trimSpacesAndComments(Editor editor, PsiFile file, boolean trimComments) {
     int start = editor.getSelectionModel().getSelectionStart();
     int end = editor.getSelectionModel().getSelectionEnd();
     while (file.findElementAt(start) instanceof PsiWhiteSpace ||
-        file.findElementAt(start) instanceof PsiComment ||
+        (file.findElementAt(start) instanceof PsiComment && trimComments) ||
         (file.findElementAt(start) != null &&
             GroovyTokenTypes.mNLS.equals(file.findElementAt(start).getNode().getElementType()))) {
       start++;
     }
     while (file.findElementAt(end - 1) instanceof PsiWhiteSpace ||
-        file.findElementAt(end - 1) instanceof PsiComment ||
+        (file.findElementAt(end - 1) instanceof PsiComment && trimComments) ||
         (file.findElementAt(end - 1) != null &&
             (GroovyTokenTypes.mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
                 GroovyTokenTypes.mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
@@ -287,7 +285,6 @@ public abstract class GroovyRefactoringUtil {
     }
 
     editor.getSelectionModel().setSelection(start, end);
-
   }
 
   public static PsiElement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
@@ -337,16 +334,26 @@ public abstract class GroovyRefactoringUtil {
       return new PsiElement[]{parent.getParent()};
     }
 
-    PsiElement[] children = parent.getChildren();
+    // calcualte children
+    PsiElement[] children = PsiElement.EMPTY_ARRAY;
+    PsiElement psiChild = parent.getFirstChild();
+    if (psiChild != null) {
+      List<PsiElement> result = new ArrayList<PsiElement>();
+      while (psiChild != null) {
+        result.add(psiChild);
+        psiChild = psiChild.getNextSibling();
+      }
+      children = result.toArray(new PsiElement[result.size()]);
+    }
+
+
     ArrayList<PsiElement> possibleStatements = new ArrayList<PsiElement>();
     boolean flag = false;
     for (PsiElement child : children) {
       if (child.equals(element1)) {
         flag = true;
       }
-      if (flag &&
-          !(child instanceof PsiWhiteSpace ||
-          TokenSets.SEPARATORS.contains(child.getNode().getElementType()))) {
+      if (flag) {
         possibleStatements.add(child);
       }
       if (child.equals(element2)) {
@@ -355,7 +362,10 @@ public abstract class GroovyRefactoringUtil {
     }
 
     for (PsiElement element : possibleStatements) {
-      if (!(element instanceof GrStatement || element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+      if (!(element instanceof GrStatement ||
+          element instanceof PsiWhiteSpace ||
+          element instanceof PsiComment ||
+          TokenSets.SEPARATORS.contains(element.getNode().getElementType()))) {
         return PsiElement.EMPTY_ARRAY;
       }
     }

@@ -15,28 +15,14 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 
 /**
- * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
+ * @author ilyas
  */
-public interface GrTypeDefinitionBody extends GroovyPsiElement {
-  GrField[] getFields();
-
-  GrMethod[] getMethods();
-
-  GrMembersDeclaration[] getMemberDeclarations();
-
-  @Nullable
-  PsiElement getLBrace();
-
-  @Nullable
-  PsiElement getRBrace();
+public interface GrMethodOwner {
+  
+  GrMethod addMethod(GrMethod method) throws IncorrectOperationException ;
 
 }

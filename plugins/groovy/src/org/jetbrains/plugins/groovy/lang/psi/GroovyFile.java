@@ -15,15 +15,18 @@
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
 
 /**
  * @author ven
  */
-public interface GroovyFile extends GroovyFileBase {
+public interface GroovyFile extends GroovyFileBase, GrMethodOwner {
 
   GrImportStatement[] getImportStatements();
 
@@ -33,4 +36,6 @@ public interface GroovyFile extends GroovyFileBase {
   GrPackageDefinition getPackageDefinition();
 
   void setPackageDefinition(String packageName);
+
+  GrMethod addMethod(@NotNull GrMethod method) throws IncorrectOperationException;
 }
