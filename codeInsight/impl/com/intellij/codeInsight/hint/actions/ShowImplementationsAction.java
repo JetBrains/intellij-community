@@ -50,6 +50,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
+import com.intellij.ui.popup.PopupUpdateProcessor;
 
 import java.util.*;
 
@@ -161,14 +162,17 @@ public class ShowImplementationsAction extends AnAction {
 
     final ImplementationViewComponent component = new ImplementationViewComponent(impls);
     if (component.hasElementsToShow()) {
+      final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(new Condition<PsiElement>() {
+        public boolean value(final PsiElement element) {
+          updateElementImplementations(element, editor, project);
+          return false;
+        }
+      });
       final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPrefferedFocusableComponent())
         .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
-        .setLookupAndSearchUpdater(new Condition<PsiElement>() {
-          public boolean value(final PsiElement element) {
-            updateElementImplementations(element, editor, project);
-            return false;
-          }
-        }, project)
+        .setProject(project)
+        .addListener(updateProcessor)
+        .addUserData(updateProcessor)
         .setDimensionServiceKey(project, "ShowImplementationPopup", false)
         .setResizable(true)
         .setMovable(true)

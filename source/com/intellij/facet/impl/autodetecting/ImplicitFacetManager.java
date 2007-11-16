@@ -8,14 +8,15 @@ import com.intellij.facet.*;
 import com.intellij.facet.impl.FacetUtil;
 import com.intellij.facet.impl.autodetecting.facetsTree.ImplicitFacetsDialog;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.StatusBar;
@@ -36,7 +37,7 @@ import java.util.List;
 public class ImplicitFacetManager implements Disposable {
   public static final Icon FACET_DETECTED_ICON = IconLoader.getIcon("/ide/facetDetected.png");
   private static final int NOTIFICATION_DELAY = 200;
-  private final JBPopupListener myNotificationPopupListener = new JBPopupListener() {
+  private final JBPopupListener myNotificationPopupListener = new JBPopupAdapter() {
     public void onClosed(final JBPopup popup) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {

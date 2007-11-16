@@ -1,8 +1,8 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -13,7 +13,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,8 +24,8 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.ui.popup.PopupOwner;
+import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.diff.Diff;
@@ -191,10 +190,10 @@ public abstract class ChooseByNameBase{
 
     public void updateHint(PsiElement element) {
       if (myHint == null || !myHint.isVisible()) return;
-      final Condition<PsiElement> popupUpdater = ((JBPopupImpl)myHint).getPopupUpdater();
-      if (popupUpdater != null){
+      final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
+      if (updateProcessor != null){
         myHint.cancel();
-        popupUpdater.value(element);
+        updateProcessor.getUpdater().value(element);
       }
     }
   }

@@ -16,7 +16,10 @@
 
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.openapi.project.Project;
+
 public interface JBPopupListener {
+  void beforeShown(Project project, JBPopup popup);
 
   void onClosed(JBPopup popup);
 

@@ -50,6 +50,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
+import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -141,14 +142,17 @@ public class JavaDocManager implements ProjectComponent {
   public JBPopup showJavaDocInfo(@NotNull PsiElement element) {
     final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
 
+    final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(new Condition<PsiElement>() {
+      public boolean value(final PsiElement element) {
+        showJavaDocInfo(element);
+        return false;
+      }
+    });
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
       .setRequestFocusCondition(getProject(element), NotLookupOrSearchCondition.INSTANCE)
-      .setLookupAndSearchUpdater(new Condition<PsiElement>() {
-        public boolean value(final PsiElement element) {
-          showJavaDocInfo(element);
-          return false;
-        }
-      }, getProject(element))
+      .setProject(myProject)
+      .addListener(updateProcessor)
+      .addUserData(updateProcessor)
       .setForceHeavyweight(true)
       .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
       .setResizable(true)
@@ -248,23 +252,27 @@ public class JavaDocManager implements ProjectComponent {
     final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
     storeOriginalElement(project, originalElement, element);
 
+    final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(new Condition<PsiElement>() {
+      public boolean value(final PsiElement element) {
+        if (myEditor != null) {
+          final PsiFile file = element.getContainingFile();
+          if (file != null) {
+            Editor editor = myEditor;
+            showJavaDocInfo(myEditor, file, false);
+            myEditor = editor;
+          }
+        }
+        else {
+          showJavaDocInfo(element);
+        }
+        return false;
+      }
+    });
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
       .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
-      .setLookupAndSearchUpdater(new Condition<PsiElement>() {
-        public boolean value(final PsiElement element) {
-          if (myEditor != null){
-            final PsiFile file = element.getContainingFile();
-            if (file != null) {
-              Editor editor = myEditor;
-              showJavaDocInfo(myEditor, file, false);
-              myEditor = editor;
-            }
-          } else {
-            showJavaDocInfo(element);
-          }
-          return false;
-        }
-      }, project)
+      .setProject(project)
+      .addListener(updateProcessor)
+      .addUserData(updateProcessor)
       .setForceHeavyweight(false)
       .setDimensionServiceKey(project, JAVADOC_LOCATION_AND_SIZE, false)
       .setResizable(true)

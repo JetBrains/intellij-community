@@ -19,7 +19,6 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,14 +63,6 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setCancelOnMouseOutCallback(final MouseChecker shouldCancel);
 
-  /**
-   * @param updater recreates popup in accordance to selected (in lookup or Ctrl N) psiElement. Current popup will be closed automatically
-   * @param project
-   * @return this
-   */
-  @NotNull
-  ComponentPopupBuilder setLookupAndSearchUpdater(final Condition<PsiElement> updater, Project project);
-
   @NotNull
   JBPopup createPopup();
 
@@ -94,5 +85,9 @@ public interface ComponentPopupBuilder {
   @NotNull ComponentPopupBuilder setAlpha(float alpha);
 
   @NotNull ComponentPopupBuilder setBelongsToGlobalPopupStack(boolean isInStack);
+
+  @NotNull ComponentPopupBuilder setProject(Project project);
+
+  @NotNull ComponentPopupBuilder addUserData(Object object);
 
 }

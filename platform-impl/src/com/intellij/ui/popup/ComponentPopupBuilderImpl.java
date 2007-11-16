@@ -8,12 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -31,7 +31,6 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myForceHeavyweight;
   private String myDimensionServiceKey = null;
   private Computable<Boolean> myCallback = null;
-  private Condition<PsiElement> myPopupUpdater;
   private Project myProject;
   private boolean myCancelOnClickOutside = true;
   private Set<JBPopupListener> myListeners = new LinkedHashSet<JBPopupListener>();
@@ -47,6 +46,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Dimension myMinSize;
   private MaskProvider myMaskProvider;
   private float myAlpha;
+  private ArrayList<Object> myUserData;
 
   private boolean myInStack = true;
 
@@ -131,8 +131,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
-  public ComponentPopupBuilder setLookupAndSearchUpdater(final Condition<PsiElement> updater, Project project) {
-    myPopupUpdater = updater;
+  public ComponentPopupBuilder setProject(Project project) {
     myProject = project;
     return this;
   }
@@ -144,8 +143,11 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
                                               myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack);
-    if (myPopupUpdater != null) {
-      popup.setPopupUpdater(myPopupUpdater, myProject);
+    if (myProject != null) {
+      popup.setProject(myProject);
+    }
+    if (myUserData != null) {
+      popup.setUserData(myUserData);
     }
     return popup;
   }
@@ -201,6 +203,15 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setBelongsToGlobalPopupStack(final boolean isInStack) {
     myInStack = isInStack;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder addUserData(final Object object) {
+    if (myUserData == null) {
+      myUserData = new ArrayList<Object>();
+    }
+    myUserData.add(object);
     return this;
   }
 }

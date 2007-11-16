@@ -752,7 +752,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         }
       });
 
-    builder.addListener(new JBPopupListener() {
+    builder.addListener(new JBPopupAdapter() {
       public void onClosed(final JBPopup popup) {
         processClosed();
       }

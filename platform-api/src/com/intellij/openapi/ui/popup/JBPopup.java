@@ -125,4 +125,7 @@ public interface JBPopup extends Disposable {
 
   void setUiVisible(boolean visible);
 
+  <T>
+  T getUserData(Class<T> userDataClass);
+
 }
