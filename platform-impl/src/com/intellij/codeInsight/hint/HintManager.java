@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -208,8 +207,8 @@ public class HintManager implements ApplicationComponent {
   }
 
   private static void updateScrollableHintPosition(VisibleAreaEvent e, LightweightHint hint, boolean hideIfOutOfEditor) {
-    if (hint.getComponent() instanceof IntentionHintComponent) {
-      ((IntentionHintComponent)hint.getComponent()).closePopup();
+    if (hint.getComponent() instanceof ScrollAwareHint) {
+      ((ScrollAwareHint)hint.getComponent()).editorScrolled();
     }
 
     Editor editor = e.getEditor();

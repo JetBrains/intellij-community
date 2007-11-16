@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.hint.ScrollAwareHint;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
@@ -55,7 +56,7 @@ import java.util.List;
  * @author Eugene Belyaev
  * @author and me too
  */
-public class IntentionHintComponent extends JPanel implements Disposable {
+public class IntentionHintComponent extends JPanel implements Disposable, ScrollAwareHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
   private static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/intentionBulb.png");
@@ -374,6 +375,10 @@ public class IntentionHintComponent extends JPanel implements Disposable {
     closePopup();
     myComponentHint.hide();
     super.hide();
+  }
+
+  public void editorScrolled() {
+    closePopup();
   }
 
   //true if success
