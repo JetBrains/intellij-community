@@ -4,14 +4,14 @@ package com.intellij.codeInsight.navigation.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.MethodUpHandler;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.lang.Language;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 
 /**
  *
@@ -29,8 +29,7 @@ public class MethodUpAction extends BaseCodeInsightAction {
     if (file instanceof PsiJavaFile || file instanceof XmlFile) {
       return true;
     }
-    Language lang = file.getLanguage();
-    final StructureViewBuilder structureViewBuilder = lang.getStructureViewBuilder(file);
+    final StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
     if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
       return true;
     }

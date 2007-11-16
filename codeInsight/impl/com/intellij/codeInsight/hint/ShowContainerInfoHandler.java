@@ -1,6 +1,10 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -8,12 +12,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LightweightHint;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
 
 import java.awt.*;
 import java.lang.ref.WeakReference;
@@ -53,7 +54,7 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
     }
     else {
       container = null;
-      StructureViewBuilder builder = file.getLanguage().getStructureViewBuilder(file);
+      StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
       if (builder instanceof TreeBasedStructureViewBuilder) {
         StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel();
         Object element = model.getCurrentEditorElement();

@@ -1,14 +1,15 @@
 
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,7 +55,7 @@ public class MethodUpDownUtil {
       addNavigationElements(array, element.getParent());
     }
     else if (element instanceof PsiFile) {
-      StructureViewBuilder structureViewBuilder = element.getLanguage().getStructureViewBuilder((PsiFile) element);
+      StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder((PsiFile) element);
       if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
         TreeBasedStructureViewBuilder builder = (TreeBasedStructureViewBuilder) structureViewBuilder;
         StructureViewModel model = builder.createStructureViewModel();

@@ -5,6 +5,7 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewBuilderProvider;
+import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -19,7 +20,8 @@ public class LanguageFileTypeStructureViewBuilderProvider implements StructureVi
   public StructureViewBuilder getStructureViewBuilder(@NotNull final FileType fileType, @NotNull final VirtualFile file, @NotNull final Project project) {
     if (fileType instanceof LanguageFileType) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      return psiFile == null ?  null : ((LanguageFileType)fileType).getLanguage().getStructureViewBuilder(psiFile);
+      return psiFile == null ?  null : LanguageStructureViewBuilder.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage())
+        .getStructureViewBuilder(psiFile);
     }
 
     return null;

@@ -1,10 +1,6 @@
 package com.intellij.lang.java;
 
 import com.intellij.ide.highlighter.JavaFileHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -13,13 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,26 +39,5 @@ public class JavaLanguage extends Language {
         return new JavaFileHighlighter(languageLevel);
       }
     });
-  }
-
-  @NotNull
-  public TokenSet getReadableTextContainerElements() {
-    return TokenSet.create(JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT,
-                           JavaDocTokenType.DOC_COMMENT_DATA, JavaTokenType.STRING_LITERAL);
-  }
-
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
-    if (!(psiFile instanceof PsiJavaFile)) return null;
-    return new TreeBasedStructureViewBuilder() {
-      @NotNull
-      public StructureViewModel createStructureViewModel() {
-        return new JavaFileTreeModel((PsiJavaFile)psiFile);
-      }
-
-      public boolean isRootNodeShown() {
-        return false;
-      }
-    };
   }
 }

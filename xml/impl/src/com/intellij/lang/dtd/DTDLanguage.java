@@ -1,18 +1,11 @@
 package com.intellij.lang.dtd;
 
 import com.intellij.ide.highlighter.XmlFileHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,15 +23,5 @@ public class DTDLanguage extends Language {
         return new XmlFileHighlighter(true);
       }
     });
-  }
-
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
-    return new TreeBasedStructureViewBuilder() {
-      @NotNull
-      public StructureViewModel createStructureViewModel() {
-        return new XmlStructureViewTreeModel((XmlFile)psiFile);
-      }
-    };
   }
 }

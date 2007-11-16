@@ -15,11 +15,8 @@
  */
 package com.intellij.lang;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,32 +76,6 @@ public abstract class Language {
     return (T)ourRegisteredLanguages.get(klass);
   }
 
-
-  /**
-   * Word completion feature related method. It supposed to return token types of the places where word completion should be enabled.
-   * Default implementation delegates to parser definition and returns comment tokens so words completion is enabled in comments
-   * if parser definition is implemented.
-   *
-   * @return set of token types where word completion should be enabled.
-   */
-  @NotNull
-  public TokenSet getReadableTextContainerElements() {
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(this);
-    if (parserDefinition != null) return parserDefinition.getCommentTokens();
-    return TokenSet.EMPTY;
-  }
-
-  /**
-   * Override this method to provide structure view and file structure popup content for the files of your language.
-   *
-   * @param psiFile
-   * @return <code>StructureViewBuilder</code> interface implementation for this particular language or <code>null</code>
-   *         if no file structure implementation.
-   */
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {
-    return null;
-  }
 
   public String toString() {
     //noinspection HardCodedStringLiteral

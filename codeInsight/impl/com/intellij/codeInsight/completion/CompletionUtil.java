@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
@@ -31,7 +32,6 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -171,8 +171,7 @@ public class CompletionUtil {
       ASTNode textContainer = element != null ? element.getNode() : null;
       while (textContainer != null) {
         final IElementType elementType = textContainer.getElementType();
-        final TokenSet readableTextContainerElements = elementType.getLanguage().getReadableTextContainerElements();
-        if (readableTextContainerElements.contains(elementType) || elementType == ElementType.PLAIN_TEXT) {
+        if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) || elementType == ElementType.PLAIN_TEXT) {
           wordCompletionData = ourWordCompletionData;
         }
         textContainer = textContainer.getTreeParent();

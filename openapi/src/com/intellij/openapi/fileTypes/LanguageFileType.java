@@ -17,6 +17,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.project.Project;
@@ -77,7 +78,7 @@ public abstract class LanguageFileType implements FileType{
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    return psiFile == null ?  null : myLanguage.getStructureViewBuilder(psiFile);
+    return psiFile == null ?  null : LanguageStructureViewBuilder.INSTANCE.forLanguage(myLanguage).getStructureViewBuilder(psiFile);
   }
 
   public final boolean isBinary() {

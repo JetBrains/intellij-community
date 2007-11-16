@@ -9,6 +9,7 @@ import com.intellij.ide.structureView.impl.jsp.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewModel;
 import com.intellij.openapi.Disposable;
@@ -74,7 +75,7 @@ public class ViewStructureAction extends AnAction {
     else if (PsiUtil.isInJspFile(psiFile)) {
       Language language = ((LanguageFileType)psiFile.getFileType()).getLanguage();
       StructureViewComposite structureViewComposite =
-        (StructureViewComposite)language.getStructureViewBuilder(psiFile).createStructureView(fileEditor, project);
+        (StructureViewComposite)LanguageStructureViewBuilder.INSTANCE.forLanguage(language).getStructureViewBuilder(psiFile).createStructureView(fileEditor, project);
       StructureView structureView = structureViewComposite.getSelectedStructureView();
       structureViewModel = ((StructureViewComponent)structureView).getTreeModel();
       auxDisposable = structureViewComposite;

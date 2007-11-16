@@ -23,6 +23,7 @@
     <lang.parserDefinition language="ANT" implementationClass="com.intellij.lang.ant.AntParserDefinition"/>
     <lang.findUsagesProvider language="ANT" implementationClass="com.intellij.lang.ant.psi.usages.AntUsagesProvider"/>
     <lang.commenter language="ANT" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
+    <lang.psiStructureViewFactory language="ANT" implementationClass="com.intellij.lang.ant.AntStructureViewBuilderFactory"/>
   </extensions>
 
   <application-components>

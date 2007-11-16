@@ -16,6 +16,7 @@ import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -173,7 +174,7 @@ public class FileStructureDialog extends DialogWrapper {
     myTreeStructure = new MyStructureTreeStructure();
 
     PsiFile psiFile = getPsiFile(myProject);
-    StructureViewBuilder viewBuilder = psiFile.getLanguage().getStructureViewBuilder(psiFile);
+    StructureViewBuilder viewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
     boolean showRoot =
       viewBuilder instanceof TreeBasedStructureViewBuilder && ((TreeBasedStructureViewBuilder)viewBuilder).isRootNodeShown();
     ProjectListBuilder projectListBuilder = new ProjectListBuilder(myProject, myCommanderPanel, myTreeStructure, null, showRoot) {
