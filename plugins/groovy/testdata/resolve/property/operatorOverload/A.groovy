@@ -1,5 +1,5 @@
 class Tick {
-    int seconds;
+    public int seconds;
 
     Tick plus(int i) {
         return new Tick(seconds: seconds + i)

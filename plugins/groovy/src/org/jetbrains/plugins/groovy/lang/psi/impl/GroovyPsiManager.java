@@ -76,7 +76,7 @@ public class GroovyPsiManager implements ProjectComponent {
 
   private TypeInferenceHelper myTypeInferenceHelper;
 
-  private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { int length }";
+  private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { public int length }";
   public Runnable myUpdateRunnable;
 
   private String myGroovyJarUrl = null;

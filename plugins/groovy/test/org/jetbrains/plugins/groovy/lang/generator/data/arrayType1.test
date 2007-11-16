@@ -7,9 +7,9 @@ class Foo {
 }
 -----
 public class Foo extends groovy.lang.GroovyObjectSupport {
-  public int[] integers = null;
+  private int[] integers = null;
 
-  public String[] strings = null;
+  private String[] strings = null;
 
   public int[] foo() {
     return null;

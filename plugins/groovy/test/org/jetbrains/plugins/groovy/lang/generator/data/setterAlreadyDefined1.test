@@ -4,7 +4,7 @@ class D {
 }
 -----
 public class D extends groovy.lang.GroovyObjectSupport {
-  public java.lang.Object DDD = null;
+  private java.lang.Object DDD = null;
 
   public java.lang.Object getDDD() {
     return null;

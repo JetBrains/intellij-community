@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 import java.util.*;
@@ -75,7 +76,9 @@ public class GrModifierListImpl extends GroovyPsiElementImpl implements GrModifi
 
   public boolean hasModifierProperty(@NotNull @NonNls String modifier) {
     final PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclaration && !hasExplicitVisibilityModifiers()) { //properties are backed by private fields
+    if (parent instanceof GrVariableDeclaration &&
+        parent.getParent() instanceof GrTypeDefinitionBody &&
+        !hasExplicitVisibilityModifiers()) { //properties are backed by private fields
       if (modifier.equals(PsiModifier.PUBLIC)) return false;
       if (modifier.equals(PsiModifier.PROTECTED)) return false;
       if (modifier.equals(PsiModifier.PRIVATE)) return true;
