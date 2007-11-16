@@ -76,7 +76,8 @@ public interface PsiBuilder extends UserDataHolder {
   interface Marker {
     /**
      * Creates and returns a new marker starting immediately before the start of
-     * this marker and extending after its end. Can be called only on a completed marker.
+     * this marker and extending after its end. Can be called on a completed or
+     * a currently active marker.
      *
      * @return the new marker instance.
      */
