@@ -67,12 +67,12 @@ public class Extensions {
   @TestOnly
   public static void cleanRootArea(@NotNull Disposable parentDisposable) {
     final ExtensionsAreaImpl oldRootArea = (ExtensionsAreaImpl)getRootArea();
-    oldRootArea.notifyAreaReplaced();
     final ExtensionsAreaImpl newArea = createRootArea();
+    oldRootArea.notifyAreaReplaced();
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
-        newArea.notifyAreaReplaced();
         ourAreaInstance2area.put(null, oldRootArea);
+        newArea.notifyAreaReplaced();
       }
     });
   }

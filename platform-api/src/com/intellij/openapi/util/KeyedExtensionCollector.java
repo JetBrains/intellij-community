@@ -21,30 +21,47 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
   private final Map<String, List<T>> myCache = new HashMap<String, List<T>>();
   private final Object lock = new Object();
   private ExtensionPoint<KeyedLazyInstance<T>> myPoint;
+  private final String myEpName;
+  private ExtensionPointAndAreaListener<KeyedLazyInstance<T>> myListener;
 
   public KeyedExtensionCollector(@NonNls String epName) {
-    ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(epName);
-    if (Extensions.getRootArea().hasExtensionPoint(epName)) {
-      myPoint = Extensions.getRootArea().getExtensionPoint(typesafe);
-      myPoint.addExtensionPointListener(new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
-        public void extensionAdded(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
-          synchronized (lock) {
-            myCache.remove(bean.getKey());
-          }
-        }
+    myEpName = epName;
+    resetAreaListener();
+  }
 
-        public void extensionRemoved(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
-          synchronized (lock) {
-            myCache.remove(bean.getKey());
-          }
-        }
+  private void resetAreaListener() {
+    synchronized (lock) {
+      myCache.clear();
 
-        public void areaReplaced(final ExtensionsArea area) {
-          synchronized (lock) {
-            dropCaches();
+      if (myPoint != null) {
+        myPoint.removeExtensionPointListener(myListener);
+        myPoint = null;
+        myListener = null;
+      }
+
+      if (Extensions.getRootArea().hasExtensionPoint(myEpName)) {
+        ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(myEpName);
+        myPoint = Extensions.getRootArea().getExtensionPoint(typesafe);
+        myListener = new ExtensionPointAndAreaListener<KeyedLazyInstance<T>>() {
+          public void extensionAdded(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
+            synchronized (lock) {
+              myCache.remove(bean.getKey());
+            }
           }
-        }
-      });
+
+          public void extensionRemoved(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
+            synchronized (lock) {
+              myCache.remove(bean.getKey());
+            }
+          }
+
+          public void areaReplaced(final ExtensionsArea area) {
+            resetAreaListener();
+          }
+        };
+
+        myPoint.addExtensionPointListener(myListener);
+      }
     }
   }
 
