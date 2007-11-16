@@ -377,6 +377,9 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       if (def == null) { // can be null if failed to introspect the class for some reason
         def = new AntTypeDefinitionImpl(id, classname, isTask, isAssignableFrom(TaskContainer.class.getName(), clazz));
       }
+      else {
+        fixNestedDefinitions(def);
+      }
       def.setIsProperty(isAssignableFrom(org.apache.tools.ant.taskdefs.Property.class.getName(), clazz));
     }
     if (def != null) {
@@ -411,6 +414,25 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
       }
     }
     return def;
+  }
+
+  private void fixNestedDefinitions(final AntTypeDefinitionImpl def) {
+    // hack to overcome problems with poorly written custom tasks. 
+    // For example: net.sf.antcontrib.logic.ForTask.createSequential() is defined to 
+    // return java.langObject instead of org.apache.tools.ant.taskdefs.Sequential 
+    
+    for (AntTypeId nestedTypeId : def.getNestedElements()) {
+      final String className = def.getNestedClassName(nestedTypeId);
+      if ("java.lang.Object".equals(className)) {
+        // check if such typeId is already mapped correct the definition's nested element
+        for (AntTypeDefinition typeDefinition : getAntFile().getBaseTypeDefinitions()) {
+          if (nestedTypeId.equals(typeDefinition.getTypeId()) && !"java.lang.Object".equals(typeDefinition.getClassName())) {
+            def.registerNestedType(nestedTypeId, typeDefinition.getClassName());
+            break;
+          }
+        }
+      }
+    }
   }
 
   private boolean isTask(final Class clazz) {
