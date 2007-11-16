@@ -79,7 +79,7 @@ public class FileTypeChooser extends DialogWrapper{
       }
     );
 
-    ListScrollingUtil.selectItem(myList, StdFileTypes.PLAIN_TEXT);
+    ListScrollingUtil.selectItem(myList, FileTypes.PLAIN_TEXT);
 
     return myPanel;
   }

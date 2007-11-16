@@ -16,6 +16,7 @@
 package com.intellij.lang;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 
 /**
  * Defines the standard languages supported by IDEA.
@@ -65,7 +66,7 @@ public class StdLanguages {
   /**
    * The definition for the Text language.
    */
-  public static Language TEXT = StdFileTypes.PLAIN_TEXT.getLanguage();
+  public static Language TEXT = FileTypes.PLAIN_TEXT.getLanguage();
 
   /**
    * The definition for the Properties language.

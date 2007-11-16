@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -148,7 +149,7 @@ public class CreateHtmlAction extends CreateElementActionBase {
 
     final FileTypeManager manager = FileTypeManager.getInstance();
     final FileType fileType = manager.getFileTypeByExtension(HtmlFileType.DOT_DEFAULT_EXTENSION);
-    if (fileType == StdFileTypes.PLAIN_TEXT) {
+    if (fileType == FileTypes.PLAIN_TEXT) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
     }

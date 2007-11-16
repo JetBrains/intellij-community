@@ -372,7 +372,7 @@ public class FileTemplateConfigurable implements Configurable {
       fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension);
     }
     else {
-      fileType = StdFileTypes.PLAIN_TEXT;
+      fileType = FileTypes.PLAIN_TEXT;
     }
 
     SyntaxHighlighter originalHighlighter = SyntaxHighlighter.PROVIDER.create(fileType, null, null);

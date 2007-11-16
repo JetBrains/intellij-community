@@ -11,7 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
@@ -92,7 +92,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   }
 
   private void createNewNameComponent() {
-    myNameSuggestionsField = new NameSuggestionsField(new String[] { myTag.getName() }, myProject, StdFileTypes.PLAIN_TEXT, myEditor);
+    myNameSuggestionsField = new NameSuggestionsField(new String[] { myTag.getName() }, myProject, FileTypes.PLAIN_TEXT, myEditor);
     myNameChangedListener = new NameSuggestionsField.DataChanged() {
       public void dataChanged() {
         validateButtons();

@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -96,7 +97,7 @@ public interface MergeVersion {
 
     public FileType getContentType() {
       VirtualFile file = getFile();
-      if (file == null) return StdFileTypes.PLAIN_TEXT;
+      if (file == null) return FileTypes.PLAIN_TEXT;
       return FileTypeManager.getInstance().getFileTypeByFile(file);
     }
 

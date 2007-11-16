@@ -216,7 +216,7 @@ public class IdTableBuilding {
 
     registerCacheBuilder(StdFileTypes.HTML,new HtmlIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.XHTML,new XHtmlIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
+    registerCacheBuilder(FileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.PROPERTIES, new PropertiesIdCacheBuilder());
 
     registerCacheBuilder(StdFileTypes.IDEA_MODULE, new EmptyBuilder());

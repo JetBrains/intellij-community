@@ -79,4 +79,6 @@
 
   <!-- Path Variables -->
   <applicationConfigurable implementation="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
+
+  <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
 </extensions>

@@ -5,7 +5,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.psi.PsiDocumentManager;
@@ -55,7 +55,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
       }
     };
     final TextPanel boundedComponent1 = boundedComponent;
-    final EditorTextField editorTextField = new EditorTextField(factory.fun(""), project, StdFileTypes.PLAIN_TEXT) {
+    final EditorTextField editorTextField = new EditorTextField(factory.fun(""), project, FileTypes.PLAIN_TEXT) {
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         return boundedComponent1 instanceof MultiLineTextPanel ? makeBigEditor(editor, ((MultiLineTextPanel)boundedComponent1).getRowCount()) : editor;
@@ -67,7 +67,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
       boundedComponent.add(editor);
       editor.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          EditorTextField textArea = new EditorTextField(editorTextField.getDocument(), project, StdFileTypes.PLAIN_TEXT) {
+          EditorTextField textArea = new EditorTextField(editorTextField.getDocument(), project, FileTypes.PLAIN_TEXT) {
             protected EditorEx createEditor() {
               final EditorEx editor = super.createEditor();
               editor.setEmbeddedIntoDialogWrapper(true);

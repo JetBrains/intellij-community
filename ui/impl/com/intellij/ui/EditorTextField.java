@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.IJSwingUtilities;
@@ -54,7 +54,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
   }
 
   public EditorTextField(@NotNull String text) {
-    this(EditorFactory.getInstance().createDocument(text), null, StdFileTypes.PLAIN_TEXT);
+    this(EditorFactory.getInstance().createDocument(text), null, FileTypes.PLAIN_TEXT);
   }
 
   public EditorTextField(@NotNull String text, Project project, FileType fileType) {

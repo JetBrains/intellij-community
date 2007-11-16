@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public class DiffUtil {
   }
 
   public static FileType[] chooseContentTypes(DiffContent[] contents) {
-    FileType commonType = StdFileTypes.PLAIN_TEXT;
+    FileType commonType = FileTypes.PLAIN_TEXT;
     for (int i = 0; i < contents.length; i++) {
       FileType contentType = contents[i].getContentType();
       if (DiffContentUtil.isTextType(contentType)) commonType = contentType;

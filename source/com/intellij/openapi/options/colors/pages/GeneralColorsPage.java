@@ -36,8 +36,8 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -85,7 +85,7 @@ public class GeneralColorsPage implements ColorSettingsPage {
   }
 
   public Icon getIcon() {
-    return StdFileTypes.PLAIN_TEXT.getIcon();
+    return FileTypes.PLAIN_TEXT.getIcon();
   }
 
   @NotNull

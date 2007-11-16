@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.fileTypes;
 
-public class StdFileTypes {
+public class StdFileTypes extends FileTypes {
+  private StdFileTypes() {
+  }
+
   public static final LanguageFileType JAVA = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("JAVA");
   public static final FileType CLASS = FileTypeManager.getInstance().getStdFileType("CLASS");
   public static final LanguageFileType JSP = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("JSP");
@@ -25,7 +28,6 @@ public class StdFileTypes {
   public static final LanguageFileType HTML = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("HTML");
   public static final LanguageFileType XHTML = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("XHTML");
   public static final LanguageFileType PROPERTIES = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("Properties");
-  public static final LanguageFileType PLAIN_TEXT = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("PLAIN_TEXT");
   public static final FileType GUI_DESIGNER_FORM = FileTypeManager.getInstance().getStdFileType("GUI_DESIGNER_FORM");
   public static final FileType IDEA_WORKSPACE = FileTypeManager.getInstance().getStdFileType("IDEA_WORKSPACE");
   public static final FileType IDEA_PROJECT = FileTypeManager.getInstance().getStdFileType("IDEA_PROJECT");

@@ -12,6 +12,7 @@ import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -56,11 +57,11 @@ public class BasicsTest extends IntegrationTestCase {
     assertFalse(hasVcsEntry(f));
 
     FileTypeManager tm = FileTypeManager.getInstance();
-    tm.registerFileType(StdFileTypes.PLAIN_TEXT, "xxx");
+    tm.registerFileType(FileTypes.PLAIN_TEXT, "xxx");
 
     assertTrue(hasVcsEntry(f));
 
-    tm.removeAssociatedExtension(StdFileTypes.PLAIN_TEXT, "xxx");
+    tm.removeAssociatedExtension(FileTypes.PLAIN_TEXT, "xxx");
 
     assertFalse(hasVcsEntry(f));
   }

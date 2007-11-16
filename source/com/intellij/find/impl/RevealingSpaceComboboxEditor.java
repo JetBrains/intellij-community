@@ -6,7 +6,7 @@
  */
 package com.intellij.find.impl;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.StringComboboxEditor;
 
@@ -14,7 +14,7 @@ import javax.swing.*;
 
 public class RevealingSpaceComboboxEditor extends StringComboboxEditor {
   public RevealingSpaceComboboxEditor(final Project project) {
-    super(project, StdFileTypes.PLAIN_TEXT);
+    super(project, FileTypes.PLAIN_TEXT);
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {

@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -154,7 +154,7 @@ public class MergePanel2 implements DiffViewer {
   }
 
   public FileType getContentType() {
-    return myData == null ? StdFileTypes.PLAIN_TEXT : getContentType(myData);
+    return myData == null ? FileTypes.PLAIN_TEXT : getContentType(myData);
   }
 
   public String getVersionTitle(int index) {
@@ -369,7 +369,7 @@ public class MergePanel2 implements DiffViewer {
 
   private static FileType getContentType(DiffRequest diffData) {
     FileType contentType = diffData.getContents()[1].getContentType();
-    if (contentType == null) contentType = StdFileTypes.PLAIN_TEXT;
+    if (contentType == null) contentType = FileTypes.PLAIN_TEXT;
     return contentType;
   }
 

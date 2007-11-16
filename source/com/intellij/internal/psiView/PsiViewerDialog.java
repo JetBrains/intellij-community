@@ -120,7 +120,7 @@ public class PsiViewerDialog extends DialogWrapper {
     for (FileType fileType : fileTypes) {
       if (fileType != StdFileTypes.GUI_DESIGNER_FORM && fileType != StdFileTypes.IDEA_MODULE && fileType != StdFileTypes.IDEA_PROJECT &&
           fileType != StdFileTypes.IDEA_WORKSPACE && fileType != FileTypes.ARCHIVE && fileType != FileTypes.UNKNOWN &&
-          fileType != StdFileTypes.PLAIN_TEXT && !(fileType instanceof CustomFileType) && !fileType.isBinary() && !fileType.isReadOnly()) {
+          fileType != FileTypes.PLAIN_TEXT && !(fileType instanceof CustomFileType) && !fileType.isBinary() && !fileType.isReadOnly()) {
         customFileTypes.add(fileType);
       }
     }

@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
@@ -98,7 +98,7 @@ public class BlockSupportImpl extends BlockSupport {
 
     FileType fileType = file.getFileType();
     if (file instanceof PsiPlainTextFile) {
-      fileType = StdFileTypes.PLAIN_TEXT;
+      fileType = FileTypes.PLAIN_TEXT;
     }
 
     if (treeFileElement.getElementType() == JspElementType.JSP_TEMPLATE ||

@@ -13,10 +13,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +62,7 @@ public class TemplateEditorUtil {
       fileType = StdFileTypes.JSP;
     }
     else {
-      fileType = StdFileTypes.PLAIN_TEXT;
+      fileType = FileTypes.PLAIN_TEXT;
     }
 
     SyntaxHighlighter highlighter = createTemplateTextHighlighter(SyntaxHighlighter.PROVIDER.create(fileType, null, null));
