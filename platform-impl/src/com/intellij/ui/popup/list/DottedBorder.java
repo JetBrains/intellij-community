@@ -16,7 +16,7 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.peer.PeerFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.border.Border;
 import java.awt.*;
@@ -43,7 +43,7 @@ public class DottedBorder implements Border {
     g.setColor(myColor);
 
     if (ApplicationManager.getApplication() != null) {
-      PeerFactory.getInstance().getUIHelper().drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
+      UIUtil.drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
     }
   }
 

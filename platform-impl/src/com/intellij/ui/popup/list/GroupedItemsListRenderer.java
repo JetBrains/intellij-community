@@ -6,12 +6,11 @@ package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.ui.components.panels.OpaquePanel;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-
-import org.jetbrains.annotations.NonNls;
 
 public class GroupedItemsListRenderer implements ListCellRenderer {
 
