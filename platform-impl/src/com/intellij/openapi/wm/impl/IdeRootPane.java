@@ -1,8 +1,7 @@
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
@@ -12,6 +11,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
@@ -71,8 +71,9 @@ public class IdeRootPane extends JRootPane{
     myUISettingsListener=new MyUISettingsListenerImpl();
     setJMenuBar(new IdeMenuBar(myActionManager, dataManager, keymapManager));
 
-    if (!GeneralSettings.getInstance().isReopenLastProject() ||
-        RecentProjectsManager.getInstance().getLastProjectPath() == null) {
+    final Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
+    application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appFrameCreated(willOpenProject);
+    if (!willOpenProject.get()) {
       myWelcomePane = WelcomeScreen.createWelcomePanel();
       myContentPane.add(myWelcomePane);
     }

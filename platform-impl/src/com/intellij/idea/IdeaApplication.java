@@ -2,8 +2,7 @@ package com.intellij.idea;
 
 import com.incors.plaf.alloy.*;
 import com.intellij.ExtensionPoints;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.reporter.ConnectionException;
@@ -13,6 +12,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.Splash;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -178,20 +179,13 @@ public class IdeaApplication {
   }
 
   private void loadProject() {
-    GeneralSettings generalSettings = GeneralSettings.getInstance();
-
+    Project project = null;
     if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
-      if (ProjectUtil.openOrImport(myArgs[0], null, false) != null) {
-        return;
-      }
+      project = ProjectUtil.openOrImport(myArgs[0], null, false);
     }
 
-    if (generalSettings.isReopenLastProject()) {
-      String lastProjectPath = RecentProjectsManager.getInstance().getLastProjectPath();
-      if (lastProjectPath != null) {
-        ProjectUtil.openProject(lastProjectPath, null, false);
-      }
-    }
+    final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+    bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project);
   }
 
   public String[] getCommandLineArguments() {

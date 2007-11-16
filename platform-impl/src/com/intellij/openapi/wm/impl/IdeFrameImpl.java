@@ -1,8 +1,8 @@
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.MnemonicHelper;
@@ -116,7 +116,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
                 if (myProject != null && myProject.isOpen()) {
                   ProjectUtil.closeProject(myProject);
                 }
-                RecentProjectsManager.getInstance().updateLastProjectPath();
+                app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectFrameClosed();
               }
               else {
                 ApplicationManagerEx.getApplicationEx().exit();

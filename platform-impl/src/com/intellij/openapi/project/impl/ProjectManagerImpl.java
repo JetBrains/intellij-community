@@ -1,6 +1,6 @@
 package com.intellij.openapi.project.impl;
 
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
@@ -297,7 +297,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
     if (!ok) {
       closeProject(project, false);
-      updateLastProjectToReopen();
+      notifyProjectOpenFailed();
       return false;
     }
 
@@ -375,7 +375,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           Disposer.dispose(project[0]);
           project[0] = null;
         }
-        updateLastProjectToReopen();
+        notifyProjectOpenFailed();
       }
 
       if (io[0] != null) throw io[0];
@@ -399,8 +399,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
   }
 
-  private static void updateLastProjectToReopen() {
-    RecentProjectsManager.getInstance().updateLastProjectPath();
+  private static void notifyProjectOpenFailed() {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
   }
 
   private void registerExternalProjectFileListener(VirtualFileManagerEx virtualFileManager) {

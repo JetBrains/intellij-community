@@ -10,12 +10,11 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
+import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -32,8 +31,9 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
   @NonNls
   private static final String ELEMENT_PROJECT = "project";
 
-  public RecentProjectsManager(ProjectManager projectManager) {
+  public RecentProjectsManager(ProjectManager projectManager, MessageBus messageBus) {
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
+    messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new MyAppLifecycleListener());
   }
 
   public static RecentProjectsManager getInstance() {
@@ -218,6 +218,33 @@ public class RecentProjectsManager implements ApplicationComponent, JDOMExternal
 
     public void actionPerformed(AnActionEvent e) {
       ProjectUtil.openProject(myProjectPath, PlatformDataKeys.PROJECT.getData(e.getDataContext()), false);
+    }
+  }
+
+  private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {
+    public void appFrameCreated(@NotNull final Ref<Boolean> willOpenProject) {
+      if (GeneralSettings.getInstance().isReopenLastProject() && getLastProjectPath() != null) {
+        willOpenProject.set(Boolean.TRUE);
+      }
+    }
+
+    public void appStarting(final Project projectFromCommandLine) {
+      if (projectFromCommandLine != null) return;
+      GeneralSettings generalSettings = GeneralSettings.getInstance();
+      if (generalSettings.isReopenLastProject()) {
+        String lastProjectPath = getLastProjectPath();
+        if (lastProjectPath != null) {
+          ProjectUtil.openProject(lastProjectPath, null, false);
+        }
+      }
+    }
+
+    public void projectFrameClosed() {
+      updateLastProjectPath();
+    }
+
+    public void projectOpenFailed() {
+      updateLastProjectPath();
     }
   }
 }
