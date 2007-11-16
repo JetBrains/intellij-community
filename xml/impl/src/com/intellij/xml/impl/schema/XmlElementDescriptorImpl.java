@@ -367,7 +367,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
            ) {
           return element;
         } else if ((namespace == null || namespace.length() == 0) &&
-                   element.getDefaultName().equals(localName)) {
+                   element.getDefaultName().equals(fullName)) {
           return element;
         } else {
           final XmlNSDescriptor descriptor = context instanceof XmlTag? ((XmlTag)context).getNSDescriptor(namespace, true) : null;
