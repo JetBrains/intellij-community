@@ -14,6 +14,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaLanguage;
@@ -960,7 +961,7 @@ public class HighlightUtil {
   }
 
   static String buildProblemWithStaticDescription(PsiElement refElement) {
-    String type = StdLanguages.JAVA.getFindUsagesProvider().getType(refElement);
+    String type = LanguageFindUsages.INSTANCE.forLanguage(StdLanguages.JAVA).getType(refElement);
     String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
     return JavaErrorMessages.message("non.static.symbol.referenced.from.static.context", type, name);
   }

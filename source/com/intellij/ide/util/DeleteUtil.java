@@ -2,6 +2,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -129,7 +130,7 @@ public class DeleteUtil {
       }
       else if (elementToDelete instanceof PsiNamedElement) {
         objName[0] = ((PsiNamedElement) elementToDelete).getName();
-        objName[1] = elementToDelete.getLanguage().getFindUsagesProvider().getType(elementToDelete);
+        objName[1] = LanguageFindUsages.INSTANCE.forLanguage(elementToDelete.getLanguage()).getType(elementToDelete);
         customElements++;
       }
     }

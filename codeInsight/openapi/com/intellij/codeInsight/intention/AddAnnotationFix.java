@@ -22,6 +22,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -61,7 +62,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     if (myModifierListOwner instanceof PsiNamedElement) {
       final String name = ((PsiNamedElement)myModifierListOwner).getName();
       if (name != null) {
-        FindUsagesProvider provider = myModifierListOwner.getLanguage().getFindUsagesProvider();
+        FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(myModifierListOwner.getLanguage());
         return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.element.as", provider.getType(myModifierListOwner), name, shortName);
       }
     }

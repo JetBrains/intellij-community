@@ -10,7 +10,6 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -59,11 +58,6 @@ public class JavaLanguage extends Language {
 
   public Commenter getCommenter() {
     return new JavaCommenter();
-  }
-
-  @NotNull
-  public FindUsagesProvider getFindUsagesProvider() {
-    return new JavaFindUsagesProvider();
   }
 
   @NotNull

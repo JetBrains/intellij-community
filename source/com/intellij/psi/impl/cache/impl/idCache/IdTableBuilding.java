@@ -11,6 +11,7 @@ import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -237,7 +238,7 @@ public class IdTableBuilding {
     final SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, virtualFile);
     if (fileType instanceof LanguageFileType) {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
-      final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
+      final FindUsagesProvider findUsagesProvider = LanguageFindUsages.INSTANCE.forLanguage(lang);
       WordsScanner scanner = findUsagesProvider == null ? null : findUsagesProvider.getWordsScanner();
       if (scanner == null) {
         scanner = new SimpleWordsScanner();

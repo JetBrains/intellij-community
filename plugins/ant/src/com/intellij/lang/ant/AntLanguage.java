@@ -8,8 +8,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.config.impl.configuration.AntStructureViewTreeModel;
 import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.usages.AntUsagesProvider;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +17,6 @@ public class AntLanguage extends Language {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.AntLanguage");
   private final Language myXmlLanguage;
-  private AntUsagesProvider myUsagesProvider;
 
   public AntLanguage() {
     super("ANT");
@@ -31,14 +28,6 @@ public class AntLanguage extends Language {
   @Nullable
   public Commenter getCommenter() {
     return myXmlLanguage.getCommenter();
-  }
-
-  @NotNull
-  public FindUsagesProvider getFindUsagesProvider() {
-    if (myUsagesProvider == null) {
-      myUsagesProvider = new AntUsagesProvider();
-    }
-    return myUsagesProvider;
   }
 
   public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {

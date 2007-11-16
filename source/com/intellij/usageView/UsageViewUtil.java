@@ -4,6 +4,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -51,7 +52,7 @@ public class UsageViewUtil {
       return ((XmlAttributeValue)element).getValue();
     }
     else if (element != null) {
-      FindUsagesProvider provider = element.getLanguage().getFindUsagesProvider();
+      FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage());
       return provider.getNodeText(element, useFullName);
     }
 
@@ -202,7 +203,7 @@ public class UsageViewUtil {
     }
 
     final Language lang = psiElement.getLanguage();
-    FindUsagesProvider provider = lang.getFindUsagesProvider();
+    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
     final String type = provider.getType(psiElement);
     if (StringUtil.isNotEmpty(type)) {
       return type;
@@ -229,7 +230,7 @@ public class UsageViewUtil {
     }
 
     final Language lang = psiElement.getLanguage();
-    FindUsagesProvider provider = lang.getFindUsagesProvider();
+    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
     return provider.getDescriptiveName(psiElement);
   }
 

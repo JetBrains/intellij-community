@@ -17,7 +17,6 @@ package com.intellij.lang;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.diagnostic.Logger;
@@ -137,19 +136,6 @@ public abstract class Language {
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(this);
     if (parserDefinition != null) return parserDefinition.getCommentTokens();
     return TokenSet.EMPTY;
-  }
-
-  /**
-   * Override this method to provide find usages capability for the elements of your language
-   * For this functionality to work properly {@link ParserDefinition} implementation is necessary.
-   * <p/>
-   * Default implementation returns mock find usages provider uncapable to search anything.
-   *
-   * @return <code>FindUsagesProvider</code> interface implementation for this particular language.
-   */
-  @NotNull
-  public FindUsagesProvider getFindUsagesProvider() {
-    return EMPTY_FIND_USAGES_PROVIDER;
   }
 
   /**

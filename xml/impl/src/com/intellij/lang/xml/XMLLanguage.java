@@ -10,7 +10,6 @@ import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.extensions.Extensions;
@@ -44,7 +43,6 @@ public class XMLLanguage extends CompositeLanguage {
   private FoldingBuilder myFoldingBuilder;
   protected static final CDATAOnAnyEncodedPolicy CDATA_ON_ANY_ENCODED_POLICY = new CDATAOnAnyEncodedPolicy();
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
-  private XmlFindUsagesProvider myXmlFindUsagesProvider;
 
   public XMLLanguage() {
     this("XML", "text/xml");
@@ -63,12 +61,6 @@ public class XMLLanguage extends CompositeLanguage {
 
   public XmlPsiPolicy getPsiPolicy() {
     return CDATA_ON_ANY_ENCODED_POLICY;
-  }
-
-  @NotNull
-  public FindUsagesProvider getFindUsagesProvider() {
-    if (myXmlFindUsagesProvider == null) myXmlFindUsagesProvider = new XmlFindUsagesProvider();
-    return myXmlFindUsagesProvider;
   }
 
   public Commenter getCommenter() {

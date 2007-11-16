@@ -38,6 +38,7 @@ import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +113,7 @@ public class FindUsagesManager implements JDOMExternalizable {
         if (element instanceof PsiFile) {
           if (((PsiFile)element).getVirtualFile() == null) return null;
         }
-        else if (!element.getLanguage().getFindUsagesProvider().canFindUsagesFor(element)) {
+        else if (!LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).canFindUsagesFor(element)) {
           return null;
         }
 
@@ -621,7 +622,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public static String getHelpID(PsiElement element) {
-    return element.getLanguage().getFindUsagesProvider().getHelpId(element);
+    return LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).getHelpId(element);
   }
 
   private void addToHistory(final List<? extends PsiElement> elements, final FindUsagesOptions findUsagesOptions) {

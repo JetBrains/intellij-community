@@ -4,8 +4,6 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
-import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.structureView.PropertiesFileStructureViewComponent;
@@ -52,11 +50,6 @@ public class PropertiesLanguage extends Language {
         return new PropertiesFileStructureViewComponent(project, (PropertiesFile)psiFile, fileEditor);
       }
     };
-  }
-
-  @NotNull
-  public FindUsagesProvider getFindUsagesProvider() {
-    return new PropertiesFindUsagesProvider();
   }
 
   public Commenter getCommenter() {

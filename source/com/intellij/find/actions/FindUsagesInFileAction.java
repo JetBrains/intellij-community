@@ -3,6 +3,7 @@ package com.intellij.find.actions;
 import com.intellij.CommonBundle;
 import com.intellij.find.FindBundle;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -58,7 +59,7 @@ public class FindUsagesInFileAction extends AnAction {
     if (editor != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
-      return file != null && !(file.getLanguage().getFindUsagesProvider() instanceof EmptyFindUsagesProvider);
+      return file != null && !(LanguageFindUsages.INSTANCE.forLanguage(file.getLanguage()) instanceof EmptyFindUsagesProvider);
     }
     else {
       UsageTarget[] target = (UsageTarget[])dataContext.getData(UsageView.USAGE_TARGETS);
