@@ -41,7 +41,11 @@ public class AccessorReferencesSearcher implements QueryExecutor<PsiReference, M
     final String propertyName = getPropertyName(method);
     if (propertyName == null) return true;
 
-    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(searchParameters.getScope());
+    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(new Computable<SearchScope>() {
+      public SearchScope compute() {
+        return searchParameters.getScope();
+      }
+    });
 
     final PsiSearchHelper helper = PsiManager.getInstance(method.getProject()).getSearchHelper();
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {

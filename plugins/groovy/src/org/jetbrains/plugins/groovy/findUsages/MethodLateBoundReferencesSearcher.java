@@ -41,7 +41,11 @@ public class MethodLateBoundReferencesSearcher implements QueryExecutor<PsiRefer
     final PsiElement element = params.getMethod();
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod) element;
-      SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(params.getScope().intersectWith(getUseScopeInReadAction(method)));
+      SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(new Computable<SearchScope>() {
+        public SearchScope compute() {
+          return params.getScope().intersectWith(getUseScopeInReadAction(method));
+        }
+      });
 
       final String name = method.getName();
 

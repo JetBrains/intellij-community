@@ -245,9 +245,10 @@ public class PsiUtil {
     return expression.getType();
   }
 
-  public static SearchScope restrictScopeToGroovyFiles(final SearchScope originalScope) {
+  public static SearchScope restrictScopeToGroovyFiles(final Computable<SearchScope> originalScopeComputation) { //important to compute originalSearchScope in read action!
     return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       public SearchScope compute() {
+        final SearchScope originalScope = originalScopeComputation.compute();
         if (originalScope instanceof GlobalSearchScope) {
           return GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope) originalScope, GroovyFileType.GROOVY_FILE_TYPE, GspFileType.GSP_FILE_TYPE);
         }
