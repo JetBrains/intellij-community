@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
@@ -77,8 +78,9 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
       }
     }
     
-    if (parent instanceof GrGspDeclarationHolder) {
-      return ((GrGspDeclarationHolder) parent).getContainingClass();
+    final PsiFile file = getContainingFile();
+    if (file instanceof GroovyFileBase) {
+      return ((GroovyFileBase) file).getScriptClass();
     }
 
     return null;

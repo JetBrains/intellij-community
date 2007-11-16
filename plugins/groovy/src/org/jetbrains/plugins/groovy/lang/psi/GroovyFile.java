@@ -32,8 +32,5 @@ public interface GroovyFile extends GroovyFileBase {
 
   GrPackageDefinition getPackageDefinition();
 
-  @Nullable
-  PsiClass getScriptClass();
-
   void setPackageDefinition(String packageName);
 }

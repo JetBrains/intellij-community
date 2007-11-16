@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -59,4 +60,7 @@ public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDec
   GrStatement addStatement(GrStatement statement, GrStatement anchor) throws IncorrectOperationException;
 
   boolean isScript();
+
+  @Nullable
+  PsiClass getScriptClass();
 }

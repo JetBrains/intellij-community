@@ -31,11 +31,11 @@ import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHold
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -386,8 +386,10 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
       }
     }
 
-    if (parent instanceof GrGspDeclarationHolder) {
-      return ((GrGspDeclarationHolder) parent).getContainingClass();
+
+    final PsiFile file = getContainingFile();
+    if (file instanceof GroovyFileBase) {
+      return ((GroovyFileBase) file).getScriptClass();
     }
 
     return null;
