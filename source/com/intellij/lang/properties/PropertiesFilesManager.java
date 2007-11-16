@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
 
 /**
  * @author max
@@ -57,6 +60,13 @@ public class PropertiesFilesManager implements ApplicationComponent {
         fileChanged(file, null);
       }
     };
+    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+      public void propertyChange(final PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals(EditorSettingsExternalizable.PROP_NATIVE2ASCII)) {
+          encodingChanged();
+        }
+      }
+    });
   }
 
   private void removeOldFile(final VirtualFileEvent event) {

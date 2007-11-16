@@ -1,6 +1,5 @@
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -15,6 +14,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 
 public class EditorSettingsExternalizable implements NamedJDOMExternalizable, ExportableApplicationComponent, Cloneable {
@@ -57,6 +58,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   }
 
   private OptionSet myOptions = new OptionSet();
+  private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private int myBlockIndent;
   //private int myTabSize = 4;
@@ -83,6 +85,16 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
   public void disposeComponent() {
   }
+
+  public void addPropertyChangeListener(PropertyChangeListener listener){
+    myPropertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  public void removePropertyChangeListener(PropertyChangeListener listener){
+    myPropertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  @NonNls public static final String PROP_NATIVE2ASCII = "native2ascii";
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(myOptions, element);
@@ -304,7 +316,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   public void setNative2AsciiForPropertiesFiles(boolean value) {
     if (myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES != value) {
       myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES = value;
-      PropertiesFilesManager.getInstance().encodingChanged();
+      myPropertyChangeSupport.firePropertyChange(PROP_NATIVE2ASCII, !value, value);
     }
   }
   public String getDefaultPropertiesCharsetName() {
