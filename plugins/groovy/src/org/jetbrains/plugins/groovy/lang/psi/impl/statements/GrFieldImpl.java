@@ -57,12 +57,6 @@ public class GrFieldImpl extends GrVariableImpl implements GrField, PsiMetaOwner
     return "Field";
   }
 
-/*
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitField(this);
-  }
-*/
-
   public void setInitializer(@Nullable PsiExpression psiExpression) throws IncorrectOperationException {
   }
 
