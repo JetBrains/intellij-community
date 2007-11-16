@@ -38,7 +38,7 @@ public class IdRefReference extends BasicAttributeValueReference {
     if (attribute == null) {
       attribute = tag.getAttribute(IdReferenceProvider.STYLE_ID_ATTR_NAME, null);
     }
-    return attribute.getValueElement();
+    return attribute != null ? attribute.getValueElement():null;
   }
 
   protected static String getIdValue(final XmlTag subTag) {
