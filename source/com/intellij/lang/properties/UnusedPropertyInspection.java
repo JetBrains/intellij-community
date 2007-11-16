@@ -6,8 +6,7 @@ import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
+import com.intellij.concurrency.JobUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -16,7 +15,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -26,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,40 +64,30 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
 
-    final Job<?> job = JobScheduler.getInstance().createJob("Searching properties usages", Job.DEFAULT_PRIORITY); // TODO: Better name, handle priority
-    for (final Property property : properties) {
-      job.addTask(new Runnable() {
-        public void run() {
-          if (original != null) {
-            original.checkCanceled();
-            original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
-          }
-
-          final PsiReference usage = ReferencesSearch.search(property, searchScope, false).findFirst();
-          if (usage == null) {
-            final ASTNode propertyNode = property.getNode();
-            assert propertyNode != null;
-
-            ASTNode[] nodes = propertyNode.getChildren(null);
-            PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
-            String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
-            ProblemDescriptor descriptor = manager.createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-            synchronized (descriptors) {
-              descriptors.add(descriptor);
+        JobUtil.invokeConcurrentlyForAll(properties, new Processor<Property>() {
+          public boolean process(final Property property) {
+            if (original != null) {
+              original.checkCanceled();
+              original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
             }
+
+            final PsiReference usage = ReferencesSearch.search(property, searchScope, false).findFirst();
+            if (usage == null) {
+              final ASTNode propertyNode = property.getNode();
+              assert propertyNode != null;
+
+              ASTNode[] nodes = propertyNode.getChildren(null);
+              PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
+              String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
+              ProblemDescriptor descriptor = manager
+                .createProblemDescriptor(key, description, RemovePropertyLocalFix.INSTANCE, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+              synchronized (descriptors) {
+                descriptors.add(descriptor);
+              }
+            }
+            return true;
           }
-        }
-      });
-    }
-    try {
-      job.scheduleAndWaitForResults();
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
+        }, "Searching properties usages");
       }
     }, progress);
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);

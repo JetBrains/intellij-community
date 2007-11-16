@@ -8,11 +8,10 @@ import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
+import com.intellij.concurrency.JobUtil;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -33,6 +32,7 @@ import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
@@ -169,37 +169,30 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     final ProgressIndicator progress = original == null ? null : new ProgressWrapper(original);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        final Job<?> job = JobScheduler.getInstance().createJob("Searching properties usages", Job.DEFAULT_PRIORITY); // TODO: Better name, handle priority
-
-        for (final Property property : properties) {
-          job.addTask(new Runnable(){
-            public void run() {
-              if (original != null) {
-                original.checkCanceled();
-                original.setText2(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
-              }
-              processTextUsages(processedValueToFiles, property.getValue(), processedKeyToFiles, searchHelper, scope);
-              processTextUsages(processedKeyToFiles, property.getUnescapedKey(), processedValueToFiles, searchHelper, scope);
+        JobUtil.invokeConcurrentlyForAll(properties, new Processor<Property>() {
+          public boolean process(final Property property) {
+            if (original != null) {
+              original.checkCanceled();
+              original.setText2(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
             }
-          });
-        }
-        try {
-          job.scheduleAndWaitForResults();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+            processTextUsages(processedValueToFiles, property.getValue(), processedKeyToFiles, searchHelper, scope);
+            processTextUsages(processedKeyToFiles, property.getUnescapedKey(), processedValueToFiles, searchHelper, scope);
+            return true;
+          }
+        }, "Searching properties usages");
 
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
-        Map<String, Set<String> > keyToDifferentValues = new HashMap<String, Set<String>>();
-        if (CHECK_DUPLICATE_KEYS || CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) prepareDuplicateKeysByFile(processedKeyToFiles, manager, keyToDifferentValues, problemDescriptors, file, original);
+        Map<String, Set<String>> keyToDifferentValues = new HashMap<String, Set<String>>();
+        if (CHECK_DUPLICATE_KEYS || CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) {
+          prepareDuplicateKeysByFile(processedKeyToFiles, manager, keyToDifferentValues, problemDescriptors, file, original);
+        }
         if (CHECK_DUPLICATE_VALUES) prepareDuplicateValuesByFile(processedValueToFiles, manager, problemDescriptors, file, original);
-        if (CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) processDuplicateKeysWithDifferentValues(keyToDifferentValues, processedKeyToFiles, problemDescriptors, manager, file, original);
+        if (CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES) {
+          processDuplicateKeysWithDifferentValues(keyToDifferentValues, processedKeyToFiles, problemDescriptors, manager, file, original);
+        }
         if (!problemDescriptors.isEmpty()) {
-          addProblemElement(getRefManager().getReference(file), problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]));
+          addProblemElement(getRefManager().getReference(file),
+                            problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]));
         }
       }
     }, progress);

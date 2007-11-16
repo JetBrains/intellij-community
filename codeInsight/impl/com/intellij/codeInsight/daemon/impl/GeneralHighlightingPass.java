@@ -47,6 +47,8 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.SmartList;
+import com.intellij.util.Processor;
+import com.intellij.concurrency.JobUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -173,7 +175,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
             result.addAll(collectHighlights(elements, highlightVisitors));
             result.addAll(highlightTodos());
-            addInjectedPsiHighlights(elements, refCountHolder, myInjectedPsiHighlights);
+            addInjectedPsiHighlights(elements, refCountHolder);
           }
         }
       };
@@ -203,8 +205,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myMarkers = lineMarkers;
   }
 
-  private void addInjectedPsiHighlights(final List<PsiElement> elements, RefCountHolder refCountHolder,
-                                        Map<TextRange, Collection<HighlightInfo>> result) {
+  private void addInjectedPsiHighlights(final List<PsiElement> elements, final RefCountHolder refCountHolder) {
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(getDocument());
     Collection<PsiElement> hosts = new THashSet<PsiElement>(elements.size() + injected.size());
 
@@ -231,22 +232,27 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }, false);
     }
     if (injectedFiles.isEmpty()) return;
-    AnnotationHolderImpl annotationHolder = createAnnotationHolder();
-    for (PsiFile injectedPsi : injectedFiles) {
-      highlightInjectedIn(injectedPsi, annotationHolder, refCountHolder);
-      DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
-      for (Annotation annotation : annotationHolder) {
-        HighlightInfo highlightInfo = HighlightUtil.convertToHighlightInfo(annotation);
-        TextRange textRange = documentWindow.getHostRange(highlightInfo.startOffset);
-        Collection<HighlightInfo> infos = result.get(textRange);
-        if (infos == null) {
-          infos = new ArrayList<HighlightInfo>();
-          result.put(textRange, infos);
+
+    JobUtil.invokeConcurrentlyForAll(injectedFiles, new Processor<PsiFile>() {
+      public boolean process(final PsiFile injectedPsi) {
+        AnnotationHolderImpl annotationHolder = createAnnotationHolder();
+        highlightInjectedIn(injectedPsi, annotationHolder, refCountHolder);
+        DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
+        for (Annotation annotation : annotationHolder) {
+          HighlightInfo highlightInfo = HighlightUtil.convertToHighlightInfo(annotation);
+          TextRange textRange = documentWindow.getHostRange(highlightInfo.startOffset);
+          synchronized (myInjectedPsiHighlights) {
+            Collection<HighlightInfo> infos = myInjectedPsiHighlights.get(textRange);
+            if (infos == null) {
+              infos = new SmartList<HighlightInfo>();
+              myInjectedPsiHighlights.put(textRange, infos);
+            }
+            infos.add(highlightInfo);
+          }
         }
-        infos.add(highlightInfo);
+        return true;
       }
-      annotationHolder.clear();
-    }
+    }, "Highlight injected language fragments");
   }
 
   private static void highlightInjectedIn(PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final RefCountHolder refCountHolder) {

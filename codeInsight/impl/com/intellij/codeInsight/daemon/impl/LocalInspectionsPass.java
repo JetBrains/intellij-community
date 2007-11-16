@@ -11,6 +11,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.lang.Language;
@@ -32,7 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedPsiInspectionUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author max
@@ -55,7 +57,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   @NotNull private List<ProblemDescriptor> myDescriptors = Collections.emptyList();
   @NotNull private List<HighlightInfoType> myLevels = Collections.emptyList();
   @NotNull private List<LocalInspectionTool> myTools = Collections.emptyList();
-  @NotNull private List<InjectedPsiInspectionUtil.InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
+  @NotNull private List<InjectedPsiInspectionResult> myInjectedPsiInspectionResults = Collections.emptyList();
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.inspection");
   private volatile List<HighlightInfo> myInfos = Collections.emptyList();
   static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
@@ -127,7 +129,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myInjectedPsiInspectionResults.size(); i++) {
-      InjectedPsiInspectionUtil.InjectedPsiInspectionResult result = myInjectedPsiInspectionResults.get(i);
+      InjectedPsiInspectionResult result = myInjectedPsiInspectionResults.get(i);
       LocalInspectionTool tool = result.tool;
       HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
 
@@ -170,59 +172,46 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     final Job<?> job = JobScheduler.getInstance().createJob("Inspection tools", Job.DEFAULT_PRIORITY); // TODO: Better name, handle priority
 
-    for (final LocalInspectionTool tool : tools) {
-      job.addTask(new Runnable() {
-        public void run() {
-          if (progress != null) {
-            if (progress.isCanceled()) {
-              job.cancel();
-              return;
-            }
-          }
-
-          final ProgressManager progressManager = ProgressManager.getInstance();
-          ((ProgressManagerImpl)progressManager).executeProcessUnderProgress(new Runnable(){
-            public void run() {
-              ApplicationManager.getApplication().assertReadAccessAllowed();
-
-              ProblemsHolder holder = new ProblemsHolder(iManager);
-              try {
-                progressManager.checkCanceled();
-                PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
-                if(elementVisitor == null) {
-                  LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
-                }
-                for (PsiElement element : elements) {
-                  progressManager.checkCanceled();
-                  element.accept(elementVisitor);
-                }
-                advanceProgress(elements.length);
-
-                if (holder.hasResults()) {
-                  appendDescriptors(holder.getResults(), tool);
-                }
-              }
-              catch (ProcessCanceledException e) {
-                job.cancel();
-              }
-            }
-          },progress);
-        }
-      });
-    }
-
     setProgressLimit(1L * tools.length * elements.length);
 
-    try {
-      job.scheduleAndWaitForResults();
-      if (job.isCanceled()) return;
-    }
-    catch (ProcessCanceledException e) {
-      return;
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-    }
+    JobUtil.invokeConcurrentlyForAll(tools, new Processor<LocalInspectionTool>() {
+      public boolean process(final LocalInspectionTool tool) {
+        if (progress != null) {
+          if (progress.isCanceled()) {
+            return false;
+          }
+        }
+
+        final ProgressManager progressManager = ProgressManager.getInstance();
+        ((ProgressManagerImpl)progressManager).executeProcessUnderProgress(new Runnable(){
+          public void run() {
+            ApplicationManager.getApplication().assertReadAccessAllowed();
+
+            ProblemsHolder holder = new ProblemsHolder(iManager);
+            try {
+              progressManager.checkCanceled();
+              PsiElementVisitor elementVisitor = tool.buildVisitor(holder, isOnTheFly);
+              if(elementVisitor == null) {
+                LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
+              }
+              for (PsiElement element : elements) {
+                progressManager.checkCanceled();
+                element.accept(elementVisitor);
+              }
+              advanceProgress(elements.length);
+
+              if (holder.hasResults()) {
+                appendDescriptors(holder.getResults(), tool);
+              }
+            }
+            catch (ProcessCanceledException e) {
+              job.cancel();
+            }
+          }
+        },progress);
+        return true;
+      }
+    }, "Inspection tools");
 
     inspectInjectedPsi(elements, tools);
 
@@ -231,20 +220,22 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     addHighlightsFromInjectedPsiProblems(myInfos);
   }
 
-  void inspectInjectedPsi(final PsiElement[] elements, LocalInspectionTool[] tools) {
-    myInjectedPsiInspectionResults = new SmartList<InjectedPsiInspectionUtil.InjectedPsiInspectionResult>();
+  void inspectInjectedPsi(final PsiElement[] elements, final LocalInspectionTool[] tools) {
+    myInjectedPsiInspectionResults = new CopyOnWriteArrayList<InjectedPsiInspectionResult>();
     final Set<PsiFile> injected = new THashSet<PsiFile>();
-    PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        injected.add(injectedPsi);
-      }
-    };
     for (PsiElement element : elements) {
-      InjectedLanguageUtil.enumerate(element, myFile, injectedPsiVisitor, false);
+      InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+          injected.add(injectedPsi);
+        }
+      }, false);
     }
-    for (PsiFile injectedPsi : injected) {
-      InjectedPsiInspectionUtil.inspectInjectedPsi(injectedPsi, myInjectedPsiInspectionResults, tools);
-    }
+    JobUtil.invokeConcurrentlyForAll(injected, new Processor<PsiFile>() {
+      public boolean process(final PsiFile injectedPsi) {
+        inspectInjectedPsi(injectedPsi, myInjectedPsiInspectionResults, tools);
+        return true;
+      }
+    }, "Inspect injected fragments");
   }
 
   //for tests only
@@ -337,7 +328,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myInjectedPsiInspectionResults.size(); i++) {
-      InjectedPsiInspectionUtil.InjectedPsiInspectionResult result = myInjectedPsiInspectionResults.get(i);
+      InjectedPsiInspectionResult result = myInjectedPsiInspectionResults.get(i);
       LocalInspectionTool tool = result.tool;
       HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName())).getSeverity();
 
@@ -446,5 +437,37 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   LocalInspectionTool[] getInspectionTools(InspectionProfileWrapper profile) {
     return profile.getHighlightingLocalInspectionTools();
+  }
+
+  private static void inspectInjectedPsi(PsiFile injectedPsi, List<InjectedPsiInspectionResult> result, LocalInspectionTool[] tools) {
+    InspectionManager inspectionManager = InspectionManager.getInstance(injectedPsi.getProject());
+    final ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager);
+    for (LocalInspectionTool tool : tools) {
+      final PsiElementVisitor visitor = tool.buildVisitor(problemsHolder, true);
+      assert !(visitor instanceof PsiRecursiveElementVisitor) : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
+      injectedPsi.accept(new PsiRecursiveElementVisitor() {
+        public void visitElement(PsiElement element) {
+          element.accept(visitor);
+          super.visitElement(element);
+        }
+      });
+      List<ProblemDescriptor> problems = problemsHolder.getResults();
+      if (problems != null && !problems.isEmpty()) {
+        InjectedPsiInspectionResult res = new InjectedPsiInspectionResult(tool, injectedPsi, new SmartList<ProblemDescriptor>(problems));
+        result.add(res);
+      }
+    }
+  }
+
+  public static class InjectedPsiInspectionResult {
+    public final LocalInspectionTool tool;
+    public final PsiElement injectedPsi;
+    public final List<ProblemDescriptor> foundProblems;
+
+    public InjectedPsiInspectionResult(final LocalInspectionTool tool, final PsiElement injectedPsi, final List<ProblemDescriptor> foundProblems) {
+      this.tool = tool;
+      this.injectedPsi = injectedPsi;
+      this.foundProblems = foundProblems;
+    }
   }
 }

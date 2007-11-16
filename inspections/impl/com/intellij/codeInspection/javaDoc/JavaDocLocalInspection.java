@@ -70,8 +70,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
 
   public static class Options implements JDOMExternalizable {
-    public String ACCESS_JAVADOC_REQUIRED_FOR = NONE;
-    public String REQUIRED_TAGS = "";
+    @NonNls public String ACCESS_JAVADOC_REQUIRED_FOR = NONE;
+    @NonNls public String REQUIRED_TAGS = "";
 
     public Options() {
     }

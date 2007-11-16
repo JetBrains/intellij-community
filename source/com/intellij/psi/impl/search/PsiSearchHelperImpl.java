@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.search;
 
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
+import com.intellij.concurrency.JobUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.Application;
@@ -527,59 +526,50 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       final AtomicInteger counter = new AtomicInteger(0);
       final AtomicBoolean canceled = new AtomicBoolean(false);
-      final Job<?> processFilesJob =
-        JobScheduler.getInstance().createJob("Process usages in files", Job.DEFAULT_PRIORITY); // TODO: Better name
-      for (final PsiFile file : files) {
-        if (file instanceof PsiBinaryFile) continue;
+      final AtomicBoolean pceThrown = new AtomicBoolean(false);
 
-        processFilesJob.addTask(new Runnable() {
-          public void run() {
-            ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
-              public void run() {
-                ApplicationManager.getApplication().runReadAction(new Runnable() {
-                  public void run() {
-                    try {
-                      PsiElement[] psiRoots = file.getPsiRoots();
-                      Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
-                      for (PsiElement psiRoot : psiRoots) {
-                        ProgressManager.getInstance().checkCanceled();
-                        if (!processed.add(psiRoot)) continue;
-                        if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, false)) {
-                          processFilesJob.cancel();
-                          return;
-                        }
+      boolean completed = JobUtil.invokeConcurrentlyForAll(files, new Processor<PsiFile>() {
+        public boolean process(final PsiFile file) {
+          if (file instanceof PsiBinaryFile) return true;
+
+          ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+            public void run() {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                public void run() {
+                  try {
+                    PsiElement[] psiRoots = file.getPsiRoots();
+                    Set<PsiElement> processed = new HashSet<PsiElement>(psiRoots.length * 2, (float)0.5);
+                    for (PsiElement psiRoot : psiRoots) {
+                      ProgressManager.getInstance().checkCanceled();
+                      if (!processed.add(psiRoot)) continue;
+                      if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, false)) {
+                        canceled.set(true);
+                        return;
                       }
-                      if (progress != null) {
-                        double fraction = (double)counter.incrementAndGet() / files.length;
-                        progress.setFraction(fraction);
-                      }
-                      myManager.dropResolveCaches();
                     }
-                    catch (ProcessCanceledException e) {
-                      processFilesJob.cancel();
-                      canceled.set(true);
+                    if (progress != null) {
+                      double fraction = (double)counter.incrementAndGet() / files.length;
+                      progress.setFraction(fraction);
                     }
+                    myManager.dropResolveCaches();
                   }
-                });
-              }
-            }, progress);
-          }
-        });
-      }
+                  catch (ProcessCanceledException e) {
+                    canceled.set(true);
+                    pceThrown.set(true);
+                  }
+                }
+              });
+            }
+          }, progress);
+          return !canceled.get();
+        }
+      }, "Process usages in files");
 
-      try {
-        processFilesJob.scheduleAndWaitForResults();
-      }
-      catch (Throwable throwable) {
-        LOG.error(throwable);
-        return false;
-      }
-
-      if (canceled.get()) {
+      if (pceThrown.get()) {
         throw new ProcessCanceledException();
       }
 
-      return !processFilesJob.isCanceled();
+      return completed;
     }
     finally {
       if (progress != null) {
