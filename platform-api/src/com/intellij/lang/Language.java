@@ -126,4 +126,17 @@ public abstract class Language {
   public Language getBaseLanguage() {
     return myBaseLanguage;
   }
+
+  public final boolean is(Language another) {
+    return this == another;
+  }
+
+  public final boolean isKindOf(Language another) {
+    Language l = this;
+    while (l != null) {
+      if (l.is(another)) return true;
+      l = l.getBaseLanguage();
+    }
+    return false;
+  }
 }
