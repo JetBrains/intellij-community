@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
@@ -207,7 +208,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         result = method.getParameterList().getParameters()[0].getType();
       } else {
-        result = method.getReturnType();
+        if (method instanceof AccessorMethod) {
+          result = ((AccessorMethod) method).getReturnTypeGroovy();
+        } else {
+          result = method.getReturnType();
+        }
       }
     } else if (resolved instanceof GrReferenceExpression) {
       PsiElement parent = resolved.getParent();

@@ -60,6 +60,12 @@ public class AccessorMethod extends LightElement implements PsiMethod {
   }
 
   @Nullable
+  public PsiType getReturnTypeGroovy() {
+    if (myIsSetter) return PsiType.VOID;
+    return myProperty.getTypeGroovy();
+  }
+
+  @Nullable
   public PsiTypeElement getReturnTypeElement() {
     return null;
   }
