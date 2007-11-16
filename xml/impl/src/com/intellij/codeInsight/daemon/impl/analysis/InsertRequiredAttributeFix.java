@@ -63,7 +63,7 @@ public class InsertRequiredAttributeFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return true;
+    return myTag.isValid();
   }
 
   public void invoke(final Project project, final Editor editor, PsiFile file) {
