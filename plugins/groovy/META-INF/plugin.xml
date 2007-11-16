@@ -103,6 +103,18 @@
             text="Grails Views" description="Generate Grails Views">
       <add-to-group group-id="GenerateGroup" anchor="last"/>
     </action>
+    <action id="Grails.GenerateController" class="org.jetbrains.plugins.grails.actions.GenerateControllerAction"
+            text="Grails Controller" description="Generate Grails Controller">
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
+    </action>
+    <action id="Grails.GenerateTests" class="org.jetbrains.plugins.grails.actions.GenerateTestsAction"
+            text="Grails Tests" description="Create Tests">
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
+    </action>
+    <action id="Grails.GenerateControllerTests" class="org.jetbrains.plugins.grails.actions.GenerateControllerTestsAction"
+            text="Grails Controller Tests" description="Create Controller Tests">
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
+    </action>
     <group id="Groovy" class="org.jetbrains.plugins.groovy.actions.GroovyGroup"
            text="Groovy">
       <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewClassAction"
