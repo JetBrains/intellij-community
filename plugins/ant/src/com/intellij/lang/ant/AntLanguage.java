@@ -3,7 +3,6 @@ package com.intellij.lang.ant;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.config.impl.configuration.AntStructureViewTreeModel;
@@ -11,23 +10,14 @@ import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class AntLanguage extends Language {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.AntLanguage");
-  private final Language myXmlLanguage;
 
   public AntLanguage() {
     super("ANT");
-    myXmlLanguage = StdLanguages.XML;
-    LOG.assertTrue(myXmlLanguage != null, "AntLanguage should be created after XmlLanguage has created.");
     StdLanguages.ANT = this;
-  }
-
-  @Nullable
-  public Commenter getCommenter() {
-    return myXmlLanguage.getCommenter();
   }
 
   public StructureViewBuilder getStructureViewBuilder(PsiFile psiFile) {

@@ -117,7 +117,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     if (psiAtOffset != null && psiAtOffset.getTextOffset() < caretOffset) {
       ASTNode token = psiAtOffset.getNode();
       final Language language = psiAtOffset.getLanguage();
-      final Commenter languageCommenter = language.getCommenter();
+      final Commenter languageCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
       final CodeDocumentationAwareCommenter commenter = languageCommenter instanceof CodeDocumentationAwareCommenter
                                                         ? (CodeDocumentationAwareCommenter)languageCommenter:null;
       final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile());
@@ -446,7 +446,7 @@ public class EnterHandler extends EditorWriteActionHandler {
         if (offset < 0) offset = 0;
         int lineStart = CharArrayUtil.shiftForward(chars, offset, " \t");
 
-        final Commenter langCommenter = PsiUtil.getLanguageAtOffset(myFile, offset).getCommenter();
+        final Commenter langCommenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtil.getLanguageAtOffset(myFile, offset));
         final boolean isInsideJavalikeCode = langCommenter instanceof CodeDocumentationAwareCommenter;
         final CodeDocumentationAwareCommenter commenter = isInsideJavalikeCode ? (CodeDocumentationAwareCommenter)langCommenter:null;
 

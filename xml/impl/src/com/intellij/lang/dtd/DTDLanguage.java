@@ -5,10 +5,8 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
-import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
-import com.intellij.lang.xml.XmlCommenter;
 import com.intellij.lang.xml.XmlFoldingBuilder;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -34,10 +32,6 @@ public class DTDLanguage extends Language {
         return new XmlFileHighlighter(true);
       }
     });
-  }
-
-  public Commenter getCommenter() {
-    return new XmlCommenter();
   }
 
   @Nullable

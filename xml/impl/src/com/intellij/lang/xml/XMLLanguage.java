@@ -63,10 +63,6 @@ public class XMLLanguage extends CompositeLanguage {
     return CDATA_ON_ANY_ENCODED_POLICY;
   }
 
-  public Commenter getCommenter() {
-    return new XmlCommenter();
-  }
-
   @NotNull
   public TokenSet getReadableTextContainerElements() {
     return TokenSet.orSet(super.getReadableTextContainerElements(), TokenSet.create(XmlElementType.XML_CDATA,

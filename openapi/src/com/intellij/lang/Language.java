@@ -113,18 +113,6 @@ public abstract class Language {
   }
 
   /**
-   * Override this method to provide comment-by-block and/or comment-by-line actions implementations for your language.
-   * For this functionality to work properly {@link ParserDefinition} implementation is necessary.
-   *
-   * @return <code>Commenter</code> interface implementation for this particular language or <code>null</code>
-   *         if no auto-commenting capabilities provided.
-   */
-  @Nullable
-  public Commenter getCommenter() {
-    return null;
-  }
-
-  /**
    * Word completion feature related method. It supposed to return token types of the places where word completion should be enabled.
    * Default implementation delegates to parser definition and returns comment tokens so words completion is enabled in comments
    * if parser definition is implemented.

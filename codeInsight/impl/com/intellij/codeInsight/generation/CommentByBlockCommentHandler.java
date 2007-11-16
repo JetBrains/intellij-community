@@ -8,6 +8,7 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -172,10 +173,10 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     final LanguageDialect languageDialect = file.getLanguageDialect();
     if (languageDialect != null) lang = languageDialect;
 
-    if (lang.getCommenter() == null) {
+    if (LanguageCommenters.INSTANCE.forLanguage(lang) == null) {
       lang = file.getLanguage();
     }
-    return lang.getCommenter();
+    return LanguageCommenters.INSTANCE.forLanguage(lang);
   }
 
   static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file, Language lang) {

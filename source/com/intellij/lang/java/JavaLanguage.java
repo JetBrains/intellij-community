@@ -8,7 +8,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
-import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -54,10 +53,6 @@ public class JavaLanguage extends Language {
         return new JavaFileHighlighter(languageLevel);
       }
     });
-  }
-
-  public Commenter getCommenter() {
-    return new JavaCommenter();
   }
 
   @NotNull

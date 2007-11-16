@@ -6,6 +6,7 @@ import com.intellij.codeInsight.generation.CommentByBlockCommentHandler;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.Commenter;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,7 @@ public class CommentByBlockCommentAction extends BaseCodeInsightAction {
 
     final Language lang = file.getLanguage();
     if (lang == null) return false;
-    final Commenter commenter = lang.getCommenter();
+    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(lang);
     if (commenter == null) return false;
     return commenter.getBlockCommentPrefix() != null && commenter.getBlockCommentSuffix() != null;
   }

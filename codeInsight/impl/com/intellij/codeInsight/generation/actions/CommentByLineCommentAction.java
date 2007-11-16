@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.lang.LanguageCommenters;
 
 public class CommentByLineCommentAction extends BaseCodeInsightAction {
   public CommentByLineCommentAction() {
@@ -23,6 +24,6 @@ public class CommentByLineCommentAction extends BaseCodeInsightAction {
     if (fileType instanceof CustomFileType) {
       return ((CustomFileType)fileType).getCommenter() != null;
     }
-    return file.getLanguage().getCommenter() != null;
+    return LanguageCommenters.INSTANCE.forLanguage(file.getLanguage()) != null;
   }
 }

@@ -2,7 +2,6 @@ package com.intellij.lang.properties;
 
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -50,9 +49,5 @@ public class PropertiesLanguage extends Language {
         return new PropertiesFileStructureViewComponent(project, (PropertiesFile)psiFile, fileEditor);
       }
     };
-  }
-
-  public Commenter getCommenter() {
-    return new PropertiesCommenter();
   }
 }

@@ -5,8 +5,7 @@
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.lang.CodeDocumentationAwareCommenter;
-import com.intellij.lang.LangBundle;
+import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.module.Module;
@@ -388,7 +387,8 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
       final StringBuffer buffer = new StringBuffer();
       final Project project = parentElement.getProject();
       final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-      final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)parentElement.getLanguage().getCommenter();
+      final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
+        .forLanguage(parentElement.getLanguage());
 
       for (PsiParameter parameter : parameters) {
 

@@ -22,6 +22,7 @@
     <lang.namesValidator language="ANT" implementationClass="com.intellij.lang.ant.AntNamesValidator"/>
     <lang.parserDefinition language="ANT" implementationClass="com.intellij.lang.ant.AntParserDefinition"/>
     <lang.findUsagesProvider language="ANT" implementationClass="com.intellij.lang.ant.psi.usages.AntUsagesProvider"/>
+    <lang.commenter language="ANT" implementationClass="com.intellij.lang.xml.XmlCommenter"/>
   </extensions>
 
   <application-components>

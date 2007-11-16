@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.*;
@@ -137,11 +138,12 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     final Language languageSuitableForCompleteFragment = CommentByBlockCommentHandler.evaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
       myDocument.getCharsSequence(), myDocument.getLineEndOffset(myLine2), " \t\n"), myFile, languageAtStart);
 
-    Commenter blockSuitableCommenter = languageSuitableForCompleteFragment != languageAtStart ? languageSuitableForCompleteFragment.getCommenter(): null;
-    if (blockSuitableCommenter == null && languageAtStart.getCommenter() == null) {
+    Commenter blockSuitableCommenter = languageSuitableForCompleteFragment != languageAtStart ? LanguageCommenters.INSTANCE
+      .forLanguage(languageSuitableForCompleteFragment) : null;
+    if (blockSuitableCommenter == null && LanguageCommenters.INSTANCE.forLanguage(languageAtStart) == null) {
       Language language = myFile.getLanguageDialect();
       if (language == null) language = myFile.getLanguage();
-      blockSuitableCommenter = language.getCommenter();
+      blockSuitableCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
     }
 
     if (blockSuitableCommenter == null && myFile.getFileType() instanceof CustomFileType) {
@@ -269,7 +271,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     int offset = myDocument.getLineStartOffset(line);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
     Language language = PsiUtil.getLanguageAtOffset(myFile, offset);
-    return language.getCommenter();
+    return LanguageCommenters.INSTANCE.forLanguage(language);
   }
 
   private Indent computeMinIndent(int line1, int line2, CharSequence chars, CodeStyleManager codeStyleManager, FileType fileType) {
