@@ -86,7 +86,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     if(fileType instanceof LanguageFileType){
       final Language language = ((LanguageFileType)fileType).getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-      FileViewProvider viewProvider = language.createViewProvider(virtualFile, myManager, physical);
+      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
+      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
       if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(language);
@@ -123,7 +124,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     if(fileType instanceof LanguageFileType){
       final Language language = ((LanguageFileType)fileType).getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-      FileViewProvider viewProvider = language.createViewProvider(virtualFile, myManager, physical);
+      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
+      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
       if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(targetLanguage);

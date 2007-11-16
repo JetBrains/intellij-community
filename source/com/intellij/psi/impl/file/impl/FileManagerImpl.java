@@ -140,7 +140,8 @@ public class FileManagerImpl implements FileManager {
     final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
       final LanguageFileType languageFileType = (LanguageFileType)fileType;
-      viewProvider = languageFileType.getLanguage().createViewProvider(file, myManager, true);
+      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(languageFileType.getLanguage());
+      viewProvider = factory != null ? factory.createFileViewProvider(file, languageFileType.getLanguage(), myManager, true) : null;
     }
     if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, file);
     return viewProvider;

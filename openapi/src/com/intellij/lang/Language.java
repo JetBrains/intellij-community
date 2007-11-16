@@ -18,10 +18,7 @@ package com.intellij.lang;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -141,11 +138,6 @@ public abstract class Language {
 
   public void associateFileType(FileType type) {
     myFileType = type;
-  }
-
-  @Nullable
-  public FileViewProvider createViewProvider(final VirtualFile file, final PsiManager manager, final boolean physical) {
-    return null;
   }
 
   @Nullable

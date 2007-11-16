@@ -12,11 +12,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
@@ -104,13 +100,5 @@ public class XMLLanguage extends CompositeLanguage {
       }
     }
     return null;
-  }
-
-  public FileViewProvider createViewProvider(final VirtualFile file, final PsiManager manager, final boolean physical) {
-    if (SingleRootFileViewProvider.isTooLarge(file)) {
-      return new SingleRootFileViewProvider(manager, file, physical);
-    }
-
-    return new XmlFileViewProvider(manager, file, physical, this);
   }
 }
