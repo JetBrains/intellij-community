@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,7 @@ public class MakePublicFix extends BaseFix {
   @NotNull
   public String getName() {
     return DevKitBundle.message("inspections.registration.problems.quickfix.make.public",
-            myElement.getLanguage().getFindUsagesProvider().getType(myElement));
+            LanguageFindUsages.INSTANCE.forLanguage(myElement.getLanguage()).getType(myElement));
   }
 
   protected void doFix(Project project, ProblemDescriptor descriptor, boolean external) throws IncorrectOperationException {
