@@ -28,13 +28,13 @@ public class DiffSideView {
     MOCK_COMPONENT.setFocusable(true);
   }
 
-  private static final DiffHighliterFactory DUMMY_HIGHLIGHTER_FACTORY = new DiffHighliterFactoryImpl(null, null);
+  private static final DiffHighlighterFactory DUMMY_HIGHLIGHTER_FACTORY = new DiffHighlighterFactoryImpl(null, null);
   private final LabeledEditor myPanel = new LabeledEditor();
 
   private final DiffSidesContainer myContainer;
   private final CurrentLineMarker myLineMarker = new CurrentLineMarker();
 
-  private DiffHighliterFactory myHighlighterFactory = DUMMY_HIGHLIGHTER_FACTORY;
+  private DiffHighlighterFactory myHighlighterFactory = DUMMY_HIGHLIGHTER_FACTORY;
   private EditorSource myEditorSource = EditorSource.NULL;
   private boolean myIsMaster = false;
   private String myTitle;
@@ -71,7 +71,7 @@ public class DiffSideView {
     myPanel.setComponent(component, myTitle);
   }
 
-  public void setHighlighterFactory(DiffHighliterFactory highlighterFactory) {
+  public void setHighlighterFactory(DiffHighlighterFactory highlighterFactory) {
     myHighlighterFactory = highlighterFactory;
     applyHighlighter();
   }

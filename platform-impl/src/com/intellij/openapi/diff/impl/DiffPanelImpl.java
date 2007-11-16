@@ -108,8 +108,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.requestScrollEditors();
   }
 
-  private DiffHighliterFactory createHighlighter(FileType contentType, Project project) {
-    return new DiffHighliterFactoryImpl(contentType, project);
+  private DiffHighlighterFactory createHighlighter(FileType contentType, Project project) {
+    return new DiffHighlighterFactoryImpl(contentType, project);
   }
 
   void rediff() {
