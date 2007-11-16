@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.injected.editor.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,6 +18,7 @@ public class StringLiteralEscaper extends LiteralTextEscaper<PsiLiteralExpressio
   }
 
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
+    ProperTextRange.assertProperRange(rangeInsideHost);
     String hostText = myHost.getText();
     outSourceOffsets = new int[myHost.getTextLength()+1];
     int originalLength = outChars.length();

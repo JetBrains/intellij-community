@@ -69,7 +69,7 @@ public class InjectedLanguageUtil {
   }
 
   public static TextRange toTextRange(RangeMarker marker) {
-    return new TextRange(marker.getStartOffset(), marker.getEndOffset());
+    return new ProperTextRange(marker.getStartOffset(), marker.getEndOffset());
   }
 
   public static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> getHighlightTokens(PsiFile file) {
@@ -91,7 +91,7 @@ public class InjectedLanguageUtil {
     int prevHostsCombinedLength = 0;
     nextToken:
     for (IElementType tokenType = lexer.getTokenType(); tokenType != null; lexer.advance(), tokenType = lexer.getTokenType()) {
-      TextRange range = new TextRange(lexer.getTokenStart(), lexer.getTokenEnd());
+      TextRange range = new ProperTextRange(lexer.getTokenStart(), lexer.getTokenEnd());
       while (!range.isEmpty()) {
         if (range.getStartOffset() >= shreds.get(hostNum).range.getEndOffset()) {
           hostNum++;
@@ -101,7 +101,7 @@ public class InjectedLanguageUtil {
         if (editable == null || editable.getLength() == 0) continue nextToken;
         editable = editable.intersection(shreds.get(hostNum).range);
         if (editable == null || editable.getLength() == 0) continue nextToken;
-        range = new TextRange(editable.getEndOffset(), range.getEndOffset());
+        range = new ProperTextRange(editable.getEndOffset(), range.getEndOffset());
         PsiLanguageInjectionHost host = shreds.get(hostNum).host;
         LiteralTextEscaper<PsiLanguageInjectionHost> escaper = escapers.get(hostNum);
         TextRange rangeInsideHost = shreds.get(hostNum).getRangeInsideHost();
@@ -110,12 +110,12 @@ public class InjectedLanguageUtil {
         int end = escaper.getOffsetInHost(editable.getEndOffset() - prevHostsCombinedLength - prefixLength, rangeInsideHost);
         if (end == -1) {
           end = rangeInsideHost.getEndOffset();
-          tokens.add(Trinity.create(tokenType, host, new TextRange(start, end)));
+          tokens.add(Trinity.<IElementType, PsiLanguageInjectionHost, TextRange>create(tokenType, host, new ProperTextRange(start, end)));
           prevHostsCombinedLength = shreds.get(hostNum).range.getEndOffset();
-          range = new TextRange(shreds.get(hostNum).range.getEndOffset(), range.getEndOffset());
+          range = new ProperTextRange(shreds.get(hostNum).range.getEndOffset(), range.getEndOffset());
         }
         else {
-          TextRange rangeInHost = new TextRange(start, end);
+          TextRange rangeInHost = new ProperTextRange(start, end);
           tokens.add(Trinity.create(tokenType, host, rangeInHost));
         }
       }
@@ -235,7 +235,7 @@ public class InjectedLanguageUtil {
       LeafElement prevElement;
       String prevElementTail;
       int prevHostsCombinedLength = 0;
-      TextRange shredHostRange = TextRange.from(shreds.get(0).prefix.length(), shreds.get(0).getRangeInsideHost().getLength());
+      TextRange shredHostRange = new ProperTextRange(TextRange.from(shreds.get(0).prefix.length(), shreds.get(0).getRangeInsideHost().getLength()));
       TextRange rangeInsideHost = shreds.get(currentHostNum).getRangeInsideHost();
       String hostText = shreds.get(currentHostNum).host.getText();
       PsiLanguageInjectionHost.Shred shred = shreds.get(currentHostNum);
@@ -311,7 +311,7 @@ public class InjectedLanguageUtil {
         currentHostNum++;
         prevHostsCombinedLength = startOffset;
         shred = shreds.get(currentHostNum);
-        shredHostRange = TextRange.from(shred.prefix.length(), shred.getRangeInsideHost().getLength());
+        shredHostRange = new ProperTextRange(TextRange.from(shred.prefix.length(), shred.getRangeInsideHost().getLength()));
         rangeInsideHost = shred.getRangeInsideHost();
         hostText = shred.host.getText();
       }
@@ -562,6 +562,7 @@ public class InjectedLanguageUtil {
                                          @NonNls @Nullable String suffix,
                                          @NotNull PsiLanguageInjectionHost host,
                                          @NotNull TextRange rangeInsideHost) {
+        ProperTextRange.assertProperRange(rangeInsideHost);
         if (!host.getTextRange().contains(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()))) {
           clear();
           throw new IllegalArgumentException("rangeInsideHost must lie within host text range. rangeInsideHost:"+rangeInsideHost+"; host textRange:"+host.getTextRange());
@@ -598,7 +599,7 @@ public class InjectedLanguageUtil {
         RangeMarker relevantMarker = myHostDocument.createRangeMarker(relevantRangeInHost);
         relevantMarker.setGreedyToLeft(true);
         relevantMarker.setGreedyToRight(true);
-        shreds.add(new PsiLanguageInjectionHost.Shred(host, relevantMarker, prefix, suffix, new TextRange(startOffset, endOffset)));
+        shreds.add(new PsiLanguageInjectionHost.Shred(host, relevantMarker, prefix, suffix, new ProperTextRange(startOffset, endOffset)));
         return this;
       }
 
@@ -766,10 +767,10 @@ public class InjectedLanguageUtil {
     injected.add(documentWindow);
     List<RangeMarker> injectedRegions = getCachedInjectedRegions(hostDocument);
     RangeMarker newMarker = documentWindow.getHostRanges()[0];
-    TextRange newRange = new TextRange(newMarker.getStartOffset(), newMarker.getEndOffset());
+    TextRange newRange = toTextRange(newMarker);
     for (int i = 0; i < injectedRegions.size(); i++) {
       RangeMarker stored = injectedRegions.get(i);
-      TextRange storedRange = new TextRange(stored.getStartOffset(), stored.getEndOffset());
+      TextRange storedRange = toTextRange(stored);
       if (storedRange.intersects(newRange)) {
         injectedRegions.set(i, newMarker);
         break;

@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.injected.editor.ProperTextRange;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.injected.editor.VirtualFileWindowImpl;
 import com.intellij.lang.Language;
@@ -215,12 +216,13 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
   }
 
   public TextRange injectedToHost(@NotNull PsiElement element, @NotNull TextRange textRange) {
+    ProperTextRange.assertProperRange(textRange);
     PsiFile file = element.getContainingFile();
     if (file == null) return textRange;
     Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(file);
     if (!(document instanceof DocumentWindowImpl)) return textRange;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
-    return documentWindow.injectedToHost(textRange);
+    return documentWindow.injectedToHost(new ProperTextRange(textRange));
   }
 
   private final ConcurrentMap<Class, MultiHostInjector[]> injectors = new ConcurrentHashMap<Class, MultiHostInjector[]>();
@@ -372,6 +374,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
       InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
         public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost, @NonNls @Nullable String prefix, @NonNls @Nullable String suffix) {
+          ProperTextRange.assertProperRange(rangeInsideHost);
           injectionPlacesRegistrar
             .startInjecting(language)
             .addPlace(prefix, suffix, host, rangeInsideHost)

@@ -4,6 +4,7 @@ import com.intellij.psi.impl.source.xml.XmlAttributeValueImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.injected.editor.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,6 +19,7 @@ public class XmlAttributeLiteralEscaper extends LiteralTextEscaper<XmlAttributeV
   }
 
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
+    ProperTextRange.assertProperRange(rangeInsideHost);
     TextRange valueTextRange = myXmlAttribute.getValueTextRange();
     int startInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getStartOffset() - valueTextRange.getStartOffset());
     int endInDecoded = myXmlAttribute.physicalToDisplay(rangeInsideHost.getEndOffset() - valueTextRange.getStartOffset());

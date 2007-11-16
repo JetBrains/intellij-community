@@ -4,6 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
+import com.intellij.injected.editor.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,6 +16,7 @@ public class CommentLiteralEscaper extends LiteralTextEscaper<PsiCommentImpl> {
   }
 
   public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
+    ProperTextRange.assertProperRange(rangeInsideHost);
     outChars.append(myHost.getText(), rangeInsideHost.getStartOffset(), rangeInsideHost.getEndOffset());
     return true;
   }

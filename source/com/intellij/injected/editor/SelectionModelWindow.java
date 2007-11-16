@@ -43,7 +43,7 @@ public class SelectionModelWindow implements SelectionModel {
   }
 
   public void setSelection(final int startOffset, final int endOffset) {
-    TextRange hostRange = myDocument.injectedToHost(new TextRange(startOffset, endOffset));
+    TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
     myHostModel.setSelection(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
 
