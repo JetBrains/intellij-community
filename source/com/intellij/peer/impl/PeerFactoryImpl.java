@@ -3,7 +3,6 @@ package com.intellij.peer.impl;
 import com.intellij.execution.runners.ProcessProxyFactory;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -23,6 +22,7 @@ import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -326,6 +326,6 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public EditorHighlighter createEditorHighlighter(final SyntaxHighlighter syntaxHighlighter, final EditorColorsScheme colors) {
-    return HighlighterFactory.createHighlighter(syntaxHighlighter, colors);
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(syntaxHighlighter, colors);
   }
 }

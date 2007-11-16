@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,8 +25,7 @@ public class HighlighterFactory {
   }
 
   public static EditorHighlighter createHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme settings) {
-    if (highlighter == null) highlighter = new PlainSyntaxHighlighter();
-    return new LexerEditorHighlighter(highlighter, settings);
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(highlighter, settings);
   }
 
   public static EditorHighlighter createXMLHighlighter(EditorColorsScheme settings){

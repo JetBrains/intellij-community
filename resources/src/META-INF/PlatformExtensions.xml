@@ -59,6 +59,8 @@
                       serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapGroupFactory"
                       serviceImplementation="com.intellij.openapi.keymap.impl.KeymapGroupFactoryImpl"/>
+  <applicationService serviceInterface="com.intellij.openapi.editor.highlighter.EditorHighlighterFactory"
+                      serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
   
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>

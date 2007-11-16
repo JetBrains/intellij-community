@@ -15,16 +15,12 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,20 +61,7 @@ public abstract class LanguageFileType implements FileType{
   public EditorHighlighter getEditorHighlighter(@Nullable Project project,
                                                 @Nullable final VirtualFile virtualFile,
                                                 @NotNull EditorColorsScheme colors) {
-    return PeerFactory.getInstance().createEditorHighlighter(SyntaxHighlighter.PROVIDER.create(this, project, virtualFile), colors);
-  }
-
-  /**
-   * Returns the structure view builder for the specified file.
-   * 
-   * @param file The file for which the structure view builder is requested.
-   * @param project The project to which the file belongs.
-   * @return The structure view builder, or null if no structure view is available for the file.
-   */
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    return psiFile == null ?  null : LanguageStructureViewBuilder.INSTANCE.forLanguage(myLanguage).getStructureViewBuilder(psiFile);
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(SyntaxHighlighter.PROVIDER.create(this, project, virtualFile), colors);
   }
 
   public final boolean isBinary() {

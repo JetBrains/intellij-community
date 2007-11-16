@@ -31,15 +31,11 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Language;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PlainTextFileType extends LanguageFileType {
   private static final Language ourLanguage = new PlainTextLanguage();
