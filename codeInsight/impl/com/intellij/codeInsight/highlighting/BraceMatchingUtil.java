@@ -4,6 +4,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
+import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -213,7 +214,7 @@ public class BraceMatchingUtil {
     }
 
     private static boolean isLBraceToken(final IElementType tokenType) {
-      PairedBraceMatcher matcher = tokenType.getLanguage().getPairedBraceMatcher();
+      PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
       if (matcher != null) {
         BracePair[] pairs = matcher.getPairs();
         for (BracePair pair : pairs) {
@@ -236,7 +237,7 @@ public class BraceMatchingUtil {
 
     public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
       final IElementType tokenType = getToken(iterator);
-      PairedBraceMatcher matcher = tokenType.getLanguage().getPairedBraceMatcher();
+      PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
       if (matcher != null) {
         BracePair[] pairs = matcher.getPairs();
         for (BracePair pair : pairs) {
@@ -285,7 +286,7 @@ public class BraceMatchingUtil {
     public boolean isStructuralBrace(HighlighterIterator iterator,CharSequence text, FileType fileType) {
       IElementType tokenType = getToken(iterator);
 
-      PairedBraceMatcher matcher = tokenType.getLanguage().getPairedBraceMatcher();
+      PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
       if (matcher != null) {
         BracePair[] pairs = matcher.getPairs();
         for (BracePair pair : pairs) {
@@ -806,7 +807,7 @@ public class BraceMatchingUtil {
     if (braceMatcher==null) {
       if (fileType instanceof LanguageFileType) {
         final Language language = ((LanguageFileType)fileType).getLanguage();
-        final PairedBraceMatcher matcher = language.getPairedBraceMatcher();
+        final PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(language);
         if (matcher != null) {
           braceMatcher = new PairedBraceMatcherAdapter(matcher,language);
         }

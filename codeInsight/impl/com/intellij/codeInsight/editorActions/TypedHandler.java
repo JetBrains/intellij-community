@@ -6,6 +6,7 @@ import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
 import com.intellij.lang.PairedBraceMatcher;
+import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -704,7 +705,7 @@ public class TypedHandler implements TypedActionHandler {
       IElementType braceTokenType = braceChar == '{' ? JavaTokenType.LBRACE:JavaTokenType.RBRACE;
 
       final Language language = element.getLanguage();
-      final PairedBraceMatcher matcher = language.getPairedBraceMatcher();
+      final PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(language);
       
       if (matcher != null) {
         final BracePair[] pairs = matcher.getPairs();

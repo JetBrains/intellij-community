@@ -21,7 +21,6 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -97,18 +96,6 @@ public abstract class Language {
    */
   @Nullable
   public FoldingBuilder getFoldingBuilder() {
-    return null;
-  }
-
-  /**
-   * Override this method to provide paired brace matching and highlighting ability for editors of the language.
-   * For this functionality to work properly own {@link SyntaxHighlighter} implementation is necessary.
-   *
-   * @return <code>PairedBraceMatcher</code> interface implementation for this particular language or <code>null</code>
-   *         if no brace matching capabilities provided.
-   */
-  @Nullable
-  public PairedBraceMatcher getPairedBraceMatcher() {
     return null;
   }
 
