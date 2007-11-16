@@ -19,8 +19,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.tools.Tool;
-import com.intellij.tools.ToolManager;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -37,8 +35,6 @@ public class ActionsTreeUtil {
   private static final Icon MAIN_MENU_ICON = IconLoader.getIcon("/nodes/keymapMainMenu.png");
   private static final Icon EDITOR_ICON = IconLoader.getIcon("/nodes/keymapEditor.png");
   private static final Icon EDITOR_OPEN_ICON = IconLoader.getIcon("/nodes/keymapEditorOpen.png");
-  private static final Icon TOOLS_ICON = IconLoader.getIcon("/nodes/keymapTools.png");
-  private static final Icon TOOLS_OPEN_ICON = IconLoader.getIcon("/nodes/keymapToolsOpen.png");
   private static final Icon OTHER_ICON = IconLoader.getIcon("/nodes/keymapOther.png");
   public static final String EDITOR_TAB_POPUP = KeyMapBundle.message("editor.tab.popup.menu.title");
   public static final String FAVORITES_POPUP = KeyMapBundle.message("favorites.popup.title");
@@ -217,44 +213,6 @@ public class ActionsTreeUtil {
   }
 
 
-  private static Group createExternalToolsGroup(Condition<AnAction> filtered) {
-    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    String[] ids = actionManager.getActionIds(Tool.ACTION_ID_PREFIX);
-    Arrays.sort(ids);
-    Group group = new Group(KeyMapBundle.message("actions.tree.external.tools.group"), TOOLS_ICON, TOOLS_OPEN_ICON);
-
-    ToolManager toolManager = ToolManager.getInstance();
-
-    HashMap<String, Group> toolGroupNameToGroup = new HashMap<String, Group>();
-
-    for (String id : ids) {
-      if (filtered != null && !filtered.value(actionManager.getActionOrStub(id))) continue;
-      String groupName = toolManager.getGroupByActionId(id);
-
-      if (groupName != null && groupName.trim().length() == 0) {
-        groupName = null;
-      }
-
-      Group subGroup = toolGroupNameToGroup.get(groupName);
-      if (subGroup == null) {
-        subGroup = new Group(groupName, null, null);
-        toolGroupNameToGroup.put(groupName, subGroup);
-        if (groupName != null) {
-          group.addGroup(subGroup);
-        }
-      }
-
-      subGroup.addActionId(id);
-    }
-
-    Group subGroup = toolGroupNameToGroup.get(null);
-    if (subGroup != null) {
-      group.addAll(subGroup);
-    }
-
-    return group;
-  }
-
   private static Group createOtherGroup(Condition<AnAction> filtered, Group addedActions, final Keymap keymap) {
     addedActions.initIds();
     ArrayList<String> result = new ArrayList<String>();
@@ -375,7 +333,6 @@ public class ActionsTreeUtil {
     for (KeymapExtension extension : Extensions.getExtensions(KeymapExtension.EXTENSION_POINT_NAME)) {
       mainGroup.addGroup(createExtensionGroup(filtered, project, extension));
     }
-    mainGroup.addGroup(createExternalToolsGroup(filtered));
     mainGroup.addGroup(createMacrosGroup(filtered));
     mainGroup.addGroup(createQuickListsGroup(filtered, filter, forceFiltering, quickLists));
     mainGroup.addGroup(createOtherGroup(filtered, mainGroup, keymap));
