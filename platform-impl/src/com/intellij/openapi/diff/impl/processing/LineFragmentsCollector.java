@@ -4,6 +4,7 @@ import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.ArrayList;
 
@@ -39,14 +40,9 @@ class LineFragmentsCollector {
   }
 
   private static int countLines(String text) {
-    if (text == null) return 0;
-    int count = 0;
-    char[] chars = text.toCharArray();
-    for (int i = 0; i < chars.length; i++) {
-      char aChar = chars[i];
-      if (aChar == '\n') count++;
-    }
-    if (chars[chars.length - 1] != '\n') count++;
+    if (text == null || text.length() == 0) return 0;
+    int count = StringUtil.countNewLines(text);
+    if (text.charAt(text.length()-1) != '\n') count++;
     return count;
   }
 

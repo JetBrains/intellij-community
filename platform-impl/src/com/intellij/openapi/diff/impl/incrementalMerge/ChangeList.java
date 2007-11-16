@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashSet;
 
 import java.util.*;
@@ -137,13 +138,7 @@ public class ChangeList {
 
     private int countLines(String text) {
       if (text == null) return 0;
-      char[] chars = text.toCharArray();
-      int counter = 0;
-      for (int i = 0; i < chars.length; i++) {
-        char aChar = chars[i];
-        if (aChar == '\n') counter++;
-      }
-      return counter;
+      return StringUtil.countNewLines(text);
     }
 
     protected Context getContext() {

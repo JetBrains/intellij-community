@@ -1223,4 +1223,17 @@ public class StringUtil {
 
     return result;
   }
+
+  public static int countNewLines(final CharSequence text) {
+    int lineShift = 0;
+
+    for(int i = 0; i < text.length(); ++i) {
+      final char ch = text.charAt(i);
+
+      if (ch == '\n') {
+        ++lineShift;
+      }
+    }
+    return lineShift;
+  }
 }

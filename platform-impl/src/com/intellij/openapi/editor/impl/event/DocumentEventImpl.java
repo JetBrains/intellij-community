@@ -3,14 +3,15 @@ package com.intellij.openapi.editor.impl.event;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
 import org.jetbrains.annotations.NotNull;
 
 public class DocumentEventImpl extends DocumentEvent {
   private final int myOffset;
-  private CharSequence myOldString;
+  private final CharSequence myOldString;
   private final int myOldLength;
-  private CharSequence myNewString;
+  private final CharSequence myNewString;
   private final int myNewLength;
 
   private boolean isOnlyOneLineChangedCalculated = false;
@@ -20,7 +21,7 @@ public class DocumentEventImpl extends DocumentEvent {
   private int myStartOldIndex;
 
   private final long myOldTimeStamp;
-  private boolean myIsWholeDocReplaced = false;
+  private final boolean myIsWholeDocReplaced;
   private Diff.Change myChange;
 
   private int myOptimizedLineShift = -1;
@@ -29,30 +30,37 @@ public class DocumentEventImpl extends DocumentEvent {
   private int myOptimizedOldLineShift = -1;
   private boolean myOptimizedOldLineShiftCalculated;
 
-  public DocumentEventImpl(Document document,
-                           int offset,
-                           CharSequence oldString,
-                           CharSequence newString,
-                           long oldTimeStamp) {
+  public DocumentEventImpl(Document document, int offset, CharSequence oldString, CharSequence newString, long oldTimeStamp) {
     super(document);
     myOffset = offset;
 
-    myOldString = oldString;
-    if(myOldString == null) myOldString = "";
+    myOldString = oldString == null ? "" : oldString;
     myOldLength = myOldString.length();
 
-    myNewString = newString;
-    if(myNewString == null) myNewString = "";
+    myNewString = newString == null ? "" : newString;
     myNewLength = myNewString.length();
 
     myOldTimeStamp = oldTimeStamp;
 
-    if(getDocument().getTextLength() == 0) {
+    if (getDocument().getTextLength() == 0) {
       isOnlyOneLineChangedCalculated = true;
       isOnlyOneLineChanged = false;
-    } else {
+      myIsWholeDocReplaced = false;
+    }
+    else {
       myIsWholeDocReplaced = offset == 0 && document.getTextLength() == myOldLength;
     }
+  }
+
+  public DocumentEventImpl(final Document document, int offset, int oldLength, int newLength) {
+    super(document);
+    myOffset = offset;
+    myOldLength = oldLength;
+    myNewLength = newLength;
+    myOldString = null;
+    myNewString = null;
+    myOldTimeStamp = 0;
+    myIsWholeDocReplaced = false;
   }
 
   public int getOffset() {
@@ -186,7 +194,7 @@ public class DocumentEventImpl extends DocumentEvent {
       myOptimizedLineShiftCalculated = true;
 
       if (myOldLength == 0) {
-        int lineShift = countNewLines(myNewString);
+        int lineShift = StringUtil.countNewLines(myNewString);
 
         myOptimizedLineShift = lineShift == 0 ? -1 : lineShift;
       }
@@ -194,25 +202,12 @@ public class DocumentEventImpl extends DocumentEvent {
     return myOptimizedLineShift;
   }
 
-  private static int countNewLines(final CharSequence newFragment) {
-    int lineShift = 0;
-
-    for(int i = 0; i < newFragment.length(); ++i) {
-      final char ch = newFragment.charAt(i);
-
-      if (ch == '\n') {
-        ++lineShift;
-      }
-    }
-    return lineShift;
-  }
-
   public int getOptimizedOldLineShift() {
     if (!myOptimizedOldLineShiftCalculated) {
       myOptimizedOldLineShiftCalculated = true;
 
       if (myNewLength == 0) {
-        int lineShift = countNewLines(myOldString);
+        int lineShift = StringUtil.countNewLines(myOldString);
 
         myOptimizedOldLineShift = lineShift == 0 ? -1 : lineShift;
       }

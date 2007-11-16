@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JScrollPane2;
 import com.intellij.util.Alarm;
@@ -966,11 +967,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static int countLineFeeds(CharSequence c) {
-    int count = 0;
-    for (int i = 0; i < c.length(); i++) {
-      if (c.charAt(i) == '\n') count++;
-    }
-    return count;
+    return StringUtil.countNewLines(c);
   }
 
   private void updateGutterSize() {
