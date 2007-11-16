@@ -204,7 +204,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         return manager.getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
       }
       PsiMethod method = (PsiMethod) resolved;
-      if (PropertyUtil.isSimplePropertySetter(method)) {
+      if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         result = method.getParameterList().getParameters()[0].getType();
       } else {
         result = method.getReturnType();
