@@ -7,10 +7,8 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewBuilderProvider;
 import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
-import com.intellij.lang.Commenter;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
-import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
@@ -40,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public class XMLLanguage extends CompositeLanguage {
-  private FoldingBuilder myFoldingBuilder;
   protected static final CDATAOnAnyEncodedPolicy CDATA_ON_ANY_ENCODED_POLICY = new CDATAOnAnyEncodedPolicy();
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
 
@@ -68,11 +65,6 @@ public class XMLLanguage extends CompositeLanguage {
     return TokenSet.orSet(super.getReadableTextContainerElements(), TokenSet.create(XmlElementType.XML_CDATA,
                                                                                     XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
                                                                                     XmlTokenType.XML_DATA_CHARACTERS));
-  }
-
-  public FoldingBuilder getFoldingBuilder() {
-    if (myFoldingBuilder == null) myFoldingBuilder = new XmlFoldingBuilder();
-    return myFoldingBuilder;
   }
 
   @Nullable

@@ -16,8 +16,6 @@
 package com.intellij.lang;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
-import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -50,7 +48,6 @@ public abstract class Language {
   private final String myID;
   private final String[] myMimeTypes;
   public static final Language ANY = new Language("", "") { };
-  private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
   private FileType myFileType;
 
@@ -86,18 +83,6 @@ public abstract class Language {
     return (T)ourRegisteredLanguages.get(klass);
   }
 
-
-  /**
-   * Override this method to provide code folding capabilities when editing files of this language.
-   * Please note {@link #getParserDefinition()} should return parser implementation for folding building to work properly.
-   *
-   * @return <code>FoldingBuilder</code> interface implementation for this particular language or <code>null</code>
-   *         if no folding capabilities provided.
-   */
-  @Nullable
-  public FoldingBuilder getFoldingBuilder() {
-    return null;
-  }
 
   /**
    * Word completion feature related method. It supposed to return token types of the places where word completion should be enabled.

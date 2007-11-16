@@ -4,6 +4,7 @@ import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.xml.XmlFoldingBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -41,7 +42,7 @@ class FoldingPolicy {
       }
     });
     final Language lang = file.getLanguage();
-    final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
+    final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
     if (foldingBuilder != null) {
       final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(file.getNode(), document);
       for (FoldingDescriptor descriptor : foldingDescriptors) {
@@ -200,7 +201,7 @@ class FoldingPolicy {
       return element.getTextRange();
     }
     if (element instanceof XmlTag) {
-      final FoldingBuilder foldingBuilder = element.getLanguage().getFoldingBuilder();
+      final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(element.getLanguage());
 
       if (foldingBuilder instanceof XmlFoldingBuilder) {
         return ((XmlFoldingBuilder)foldingBuilder).getRangeToFold(element);
@@ -242,7 +243,7 @@ class FoldingPolicy {
 
   public static String getFoldingText(PsiElement element) {
     final Language lang = element.getLanguage();
-    final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
+    final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
     if (foldingBuilder != null) {
       return foldingBuilder.getPlaceholderText(element.getNode());
     }
@@ -271,7 +272,7 @@ class FoldingPolicy {
 
   public static boolean isCollapseByDefault(PsiElement element) {
     final Language lang = element.getLanguage();
-    final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
+    final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
     if (foldingBuilder != null) {
       return foldingBuilder.isCollapsedByDefault(element.getNode());
     }

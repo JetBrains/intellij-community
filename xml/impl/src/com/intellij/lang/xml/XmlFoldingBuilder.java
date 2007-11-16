@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
@@ -98,7 +99,7 @@ public class XmlFoldingBuilder implements FoldingBuilder {
       } else {
         final Language language = child.getLanguage();
         if (!(language instanceof XMLLanguage) && language != Language.ANY) {
-          final FoldingBuilder foldingBuilder = language.getFoldingBuilder();
+          final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
 
           if (foldingBuilder != null) {
             final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(child.getNode(), document);
