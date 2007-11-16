@@ -34,7 +34,7 @@ public class ClassNameCompletionAction extends BaseCodeInsightAction {
     if (item == null) return false;
     
     final Object o = item.getObject();
-    return o instanceof PsiElement && isValidForFile(null, null, ((PsiElement)o).getContainingFile());    
+    return o instanceof PsiElement && ((PsiElement) o).isValid() && isValidForFile(null, null, ((PsiElement)o).getContainingFile());
   }
 
   protected boolean isValidForLookup() {
