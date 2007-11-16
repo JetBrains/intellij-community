@@ -19,7 +19,6 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.TreeTable;
@@ -316,11 +315,8 @@ public class PopupChooserBuilder {
 
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (dataId.equals(DataConstants.PSI_ELEMENT)){
-        final Object selectedValue = myList.getSelectedValue();
-        if (selectedValue instanceof PsiElement){
-          return selectedValue;
-        }
+      if (dataId.equals(DataConstants.SELECTED_ITEM)){
+        return myList.getSelectedValue();
       }
       return null;
     }

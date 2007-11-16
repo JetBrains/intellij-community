@@ -171,4 +171,6 @@ public interface DataConstants {
    * Returns com.intellij.openapi.editor.Editor even if foces currently is in find bar
    */
   @NonNls String EDITOR_EVEN_IF_INACTIVE = "editor.even.if.inactive";
+
+  @NonNls String SELECTED_ITEM = "selectedItem";
 }
