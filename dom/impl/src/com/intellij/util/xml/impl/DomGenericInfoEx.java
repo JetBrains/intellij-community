@@ -3,9 +3,11 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.JavaMethod;
-import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +31,11 @@ public abstract class DomGenericInfoEx implements DomGenericInfo {
                                                                final String qName) {
     for (final AbstractDomChildrenDescription description : getChildrenDescriptions()) {
       if (description instanceof DomChildDescriptionImpl && description instanceof AttributeChildDescriptionImpl == attribute) {
-        final EvaluatedXmlName xmlName = handler.createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName());
-        if (DomImplUtil.isNameSuitable(xmlName, localName, qName, namespace, handler)) {
+        final XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
+        if (attribute && StringUtil.isEmpty(namespace) && xmlName.getLocalName().equals(localName)) return description;
+
+        final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(xmlName);
+        if (DomImplUtil.isNameSuitable(evaluatedXmlName, localName, qName, namespace, handler)) {
           return description;
         }
       }
