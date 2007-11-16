@@ -28,7 +28,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     if (range == null) return result;
 
     final PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null) return result;
+    if (psiFile == null || psiFile instanceof PsiCompiledElement) return result;
 
     final String fileText = psiFile.getText();
     if (fileText == null) return result;
