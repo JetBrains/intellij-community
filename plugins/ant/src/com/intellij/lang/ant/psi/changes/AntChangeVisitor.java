@@ -79,6 +79,12 @@ public class AntChangeVisitor implements XmlChangeVisitor {
     if (element instanceof AntTypeDef) {
       ((AntTypeDef)element).clearClassesCache();
     }
+    else if (element instanceof AntMacroDef) {
+      file.unregisterCustomType(((AntMacroDef)element).getMacroDefinition());
+    }
+    else if (element instanceof AntPresetDef) {
+      file.unregisterCustomType(((AntPresetDef)element).getPresetDefinition());
+    }
     if (element != null) {
       do{
         element = element.getAntParent();

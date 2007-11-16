@@ -7,7 +7,6 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
@@ -136,17 +135,9 @@ public class AntMacroDefImpl extends AntTaskImpl implements AntMacroDef {
       myMacroDefinition.setIsTask(true);
       myMacroDefinition.setDefiningElement(this);
     }
-    final AntStructuredElement parent = getAntProject();
-    if (parent != null) {
-      parent.registerCustomType(myMacroDefinition);
-    }
-    // define itself as nested task for sequential
-    final AntAllTasksContainerImpl sequential = PsiTreeUtil.getChildOfType(this, AntAllTasksContainerImpl.class);
-    if (sequential != null) {
-      sequential.registerCustomType(myMacroDefinition);
-      for (final AntTypeId id : myMacroDefinition.getNestedElements()) {
-        sequential.registerCustomType(file.getBaseTypeDefinition(myMacroDefinition.getNestedClassName(id)));
-      }
+    final AntStructuredElement antProject = getAntProject();
+    if (antProject != null) {
+      antProject.registerCustomType(myMacroDefinition);
     }
   }
 }
