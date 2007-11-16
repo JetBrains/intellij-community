@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.util.treeView;
 
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.*;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -207,10 +207,10 @@ public class TreeState implements JDOMExternalizable {
         value = ((AbstractTreeNode)nodeDescriptor).getValue();
       }
 
-      if (value instanceof PsiElement && ((PsiElement) value).isValid()) {
-        // for PsiElements only since they define toString() correctly
+      if (value instanceof NavigationItem) {
         try {
-          return value.toString();
+          final String name = ((NavigationItem)value).getName();
+          return name != null ? name : value.toString();
         }
         catch (Exception e) {
           //ignore for invalid psi element
