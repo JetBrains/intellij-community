@@ -475,7 +475,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         commitNecessary = true;
       }
 
-      if (commitNecessary && ApplicationManager.getApplication().getCurrentWriteAction(PsiExternalChangeAction.class) != null){
+      if (commitNecessary && ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null){
         commitDocument(document);
       }
     }

@@ -773,7 +773,7 @@ public class FileManagerImpl implements FileManager {
       final VirtualFile vFile = event.getFile();
 
       ApplicationManager.getApplication().runWriteAction(
-        new PsiExternalChangeAction() {
+        new ExternalChangeAction() {
           public void run() {
             VirtualFile parent = vFile.getParent();
             PsiDirectory parentDir = parent == null ? null : myVFileToPsiDirMap.get(parent);
@@ -816,7 +816,7 @@ public class FileManagerImpl implements FileManager {
       if (parentDir == null) return; // do not notify listeners if parent directory was never accessed via PSI
 
       ApplicationManager.getApplication().runWriteAction(
-        new PsiExternalChangeAction() {
+        new ExternalChangeAction() {
           public void run() {
             if (!vFile.isDirectory()) {
               PsiFile psiFile = findFile(vFile);
@@ -856,7 +856,7 @@ public class FileManagerImpl implements FileManager {
         myVFileToViewProviderMap.remove(vFile);
 
         if (parentDir != null) {
-          ApplicationManager.getApplication().runWriteAction(new PsiExternalChangeAction() {
+          ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
             public void run() {
               PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
               treeEvent.setParent(parentDir);
@@ -872,7 +872,7 @@ public class FileManagerImpl implements FileManager {
           removeInvalidFilesAndDirs(false);
 
           if (parentDir != null) {
-            ApplicationManager.getApplication().runWriteAction(new PsiExternalChangeAction() {
+            ApplicationManager.getApplication().runWriteAction(new ExternalChangeAction() {
               public void run() {
                 PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
                 treeEvent.setParent(parentDir);
@@ -898,7 +898,7 @@ public class FileManagerImpl implements FileManager {
       if (parentDir == null) return; // do not notifyListeners event if parent directory was never accessed via PSI
 
       ApplicationManager.getApplication().runWriteAction(
-        new PsiExternalChangeAction() {
+        new ExternalChangeAction() {
           public void run() {
             PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
             treeEvent.setParent(parentDir);
@@ -1012,7 +1012,7 @@ public class FileManagerImpl implements FileManager {
       }
 
       ApplicationManager.getApplication().runWriteAction(
-        new PsiExternalChangeAction() {
+        new ExternalChangeAction() {
           public void run() {
             PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
             treeEvent.setParent(parentDir);
@@ -1103,7 +1103,7 @@ public class FileManagerImpl implements FileManager {
       if (myFileTypeManager.isFileIgnored(vFile.getName())) return;
 
       ApplicationManager.getApplication().runWriteAction(
-        new PsiExternalChangeAction() {
+        new ExternalChangeAction() {
           public void run() {
             PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
 
@@ -1173,7 +1173,7 @@ public class FileManagerImpl implements FileManager {
       if (oldElement == null && newElement == null) return;
 
       ApplicationManager.getApplication().runWriteAction(
-        new PsiExternalChangeAction() {
+        new ExternalChangeAction() {
           public void run() {
             PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
             if (oldElement != null) {
@@ -1250,7 +1250,7 @@ public class FileManagerImpl implements FileManager {
       if (!myInitialized) return;
       if (event.isCausedByFileTypesChange()) return;
       ApplicationManager.getApplication().runWriteAction(
-        new PsiExternalChangeAction() {
+        new ExternalChangeAction() {
           public void run() {
             depthCounter++;
             if (depthCounter > 1) return;
@@ -1277,7 +1277,7 @@ public class FileManagerImpl implements FileManager {
       }
       if (event.isCausedByFileTypesChange()) return;
       ApplicationManager.getApplication().runWriteAction(
-        new PsiExternalChangeAction() {
+        new ExternalChangeAction() {
           public void run() {
             depthCounter--;
             if (depthCounter > 0) return;
@@ -1321,7 +1321,7 @@ public class FileManagerImpl implements FileManager {
       final PsiFile psiFile = getCachedPsiFileInner(file);
       if (psiFile != null) {
         ApplicationManager.getApplication().runWriteAction(
-          new PsiExternalChangeAction() {
+          new ExternalChangeAction() {
             public void run() {
               reloadFromDisk(psiFile, true); // important to ignore document which might appear already!
             }

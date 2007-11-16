@@ -32,7 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.psi.PsiExternalChangeAction;
+import com.intellij.psi.ExternalChangeAction;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EventDispatcher;
@@ -356,7 +356,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       if (document == null) return;
 
       ApplicationManager.getApplication().runWriteAction(
-        new PsiExternalChangeAction() {
+        new ExternalChangeAction() {
           public void run() {
             document.setReadOnly(!event.getFile().isWritable());
           }
@@ -424,7 +424,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
 
     ApplicationManager.getApplication().runWriteAction(
-      new PsiExternalChangeAction() {
+      new ExternalChangeAction() {
         public void run() {
           boolean wasWritable = document.isWritable();
           DocumentEx documentEx = (DocumentEx)document;

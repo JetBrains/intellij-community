@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiExternalChangeAction;
+import com.intellij.psi.ExternalChangeAction;
 
 /**
  * author: lesya
@@ -133,7 +133,7 @@ class DocumentEditingUndoProvider {
     }
 
     private boolean externalChanges() {
-      return ApplicationManager.getApplication().getCurrentWriteAction(PsiExternalChangeAction.class) != null;
+      return ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null;
     }
   }
 }

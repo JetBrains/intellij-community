@@ -15,5 +15,5 @@
  */
 package com.intellij.psi;
 
-public interface PsiExternalChangeAction extends Runnable{
+public interface ExternalChangeAction extends Runnable{
 }
