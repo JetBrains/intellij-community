@@ -4,6 +4,7 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
@@ -13,8 +14,8 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,6 +101,7 @@ public class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileV
   }
 
   protected FileViewProvider cloneInner(VirtualFile fileCopy) {
+    fileCopy.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
     return new MultiplePsiFilesPerDocumentFileViewProvider(getManager(), fileCopy, false);
   }
 

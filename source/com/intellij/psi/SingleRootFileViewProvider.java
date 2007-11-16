@@ -10,6 +10,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -356,6 +357,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public FileViewProvider clone() {
     LightVirtualFile copy = new LightVirtualFile(getVirtualFile().getName(), getRealFileType(), getContents(), getModificationStamp());
+    copy.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
+
     copy.setCharset(getVirtualFile().getCharset());
     return new SingleRootFileViewProvider(getManager(), copy, false);
   }

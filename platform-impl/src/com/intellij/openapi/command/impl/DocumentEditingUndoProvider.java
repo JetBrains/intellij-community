@@ -16,9 +16,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiExternalChangeAction;
-import com.intellij.psi.PsiManager;
 
 /**
  * author: lesya
@@ -61,7 +59,7 @@ class DocumentEditingUndoProvider {
       if (isCopy(document)) return;
 
       if (allEditorsAreViewersFor(document)) return;
-      if (myProject != null && !isToPostEvents(document)) return;
+      if (myProject != null && !isToRecordActions(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
       if (externalChanges()) {
@@ -81,12 +79,14 @@ class DocumentEditingUndoProvider {
       }
     }
 
-    private boolean isToPostEvents(final Document document) {
+    private boolean isToRecordActions(final Document document) {
+      if (document.getUserData(UndoManager.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
+
       final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-      if (vFile != null) {
-        final FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(vFile);
-        if (viewProvider != null && !viewProvider.isEventSystemEnabled()) return false;
+      if (vFile != null && vFile.getUserData(UndoManager.DONT_RECORD_UNDO) == Boolean.TRUE) {
+        return false;
       }
+
       return true;
     }
 

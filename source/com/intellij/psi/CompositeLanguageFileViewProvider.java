@@ -2,6 +2,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,6 +52,7 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
 
   public CompositeLanguageFileViewProvider clone() {
     LightVirtualFile fileCopy = new LightVirtualFile(getVirtualFile(), getContents(), getModificationStamp());
+    fileCopy.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
     final CompositeLanguageFileViewProvider viewProvider = cloneInner(fileCopy);
     final PsiFileImpl psiFile = (PsiFileImpl)viewProvider.getPsi(getBaseLanguage());
 
