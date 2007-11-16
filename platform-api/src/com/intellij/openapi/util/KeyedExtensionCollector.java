@@ -14,37 +14,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class KeyedExtensionCollector<T, KeyT> {
-  private final Map<String, List<KeyedLazyInstance<T>>> myRegistry = new THashMap<String, List<KeyedLazyInstance<T>>>();
   private final Map<String, List<T>> myExplicitExtensions = new THashMap<String, List<T>>();
   private final Map<String, List<T>> myCache = new HashMap<String, List<T>>();
   private final Object lock = new Object();
+  private ExtensionPoint<KeyedLazyInstance<T>> myPoint;
 
   public KeyedExtensionCollector(@NonNls String epName) {
     ExtensionPointName<KeyedLazyInstance<T>> typesafe = ExtensionPointName.create(epName);
     if (Extensions.getRootArea().hasExtensionPoint(epName)) {
-      final ExtensionPoint<KeyedLazyInstance<T>> point = Extensions.getRootArea().getExtensionPoint(typesafe);
-      point.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
+      myPoint = Extensions.getRootArea().getExtensionPoint(typesafe);
+      myPoint.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
         public void extensionAdded(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
           synchronized (lock) {
-            List<KeyedLazyInstance<T>> beans = myRegistry.get(bean.getKey());
-            if (beans == null) {
-              beans = new CopyOnWriteArrayList<KeyedLazyInstance<T>>();
-              myRegistry.put(bean.getKey(), beans);
-            }
-            beans.add(bean);
             myCache.remove(bean.getKey());
           }
         }
 
         public void extensionRemoved(final KeyedLazyInstance<T> bean, @Nullable final PluginDescriptor pluginDescriptor) {
           synchronized (lock) {
-            List<KeyedLazyInstance<T>> beans = myRegistry.get(bean.getKey());
-            if (beans != null) {
-              beans.remove(bean);
-            }
             myCache.remove(bean.getKey());
           }
         }
@@ -94,10 +83,12 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
   private List<T> buildExtensions(final String key) {
     final List<T> explicit = myExplicitExtensions.get(key);
     List<T> result = explicit != null ? new ArrayList<T>(explicit) : new ArrayList<T>();
-    final List<KeyedLazyInstance<T>> beans = myRegistry.get(key);
-    if (beans != null) {
+    if (myPoint != null) {
+      final KeyedLazyInstance<T>[] beans = myPoint.getExtensions();
       for (KeyedLazyInstance<T> bean : beans) {
-        result.add(bean.getInstance());
+        if (key.equals(bean.getKey())) {
+          result.add(bean.getInstance());
+        }
       }
     }
     return result;
