@@ -73,6 +73,8 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
     myProject = project;
     myPomModel =  pomModel;
+    boostrapPicoContainer();
+
     init(filePath);
   }
 

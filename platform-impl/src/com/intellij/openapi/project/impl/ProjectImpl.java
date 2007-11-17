@@ -70,6 +70,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     super(ApplicationManager.getApplication());
 
     myDefault = isDefault;
+    boostrapPicoContainer();
 
     getStateStore().setProjectFilePath(filePath);
 
