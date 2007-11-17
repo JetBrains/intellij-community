@@ -11,6 +11,8 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.content.DebuggerContentUI;
+import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
+import com.intellij.debugger.ui.content.newUI.NewDebuggerContentUI;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
@@ -92,7 +94,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private Content myFramesContent;
   private Content myVarsContent;
   private Content myWatchesContent;
-  private DebuggerContentUI myContentUI;
+  private DebuggerContentUIFacade myContentUI;
   private FramesPanel myFramesPanel;
 
   public DebuggerSessionTab(Project project, String sessionName) {
@@ -135,9 +137,15 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
         }
       });
     }
-    myContentUI = new DebuggerContentUI(this, getProject(), ActionManager.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
+
+    if ("true".equalsIgnoreCase(System.getProperty("new.debugger.ui"))) {
+      myContentUI = new NewDebuggerContentUI(ActionManager.getInstance(), DebuggerSettings.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
+    } else {
+      myContentUI = new DebuggerContentUI(this, getProject(), ActionManager.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
+    }
+
     myViewsContentManager = getContentFactory().
-      createContentManager(myContentUI, false, getProject());
+      createContentManager(myContentUI.getContentUI(), false, getProject());
     Disposer.register(this, myViewsContentManager);
 
    
@@ -513,7 +521,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myContentUI.restoreLayout();
   }
 
-  public DebuggerContentUI getContentUi() {
+  public DebuggerContentUIFacade getContentUi() {
     return myContentUI;
   }
 

@@ -213,6 +213,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
     add(label);
 
+    updateText(info);
+    updateIcon(info);
+    updateSideComponent(info);
+
     updateAll();
 
     return info;
@@ -268,24 +272,36 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   public void propertyChange(final PropertyChangeEvent evt) {
     final TabInfo tabInfo = (TabInfo)evt.getSource();
     if (TabInfo.ACTION_GROUP.equals(evt.getPropertyName())) {
-      final JComponent old = myInfo2Toolbar.get(tabInfo);
-      if (old != null) {
-        remove(old);
-      }
-      final JComponent toolbar = createToolbarComponent(tabInfo);
-      if (toolbar != null) {
-        myInfo2Toolbar.put(tabInfo, toolbar);
-        add(toolbar);
-      }
+      updateSideComponent(tabInfo);
     }
     else if (TabInfo.TEXT.equals(evt.getPropertyName())) {
-      myInfo2Label.get(tabInfo).setText(tabInfo.getText());
+      updateText(tabInfo);
     }
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
-      myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+      updateIcon(tabInfo);
     }
 
     update(false);
+  }
+
+  private void updateIcon(final TabInfo tabInfo) {
+    myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+  }
+
+  private void updateText(final TabInfo tabInfo) {
+    myInfo2Label.get(tabInfo).setText(tabInfo.getText());
+  }
+
+  private void updateSideComponent(final TabInfo tabInfo) {
+    final JComponent old = myInfo2Toolbar.get(tabInfo);
+    if (old != null) {
+      remove(old);
+    }
+    final JComponent toolbar = createToolbarComponent(tabInfo);
+    if (toolbar != null) {
+      myInfo2Toolbar.put(tabInfo, toolbar);
+      add(toolbar);
+    }
   }
 
   @Nullable
@@ -898,6 +914,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       setOpaque(false);
       setLayout(new BorderLayout());
       add(myLabel, BorderLayout.CENTER);
+
 
       addMouseListener(new MouseAdapter() {
         public void mousePressed(final MouseEvent e) {

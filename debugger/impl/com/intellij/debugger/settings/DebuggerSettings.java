@@ -1,13 +1,15 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.DebuggerContentInfo;
+import com.intellij.debugger.ui.content.newUI.ContentContainer;
+import com.intellij.debugger.ui.content.newUI.NewContentState;
+import com.intellij.debugger.ui.content.newUI.PlaceInGrid;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.ui.content.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -50,6 +52,8 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;
+
+  public volatile boolean HORIZONTAL_TOOLBAR = false;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
@@ -260,5 +264,44 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     public void setHorizontalToolbar(final boolean horizontalToolbar) {
       myHorizontalToolbar = horizontalToolbar;
     }
+  }
+
+  public NewContentState getNewContentState(Content content) {
+    final Key kind = content.getUserData(DebuggerContentInfo.CONTENT_KIND);
+    if (DebuggerContentInfo.FRAME_CONTENT.equals(kind)) {
+      return new NewContentState(ContentContainer.Type.grid, PlaceInGrid.left, getSplitProportion(PlaceInGrid.left));
+    } else if (DebuggerContentInfo.VARIABLES_CONTENT.equals(kind)) {
+      return new NewContentState(ContentContainer.Type.grid, PlaceInGrid.center, getSplitProportion(PlaceInGrid.center));
+    } else if (DebuggerContentInfo.WATCHES_CONTENT.equals(kind)) {
+      return new NewContentState(ContentContainer.Type.grid, PlaceInGrid.right, getSplitProportion(PlaceInGrid.right));
+    } else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(kind)) {
+      return new NewContentState(ContentContainer.Type.grid, PlaceInGrid.bottom, getSplitProportion(PlaceInGrid.bottom));
+    } else {
+      return new NewContentState(ContentContainer.Type.tab, PlaceInGrid.unknown, getSplitProportion(PlaceInGrid.unknown));
+    }
+  }
+
+  public float getSplitProportion(PlaceInGrid placeInGrid) {
+    switch (placeInGrid) {
+      case left:
+        return .2f;
+      case center:
+        return 0f;
+      case right:
+        return .2f;
+      case bottom:
+        return .5f;
+      default:
+        return -1f;
+    }
+  }
+
+
+  public boolean isToolbarHorizontal() {
+    return HORIZONTAL_TOOLBAR;
+  }
+
+  public void setToolbarHorizontal(boolean horizontal) {
+    HORIZONTAL_TOOLBAR = horizontal;
   }
 }
