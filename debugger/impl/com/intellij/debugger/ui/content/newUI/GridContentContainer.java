@@ -9,23 +9,18 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
-public class GridContentContainer extends Wrapper implements ContentContainer, Disposable {
+class GridContentContainer extends Wrapper implements ContentContainer, Disposable {
   private DebuggerSettings mySettings;
 
   private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
   private Splitter mySplitter = new Splitter(true);
 
-  private HashMap<PlaceInGrid, Cell> myPlaceInGrid2Cell = new HashMap<PlaceInGrid, Cell>();
-  private ActionManager myActionManager;
+  private HashMap<PlaceInGrid, GridCell> myPlaceInGrid2Cell = new HashMap<PlaceInGrid, GridCell>();
+  ActionManager myActionManager;
 
   private Placeholder myLeft = new Placeholder();
   private Placeholder myCenter = new Placeholder();
@@ -43,10 +38,10 @@ public class GridContentContainer extends Wrapper implements ContentContainer, D
 
     setOpaque(false);
 
-    myPlaceInGrid2Cell.put(PlaceInGrid.left, new Cell(myLeft, horizontalToolbars, PlaceInGrid.left));
-    myPlaceInGrid2Cell.put(PlaceInGrid.center, new Cell(myCenter, horizontalToolbars, PlaceInGrid.center));
-    myPlaceInGrid2Cell.put(PlaceInGrid.right, new Cell(myRight, horizontalToolbars, PlaceInGrid.right));
-    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new Cell(myBottom, horizontalToolbars, PlaceInGrid.bottom));
+    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(this, myLeft, horizontalToolbars, PlaceInGrid.left));
+    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(this, myCenter, horizontalToolbars, PlaceInGrid.center));
+    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(this, myRight, horizontalToolbars, PlaceInGrid.right));
+    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(this, myBottom, horizontalToolbars, PlaceInGrid.bottom));
 
     setContent(mySplitter);
 
@@ -67,7 +62,7 @@ public class GridContentContainer extends Wrapper implements ContentContainer, D
   }
 
   private void restoreProportions() {
-    for (final Cell cell : myPlaceInGrid2Cell.values()) {
+    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
       cell.restoreProportion();
     }
   }
@@ -81,13 +76,13 @@ public class GridContentContainer extends Wrapper implements ContentContainer, D
   }
 
   public void setToolbarHorizontal(boolean horizontal) {
-    for (final Cell cell : myPlaceInGrid2Cell.values()) {
+    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
       cell.setToolbarHorizontal(horizontal);
     }
   }
 
-  private GridContentContainer.Cell getCellFor(final Content content) {
-    final GridContentContainer.Cell cell = myPlaceInGrid2Cell.get(getStateFor(content).getPlaceInGrid());
+  private GridCell getCellFor(final Content content) {
+    final GridCell cell = myPlaceInGrid2Cell.get(getStateFor(content).getPlaceInGrid());
     assert cell != null : "Unknown place in grid: " + getStateFor(content).getPlaceInGrid().name();
     return cell;
   }
@@ -97,85 +92,7 @@ public class GridContentContainer extends Wrapper implements ContentContainer, D
   }
 
 
-  class Cell {
-
-    private List<Content> myContents = new ArrayList<Content>();
-    private JBTabs myTabs;
-    private Placeholder myPlaceholder;
-    private PlaceInGrid myPlaceInGrid;
-
-    public Cell(Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
-      myPlaceInGrid = placeInGrid;
-      myPlaceholder = placeholder;
-      myTabs = new JBTabs(myActionManager, GridContentContainer.this);
-      myTabs.setUiDecorator(new JBTabs.UiDecorator() {
-        public JBTabs.UiDecoration getDecoration() {
-          return new JBTabs.UiDecoration(null, new Insets(0, -1, 0, -1));
-        }
-      });
-      myTabs.setSideComponentVertical(!horizontalToolbars);
-      myTabs.setStealthTabMode(true);
-    }
-
-    void add(Content content) {
-      if (myContents.contains(content)) return;
-      myContents.add(content);
-
-      revalidateCell();
-    }
-
-    void remove(Content content) {
-      if (!myContents.contains(content)) return;
-      myContents.remove(content);
-
-      revalidateCell();
-    }
-
-    private void revalidateCell() {
-
-      if (myContents.size() == 0) {
-        myPlaceholder.removeAll();
-      } else {
-        if (myPlaceholder.isNull()) {
-          myPlaceholder.setContent(myTabs);
-        }
-
-        myTabs.removeAllTabs();
-        for (Content each : myContents) {
-          myTabs.addTab(getTabInfoFor(each));
-        }
-      }
-
-      restoreProportion();
-
-      myTabs.revalidate();
-      myTabs.repaint();
-    }
-
-    private TabInfo getTabInfoFor(Content content) {
-      final JComponent c = content.getComponent();
-
-      NewDebuggerContentUI.removeScrollBorder(c);
-
-      return new TabInfo(c)
-        .setIcon(content.getIcon())
-        .setText(content.getDisplayName())
-        .setActions(content.getActions(), content.getPlace())
-        .setObject(content)
-        .setPreferredFocusableComponent(content.getPreferredFocusableComponent());
-    }
-
-    public void setToolbarHorizontal(final boolean horizontal) {
-      myTabs.setSideComponentVertical(!horizontal);
-    }
-
-    public void restoreProportion() {
-      GridContentContainer.this.restoreProportion(myPlaceInGrid);
-    }
-  }
-
-
-  private static class Placeholder extends Wrapper implements NullableComponent {
+  static class Placeholder extends Wrapper implements NullableComponent {
     public boolean isNull() {
       return getComponentCount() == 0;
     }
@@ -184,7 +101,7 @@ public class GridContentContainer extends Wrapper implements ContentContainer, D
   public void dispose() {
   }
 
-  private void restoreProportion(PlaceInGrid placeInGrid) {
+  void restoreProportion(PlaceInGrid placeInGrid) {
     final float proportion = mySettings.getSplitProportion(placeInGrid);
     switch (placeInGrid) {
       case left:
