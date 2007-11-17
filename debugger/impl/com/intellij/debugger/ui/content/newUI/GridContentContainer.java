@@ -14,6 +14,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,7 +108,13 @@ public class GridContentContainer extends Wrapper implements ContentContainer, D
       myPlaceInGrid = placeInGrid;
       myPlaceholder = placeholder;
       myTabs = new JBTabs(myActionManager, GridContentContainer.this);
+      myTabs.setUiDecorator(new JBTabs.UiDecorator() {
+        public JBTabs.UiDecoration getDecoration() {
+          return new JBTabs.UiDecoration(null, new Insets(0, -1, 0, -1));
+        }
+      });
       myTabs.setSideComponentVertical(!horizontalToolbars);
+      myTabs.setStealthTabMode(true);
     }
 
     void add(Content content) {

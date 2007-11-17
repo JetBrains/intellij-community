@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -15,6 +16,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.GeneralPath;
@@ -53,6 +55,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   private boolean myHorizontalSide = true;
   private LineLayoutData myLastSingRowLayout;
 
+  private boolean myStealthTabMode = false; 
+
   private MoreIcon myMoreIcon = new MoreIcon() {
     protected boolean isActive() {
       return myFocused;
@@ -68,6 +72,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   private TableLayoutData myLastTableLayout;
 
   private boolean myForcedRelayout;
+  private UiDecorator myUiDecorator;
 
   public JBTabs(ActionManager actionManager, Disposable parent) {
     myActionManager = actionManager;
@@ -665,23 +670,36 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     config.setAntialiasing(true);
 
     Graphics2D g2d = (Graphics2D)g;
+
+    int arc = getArcSize();
+
     final GeneralPath path = new GeneralPath();
     Insets insets = getLayoutInsets();
     final int bottomY = (int)selectedTabBounds.getMaxY();
     final int topY = selectedTabBounds.y;
     int leftX = selectedTabBounds.x;
+
     int rightX = selectedTabBounds.x + selectedTabBounds.width;
-    int arc = getArcSize();
 
     path.moveTo(insets.left, bottomY);
     path.lineTo(leftX, bottomY);
     path.lineTo(leftX, topY + arc);
     path.quadTo(leftX, topY, leftX + arc, topY);
-    path.lineTo(rightX - arc, topY);
-    path.quadTo(rightX, topY, rightX, topY + arc);
-    path.lineTo(rightX, bottomY - arc);
-    path.quadTo(rightX, bottomY, rightX + arc, bottomY);
-    path.lineTo(getWidth() - insets.right - 1, bottomY);
+
+    int lastX = getWidth() - insets.right - 1;
+
+    if (isStealthModeEffective()) {
+      path.lineTo(lastX - arc, topY);
+      path.quadTo(lastX, topY, lastX, topY + arc);
+      path.lineTo(lastX, bottomY);
+    } else {
+      path.lineTo(rightX - arc, topY);
+      path.quadTo(rightX, topY, rightX, topY + arc);
+      path.lineTo(rightX, bottomY - arc);
+      path.quadTo(rightX, bottomY, rightX + arc, bottomY);
+    }
+
+    path.lineTo(lastX, bottomY);
     path.closePath();
 
     final Color from;
@@ -711,6 +729,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     g2d.drawRect(insets.left, bottomY, getWidth() - insets.left - insets.right - 1, getHeight() - bottomY - insets.bottom - 1);
 
     config.restore();
+  }
+
+  private boolean isStealthModeEffective() {
+    return myStealthTabMode && getTabCount() == 1 && isSideComponentVertical();
   }
 
 
@@ -969,6 +991,29 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     public TabInfo getInfo() {
       return myInfo;
     }
+
+    public void apply(UiDecoration decoration) {
+      if (decoration.getLabelFont() != null) {
+        setFont(decoration.getLabelFont());
+      }
+
+      Insets insets = decoration.getLabelInsets();
+      if (insets != null) {
+        Insets current = getInsets();
+        if (current == null) {
+          current = new Insets(0, 0 ,0 ,0);
+        }
+        setBorder(new EmptyBorder(
+          getValue(current.top, insets.top),
+          getValue(current.left, insets.left),
+          getValue(current.bottom, insets.bottom),
+          getValue(current.right, insets.right)));
+      }
+    }
+
+    private int getValue(int curentValue, int newValue) {
+      return newValue != -1 ? newValue : curentValue;
+    }
   }
 
   protected void onPopup(final TabInfo popupInfo) {
@@ -1047,6 +1092,16 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
   }
 
+  public void setStealthTabMode(final boolean stealthTabMode) {
+    myStealthTabMode = stealthTabMode;
+
+    update(true);
+  }
+
+  public boolean isStealthTabMode() {
+    return myStealthTabMode;
+  }
+
   public void setSideComponentVertical(final boolean vertical) {
     myHorizontalSide = !vertical;
 
@@ -1071,6 +1126,58 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   public boolean isSideComponentVertical() {
     return !myHorizontalSide;
   }
+
+  public void setUiDecorator(UiDecorator decorator) {
+    myUiDecorator = decorator;
+    applyDecoration();
+  }
+
+  protected void setUI(final ComponentUI newUI) {
+    super.setUI(newUI);
+    applyDecoration();
+  }
+
+  public void updateUI() {
+    super.updateUI();
+    applyDecoration();
+  }
+
+  private void applyDecoration() {
+    if (myUiDecorator != null) {
+      UiDecoration uiDecoration = myUiDecorator.getDecoration();
+      for (TabLabel each : myInfo2Label.values()) {
+        each.apply(uiDecoration);
+      }
+    }
+
+    update(true);
+  }
+
+  public static class UiDecoration {
+    private @Nullable Font myLabelFont;
+    private @Nullable Insets myLabelInsets;
+
+    public UiDecoration(final Font labelFont, final Insets labelInsets) {
+      myLabelFont = labelFont;
+      myLabelInsets = labelInsets;
+    }
+
+    @Nullable
+    public Font getLabelFont() {
+      return myLabelFont;
+    }
+
+    @Nullable
+    public Insets getLabelInsets() {
+      return myLabelInsets;
+    }
+  }
+
+  public static interface UiDecorator {
+    @NotNull
+    UiDecoration getDecoration();
+  }
+
 
   public static void main(String[] args) {
     System.out.println("JBTabs.main");
@@ -1124,31 +1231,46 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     });
     south.add(row);
 
+    final JCheckBox stealth = new JCheckBox("Stealth tab", tabs.isStealthTabMode());
+    stealth.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        tabs.setStealthTabMode(stealth.isSelected());
+      }
+    });
+    south.add(stealth);
+
     frame.getContentPane().add(south, BorderLayout.SOUTH);
 
     tabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         System.out.println("TabsWithActions.selectionChanged old=" + oldSelection + " new=" + newSelection);
-      }
+      }                                              
     });
 
     tabs.addTab(new TabInfo(new JTree())).setText("Tree1").setActions(new DefaultActionGroup(), null)
       .setIcon(IconLoader.getIcon("/debugger/frame.png"));
-    tabs.addTab(new TabInfo(new JTree())).setText("Tree2");
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 4").setActions(new DefaultActionGroup(), null);
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 5").setActions(new DefaultActionGroup(), null);
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 6").setActions(new DefaultActionGroup(), null);
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 7").setActions(new DefaultActionGroup(), null);
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 8").setActions(new DefaultActionGroup(), null);
-    tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTree())).setText("Tree2");
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 4").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 5").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 6").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 7").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 8").setActions(new DefaultActionGroup(), null);
+    //tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
 
     tabs.setBorder(new EmptyBorder(6, 6, 20, 6));
 
-    frame.setBounds(200, 200, 300, 200);
+    tabs.setUiDecorator(new UiDecorator() {
+      public UiDecoration getDecoration() {
+        return new UiDecoration(null, new Insets(1, -1, 1, -1));
+      }
+    });
+
+
+    frame.setBounds(200, 200, 600, 200);
     frame.show();
   }
 
