@@ -30,9 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.gsp.api.GspFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -40,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -254,21 +253,30 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       if (child instanceof GrReferenceExpression &&
           !child.getText().contains(".")) {
         PsiReference psiReference = child.getReference();
-        if (psiReference != null &&
-            psiReference.resolve() != null &&
-            psiReference.resolve() instanceof GrField &&
-            varDef.getNameIdentifierGroovy().getText().equals(((GrField) psiReference.resolve()).getNameIdentifierGroovy().getText())) {
-          GroovyElementFactory factory = GroovyElementFactory.getInstance(tempContainer.getProject());
-          try {
-            ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()), true);
-          } catch (IncorrectOperationException e) {
-            LOG.error(e);
+        if (psiReference != null) {
+          final PsiElement resolved = psiReference.resolve();
+          if (resolved != null) {
+            String fieldName = getFieldName(resolved);
+            if (fieldName != null &&
+                varDef.getName().equals(fieldName)) {
+                GroovyElementFactory factory = GroovyElementFactory.getInstance(tempContainer.getProject());
+                try {
+                  ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()), true);
+                } catch (IncorrectOperationException e) {
+                  LOG.error(e);
+                }
+              }
           }
         }
       } else {
         resolveLocalConflicts(child, varDef);
       }
     }
+  }
+
+  private String getFieldName(PsiElement element) {
+    if (element instanceof AccessorMethod) element = ((AccessorMethod) element).getProperty();
+    return element instanceof GrField ? ((GrField) element).getName() : null;
   }
 
   private void refreshPositionMarker(PsiElement position) {
