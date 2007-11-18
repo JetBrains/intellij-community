@@ -12,8 +12,9 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
+import java.util.*;
 
-class GridContentContainer extends Wrapper implements ContentContainer, Disposable {
+class Grid extends Wrapper implements Disposable {
   private DebuggerSettings mySettings;
 
   private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
@@ -29,7 +30,14 @@ class GridContentContainer extends Wrapper implements ContentContainer, Disposab
 
   private String mySessionName;
 
-  public GridContentContainer(ActionManager actionManager, DebuggerSettings settings, Disposable parent, String sessionName, boolean horizontalToolbars) {
+  private List<Content> myContents = new ArrayList<Content>();
+  private Comparator<Content> myContentComparator = new Comparator<Content>() {
+    public int compare(final Content o1, final Content o2) {
+      return getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
+    }
+  };
+
+  public Grid(ActionManager actionManager, DebuggerSettings settings, Disposable parent, String sessionName, boolean horizontalToolbars) {
     Disposer.register(parent, this);
 
     mySettings = settings;
@@ -69,10 +77,13 @@ class GridContentContainer extends Wrapper implements ContentContainer, Disposab
 
   public void add(final Content content, final boolean select) {
     getCellFor(content).add(content);
+    myContents.add(content);
+    Collections.sort(myContents, myContentComparator);
   }
 
   public void remove(final Content content) {
     getCellFor(content).remove(content);
+    myContents.remove(content);
   }
 
   public void setToolbarHorizontal(boolean horizontal) {
@@ -91,6 +102,13 @@ class GridContentContainer extends Wrapper implements ContentContainer, Disposab
     return mySettings.getNewContentState(content);
   }
 
+  public void updateGridUI() {
+    Iterator<GridCell> cells = myPlaceInGrid2Cell.values().iterator();
+    while (cells.hasNext()) {
+      GridCell each = cells.next();
+      each.setHideTabs(myContents.size() == 1);
+    }
+  }
 
   static class Placeholder extends Wrapper implements NullableComponent {
     public boolean isNull() {
@@ -149,4 +167,7 @@ class GridContentContainer extends Wrapper implements ContentContainer, Disposab
     myTopSplit.setLastSize((int)(proportion * (float)(componentSize - 2 * myTopSplit.getDividerWidth())));
   }
 
+  public List<Content> getContents() {
+    return myContents;
+  }
 }

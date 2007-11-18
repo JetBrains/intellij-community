@@ -11,14 +11,14 @@ import java.awt.*;
 
 class GridCell {
 
-  private GridContentContainer myContainer;
+  private Grid myContainer;
 
   private List<Content> myContents = new ArrayList<Content>();
   private JBTabs myTabs;
-  private GridContentContainer.Placeholder myPlaceholder;
+  private Grid.Placeholder myPlaceholder;
   private PlaceInGrid myPlaceInGrid;
 
-  public GridCell(GridContentContainer container, GridContentContainer.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
+  public GridCell(Grid container, Grid.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
     myContainer = container;
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
@@ -30,6 +30,10 @@ class GridCell {
     });
     myTabs.setSideComponentVertical(!horizontalToolbars);
     myTabs.setStealthTabMode(true);
+  }
+
+  public PlaceInGrid getPlaceInGrid() {
+    return myPlaceInGrid;
   }
 
   void add(Content content) {
@@ -65,6 +69,10 @@ class GridCell {
 
     myTabs.revalidate();
     myTabs.repaint();
+  }
+
+  void setHideTabs(boolean hide) {
+    myTabs.setHideTabs(hide);
   }
 
   private TabInfo getTabInfoFor(Content content) {

@@ -6,8 +6,8 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
-import com.intellij.ui.CaptionPanel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.CaptionPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +22,8 @@ import java.awt.event.*;
 import java.awt.geom.GeneralPath;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class JBTabs extends JComponent implements PropertyChangeListener {
 
@@ -73,6 +71,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
   private boolean myForcedRelayout;
   private UiDecorator myUiDecorator;
+
+  private boolean myPaintBorder = true;
+  private boolean myPaintFocus = true;
+
+  private boolean myHideTabs = false;
 
   public JBTabs(ActionManager actionManager, Disposable parent) {
     myActionManager = actionManager;
@@ -321,6 +324,14 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     return new Toolbar(tabInfo);
   }
 
+  public TabInfo getTabAt(final int tabIndex) {
+    return myInfos.get(tabIndex);
+  }
+
+  public List<TabInfo> getTabs() {
+    return Collections.unmodifiableList(myInfos);
+  }
+
   private class Toolbar extends JPanel {
     public Toolbar(TabInfo info) {
       setLayout(new BorderLayout());
@@ -500,13 +511,14 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
     Insets insets = getLayoutInsets();
 
-    resetLayout(layoutLabels);
+    resetLayout(layoutLabels || isHideTabs());
 
-    if (!myHorizontalSide && selectedToolbar != null) {
+
+    if (isSideComponentVertical() && selectedToolbar != null) {
       data.xAddin = selectedToolbar.getPreferredSize().width + 1;
     }
 
-    if (layoutLabels) {
+    if (layoutLabels && !isHideTabs()) {
       data.eachX = insets.left;
 
       recomputeToLayout(selectedToolbar, data, insets);
@@ -518,13 +530,13 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       }
     }
 
-    data.yComp = myHeaderFitSize.height + insets.top;
+    data.yComp = isHideTabs() ? insets.top : myHeaderFitSize.height + insets.top;
     if (selectedToolbar != null) {
-      if (myHorizontalSide) {
+      if (!isSideComponentVertical() && !isHideTabs()) {
         int toolbarX = data.eachX + getToolbarInset() + (data.moreRect != null ? data.moreRect.width : 0);
         selectedToolbar.setBounds(toolbarX, insets.top, getSize().width - insets.left - toolbarX, myHeaderFitSize.height - 1);
       }
-      else {
+      else if (isSideComponentVertical()) {
         selectedToolbar.setBounds(insets.left + 1, data.yComp + 1, selectedToolbar.getPreferredSize().width,
                                   getSize().height - data.yComp - insets.bottom - 2);
       }
@@ -656,6 +668,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
+    if (isHideTabs()) {
+
+    }
+
     final TabInfo selected = getSelectedInfo();
     if (selected == null) return;
 
@@ -705,7 +721,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     final Color from;
     final Color to;
     final int alpha;
-    final boolean paintFocused = myFocused || myActivePopup != null;
+    final boolean paintFocused = myPaintFocus && (myFocused || myActivePopup != null);
     if (paintFocused) {
       from = UIUtil.getFocusedFillColor();
       to = UIUtil.getFocusedFillColor();
@@ -716,17 +732,31 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       to = UIUtil.toAlpha(UIUtil.getPanelBackgound(), alpha);
     }
 
+
     g2d.setPaint(new GradientPaint(selectedTabBounds.x, topY, from, selectedTabBounds.x, bottomY, to));
-    g2d.fill(path);
+
+    if (!isHideTabs()) {
+      g2d.fill(path);
+    }
+
     if (paintFocused) {
       g2d.setColor(UIUtil.getFocusedBoundsColor());
     }
     else {
       g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR.darker());
     }
-    g2d.draw(path);
 
-    g2d.drawRect(insets.left, bottomY, getWidth() - insets.left - insets.right - 1, getHeight() - bottomY - insets.bottom - 1);
+    if (!isHideTabs()) {
+      g2d.draw(path);
+    }
+
+    if (myPaintBorder) {
+      if (isHideTabs()) {
+        g2d.drawRect(insets.left, insets.top, getWidth() - insets.left - insets.right - 1, getHeight() - insets.bottom - insets.top - 1);
+      } else {
+        g2d.drawRect(insets.left, bottomY, getWidth() - insets.left - insets.right - 1, getHeight() - bottomY - insets.bottom - 1);
+      }
+    }
 
     config.restore();
   }
@@ -1024,6 +1054,35 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     repaint();
   }
 
+  public boolean isHideTabs() {
+    return myHideTabs;
+  }
+
+  public void setHideTabs(final boolean hideTabs) {
+    if (isHideTabs() == hideTabs) return;
+
+    myHideTabs = hideTabs;
+
+    update(true);
+  }
+
+  public boolean isPaintBorder() {
+    return myPaintBorder;
+  }
+
+  public void setPaintBorder(final boolean paintBorder) {
+    myPaintBorder = paintBorder;
+    repaint();
+  }
+
+  public boolean isPaintFocus() {
+    return myPaintFocus;
+  }
+
+  public void setPaintFocus(final boolean paintFocus) {
+    myPaintFocus = paintFocus;
+  }
+
   private abstract class BaseAction extends AnAction {
 
     private ShadowAction myShadow;
@@ -1153,6 +1212,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     update(true);
   }
 
+  public void sortTabs(Comparator<TabInfo> comparator) {
+    Collections.sort(myInfos, comparator);
+
+    update(true);
+  }
+
   public static class UiDecoration {
     private @Nullable Font myLabelFont;
     private @Nullable Insets myLabelInsets;
@@ -1172,6 +1237,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       return myLabelInsets;
     }
   }
+
+
 
   public static interface UiDecorator {
     @NotNull
@@ -1238,6 +1305,14 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       }
     });
     south.add(stealth);
+
+    final JCheckBox hide = new JCheckBox("Hide tabs", tabs.isHideTabs());
+    hide.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        tabs.setHideTabs(hide.isSelected());
+      }
+    });
+    south.add(hide);
 
     frame.getContentPane().add(south, BorderLayout.SOUTH);
 

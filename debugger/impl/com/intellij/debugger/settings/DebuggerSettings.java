@@ -2,7 +2,6 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.debugger.ui.content.newUI.ContentContainer;
 import com.intellij.debugger.ui.content.newUI.NewContentState;
 import com.intellij.debugger.ui.content.newUI.PlaceInGrid;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +11,9 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -173,6 +174,7 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     return state;
   }
 
+
   public static class ContentState {
 
     private String myType;
@@ -269,15 +271,15 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public NewContentState getNewContentState(Content content) {
     final Key kind = content.getUserData(DebuggerContentInfo.CONTENT_KIND);
     if (DebuggerContentInfo.FRAME_CONTENT.equals(kind)) {
-      return new NewContentState(ContentContainer.Type.grid, PlaceInGrid.left, getSplitProportion(PlaceInGrid.left));
+      return new NewContentState(0, PlaceInGrid.left, getSplitProportion(PlaceInGrid.left));
     } else if (DebuggerContentInfo.VARIABLES_CONTENT.equals(kind)) {
-      return new NewContentState(ContentContainer.Type.grid, PlaceInGrid.center, getSplitProportion(PlaceInGrid.center));
+      return new NewContentState(0, PlaceInGrid.center, getSplitProportion(PlaceInGrid.center));
     } else if (DebuggerContentInfo.WATCHES_CONTENT.equals(kind)) {
-      return new NewContentState(ContentContainer.Type.grid, PlaceInGrid.right, getSplitProportion(PlaceInGrid.right));
+      return new NewContentState(0, PlaceInGrid.right, getSplitProportion(PlaceInGrid.right));
     } else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(kind)) {
-      return new NewContentState(ContentContainer.Type.grid, PlaceInGrid.bottom, getSplitProportion(PlaceInGrid.bottom));
+      return new NewContentState(1, PlaceInGrid.bottom, getSplitProportion(PlaceInGrid.bottom));
     } else {
-      return new NewContentState(ContentContainer.Type.tab, PlaceInGrid.unknown, getSplitProportion(PlaceInGrid.unknown));
+      return new NewContentState(Integer.MAX_VALUE, PlaceInGrid.unknown, getSplitProportion(PlaceInGrid.unknown));
     }
   }
 
@@ -296,6 +298,16 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     }
   }
 
+
+  public @Nullable
+  String getTabTitle(final int index) {
+    return index == 0 ? "Debugger" : null;
+  }
+
+  @Nullable
+  public Icon getTabIcon(final int tabIndex) {
+    return null;
+  }
 
   public boolean isToolbarHorizontal() {
     return HORIZONTAL_TOOLBAR;

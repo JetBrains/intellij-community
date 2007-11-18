@@ -2,19 +2,19 @@ package com.intellij.debugger.ui.content.newUI;
 
 public class NewContentState {
 
-  private ContentContainer.Type myContainer;
+  private int myTab;
   private PlaceInGrid myPlaceInGrid;
 
   private float myGridSplitProportion;
 
-  public NewContentState(ContentContainer.Type container, final PlaceInGrid placeInGrid, float gridSplitProportion) {
-    myContainer = container;
+  public NewContentState(int tab, final PlaceInGrid placeInGrid, float gridSplitProportion) {
+    myTab = tab;
     myPlaceInGrid = placeInGrid;
     myGridSplitProportion = gridSplitProportion;
   }
 
-  public ContentContainer.Type getContainer() {
-    return myContainer;
+  public int getTab() {
+    return myTab;
   }
 
   public PlaceInGrid getPlaceInGrid() {
