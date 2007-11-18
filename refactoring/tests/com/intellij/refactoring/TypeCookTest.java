@@ -5,14 +5,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.typeCook.Settings;
-import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
+import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
-import com.intellij.pom.java.LanguageLevel;
 import junit.textui.TestRunner;
 
 import java.io.File;
@@ -627,6 +626,10 @@ public class TypeCookTest extends MultiFileTestCase {
   }
 
   public void testT147() throws Exception {
+        start();
+  }
+
+  public void testT148() throws Exception {
         start();
   }
 

@@ -448,7 +448,18 @@ public class SystemBuilder {
                               PsiType type = aSubst.substitute(parm);
 
                               if (type != null) {
-                                type = substitute(type);
+                                if (type instanceof PsiWildcardType) {
+                                  final PsiWildcardType wildcard = (PsiWildcardType)type;
+                                  final PsiType bound = wildcard.getBound();
+                                  if (bound != null) {
+                                    final PsiManager manager = parm.getManager();
+                                    type = wildcard.isExtends() ?
+                                           PsiWildcardType.createExtends(manager, substitute(bound)) : 
+                                           PsiWildcardType.createSuper(manager, substitute(bound));
+                                  }
+                                } else {
+                                  type = substitute(type);
+                                }
                               }
 
                               theSubst = theSubst.put(parm, type);
