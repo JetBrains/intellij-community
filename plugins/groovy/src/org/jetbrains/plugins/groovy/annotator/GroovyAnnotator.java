@@ -675,8 +675,7 @@ public class GroovyAnnotator implements Annotator {
     if (refExpr.getType() == null) {
       PsiElement refNameElement = refExpr.getReferenceNameElement();
       PsiElement elt = refNameElement == null ? refExpr : refNameElement;
-      Annotation annotation = holder.createInformationAnnotation(elt,
-          GroovyBundle.message("untyped.access", refExpr.getReferenceName()));
+      Annotation annotation = holder.createInfoAnnotation(elt, null);
       if (resolved == null && refExpr.getQualifierExpression() == null) {
         if (!(refExpr.getParent() instanceof GrCallExpression)) {
           registerCreateClassByTypeFix(refExpr, annotation, false);
