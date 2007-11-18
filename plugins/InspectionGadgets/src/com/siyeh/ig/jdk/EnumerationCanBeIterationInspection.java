@@ -81,12 +81,11 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             final PsiElement parent =
                     methodCallExpression.getParent();
             final PsiVariable variable;
-            final PsiAssignmentExpression assignmentExpression;
             if (parent instanceof PsiVariable) {
                 variable = (PsiVariable) parent;
-                assignmentExpression = null;
             } else if (parent instanceof PsiAssignmentExpression) {
-                assignmentExpression = (PsiAssignmentExpression) parent;
+                final PsiAssignmentExpression assignmentExpression =
+                        (PsiAssignmentExpression)parent;
                 final PsiExpression lhs = assignmentExpression.getLExpression();
                 if (!(lhs instanceof PsiReferenceExpression)) {
                     return;
@@ -115,13 +114,17 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (newStatement == null) {
                 return;
             }
-            final PsiElement statementParent = statement.getParent();
-            statementParent.addAfter(newStatement, statement);
             if (deleteInitialization) {
-                if (assignmentExpression == null) {
-                    variable.delete();
+                statement.replace(newStatement);
+            } else {
+                final PsiElement statementParent = statement.getParent();
+                if (statementParent instanceof PsiForStatement) {
+                    final PsiElement statementGrandParent =
+                            statementParent.getParent();
+                    statementGrandParent.addBefore(newStatement,
+                            statementParent);
                 } else {
-                    assignmentExpression.delete();
+                    statementParent.addAfter(newStatement, statement);
                 }
             }
         }

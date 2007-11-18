@@ -26,4 +26,11 @@ public class EnumerationCanBeIterationInspection {
             System.out.println(i.next());
         }
     }
+
+    public void test(Vector vector) {
+
+        for (Enumeration enumeration = vector.elements(); enumeration.hasMoreElements();) {
+            Object a = enumeration.nextElement();
+        }
+    }
 }
