@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.EnumSet;
@@ -53,6 +54,7 @@ public class PropertyResolverProcessor extends ResolverProcessor {
         }
       }
     } else if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
+      if (element instanceof GrField && ((GrField) element).isProperty()) return true;
       return super.execute(element, substitutor);
     }
 
