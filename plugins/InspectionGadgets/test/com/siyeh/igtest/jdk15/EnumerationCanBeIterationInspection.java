@@ -33,4 +33,12 @@ public class EnumerationCanBeIterationInspection {
             Object a = enumeration.nextElement();
         }
     }
+
+    public void before(Vector<String> vector) {
+
+        final Enumeration<String> iterator = vector.elements();
+        while (iterator.hasMoreElements()) {
+            String s = iterator.nextElement();
+        }
+    }
 }

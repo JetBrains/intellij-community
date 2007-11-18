@@ -109,8 +109,21 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             final boolean deleteInitialization =
                     replaceMethodCalls(variable, statement.getTextOffset(),
                             variableName);
+            final PsiType variableType = variable.getType();
+            if (!(variableType instanceof PsiClassType)) {
+                return;
+            }
+            final PsiClassType classType = (PsiClassType)variableType;
+            final PsiType[] parameterTypes = classType.getParameters();
+            final PsiType parameterType;
+            if (parameterTypes.length > 0) {
+                parameterType = parameterTypes[0];
+            } else {
+                parameterType = null;
+            }
             final PsiStatement newStatement =
-                    createDeclaration(methodCallExpression, variableName);
+                    createDeclaration(methodCallExpression, variableName,
+                            parameterType);
             if (newStatement == null) {
                 return;
             }
@@ -132,7 +145,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
         @Nullable
         private static PsiStatement createDeclaration(
                 PsiMethodCallExpression methodCallExpression,
-                String variableName)
+                String variableName, PsiType parameterType)
                 throws IncorrectOperationException {
             final StringBuilder newStatementText =
                     new StringBuilder();
@@ -142,7 +155,14 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
                 newStatementText.append("final ");
             }
-            newStatementText.append("java.util.Iterator ");
+            newStatementText.append("java.util.Iterator");
+            if (parameterType != null) {
+                final String typeText = parameterType.getCanonicalText();
+                newStatementText.append('<');
+                newStatementText.append(typeText);
+                newStatementText.append('>');
+            }
+            newStatementText.append(' ');
             newStatementText.append(variableName);
             newStatementText.append('=');
             final PsiReferenceExpression methodExpression =
