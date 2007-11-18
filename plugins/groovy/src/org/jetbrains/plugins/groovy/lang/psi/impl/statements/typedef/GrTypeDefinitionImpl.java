@@ -49,8 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -189,14 +188,14 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
         CandidateInfo fieldInfo = fieldsMap.get(name);
         if (fieldInfo != null) {
           final PsiElement element = fieldInfo.getElement();
-          if (!(element instanceof GrField && PsiTreeUtil.isAncestor(element.getParent(), place, true))) { //the same variable declaration
+          if (!isSameDeclaration(place, element)) { //the same variable declaration
             if (!processor.execute(element, fieldInfo.getSubstitutor())) return false;
           }
         }
       } else {
         for (CandidateInfo info : fieldsMap.values()) {
           final PsiElement element = info.getElement();
-          if (!(element instanceof GrField && PsiTreeUtil.isAncestor(element.getParent(), place, true))) {  //the same variable declaration
+          if (!isSameDeclaration(place, element)) {  //the same variable declaration
             if (!processor.execute(element, info.getSubstitutor())) return false;
           }
         }
@@ -210,7 +209,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
         for (List<CandidateInfo> list : methodsMap.values()) {
           for (CandidateInfo info : list) {
             PsiMethod method = (PsiMethod) info.getElement();
-            if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY))
+            if (!isSameDeclaration(place, method) &&
+                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY))
               return false;
           }
         }
@@ -219,7 +219,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
         if (byName != null) {
           for (CandidateInfo info : byName) {
             PsiMethod method = (PsiMethod) info.getElement();
-            if (isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY))
+            if (!isSameDeclaration(place, method) &&
+                isMethodVisible(isPlaceGroovy, method) && !processor.execute(method, PsiSubstitutor.EMPTY))
               return false;
           }
         }
@@ -243,6 +244,12 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     }
 
     return true;
+  }
+
+  private boolean isSameDeclaration(PsiElement place, PsiElement element) {
+    if (element instanceof AccessorMethod) element = ((AccessorMethod) element).getProperty();
+
+    return element instanceof GrField && PsiTreeUtil.isAncestor(element.getParent(), place, true);
   }
 
   private boolean isPropertyReference(PsiElement place, PsiField aField, boolean isGetter) {

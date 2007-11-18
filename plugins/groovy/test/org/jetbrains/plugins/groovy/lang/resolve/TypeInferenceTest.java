@@ -56,7 +56,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
 
   public void testCircular1() throws Exception {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("circular1/A.groovy").getElement();
-    assertEquals("java.lang.Object", ref.getType().getCanonicalText());
+    assertNull(ref.getType());
   }
 
   public void testClosure() throws Exception {
