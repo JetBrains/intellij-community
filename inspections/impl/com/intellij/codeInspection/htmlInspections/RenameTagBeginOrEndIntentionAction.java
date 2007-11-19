@@ -54,15 +54,17 @@ public class RenameTagBeginOrEndIntentionAction implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    if (!CodeInsightUtil.prepareFileForWrite(myTarget.getContainingFile())) {
-      return;
-    }
-
-    new WriteCommandAction(project) {
-      protected void run(final Result result) throws Throwable {
-        final XmlTag newTag = PsiManager.getInstance(project).getElementFactory().createTagFromText("<" + myTargetName + "/>");
-        CodeEditUtil.replaceChild(myParent, myTarget.getNode(), newTag.getChildren()[1].getNode());
+    if (myTarget.isValid()) {
+      if (!CodeInsightUtil.prepareFileForWrite(myTarget.getContainingFile())) {
+        return;
       }
-    }.execute();
+
+      new WriteCommandAction(project) {
+        protected void run(final Result result) throws Throwable {
+          final XmlTag newTag = PsiManager.getInstance(project).getElementFactory().createTagFromText("<" + myTargetName + "/>");
+          CodeEditUtil.replaceChild(myParent, myTarget.getNode(), newTag.getChildren()[1].getNode());
+        }
+      }.execute();
+    }
   }
 }
