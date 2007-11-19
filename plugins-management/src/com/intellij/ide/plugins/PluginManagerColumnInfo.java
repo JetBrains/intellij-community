@@ -208,28 +208,27 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
       if (column == COLUMN_DATE) {
         setHorizontalAlignment(SwingConstants.RIGHT);
       }
-      if (!isSelected) {
-        if (descriptor instanceof IdeaPluginDescriptorImpl) {
-          final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
-          if (ideaPluginDescriptor.isDeleted()) {
-            setForeground(FileStatus.COLOR_MISSING);
-            setToolTipText(IdeBundle.message("plugin.deleted.status.tooltip"));
-          } else if (InstalledPluginsTableModel.hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
-            setForeground(FileStatus.COLOR_MODIFIED);
-            setToolTipText(IdeBundle.message("plugin.outdated.version.status.tooltip"));
-          } else if (InstalledPluginsTableModel.wasUpdated(ideaPluginDescriptor.getPluginId())) {
-            setForeground(FileStatus.COLOR_MODIFIED);
-            setToolTipText(IdeBundle.message("plugin.updated.status.tooltip"));
-          }
-        } else if (descriptor instanceof PluginNode) {
-          final PluginNode pluginNode = (PluginNode)descriptor;
-          if (pluginNode.getStatus() == PluginNode.STATUS_DOWNLOADED){
-            setForeground(FileStatus.COLOR_ADDED);
-            setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
-          } else if (pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
-            setForeground(FileStatus.COLOR_MODIFIED);
-            setToolTipText(IdeBundle.message("plugin.is.already.installed.status.tooltip"));
-          }
+      if (descriptor instanceof IdeaPluginDescriptorImpl) {
+        final IdeaPluginDescriptorImpl ideaPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
+        if (ideaPluginDescriptor.isDeleted()) {
+          if (!isSelected) setForeground(FileStatus.COLOR_MISSING);
+          setToolTipText(IdeBundle.message("plugin.deleted.status.tooltip"));
+        } else if (InstalledPluginsTableModel.hasNewerVersion(ideaPluginDescriptor.getPluginId())) {
+          if (!isSelected) setForeground(FileStatus.COLOR_MODIFIED);
+          setToolTipText(IdeBundle.message("plugin.outdated.version.status.tooltip"));
+        } else if (InstalledPluginsTableModel.wasUpdated(ideaPluginDescriptor.getPluginId())) {
+          if (!isSelected) setForeground(FileStatus.COLOR_MODIFIED);
+          setToolTipText(IdeBundle.message("plugin.updated.status.tooltip"));
+        }
+      } else if (descriptor instanceof PluginNode) {
+        final PluginNode pluginNode = (PluginNode)descriptor;
+        if (pluginNode.getStatus() == PluginNode.STATUS_DOWNLOADED){
+          if (!isSelected) setForeground(FileStatus.COLOR_ADDED);
+          if (column == COLUMN_NAME) setIcon(IconLoader.getIcon("/nodes/plugin.png"));
+          setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
+        } else if (pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
+          if (!isSelected) setForeground(FileStatus.COLOR_MODIFIED);
+          setToolTipText(IdeBundle.message("plugin.is.already.installed.status.tooltip"));
         }
       }
 
