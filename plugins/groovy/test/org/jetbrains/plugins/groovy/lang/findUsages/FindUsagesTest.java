@@ -32,6 +32,7 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.Query;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -98,6 +99,14 @@ public class FindUsagesTest extends IdeaTestCase {
     doTest("property1/A.groovy", 1);
   }
 
+  public void testProperty2() throws Throwable {
+    myFixture.configureByFile("property2/A.groovy");
+    final PsiElement elementAt = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+    final GrField field = PsiTreeUtil.getParentOfType(elementAt, GrField.class);
+    assertNotNull(field);
+    doFind(1, field);
+  }
+
   public void testEscapedReference() throws Throwable {
     doTest("escapedReference/A.groovy", 1);
   }
@@ -126,6 +135,10 @@ public class FindUsagesTest extends IdeaTestCase {
     final PsiElement resolved = ref.resolve();
     assertNotNull("Could not resolve reference", resolved);
 
+    doFind(expectedUsagesCount, resolved);
+  }
+
+  private void doFind(int expectedUsagesCount, PsiElement resolved) {
     final Query<PsiReference> query;
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.getProject());
     if (resolved instanceof PsiMethod) {
