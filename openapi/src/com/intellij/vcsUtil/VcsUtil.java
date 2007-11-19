@@ -257,6 +257,24 @@ public class VcsUtil {
     return roots[0];
   }
 
+  @Nullable
+  public static VirtualFile getVcsRootFor(final Project project, final VirtualFile file) {
+    final VirtualFile[] roots = new VirtualFile[1];
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        //  IDEADEV-17916, when e.g. ContentRevision.getContent is called in
+        //  a future task after the component has been disposed.
+        if( !project.isDisposed() )
+        {
+          ProjectLevelVcsManager mgr = ProjectLevelVcsManager.getInstance( project );
+          roots[ 0 ] = (mgr != null) ? mgr.getVcsRootFor( file ) : null;
+        }
+      }
+    });
+    return roots[0];
+  }
+
   public static void refreshFiles(final FilePath[] roots, final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     refreshFiles(collectFilesToRefresh(roots), runnable);
