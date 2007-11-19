@@ -13,21 +13,24 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrSimplePowerExprImpl extends GrPowerExprImpl {
+public class GrLogicalAndExpressionImpl extends GrLogicalExpressionImpl {
 
-  public GrSimplePowerExprImpl(@NotNull ASTNode node) {
+  public GrLogicalAndExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
-    return "Simple power expression";
+    return "Logical AND expression";
   }
+
 }

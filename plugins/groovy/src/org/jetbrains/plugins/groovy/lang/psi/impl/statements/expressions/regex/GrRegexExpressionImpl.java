@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
+package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
@@ -23,19 +23,19 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author ilyas
  */
-public class GrPowerExprImpl extends GrBinaryExpressionImpl {
+public class GrRegexExpressionImpl extends GrBinaryExpressionImpl {
+  private static final String MATCHER_FQ_NAME = "java.util.regex.Matcher";
 
-  public GrPowerExprImpl(@NotNull ASTNode node) {
+  public GrRegexExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  public String toString() {
-    return "Power expression";
-  }
-
   public PsiType getType() {
-    //cannot know the type statically without the knowledge of actual value
-    return getTypeByFQName("java.lang.Number");
+    return getManager().getElementFactory().createTypeByFQClassName(MATCHER_FQ_NAME, getResolveScope());
   }
-}
 
+  public String toString() {
+    return "Regex expression";
+  }
+
+}

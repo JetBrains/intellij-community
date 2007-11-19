@@ -27,7 +27,7 @@ public class IntentionUtils {
     // codeStyleManager.reformat(insertedElement);
   }
 
-  public static void replaceStatement(
+  public static GrStatement replaceStatement(
       @NonNls @NotNull String newStatement,
       @NonNls @NotNull GrStatement statement)
       throws IncorrectOperationException {
@@ -35,7 +35,7 @@ public class IntentionUtils {
     final GroovyElementFactory factory = GroovyElementFactory.getInstance(statement.getProject());
     final GrStatement newCall =
         (GrStatement) factory.createTopElementFromText(newStatement);
-    final PsiElement insertedElement = statement.replaceWithStatement(newCall);
+    return statement.replaceWithStatement(newCall);
     //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
     // codeStyleManager.reformat(insertedElement);
   }

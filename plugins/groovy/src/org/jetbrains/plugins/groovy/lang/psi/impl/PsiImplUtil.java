@@ -50,10 +50,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrExclusiveOrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrInclusiveOrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalAndExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalOrExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExprImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExprImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalAndExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalOrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrEqualityExpressionImpl;
 import org.jetbrains.plugins.groovy.refactoring.GroovyVariableUtil;
 
 import java.util.ArrayList;
@@ -118,10 +118,10 @@ public class PsiImplUtil {
     if (binaryExpression instanceof GrAdditiveExpressionImpl) {
       return binaryExpression.getOperationTokenType() == GroovyTokenTypes.mMINUS;
     }
-    return binaryExpression instanceof GrEqualityExprImpl
-        || binaryExpression instanceof GrRegexExprImpl
-        || binaryExpression instanceof GrShiftExprImpl
-        || binaryExpression instanceof GrPowerExprImpl;
+    return binaryExpression instanceof GrEqualityExpressionImpl
+        || binaryExpression instanceof GrRegexExpressionImpl
+        || binaryExpression instanceof GrShiftExpressionImpl
+        || binaryExpression instanceof GrPowerExpressionImpl;
   }
 
   public static SearchScope getUseScope(GrMember member) {
@@ -237,20 +237,21 @@ public class PsiImplUtil {
     if (expr instanceof GrPostfixExpression) priority = 5;
     if (expr instanceof GrUnaryExpression ||
         expr instanceof GrTypeCastExpression) priority = 6;
-    if (expr instanceof GrPowerExprImpl) priority = 7;
+    if (expr instanceof GrPowerExpressionImpl) priority = 7;
     if (expr instanceof GrMultiplicativeExpressionImpl) priority = 8;
     if (expr instanceof GrAdditiveExpressionImpl) priority = 9;
-    if (expr instanceof GrShiftExprImpl) priority = 10;
-    if (expr instanceof GrRelationalExpression) priority = 11;
-    if (expr instanceof GrEqualityExprImpl) priority = 12;
-    if (expr instanceof GrRegexExprImpl) priority = 13;
-    if (expr instanceof GrAndExpressionImpl) priority = 14;
-    if (expr instanceof GrExclusiveOrExpressionImpl) priority = 15;
-    if (expr instanceof GrInclusiveOrExpressionImpl) priority = 16;
-    if (expr instanceof GrLogicalAndExprImpl) priority = 17;
-    if (expr instanceof GrLogicalOrExprImpl) priority = 18;
-    if (expr instanceof GrConditionalExpression) priority = 19;
-    if (expr instanceof GrAssignmentExpression) priority = 20;
+    if (expr instanceof GrShiftExpressionImpl) priority = 10;
+    if (expr instanceof GrRangeExpressionImpl) priority = 11;
+    if (expr instanceof GrRelationalExpression) priority = 12;
+    if (expr instanceof GrEqualityExpressionImpl) priority = 13;
+    if (expr instanceof GrRegexExpressionImpl) priority = 14;
+    if (expr instanceof GrAndExpressionImpl) priority = 15;
+    if (expr instanceof GrExclusiveOrExpressionImpl) priority = 16;
+    if (expr instanceof GrInclusiveOrExpressionImpl) priority = 17;
+    if (expr instanceof GrLogicalAndExpressionImpl) priority = 18;
+    if (expr instanceof GrLogicalOrExpressionImpl) priority = 19;
+    if (expr instanceof GrConditionalExpression) priority = 20;
+    if (expr instanceof GrAssignmentExpression) priority = 21;
     return -priority;
   }
 

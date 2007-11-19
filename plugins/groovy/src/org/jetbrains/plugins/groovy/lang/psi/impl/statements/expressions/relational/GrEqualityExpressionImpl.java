@@ -23,9 +23,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author ilyas
  */
-public class GrEqualityExprImpl extends GrBinaryExpressionImpl {
+public class GrEqualityExpressionImpl extends GrBinaryExpressionImpl {
 
-  public GrEqualityExprImpl(@NotNull ASTNode node) {
+  public GrEqualityExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 

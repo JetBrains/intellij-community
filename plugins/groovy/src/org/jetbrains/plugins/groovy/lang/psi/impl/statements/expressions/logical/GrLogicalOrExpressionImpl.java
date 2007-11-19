@@ -23,9 +23,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinar
 /**
  * @author ilyas
  */
-public class GrLogicalOrExprImpl extends GrLogicalExpressionImpl {
+public class GrLogicalOrExpressionImpl extends GrLogicalExpressionImpl {
 
-  public GrLogicalOrExprImpl(@NotNull ASTNode node) {
+  public GrLogicalOrExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 

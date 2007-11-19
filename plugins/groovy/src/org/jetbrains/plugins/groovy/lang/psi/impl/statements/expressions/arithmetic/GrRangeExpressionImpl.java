@@ -11,12 +11,12 @@ import com.intellij.psi.PsiElementFactory;
 /**
  * @author ilyas
  */
-public class GrRangeExprImpl extends GrBinaryExpressionImpl implements GrRangeExpression {
+public class GrRangeExpressionImpl extends GrBinaryExpressionImpl implements GrRangeExpression {
   private static final String INTEGER_FQ_NAME = "java.lang.Integer";
   private static final String INT_RANGE_FQ_NAME = "groovy.lang.IntRange";
   private static final String OBJECT_RANGE_FQ_NAME = "groovy.lang.ObjectRange";
 
-  public GrRangeExprImpl(@NotNull ASTNode node) {
+  public GrRangeExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
