@@ -1,13 +1,14 @@
 package com.intellij.debugger.ui.content.newUI;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.ArrayList;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 class GridCell {
 
@@ -18,11 +19,11 @@ class GridCell {
   private Grid.Placeholder myPlaceholder;
   private PlaceInGrid myPlaceInGrid;
 
-  public GridCell(Grid container, Grid.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
+  public GridCell(Project project, Grid container, Grid.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
     myContainer = container;
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
-    myTabs = new JBTabs(container.myActionManager, container);
+    myTabs = new JBTabs(project, container.myActionManager, container);
     myTabs.setUiDecorator(new JBTabs.UiDecorator() {
       public JBTabs.UiDecoration getDecoration() {
         return new JBTabs.UiDecoration(null, new Insets(0, -1, 0, -1));

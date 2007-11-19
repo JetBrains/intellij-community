@@ -139,7 +139,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     }
 
     if ("true".equalsIgnoreCase(System.getProperty("new.debugger.ui"))) {
-      myContentUI = new NewDebuggerContentUI(ActionManager.getInstance(), DebuggerSettings.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
+      myContentUI = new NewDebuggerContentUI(getProject(), ActionManager.getInstance(), DebuggerSettings.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
     } else {
       myContentUI = new DebuggerContentUI(this, getProject(), ActionManager.getInstance(), DebuggerBundle.message("title.generic.debug.dialog") + " - " + sessionName);
     }

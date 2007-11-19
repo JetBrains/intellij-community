@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.content.newUI;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -37,7 +38,7 @@ class Grid extends Wrapper implements Disposable {
     }
   };
 
-  public Grid(ActionManager actionManager, DebuggerSettings settings, Disposable parent, String sessionName, boolean horizontalToolbars) {
+  public Grid(Project project, ActionManager actionManager, DebuggerSettings settings, Disposable parent, String sessionName, boolean horizontalToolbars) {
     Disposer.register(parent, this);
 
     mySettings = settings;
@@ -46,10 +47,10 @@ class Grid extends Wrapper implements Disposable {
 
     setOpaque(false);
 
-    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(this, myLeft, horizontalToolbars, PlaceInGrid.left));
-    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(this, myCenter, horizontalToolbars, PlaceInGrid.center));
-    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(this, myRight, horizontalToolbars, PlaceInGrid.right));
-    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(this, myBottom, horizontalToolbars, PlaceInGrid.bottom));
+    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(project, this, myLeft, horizontalToolbars, PlaceInGrid.left));
+    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(project, this, myCenter, horizontalToolbars, PlaceInGrid.center));
+    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(project, this, myRight, horizontalToolbars, PlaceInGrid.right));
+    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(project, this, myBottom, horizontalToolbars, PlaceInGrid.bottom));
 
     setContent(mySplitter);
 
@@ -58,6 +59,8 @@ class Grid extends Wrapper implements Disposable {
     myTopSplit.setLastComponent(myRight);
     mySplitter.setFirstComponent(myTopSplit);
     mySplitter.setSecondComponent(myBottom);
+
+    setFocusCycleRoot(true);
   }
 
   public void addNotify() {

@@ -7,6 +7,7 @@ import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.ui.tabs.JBTabs;
@@ -38,15 +39,18 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
       return ((Integer)o1.getObject()).compareTo(((Integer)o2.getObject()));
     }
   };
+  private Project myProject;
 
-  public NewDebuggerContentUI(ActionManager actionManager, DebuggerSettings settings, String sessionName) {
+  public NewDebuggerContentUI(Project project, ActionManager actionManager, DebuggerSettings settings, String sessionName) {
+    myProject = project;
     mySettings = settings;
     myActionManager = actionManager;
     mySessionName = sessionName;
 
-    myTabs = new JBTabs(actionManager, this);
+    myTabs = new JBTabs(project, actionManager, this);
     myTabs.setPaintBorder(false);
-    //myTabs.setPaintFocus(false);
+    myTabs.setPaintFocus(false);
+    myTabs.setRequestFocusOnLastFocusedComponent(true);
 
     myComponent.setContent(myTabs);
   }
@@ -86,7 +90,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     Grid grid = findGridFor(content);
     if (grid != null || !createIfMissing) return grid;
 
-    grid = new Grid(myActionManager, mySettings, this, mySessionName, isHorizontalToolbar());
+    grid = new Grid(myProject, myActionManager, mySettings, this, mySessionName, isHorizontalToolbar());
     grid.setBorder(new EmptyBorder(1, 0, 0, 0));
 
     TabInfo tab = new TabInfo(grid).setObject(getContentState(content).getTab()).setText("Tab");

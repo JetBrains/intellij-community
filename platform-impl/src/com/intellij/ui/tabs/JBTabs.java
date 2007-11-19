@@ -2,12 +2,15 @@ package com.intellij.ui.tabs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.ui.CaptionPanel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,8 +79,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   private boolean myPaintFocus = true;
 
   private boolean myHideTabs = false;
+  private @Nullable Project myProject;
 
-  public JBTabs(ActionManager actionManager, Disposable parent) {
+  private boolean myRequestFocusOnLastFocusedComponent = false;
+
+  public JBTabs(@Nullable Project project, ActionManager actionManager, Disposable parent) {
+    myProject = project;
     myActionManager = actionManager;
 
     myOwnGroup = new DefaultActionGroup();
@@ -157,37 +164,49 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     myMorePopup.show(this, e.getX(), e.getY());
   }
 
-  public void requestFocus() {
-    final TabInfo info = getSelectedInfo();
-    if (info == null || info.getPreferredFocusableComponent() == null) {
+
+
+  private JComponent getToFocus() {
+   final TabInfo info = getSelectedInfo();
+
+    JComponent toFocus = null;
+
+    if (isRequestFocusOnLastFocusedComponent() && info.getLastFocusOwner() != null && !isMyChildIsFocusedNow()) {
+      toFocus = info.getLastFocusOwner();
+    }
+
+    if (toFocus == null && (info == null || info.getPreferredFocusableComponent() == null)) {
+      return null;
+    }
+
+
+    if (toFocus == null) {
+      toFocus = info.getPreferredFocusableComponent();
+      final JComponent policyToFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
+      if (policyToFocus != null) {
+        toFocus = policyToFocus;
+      }
+    }
+
+    return toFocus;
+  }
+
+ public void requestFocus() {
+    final JComponent toFocus = getToFocus();
+    if (toFocus != null) {
+      toFocus.requestFocus();
+    } else {
       super.requestFocus();
-      return;
     }
-
-
-    JComponent toFocus = info.getPreferredFocusableComponent();
-    final JComponent policyToFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
-    if (policyToFocus != null) {
-      toFocus = policyToFocus;
-    }
-
-    toFocus.requestFocus();
   }
 
   public boolean requestFocusInWindow() {
-    final TabInfo info = getSelectedInfo();
-    if (info == null || info.getPreferredFocusableComponent() == null) {
+  final JComponent toFocus = getToFocus();
+    if (toFocus != null) {
+      return toFocus.requestFocusInWindow();
+    } else {
       return super.requestFocusInWindow();
     }
-
-
-    JComponent toFocus = info.getPreferredFocusableComponent();
-    final JComponent policyToFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(toFocus);
-    if (policyToFocus != null) {
-      toFocus = policyToFocus;
-    }
-
-    return toFocus.requestFocusInWindow();
   }
 
   private JBTabs findTabs(Component c) {
@@ -205,7 +224,6 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
 
   public TabInfo addTab(TabInfo info, int index) {
     info.getChangeSupport().addPropertyChangeListener(this);
-    add(info.getComponent());
     final TabLabel label = new TabLabel(info);
     myInfo2Label.put(info, label);
 
@@ -257,7 +275,24 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     setSelected(getSelectedInfo(), false);
   }
 
+  private boolean isMyChildIsFocusedNow() {
+    final Component owner = getFocusOwner();
+    return  owner != null && SwingUtilities.isDescendingFrom(owner, this);
+  }
+
+  @Nullable
+  private JComponent getFocusOwner() {
+    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    return (JComponent)(owner instanceof JComponent ? owner : null);
+  }
+
   public void setSelected(final TabInfo info, final boolean requestFocus) {
+    if (myRequestFocusOnLastFocusedComponent && mySelectedInfo != null) {
+      if (isMyChildIsFocusedNow()) {
+        mySelectedInfo.setLastFocusOwner(getFocusOwner());
+      }
+    }
+
     TabInfo oldInfo = mySelectedInfo;
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
@@ -273,9 +308,20 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
 
     if (requestFocus) {
-      newInfo.getPreferredFocusableComponent().requestFocus();
+      final JComponent toFocus = getToFocus();
+      if (myProject != null && toFocus != null) {
+        ToolWindowManager.getInstance(myProject).requestFocus(new ActionCallback.Runnable() {
+          public ActionCallback run() {
+            toFocus.requestFocus();
+            return new ActionCallback.Done();
+          }
+        }, true);
+      } else {
+        requestFocus();
+      }
     }
   }
+
 
   public void propertyChange(final PropertyChangeEvent evt) {
     final TabInfo tabInfo = (TabInfo)evt.getSource();
@@ -397,6 +443,14 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
         layoutTable();
         myLastSingRowLayout = null;
       }
+
+      if (isStealthModeEffective()) {
+        final JBTabs.TabLabel label = myInfo2Label.get(getSelectedInfo());
+        final Rectangle bounds = label.getBounds();
+        final Insets insets = getLayoutInsets();
+        label.setBounds(bounds.x, bounds.y, getWidth() - insets.right - insets.left, bounds.height);
+      }
+
     }
     finally {
       myForcedRelayout = false;
@@ -668,9 +722,6 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
 
-    if (isHideTabs()) {
-
-    }
 
     final TabInfo selected = getSelectedInfo();
     if (selected == null) return;
@@ -909,6 +960,23 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
   }
 
   private void update(boolean forced) {
+    for (TabInfo each : myInfos) {
+      final JComponent eachComponent = each.getComponent();
+      if (getSelectedInfo() == each && getSelectedInfo() != null) {
+        final Container parent = eachComponent.getParent();
+        if (parent != null && parent != this) {
+          parent.remove(eachComponent);
+        }
+
+        if (eachComponent.getParent() == null) {
+          add(eachComponent);
+        }
+      } else {
+        remove(eachComponent);
+      }
+    }
+
+
     myForcedRelayout = forced;
     revalidate();
     repaint();
@@ -1238,7 +1306,13 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     }
   }
 
+  public boolean isRequestFocusOnLastFocusedComponent() {
+    return myRequestFocusOnLastFocusedComponent;
+  }
 
+  public void setRequestFocusOnLastFocusedComponent(final boolean requestFocusOnLastFocusedComponent) {
+    myRequestFocusOnLastFocusedComponent = requestFocusOnLastFocusedComponent;
+  }
 
   public static interface UiDecorator {
     @NotNull
@@ -1254,7 +1328,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());
     final int[] count = new int[1];
-    final JBTabs tabs = new JBTabs(null, new Disposable() {
+    final JBTabs tabs = new JBTabs(null, null, new Disposable() {
       public void dispose() {
       }
     }) {
@@ -1322,7 +1396,17 @@ public class JBTabs extends JComponent implements PropertyChangeListener {
       }                                              
     });
 
-    tabs.addTab(new TabInfo(new JTree())).setText("Tree1").setActions(new DefaultActionGroup(), null)
+    tabs.addTab(new TabInfo(new JTree() {
+      public void addNotify() {
+        super.addNotify();    //To change body of overridden methods use File | Settings | File Templates.
+        System.out.println("JBTabs.addNotify");
+      }
+
+      public void removeNotify() {
+        System.out.println("JBTabs.removeNotify");
+        super.removeNotify();    //To change body of overridden methods use File | Settings | File Templates.
+      }
+    })).setText("Tree1").setActions(new DefaultActionGroup(), null)
       .setIcon(IconLoader.getIcon("/debugger/frame.png"));
     //tabs.addTab(new TabInfo(new JTree())).setText("Tree2");
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);

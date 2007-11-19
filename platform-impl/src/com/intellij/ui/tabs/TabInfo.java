@@ -1,10 +1,11 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeSupport;
+import java.lang.ref.WeakReference;
 
 public final class TabInfo {
 
@@ -24,6 +25,7 @@ public final class TabInfo {
   private String myPlace;
   private Object myObject;
   private JComponent mySideComponent;
+  private WeakReference<JComponent> myLastFocusOwner;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -95,11 +97,21 @@ public final class TabInfo {
   }
 
   public JComponent getPreferredFocusableComponent() {
-    return myPreferredFocusableComponent;
+    return myPreferredFocusableComponent != null ? myPreferredFocusableComponent : myComponent;
   }
 
   public TabInfo setPreferredFocusableComponent(final JComponent component) {
     myPreferredFocusableComponent = component;
     return this;
   }
+
+  void setLastFocusOwner(final JComponent owner) {
+    myLastFocusOwner = new WeakReference<JComponent>(owner);
+  }
+  
+  @Nullable
+  JComponent getLastFocusOwner() {
+    return myLastFocusOwner != null ? myLastFocusOwner.get() : null;
+  }
+
 }
