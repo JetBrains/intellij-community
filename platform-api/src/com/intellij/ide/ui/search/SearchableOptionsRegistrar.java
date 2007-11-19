@@ -42,7 +42,7 @@ public abstract class SearchableOptionsRegistrar{
                                                      final DocumentEvent.EventType type,
                                                      final Set<Configurable> configurables,
                                                      final String option,
-                                                     final boolean showProjectCodeStyle);
+                                                     final Project project);
 
   @Nullable
   public abstract String getInnerPath(SearchableConfigurable configurable, String option);

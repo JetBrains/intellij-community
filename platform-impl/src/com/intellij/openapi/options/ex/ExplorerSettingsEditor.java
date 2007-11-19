@@ -1,7 +1,6 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
@@ -435,8 +434,7 @@ public class ExplorerSettingsEditor extends DialogWrapper {
           public void run() {
             final @NonNls String searchPattern = mySearchField.getText();
             if (searchPattern != null && searchPattern.length() > 0) {
-              myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern,
-                                                                     CodeStyleFacade.getInstance(myProject).projectUsesOwnSettings());
+              myOptionContainers = optionsRegistrar.getConfigurables(myGroups, e.getType(), myOptionContainers, searchPattern, myProject);
             }
             else {
               myOptionContainers = null;

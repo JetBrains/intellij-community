@@ -5,6 +5,7 @@ package com.intellij.codeStyle;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.options.Configurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,10 @@ public class DefaultCodeStyleFacade extends CodeStyleFacade {
   }
 
   public boolean projectUsesOwnSettings() {
+    return false;
+  }
+
+  public boolean isUnsuitableCodestyleConfigurable(final Configurable c) {
     return false;
   }
 

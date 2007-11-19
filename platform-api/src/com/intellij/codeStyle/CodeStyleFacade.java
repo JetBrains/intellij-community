@@ -6,6 +6,7 @@ package com.intellij.codeStyle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,4 +46,6 @@ public abstract class CodeStyleFacade {
   public abstract String getLineSeparator();
 
   public abstract boolean projectUsesOwnSettings();
+
+  public abstract boolean isUnsuitableCodestyleConfigurable(Configurable c);
 }

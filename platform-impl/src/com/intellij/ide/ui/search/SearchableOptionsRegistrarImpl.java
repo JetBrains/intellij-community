@@ -4,8 +4,6 @@
 
 package com.intellij.ide.ui.search;
 
-import com.intellij.application.options.CodeStyleSchemesConfigurable;
-import com.intellij.application.options.ProjectCodeStyleConfigurable;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -154,7 +152,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
                                             final DocumentEvent.EventType type,
                                             Set<Configurable> configurables,
                                             String option,
-                                            boolean showProjectCodeStyle) {
+                                            Project project) {
 
     Set<String> options = getProcessedWordsWithoutStemming(option);
     if (configurables == null) {
@@ -186,8 +184,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     if (helpIds != null) {
       for (Iterator<Configurable> it = configurables.iterator(); it.hasNext();) {
         Configurable configurable = it.next();
-        if ((configurable instanceof ProjectCodeStyleConfigurable && !showProjectCodeStyle) ||
-            (configurable instanceof CodeStyleSchemesConfigurable && showProjectCodeStyle)) {
+        if (CodeStyleFacade.getInstance(project).isUnsuitableCodestyleConfigurable(configurable)) {
           it.remove();
           continue;
         }
@@ -197,7 +194,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
     }
     if (type == DocumentEvent.EventType.REMOVE && currentConfigurables.equals(configurables)) {
-      return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, showProjectCodeStyle);
+      return getConfigurables(groups, DocumentEvent.EventType.CHANGE, null, option, project);
     }
     return configurables;
   }
