@@ -697,8 +697,10 @@ public class BindingFactory {
                   if (yType instanceof PsiTypeVariable) {
                     final PsiTypeVariable beta = myFactory.create();
 
-                    if (x != null && constraints != null) constraints.add (new Subtype(x, beta));
-                    constraints.add (new Subtype(yType, beta));
+                    if (constraints != null) {
+                      if (x != null) constraints.add (new Subtype(x, beta));
+                      constraints.add (new Subtype(yType, beta));
+                    }
 
                     return create();
                   }
