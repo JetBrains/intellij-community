@@ -473,7 +473,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   @NotNull
-  public LiteralTextEscaper createLiteralTextEscaper() {
+  public LiteralTextEscaper<XmlTextImpl> createLiteralTextEscaper() {
     return new XmlTextLiteralEscaper(this);
   }
   public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {

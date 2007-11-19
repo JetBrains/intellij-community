@@ -34,7 +34,8 @@ public class StringLiteralEscaper extends LiteralTextEscaper<PsiLiteralExpressio
 
   public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
     int off = offsetInDecoded + rangeDisplayStart;
-    return off < myHost.getTextLength() ? outSourceOffsets[off] : -1;
+    int result = off < myHost.getTextLength() ? outSourceOffsets[off] : -1;
+    return result <= rangeInsideHost.getEndOffset() ? result : rangeInsideHost.getEndOffset();
   }
 
   public boolean isOneLine() {

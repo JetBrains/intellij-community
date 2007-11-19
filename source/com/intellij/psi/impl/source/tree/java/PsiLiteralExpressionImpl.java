@@ -438,7 +438,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   }
 
   @NotNull
-  public LiteralTextEscaper createLiteralTextEscaper() {
+  public LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
     return new StringLiteralEscaper(this);
   }
 

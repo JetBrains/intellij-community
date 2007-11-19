@@ -78,7 +78,7 @@ public class InjectedLanguageUtil {
 
   private static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> obtainHighlightTokensFromLexer(Language language,
                                                                                                                  StringBuilder outChars,
-                                                                                                                 List<LiteralTextEscaper<PsiLanguageInjectionHost>> escapers,
+                                                                                                                 List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
                                                                                                                  List<PsiLanguageInjectionHost.Shred> shreds,
                                                                                                                  VirtualFileWindow virtualFile,
                                                                                                                  DocumentWindowImpl documentWindow,
@@ -103,7 +103,7 @@ public class InjectedLanguageUtil {
         if (editable == null || editable.getLength() == 0) continue nextToken;
         range = new ProperTextRange(editable.getEndOffset(), range.getEndOffset());
         PsiLanguageInjectionHost host = shreds.get(hostNum).host;
-        LiteralTextEscaper<PsiLanguageInjectionHost> escaper = escapers.get(hostNum);
+        LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = escapers.get(hostNum);
         TextRange rangeInsideHost = shreds.get(hostNum).getRangeInsideHost();
         int prefixLength = shreds.get(hostNum).prefix.length();
         int start = escaper.getOffsetInHost(editable.getStartOffset() - prevHostsCombinedLength - prefixLength, rangeInsideHost);
@@ -227,7 +227,7 @@ public class InjectedLanguageUtil {
   }
 
   private static void patchLeafs(final ASTNode parsedNode,
-                                 final List<LiteralTextEscaper<PsiLanguageInjectionHost>> escapers,
+                                 final List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
                                  final List<PsiLanguageInjectionHost.Shred> shreds) {
     final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
     ((TreeElement)parsedNode).acceptTree(new RecursiveTreeElementVisitor(){
@@ -502,7 +502,7 @@ public class InjectedLanguageUtil {
       private List<String> prefixes;
       private List<String> suffixes;
       private List<PsiLanguageInjectionHost> injectionHosts;
-      private List<LiteralTextEscaper<PsiLanguageInjectionHost>> escapers;
+      private List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers;
       private List<PsiLanguageInjectionHost.Shred> shreds;
       private StringBuilder outChars;
       boolean isOneLineEditor;
@@ -527,7 +527,7 @@ public class InjectedLanguageUtil {
         prefixes = new SmartList<String>();
         suffixes = new SmartList<String>();
         injectionHosts = new SmartList<PsiLanguageInjectionHost>();
-        escapers = new SmartList<LiteralTextEscaper<PsiLanguageInjectionHost>>();
+        escapers = new SmartList<LiteralTextEscaper<? extends PsiLanguageInjectionHost>>();
         shreds = new SmartList<PsiLanguageInjectionHost.Shred>();
         outChars = new StringBuilder();
 
@@ -584,14 +584,18 @@ public class InjectedLanguageUtil {
         cleared = false;
         injectionHosts.add(host);
         outChars.append(prefix);
-        LiteralTextEscaper<PsiLanguageInjectionHost> textEscaper = host.createLiteralTextEscaper();
+        LiteralTextEscaper<? extends PsiLanguageInjectionHost> textEscaper = host.createLiteralTextEscaper();
         escapers.add(textEscaper);
         isOneLineEditor |= textEscaper.isOneLine();
         TextRange relevantRange = textEscaper.getRelevantTextRange().intersection(rangeInsideHost);
         if (relevantRange == null) return this;
         int startOffset = outChars.length();
         boolean result = textEscaper.decode(relevantRange, outChars);
-        if (!result) return this;
+        if (!result) {
+          // if there are invalid chars, adjust the range
+          int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - startOffset, rangeInsideHost);
+          relevantRange = relevantRange.intersection(new TextRange(0, offsetInHost));
+        }
         outChars.append(suffix);
         int endOffset = outChars.length();
         TextRange relevantRangeInHost = relevantRange.shiftRight(host.getTextRange().getStartOffset());

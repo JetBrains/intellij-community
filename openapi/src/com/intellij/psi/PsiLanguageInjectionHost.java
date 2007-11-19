@@ -52,7 +52,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
   void fixText(@NotNull String text);
   
   @NotNull
-  LiteralTextEscaper createLiteralTextEscaper();
+  LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper();
 
   
   interface InjectedPsiVisitor {

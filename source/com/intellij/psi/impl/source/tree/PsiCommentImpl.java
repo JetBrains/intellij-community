@@ -58,7 +58,7 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJav
   }
 
   @NotNull
-  public LiteralTextEscaper createLiteralTextEscaper() {
+  public LiteralTextEscaper<PsiCommentImpl> createLiteralTextEscaper() {
     return new CommentLiteralEscaper(this);
   }
 

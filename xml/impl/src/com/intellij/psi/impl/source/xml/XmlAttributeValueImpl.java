@@ -102,7 +102,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
   @NotNull
-  public LiteralTextEscaper createLiteralTextEscaper() {
+  public LiteralTextEscaper<XmlAttributeValueImpl> createLiteralTextEscaper() {
     return new XmlAttributeLiteralEscaper(this);
   }
   public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {

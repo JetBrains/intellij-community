@@ -217,6 +217,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       PsiElement context = file.getContext();
       if (context != null
           && context.isValid()
+          && !file.getProject().isDisposed()
           && (myUpdateAll || new TextRange(myStartOffset, myEndOffset).contains(context.getTextRange()))) {
         hosts.add(context);
       }
