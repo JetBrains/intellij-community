@@ -29,7 +29,7 @@ public class ViewAssertEqualsDiffAction extends AnAction {
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final AbstractTestProxy testProxy = TestProxy.fromDataContext(dataContext);
+    final AbstractTestProxy testProxy = (AbstractTestProxy)dataContext.getData(AbstractTestProxy.DATA_CONSTANT);
     final ComparisonFailureState state = (ComparisonFailureState)((TestProxy)testProxy).getState();
     state.openDiff(PlatformDataKeys.PROJECT.getData(dataContext));
   }
@@ -40,7 +40,7 @@ public class ViewAssertEqualsDiffAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     if (dataContext.getData(DataConstants.PROJECT) == null) enabled = false;
     else {
-      final AbstractTestProxy test = TestProxy.fromDataContext(dataContext);
+      final AbstractTestProxy test = (AbstractTestProxy)dataContext.getData(AbstractTestProxy.DATA_CONSTANT);
       if (test instanceof TestProxy) {
         final TestState state = ((TestProxy)test).getState();
         enabled = state instanceof ComparisonFailureState;

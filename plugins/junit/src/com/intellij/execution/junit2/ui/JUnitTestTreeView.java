@@ -30,7 +30,7 @@ public class JUnitTestTreeView extends TestTreeView {
     return new TreeTestRenderer(properties);
   }
 
-  protected TestProxy getSelectedTest(@NotNull final TreePath selectionPath) {
+  public TestProxy getSelectedTest(@NotNull final TreePath selectionPath) {
     return TestProxyClient.from(selectionPath.getLastPathComponent());
   }
 

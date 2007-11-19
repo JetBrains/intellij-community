@@ -81,7 +81,7 @@ public class TestProxy implements AbstractTestProxy {
     return total;
   }
 
-  public List<TestProxy> getResults() {
+  public List<TestProxy> getChildren() {
     return results;
   }
 

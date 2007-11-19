@@ -24,7 +24,6 @@ import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -292,9 +291,7 @@ public class TestProxy extends CompositePrintable implements AbstractTestProxy, 
     return getParent() == null;
   }
 
-  public static AbstractTestProxy fromDataContext(final DataContext dataContext) {
-    return (AbstractTestProxy)dataContext.getData(DATA_CONSTANT);
-  }
+
 
   public TestState.StateInterval calculateInterval(final SuiteState state) {
     final SuiteState.SuiteStateInterval result = new SuiteState.SuiteStateInterval(state, getChildAt(0).getState().getInterval());

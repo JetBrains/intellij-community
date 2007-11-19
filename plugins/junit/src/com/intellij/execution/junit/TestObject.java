@@ -186,7 +186,7 @@ public abstract class TestObject implements JavaCommandLine {
     PathUtilEx.addRtJar(myJavaParameters.getClassPath());
     PathUtilEx.addJunit4RtJar(myJavaParameters.getClassPath());
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
-    if (!(myRunnerSettings.getData() instanceof DebuggingRunnerData) && myConfiguration.isCoverageEnabled()) {
+    if (myConfiguration.isCoverageEnabled()) {
       final String coverageFileName = myConfiguration.getCoverageFilePath();
       final long lastCoverageTime = System.currentTimeMillis();
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(myProject);

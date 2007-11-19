@@ -83,7 +83,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
         } else {
             boolean hasFail = false;
             boolean hasSkipped = false;
-            for (TestProxy result : node.getResults()) {
+            for (TestProxy result : node.getChildren()) {
                 Icon icon = getIcon(result);
                 if (icon == PoolOfTestIcons.FAILED_ICON) {
                     hasFail = true;

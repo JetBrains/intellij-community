@@ -50,11 +50,11 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.text.NumberFormat;
 
 public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleManager
 {
@@ -291,7 +291,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
     }
 
     private TestProxy getChildNodeNamed(TestProxy currentNode, String node) {
-        for (TestProxy child : currentNode.getResults()) {
+        for (TestProxy child : currentNode.getChildren()) {
             if (child.getName().equals(node)) {
                 return child;
             }
@@ -378,7 +378,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
   }
 
   public boolean hasTestSuites() {
-    return rootNode.getResults().size() > 0;
+    return rootNode.getChildren().size() > 0;
   }
 
   public TestProxy getRoot() {
