@@ -35,7 +35,7 @@ public class JobUtil {
     try {
       job.scheduleAndWaitForResults();
     }
-    catch (ProcessCanceledException e) {
+    catch (RuntimeException e) {
       throw e;
     }
     catch (Throwable throwable) {
