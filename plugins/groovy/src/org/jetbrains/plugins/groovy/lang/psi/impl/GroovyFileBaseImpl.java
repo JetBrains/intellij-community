@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -92,7 +93,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     }
   }
 
-  public GrStatement addStatement(GrStatement statement, GrStatement anchor) throws IncorrectOperationException {
+  public GrStatement addStatementBefore(GrStatement statement, GrStatement anchor) throws IncorrectOperationException {
     final PsiElement result = addBefore(statement, anchor);
     getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
     return (GrStatement) result;
@@ -100,6 +101,12 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   public void removeVariable(GrVariable variable) throws IncorrectOperationException {
     PsiImplUtil.removeVariable(variable);
+  }
+
+  public GrVariableDeclaration addVariableDeclarationBefore(GrVariableDeclaration declaration, GrStatement anchor) throws IncorrectOperationException {
+    GrStatement statement = addStatementBefore(declaration, anchor);
+    assert statement instanceof GrVariableDeclaration;
+    return ((GrVariableDeclaration) statement);
   }
 
   public void accept(GroovyElementVisitor visitor) {

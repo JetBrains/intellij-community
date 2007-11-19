@@ -23,9 +23,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -60,6 +60,12 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
 
   public void removeVariable(GrVariable variable) throws IncorrectOperationException {
     PsiImplUtil.removeVariable(variable);
+  }
+
+  public GrVariableDeclaration addVariableDeclarationBefore(GrVariableDeclaration declaration, GrStatement anchor) throws IncorrectOperationException {
+    GrStatement statement = addStatementBefore(declaration, anchor);
+    assert statement instanceof GrVariableDeclaration;
+    return ((GrVariableDeclaration) statement);
   }
 
   private boolean mayUseNewLinesAsSeparators() {

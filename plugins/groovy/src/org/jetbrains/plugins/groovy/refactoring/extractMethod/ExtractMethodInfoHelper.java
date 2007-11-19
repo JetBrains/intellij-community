@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,9 +35,11 @@ public class ExtractMethodInfoHelper {
   private final String myOutputName;
   private final PsiType myOutputType;
   private final PsiElement[] myInnerElements;
+  private final GrStatement[] myStatements;
 
-  public ExtractMethodInfoHelper(String[] inputNames, String outputName, Map<String, PsiType> typeMap, PsiElement[] innerElements) {
+  public ExtractMethodInfoHelper(String[] inputNames, String outputName, Map<String, PsiType> typeMap, PsiElement[] innerElements, GrStatement[] statements) {
     myInnerElements = innerElements;
+    myStatements = statements;
     int i = 0;
     for (String name : inputNames) {
       PsiType type = typeMap.get(name);
@@ -83,8 +86,24 @@ public class ExtractMethodInfoHelper {
     return true;
   }
 
+  @Nullable
   public String getOutputName() {
     return myOutputName;
+  }
+
+  /**
+   * Get old names of parameters to be pasted as method call arguments
+   * @return array of argument names
+   */
+  public String[] getArgumentNames(){
+    Collection<ParameterInfo> infos = myInputNamesMap.values();
+    String[] argNames = new String[infos.size()];
+    for (ParameterInfo info : infos) {
+      int position = info.getPosition();
+      assert position < argNames.length;
+      argNames[position] = info.getOldName();
+    }
+    return argNames;
   }
 
   @NotNull
@@ -92,7 +111,13 @@ public class ExtractMethodInfoHelper {
     return myOutputType;
   }
 
+  @NotNull
   public PsiElement[] getInnerElements() {
     return myInnerElements;
+  }
+
+  @NotNull
+  public GrStatement[] getStatements() {
+    return myStatements;
   }
 }

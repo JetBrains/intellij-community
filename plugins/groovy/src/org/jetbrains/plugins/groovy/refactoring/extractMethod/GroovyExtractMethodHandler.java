@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -98,8 +99,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       return false;
     }
 
-    GrMethodOwner owner = ExtractMethodUtil.getMethodOwner(statements[0]);
-    if (owner == null) {
+    GrMethodOwner methodOwner = ExtractMethodUtil.getMethodOwner(statements[0]);
+    GrVariableDeclarationOwner declarationOwner = ExtractMethodUtil.getDecalarationOwner(statements[0]);
+    if (methodOwner == null || declarationOwner == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
       showErrorMessage(message, project);
       return false;
@@ -124,23 +126,42 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       return false;
     }
 
-    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputNames, outputName, typeMap, elements);
+    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputNames, outputName, typeMap, elements, statements);
 
     // todo implement EM dialog logic
 
-    runRefactoring(helper, owner);
+    runRefactoring(helper, methodOwner, declarationOwner, editor);
 
     return true;
   }
 
-  private void runRefactoring(@NotNull ExtractMethodInfoHelper helper, @NotNull final GrMethodOwner owner) {
+  private void runRefactoring(@NotNull final ExtractMethodInfoHelper helper,
+                              @NotNull final GrMethodOwner methodOwner,
+                              final GrVariableDeclarationOwner declarationOwner,
+                              final Editor editor) {
 
-    final GrMethod method = ExtractMethodUtil.createMethodByHelper("bliss", helper);
+    // todo remove me!
+    String methodName = "bliss";
+    final GrMethod method = ExtractMethodUtil.createMethodByHelper(methodName, helper);
+    final GrStatement newStatement = ExtractMethodUtil.createResultVariableAssignment(helper, methodName);
+    final GrStatement[] statements = helper.getStatements();
+    assert statements.length > 0 ;
 
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
-          owner.addMethod(method);
+          methodOwner.addMethod(method);
+          // add call statement
+          declarationOwner.addStatementBefore(newStatement, statements[0]);
+          // remove old statements
+          ExtractMethodUtil.removeOldStatements(declarationOwner, helper);
+          ExtractMethodUtil.removeNewLineAfter(newStatement);
+
+          // move to offset
+          if (editor != null) {
+            editor.getCaretModel().moveToOffset(ExtractMethodUtil.getCaretOffset(newStatement));
+          }
+
         } catch (IncorrectOperationException e) {
           LOG.error(e);
         }
@@ -148,7 +169,6 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     };
 
     Project project = helper.getProject();
-
     CommandProcessor.getInstance().executeCommand(
         project,
         new Runnable() {

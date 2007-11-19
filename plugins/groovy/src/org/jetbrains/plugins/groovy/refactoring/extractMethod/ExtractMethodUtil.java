@@ -15,64 +15,99 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ArrayList;
 
 /**
  * @author ilyas
  */
 public class ExtractMethodUtil {
 
-  @Nullable
-  public static Map<String, PsiType> getVariableTypes(GrStatement[] statements) {
+  public enum MethodAccessQualifier {
+    PUBLIC, PRIVATE, PROTECTED
+  }
 
+  @NotNull
+  static GrStatement createResultVariableAssignment(ExtractMethodInfoHelper helper, @NotNull String methodName) {
+    String name = helper.getOutputName();
+    PsiType type = helper.getOutputType();
+    GrStatement[] statements = helper.getStatements();
+    GrMethodCallExpression callExpression = createMethodCallStringByHelper(methodName, helper);
+    if (name == null || type == PsiType.VOID) return callExpression;
+    GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
+    if (mustAddVariableDeclaration(statements, name)) {
+      return factory.createVariableDeclaration(new String[0], name, callExpression, type.equalsToText("java.lang.Object") ? null : type);
+    } else {
+      return factory.createExpressionFromText(name + "= " + callExpression.getText());
+    }
+  }
+
+  static void removeOldStatements(GrStatementOwner owner, ExtractMethodInfoHelper helper) throws IncorrectOperationException {
+    ASTNode parentNode = owner.getNode();
+    for (PsiElement element : helper.getInnerElements()) {
+      ASTNode node = element.getNode();
+      if (node == null || node.getTreeParent() != parentNode) {
+        throw new IncorrectOperationException();
+      }
+      parentNode.removeChild(node);
+    }
+  }
+
+
+  /*
+  Collect variable types in code block to be extracted
+   */
+  @Nullable
+  static Map<String, PsiType> getVariableTypes(GrStatement[] statements) {
     if (statements.length == 0) return null;
     Map<String, PsiType> map = new HashMap<String, PsiType>();
     for (GrStatement statement : statements) {
       addContainingVariableTypes(statement, map);
     }
-
     return map;
-
   }
 
-  private static void addContainingVariableTypes(PsiElement statement, Map<String, PsiType> map) {
-    for (PsiElement element : statement.getChildren()) {
-      if (element instanceof GrVariable) {
-        GrVariable variable = (GrVariable) element;
-        String name = variable.getName();
-        if (name != null) {
-          map.put(name, variable.getTypeGroovy());
+  /*
+  To declare or not a variable to which method call result will be assigned.
+   */
+  private static boolean mustAddVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
+    GrVariable ourDeclaration = getVariableDeclaration(statements, varName);
+    if (ourDeclaration == null) return true;
+    for (GrStatement statement : statements) {
+      if (statement instanceof GrVariableDeclaration) {
+        GrVariable[] variables = ((GrVariableDeclaration) statement).getVariables();
+        for (GrVariable variable : variables) {
+          if (ourDeclaration == variable) return true;
         }
       }
-      if (element instanceof GrReferenceExpression) {
-        GrReferenceExpression expr = (GrReferenceExpression) element;
-        String name = expr.getName();
-        if (name != null) {
-          map.put(name, expr.getType());
-        }
-      }
-      addContainingVariableTypes(element, map);
     }
+    return false;
   }
 
-  public static GrMethod createMethodByHelper(String name, ExtractMethodInfoHelper helper) {
+  static GrMethod createMethodByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
     //todo change names in statements
     StringBuffer buffer = new StringBuffer();
 
@@ -154,8 +189,117 @@ public class ExtractMethodUtil {
     return parent instanceof GrMethodOwner ? ((GrMethodOwner) parent) : null;
   }
 
-  public enum MethodAccessQualifier {
-    PUBLIC, PRIVATE, PROTECTED
+  @Nullable
+  static GrVariableDeclarationOwner getDecalarationOwner(GrStatement statement) {
+    PsiElement parent = statement.getParent();
+    return parent instanceof GrVariableDeclarationOwner ? ((GrVariableDeclarationOwner) parent) : null;
   }
+
+  // Get declaration of variable to which method call expression will be assigned
+  private static GrVariable getVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
+    GrVariable variable = null;
+    for (GrStatement statement : statements) {
+      variable = getInnerVariableDeclaration(statement, varName);
+      if (variable != null) break;
+    }
+    return variable;
+  }
+
+  private static GrVariable getInnerVariableDeclaration(@NotNull PsiElement element, @NotNull String name) {
+    if (element instanceof GrReferenceExpression) {
+      GrReferenceExpression expr = (GrReferenceExpression) element;
+      if (name.equals(expr.getName())) {
+        PsiReference ref = expr.getReference();
+        if (ref != null) {
+          PsiElement resolved = ref.resolve();
+          if (resolved instanceof GrVariable && !(resolved instanceof GrField)) {
+            return ((GrVariable) resolved);
+          }
+        }
+        return null;
+      } else {
+        return null;
+      }
+    }
+    for (PsiElement child : element.getChildren()) {
+      GrVariable res = getInnerVariableDeclaration(child, name);
+      if (res != null) return res;
+    }
+    return null;
+  }
+
+  private static void addContainingVariableTypes(PsiElement statement, Map<String, PsiType> map) {
+    for (PsiElement element : statement.getChildren()) {
+      if (element instanceof GrVariable) {
+        GrVariable variable = (GrVariable) element;
+        String name = variable.getName();
+        if (name != null) {
+          map.put(name, variable.getTypeGroovy());
+        }
+      }
+      if (element instanceof GrReferenceExpression) {
+        GrReferenceExpression expr = (GrReferenceExpression) element;
+        String name = expr.getName();
+        PsiReference ref = expr.getReference();
+        if (name != null && (ref == null || !(ref.resolve() instanceof GrField))) {
+          map.put(name, expr.getType());
+        }
+      }
+      addContainingVariableTypes(element, map);
+    }
+  }
+
+  private static GrMethodCallExpression createMethodCallStringByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
+    StringBuffer buffer = new StringBuffer();
+    buffer.append(name).append("(");
+    int i = 0;
+    String[] argumentNames = helper.getArgumentNames();
+    for (String argName : argumentNames) {
+      buffer.append(argName);
+      if (i < argumentNames.length - 1) {
+        buffer.append(",");
+      }
+      i++;
+    }
+
+    buffer.append(")");
+    String callText = buffer.toString();
+    GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
+    GrExpression expr = factory.createExpressionFromText(callText);
+    assert expr instanceof GrMethodCallExpression;
+    return ((GrMethodCallExpression) expr);
+  }
+
+  /*
+  Some cosmetics
+   */
+  static void removeNewLineAfter(@NotNull GrStatement statement) {
+    ASTNode parentNode = statement.getParent().getNode();
+    ASTNode next = statement.getNode().getTreeNext();
+    if (parentNode != null && next != null && GroovyTokenTypes.mNLS == next.getElementType()) {
+      parentNode.removeChild(next);
+    }
+  }
+
+  static int getCaretOffset(@NotNull GrStatement statement) {
+    if (statement instanceof GrVariableDeclaration) {
+      GrVariable[] variables = ((GrVariableDeclaration) statement).getVariables();
+      if (variables.length > 0) {
+        GrExpression initializer = variables[0].getInitializerGroovy();
+        if (initializer != null) {
+          return initializer.getTextOffset();
+        }
+      }
+    } else if (statement instanceof GrAssignmentExpression) {
+      GrExpression value = ((GrAssignmentExpression) statement).getRValue();
+      if (value != null) {
+        return value.getTextOffset();
+      }
+    } else if (statement instanceof GrMethodCallExpression) {
+      return statement.getTextOffset();
+    }
+    return statement.getTextOffset();
+  }
+
 
 }

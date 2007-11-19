@@ -57,7 +57,7 @@ public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDec
 
   GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException;
 
-  GrStatement addStatement(GrStatement statement, GrStatement anchor) throws IncorrectOperationException;
+  GrStatement addStatementBefore(GrStatement statement, GrStatement anchor) throws IncorrectOperationException;
 
   boolean isScript();
 

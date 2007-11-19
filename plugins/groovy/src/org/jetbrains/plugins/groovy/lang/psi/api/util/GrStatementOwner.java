@@ -13,21 +13,17 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses;
+package org.jetbrains.plugins.groovy.lang.psi.api.util;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author ilyas
  */
-public interface GrCaseSection extends GroovyPsiElement, GrVariableDeclarationOwner {
+public interface GrStatementOwner extends GroovyPsiElement {
 
-  GrCaseLabel getCaseLabel();
-
-  GrStatement[] getStatements();
+  GrStatement addStatementBefore(GrStatement statement, GrStatement anchor) throws IncorrectOperationException;
 
 }

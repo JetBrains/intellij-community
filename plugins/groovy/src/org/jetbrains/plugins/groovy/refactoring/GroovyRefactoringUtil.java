@@ -311,6 +311,7 @@ public abstract class GroovyRefactoringUtil {
       }
       if (parent instanceof GrCodeBlock) break;
       if (parent instanceof GroovyFileBase) break;
+      if (parent instanceof GrCaseSection) break;
       if (parent == null) return PsiElement.EMPTY_ARRAY;
       parent = parent.getParent();
     }

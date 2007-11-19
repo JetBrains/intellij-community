@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -304,11 +305,9 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     assert GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(realContainer);
 
     if (!GroovyRefactoringUtil.isLoopOrForkStatement(realContainer)) {
-      if (realContainer instanceof GrCodeBlock) {
-        GrCodeBlock block = (GrCodeBlock) realContainer;
+      if (realContainer instanceof GrVariableDeclarationOwner) {
+        GrVariableDeclarationOwner block = (GrVariableDeclarationOwner) realContainer;
         varDecl = (GrVariableDeclaration) block.addStatementBefore(varDecl, (GrStatement) anchorElement);
-      } else if (realContainer instanceof GroovyFileBase) {
-        varDecl = (GrVariableDeclaration) ((GroovyFileBase) realContainer).addStatement(varDecl, (GrStatement) anchorElement);
       }
     } else {
       GrStatement tempStatement = ((GrStatement) anchorElement);

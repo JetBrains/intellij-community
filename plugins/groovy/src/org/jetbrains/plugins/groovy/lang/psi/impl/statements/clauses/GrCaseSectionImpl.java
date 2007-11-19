@@ -24,17 +24,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ven
  */
-public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSection, GrVariableDeclarationOwner {
+public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSection {
   public GrCaseSectionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -55,6 +58,12 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     PsiImplUtil.removeVariable(variable);
   }
 
+  public GrVariableDeclaration addVariableDeclarationBefore(GrVariableDeclaration declaration, GrStatement anchor) throws IncorrectOperationException {
+    GrStatement statement = addStatementBefore(declaration, anchor);
+    assert statement instanceof GrVariableDeclaration;
+    return ((GrVariableDeclaration) statement);
+  }
+
   public GrCaseLabel getCaseLabel() {
     return findChildByClass(GrCaseLabel.class);
   }
@@ -62,4 +71,34 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
   public GrStatement[] getStatements() {
     return findChildrenByClass(GrStatement.class);
   }
+
+  public GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
+
+    if (anchor != null && !this.equals(anchor.getParent())) {
+      throw new IncorrectOperationException();
+    }
+    ASTNode elemNode = element.getNode();
+    final ASTNode anchorNode = anchor != null ? anchor.getNode() : getLastChild().getNode();
+    getNode().addChild(elemNode, anchorNode);
+    if (mayUseNewLinesAsSeparators()) {
+      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
+    } else {
+      getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchorNode);
+    }
+    return (GrStatement) elemNode.getPsi();
+  }
+
+  private boolean mayUseNewLinesAsSeparators() {
+    PsiElement parent = this;
+    while (parent != null) {
+      if (parent instanceof GrString) {
+        GrString grString = (GrString) parent;
+        return !grString.isPlainString();
+      }
+      parent = parent.getParent();
+    }
+    return true;
+  }
+
+
 }

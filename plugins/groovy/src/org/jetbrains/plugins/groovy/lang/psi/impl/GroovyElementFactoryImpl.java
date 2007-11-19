@@ -97,7 +97,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
       } else {
         expr = initializer;
       }
-      text.append("=").append(expr.getText());
+      text.append("= ").append(expr.getText());
     }
 
     PsiFile file = createGroovyFile(text.toString());
