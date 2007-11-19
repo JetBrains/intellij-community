@@ -116,7 +116,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
 
   @Nullable
   public PsiIdentifier getNameIdentifier() {
-    return null;
+    return myProperty.getNameIdentifier();
   }
 
   @NotNull
