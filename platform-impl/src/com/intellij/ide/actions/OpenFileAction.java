@@ -15,7 +15,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -148,7 +147,7 @@ public class OpenFileAction extends AnAction {
   }
 
   public static boolean isProjectFile(File file) {
-    return FileTypeManager.getInstance().getFileTypeByFileName(file.getName()) == StdFileTypes.IDEA_PROJECT;
+    return FileTypeManager.getInstance().getFileTypeByFileName(file.getName()) instanceof ProjectFileType;
   }
 
   public void update(AnActionEvent event) {

@@ -32,10 +32,7 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,25 +41,23 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ModuleFileType implements FileType {
-  @NonNls public static final String DEFAULT_EXTENSION = "iml";
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = ".iml";
-
-  private static final Icon ICON = IconLoader.getIcon("/nodes/ideaModule.png");
+public class WorkspaceFileType implements FileType {
+  private static final Icon ICON = IconLoader.getIcon("/nodes/ideaWorkspace.png");
+  @NonNls public static final String DEFAULT_EXTENSION = "iws";
 
   @NotNull
   public String getName() {
-    return "IDEA_MODULE";
+    return "IDEA_WORKSPACE";
   }
 
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("filetype.description.idea.module");
+    return IdeBundle.message("filetype.description.idea.workspace");
   }
 
   @NotNull
   public String getDefaultExtension() {
-    return "iml";
+    return DEFAULT_EXTENSION;
   }
 
   public Icon getIcon() {
@@ -79,13 +74,5 @@ public class ModuleFileType implements FileType {
 
   public String getCharset(@NotNull VirtualFile file) {
     return CharsetToolkit.UTF8;
-  }
-
-  public StructureViewBuilder getStructureViewBuilder(@NotNull VirtualFile file, @NotNull Project project) {
-    return null;
-  }
-
-  public Language getLanguage() {
-    return null;
   }
 }
