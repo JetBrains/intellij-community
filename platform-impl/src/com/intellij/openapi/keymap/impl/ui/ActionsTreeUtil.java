@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.tools.Tool;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -46,6 +45,7 @@ public class ActionsTreeUtil {
   private static final String VCS_GROUP_ID = "VcsGroup";
   @NonNls
   private static final String EDITOR_PREFIX = "Editor";
+  @NonNls private static final String TOOL_ACTION_PREFIX = "Tool_";
 
   private ActionsTreeUtil() {
   }
@@ -136,7 +136,7 @@ public class ActionsTreeUtil {
       else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
-          if (id.startsWith(Tool.ACTION_ID_PREFIX)) continue;
+          if (id.startsWith(TOOL_ACTION_PREFIX)) continue;
           if (filtered == null || filtered.value(action)) {
             group.addActionId(id);
           }
