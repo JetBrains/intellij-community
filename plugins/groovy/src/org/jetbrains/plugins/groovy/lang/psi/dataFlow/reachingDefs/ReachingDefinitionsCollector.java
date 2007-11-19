@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -104,7 +105,9 @@ public class ReachingDefinitionsCollector {
     for (Iterator<String> iterator = names.iterator(); iterator.hasNext();) {
       String name =  iterator.next();
       final GroovyPsiElement resolved = ResolveUtil.resolveVariable(place, name);
-      if (resolved instanceof PsiField || resolved instanceof GrReferenceExpression) iterator.remove();
+      if (resolved instanceof PsiField) iterator.remove();
+      else if (resolved instanceof GrReferenceExpression && //binding variables 
+          PsiTreeUtil.getParentOfType(resolved, GrTypeDefinition.class) == null) iterator.remove();
     }
   }
 
