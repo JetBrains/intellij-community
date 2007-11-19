@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.FileContent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -25,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -61,7 +64,7 @@ public class GroovyPsiManager implements ProjectComponent {
   private Project myProject;
 
   private Map<String, List<PsiMethod>> myDefaultMethods;
-  private MessageBusConnection myRootConnection;
+
   private static final String DEFAULT_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
   private static final String DEFAULT_STATIC_METHODS_QNAME = "org.codehaus.groovy.runtime.DefaultGroovyStaticMethods";
   private static final String SWING_BUILDER_QNAME = "groovy.swing.SwingBuilder";
@@ -77,7 +80,6 @@ public class GroovyPsiManager implements ProjectComponent {
   private TypeInferenceHelper myTypeInferenceHelper;
 
   private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { public int length }";
-  public Runnable myUpdateRunnable;
 
   private String myGroovyJarUrl = null;
   private long myGroovyJarTimeStamp = -1;
@@ -100,13 +102,11 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public void initComponent() {
-    myUpdateRunnable = new Runnable() {
+    StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
       public void run() {
         buildGDK();
       }
-    };
-
-    StartupManager.getInstance(myProject).registerStartupActivity(myUpdateRunnable);
+    });
 
     ((PsiManagerEx) PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
@@ -116,22 +116,21 @@ public class GroovyPsiManager implements ProjectComponent {
 
     myTypeInferenceHelper = new  TypeInferenceHelper(myProject);
 
-    myRootConnection = myProject.getMessageBus().connect();
-    ModuleRootListener moduleRootListener = new ModuleRootListener() {
-      public void beforeRootsChange(ModuleRootEvent event) {
+    ProjectRootManagerEx.getInstanceEx(myProject).registerChangeUpdater(new CacheUpdater() {
+      public VirtualFile[] queryNeededFiles() {
+        buildGDK();
+        return VirtualFile.EMPTY_ARRAY;
       }
 
-      public void rootsChanged(ModuleRootEvent event) {
-        final Application application = ApplicationManager.getApplication();
-        if (!application.isUnitTestMode()) {
-          if (myProject.isInitialized()) {
-            application.invokeLater(myUpdateRunnable);
-          }
-        }
+      public void processFile(FileContent fileContent) {
       }
-    };
 
-    myRootConnection.subscribe(ProjectTopics.PROJECT_ROOTS, moduleRootListener);
+      public void updatingDone() {
+      }
+
+      public void canceled() {
+      }
+    });
   }
 
   public void buildGDK() {
@@ -324,7 +323,6 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public void disposeComponent() {
-    myRootConnection.disconnect();
   }
 
 
