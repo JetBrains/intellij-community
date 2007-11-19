@@ -235,7 +235,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   
   public void clearCaches() {
     synchronized (PsiLock.LOCK) {
-      if (myChildren != null) {
+      if (myChildren != null || myPrologElement != null || myProject != null || myEpilogueElement != null || myTargetDefinition != null || myClassLoader != null || myEnvPrefixes != null) {
         myChildren = null;
         myPrologElement = null;
         myProject = null;

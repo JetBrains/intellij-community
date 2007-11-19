@@ -126,8 +126,7 @@ public class AntChangeVisitor implements XmlChangeVisitor {
       if (project.isDisposed()) {
         return;
       }
-      final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-      for (final AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+      for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFiles()) {
         if (file.equals(buildFile.getAntFile())) {
           synchronized (myDirtyFiles) {
             myDirtyFiles.add(buildFile);
@@ -144,7 +143,10 @@ public class AntChangeVisitor implements XmlChangeVisitor {
               }
               if (files != null) {
                 for (final AntBuildFile dirtyFile : files) {
-                  antConfiguration.updateBuildFile(dirtyFile);
+                  final Project proj = dirtyFile.getProject();
+                  if (!proj.isDisposed()) {
+                    AntConfiguration.getInstance(project).updateBuildFile(dirtyFile);
+                  }
                 }
               }
             }
