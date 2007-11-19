@@ -200,7 +200,7 @@ public final class LoadTextUtil {
         return decompiler.decompile(file);
       }
 
-      return "Cannot open binary files";
+      throw new IllegalArgumentException("Attempt to load text for binary file, that doesn't have decompiler plugged in.");
     }
 
     try {
