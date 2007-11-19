@@ -27,7 +27,7 @@ public abstract class TestTreeView extends Tree implements DataProvider {
 
   protected abstract TreeCellRenderer getRenderer(TestConsoleProperties properties);
 
-  protected abstract AbstractTestProxy getSelectedTest(@NotNull TreePath selectionPath);
+  public abstract AbstractTestProxy getSelectedTest(@NotNull TreePath selectionPath);
 
   @Nullable
   public AbstractTestProxy getSelectedTest() {

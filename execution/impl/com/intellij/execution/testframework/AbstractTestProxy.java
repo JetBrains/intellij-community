@@ -33,5 +33,7 @@ public interface AbstractTestProxy {
 
   AbstractTestProxy getParent();
 
+  List<? extends AbstractTestProxy> getChildren();
+
   List<? extends AbstractTestProxy> getAllTests();
 }

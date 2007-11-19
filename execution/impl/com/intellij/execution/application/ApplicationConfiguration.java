@@ -210,7 +210,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         ext.updateJavaParameters(ApplicationConfiguration.this, params);
       }
 
-      if (!(getRunnerSettings().getData() instanceof DebuggingRunnerData) && isCoverageEnabled()) {
+      if (isCoverageEnabled()) {
         final String coverageFileName = getCoverageFilePath();
         final long lastCoverageTime = System.currentTimeMillis();
         String name = getName();

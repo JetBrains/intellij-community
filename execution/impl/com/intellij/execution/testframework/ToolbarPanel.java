@@ -11,6 +11,7 @@ import com.intellij.execution.junit2.ui.TestsUIUtil;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
+import com.intellij.execution.testframework.actions.TrackCoverageAction;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -27,6 +28,7 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
   protected final TestTreeExpander myTreeExpander = new TestTreeExpander();
   protected final FailedTestsNavigator myOccurenceNavigator;
   protected final ScrollToTestSourceAction myScrollToSource;
+  private final TrackCoverageAction myTrackCoverageAction;
 
   public ToolbarPanel(final TestConsoleProperties properties,
                       final RunnerSettings runnerSettings,
@@ -43,6 +45,9 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
                                               ExecutionBundle.message("junit.runing.info.track.test.action.description"),
                                               TestsUIUtil.loadIcon("trackTests"),
                                               properties, TestConsoleProperties.TRACK_RUNNING_TEST));
+    myTrackCoverageAction = new TrackCoverageAction(properties);
+    actionGroup.add(myTrackCoverageAction);
+
     actionGroup.addSeparator();
     AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
     action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.collapse.test.action.name"));
@@ -87,6 +92,7 @@ public abstract class ToolbarPanel extends JPanel implements OccurenceNavigator 
     myScrollToSource.setModel(model);
     myTreeExpander.setModel(model);
     myOccurenceNavigator.setModel(model);
+    myTrackCoverageAction.setModel(model);
   }
 
   public boolean hasNextOccurence() {
