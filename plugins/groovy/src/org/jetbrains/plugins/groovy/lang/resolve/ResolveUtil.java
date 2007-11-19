@@ -143,14 +143,14 @@ public class ResolveUtil {
     return manager.findClass("java.util.List", resolveScope);
   }
 
-  public static GrVariable resolveVariable(GroovyPsiElement place, String name) {
+  public static GroovyPsiElement resolveVariable(GroovyPsiElement place, String name) {
     ResolverProcessor processor = new PropertyResolverProcessor(name, place,  false);
     treeWalkUp(place, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (GroovyResolveResult candidate : candidates) {
       final PsiElement element = candidate.getElement();
       if (element == place) continue;
-      if (element instanceof GrVariable) return (GrVariable) element;
+      if (element instanceof GrVariable || element instanceof GrReferenceExpression) return (GroovyPsiElement) element;
     }
 
     return null;

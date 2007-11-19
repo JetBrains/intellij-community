@@ -20,8 +20,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.*;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -101,8 +103,8 @@ public class ReachingDefinitionsCollector {
   private static void filterFields(Set<String> names, GrStatement place) {
     for (Iterator<String> iterator = names.iterator(); iterator.hasNext();) {
       String name =  iterator.next();
-      final GrVariable variable = ResolveUtil.resolveVariable(place, name);
-      if (variable instanceof PsiField) iterator.remove();
+      final GroovyPsiElement resolved = ResolveUtil.resolveVariable(place, name);
+      if (resolved instanceof PsiField || resolved instanceof GrReferenceExpression) iterator.remove();
     }
   }
 
