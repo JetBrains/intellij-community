@@ -57,6 +57,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected ComponentManagerImpl(ComponentManager parentComponentManager) {
     myParentComponentManager = parentComponentManager;
+    boostrapPicoContainer();
   }
 
   //todo[mike] there are several init* methods. Make it just 1

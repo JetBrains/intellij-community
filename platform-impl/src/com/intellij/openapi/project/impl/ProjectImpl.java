@@ -70,7 +70,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     super(ApplicationManager.getApplication());
 
     myDefault = isDefault;
-    boostrapPicoContainer();
 
     getStateStore().setProjectFilePath(filePath);
 
@@ -84,9 +83,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     super.boostrapPicoContainer();
     final MutablePicoContainer picoContainer = getPicoContainer();
 
-    ProjectStoreClassProvider projectStoreClassProvider = (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
+    final ProjectStoreClassProvider projectStoreClassProvider = (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
 
-    final Class storeClass = projectStoreClassProvider.getProjectStoreClass(myDefault);
 
     picoContainer.registerComponentImplementation(ProjectPathMacroManager.class);
     picoContainer.registerComponent(new ComponentAdapter() {
@@ -96,6 +94,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       public ComponentAdapter getDelegate() {
         if (myDelegate == null) {
 
+          final Class storeClass = projectStoreClassProvider.getProjectStoreClass(myDefault);
           myDelegate = new CachingComponentAdapter(
             new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true));
         }
