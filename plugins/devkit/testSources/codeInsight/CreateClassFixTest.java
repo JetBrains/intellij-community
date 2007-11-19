@@ -18,8 +18,8 @@ import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspection;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import java.util.List;
 
@@ -48,7 +48,7 @@ public class CreateClassFixTest {
     return new Object[][]{{"Action", true}, {"Impl", true}, {"Intf", true}, {"Intf", false}};
   }
 
-  @Test(dataProvider = "data")
+  @Test(dataProvider = "data", enabled = false)
   public void test(String testName, boolean createClass) throws Throwable {
     IntentionAction resultAction = null;
     final String createAction = QuickFixBundle.message(createClass ? "create.class.text" : "create.interface.text", testName);
