@@ -962,7 +962,8 @@ public class CompileDriver {
           final ValidityState savedState = cache.getState(outputPath);
 
           if (forceGenerate || savedState == null || !savedState.equalsTo(item.getValidityState())) {
-            if (context.getCompileScope().belongs(outputPath)) {
+            final String outputPathUrl = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, outputPath);
+            if (context.getCompileScope().belongs(outputPathUrl)) {
               toGenerate.add(item);
             }
             else {
