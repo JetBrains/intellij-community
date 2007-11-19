@@ -1,20 +1,16 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -198,10 +194,14 @@ public final class LoadTextUtil {
     assert !file.isDirectory() : "'"+file.getPresentableUrl() + "' is directory";
     final FileType fileType = file.getFileType();
 
-    if (fileType.equals(StdFileTypes.CLASS)) {
-      return decompile(file);
+    if (fileType.isBinary()) {
+      final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType);
+      if (decompiler != null) {
+        return decompiler.decompile(file);
+      }
+
+      return "Cannot open binary files";
     }
-    assert !fileType.isBinary() : "'"+file.getPresentableUrl() + "' is binary";
 
     try {
       final byte[] bytes = file.contentsToByteArray();
@@ -210,21 +210,6 @@ public final class LoadTextUtil {
     catch (IOException e) {
       return ArrayUtil.EMPTY_CHAR_SEQUENCE;
     }
-  }
-
-  private static CharSequence decompile(VirtualFile file) {
-    final Project project;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      project = ((ProjectManagerEx)ProjectManager.getInstance()).getCurrentTestProject();
-      assert project != null;
-    }
-    else {
-      final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-      if (projects.length == 0) return "";
-      project = projects[0];
-    }
-
-    return ClsFileImpl.decompile(PsiManager.getInstance(project), file);
   }
 
   public static CharSequence getTextByBinaryPresentation(final byte[] bytes, final VirtualFile virtualFile) {

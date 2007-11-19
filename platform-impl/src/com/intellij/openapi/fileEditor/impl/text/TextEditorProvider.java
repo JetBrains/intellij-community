@@ -12,6 +12,8 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
@@ -50,7 +52,13 @@ public class TextEditorProvider implements FileEditorProvider {
     if (file.isDirectory() || !file.isValid()) {
       return false;
     }
-    return !file.getFileType().isBinary();
+
+    final FileType ft = file.getFileType();
+    if (ft.isBinary()) {
+      return BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
+    }
+
+    return true;
   }
 
   @NotNull

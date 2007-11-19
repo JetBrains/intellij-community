@@ -13,8 +13,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,14 +25,6 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider");
   @NonNls
   private static final String FOLDING_ELEMENT = "folding";
-
-  public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file) {
-    if (file.isDirectory() || !file.isValid()) {
-      return false;
-    }
-    FileType fileType = file.getFileType();
-    return !fileType.isBinary() || fileType == StdFileTypes.CLASS;
-  }
 
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {

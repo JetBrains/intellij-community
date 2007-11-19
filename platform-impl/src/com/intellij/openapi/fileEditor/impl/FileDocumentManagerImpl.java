@@ -19,8 +19,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -91,7 +91,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public Document getDocument(@NotNull final VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null) {
-      if (file.isDirectory() || file.getFileType().isBinary() && file.getFileType() != StdFileTypes.CLASS) return null;
+      if (file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
       final CharSequence text = LoadTextUtil.loadText(file);
 
       synchronized (lock) {
@@ -137,7 +137,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     Reference<Document> reference = file.getUserData(DOCUMENT_KEY);
     Document document = reference != null ? reference.get() : null;
 
-    if (document != null && isFileBecameBinary(file)){
+    if (document != null && isBinaryWithoutDecompiler(file)){
       file.putUserData(DOCUMENT_KEY, null);
       document.putUserData(FILE_KEY, null);
       return null;
@@ -155,11 +155,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       });
       document.putUserData(FILE_KEY, virtualFile);
     }
-  }
-
-  private static boolean isFileBecameBinary(VirtualFile file) {
-    final FileType fileType = file.getFileType();
-    return fileType.isBinary() && !fileType.equals(StdFileTypes.CLASS);
   }
 
   public VirtualFile getFile(@NotNull Document document) {
@@ -366,6 +361,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
+  private static boolean isBinaryWithDecompiler(VirtualFile file) {
+    final FileType ft = file.getFileType();
+    return ft.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
+  }
+
+  private static boolean isBinaryWithoutDecompiler(VirtualFile file) {
+    final FileType ft = file.getFileType();
+    return ft.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) == null;
+  }
+
   public void contentsChanged(VirtualFileEvent event) {
     if (event.isFromSave()) return;
     final VirtualFile file = event.getFile();
@@ -375,7 +380,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       return;
     }
 
-    if (file.getFileType() == StdFileTypes.CLASS) {
+    if (isBinaryWithDecompiler(file)) {
       fireFileWithNoDocumentChanged(file); // This will generate PSI event at FileManagerImpl
     }
 
