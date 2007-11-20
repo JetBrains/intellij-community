@@ -34,7 +34,7 @@ public interface GrCodeBlock extends GrControlFlowOwner, GrVariableDeclarationOw
 
   GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException;
 
-  @Nullable
+  @NotNull
   PsiElement getLBrace();
 
   @Nullable
