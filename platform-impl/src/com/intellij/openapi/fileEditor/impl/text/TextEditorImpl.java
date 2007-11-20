@@ -28,7 +28,11 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor{
     myProject = project;
     myProvider = provider;
     myChangeSupport = new PropertyChangeSupport(this);
-    myComponent = new TextEditorComponent(project, file, this);
+    myComponent = createEditorComponent(project, file);
+  }
+
+  protected TextEditorComponent createEditorComponent(final Project project, final VirtualFile file) {
+    return new TextEditorComponent(project, file, this);
   }
 
   public void dispose(){

@@ -173,4 +173,6 @@ public interface DataConstants {
   @NonNls String EDITOR_EVEN_IF_INACTIVE = "editor.even.if.inactive";
 
   @NonNls String SELECTED_ITEM = "selectedItem";
+
+  @NonNls String DOMINANT_HINT_AREA_RECTANGLE = "dominant.hint.rectangle";
 }

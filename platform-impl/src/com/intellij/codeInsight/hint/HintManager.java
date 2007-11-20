@@ -1,11 +1,6 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +11,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
@@ -342,37 +338,32 @@ public class HintManager implements ApplicationComponent {
    */
   public Point getHintPosition(LightweightHint hint, Editor editor, short constraint) {
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-    Project project = editor.getProject();
-    Lookup lookup = project == null ? null : LookupManager.getInstance(project).getActiveLookup();
+    final DataContext dataContext = ((EditorEx)editor).getDataContext();
+    final Rectangle dominantArea = (Rectangle)dataContext.getData(DataConstants.DOMINANT_HINT_AREA_RECTANGLE);
 
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    if (lookup == null) {
+    if (dominantArea == null) {
       for (HintInfo info : myHintsStack) {
         if (!info.hint.isSelectingHint()) continue;
         final Rectangle rectangle = info.hint.getBounds();
 
         if (rectangle != null) {
-          return getHintPositionRelativeTo(hint, editor, constraint, rectangle, rectangle, pos);
+          return getHintPositionRelativeTo(hint, editor, constraint, rectangle, pos);
         }
       }
-      return getHintPosition(hint, editor, pos, constraint);
     }
     else {
-      Rectangle cellBounds = lookup.getCurrentItemBounds();
-      if (cellBounds == null) {
-        return getHintPosition(hint, editor, pos, constraint);
-      }
-      Rectangle lookupBounds = lookup.getBounds();
-      return getHintPositionRelativeTo(hint, editor, constraint, cellBounds, lookupBounds, pos);
+      return getHintPositionRelativeTo(hint, editor, constraint, dominantArea, pos);
     }
+
+    return getHintPosition(hint, editor, pos, constraint);
   }
 
   private static Point getHintPositionRelativeTo(final LightweightHint hint,
-                                          final Editor editor,
-                                          final short constraint,
-                                          final Rectangle cellBounds,
-                                          final Rectangle lookupBounds,
-                                          final LogicalPosition pos) {
+                                                 final Editor editor,
+                                                 final short constraint,
+                                                 final Rectangle lookupBounds,
+                                                 final LogicalPosition pos) {
     Dimension hintSize = hint.getComponent().getPreferredSize();
     JComponent editorComponent = editor.getComponent();
     JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
@@ -381,7 +372,7 @@ public class HintManager implements ApplicationComponent {
     switch (constraint) {
       case LEFT:
         {
-          int y = cellBounds.y + (cellBounds.height - hintSize.height) / 2;
+          int y = lookupBounds.y;
           if (y < 0) {
             y = 0;
           }
@@ -393,7 +384,7 @@ public class HintManager implements ApplicationComponent {
 
       case RIGHT:
         {
-          int y = cellBounds.y + (cellBounds.height - hintSize.height) / 2;
+          int y = lookupBounds.y;
           if (y < 0) {
             y = 0;
           }

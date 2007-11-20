@@ -152,6 +152,9 @@ public abstract class ChooseByNameBase{
           return result.toArray(new PsiElement[result.size()]);
         }
       }
+      else if (dataId.equals(DataConstants.DOMINANT_HINT_AREA_RECTANGLE)) {
+        return getBounds();
+      }
       return null;
     }
 

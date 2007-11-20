@@ -43,7 +43,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class TextEditorComponent extends JPanel implements DataProvider{
+class TextEditorComponent extends JPanel implements DataProvider{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorComponent");
 
   private final Project myProject;
