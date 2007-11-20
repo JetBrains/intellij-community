@@ -166,6 +166,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return false;
     }
 
+    public boolean isSingleSelection() {
+      return true;
+    }
+
     public ContentFactory getFactory() {
       return ServiceManager.getService(ContentFactory.class);
     }

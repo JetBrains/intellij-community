@@ -63,7 +63,7 @@ abstract class TabNavigationActionBase extends AnAction {
     }
 
     ContentManager contentManager = (ContentManager)dataContext.getData(DataConstantsEx.CONTENT_MANAGER);
-    presentation.setEnabled(contentManager != null && contentManager.getContentCount() > 1);
+    presentation.setEnabled(contentManager != null && contentManager.getContentCount() > 1 && contentManager.isSingleSelection());
   }
 
   private void doNavigate(ContentManager contentManager) {

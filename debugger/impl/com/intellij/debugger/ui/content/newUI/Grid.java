@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
@@ -37,20 +38,22 @@ class Grid extends Wrapper implements Disposable {
       return getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
     }
   };
+  private ContentManager myContentManager;
 
-  public Grid(Project project, ActionManager actionManager, DebuggerSettings settings, Disposable parent, String sessionName, boolean horizontalToolbars) {
+  public Grid(ContentManager contentManager, Project project, ActionManager actionManager, DebuggerSettings settings, Disposable parent, String sessionName, boolean horizontalToolbars) {
     Disposer.register(parent, this);
 
+    myContentManager = contentManager;
     mySettings = settings;
     myActionManager = actionManager;
     mySessionName = sessionName;
 
     setOpaque(false);
 
-    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(project, this, myLeft, horizontalToolbars, PlaceInGrid.left));
-    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(project, this, myCenter, horizontalToolbars, PlaceInGrid.center));
-    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(project, this, myRight, horizontalToolbars, PlaceInGrid.right));
-    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(project, this, myBottom, horizontalToolbars, PlaceInGrid.bottom));
+    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(contentManager, project, this, myLeft, horizontalToolbars, PlaceInGrid.left));
+    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(contentManager, project, this, myCenter, horizontalToolbars, PlaceInGrid.center));
+    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(contentManager, project, this, myRight, horizontalToolbars, PlaceInGrid.right));
+    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(contentManager, project, this, myBottom, horizontalToolbars, PlaceInGrid.bottom));
 
     setContent(mySplitter);
 
@@ -70,6 +73,20 @@ class Grid extends Wrapper implements Disposable {
         restoreProportions();
       }
     });
+
+    updateSelection(true);
+  }
+
+  public void removeNotify() {
+    super.removeNotify();
+
+    updateSelection(false);
+  }
+
+  private void updateSelection(boolean isShowing) {
+    for (GridCell each: myPlaceInGrid2Cell.values()) {
+      each.updateSelection(isShowing);     
+    }
   }
 
   private void restoreProportions() {

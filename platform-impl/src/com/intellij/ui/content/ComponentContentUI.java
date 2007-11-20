@@ -58,6 +58,10 @@ public class ComponentContentUI implements ContentUI {
     return true;
   }
 
+  public boolean canBeEmptySelection() {
+    return false;
+  }
+
   public void dispose() {
   }
 }

@@ -286,6 +286,10 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     return false;
   }
 
+  public boolean canBeEmptySelection() {
+    return false;
+  }
+
   public void dispose() {
   }
 }

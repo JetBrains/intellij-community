@@ -2,6 +2,7 @@ package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 
@@ -9,6 +10,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 class GridCell {
 
@@ -18,8 +21,12 @@ class GridCell {
   private JBTabs myTabs;
   private Grid.Placeholder myPlaceholder;
   private PlaceInGrid myPlaceInGrid;
+  private ContentManager myContentManager;
 
-  public GridCell(Project project, Grid container, Grid.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
+  private Map<Content, TabInfo> myContent2Tab = new HashMap<Content, TabInfo>();
+
+  public GridCell(ContentManager contentManager, Project project, Grid container, Grid.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
+    myContentManager = contentManager;
     myContainer = container;
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
@@ -31,6 +38,7 @@ class GridCell {
     });
     myTabs.setSideComponentVertical(!horizontalToolbars);
     myTabs.setStealthTabMode(true);
+
   }
 
   public PlaceInGrid getPlaceInGrid() {
@@ -62,7 +70,7 @@ class GridCell {
 
       myTabs.removeAllTabs();
       for (Content each : myContents) {
-        myTabs.addTab(getTabInfoFor(each));
+        myTabs.addTab(createTabInfoFor(each));
       }
     }
 
@@ -76,17 +84,25 @@ class GridCell {
     myTabs.setHideTabs(hide);
   }
 
-  private TabInfo getTabInfoFor(Content content) {
+  private TabInfo createTabInfoFor(Content content) {
     final JComponent c = content.getComponent();
 
     NewDebuggerContentUI.removeScrollBorder(c);
 
-    return new TabInfo(c)
+    final TabInfo tabInfo = new TabInfo(c)
       .setIcon(content.getIcon())
       .setText(content.getDisplayName())
       .setActions(content.getActions(), content.getPlace())
       .setObject(content)
       .setPreferredFocusableComponent(content.getPreferredFocusableComponent());
+
+    myContent2Tab.put(content, tabInfo);
+
+    return tabInfo;
+  }
+
+  private TabInfo getTabInfoFor(Content content) {
+    return myContent2Tab.get(content);
   }
 
   public void setToolbarHorizontal(final boolean horizontal) {
@@ -95,5 +111,16 @@ class GridCell {
 
   public void restoreProportion() {
     myContainer.restoreProportion(myPlaceInGrid);
+  }
+
+  public void updateSelection(final boolean isShowing) {
+    for (Content each : myContents) {
+      final TabInfo eachTab = getTabInfoFor(each);
+      if (myTabs.getSelectedInfo() == eachTab && isShowing) {
+        myContentManager.addSelectedContent(each);
+      } else {
+        myContentManager.removeFromSelection(each);
+      }
+    }
   }
 }

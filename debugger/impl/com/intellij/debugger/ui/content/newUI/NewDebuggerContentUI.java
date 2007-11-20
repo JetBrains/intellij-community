@@ -66,6 +66,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     myManager.addContentManagerListener(new ContentManagerListener() {
       public void contentAdded(final ContentManagerEvent event) {
         getGridFor(event.getContent(), true).add(event.getContent(), false);
+
         updateTabsUI();
       }
 
@@ -90,7 +91,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     Grid grid = findGridFor(content);
     if (grid != null || !createIfMissing) return grid;
 
-    grid = new Grid(myProject, myActionManager, mySettings, this, mySessionName, isHorizontalToolbar());
+    grid = new Grid(myManager, myProject, myActionManager, mySettings, this, mySessionName, isHorizontalToolbar());
     grid.setBorder(new EmptyBorder(1, 0, 0, 0));
 
     TabInfo tab = new TabInfo(grid).setObject(getContentState(content).getTab()).setText("Tab");
@@ -187,6 +188,10 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
   public boolean isToSelectAddedContent() {
     return false;
+  }
+
+  public boolean canBeEmptySelection() {
+    return true;
   }
 
   public void dispose() {

@@ -127,7 +127,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     myContents.add(content);
     content.addPropertyChangeListener(this);
     fireContentAdded(content, myContents.size() - 1);
-    if (myUI.isToSelectAddedContent() || mySelection.size() == 0) {
+    if (myUI.isToSelectAddedContent() || (mySelection.size() == 0 && !myUI.canBeEmptySelection())) {
       if (myUI.isSingleSelection()) {
         setSelectedContent(content);
       }
@@ -488,5 +488,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   public boolean isDisposed() {
     return myDisposed;
+  }
+
+  public boolean isSingleSelection() {
+    return myUI.isSingleSelection();
   }
 }

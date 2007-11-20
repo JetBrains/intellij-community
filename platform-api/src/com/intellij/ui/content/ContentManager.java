@@ -94,4 +94,6 @@ public interface ContentManager extends Disposable {
   ContentFactory getFactory();
 
   boolean isDisposed();
+
+  boolean isSingleSelection();
 }

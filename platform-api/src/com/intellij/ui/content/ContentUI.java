@@ -25,5 +25,6 @@ public interface ContentUI extends Disposable {
   
   boolean isSingleSelection();
   boolean isToSelectAddedContent();
+  boolean canBeEmptySelection();
 
 }

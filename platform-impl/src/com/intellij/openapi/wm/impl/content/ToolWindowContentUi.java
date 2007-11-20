@@ -443,6 +443,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return false;
   }
 
+  public boolean canBeEmptySelection() {
+    return false;
+  }
+
   static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
     if (c.getClientProperty(ui) != null) return;
 
