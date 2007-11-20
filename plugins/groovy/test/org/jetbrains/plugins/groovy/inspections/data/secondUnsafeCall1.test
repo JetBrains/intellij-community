@@ -1,0 +1,3 @@
+println a?.b.c
+-----
+println a?.b?.c
