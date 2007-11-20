@@ -306,13 +306,13 @@ public abstract class GroovyRefactoringUtil {
     PsiElement parent = PsiTreeUtil.findCommonParent(element1, element2);
     if (parent == null) return PsiElement.EMPTY_ARRAY;
     while (true) {
+      if (parent instanceof GrCodeBlock) break;
+      if (parent instanceof GroovyFileBase) break;
+      if (parent instanceof GrCaseSection) break;
       if (parent instanceof GrStatement) {
         parent = parent.getParent();
         break;
       }
-      if (parent instanceof GrCodeBlock) break;
-      if (parent instanceof GroovyFileBase) break;
-      if (parent instanceof GrCaseSection) break;
       if (parent == null) return PsiElement.EMPTY_ARRAY;
       parent = parent.getParent();
     }
@@ -376,17 +376,9 @@ public abstract class GroovyRefactoringUtil {
   }
 
   public static boolean isSuperOrThisCall(GrStatement statement, boolean testForSuper, boolean testForThis) {
-    if (!(statement instanceof GrMethodCallExpression)) return false;
-    GrMethodCallExpression expr = (GrMethodCallExpression) statement;
-    GrExpression invoked = expr.getInvokedExpression();
-    if (testForSuper) {
-      if ("super".equals(invoked.getText())) return true;
-    }
-    if (testForThis) {
-      if ("this".equals(invoked.getText())) return true;
-    }
-
-    return false;
+    if (!(statement instanceof GrConstructorInvocation)) return false;
+    GrConstructorInvocation expr = (GrConstructorInvocation) statement;
+    return (testForSuper && expr.isSuperCall()) || (testForThis && expr.isThisCall());
   }
 
 }

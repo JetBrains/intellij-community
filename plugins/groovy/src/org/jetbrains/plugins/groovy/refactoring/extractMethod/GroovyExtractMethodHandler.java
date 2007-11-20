@@ -23,7 +23,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -135,7 +138,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     String[] inputNames = variableInfo.getInputVariableNames();
     String[] outputNames = variableInfo.getOutputVariableNames();
     if (outputNames.length > 1) {
-      String message = RefactoringBundle.getCannotRefactorMessage("multiple.output.values");
+      String message = GroovyRefactoringBundle.message("multiple.output.values");
       showErrorMessage(message, project);
       return false;
     }

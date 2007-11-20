@@ -1,0 +1,8 @@
+def foo = {
+    a ->
+    <selection>println a</selection>
+}
+-----
+input:
+a
+output:
