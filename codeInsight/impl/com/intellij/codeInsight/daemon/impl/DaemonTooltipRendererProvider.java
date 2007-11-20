@@ -3,15 +3,24 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction;
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
+import com.intellij.codeInsight.hint.TooltipLinkHandlerEP;
 import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -78,8 +87,63 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       super(text);
     }
 
+    protected String convertTextOnLinkHandled(final String text) {
+      return text.
+        replace(" " + DaemonBundle.message("inspection.extended.description"), "").
+        replace("(" + KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)) + ")", "");
+    }
+
     protected void onHide(final JComponent contentComponent) {
       ShowErrorDescriptionAction.rememberCurrentWidth(contentComponent.getWidth());
+    }
+
+    protected boolean dressDescription() {
+      final String[] problems = getHtmlBody(myText).split(BORDER_LINE);
+      String text = "";
+      for (String problem : problems) {
+        final String descriptionPrefix = getDescriptionPrefix(problem);
+        if (descriptionPrefix != null) {
+          for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
+            final String description = handlerEP.getDescription(descriptionPrefix);
+            if (description != null) {
+              text += getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
+                                                     DaemonBundle.message("inspection.collapse.description")) + BORDER_LINE + getHtmlBody(description) + BORDER_LINE;
+              break;
+            }
+          }
+        }
+      }
+      if (text.length() > 0) { //otherwise do not change anything
+        myText = "<html><body>" +  StringUtil.trimEnd(text, BORDER_LINE) + "</body></html>";
+        return true;
+      }
+      return false;
+    }
+
+    @Nullable
+    private static String getDescriptionPrefix(@NonNls String text) {
+      final int linkIdx = text.indexOf("<a href=");
+      if (linkIdx != -1) {
+        final String ref = text.substring(linkIdx + 9);
+        final int quatIdx = ref.indexOf("\"");
+        if (quatIdx > 0) {
+          return ref.substring(0, quatIdx);
+        }
+      }
+      return null;
+    }
+
+    protected void stripDescription() {
+      final String[] problems = getHtmlBody(myText).split(BORDER_LINE);
+      myText = "<html><body>";
+      for (int i = 0; i < problems.length; i++) {
+        final String problem = problems[i];
+        if (i % 2 == 0) {
+          myText += getHtmlBody(problem).replace(DaemonBundle.message("inspection.collapse.description"),
+                                                 DaemonBundle.message("inspection.extended.description")) + BORDER_LINE;
+        }
+      }
+      myText = StringUtil.trimEnd(myText, BORDER_LINE) + "</body></html>";
     }
   }
 }

@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.hint;
 
-import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -9,14 +8,12 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -29,11 +26,11 @@ import java.awt.event.MouseEvent;
  * @author cdr
  */
 public class LineTooltipRenderer implements TooltipRenderer {
-  @NonNls private String myText;
+  @NonNls protected String myText;
 
   private boolean myActiveLink = false;
   private int myCurrentWidth;
-  @NonNls private static final String BORDER_LINE = "<hr size=1 noshade>";
+  @NonNls protected static final String BORDER_LINE = "<hr size=1 noshade>";
 
   public LineTooltipRenderer(String text) {
     myText = text;
@@ -157,9 +154,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
           if (!expanded[0]) { // more -> less
             for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
               if (handlerEP.handleLink(e.getDescription(), editor, pane)) {
-                myText = myText
-                  .replace(" " + DaemonBundle.message("inspection.extended.description"), "")
-                  .replace("(" + KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)) + ")", "");
+                myText = convertTextOnLinkHandled(myText);
                 pane.setText(myText);
                 return;
               }
@@ -181,58 +176,15 @@ public class LineTooltipRenderer implements TooltipRenderer {
     return hint;
   }
 
+  protected String convertTextOnLinkHandled(String text) {
+    return text;
+  }
+
   protected void onHide(JComponent contentComponent) {
-
   }
 
-  private boolean dressDescription() {
-    final String[] problems = getHtmlBody(myText).split(BORDER_LINE);
-    String text = "";
-    for (String problem : problems) {
-      final String descriptionPrefix = getDescriptionPrefix(problem);
-      if (descriptionPrefix != null) {
-        for (final TooltipLinkHandlerEP handlerEP : Extensions.getExtensions(TooltipLinkHandlerEP.EP_NAME)) {
-          final String description = handlerEP.getDescription(descriptionPrefix);
-          if (description != null) {
-            text += getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
-                                                   DaemonBundle.message("inspection.collapse.description")) + BORDER_LINE + getHtmlBody(description) + BORDER_LINE;
-            break;
-          }
-        }
-      }
-    }
-    if (text.length() > 0) { //otherwise do not change anything
-      myText = "<html><body>" +  StringUtil.trimEnd(text, BORDER_LINE) + "</body></html>";
-      return true;
-    }
-    return false;
-  }
-
-  private void stripDescription() {
-    final String[] problems = getHtmlBody(myText).split(BORDER_LINE);
-    myText = "<html><body>";
-    for (int i = 0; i < problems.length; i++) {
-      final String problem = problems[i];
-      if (i % 2 == 0) {
-        myText += getHtmlBody(problem).replace(DaemonBundle.message("inspection.collapse.description"),
-                                               DaemonBundle.message("inspection.extended.description")) + BORDER_LINE;
-      }
-    }
-    myText = StringUtil.trimEnd(myText, BORDER_LINE) + "</body></html>";
-  }
-
-  @Nullable
-  private static String getDescriptionPrefix(@NonNls String text) {
-    final int linkIdx = text.indexOf("<a href=");
-    if (linkIdx != -1) {
-      final String ref = text.substring(linkIdx + 9);
-      final int quatIdx = ref.indexOf("\"");
-      if (quatIdx > 0) {
-        return ref.substring(0, quatIdx);
-      }
-    }
-    return null;
-  }
+  protected boolean dressDescription() { return false; }
+  protected void stripDescription() {}
 
   static JEditorPane initPane(@NonNls String text) {
     text = "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + getHtmlBody(text) + "</body></html>";
@@ -263,7 +215,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
     myText = "<html><body>" + newBody + "</body></html>";
   }
 
-  private static String getHtmlBody(@NonNls String text) {
+  protected static String getHtmlBody(@NonNls String text) {
     if (!text.startsWith("<html>")) {
       return text.replaceAll("\n","<br>");
     }
