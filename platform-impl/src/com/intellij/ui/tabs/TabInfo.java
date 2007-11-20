@@ -12,6 +12,7 @@ public final class TabInfo {
   static final String ACTION_GROUP = "actionGroup";
   static final String ICON = "icon";
   static final String TEXT = "text";
+  static final String TAB_ACTION_GROUP = "tabActionGroup";
 
   private JComponent myComponent;
   private JComponent myPreferredFocusableComponent;
@@ -26,6 +27,9 @@ public final class TabInfo {
   private Object myObject;
   private JComponent mySideComponent;
   private WeakReference<JComponent> myLastFocusOwner;
+
+
+  private ActionGroup myTabActions;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -108,7 +112,17 @@ public final class TabInfo {
   void setLastFocusOwner(final JComponent owner) {
     myLastFocusOwner = new WeakReference<JComponent>(owner);
   }
-  
+
+  public ActionGroup getTabActions() {
+    return myTabActions;
+  }
+
+  public void setTabActions(final ActionGroup tabActions) {
+    ActionGroup old = myTabActions;
+    myTabActions = tabActions;
+    myChangeSupport.firePropertyChange(TAB_ACTION_GROUP, old, myTabActions);
+  }
+
   @Nullable
   JComponent getLastFocusOwner() {
     return myLastFocusOwner != null ? myLastFocusOwner.get() : null;

@@ -50,10 +50,10 @@ class Grid extends Wrapper implements Disposable {
 
     setOpaque(false);
 
-    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(contentManager, project, this, myLeft, horizontalToolbars, PlaceInGrid.left));
-    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(contentManager, project, this, myCenter, horizontalToolbars, PlaceInGrid.center));
-    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(contentManager, project, this, myRight, horizontalToolbars, PlaceInGrid.right));
-    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(contentManager, project, this, myBottom, horizontalToolbars, PlaceInGrid.bottom));
+    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(contentManager, actionManager, project, this, myLeft, horizontalToolbars, PlaceInGrid.left));
+    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(contentManager, actionManager, project, this, myCenter, horizontalToolbars, PlaceInGrid.center));
+    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(contentManager, actionManager, project, this, myRight, horizontalToolbars, PlaceInGrid.right));
+    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(contentManager, actionManager, project, this, myBottom, horizontalToolbars, PlaceInGrid.bottom));
 
     setContent(mySplitter);
 

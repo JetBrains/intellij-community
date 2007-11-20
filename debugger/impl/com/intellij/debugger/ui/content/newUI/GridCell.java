@@ -1,19 +1,27 @@
 package com.intellij.debugger.ui.content.newUI;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
-class GridCell {
+public class GridCell {
+
+  public static final DataKey<GridCell> KEY = DataKey.create("DebuggerGridCell");
 
   private Grid myContainer;
 
@@ -24,13 +32,15 @@ class GridCell {
   private ContentManager myContentManager;
 
   private Map<Content, TabInfo> myContent2Tab = new HashMap<Content, TabInfo>();
+  private ActionManager myActionManager;
 
-  public GridCell(ContentManager contentManager, Project project, Grid container, Grid.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
+  public GridCell(ContentManager contentManager, ActionManager actionManager, Project project, Grid container, Grid.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
     myContentManager = contentManager;
+    myActionManager = actionManager;
     myContainer = container;
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
-    myTabs = new JBTabs(project, container.myActionManager, container);
+    myTabs = new MyTabs(project, container);
     myTabs.setUiDecorator(new JBTabs.UiDecorator() {
       public JBTabs.UiDecoration getDecoration() {
         return new JBTabs.UiDecoration(null, new Insets(0, -1, 0, -1));
@@ -98,6 +108,9 @@ class GridCell {
 
     myContent2Tab.put(content, tabInfo);
 
+    ActionGroup group = (ActionGroup)myActionManager.getAction("Debugger.View");
+    tabInfo.setTabActions(group);
+
     return tabInfo;
   }
 
@@ -123,4 +136,16 @@ class GridCell {
       }
     }
   }
+
+  private class MyTabs extends JBTabs implements DataProvider {
+    public MyTabs(final Project project, final Grid container) {
+      super(project, container.myActionManager, container);
+    }
+
+    @Nullable
+    public Object getData(@NonNls final String dataId) {
+      return KEY.getName().equals(dataId) ? GridCell.this : null;
+    }
+  }
+
 }

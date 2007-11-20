@@ -628,6 +628,10 @@
         <action id="Debugger.ToggleToolbarLayout" class="com.intellij.debugger.actions.ToggleToolbarLayout"/>
       </group>
 
+      <group id="Debugger.View">
+        <action id="Debugger.CloseView" class="com.intellij.debugger.ui.content.newUI.actions.CloseViewAction" icon="/actions/cross.png"/>
+      </group>
+
     </group>
 
     <group id="Debugger.Representation">
