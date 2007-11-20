@@ -75,7 +75,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
-  protected boolean myHasErrorElement;
+  protected volatile boolean myHasErrorElement;
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private volatile boolean myErrorFound;
 
@@ -93,6 +93,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     LOG.assertTrue(myFile.isValid());
     setId(Pass.UPDATE_ALL);
+    myHasErrorElement = !isWholeFileHighlighting() && Boolean.TRUE.equals(myFile.getUserData(HAS_ERROR_ELEMENT));
+    FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap();
+    myErrorFound = !isWholeFileHighlighting() && fileStatusMap.wasErrorFound(myDocument);
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
@@ -356,6 +359,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
+  private boolean isWholeFileHighlighting() {
+    return myUpdateAll && myStartOffset == 0 && myEndOffset == myFile.getTextLength();
+  }
   protected void applyInformationWithProgress() {
     myFile.putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
 
@@ -571,11 +577,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     VirtualFile file = myFile.getVirtualFile();
     if (file == null) return;
 
-    boolean hasErrorElement = Boolean.TRUE.equals(myFile.getUserData(HAS_ERROR_ELEMENT));
-    List<Problem> problems = convertToProblems(getHighlights(), file, hasErrorElement);
+    List<Problem> problems = convertToProblems(getHighlights(), file, myHasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
 
-    wolf.reportProblems(file, problems);
+    if (isWholeFileHighlighting()) {
+      wolf.reportProblems(file, problems);
+    }
+    else {
+      wolf.weHaveGotProblems(file, problems);
+    }
   }
 
   static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
