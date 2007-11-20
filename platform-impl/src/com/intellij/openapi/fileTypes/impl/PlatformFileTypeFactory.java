@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PlatformFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(final @NotNull PairConsumer<FileType, String> consumer) {
-    consumer.consume(new ArchiveFileType(), "zip;jar;war;ear");
+    consumer.consume(new ArchiveFileType(), "zip;jar;war;ear;swc");
     consumer.consume(new PlainTextFileType(), "txt;sh;bat;cmd;policy;log;cgi;pl;MF;sql;jad;jam");
     consumer.consume(new UnknownFileType(), null);
   }
