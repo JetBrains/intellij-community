@@ -21,9 +21,13 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                   "</dependencies>");
 
     assertModules("project");
+    assertModuleLibDep("project", "junit:junit:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/");
   }
 
-  public void testProjectWithProperty() throws IOException {
+  public void testProjectWithEnvironmentProperty() throws IOException {
+    String javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"));
+
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -39,9 +43,12 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                   "</dependencies>");
 
     assertModules("project");
+    assertModuleLibDep("project",
+                       "direct-system-dependency:direct-system-dependency:1.0",
+                       "jar://" + javaHome + "/lib/tools.jar!/");
   }
 
-  public void testProjectWithEnvProperty() throws IOException {
+  public void testProjectWithEnvironmentENVProperty() throws IOException {
     String ideaJDK = FileUtil.toSystemIndependentName(System.getenv("IDEA_JDK"));
 
     importProject("<groupId>test</groupId>" +
@@ -425,5 +432,81 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
 
     // will fail when bug in embedder is fixed
     assertModules();
+  }
+
+  public void testProjectWithProfilesXmlFile() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>${junit.version}</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    createProfilesXml("<profile>" +
+                      "  <id>one</id>" +
+                      "  <activation>" +
+                      "    <activeByDefault>false</activeByDefault>" +
+                      "  </activation>" +
+                      "  <properties>" +
+                      "    <junit.version>4.0</junit.version>" +
+                      "  </properties>" +
+                      "</profile>" +
+
+                      "<profile>" +
+                      "  <id>two</id>" +
+                      "  <activation>" +
+                      "    <activeByDefault>false</activeByDefault>" +
+                      "  </activation>" +
+                      "  <properties>" +
+                      "    <junit.version>3.8.1</junit.version>" +
+                      "  </properties>" +
+                      "</profile>");
+
+    importProjectWithProfiles("one");
+    assertModules("project");
+
+    assertModuleLibDep("project", "junit:junit:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/");
+
+    importProjectWithProfiles("two");
+    assertModules("project");
+
+    assertModuleLibDep("project", "junit:junit:3.8.1",
+                       "jar://" + getRepositoryPath() + "/junit/junit/3.8.1/junit-3.8.1.jar!/");
+  }
+
+  public void testProjectWithDefaultProfileInProfilesXmlFile() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>junit</groupId>" +
+                     "    <artifactId>junit</artifactId>" +
+                     "    <version>${junit.version}</version>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    createProfilesXml("<profile>" +
+                      "  <id>one</id>" +
+                      "  <activation>" +
+                      "    <activeByDefault>true</activeByDefault>" +
+                      "  </activation>" +
+                      "  <properties>" +
+                      "    <junit.version>4.0</junit.version>" +
+                      "  </properties>" +
+                      "</profile>");
+
+    importProject();
+    assertModules("project");
+
+    assertModuleLibDep("project", "junit:junit:4.0",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/");
   }
 }

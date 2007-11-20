@@ -92,6 +92,10 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
     return projectRoot.getParent().getPath();
   }
 
+  protected String getRepositoryPath() {
+    return FileUtil.toSystemIndependentName(repoDir.getPath());
+  }
+
   protected PomTreeStructure.RootNode createMavenTree() {
     PomTreeStructure s = new PomTreeStructure(myProject, myProject.getComponent(MavenProjectsState.class),
                                               myProject.getComponent(MavenRepository.class),
@@ -299,21 +303,36 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
            "</project>";
   }
 
+  protected void createProfilesXml(String xml) throws IOException {
+    VirtualFile f = projectRoot.createChildData(null, "profiles.xml");
+    f.setBinaryContent(createValidProfiles(xml).getBytes());
+  }
+
+  private String createValidProfiles(String xml) {
+    return "<?xml version=\"1.0\"?>" +
+           "<profiles>" +
+           xml +
+          "</profiles>";
+  }
+
   protected void importProject(String xml) throws IOException {
     createProjectPom(xml);
     importProject();
   }
 
   protected void importProject() {
-    ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
-    files.add(projectPom);
-    ArrayList<String> profiles = new ArrayList<String>();
+    importProjectWithProfiles();
+  }
+
+  protected void importProjectWithProfiles(String... profiles) {
+    List<VirtualFile> files = Collections.singletonList(projectPom);
+    List<String> profilesList = Arrays.asList(profiles);
 
     MavenImportProcessor p = new MavenImportProcessor(myProject);
-    p.createMavenProjectModel(new HashMap<VirtualFile, Module>(), files, profiles);
+    p.createMavenProjectModel(new HashMap<VirtualFile, Module>(), files, profilesList);
     p.createMavenToIdeaMapping(false);
-    p.resolve(myProject, profiles);
-    p.commit(myProject, profiles, false);
+    p.resolve(myProject, profilesList);
+    p.commit(myProject, profilesList, false);
     projectModel = p.getMavenProjectModel();
   }
 
