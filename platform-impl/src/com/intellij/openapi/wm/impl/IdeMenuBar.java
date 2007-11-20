@@ -114,8 +114,10 @@ public class IdeMenuBar extends JMenuBar{
     super.updateUI();
     if (getMenuCount() > 0) {
       final JMenu menu = getMenu(0);
-      menu.updateUI();
-      setBackground(menu.getBackground());
+      if (menu != null) {  // hack for Substance LAF compatibility
+        menu.updateUI();
+        setBackground(menu.getBackground());
+      }
     }
   }
 
