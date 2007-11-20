@@ -102,7 +102,7 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     return (GrStatement) elemNode.getPsi();
   }
 
-  @NotNull
+  @Nullable
   public PsiElement getLBrace() {
     return findChildByType(GroovyTokenTypes.mLCURLY);
   }

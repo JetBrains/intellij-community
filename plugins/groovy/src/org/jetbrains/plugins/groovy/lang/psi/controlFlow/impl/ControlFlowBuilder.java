@@ -63,7 +63,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitBlock(GrCodeBlock block) {
     final PsiElement parent = block.getParent();
     final PsiElement lbrace = block.getLBrace();
-    if (parent instanceof GrMethod) {
+    if (lbrace != null && parent instanceof GrMethod) {
       final GrParameter[] parameters = ((GrMethod) parent).getParameters();
       for (GrParameter parameter : parameters) {
         addNode(new ReadWriteVariableInstructionImpl(parameter, myInstructionNumber++));
