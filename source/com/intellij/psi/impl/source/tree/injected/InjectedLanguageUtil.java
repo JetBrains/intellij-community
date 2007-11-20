@@ -640,7 +640,7 @@ public class InjectedLanguageUtil {
           virtualFile.setContent(null, documentWindow.getText(), false);
           FileDocumentManagerImpl.registerDocument(documentWindow, virtualFile);
           synchronized (PsiLock.LOCK) {
-            psiFile = registerDocument(documentWindow, psiFile, shreds);
+            psiFile = registerDocument(documentWindow, psiFile, shreds, myHostPsiFile);
             MyFileViewProvider myFileViewProvider = (MyFileViewProvider)psiFile.getViewProvider();
             myFileViewProvider.setVirtualFile(virtualFile);
             myFileViewProvider.forceCachedPsi(psiFile);
@@ -677,10 +677,10 @@ public class InjectedLanguageUtil {
   private static final Key<List<DocumentWindow>> INJECTED_DOCS_KEY = Key.create("INJECTED_DOCS_KEY");
   private static final Key<List<RangeMarker>> INJECTED_REGIONS_KEY = Key.create("INJECTED_REGIONS_KEY");
   @NotNull
-  public static List<DocumentWindow> getCachedInjectedDocuments(@NotNull Document hostDocument) {
-    List<DocumentWindow> injected = hostDocument.getUserData(INJECTED_DOCS_KEY);
+  public static List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
+    List<DocumentWindow> injected = hostPsiFile.getUserData(INJECTED_DOCS_KEY);
     if (injected == null) {
-      injected = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(INJECTED_DOCS_KEY, new CopyOnWriteArrayList<DocumentWindow>());
+      injected = ((UserDataHolderEx)hostPsiFile).putUserDataIfAbsent(INJECTED_DOCS_KEY, new CopyOnWriteArrayList<DocumentWindow>());
     }
     return injected;
   }
@@ -719,9 +719,9 @@ public class InjectedLanguageUtil {
   }
 
   private static PsiFile registerDocument(final DocumentWindowImpl documentWindow, final PsiFile injectedPsi,
-                                          List<PsiLanguageInjectionHost.Shred> shreds) {
+                                          List<PsiLanguageInjectionHost.Shred> shreds, final PsiFile hostPsiFile) {
     DocumentEx hostDocument = documentWindow.getDelegate();
-    List<DocumentWindow> injected = getCachedInjectedDocuments(hostDocument);
+    List<DocumentWindow> injected = getCachedInjectedDocuments(hostPsiFile);
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(injectedPsi.getProject());
     for (int i = injected.size()-1; i>=0; i--) {

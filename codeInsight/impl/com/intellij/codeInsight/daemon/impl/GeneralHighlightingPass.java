@@ -206,7 +206,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private void addInjectedPsiHighlights(final List<PsiElement> elements, final RefCountHolder refCountHolder) {
-    List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(getDocument());
+    List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(myFile);
     Collection<PsiElement> hosts = new THashSet<PsiElement>(elements.size() + injected.size());
 
     // rehighlight all injected PSI regardless the range,
