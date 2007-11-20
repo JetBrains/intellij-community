@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
@@ -74,6 +76,14 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
     // Expression or block to be introduced as a variable
     GroovyFileBase fileBase = file instanceof GspFile ? ((GspFile) file).getGroovyLanguageRoot() : ((GroovyFileBase) file);
     GrExpression tempExpr = GroovyRefactoringUtil.findElementInRange(fileBase, startOffset, endOffset, GrExpression.class);
+    if (tempExpr != null) {
+      PsiElement parent = tempExpr.getParent();
+      if (parent instanceof GrMethodCallExpression || parent instanceof GrIndexProperty) {
+        tempExpr = ((GrExpression) tempExpr.getParent());
+        SelectionModel model = editor.getSelectionModel();
+        model.setSelection(model.getSelectionStart(), tempExpr.getTextRange().getEndOffset());
+      }
+    }
     return invokeImpl(project, tempExpr, editor);
   }
 

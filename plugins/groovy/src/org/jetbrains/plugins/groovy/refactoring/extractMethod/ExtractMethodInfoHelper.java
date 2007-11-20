@@ -21,6 +21,8 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,7 +30,7 @@ import java.util.Map;
 
 /**
  * @author ilyas
-*/
+ */
 public class ExtractMethodInfoHelper {
 
   private final Map<String, ParameterInfo> myInputNamesMap = new HashMap<String, ParameterInfo>();
@@ -53,21 +55,32 @@ public class ExtractMethodInfoHelper {
       if (type == null) myOutputType = PsiType.VOID;
       else myOutputType = type;
     } else {
-      myOutputType = PsiType.VOID;
+      if (ExtractMethodUtil.isSingleExpression(statements) ||
+          statements.length == 1 && statements[0] instanceof GrExpression &&
+          !(statements[0] instanceof GrAssignmentExpression)) {
+        PsiType type = ((GrExpression) statements[0]).getType();
+        if (type != null) {
+          myOutputType = type;
+        } else {
+          myOutputType = PsiType.VOID;
+        }
+      } else  {
+        myOutputType = PsiType.VOID;
+      }
     }
   }
 
   @NotNull
-  public Project getProject(){
+  public Project getProject() {
     assert getInnerElements().length > 0;
     return getInnerElements()[0].getProject();
   }
 
-  public boolean validateName(String newName){
+  public boolean validateName(String newName) {
     return true;
   }
 
-  public ParameterInfo[] getParameterInfos(){
+  public ParameterInfo[] getParameterInfos() {
     Collection<ParameterInfo> collection = myInputNamesMap.values();
     ParameterInfo[] infos = new ParameterInfo[collection.size()];
     for (ParameterInfo info : collection) {
@@ -78,7 +91,7 @@ public class ExtractMethodInfoHelper {
     return infos;
   }
 
-  public boolean setNewName(@NotNull String oldName,@NotNull String newName){
+  public boolean setNewName(@NotNull String oldName, @NotNull String newName) {
     ParameterInfo info = myInputNamesMap.remove(oldName);
     if (info == null) return false;
     info.setNewName(newName);
@@ -93,9 +106,10 @@ public class ExtractMethodInfoHelper {
 
   /**
    * Get old names of parameters to be pasted as method call arguments
+   *
    * @return array of argument names
    */
-  public String[] getArgumentNames(){
+  public String[] getArgumentNames() {
     Collection<ParameterInfo> infos = myInputNamesMap.values();
     String[] argNames = new String[infos.size()];
     for (ParameterInfo info : infos) {

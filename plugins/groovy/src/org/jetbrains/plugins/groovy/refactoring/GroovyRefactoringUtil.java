@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -373,4 +374,19 @@ public abstract class GroovyRefactoringUtil {
 
     return possibleStatements.toArray(new PsiElement[possibleStatements.size()]);
   }
+
+  public static boolean isSuperOrThisCall(GrStatement statement, boolean testForSuper, boolean testForThis) {
+    if (!(statement instanceof GrMethodCallExpression)) return false;
+    GrMethodCallExpression expr = (GrMethodCallExpression) statement;
+    GrExpression invoked = expr.getInvokedExpression();
+    if (testForSuper) {
+      if ("super".equals(invoked.getText())) return true;
+    }
+    if (testForThis) {
+      if ("this".equals(invoked.getText())) return true;
+    }
+
+    return false;
+  }
+
 }

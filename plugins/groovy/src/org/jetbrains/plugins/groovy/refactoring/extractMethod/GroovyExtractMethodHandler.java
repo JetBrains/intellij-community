@@ -21,11 +21,9 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -35,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
@@ -86,11 +85,16 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       return false;
     }
 
-    int startOffset = editor.getSelectionModel().getSelectionStart();
-    int endOffset = editor.getSelectionModel().getSelectionEnd();
+    SelectionModel selectionModel = editor.getSelectionModel();
+    int startOffset = selectionModel.getSelectionStart();
+    int endOffset = selectionModel.getSelectionEnd();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement[] elements = ExtractMethodUtil.getElementsInOffset(file, startOffset, endOffset);
+    if (elements.length == 1 && elements[0] instanceof GrExpression) {
+      selectionModel.setSelection(startOffset, elements[0].getTextRange().getEndOffset());
+    }
+    
     GrStatement[] statements = ExtractMethodUtil.getStatementsByElements(elements);
 
     if (statements.length == 0) {
@@ -99,13 +103,32 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       return false;
     }
 
+    // test for this or super constructor calls
+    for (GrStatement statement : statements) {
+      if (GroovyRefactoringUtil.isSuperOrThisCall(statement, true, true)) {
+        String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
+        showErrorMessage(message, project);
+        return false;
+      }
+    }
+
     GrMethodOwner methodOwner = ExtractMethodUtil.getMethodOwner(statements[0]);
     GrVariableDeclarationOwner declarationOwner = ExtractMethodUtil.getDecalarationOwner(statements[0]);
-    if (methodOwner == null || declarationOwner == null) {
+    if (methodOwner == null ||
+        (declarationOwner == null && !ExtractMethodUtil.isSingleExpression(statements))) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
       showErrorMessage(message, project);
       return false;
     }
+    if (declarationOwner == null &&
+        ExtractMethodUtil.isSingleExpression(statements) &&
+        statements[0] instanceof GrExpression &&
+        PsiType.VOID == ((GrExpression) statements[0]).getType()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("selected.expression.has.void.type"));
+      showErrorMessage(message, project);
+      return false;
+    }
+
 
     // get information about variables in selected block
     VariableInfo variableInfo = ReachingDefinitionsCollector.obtainVariableFlowInformation(statements[0], statements[statements.length - 1]);
@@ -119,7 +142,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
     // map names to types
     String outputName = outputNames.length == 0 ? null : outputNames[0];
-    Map<String,PsiType> typeMap = ExtractMethodUtil.getVariableTypes(statements);
+    Map<String, PsiType> typeMap = ExtractMethodUtil.getVariableTypes(statements);
     if (typeMap == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("cannot.perform.analysis"));
       showErrorMessage(message, project);
@@ -128,38 +151,55 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
     ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputNames, outputName, typeMap, elements, statements);
 
-    // todo implement EM dialog logic
+    ExtractMethodSettings settings = getSettings(helper);
+    if (!settings.isOK()) {
+      return false;
+    }
 
-    runRefactoring(helper, methodOwner, declarationOwner, editor);
+    final String methodName = settings.getEnteredName();
+    helper = settings.getHelper();
+
+    assert methodName != null;
+    runRefactoring(methodName, helper, methodOwner, declarationOwner, editor);
 
     return true;
   }
 
-  private void runRefactoring(@NotNull final ExtractMethodInfoHelper helper,
+  private void runRefactoring(final String methodName,
+                              @NotNull final ExtractMethodInfoHelper helper,
                               @NotNull final GrMethodOwner methodOwner,
                               final GrVariableDeclarationOwner declarationOwner,
                               final Editor editor) {
 
     // todo remove me!
-    String methodName = "bliss";
     final GrMethod method = ExtractMethodUtil.createMethodByHelper(methodName, helper);
-    final GrStatement newStatement = ExtractMethodUtil.createResultVariableAssignment(helper, methodName);
-    final GrStatement[] statements = helper.getStatements();
-    assert statements.length > 0 ;
-
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
           methodOwner.addMethod(method);
-          // add call statement
-          declarationOwner.addStatementBefore(newStatement, statements[0]);
-          // remove old statements
-          ExtractMethodUtil.removeOldStatements(declarationOwner, helper);
-          ExtractMethodUtil.removeNewLineAfter(newStatement);
+          GrStatement realStatement;
+
+          if (declarationOwner != null && !ExtractMethodUtil.isSingleExpression(helper.getStatements())) {
+            // Replace set of statements
+            final GrStatement newStatement = ExtractMethodUtil.createResultStatement(helper, methodName);
+            // add call statement
+            final GrStatement[] statements = helper.getStatements();
+            assert statements.length > 0;
+            realStatement = declarationOwner.addStatementBefore(newStatement, statements[0]);
+            // remove old statements
+            ExtractMethodUtil.removeOldStatements(declarationOwner, helper);
+            ExtractMethodUtil.removeNewLineAfter(realStatement);
+          } else {
+            // Expression call replace
+            GrExpression methodCall = ExtractMethodUtil.createMethodCallByHelper(methodName, helper);
+            GrExpression oldExpr = (GrExpression) helper.getStatements()[0];
+            realStatement = oldExpr.replaceWithExpression(methodCall , true);
+          }
 
           // move to offset
           if (editor != null) {
-            editor.getCaretModel().moveToOffset(ExtractMethodUtil.getCaretOffset(newStatement));
+            PsiDocumentManager.getInstance(helper.getProject()).commitDocument(editor.getDocument());
+            editor.getCaretModel().moveToOffset(ExtractMethodUtil.getCaretOffset(realStatement));
           }
 
         } catch (IncorrectOperationException e) {
@@ -178,6 +218,12 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         }, REFACTORING_NAME, null);
 
 
+  }
+
+  private ExtractMethodSettings getSettings(@NotNull ExtractMethodInfoHelper helper) {
+    GroovyExtractMethodDialog dialog = new GroovyExtractMethodDialog(helper, helper.getProject());
+    dialog.show();
+    return dialog;
   }
 
 
