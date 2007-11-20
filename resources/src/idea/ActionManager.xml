@@ -353,6 +353,7 @@
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
       <separator/>
       <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
+      <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"/>
       <separator/>
       <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
       <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
