@@ -136,18 +136,19 @@ public class UnusedDefInspection extends LocalInspectionTool {
 
   private boolean isLocalAssignment(PsiElement element) {
     if (element instanceof GrVariable) {
-      return isLocalVariable((GrVariable) element);
+      return isLocalVariable((GrVariable) element, false);
     } else if (element instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression) element).resolve();
-      return resolved instanceof GrVariable && isLocalVariable((GrVariable) resolved);
+      return resolved instanceof GrVariable && isLocalVariable((GrVariable) resolved, true);
     }
 
     return false;
   }
 
-  private boolean isLocalVariable(GrVariable var) {
-    if (var instanceof GrField || var instanceof GrParameter) return false;
-    return !(var.getParent().getParent() instanceof GroovyFileBase); //binding variable
+  private boolean isLocalVariable(GrVariable var, boolean parametersAllowed) {
+    if (var instanceof GrField) return false;
+    else if (var instanceof GrParameter && !parametersAllowed) return false;
+    return !(var.getParent().getParent() instanceof GroovyFileBase); //script binding variable
   }
 
   public boolean isEnabledByDefault() {
