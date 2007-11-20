@@ -116,7 +116,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field) {
-    final PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
+      final PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       final String qName = annotation.getQualifiedName();
       if (qName != null && qName.equals(Attribute.class.getName())) {
