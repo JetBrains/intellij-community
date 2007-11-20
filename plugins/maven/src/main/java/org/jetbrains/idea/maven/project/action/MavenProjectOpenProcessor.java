@@ -7,16 +7,16 @@ package org.jetbrains.idea.maven.project.action;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.projectImport.ProjectOpenProcessorBase;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MavenProjectOpenProcessor extends ProjectOpenProcessor {
+public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase {
   public MavenProjectOpenProcessor(final MavenImportBuilder builder) {
     super(builder);
   }
