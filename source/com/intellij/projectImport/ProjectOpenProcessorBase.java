@@ -10,7 +10,6 @@ import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -29,12 +28,11 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 
-public abstract class ProjectOpenProcessor {
-  public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME = new ExtensionPointName<ProjectOpenProcessor>("com.intellij.projectOpenProcessor");
+public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
 
   private ProjectImportBuilder myBuilder;
 
-  protected ProjectOpenProcessor(final ProjectImportBuilder builder) {
+  protected ProjectOpenProcessorBase(final ProjectImportBuilder builder) {
     myBuilder = builder;
   }
 

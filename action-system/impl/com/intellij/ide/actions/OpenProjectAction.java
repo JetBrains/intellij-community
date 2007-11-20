@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.projectImport.ProjectOpenProcessorBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
@@ -62,9 +63,9 @@ public class OpenProjectAction extends AnAction {
     };
     descriptor.setTitle(IdeBundle.message("title.open.project"));
     String [] extensions = new String[]{ProjectFileType.DOT_DEFAULT_EXTENSION};
-    final ProjectOpenProcessor[] openProcessors = Extensions.getExtensions(ProjectOpenProcessor.EXTENSION_POINT_NAME);
+    final ProjectOpenProcessor[] openProcessors = Extensions.getExtensions(ProjectOpenProcessorBase.EXTENSION_POINT_NAME);
     for (ProjectOpenProcessor openProcessor : openProcessors) {
-      final String[] supportedExtensions = openProcessor.getSupportedExtensions();
+      final String[] supportedExtensions = ((ProjectOpenProcessorBase)openProcessor).getSupportedExtensions();
       if (supportedExtensions != null) {
         extensions = ArrayUtil.mergeArrays(extensions, supportedExtensions, String.class);
       }
