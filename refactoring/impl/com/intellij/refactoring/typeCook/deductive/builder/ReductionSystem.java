@@ -1,19 +1,16 @@
 package com.intellij.refactoring.typeCook.deductive.builder;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.typeCook.Util;
-import com.intellij.psi.Bottom;
-import com.intellij.refactoring.typeCook.Settings;
-import com.intellij.psi.PsiTypeVariable;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.typeCook.Settings;
+import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author db
@@ -96,9 +93,15 @@ public class ReductionSystem {
 
       if (element instanceof PsiParameter) {
         final PsiParameter parm = (PsiParameter)element;
-        final PsiMethod method = (PsiMethod)parm.getDeclarationScope();
+        final PsiElement declarationScope = parm.getDeclarationScope();
+        if (declarationScope instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod)declarationScope;
 
-        buffer.append("   parameter " + method.getParameterList().getParameterIndex(parm) + " of " + memberString(method));
+          buffer.append("   parameter " + method.getParameterList().getParameterIndex(parm) + " of " + memberString(method));
+        }
+        else {
+          buffer.append("   parameter of foreach");
+        }
       }
       else if (element instanceof PsiField) {
         buffer.append("   field " + memberString(((PsiField)element)));
@@ -362,9 +365,10 @@ public class ReductionSystem {
     }
 
     if (element instanceof PsiParameter) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
 
-      if (method != null) {
+      if (scope instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)scope;
         return "parameter " + (method.getParameterList().getParameterIndex(((PsiParameter)element))) + " of " + method.getName();
       }
     }

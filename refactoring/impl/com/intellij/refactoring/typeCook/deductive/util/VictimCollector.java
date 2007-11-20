@@ -1,9 +1,8 @@
 package com.intellij.refactoring.typeCook.deductive.util;
 
-import com.intellij.refactoring.typeCook.Util;
-import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
+import com.intellij.refactoring.typeCook.Settings;
+import com.intellij.refactoring.typeCook.Util;
 
 import java.util.HashSet;
 
@@ -40,6 +39,12 @@ public class VictimCollector extends Visitor {
     super.visitLocalVariable(variable);
   }
 
+  public void visitForeachStatement(final PsiForeachStatement statement) {
+    super.visitForeachStatement(statement);
+    final PsiParameter parameter = statement.getIterationParameter();
+    testNAdd(parameter, parameter.getType());
+  }
+
   public void visitField(final PsiField field) {
     testNAdd(field, field.getType());
 
@@ -73,8 +78,11 @@ public class VictimCollector extends Visitor {
   }
 
   public void visitTypeCastExpression (final PsiTypeCastExpression cast){
-    testNAdd(cast, cast.getCastType().getType());
-    
+    final PsiTypeElement typeElement = cast.getCastType();
+    if (typeElement != null) {
+      testNAdd(cast, typeElement.getType());
+    }
+
     super.visitTypeCastExpression(cast);
   }
 

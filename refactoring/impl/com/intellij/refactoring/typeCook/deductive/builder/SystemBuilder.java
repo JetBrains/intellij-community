@@ -87,8 +87,7 @@ public class SystemBuilder {
         return false;
       }
 
-      final PsiElement e =
-        parameter == null ? superMethod : superMethod.getParameterList().getParameters()[index];
+      final PsiElement e = parameter == null ? superMethod : superMethod.getParameterList().getParameters()[index];
 
       if (!victims.contains(e)) {
         myMethodCache.put(superMethod, Boolean.FALSE);
@@ -206,13 +205,14 @@ public class SystemBuilder {
 
         if (parameterType instanceof PsiEllipsisType) {
           parameterType = ((PsiEllipsisType)parameterType).getComponentType();
-          if (arguments.length == parameters.length && argumentType instanceof PsiArrayType &&
+          if (arguments.length == parameters.length &&
+              argumentType instanceof PsiArrayType &&
               !(((PsiArrayType)argumentType).getComponentType() instanceof PsiPrimitiveType)) {
             argumentType = ((PsiArrayType)argumentType).getComponentType();
           }
         }
-        final PsiType currentSubstitution = helper.getSubstitutionForTypeParameter(typeParameter, parameterType,
-                                                                                   argumentType, true, PsiUtil.getLanguageLevel(parent));
+        final PsiType currentSubstitution =
+          helper.getSubstitutionForTypeParameter(typeParameter, parameterType, argumentType, true, PsiUtil.getLanguageLevel(parent));
         if (currentSubstitution == null) {
           substitution = null;
           break;
@@ -284,7 +284,8 @@ public class SystemBuilder {
     }
 
     PsiType returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
-    PsiType guess = parent.getManager().getResolveHelper().getSubstitutionForTypeParameter(typeParameter, returnType, type, false, PsiUtil.getLanguageLevel(parent));
+    PsiType guess = parent.getManager().getResolveHelper()
+      .getSubstitutionForTypeParameter(typeParameter, returnType, type, false, PsiUtil.getLanguageLevel(parent));
 
     if (guess == PsiType.NULL) {
       PsiType superType = substitutor.substitute(typeParameter.getSuperTypes()[0]);
@@ -332,9 +333,8 @@ public class SystemBuilder {
         final PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         final PsiExpression[] arguments = call.getArgumentList().getExpressions();
-        final PsiExpression qualifier = expr instanceof PsiMethodCallExpression
-                                         ? ((PsiMethodCallExpression)expr).getMethodExpression().getQualifierExpression()
-                                         : null;
+        final PsiExpression qualifier =
+          expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).getMethodExpression().getQualifierExpression() : null;
 
         final HashSet<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(methodTypeParameters));
 
@@ -402,11 +402,8 @@ public class SystemBuilder {
               parmType = Util.banalize(parmType);
             }
 
-            final PsiType theType =
-            new Object() {
-              PsiType introduceAdditionalTypeVariables(final PsiType type,
-                                                       final PsiSubstitutor qualifier,
-                                                       final PsiSubstitutor supertype) {
+            final PsiType theType = new Object() {
+              PsiType introduceAdditionalTypeVariables(final PsiType type, final PsiSubstitutor qualifier, final PsiSubstitutor supertype) {
                 final int level = type.getArrayDimensions();
                 final PsiClassType.ClassResolveResult result = Util.resolveType(type);
                 final PsiClass aClass = result.getElement();
@@ -426,8 +423,7 @@ public class SystemBuilder {
                     for (final PsiClassType ext : extypes) {
                       final PsiType extype = qualifier.substitute(new Object() {
                         public PsiType substitute(final PsiType ext) {
-                          final PsiClassType.ClassResolveResult result =
-                            Util.resolveType(ext);
+                          final PsiClassType.ClassResolveResult result = Util.resolveType(ext);
                           final PsiClass aClass = result.getElement();
 
                           if (aClass != null) {
@@ -453,11 +449,12 @@ public class SystemBuilder {
                                   final PsiType bound = wildcard.getBound();
                                   if (bound != null) {
                                     final PsiManager manager = parm.getManager();
-                                    type = wildcard.isExtends() ?
-                                           PsiWildcardType.createExtends(manager, substitute(bound)) : 
-                                           PsiWildcardType.createSuper(manager, substitute(bound));
+                                    type = wildcard.isExtends()
+                                           ? PsiWildcardType.createExtends(manager, substitute(bound))
+                                           : PsiWildcardType.createSuper(manager, substitute(bound));
                                   }
-                                } else {
+                                }
+                                else {
                                   type = substitute(type);
                                 }
                               }
@@ -534,6 +531,9 @@ public class SystemBuilder {
                           theSubst = theSubst.put(p, pType);
                         }
                       }
+                      else {
+                        theSubst = theSubst.put(p, pType);
+                      }
                     }
                     else if (pType != null) {
                       theSubst = theSubst.put(p, introduceAdditionalTypeVariables(pType, qualifier, supertype));
@@ -598,8 +598,7 @@ public class SystemBuilder {
             PsiType aType = fieldType;
 
             if (!aClass.equals(superClass) && field.isPhysical()) {
-              aType =
-                TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY).substitute(aType);
+              aType = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY).substitute(aType);
             }
 
             return aSubst.substitute(aType);
@@ -678,6 +677,8 @@ public class SystemBuilder {
               }
             }
           }
+        } else if (declarationScope instanceof PsiForeachStatement) {
+          addForEachConstraint(system, (PsiForeachStatement)declarationScope);
         }
       }
       return;
@@ -686,17 +687,16 @@ public class SystemBuilder {
       final PsiType reType = getType(element);
 
       element.accept(new PsiRecursiveElementVisitor() {
-                       public void visitReturnStatement(final PsiReturnStatement statement) {
-                         super.visitReturnStatement(statement);
+        public void visitReturnStatement(final PsiReturnStatement statement) {
+          super.visitReturnStatement(statement);
 
-                         final PsiExpression retExpr = statement.getReturnValue();
+          final PsiExpression retExpr = statement.getReturnValue();
 
-                         if (retExpr != null) {
-                           system.addSubtypeConstraint(evaluateType(retExpr, system), reType);
-                         }
-                       }
-                     }
-      );
+          if (retExpr != null) {
+            system.addSubtypeConstraint(evaluateType(retExpr, system), reType);
+          }
+        }
+      });
 
       return;
     }
@@ -708,99 +708,100 @@ public class SystemBuilder {
 
       if (!myVisitedConstructions.contains(anchor)) {
         root.accept(new PsiRecursiveElementVisitor() {
-                      public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
-                        super.visitAssignmentExpression(expression);
+          public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+            super.visitAssignmentExpression(expression);
 
-                        system.addSubtypeConstraint(evaluateType(expression.getRExpression(), system), evaluateType(expression.getLExpression(),
-                                                                                                                        system));
-                      }
+            system
+              .addSubtypeConstraint(evaluateType(expression.getRExpression(), system), evaluateType(expression.getLExpression(), system));
+          }
 
-                      public void visitConditionalExpression(final PsiConditionalExpression expression) {
-                        super.visitConditionalExpression(expression);
+          public void visitConditionalExpression(final PsiConditionalExpression expression) {
+            super.visitConditionalExpression(expression);
 
-                        system.addSubtypeConstraint(evaluateType(expression.getThenExpression(), system),
-                                                    evaluateType(expression.getElseExpression(), system));
-                        system.addSubtypeConstraint(evaluateType(expression.getElseExpression(), system),
-                                                    evaluateType(expression.getThenExpression(), system));
-                      }
+            system.addSubtypeConstraint(evaluateType(expression.getThenExpression(), system),
+                                        evaluateType(expression.getElseExpression(), system));
+            system.addSubtypeConstraint(evaluateType(expression.getElseExpression(), system),
+                                        evaluateType(expression.getThenExpression(), system));
+          }
 
-                      public void visitCallExpression(final PsiCallExpression expression) {
-                        super.visitCallExpression(expression);
-                        evaluateType(expression, system);
-                      }
+          public void visitCallExpression(final PsiCallExpression expression) {
+            super.visitCallExpression(expression);
+            evaluateType(expression, system);
+          }
 
-                      public void visitReturnStatement(final PsiReturnStatement statement) {
-                        super.visitReturnStatement(statement);
+          public void visitReturnStatement(final PsiReturnStatement statement) {
+            super.visitReturnStatement(statement);
 
-                        final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+            final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
 
-                        if (method != null) {
-                          system.addSubtypeConstraint(evaluateType(statement.getReturnValue(), system), getType(method));
-                        }
-                      }
+            if (method != null) {
+              system.addSubtypeConstraint(evaluateType(statement.getReturnValue(), system), getType(method));
+            }
+          }
 
-                      public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
-                        super.visitTypeCastExpression(expression);
+          public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
+            super.visitTypeCastExpression(expression);
 
-                        final PsiType operandType = evaluateType(expression.getOperand(), system);
-                        final PsiType castType = evaluateType(expression, system);
-                        if (operandType == null || castType == null) return;
+            final PsiType operandType = evaluateType(expression.getOperand(), system);
+            final PsiType castType = evaluateType(expression, system);
+            if (operandType == null || castType == null) return;
 
-                        if (Util.bindsTypeVariables(operandType)) {
-                          system.addCast(expression, operandType);
-                        }
+            if (Util.bindsTypeVariables(operandType)) {
+              system.addCast(expression, operandType);
+            }
 
-                        if (operandType.getDeepComponentType() instanceof PsiTypeVariable || castType.getDeepComponentType() instanceof PsiTypeVariable) {
-                          system.addSubtypeConstraint(operandType, castType);
-                        }
-                        else {
-                          final PsiClassType.ClassResolveResult operandResult = Util.resolveType(operandType);
-                          final PsiClassType.ClassResolveResult castResult = Util.resolveType(castType);
+            if (operandType.getDeepComponentType() instanceof PsiTypeVariable ||
+                castType.getDeepComponentType() instanceof PsiTypeVariable) {
+              system.addSubtypeConstraint(operandType, castType);
+            }
+            else {
+              final PsiClassType.ClassResolveResult operandResult = Util.resolveType(operandType);
+              final PsiClassType.ClassResolveResult castResult = Util.resolveType(castType);
 
-                          final PsiClass operandClass = operandResult.getElement();
-                          final PsiClass castClass = castResult.getElement();
+              final PsiClass operandClass = operandResult.getElement();
+              final PsiClass castClass = castResult.getElement();
 
-                          if (operandClass != null && castClass != null) {
-                            if (InheritanceUtil.isCorrectDescendant(operandClass, castClass, true)) {
-                              system.addSubtypeConstraint(operandType, castType);
-                            }
-                          }
-                        }
-                      }
+              if (operandClass != null && castClass != null) {
+                if (InheritanceUtil.isCorrectDescendant(operandClass, castClass, true)) {
+                  system.addSubtypeConstraint(operandType, castType);
+                }
+              }
+            }
+          }
 
-                      public void visitVariable(final PsiVariable variable) {
-                        super.visitVariable(variable);
+          public void visitVariable(final PsiVariable variable) {
+            super.visitVariable(variable);
 
-                        final PsiExpression init = variable.getInitializer();
+            final PsiExpression init = variable.getInitializer();
 
-                        if (init != null) {
-                          system.addSubtypeConstraint(evaluateType(init, system), getType(variable));
-                        }
-                      }
+            if (init != null) {
+              system.addSubtypeConstraint(evaluateType(init, system), getType(variable));
+            }
+          }
 
-                      public void visitNewExpression(final PsiNewExpression expression) {
-                        super.visitNewExpression(expression);
+          public void visitNewExpression(final PsiNewExpression expression) {
+            super.visitNewExpression(expression);
 
-                        final PsiArrayInitializerExpression init = expression.getArrayInitializer();
+            final PsiArrayInitializerExpression init = expression.getArrayInitializer();
 
-                        if (init != null) {
-                          final PsiExpression[] inits = init.getInitializers();
-                          final PsiType type = getType(expression);
+            if (init != null) {
+              final PsiExpression[] inits = init.getInitializers();
+              final PsiType type = getType(expression);
 
-                          for (PsiExpression init1 : inits) {
-                            system.addSubtypeConstraint(evaluateType(init1, system).createArrayType(), type);
-                          }
-                        }
-                      }
+              for (PsiExpression init1 : inits) {
+                system.addSubtypeConstraint(evaluateType(init1, system).createArrayType(), type);
+              }
+            }
+          }
 
-                      public void visitReferenceExpression(final PsiReferenceExpression expression) {
-                        final PsiExpression qualifierExpression = expression.getQualifierExpression();
+          public void visitReferenceExpression(final PsiReferenceExpression expression) {
+            final PsiExpression qualifierExpression = expression.getQualifierExpression();
 
-                        if (qualifierExpression != null) {
-                          qualifierExpression.accept(this);
-                        }
-                      }
-                    });
+            if (qualifierExpression != null) {
+              qualifierExpression.accept(this);
+            }
+          }
+        });
 
         myVisitedConstructions.add(anchor);
       }
@@ -810,7 +811,8 @@ public class SystemBuilder {
   private static SearchScope getScope(final PsiSearchHelper helper, final PsiElement element) {
     SearchScope scope = helper.getUseScope(element);
     if (scope instanceof GlobalSearchScope) {
-      scope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)scope, StdFileTypes.JAVA, StdFileTypes.JSP, StdFileTypes.JSPX);
+      scope =
+        GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)scope, StdFileTypes.JAVA, StdFileTypes.JSP, StdFileTypes.JSPX);
     }
     return scope;
   }
@@ -903,7 +905,7 @@ public class SystemBuilder {
     ReductionSystem system = new ReductionSystem(myProject, victims, myTypes, myTypeVariableFactory, mySettings);
 
     for (final PsiElement element : victims) {
-      if (element instanceof PsiParameter) {
+      if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) {
         if (!verifyMethod(element, victims, helper)) {
           continue;
         }
@@ -917,7 +919,7 @@ public class SystemBuilder {
 
     for (final PsiElement element : victims) {
       PsiType definedType;
-      if (element instanceof PsiParameter) {
+      if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) {
         final PsiParameter p = myParameters.get(element);
 
         if (p != null) {
@@ -946,9 +948,20 @@ public class SystemBuilder {
 
     for (final PsiElement element : victims) {
       if (element instanceof PsiParameter) {
-        final PsiParameter p = myParameters.get(element);
+        final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
+        if (scope instanceof PsiMethod) {
+          final PsiParameter p = myParameters.get(element);
 
-        if (p == null) continue;
+          if (p == null) continue;
+        }
+        /*else if (scope instanceof PsiForeachStatement) {
+          addForEachConstraint(system, (PsiForeachStatement)scope);
+        }*/
+        else if (element instanceof PsiMethod) {
+          final PsiMethod m = myMethods.get(element);
+
+          if (m == null) continue;
+        }
       }
       else if (element instanceof PsiMethod) {
         final PsiMethod m = myMethods.get(element);
@@ -972,5 +985,34 @@ public class SystemBuilder {
     }
 
     return system;
+  }
+
+  private void addForEachConstraint(final ReductionSystem system, final PsiForeachStatement statement) {
+    final PsiType paramType = getType(statement.getIterationParameter());
+    final PsiExpression value = statement.getIteratedValue();
+    if (value != null) {
+      final PsiType type = evaluateType(value, system);
+      if (type instanceof PsiClassType) {
+        final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+        final PsiClass clazz = resolveResult.getElement();
+        if (clazz != null) {
+          final PsiClass iterableClass = clazz.getManager().findClass("java.lang.Iterable", clazz.getResolveScope());
+          if (iterableClass != null) {
+            final PsiTypeParameter[] typeParameters = iterableClass.getTypeParameters();
+            if (typeParameters.length == 1) {
+              final PsiSubstitutor substitutor =
+                TypeConversionUtil.getClassSubstitutor(iterableClass, clazz, resolveResult.getSubstitutor());
+              if (substitutor != null) {
+                final PsiType componentType = substitutor.substitute(typeParameters[0]);
+                system.addSubtypeConstraint(componentType, paramType);
+              }
+            }
+          }
+        }
+      }
+      else if (type instanceof PsiArrayType) {
+        system.addSubtypeConstraint(((PsiArrayType)type).getComponentType(), paramType);
+      }
+    }
   }
 }

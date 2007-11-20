@@ -5,6 +5,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.typeCook.Settings;
@@ -27,6 +29,10 @@ import java.io.PrintWriter;
  */
 
 public class TypeCookTest extends MultiFileTestCase {
+  protected ProjectJdk getTestProjectJdk() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
+  }
+
   protected void setUp() throws Exception {
     super.setUp();
     myPsiManager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
@@ -633,15 +639,23 @@ public class TypeCookTest extends MultiFileTestCase {
         start();
   }
 
+  public void testT149() throws Exception {
+        start(true);
+  }
+
   public void start() throws Exception {
+    start(false);
+  }
+
+  public void start(final boolean cookObjects) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        TypeCookTest.this.performAction("Test", rootDir.getName());
+        TypeCookTest.this.performAction("Test", rootDir.getName(), cookObjects);
       }
     });
   }
 
-  private void performAction(String className, String rootDir) throws Exception {
+  private void performAction(String className, String rootDir, final boolean cookObjects) throws Exception {
     PsiClass aClass = myPsiManager.findClass(className);
 
     assertNotNull("Class " + className + " not found", aClass);
@@ -665,7 +679,7 @@ public class TypeCookTest extends MultiFileTestCase {
                                           }
 
                                           public boolean cookObjects(){
-                                            return false;
+                                            return cookObjects;
                                           }
 
                                           public boolean cookToWildcards(){
