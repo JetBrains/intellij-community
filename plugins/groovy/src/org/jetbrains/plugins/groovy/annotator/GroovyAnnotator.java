@@ -601,6 +601,25 @@ public class GroovyAnnotator implements Annotator {
     if (extendsClause != null) {
       checkForExtendingInterface(holder, extendsClause, implementsClause, ((GrTypeDefinition) extendsClause.getParent()));
     }
+
+    checkDuplicateClass(typeDefinition, holder);
+  }
+
+  private void checkDuplicateClass(GrTypeDefinition typeDefinition, AnnotationHolder holder) {
+    final String qName = typeDefinition.getQualifiedName();
+    if (qName != null) {
+      final PsiClass[] classes = typeDefinition.getManager().findClasses(qName, typeDefinition.getResolveScope());
+      if (classes.length > 1) {
+        final PsiFile file = typeDefinition.getContainingFile();
+        String packageName = "<default package>";
+        if (file instanceof GroovyFile) {
+          final String name = ((GroovyFile) file).getPackageName();
+          if (name.length() > 0) packageName = name;
+        }
+
+        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("duplicate.class", typeDefinition.getName(), packageName));
+      }
+    }
   }
 
   private void checkForExtendingInterface(AnnotationHolder holder, GrExtendsClause extendsClause, GrImplementsClause implementsClause, GrTypeDefinition myClass) {
