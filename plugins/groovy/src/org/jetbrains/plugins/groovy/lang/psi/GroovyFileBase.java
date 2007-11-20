@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ilyas
  */
-public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner, PsiClassOwner {
+public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDeclarationOwner, PsiClassOwner, GrControlFlowOwner {
   String SCRIPT_BASE_CLASS_NAME = "groovy.lang.Script";
   String[] IMPLICITLY_IMPORTED_PACKAGES = {
       "java.lang",
