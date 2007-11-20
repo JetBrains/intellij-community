@@ -125,7 +125,7 @@ public class UnusedDefInspection extends LocalInspectionTool {
           if (element instanceof GrReferenceExpression) {
             problemsHolder.registerProblem(element, GroovyInspectionBundle.message("unused.assignment.tooltip"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
           } else if (element instanceof GrVariable) {
-            problemsHolder.registerProblem(((GrVariable) element).getNameIdentifierGroovy(), GroovyInspectionBundle.message("unused.variable.tooltip"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+            problemsHolder.registerProblem(((GrVariable) element).getNameIdentifierGroovy(), GroovyInspectionBundle.message("unused.assignment.tooltip"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
           }
         }
         return true;
