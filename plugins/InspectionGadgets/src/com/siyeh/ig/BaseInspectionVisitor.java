@@ -157,6 +157,9 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
 
     protected final void registerError(@NotNull PsiElement location,
                                        Object... infos){
+        if (location.getTextLength() == 0) {
+            return;
+        }
         final InspectionGadgetsFix[] fixes = createFixes(location);
         for (InspectionGadgetsFix fix : fixes) {
             fix.setOnTheFly(onTheFly);
