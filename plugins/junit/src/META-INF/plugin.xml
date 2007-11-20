@@ -37,8 +37,6 @@
     <group>
       <action class="com.intellij.execution.junit2.ui.actions.ViewAssertEqualsDiffAction" text="View assertEquals Difference" id="openAssertEqualsDiff"/>
       <separator/>
-      <action class="com.intellij.execution.testframework.actions.ShowCoveredLinesAction" text="Show Covered Lines" id="showCoveredLines"/>
-      <separator/>
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>
     <group>
