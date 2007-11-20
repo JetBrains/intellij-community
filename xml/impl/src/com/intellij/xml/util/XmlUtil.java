@@ -489,7 +489,7 @@ public class XmlUtil {
         if (!xmlConditionalSection.isIncluded(targetFile)) return true;
         startFrom = xmlConditionalSection.getBodyStart();
       }
-      else if (isXInclude(element)) {
+      else if (XmlIncludeHandler.isXInclude(element)) {
         XmlTag tag = (XmlTag)element;
 
         if (!processXInclude(deepFlag, wideFlag, tag)) return false;
@@ -516,32 +516,22 @@ public class XmlUtil {
                 List<Object> deps = new ArrayList<Object>();
                 deps.add(xincludeTag.getContainingFile());
 
-                final XmlAttribute hrefAttribute = xincludeTag.getAttribute("href", XINCLUDE_URI);
-                if (hrefAttribute != null) {
-                  final XmlAttributeValue xmlAttributeValue = hrefAttribute.getValueElement();
-                  if (xmlAttributeValue != null) {
-                    final PsiReference reference = xmlAttributeValue.getReference();
-                    if (reference != null) {
-                      final PsiElement target = reference.resolve();
-                      if (target instanceof XmlFile) {
-                        XmlFile xmlFile = (XmlFile)target;
+                final XmlFile xmlFile = XmlIncludeHandler.resolveXIncludeFile(xincludeTag);
 
-                        deps.add(xmlFile);
-                        final XmlDocument document = xmlFile.getDocument();
-                        if (document != null) {
-                          XmlTag rootTag = document.getRootTag();
-                          if (rootTag != null) {
-                            final XmlTag[] includeTag = extractXpointer(rootTag, xincludeTag);
-                            result = ContainerUtil.map(includeTag, new Function<XmlTag, PsiElement>() {
-                              public PsiElement fun(final XmlTag xmlTag) {
-                                final PsiElement psiElement = xmlTag.copy();
-                                psiElement.putUserData(XmlElement.ORIGINAL_ELEMENT, xincludeTag.getParentTag());
-                                return psiElement;
-                              }
-                            }, new PsiElement[includeTag.length]);
-                          }
+                if (xmlFile != null) {
+                  deps.add(xmlFile);
+                  final XmlDocument document = xmlFile.getDocument();
+                  if (document != null) {
+                    XmlTag rootTag = document.getRootTag();
+                    if (rootTag != null) {
+                      final XmlTag[] includeTag = extractXpointer(rootTag, xincludeTag);
+                      result = ContainerUtil.map(includeTag, new Function<XmlTag, PsiElement>() {
+                        public PsiElement fun(final XmlTag xmlTag) {
+                          final PsiElement psiElement = xmlTag.copy();
+                          psiElement.putUserData(XmlElement.ORIGINAL_ELEMENT, xincludeTag.getParentTag());
+                          return psiElement;
                         }
-                      }
+                      }, new PsiElement[includeTag.length]);
                     }
                   }
                 }
@@ -581,22 +571,6 @@ public class XmlUtil {
       return new XmlTag[]{rootTag};
     }
 
-    private static boolean isXInclude(PsiElement element) {
-      if (element instanceof XmlTag) {
-        XmlTag xmlTag = (XmlTag)element;
-
-        if (xmlTag.getParent() instanceof XmlDocument) return false;
-
-        if (xmlTag.getLocalName().equals("include")) {
-          if (xmlTag.getNamespace().equals(XINCLUDE_URI)) {
-            return true;
-          }
-        }
-      }
-
-      return false;
-    }
-
     private boolean processElement(PsiElement child, boolean deepFlag, boolean wideFlag) {
       if (deepFlag) {
         if (!processXmlElements(child, true, wideFlag)) {
@@ -610,7 +584,7 @@ public class XmlUtil {
         else if (child instanceof XmlConditionalSection) {
           if (!processXmlElements(child, false, wideFlag)) return false;
         }
-        else if (isXInclude(child)) {
+        else if (XmlIncludeHandler.isXInclude(child)) {
           if (!processXmlElements(child, false, wideFlag)) return false;
         }
         else if (!processor.execute(child)) return false;

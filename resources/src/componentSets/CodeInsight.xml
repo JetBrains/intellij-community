@@ -119,5 +119,10 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+    <component>
+      <interface-class>com.intellij.openapi.editor.HectorComponentPanelsProvider</interface-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.FileIncludeContextHectorProvider</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 </components>
