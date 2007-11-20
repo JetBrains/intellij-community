@@ -9,12 +9,6 @@
   </application-components>
   <project-components>
     <component>
-      <interface-class>com.intellij.openapi.vcs.FileStatusManager</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.impl.FileStatusManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.openapi.vcs.VcsConfiguration</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
