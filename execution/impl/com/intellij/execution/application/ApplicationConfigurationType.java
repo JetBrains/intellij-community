@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +69,14 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
         final PsiClass aClass = (PsiClass)element;
         if (PsiMethodUtil.findMainInClass(aClass) != null){
           return aClass;
+        }
+      } else if (element instanceof PsiJavaFile) {
+        final PsiJavaFile javaFile = (PsiJavaFile)element;
+        final PsiClass[] classes = javaFile.getClasses();
+        for (PsiClass aClass : classes) {
+          if (PsiMethodUtil.findMainInClass(aClass) != null) {
+            return aClass;
+          }
         }
       }
       element = element.getParent();
