@@ -708,12 +708,12 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         for (Change change : list.getChanges()) {
           final ContentRevision afterRevision = change.getAfterRevision();
           if (afterRevision != null) {
-            String revisionPath = FileUtil.toSystemIndependentName(afterRevision.getFile().getPath());
+            String revisionPath = FileUtil.toSystemIndependentName(afterRevision.getFile().getIOFile().getPath());
             if (FileUtil.pathsEqual(revisionPath, file.getPath())) return change;
           }
           final ContentRevision beforeRevision = change.getBeforeRevision();
           if (beforeRevision != null) {
-            String revisionPath = FileUtil.toSystemIndependentName(beforeRevision.getFile().getPath());
+            String revisionPath = FileUtil.toSystemIndependentName(beforeRevision.getFile().getIOFile().getPath());
             if (FileUtil.pathsEqual(revisionPath, file.getPath())) return change;
           }
         }
