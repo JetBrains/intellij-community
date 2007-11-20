@@ -64,6 +64,11 @@ public class BreakpointsConfigurationDialogFactory {
       reset();
     }
 
+    @NonNls
+    protected String getDimensionServiceKey() {
+      return "#com.intellij.debugger.ui.breakpoints.BreakpointsConfigurationDialog";
+    }
+
     protected Action[] createActions(){
       return new Action[]{getOKAction(), getHelpAction()};
     }
