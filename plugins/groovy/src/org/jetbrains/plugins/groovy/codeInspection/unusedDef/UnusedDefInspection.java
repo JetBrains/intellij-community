@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -145,7 +146,7 @@ public class UnusedDefInspection extends LocalInspectionTool {
   }
 
   private boolean isLocalVariable(GrVariable var) {
-    if (var instanceof GrField) return false;
+    if (var instanceof GrField || var instanceof GrParameter) return false;
     return !(var.getParent().getParent() instanceof GroovyFileBase); //binding variable
   }
 
