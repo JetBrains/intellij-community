@@ -17,12 +17,10 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.*;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
@@ -46,17 +44,18 @@ public class ReachingDefinitionsCollector {
     final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
     final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFA();
 
-    TIntHashSet fragmentReads = getFragmentReads(first, last, flow);
-    TIntHashSet reachableFromFragmentReads = getReachable(fragmentReads, flow);
+    TIntHashSet fragmentInstructions = getFragmentInstructions(first, last, flow);
+    TIntHashSet reachableFromFragmentReads = getReachable(fragmentInstructions, flow);
+    TIntHashSet fragmentReads = filterReads(fragmentInstructions, flow);
 
     final Set<String> inames = new LinkedHashSet<String>();
     final Set<String> onames = new LinkedHashSet<String>();
 
-    addNames(fragmentReads, inames, flow, dfaResult, first, last, false);
+    addNames(fragmentInstructions, inames, flow, dfaResult, first, last, false);
     addNames(reachableFromFragmentReads, onames, flow, dfaResult, first, last, true);
 
-    filterFields(inames, first);
-    filterFields(onames, first);
+    filterNonlocals(inames, first);
+    filterNonlocals(onames, first);
 
     final String[] iarr = inames.toArray(new String[inames.size()]);
     final String[] oarr = onames.toArray(new String[onames.size()]);
@@ -70,6 +69,20 @@ public class ReachingDefinitionsCollector {
         return oarr;
       }
     };
+  }
+
+  private static TIntHashSet filterReads(final TIntHashSet instructions, final Instruction[] flow) {
+    final TIntHashSet result = new TIntHashSet();
+    instructions.forEach(new TIntProcedure() {
+      public boolean execute(int i) {
+        final Instruction instruction = flow[i];
+        if (instruction instanceof ReadWriteVariableInstruction && !((ReadWriteVariableInstruction) instruction).isWrite()) {
+          result.add(i);
+        }
+        return true;
+      }
+    });
+    return result;
   }
 
   private static void addNames(final TIntHashSet reads,
@@ -101,7 +114,7 @@ public class ReachingDefinitionsCollector {
     });
   }
 
-  private static void filterFields(Set<String> names, GrStatement place) {
+  private static void filterNonlocals(Set<String> names, GrStatement place) {
     for (Iterator<String> iterator = names.iterator(); iterator.hasNext();) {
       String name =  iterator.next();
       final GroovyPsiElement resolved = ResolveUtil.resolveVariable(place, name);
@@ -111,17 +124,16 @@ public class ReachingDefinitionsCollector {
     }
   }
 
-  private static TIntHashSet getFragmentReads(GrStatement first, GrStatement last, Instruction[] flow) {
-    TIntHashSet fragmentReads;
-    fragmentReads = new TIntHashSet();
+  private static TIntHashSet getFragmentInstructions(GrStatement first, GrStatement last, Instruction[] flow) {
+    TIntHashSet result;
+    result = new TIntHashSet();
     for (int i = 0; i < flow.length; i++) {
       Instruction instruction = flow[i];
-      if (instruction instanceof ReadWriteVariableInstruction &&
-          !((ReadWriteVariableInstruction) instruction).isWrite() && isInFragment(instruction, first, last)) {
-        fragmentReads.add(instruction.num());
+      if (isInFragment(instruction, first, last)) {
+        result.add(instruction.num());
       }
     }
-    return fragmentReads;
+    return result;
   }
 
   private static boolean isInFragment(Instruction instruction, GrStatement first, GrStatement last) {
