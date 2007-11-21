@@ -204,10 +204,13 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     buffer.append(ExtractMethodUtil.getTypeString(myHelper));
     String name = getEnteredName() == null ? "" : getEnteredName();
     buffer.append(name);
-    buffer.append("(\n");
+    buffer.append("(");
     String[] params = ExtractMethodUtil.getParameterString(myHelper);
-    for (String param : params) {
-      buffer.append("  ").append(param).append("\n");
+    if (params.length > 0) {
+      buffer.append("\n");
+      for (String param : params) {
+        buffer.append("  ").append(param).append("\n");
+      }
     }
     buffer.append(")");
     mySignatureArea.setText(buffer.toString());
