@@ -377,7 +377,7 @@ public class WaverGraphicsDecorator extends Graphics2D {
   }
 
   public Graphics create(final int x, final int y, final int width, final int height) {
-    return myOriginal.create(x, y, width, height);
+    return new WaverGraphicsDecorator((Graphics2D)myOriginal.create(x, y, width, height), myWaveColor);
   }
 
   public void drawRect(final int x, final int y, final int width, final int height) {
