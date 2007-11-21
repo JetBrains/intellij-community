@@ -5,7 +5,6 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
 import org.jdom.Comment;
 import org.jdom.Element;
@@ -101,7 +100,7 @@ public abstract class PathMacroMap {
 
   public static String quotePath(String path) {
     path = path.replace(File.separatorChar, '/');
-    path = StringUtil.replace(path, "&", "&amp;");
+    //path = StringUtil.replace(path, "&", "&amp;");
     return path;
   }
 
