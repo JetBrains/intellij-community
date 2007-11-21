@@ -51,7 +51,7 @@ public class ReachingDefinitionsCollector {
     final Set<String> inames = new LinkedHashSet<String>();
     final Set<String> onames = new LinkedHashSet<String>();
 
-    addNames(fragmentInstructions, inames, flow, dfaResult, first, last, false);
+    addNames(fragmentReads, inames, flow, dfaResult, first, last, false);
     addNames(reachableFromFragmentReads, onames, flow, dfaResult, first, last, true);
 
     filterNonlocals(inames, first);
