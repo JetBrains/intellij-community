@@ -1,5 +1,6 @@
 package com.intellij.xml.util;
 
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -21,6 +22,8 @@ public class XmlIncludeHandler implements PsiIncludeManager.PsiIncludeHandler {
   }
 
   public PsiIncludeManager.IncludeInfo[] findIncludes(final PsiFile psiFile) {
+    if (!canContainIncludeTag(psiFile)) return PsiIncludeManager.IncludeInfo.EMPTY_ARRAY;
+
     final List<PsiIncludeManager.IncludeInfo> result = new ArrayList<PsiIncludeManager.IncludeInfo>();
 
     psiFile.accept(new PsiRecursiveElementVisitor() {
@@ -43,6 +46,15 @@ public class XmlIncludeHandler implements PsiIncludeManager.PsiIncludeHandler {
     });
 
     return result.toArray(new PsiIncludeManager.IncludeInfo[result.size()]);
+  }
+
+  private static boolean canContainIncludeTag(final PsiFile psiFile) {
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+
+    final String text = LoadTextUtil.loadText(virtualFile).toString();
+
+    if (text.indexOf(INCLUDE_TAG_NAME) < 0 || text.indexOf(XmlUtil.XINCLUDE_URI) < 0) return false;
+    return true;
   }
 
   public static boolean isXInclude(PsiElement element) {
