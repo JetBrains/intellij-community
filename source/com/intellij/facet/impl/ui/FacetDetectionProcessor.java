@@ -48,7 +48,7 @@ public class FacetDetectionProcessor {
   }
 
   public void process(final File root) {
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(root);
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
     if (virtualFile == null) return;
 
     for (int i = 0; i < myDetectors.size(); i++) {
@@ -78,6 +78,8 @@ public class FacetDetectionProcessor {
     if (myProgressIndicator.isCanceled()) return;
 
     if (file.isDirectory()) {
+      file.getChildren();//initialize myChildren field to ensure that refresh will be really performed 
+      file.refresh(false, false);
       VirtualFile[] children = file.getChildren();
       for (VirtualFile child : children) {
         process(child, detectorsMap);

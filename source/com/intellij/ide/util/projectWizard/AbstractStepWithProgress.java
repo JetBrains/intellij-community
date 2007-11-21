@@ -103,6 +103,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   protected void runProgress() {
     final MyProgressIndicator progress = new MyProgressIndicator();
+    progress.setModalityProgress(null);
     final String title = getProgressText();
     if (title != null) {
       myTitleLabel.setText(title);

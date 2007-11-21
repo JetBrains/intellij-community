@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,14 +33,14 @@ public class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescr
   implements ProjectFromSourcesBuilder.ProjectConfigurationUpdater {
   private Icon myIcon;
   private ProjectFromSourcesBuilder myProjectBuilder;
-  private List<File> myLastRoots = new ArrayList<File>();
+  private List<File> myLastRoots = null;
   private DetectedFacetsTreeComponent myDetectedFacetsComponent;
   private JPanel myMainPanel;
   private JPanel myFacetsTreePanel;
   private JLabel myFacetsDetectedLabel;
 
   public FacetDetectionStep(final ProjectFromSourcesBuilder projectBuilder, final Icon icon) {
-    super(ProjectBundle.message("message.text.stop.searching.for.facets"));
+    super(ProjectBundle.message("message.text.stop.searching.for.facets", ApplicationNamesInfo.getInstance().getProductName()));
     myProjectBuilder = projectBuilder;
     myIcon = icon;
     myDetectedFacetsComponent = new DetectedFacetsTreeComponent();
@@ -50,7 +51,7 @@ public class FacetDetectionStep extends AbstractStepWithProgress<Map<ModuleDescr
   }
 
   protected boolean shouldRunProgress() {
-    return !Comparing.haveEqualElements(myLastRoots, getRoots());
+    return myLastRoots == null || !Comparing.haveEqualElements(myLastRoots, getRoots());
   }
 
   protected String getProgressText() {
