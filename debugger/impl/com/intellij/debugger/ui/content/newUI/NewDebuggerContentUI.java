@@ -1,13 +1,17 @@
 package com.intellij.debugger.ui.content.newUI;
 
+import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.content.DebuggerContentUI;
 import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.ui.tabs.JBTabs;
@@ -25,7 +29,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade {
+public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions {
 
   private ContentManager myManager;
   private MyComponent myComponent = new MyComponent();
@@ -41,6 +45,9 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   };
   private Project myProject;
 
+  private DefaultActionGroup myDebuggerActions = new DefaultActionGroup();
+  private DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
+
   public NewDebuggerContentUI(Project project, ActionManager actionManager, DebuggerSettings settings, String sessionName) {
     myProject = project;
     mySettings = settings;
@@ -53,6 +60,15 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     myTabs.setRequestFocusOnLastFocusedComponent(true);
 
     myComponent.setContent(myTabs);
+
+    myDebuggerActions.add(myActionManager.getAction(SHOW_EXECUTION_POINT));
+    myDebuggerActions.addSeparator();
+    myDebuggerActions.add(myActionManager.getAction(STEP_OVER));
+    myDebuggerActions.add(myActionManager.getAction(STEP_INTO));
+    myDebuggerActions.add(myActionManager.getAction(FORCE_STEP_INTO));
+    myDebuggerActions.add(myActionManager.getAction(STEP_OUT));
+    myDebuggerActions.addSeparator();
+    myDebuggerActions.add(myActionManager.getAction(RUN_TO_CURSOR));
   }
 
   public JComponent getComponent() {
@@ -95,6 +111,11 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     grid.setBorder(new EmptyBorder(1, 0, 0, 0));
 
     TabInfo tab = new TabInfo(grid).setObject(getContentState(content).getTab()).setText("Tab");
+
+    NonOpaquePanel toolbar = new NonOpaquePanel(new BorderLayout());
+    toolbar.add(myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myDebuggerActions, true).getComponent(), BorderLayout.CENTER);
+
+    tab.setSideComponent(toolbar);
 
     myTabs.addTab(tab);
     myTabs.sortTabs(myTabsComparator);

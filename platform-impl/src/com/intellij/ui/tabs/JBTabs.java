@@ -437,6 +437,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       setLayout(new BorderLayout());
 
       final ActionGroup group = info.getGroup();
+      final JComponent side = info.getSideComponent();
+
       if (group != null) {
         final String place = info.getPlace();
         final JComponent actionToolbar =
@@ -444,9 +446,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         add(actionToolbar, BorderLayout.CENTER);
       }
 
-      final JComponent side = info.getSideComponent();
       if (side != null) {
-        add(side, BorderLayout.EAST);
+        if (group != null) {
+          add(side, BorderLayout.EAST);
+        } else {
+          add(side, BorderLayout.CENTER);
+        }
       }
     }
   }
@@ -1584,7 +1589,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       }
     })).setText("Tree1").setActions(new DefaultActionGroup(), null)
       .setIcon(IconLoader.getIcon("/debugger/frame.png"));
-    //tabs.addTab(new TabInfo(new JTree())).setText("Tree2");
+    tabs.addTab(new TabInfo(new JTree())).setText("Tree2");
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);

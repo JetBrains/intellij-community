@@ -9,6 +9,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.debugger.actions.DebuggerActions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,7 @@ public class GridCell {
 
     myContent2Tab.put(content, tabInfo);
 
-    ActionGroup group = (ActionGroup)myActionManager.getAction("Debugger.View");
+    ActionGroup group = (ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW);
     tabInfo.setTabActions(group);
 
     return tabInfo;

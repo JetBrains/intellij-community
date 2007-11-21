@@ -167,18 +167,10 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
                                     DebuggerContentInfo.FRAME_CONTENT, null);
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
-    addAction(framesGroup, DebuggerActions.SHOW_EXECUTION_POINT);
-    framesGroup.addSeparator();
-    addAction(framesGroup, DebuggerActions.STEP_OVER);
-    addAction(framesGroup, DebuggerActions.STEP_INTO);
-    addAction(framesGroup, DebuggerActions.FORCE_STEP_INTO);
-    addAction(framesGroup, DebuggerActions.STEP_OUT);
     addAction(framesGroup, DebuggerActions.POP_FRAME);
-    framesGroup.addSeparator();
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesPanel.getOccurenceNavigator()));
     framesGroup.add(actionsManager.createNextOccurenceAction(myFramesPanel.getOccurenceNavigator()));
-    addAction(framesGroup, DebuggerActions.RUN_TO_CURSOR);
     myFramesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR);
 
     myViewsContentManager.addContent(myFramesContent);

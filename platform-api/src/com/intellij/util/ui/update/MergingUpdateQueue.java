@@ -19,8 +19,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
@@ -38,18 +40,36 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
   private String myName;
   private int myMergingTimeSpan;
-  private final JComponent myComponent;
+  private final JComponent myModalityStateComponent;
   private boolean myPassThrough;
   private boolean myDisposed;
 
-  public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent component) {
+  private UiNotifyConnector myUiNotifyConnector;
+
+  public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent) {
+    this(name, mergingTimeSpan, isActive, modalityStateComponent, null);
+  }
+
+  public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent, @Nullable Disposable parent) {
+    this(name, mergingTimeSpan, isActive, modalityStateComponent, null, null);
+  }
+
+  public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent, @Nullable Disposable parent, @Nullable JComponent activationComponent) {
     myMergingTimeSpan = mergingTimeSpan;
-    myComponent = component;
+    myModalityStateComponent = modalityStateComponent;
     myName = name;
     myPassThrough = ApplicationManager.getApplication().isUnitTestMode();
 
     if (isActive) {
       showNotify();
+    }
+
+    if (parent != null) {
+      Disposer.register(parent, this);
+    }
+
+    if (activationComponent != null) {
+      setActivationComponent(activationComponent);
     }
   }
 
@@ -255,9 +275,19 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public ModalityState getModalityState() {
-    if (myComponent == null) {
+    if (myModalityStateComponent == null) {
       return ModalityState.NON_MODAL;
     }
-    return ModalityState.stateForComponent(myComponent);
+    return ModalityState.stateForComponent(myModalityStateComponent);
+  }
+
+  public void setActivationComponent(JComponent c) {
+    if (myUiNotifyConnector != null) {
+      Disposer.dispose(myUiNotifyConnector);
+    }
+
+    UiNotifyConnector connector = new UiNotifyConnector(c, this);
+    Disposer.register(this, connector);
+    myUiNotifyConnector = connector;
   }
 }
