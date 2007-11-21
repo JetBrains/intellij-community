@@ -22,11 +22,13 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.refactoring.HelpID;
 import com.intellij.ui.EditorTextField;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
@@ -51,9 +53,10 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
 
   private JPanel contentPane;
   private EditorTextField myNameField;
-  private JCheckBox myCbMakeStatic;
+  private JCheckBox myCbSpecifyType;
   private JLabel myNameLabel;
   private JTextArea mySignatureArea;
+  private VisibilityPanel myVisibilityPanel;
   private JButton buttonOK;
 
   public GroovyExtractMethodDialog(ExtractMethodInfoHelper helper, Project project) {
@@ -70,17 +73,31 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     update();
   }
 
+  protected void doOKAction() {
+    if (myCbSpecifyType.isEnabled()) {
+      GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE = myCbSpecifyType.isSelected();
+    }
+    GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_VISIBILITY = myVisibilityPanel.getVisibility();
+    super.doOKAction();
+  }
+
   private void setUpDialog() {
-    myCbMakeStatic.setMnemonic(KeyEvent.VK_S);
-    myCbMakeStatic.setEnabled(myHelper.isStatic());
-    myCbMakeStatic.setSelected(myHelper.isStatic());
-    myCbMakeStatic.addChangeListener(new ChangeListener(){
+    myCbSpecifyType.setMnemonic(KeyEvent.VK_T);
+    myCbSpecifyType.setEnabled(myHelper.specifyType());
+    myCbSpecifyType.setSelected(myHelper.specifyType());
+    if (myCbSpecifyType.isEnabled() && GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE != null) {
+      myCbSpecifyType.setSelected(GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE);
+    }
+
+    myCbSpecifyType.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        myHelper.setStatic(myCbMakeStatic.isSelected());
+        myHelper.setSpecifyType(myCbSpecifyType.isSelected());
         updateSignature();
       }
     });
 
+    myHelper.setSpecifyType(myCbSpecifyType.isSelected());
+    myHelper.setVisibility(myVisibilityPanel.getVisibility());
     myNameLabel.setLabelFor(myNameField);
   }
 
@@ -147,6 +164,19 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
 
   private void createUIComponents() {
     myNameField = new EditorTextField("", myProject, GroovyFileType.GROOVY_FILE_TYPE);
+    myVisibilityPanel = new VisibilityPanel();
+
+    String visibility = GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_VISIBILITY;
+    if (visibility == null) {
+      visibility = PsiModifier.PRIVATE;
+    }
+    myVisibilityPanel.setVisibility(visibility);
+    myVisibilityPanel.addStateChangedListener(new VisibilityPanel.VisibilityStateChanged() {
+      public void visibilityChanged(String newVisibility) {
+        myHelper.setVisibility(newVisibility);
+        updateSignature();
+      }
+    });
   }
 
   class DataChangedListener implements EventListener {

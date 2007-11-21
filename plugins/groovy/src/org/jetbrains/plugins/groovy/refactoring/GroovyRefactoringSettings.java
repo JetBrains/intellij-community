@@ -37,6 +37,8 @@ public class GroovyRefactoringSettings implements PersistentStateComponent<Groov
 
   public Boolean SPECIFY_TYPE_EXPLICITLY = null;
   public Boolean INTRODUCE_LOCAL_CREATE_FINALS = null;
+  public Boolean EXTRACT_METHOD_SPECIFY_TYPE = null;
+  public String EXTRACT_METHOD_VISIBILITY = null; 
 
   public GroovyRefactoringSettings getState() {
     return this;

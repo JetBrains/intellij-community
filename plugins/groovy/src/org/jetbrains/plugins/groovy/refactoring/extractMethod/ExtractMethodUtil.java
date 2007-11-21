@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
@@ -180,7 +181,7 @@ public class ExtractMethodUtil {
     final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
     if (outUnboxed != null) type = outUnboxed;
     String typeText = type.getPresentableText();
-    String returnType = typeText.equals("void") || typeText.equals("Object") ? "" : typeText;
+    String returnType = typeText.equals("void") || typeText.equals("Object") || !helper.specifyType() ? "" : typeText;
     if (returnType.length() == 0) {
       typeText = "def ";
     } else {
@@ -273,7 +274,11 @@ public class ExtractMethodUtil {
       GrVariable variable = (GrVariable) statement;
       String name = variable.getName();
       if (name != null) {
-        map.put(name, variable.getTypeGroovy());
+        PsiType type = variable.getTypeGroovy();
+        if (type != null) {
+          type = TypeConversionUtil.erasure(type);
+        }
+        map.put(name, type);
       }
     }
     if (statement instanceof GrReferenceExpression) {
@@ -281,7 +286,11 @@ public class ExtractMethodUtil {
       String name = expr.getName();
       PsiReference ref = expr.getReference();
       if (name != null && (ref == null || !(ref.resolve() instanceof GrField))) {
-        map.put(name, expr.getType());
+        PsiType type = expr.getType();
+        if (type != null) {
+          type = TypeConversionUtil.erasure(type);
+        }
+        map.put(name, type);
       }
     }
     for (PsiElement element : statement.getChildren()) {
@@ -354,7 +363,10 @@ public class ExtractMethodUtil {
   }
 
   static String getModifierString(ExtractMethodInfoHelper helper) {
-    return helper.isStatic() ? "static " : "";
+    String visibility = helper.getVisibility();
+    assert visibility != null && visibility.length() > 0;
+    visibility = visibility.equals(PsiModifier.PUBLIC) ? "" : visibility + " ";
+    return visibility + (helper.isStatic() ? "static " : "");
   }
 
 }

@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -39,8 +41,10 @@ public class ExtractMethodInfoHelper {
   private final Map<String, ParameterInfo> myInputNamesMap = new HashMap<String, ParameterInfo>();
   private final String myOutputName;
   private final PsiType myOutputType;
-  private boolean myIsStatic;
+  private final boolean myIsStatic;
+  private boolean mySpecifyType;
   private final PsiElement[] myInnerElements;
+  private String myVisibility;
   private final GrStatement[] myStatements;
 
   public ExtractMethodInfoHelper(String[] inputNames,
@@ -52,6 +56,7 @@ public class ExtractMethodInfoHelper {
     myInnerElements = innerElements;
     myStatements = statements;
     myIsStatic = isStatic;
+    myVisibility = PsiModifier.PRIVATE;
     int i = 0;
     for (String name : inputNames) {
       PsiType type = typeMap.get(name);
@@ -70,7 +75,7 @@ public class ExtractMethodInfoHelper {
           !(statements[0] instanceof GrAssignmentExpression)) {
         PsiType type = ((GrExpression) statements[0]).getType();
         if (type != null) {
-          myOutputType = type;
+          myOutputType = TypeConversionUtil.erasure(type);
         } else {
           myOutputType = PsiType.VOID;
         }
@@ -79,6 +84,7 @@ public class ExtractMethodInfoHelper {
         myOutputType = returnType == null ? PsiType.VOID : returnType;
       }
     }
+    mySpecifyType = !(myOutputType == PsiType.VOID || myOutputType.equalsToText("java.lang.Object"));
   }
 
   private PsiType referTypeFromContext(GrStatement[] statements) {
@@ -94,7 +100,11 @@ public class ExtractMethodInfoHelper {
         grStatements = ((GrOpenBlock) parent).getStatements();
       }
       if (grStatements.length > 0 && grStatements[grStatements.length -1] == expr) {
-        return expr.getType();
+        PsiType type = expr.getType();
+        if (type != null) {
+          type = TypeConversionUtil.erasure(type);
+        }
+        return type;
       }
     }
     return null;
@@ -169,7 +179,19 @@ public class ExtractMethodInfoHelper {
     return myIsStatic;
   }
 
-  public void setStatic(boolean isStatic) {
-    myIsStatic = isStatic;
+  public String getVisibility() {
+    return myVisibility;
+  }
+
+  public void setVisibility(String visibility) {
+    myVisibility = visibility;
+  }
+
+  public boolean specifyType() {
+    return mySpecifyType;
+  }
+
+  public void setSpecifyType(boolean specifyType) {
+    mySpecifyType = specifyType;
   }
 }
