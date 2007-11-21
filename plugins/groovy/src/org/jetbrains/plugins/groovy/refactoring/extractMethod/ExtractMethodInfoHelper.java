@@ -21,6 +21,9 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 
@@ -36,12 +39,19 @@ public class ExtractMethodInfoHelper {
   private final Map<String, ParameterInfo> myInputNamesMap = new HashMap<String, ParameterInfo>();
   private final String myOutputName;
   private final PsiType myOutputType;
+  private boolean myIsStatic;
   private final PsiElement[] myInnerElements;
   private final GrStatement[] myStatements;
 
-  public ExtractMethodInfoHelper(String[] inputNames, String outputName, Map<String, PsiType> typeMap, PsiElement[] innerElements, GrStatement[] statements) {
+  public ExtractMethodInfoHelper(String[] inputNames,
+                                 String outputName,
+                                 Map<String, PsiType> typeMap,
+                                 PsiElement[] innerElements,
+                                 GrStatement[] statements,
+                                 boolean isStatic) {
     myInnerElements = innerElements;
     myStatements = statements;
+    myIsStatic = isStatic;
     int i = 0;
     for (String name : inputNames) {
       PsiType type = typeMap.get(name);
@@ -65,9 +75,29 @@ public class ExtractMethodInfoHelper {
           myOutputType = PsiType.VOID;
         }
       } else  {
-        myOutputType = PsiType.VOID;
+        PsiType returnType = referTypeFromContext(myStatements);
+        myOutputType = returnType == null ? PsiType.VOID : returnType;
       }
     }
+  }
+
+  private PsiType referTypeFromContext(GrStatement[] statements) {
+    assert statements.length > 0;
+    GrStatement finalStatement = statements[statements.length - 1];
+    if (finalStatement instanceof GrExpression) {
+      GrExpression expr = (GrExpression) finalStatement;
+      PsiElement parent = expr.getParent();
+      GrStatement[] grStatements = GrStatement.EMPTY_ARRAY;
+      if (parent instanceof GrClosableBlock) {
+        grStatements = ((GrClosableBlock) parent).getStatements();
+      } else if (parent instanceof GrOpenBlock && parent.getParent() instanceof GrMethod) {
+        grStatements = ((GrOpenBlock) parent).getStatements();
+      }
+      if (grStatements.length > 0 && grStatements[grStatements.length -1] == expr) {
+        return expr.getType();
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -133,5 +163,13 @@ public class ExtractMethodInfoHelper {
   @NotNull
   public GrStatement[] getStatements() {
     return myStatements;
+  }
+
+  public boolean isStatic() {
+    return myIsStatic;
+  }
+
+  public void setStatic(boolean isStatic) {
+    myIsStatic = isStatic;
   }
 }

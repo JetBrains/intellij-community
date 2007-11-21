@@ -152,7 +152,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       return false;
     }
 
-    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputNames, outputName, typeMap, elements, statements);
+    boolean canBeStatic = ExtractMethodUtil.canBeStatic(statements[0]);
+
+    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputNames, outputName, typeMap, elements, statements, canBeStatic);
 
     ExtractMethodSettings settings = getSettings(helper);
     if (!settings.isOK()) {

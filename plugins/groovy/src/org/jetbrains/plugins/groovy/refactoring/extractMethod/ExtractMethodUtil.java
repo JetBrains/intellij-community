@@ -118,27 +118,13 @@ public class ExtractMethodUtil {
     PsiType type = helper.getOutputType();
     final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
     if (outUnboxed != null) type = outUnboxed;
-    String typeText = type.getPresentableText();
-    String returnType = typeText.equals("void") || typeText.equals("Object") ? "" : typeText;
-    if (returnType.length() == 0) buffer.append("def ");
-    buffer.append(returnType);
-    buffer.append(" ");
+    String typeText = getTypeString(helper);
+    buffer.append(getModifierString(helper));
+    buffer.append(typeText);
     buffer.append(name);
     buffer.append("(");
-    int i = 0;
-    ParameterInfo[] infos = helper.getParameterInfos();
-    for (ParameterInfo info : infos) {
-      PsiType paramType = info.getType();
-      final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(paramType);
-      if (unboxed != null) paramType = unboxed;
-      String paramTypeText = paramType == null || paramType.equalsToText("java.lang.Object") ? "" : paramType.getPresentableText();
-      buffer.append(paramTypeText);
-      buffer.append(" ");
-      buffer.append(info.getName());
-      if (i < infos.length - 1) {
-        buffer.append(",");
-      }
-      i++;
+    for (String param : getParameterString(helper)) {
+      buffer.append(param);
     }
     buffer.append(") { \n");
 
@@ -172,6 +158,35 @@ public class ExtractMethodUtil {
     GrMethod method = factory.createMethodFromText(methodText);
     assert method != null;
     return method;
+  }
+
+  static String[] getParameterString(ExtractMethodInfoHelper helper) {
+    int i = 0;
+    ParameterInfo[] infos = helper.getParameterInfos();
+    String[] params = new String[infos.length];
+    for (ParameterInfo info : infos) {
+      PsiType paramType = info.getType();
+      final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(paramType);
+      if (unboxed != null) paramType = unboxed;
+      String paramTypeText = paramType == null || paramType.equalsToText("java.lang.Object") ? "" : paramType.getPresentableText() + " ";
+      params[i] = paramTypeText + info.getName() + (i < infos.length - 1 ? ", " : "");
+      i++;
+    }
+    return params;
+  }
+
+  static String getTypeString(ExtractMethodInfoHelper helper) {
+    PsiType type = helper.getOutputType();
+    final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
+    if (outUnboxed != null) type = outUnboxed;
+    String typeText = type.getPresentableText();
+    String returnType = typeText.equals("void") || typeText.equals("Object") ? "" : typeText;
+    if (returnType.length() == 0) {
+      typeText = "def ";
+    } else {
+      typeText = returnType + " ";
+    }
+    return typeText;
   }
 
   static GrStatement[] getStatementsByElements(PsiElement[] elements) {
@@ -327,5 +342,19 @@ public class ExtractMethodUtil {
     return statement.getTextOffset();
   }
 
+  static boolean canBeStatic(GrStatement statement) {
+    PsiElement parent = statement.getParent();
+    while (parent != null && !(parent instanceof PsiFile)) {
+      if (parent instanceof GrMethod){
+        return ((GrMethod) parent).hasModifierProperty(PsiModifier.STATIC);
+      }
+      parent = parent.getParent();
+    }
+    return false;
+  }
+
+  static String getModifierString(ExtractMethodInfoHelper helper) {
+    return helper.isStatic() ? "static " : "";
+  }
 
 }

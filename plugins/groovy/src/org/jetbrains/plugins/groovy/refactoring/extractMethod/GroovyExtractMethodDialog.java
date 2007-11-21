@@ -24,12 +24,15 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -50,6 +53,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
   private EditorTextField myNameField;
   private JCheckBox myCbMakeStatic;
   private JLabel myNameLabel;
+  private JTextArea mySignatureArea;
   private JButton buttonOK;
 
   public GroovyExtractMethodDialog(ExtractMethodInfoHelper helper, Project project) {
@@ -63,14 +67,21 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     setTitle(REFACTORING_NAME);
     init();
     setUpDialog();
-    updateOkStatus();
+    update();
   }
 
   private void setUpDialog() {
     myCbMakeStatic.setMnemonic(KeyEvent.VK_S);
+    myCbMakeStatic.setEnabled(myHelper.isStatic());
+    myCbMakeStatic.setSelected(myHelper.isStatic());
+    myCbMakeStatic.addChangeListener(new ChangeListener(){
+      public void stateChanged(ChangeEvent e) {
+        myHelper.setStatic(myCbMakeStatic.isSelected());
+        updateSignature();
+      }
+    });
+
     myNameLabel.setLabelFor(myNameField);
-
-
   }
 
   private void setUpNameField() {
@@ -107,8 +118,9 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     return myHelper;
   }
 
-  private void updateOkStatus() {
+  private void update() {
     String text = getEnteredName();
+    updateSignature();
     setOKActionEnabled(GroovyNamesUtil.isIdentifier(text));
   }
 
@@ -139,7 +151,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
 
   class DataChangedListener implements EventListener {
     void dataChanged() {
-      updateOkStatus();
+      update();
     }
   }
 
@@ -150,6 +162,25 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
         ((DataChangedListener) aList).dataChanged();
       }
     }
+  }
+
+  /*
+  Update signature text area
+   */
+  private void updateSignature() {
+    if (mySignatureArea == null) return;
+    @NonNls StringBuffer buffer = new StringBuffer();
+    buffer.append(ExtractMethodUtil.getModifierString(myHelper));
+    buffer.append(ExtractMethodUtil.getTypeString(myHelper));
+    String name = getEnteredName() == null ? "" : getEnteredName();
+    buffer.append(name);
+    buffer.append("(\n");
+    String[] params = ExtractMethodUtil.getParameterString(myHelper);
+    for (String param : params) {
+      buffer.append("  ").append(param).append("\n");
+    }
+    buffer.append(")");
+    mySignatureArea.setText(buffer.toString());
   }
 
 
