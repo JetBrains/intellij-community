@@ -681,7 +681,7 @@ public class CustomizableActionsPanel {
         }
         Icon icon = new File(path).exists() ? IconLoader.getIcon(image) : null;
         if (icon != null) {
-          if (icon.getIconWidth() > 18 || icon.getIconHeight() > 18) {
+          if (icon.getIconWidth() >  EMPTY_ICON.getIconWidth() || icon.getIconHeight() > EMPTY_ICON.getIconHeight()) {
             Messages.showErrorDialog(myActionsTree, IdeBundle.message("custom.icon.validation.message"), IdeBundle.message("custom.icon.validation.title"));
             return;
           }
