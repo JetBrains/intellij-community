@@ -681,6 +681,10 @@ public class CustomizableActionsPanel {
         }
         Icon icon = new File(path).exists() ? IconLoader.getIcon(image) : null;
         if (icon != null) {
+          if (icon.getIconWidth() > 18 || icon.getIconHeight() > 18) {
+            Messages.showErrorDialog(myActionsTree, IdeBundle.message("custom.icon.validation.message"), IdeBundle.message("custom.icon.validation.title"));
+            return;
+          }
           node.setUserObject(Pair.create(actionId, icon));
           schemas.addIconCustomization(actionId, path);
         }
