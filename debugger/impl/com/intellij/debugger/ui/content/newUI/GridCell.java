@@ -1,24 +1,25 @@
 package com.intellij.debugger.ui.content.newUI;
 
+import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.MutualMap;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
-import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 public class GridCell {
 
@@ -26,19 +27,22 @@ public class GridCell {
 
   private Grid myContainer;
 
-  private List<Content> myContents = new ArrayList<Content>();
+  private MutualMap<Content, TabInfo> myContents = new MutualMap<Content, TabInfo>(true);
+  private Set<Content> myMinimizedContents = new HashSet<Content>();
+
   private JBTabs myTabs;
   private Grid.Placeholder myPlaceholder;
   private PlaceInGrid myPlaceInGrid;
   private ContentManager myContentManager;
 
-  private Map<Content, TabInfo> myContent2Tab = new HashMap<Content, TabInfo>();
   private ActionManager myActionManager;
 
-  public GridCell(ContentManager contentManager, ActionManager actionManager, Project project, Grid container, Grid.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
-    myContentManager = contentManager;
-    myActionManager = actionManager;
+
+  public GridCell(Grid container, Project project, Grid.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
     myContainer = container;
+
+    myContentManager = container.myContentManager;
+    myActionManager = container.myActionManager;
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
     myTabs = new MyTabs(project, container);
@@ -57,14 +61,14 @@ public class GridCell {
   }
 
   void add(Content content) {
-    if (myContents.contains(content)) return;
-    myContents.add(content);
+    if (myContents.containsKey(content)) return;
+    myContents.put(content, null);
 
     revalidateCell();
   }
 
   void remove(Content content) {
-    if (!myContents.contains(content)) return;
+    if (!myContents.containsKey(content)) return;
     myContents.remove(content);
 
     revalidateCell();
@@ -80,7 +84,8 @@ public class GridCell {
       }
 
       myTabs.removeAllTabs();
-      for (Content each : myContents) {
+
+      for (Content each : myContents.getKeys()) {
         myTabs.addTab(createTabInfoFor(each));
       }
     }
@@ -107,7 +112,7 @@ public class GridCell {
       .setObject(content)
       .setPreferredFocusableComponent(content.getPreferredFocusableComponent());
 
-    myContent2Tab.put(content, tabInfo);
+    myContents.put(content, tabInfo);
 
     ActionGroup group = (ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW);
     tabInfo.setTabActions(group);
@@ -115,8 +120,14 @@ public class GridCell {
     return tabInfo;
   }
 
-  private TabInfo getTabInfoFor(Content content) {
-    return myContent2Tab.get(content);
+  @Nullable
+  private TabInfo getTabFor(Content content) {
+    return myContents.getValue(content);
+  }
+
+  @NotNull
+  private Content getContentFor(TabInfo tab) {
+    return myContents.getKey(tab);
   }
 
   public void setToolbarHorizontal(final boolean horizontal) {
@@ -128,14 +139,27 @@ public class GridCell {
   }
 
   public void updateSelection(final boolean isShowing) {
-    for (Content each : myContents) {
-      final TabInfo eachTab = getTabInfoFor(each);
-      if (myTabs.getSelectedInfo() == eachTab && isShowing) {
+    for (Content each : myContents.getKeys()) {
+      final TabInfo eachTab = getTabFor(each);
+      if (eachTab != null && myTabs.getSelectedInfo() == eachTab && isShowing) {
         myContentManager.addSelectedContent(each);
       } else {
         myContentManager.removeFromSelection(each);
       }
     }
+  }
+
+  public void minimize() {
+    final Content content = getContentFor(myTabs.getSelectedInfo());
+    myContainer.minimize(content, new CellTransform.Restore() {
+      public ActionCallback restoreInGrid() {
+        return restore(content);
+      }
+    });
+  }
+
+  private ActionCallback restore(Content content) {
+    return new ActionCallback.Done();
   }
 
   private class MyTabs extends JBTabs implements DataProvider {

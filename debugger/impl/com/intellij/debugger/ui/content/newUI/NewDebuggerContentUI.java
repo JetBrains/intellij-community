@@ -5,12 +5,12 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.content.DebuggerContentUI;
 import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
+import com.intellij.debugger.ui.content.newUI.actions.RestoreViewAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
@@ -23,30 +23,31 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
-public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions {
+public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions, CellTransform.Facade {
 
-  private ContentManager myManager;
+  ContentManager myManager;
   private MyComponent myComponent = new MyComponent();
-  private DebuggerSettings mySettings;
+  DebuggerSettings mySettings;
 
   private JBTabs myTabs;
-  private ActionManager myActionManager;
+  ActionManager myActionManager;
   private String mySessionName;
   private Comparator<TabInfo> myTabsComparator = new Comparator<TabInfo>() {
     public int compare(final TabInfo o1, final TabInfo o2) {
       return ((Integer)o1.getObject()).compareTo(((Integer)o2.getObject()));
     }
   };
-  private Project myProject;
+  Project myProject;
 
   private DefaultActionGroup myDebuggerActions = new DefaultActionGroup();
   private DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
+
+  private Map<Grid, Wrapper> myToolbarPlaceholders = new HashMap<Grid, Wrapper>();
 
   public NewDebuggerContentUI(Project project, ActionManager actionManager, DebuggerSettings settings, String sessionName) {
     myProject = project;
@@ -83,15 +84,16 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
       public void contentAdded(final ContentManagerEvent event) {
         getGridFor(event.getContent(), true).add(event.getContent(), false);
 
-        updateTabsUI();
+        updateTabsUI(true);
       }
 
       public void contentRemoved(final ContentManagerEvent event) {
         Grid grid = findGridFor(event.getContent());
         if (grid != null) {
           grid.remove(event.getContent());
+          removeGridIfNeeded(grid);
         }
-        updateTabsUI();
+        updateTabsUI(false);
       }
 
       public void contentRemoveQuery(final ContentManagerEvent event) {
@@ -102,18 +104,35 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     });
   }
 
+  private void removeGridIfNeeded(Grid grid) {
+    if (grid.isEmpty()) {
+      myTabs.removeTab(grid);
+      myToolbarPlaceholders.remove(grid);
+    }
+  }
+
   @NotNull
   private Grid getGridFor(Content content, boolean createIfMissing) {
     Grid grid = findGridFor(content);
     if (grid != null || !createIfMissing) return grid;
 
-    grid = new Grid(myManager, myProject, myActionManager, mySettings, this, mySessionName, isHorizontalToolbar());
+    grid = new Grid(this, mySessionName, isHorizontalToolbar());
     grid.setBorder(new EmptyBorder(1, 0, 0, 0));
 
     TabInfo tab = new TabInfo(grid).setObject(getContentState(content).getTab()).setText("Tab");
 
     NonOpaquePanel toolbar = new NonOpaquePanel(new BorderLayout());
-    toolbar.add(myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myDebuggerActions, true).getComponent(), BorderLayout.CENTER);
+    toolbar.add(myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myDebuggerActions, true).getComponent(), BorderLayout.WEST);
+
+    NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
+
+    Wrapper placeholder = new Wrapper();
+    placeholder.setBorder(new LineBorder(Color.blue));
+
+    myToolbarPlaceholders.put(grid, placeholder);
+    wrapper.add(placeholder, BorderLayout.EAST);
+    toolbar.add(wrapper, BorderLayout.CENTER);
+
 
     tab.setSideComponent(toolbar);
 
@@ -123,19 +142,30 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     return grid;
   }
 
-  private void updateTabsUI() {
+  private void rebuildMinimizedActions() {
+    for (Wrapper each : myToolbarPlaceholders.values()) {
+      each.removeAll();
+      JComponent minimized = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myMinimizedViewActions, true).getComponent();
+      each.setContent(minimized);
+    }
+
+    myTabs.revalidate();
+    myTabs.repaint();
+  }
+
+  private void updateTabsUI(boolean isAddingContent) {
     java.util.List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo each : tabs) {
-      updateTabUI(each);
+      updateTabUI(each, isAddingContent);
     }
   }
 
-  private void updateTabUI(TabInfo tab) {
+  private void updateTabUI(TabInfo tab, boolean isAddingContent) {
     String title = getSettings().getTabTitle(getTabIndex(tab));
     Icon icon = getSettings().getTabIcon(getTabIndex(tab));
 
     Grid grid = getGridFor(tab);
-    grid.updateGridUI();
+    grid.updateGridUI(isAddingContent);
 
     List<Content> contents = grid.getContents();
     if (title == null) {
@@ -266,5 +296,21 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
   public ContentUI getContentUI() {
     return this;
+  }
+
+  public void minimize(final Content content, final CellTransform.Restore restore) {
+    final Ref<AnAction> restoreAction = new Ref<AnAction>();
+    myMinimizedViewActions.add(new RestoreViewAction(content, new CellTransform.Restore() {
+      public ActionCallback restoreInGrid() {
+        myMinimizedViewActions.remove(restoreAction.get());
+        return restore.restoreInGrid().doWhenDone(new Runnable() {
+          public void run() {
+            rebuildMinimizedActions();
+          }
+        });
+      }
+    }));
+
+    rebuildMinimizedActions();
   }
 }

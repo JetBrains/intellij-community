@@ -3,11 +3,11 @@ package com.intellij.debugger.ui.content.newUI;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -16,7 +16,7 @@ import com.intellij.util.containers.HashMap;
 import javax.swing.*;
 import java.util.*;
 
-class Grid extends Wrapper implements Disposable {
+class Grid extends Wrapper implements Disposable, CellTransform.Facade {
   private DebuggerSettings mySettings;
 
   private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
@@ -33,27 +33,33 @@ class Grid extends Wrapper implements Disposable {
   private String mySessionName;
 
   private List<Content> myContents = new ArrayList<Content>();
+  private Map<Content, GridCell> myContent2Cell = new java.util.HashMap<Content, GridCell>();
+
   private Comparator<Content> myContentComparator = new Comparator<Content>() {
     public int compare(final Content o1, final Content o2) {
       return getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
     }
   };
-  private ContentManager myContentManager;
+  ContentManager myContentManager;
 
-  public Grid(ContentManager contentManager, Project project, ActionManager actionManager, DebuggerSettings settings, Disposable parent, String sessionName, boolean horizontalToolbars) {
-    Disposer.register(parent, this);
+  private NewDebuggerContentUI myUI;
 
-    myContentManager = contentManager;
-    mySettings = settings;
-    myActionManager = actionManager;
+  public Grid(NewDebuggerContentUI ui, String sessionName, boolean horizontalToolbars) {
+    myUI = ui;
+
+    Disposer.register(myUI, this);
+
+    myContentManager = ui.myManager;
+    mySettings = ui.mySettings;
+    myActionManager = ui.myActionManager;
     mySessionName = sessionName;
 
     setOpaque(false);
 
-    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(contentManager, actionManager, project, this, myLeft, horizontalToolbars, PlaceInGrid.left));
-    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(contentManager, actionManager, project, this, myCenter, horizontalToolbars, PlaceInGrid.center));
-    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(contentManager, actionManager, project, this, myRight, horizontalToolbars, PlaceInGrid.right));
-    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(contentManager, actionManager, project, this, myBottom, horizontalToolbars, PlaceInGrid.bottom));
+    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(this, myUI.myProject, myLeft, horizontalToolbars, PlaceInGrid.left));
+    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(this, myUI.myProject, myCenter, horizontalToolbars, PlaceInGrid.center));
+    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(this, myUI.myProject, myRight, horizontalToolbars, PlaceInGrid.right));
+    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(this, myUI.myProject, myBottom, horizontalToolbars, PlaceInGrid.bottom));
 
     setContent(mySplitter);
 
@@ -96,14 +102,17 @@ class Grid extends Wrapper implements Disposable {
   }
 
   public void add(final Content content, final boolean select) {
-    getCellFor(content).add(content);
+    GridCell cell = getCellFor(content);
+    cell.add(content);
     myContents.add(content);
+    myContent2Cell.put(content, cell);
     Collections.sort(myContents, myContentComparator);
   }
 
   public void remove(final Content content) {
     getCellFor(content).remove(content);
     myContents.remove(content);
+    myContent2Cell.remove(content);
   }
 
   public void setToolbarHorizontal(boolean horizontal) {
@@ -122,12 +131,24 @@ class Grid extends Wrapper implements Disposable {
     return mySettings.getNewContentState(content);
   }
 
-  public void updateGridUI() {
+  public void updateGridUI(boolean restorePropertions) {
     Iterator<GridCell> cells = myPlaceInGrid2Cell.values().iterator();
     while (cells.hasNext()) {
       GridCell each = cells.next();
       each.setHideTabs(myContents.size() == 1);
     }
+
+    if (restorePropertions) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          restoreProportions();
+        }
+      });
+    }
+  }
+
+  public boolean isEmpty() {
+    return myContent2Cell.isEmpty();
   }
 
   static class Placeholder extends Wrapper implements NullableComponent {
@@ -189,5 +210,14 @@ class Grid extends Wrapper implements Disposable {
 
   public List<Content> getContents() {
     return myContents;
+  }
+
+  public void minimize(final Content content, final CellTransform.Restore restore) {
+    myUI.minimize(content, new CellTransform.Restore() {
+      public ActionCallback restoreInGrid() {
+        // my restore
+        return restore.restoreInGrid();
+      }
+    });
   }
 }
