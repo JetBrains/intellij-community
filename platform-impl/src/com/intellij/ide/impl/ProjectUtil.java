@@ -78,7 +78,7 @@ public class ProjectUtil {
 
     if (virtualFile == null) return null;
 
-    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) || virtualFile.isDirectory()) {
+    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) || virtualFile.isDirectory() && virtualFile.findChild(".idea") != null) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
     else {

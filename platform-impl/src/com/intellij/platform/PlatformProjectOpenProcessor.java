@@ -26,21 +26,24 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final Project project = projectManager.newProject(PathManager.getConfigPath() + "/dummy.ipr", true, false);
 
-    if (!virtualFile.isDirectory()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-        public void run() {
-          ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
-            public void run() {
-              ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
-                public void run() {
+    StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
+          public void run() {
+            ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
+              public void run() {
+                if (virtualFile.isDirectory()) {
+                  new FilesystemToolwindow(virtualFile, project);
+                }
+                else {
                   FileEditorManager.getInstance(project).openFile(virtualFile, true);
                 }
-              });
-            }
-          });
-        }
-      });
-    }
+              }
+            });
+          }
+        });
+      }
+    });
 
     projectManager.openProject(project);
 
