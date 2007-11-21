@@ -134,7 +134,7 @@ public class KeymapPanel extends JPanel {
     Keymap parent = mySelectedKeymap.getParent();
     if (parent != null) {
       myBaseKeymapLabel.setText(KeyMapBundle.message("based.on.keymap.label", parent.getPresentableName()));
-      if (mySelectedKeymap.getOwnActionIds().length > 0){
+      if (mySelectedKeymap.canModify() && mySelectedKeymap.getOwnActionIds().length > 0){
         myResetToDefault.setEnabled(true);
       }
     }
