@@ -221,7 +221,12 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
 
     public void paint(Graphics g) {
       if (getTabCount() != 0) {
-        super.paint(new WaverGraphicsDecorator((Graphics2D)g, Color.red));
+        if (LafManager.getInstance().isUnderAquaLookAndFeel()) {
+          super.paint(g);
+        }
+        else {
+          super.paint(new WaverGraphicsDecorator((Graphics2D)g, Color.red));
+        }
       }
       else {
         g.setColor(Color.gray);
