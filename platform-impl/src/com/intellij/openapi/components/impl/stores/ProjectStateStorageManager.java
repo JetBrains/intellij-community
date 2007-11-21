@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NonNls;
 import java.util.Map;
 
 class ProjectStateStorageManager extends StateStorageManagerImpl {
-  private Project myProject;
-  @NonNls private static final String ROOT_TAG_NAME = "project";
+  protected Project myProject;
+  @NonNls protected static final String ROOT_TAG_NAME = "project";
 
   public ProjectStateStorageManager(final TrackingPathMacroSubstitutor macroSubstitutor, Project project) {
     super(macroSubstitutor, ROOT_TAG_NAME, project, project.getPicoContainer());
@@ -20,9 +20,17 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
   }
 
   protected XmlElementStorage.StorageData createStorageData(String storageSpec) {
-    if (storageSpec.equals(ProjectStoreImpl.PROJECT_FILE_STORAGE)) return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
-    if (storageSpec.equals(ProjectStoreImpl.WS_FILE_STORAGE)) return new ProjectStoreImpl.WsStorageData(ROOT_TAG_NAME, myProject);
+    if (storageSpec.equals(ProjectStoreImpl.PROJECT_FILE_STORAGE)) return createIprStorageData();
+    if (storageSpec.equals(ProjectStoreImpl.WS_FILE_STORAGE)) return createWsStorageData();
     return new ProjectStoreImpl.ProjectStorageData(ROOT_TAG_NAME, myProject);
+  }
+
+  public XmlElementStorage.StorageData createWsStorageData() {
+    return new ProjectStoreImpl.WsStorageData(ROOT_TAG_NAME, myProject);
+  }
+
+  public XmlElementStorage.StorageData createIprStorageData() {
+    return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
   }
 
   protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) throws

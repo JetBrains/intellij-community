@@ -2,7 +2,6 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.impl.convert.ProjectConversionHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathMacros;
@@ -15,10 +14,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
-import com.intellij.openapi.project.impl.convertors.Convertor01;
-import com.intellij.openapi.project.impl.convertors.Convertor12;
-import com.intellij.openapi.project.impl.convertors.Convertor23;
-import com.intellij.openapi.project.impl.convertors.Convertor34;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
@@ -303,12 +298,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Nullable
-  private static ProjectConversionHelper getConversionHelper(Project project) {
-    return (ProjectConversionHelper)project.getPicoContainer().getComponentInstance(ProjectConversionHelper.class);
-  }
-
-
-  @Nullable
   public VirtualFile getProjectFile() {
     if (myProject.isDefault()) return null;
     final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
@@ -397,29 +386,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       super(storageData);
     }
 
-    protected void load(@NotNull final Element rootElement) throws IOException {
-      final ProjectConversionHelper conversionHelper = getConversionHelper(myProject);
-
-      if (conversionHelper != null) {
-        conversionHelper.convertWorkspaceRootToNewFormat(rootElement);
-      }
-
-      super.load(rootElement);
-    }
-
-    @NotNull
-    protected Element save() {
-      final Element result = super.save();
-
-      final ProjectConversionHelper conversionHelper = getConversionHelper(myProject);
-
-      if (conversionHelper != null) {
-        conversionHelper.convertWorkspaceRootToOldFormat(result);
-      }
-
-      return result;
-    }
-
     public XmlElementStorage.StorageData clone() {
       return new WsStorageData(this);
     }
@@ -443,7 +409,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       originalVersion = v != null ? Integer.parseInt(v) : 0;
 
       if (originalVersion != ProjectManagerImpl.CURRENT_FORMAT_VERSION) {
-        convert(root);
+        convert(root, originalVersion);
       }
 
       final Set<String> usedMacros1 = new HashSet<String>(Arrays.asList(readUsedMacros(root)));
@@ -462,19 +428,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       super.load(root);
     }
 
-    private void convert(final Element root) {
-      if (originalVersion < 1) {
-        Convertor01.execute(root);
-      }
-      if (originalVersion < 2) {
-        Convertor12.execute(root);
-      }
-      if (originalVersion < 3) {
-        Convertor23.execute(root);
-      }
-      if (originalVersion < 4) {
-        Convertor34.execute(root, myFilePath, getConversionProblemsStorage());
-      }
+    protected void convert(final Element root, final int originalVersion) {
     }
 
     @NotNull
