@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.infos.CandidateInfo;
@@ -151,12 +152,11 @@ public class GroovyAnnotator implements Annotator {
     final VirtualFile containingDirectory = virtualFile.getParent();
     assert containingDirectory != null;
 
-    final String packageNameSlashed = containingDirectory.getPath().substring(length + 1); //1 = length of separator
-    final String realPackageName = packageNameSlashed.replace('/', '.');
+    final String packageName = VfsUtil.getRelativePath(containingDirectory, sourceRootForFile, '.');
 
-    if (!packageDefinition.getPackageName().equals(realPackageName)) {
+    if (!packageDefinition.getPackageName().equals(packageName)) {
       final Annotation annotation = holder.createWarningAnnotation(packageDefinition, "wrong package name");
-      annotation.registerFix(new ChangePackageQuickFix(packageDefinition, realPackageName));
+      annotation.registerFix(new ChangePackageQuickFix(packageDefinition, packageName));
     }
   }
 
