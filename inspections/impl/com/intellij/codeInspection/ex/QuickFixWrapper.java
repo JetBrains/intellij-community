@@ -1,6 +1,5 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -46,7 +45,7 @@ public class QuickFixWrapper implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+    //if (!CodeInsightUtil.prepareFileForWrite(file)) return; consider all local quick fixes do it themselves
     LocalQuickFix fix = (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
     fix.applyFix(project, myDescriptor);
     DaemonCodeAnalyzer.getInstance(project).restart();
