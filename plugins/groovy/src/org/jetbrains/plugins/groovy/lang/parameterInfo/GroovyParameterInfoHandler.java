@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -127,29 +129,37 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       } else {
         final PsiType[] constructorTypes = PsiUtil.getArgumentTypes(place, true);
         final PsiType[] methodTypes = PsiUtil.getArgumentTypes(place, false);
+        PsiType[] argTypes = null;
+        PsiParameter[] parameters = null;
         if (namedElement instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod) namedElement;
-          PsiParameter[] parameters = method.getParameterList().getParameters();
+          parameters = method.getParameterList().getParameters();
           if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) parameters = ArrayUtil.remove(parameters, 0);
-          PsiType[] argTypes = method.isConstructor() ? constructorTypes : methodTypes;
-          if (argTypes == null) continue;
+          argTypes = method.isConstructor() ? constructorTypes : methodTypes;
+        } else if (namedElement instanceof GrVariable) {
+          final PsiType type = ((GrVariable) namedElement).getTypeGroovy();
+          if (type instanceof GrClosureType) {
+            argTypes = methodTypes;
+            parameters = ((GrClosureType) type).getClosureParameters();
+          }
+        }
+        if (argTypes == null) continue;
 
-          if (parameters.length <= currIndex) {
-            context.setUIComponentEnabled(i, false);
-            continue;
-          } else {
-            for (int j = 0; j < currIndex; j++) {
-              PsiType argType = argTypes[j];
-              final PsiType paramType = substitutor.substitute(parameters[j].getType());
-              if (!TypesUtil.isAssignable(paramType, argType, place.getManager(), place.getResolveScope())) {
-                context.setUIComponentEnabled(i, false);
-                break Outer;
-              }
+        if (parameters.length <= currIndex) {
+          context.setUIComponentEnabled(i, false);
+          continue;
+        } else {
+          for (int j = 0; j < currIndex; j++) {
+            PsiType argType = argTypes[j];
+            final PsiType paramType = substitutor.substitute(parameters[j].getType());
+            if (!TypesUtil.isAssignable(paramType, argType, place.getManager(), place.getResolveScope())) {
+              context.setUIComponentEnabled(i, false);
+              break Outer;
             }
           }
-
-          context.setUIComponentEnabled(i, true);
         }
+
+        context.setUIComponentEnabled(i, true);
       }
     }
   }
@@ -231,27 +241,13 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       if (resolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression) parms = ArrayUtil.remove(parms, 0);
       int numParams = parms.length;
       if (numParams > 0) {
+        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         for (int j = 0; j < numParams; j++) {
           PsiParameter parm = parms[j];
 
           int startOffset = buffer.length();
 
-          if (parm.isValid()) {
-            PsiType paramType = resolveResult.getSubstitutor().substitute(parm.getType());
-            buffer.append(paramType.getPresentableText());
-            String name = parm.getName();
-            if (name != null) {
-              buffer.append(" ");
-              buffer.append(name);
-            }
-
-            if (parm instanceof GrParameter) {
-              final GrExpression initializer = ((GrParameter) parm).getDefaultInitializer();
-              if (initializer != null) {
-                buffer.append(" = ").append(initializer.getText());
-              }
-            }
-          }
+          appendParameterText(parm, substitutor, buffer);
 
           int endOffset = buffer.length();
 
@@ -278,6 +274,13 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
 
     } else if (element instanceof PsiClass) {
       buffer.append("no parameters");
+    } else if (element instanceof GrVariable) {
+      final PsiType type = ((GrVariable) element).getTypeGroovy();
+      if (type instanceof GrClosureType) {
+        for (GrParameter param : ((GrClosureType) type).getClosureParameters()) {
+          appendParameterText(param, PsiSubstitutor.EMPTY, buffer);
+        }
+      }
     }
 
     final boolean isDeprecated = resolveResult instanceof PsiDocCommentOwner && ((PsiDocCommentOwner) resolveResult).isDeprecated();
@@ -291,5 +294,22 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
         false,
         context.getDefaultParameterColor()
     );
+  }
+
+  private void appendParameterText(PsiParameter parm, PsiSubstitutor substitutor, StringBuffer buffer) {
+    PsiType paramType = substitutor.substitute(parm.getType());
+    buffer.append(paramType.getPresentableText());
+    String name = parm.getName();
+    if (name != null) {
+      buffer.append(" ");
+      buffer.append(name);
+    }
+
+    if (parm instanceof GrParameter) {
+      final GrExpression initializer = ((GrParameter) parm).getDefaultInitializer();
+      if (initializer != null) {
+        buffer.append(" = ").append(initializer.getText());
+      }
+    }
   }
 }
