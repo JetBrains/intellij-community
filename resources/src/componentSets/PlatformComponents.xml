@@ -39,6 +39,13 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+
+    <component>
+      <interface-class>com.intellij.history.LocalHistory</interface-class>
+      <implementation-class>com.intellij.history.DeafLocalHistory</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
   </project-components>
 
 </components>

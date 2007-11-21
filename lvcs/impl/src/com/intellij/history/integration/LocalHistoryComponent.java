@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.io.IOException;
 
 public class LocalHistoryComponent extends LocalHistory implements ProjectComponent {
   private Project myProject;
@@ -177,7 +176,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   @Override
   protected Checkpoint putCheckpoint() {
-    if (!isInitialized) return new NullCheckpoint();
+    if (!isInitialized) return new Checkpoint.NullCheckpoint();
     return new CheckpointImpl(myGateway, myVcs);
   }
 
@@ -224,13 +223,5 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   }
 
   public void projectClosed() {
-  }
-
-  private static class NullCheckpoint implements Checkpoint {
-    public void revertToPreviousState() throws IOException {
-    }
-
-    public void revertToThatState() throws IOException {
-    }
   }
 }
