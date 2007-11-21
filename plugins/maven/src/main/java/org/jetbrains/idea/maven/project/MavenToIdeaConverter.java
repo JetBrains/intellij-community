@@ -7,7 +7,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
@@ -174,23 +176,35 @@ public class MavenToIdeaConverter {
 
   private void configFolders(RootModelAdapter m, MavenProject p) {
     configSourceFolders(m, p);
+    configStandardGeneratedSources(m, p);
     configBuildHelperPluginSources(m, p);
     configAntRunPluginSources(m, p);
   }
 
   private void configSourceFolders(RootModelAdapter m, MavenProject p) {
     for (Object o : p.getCompileSourceRoots()) {
-      m.createSrcDir((String)o, false);
+      m.addSourceDir((String)o, false);
     }
     for (Object o : p.getTestCompileSourceRoots()) {
-      m.createSrcDir((String)o, true);
+      m.addSourceDir((String)o, true);
     }
 
     for (Object o : p.getResources()) {
-      m.createSrcDir(((Resource)o).getDirectory(), false);
+      m.addSourceDir(((Resource)o).getDirectory(), false);
     }
     for (Object o : p.getTestResources()) {
-      m.createSrcDir(((Resource)o).getDirectory(), true);
+      m.addSourceDir(((Resource)o).getDirectory(), true);
+    }
+  }
+
+  private void configStandardGeneratedSources(RootModelAdapter m, MavenProject p) {
+    String generatedDir = p.getBuild().getDirectory() + "/generated-sources";
+    VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(generatedDir);
+    if (dir == null) return;
+
+    for (VirtualFile f : dir.getChildren()) {
+      if (!f.isDirectory()) continue;
+      m.addSourceDir(f.getPath(), false);
     }
   }
 
@@ -214,7 +228,7 @@ public class MavenToIdeaConverter {
     if (sources == null) return;
 
     for (Xpp3Dom source : sources.getChildren("source")) {
-      m.createSrcDir(source.getValue(), isTestSources);
+      m.addSourceDir(source.getValue(), isTestSources);
     }
   }
 
@@ -229,41 +243,46 @@ public class MavenToIdeaConverter {
       Xpp3Dom src = config.getChild("sourceRoot");
       Xpp3Dom test = config.getChild("testSourceRoot");
       
-      if (src != null) m.createSrcDir(src.getValue(), false);
-      if (test != null) m.createSrcDir(test.getValue(), true);
+      if (src != null) m.addSourceDir(src.getValue(), false);
+      if (test != null) m.addSourceDir(test.getValue(), true);
     }
   }
 
-  private void configOutputDirs(RootModelAdapter rootModel, MavenProject mavenProject) {
-    Build build = mavenProject.getBuild();
+  private void configOutputDirs(RootModelAdapter m, MavenProject p) {
+    Build build = p.getBuild();
+
     if (myPrefs.isUseMavenOutput()) {
-      rootModel.useModuleOutput(build.getOutputDirectory(), build.getTestOutputDirectory());
+      m.useModuleOutput(build.getOutputDirectory(), build.getTestOutputDirectory());
     }
     else {
-      rootModel.useProjectOutput();
-      rootModel.excludeRoot(build.getOutputDirectory());
-      rootModel.excludeRoot(build.getTestOutputDirectory());
+      m.useProjectOutput();
+      m.excludeRoot(build.getOutputDirectory());
+      m.excludeRoot(build.getTestOutputDirectory());
     }
-    rootModel.excludeRoot(build.getDirectory());
   }
 
-  private void configDependencies(RootModelAdapter rootModel, MavenProject mavenProject) {
-    for (Artifact artifact : extractDependencies(mavenProject)) {
+  private void configDependencies(RootModelAdapter m, MavenProject p) {
+    for (Artifact artifact : extractDependencies(p)) {
       MavenId id = new MavenId(artifact);
-      if (myIgnorePattern.matcher(id.toString()).matches()) {
-        continue;
-      }
+
+      if (isIgnored(id)) continue;
 
       String moduleName = findModuleFor(artifact);
       if (moduleName != null) {
-        rootModel.createModuleDependency(moduleName);
+        m.createModuleDependency(moduleName);
       }
       else {
         String artifactPath = artifact.getFile().getPath();
-        rootModel.createModuleLibrary(myMapping.getLibraryName(id), getUrl(artifactPath, null), getUrl(artifactPath, SOURCES_CLASSIFIER),
-                                      getUrl(artifactPath, JAVADOC_CLASSIFIER));
+        m.createModuleLibrary(myMapping.getLibraryName(id),
+                              getUrl(artifactPath, null),
+                              getUrl(artifactPath, SOURCES_CLASSIFIER),
+                              getUrl(artifactPath, JAVADOC_CLASSIFIER));
       }
     }
+  }
+
+  private boolean isIgnored(MavenId id) {
+    return myIgnorePattern.matcher(id.toString()).matches();
   }
 
   private String findModuleFor(Artifact artifact) {

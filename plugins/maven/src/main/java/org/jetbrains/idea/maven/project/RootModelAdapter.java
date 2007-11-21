@@ -80,7 +80,7 @@ class RootModelAdapter {
     return libraryTableModel;
   }
 
-  void createSrcDir(String path, boolean testSource) {
+  void addSourceDir(String path, boolean testSource) {
     String url = toUrl(path);
     findOrCreateContentRoot(url).addSourceFolder(url, testSource);
   }

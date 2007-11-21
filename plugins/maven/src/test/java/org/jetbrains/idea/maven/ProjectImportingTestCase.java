@@ -280,11 +280,7 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
   }
 
   protected void createModulePom(String relativePath, String xml) throws IOException {
-    File externalDir = new File(getProjectPath(), relativePath);
-    externalDir.mkdirs();
-
-    VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalDir);
-    createPomFile(dir, xml);
+    createPomFile(createProjectSubDir(relativePath), xml);
   }
 
   private VirtualFile createPomFile(VirtualFile dir, String xml) throws IOException {
@@ -313,6 +309,12 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
            "<profiles>" +
            xml +
           "</profiles>";
+  }
+
+  protected VirtualFile createProjectSubDir(String relativePath) {
+    File f = new File(getProjectPath(), relativePath);
+    f.mkdirs();
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
   }
 
   protected void importProject(String xml) throws IOException {

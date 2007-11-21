@@ -1,5 +1,7 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.vfs.VirtualFile;
+
 import java.io.IOException;
 
 public class ContentRootsImportingTest extends ProjectImportingTestCase {
@@ -278,13 +280,58 @@ public class ContentRootsImportingTest extends ProjectImportingTestCase {
     assertModules("project");
   }
 
+  public void testAddingExistingGeneratedSources() throws Exception {
+    createProjectSubDir("target/generated-sources/src1");
+    createProjectSubDir("target/generated-sources/src2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/resources",
+                  "target/generated-sources/src1",
+                  "target/generated-sources/src2");
+  }
+
+  public void testAddingExistingGeneratedSourcesWithCustomTargetDir() throws Exception {
+    createProjectSubDir("targetCustom/generated-sources/src1");
+    createProjectSubDir("targetCustom/generated-sources/src2");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <directory>targetCustom</directory>" +
+                  "</build>");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/resources",
+                  "targetCustom/generated-sources/src1",
+                  "targetCustom/generated-sources/src2");
+  }
+
+  public void testIgnoringFilesRightUnderGeneratedSources() throws Exception {
+    VirtualFile dir = createProjectSubDir("target/generated-sources");
+    dir.createChildData(null, "f.txt");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertSources("project", "src/main/java", "src/main/resources");
+  }
+
   public void testExcludingOutputDirectories() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
     assertModules("project");
 
-    assertExcludes("project", "target");
+    assertExcludes("project");
     assertModuleOutput("project",
                        getProjectPath() + "/target/classes",
                        getProjectPath() + "/target/test-classes");
@@ -298,7 +345,7 @@ public class ContentRootsImportingTest extends ProjectImportingTestCase {
                   "<version>1</version>");
     assertModules("project");
 
-    assertExcludes("project", "target", "target/classes", "target/test-classes");
+    assertExcludes("project", "target/classes", "target/test-classes");
     assertProjectOutput("project");
   }
 
@@ -315,7 +362,7 @@ public class ContentRootsImportingTest extends ProjectImportingTestCase {
 
     assertModules("project");
 
-    assertExcludes("project", "targetCustom");
+    assertExcludes("project");
     assertModuleOutput("project",
                        getProjectPath() + "/outputCustom",
                        getProjectPath() + "/testCustom");
@@ -332,13 +379,9 @@ public class ContentRootsImportingTest extends ProjectImportingTestCase {
                   "  <testOutputDirectory>../target/test-classes</testOutputDirectory>" +
                   "</build>");
 
-    String parentPath = getParentPath();
-    assertContentRoots("project", getProjectPath(), parentPath + "/target");
-    assertContentRootExcludes("project", getProjectPath());
-    assertContentRootExcludes("project", parentPath + "/target", "");
-
+    assertExcludes("project");
     assertModuleOutput("project",
-                       parentPath + "/target/classes",
-                       parentPath + "/target/test-classes");
+                       getParentPath() + "/target/classes",
+                       getParentPath() + "/target/test-classes");
   }
 }
