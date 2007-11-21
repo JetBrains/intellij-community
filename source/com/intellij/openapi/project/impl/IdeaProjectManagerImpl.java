@@ -30,7 +30,9 @@ public class IdeaProjectManagerImpl extends ProjectManagerImpl {
         throw new ProcessCanceledException();
       }
       conversionHelper = result.getConversionHelper();
-      return new Pair<Class, Object>(ProjectConversionHelper.class, conversionHelper);
+      if (conversionHelper != null) {
+        return new Pair<Class, Object>(ProjectConversionHelper.class, conversionHelper);
+      }
     }
     return null;
   }
