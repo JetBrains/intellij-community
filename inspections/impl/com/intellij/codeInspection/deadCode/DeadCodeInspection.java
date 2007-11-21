@@ -644,6 +644,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
 
     protected boolean applyFix(final RefElement[] refElements) {
+      if (!super.applyFix(refElements)) return false;
       final ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
       for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();
@@ -711,6 +712,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
 
     protected boolean applyFix(RefElement[] refElements) {
+      if (!super.applyFix(refElements)) return false;
       ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
       for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();

@@ -163,13 +163,6 @@ public class QuickFixAction extends AnAction {
   }
 
   public void doApplyFix(final RefElement[] refElements, final InspectionTool tool, InspectionResultsView view) {
-    Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
-    if (!readOnlyFiles.isEmpty()) {
-      final Project project = refElements[0].getRefManager().getProject();
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
-      if (operationStatus.hasReadonlyFiles()) return;
-    }
-
     final RefManagerImpl refManager = ((RefManagerImpl)tool.getContext().getRefManager());
 
     final boolean initial = refManager.isInProcess();
@@ -273,6 +266,12 @@ public class QuickFixAction extends AnAction {
    * @return true if immediate UI update needed.
    */
   protected boolean applyFix(RefElement[] refElements) {
-    return false;
+    Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
+    if (!readOnlyFiles.isEmpty()) {
+      final Project project = refElements[0].getRefManager().getProject();
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles.toArray(new VirtualFile[readOnlyFiles.size()]));
+      if (operationStatus.hasReadonlyFiles()) return false;
+    }
+    return true;
   }
 }
