@@ -147,8 +147,8 @@ public class PrimaryExpression implements GroovyElementTypes {
 
       ParserUtils.getToken(builder, mNLS);
       methodCallArgsParse(builder);
-      ParserUtils.getToken(builder, mNLS);
-      if (builder.getTokenType() == mLCURLY) {
+      if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
+        ParserUtils.getToken(builder, mNLS);
         OpenOrClosableBlock.parseClosableBlock(builder);
       }
     } else if (builder.getTokenType() == mLBRACK) {

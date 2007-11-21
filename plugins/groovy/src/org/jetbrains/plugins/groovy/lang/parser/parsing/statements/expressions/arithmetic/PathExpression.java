@@ -101,8 +101,8 @@ public class PathExpression implements GroovyElementTypes {
       }
     } else if (mLPAREN.equals(builder.getTokenType())) {
       PrimaryExpression.methodCallArgsParse(builder);
-      ParserUtils.getToken(builder, mNLS);
-      if (mLCURLY.equals(builder.getTokenType())) {
+      if (mLCURLY.equals(builder.getTokenType()) || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
+        ParserUtils.getToken(builder, mNLS);
         pathElementParse(builder, marker);
       } else {
         PsiBuilder.Marker newMarker = marker.precede();
