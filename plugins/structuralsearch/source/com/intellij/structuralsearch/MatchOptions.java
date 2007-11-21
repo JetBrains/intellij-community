@@ -10,9 +10,10 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * match options
@@ -31,7 +32,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
   private SearchScope scope, downUpMatchScope;
   private String searchCriteria = "";
-  private HashMap<String,MatchVariableConstraint> variableConstraints;
+  private Map<String,MatchVariableConstraint> variableConstraints;
 
   @NonNls private static final String DISTINCT_ATTRIBUTE_NAME = "distinct";
   @NonNls private static final String RECURSIVE_ATTRIBUTE_NAME = "recursive";
@@ -49,7 +50,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
   public void addVariableConstraint(MatchVariableConstraint constraint) {
     if (variableConstraints==null) {
-      variableConstraints = new HashMap<String,MatchVariableConstraint>();
+      variableConstraints = new LinkedHashMap<String,MatchVariableConstraint>();
     }
     variableConstraints.put( constraint.getName(), constraint );
   }
