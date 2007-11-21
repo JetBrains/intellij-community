@@ -17,23 +17,29 @@ public interface PsiIncludeManager {
   @Nullable
   PsiFile getInclusionContext(@NotNull PsiFile file);
 
+  void includeProcessed(@NotNull PsiElement includeDirective);
+
   interface PsiIncludeHandler {
-    boolean shouldCheckFile(VirtualFile psiFile);
+    boolean shouldCheckFile(@NotNull VirtualFile psiFile);
     IncludeInfo[] findIncludes(PsiFile psiFile);
+
+    void includeChanged(final PsiElement includeDirective, final PsiFile targetFile, final PsiTreeChangeEvent event);
   }
 
   final class IncludeInfo {
     public static IncludeInfo[] EMPTY_ARRAY = new IncludeInfo[0];
     public @Nullable final PsiFile targetFile;
-    public @Nullable final PsiElement includeElement;
+    public @Nullable final PsiElement includeDirective;
     public @NotNull final String[] possibleTargetFileNames;
+    public @NotNull final PsiIncludeHandler handler;
 
     public IncludeInfo(@Nullable final PsiFile targetFile,
-                       @Nullable final PsiElement includeElement,
-                       String[] possibleTargetFileNames) {
+                       @Nullable final PsiElement includeDirective,
+                       String[] possibleTargetFileNames, final PsiIncludeHandler handler) {
       this.targetFile = targetFile;
-      this.includeElement = includeElement;
+      this.includeDirective = includeDirective;
       this.possibleTargetFileNames = possibleTargetFileNames;
+      this.handler = handler;
     }
   }
 }

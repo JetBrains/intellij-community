@@ -307,11 +307,15 @@ public class XmlUtil {
                                            final boolean deepFlag,
                                            final boolean wideFlag,
                                            final PsiFile baseFile) {
-    return new XmlElementProcessor(processor, baseFile).processXmlElements(element, deepFlag, wideFlag);
+    final PsiIncludeManager includeManager =
+      (PsiIncludeManager)element.getProject().getPicoContainer().getComponentInstanceOfType(PsiIncludeManager.class);
+    return new XmlElementProcessor(processor, baseFile, includeManager).processXmlElements(element, deepFlag, wideFlag);
   }
 
   public static boolean processXmlElementChildren(final XmlElement element, final PsiElementProcessor processor, final boolean deepFlag) {
-    final XmlElementProcessor p = new XmlElementProcessor(processor, element.getContainingFile());
+    final PsiIncludeManager includeManager =
+      (PsiIncludeManager)element.getProject().getPicoContainer().getComponentInstanceOfType(PsiIncludeManager.class);
+    final XmlElementProcessor p = new XmlElementProcessor(processor, element.getContainingFile(), includeManager);
 
     final boolean wideFlag = false;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -453,11 +457,13 @@ public class XmlUtil {
   private static class XmlElementProcessor {
     private PsiElementProcessor processor;
     private PsiFile targetFile;
+    private final PsiIncludeManager myIncludeManager;
     private static final Key<CachedValue<PsiElement[]>> KEY_RESOLVED_XINCLUDE = Key.create("RESOLVED_XINCLUDE");
 
-    XmlElementProcessor(PsiElementProcessor _processor, PsiFile _targetFile) {
+    XmlElementProcessor(PsiElementProcessor _processor, PsiFile _targetFile, PsiIncludeManager includeManager) {
       processor = _processor;
       targetFile = _targetFile;
+      myIncludeManager = includeManager;
     }
 
     private boolean processXmlElements(PsiElement element, boolean deepFlag, boolean wideFlag) {
@@ -492,6 +498,7 @@ public class XmlUtil {
       else if (XmlIncludeHandler.isXInclude(element)) {
         XmlTag tag = (XmlTag)element;
 
+        myIncludeManager.includeProcessed(tag);
         if (!processXInclude(deepFlag, wideFlag, tag)) return false;
       }
 
