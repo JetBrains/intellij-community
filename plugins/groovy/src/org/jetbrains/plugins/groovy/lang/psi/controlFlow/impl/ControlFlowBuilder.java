@@ -19,8 +19,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
 import java.util.*;
 
@@ -98,40 +101,18 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private void buildFlowForClosure(final GrClosableBlock closure) {
     final Set<String> names = new LinkedHashSet<String>();
-    final Set<PsiVariable> vars = new LinkedHashSet<PsiVariable>();
+
     closure.accept(new GroovyRecursiveElementVisitor() {
       public void visitReferenceExpression(GrReferenceExpression refExpr) {
         super.visitReferenceExpression(refExpr);
         if (refExpr.getQualifierExpression() == null && !PsiUtil.isLValue(refExpr)) {
           if (!(refExpr.getParent() instanceof GrCall)) {
             final String refName = refExpr.getReferenceName();
-            final PsiElement resolved = refExpr.resolve();
-            if (resolved == null) {
+            PropertyResolverProcessor processor = new PropertyResolverProcessor(refName, refExpr, false);
+            ResolveUtil.treeWalkUp(refExpr, processor, closure);
+            if (!processor.hasCandidates()) {
               names.add(refName);
-            } else if (resolved instanceof PsiField) {
-              final PsiClass clazz = ((PsiField) resolved).getContainingClass();
-              final PsiClass closureClass = resolved.getManager().findClass(GrClosableBlock.GROOVY_LANG_CLOSURE, closure.getResolveScope());
-              if (InheritanceUtil.isInheritorOrSelf(clazz, closureClass, true)) {
-                vars.add((PsiVariable) resolved);
-              }
-            } else if (resolved instanceof PsiMethod) {
-              final PsiMethod method = (PsiMethod) resolved;
-              final String propName = PsiUtil.getPropertyNameByGetter(method);
-              if (propName != null) {
-                final PsiClass clazz = method.getContainingClass();
-                final PsiClass closureClass = resolved.getManager().findClass(GrClosableBlock.GROOVY_LANG_CLOSURE, closure.getResolveScope());
-                if (InheritanceUtil.isInheritorOrSelf(clazz, closureClass, true)) {
-                  names.add(propName);
-                }
-              }
-            } else if (resolved instanceof PsiParameter) {
-              vars.add((PsiVariable) resolved);
-            } else if (resolved instanceof PsiVariable && !PsiTreeUtil.isAncestor(closure, resolved, true)) {
-              vars.add((PsiVariable) resolved);
             }
-          } else {
-            //important not to resolve not to fall into infinite recursion
-            //names.add("delegate");
           }
         }
       }
@@ -139,10 +120,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     for (String name : names) {
       addNode(new ReadWriteVariableInstructionImpl(name, closure.getLBrace(), myInstructionNumber++, true));
-    }
-
-    for (PsiVariable var : vars) {
-      addNode(new ReadWriteVariableInstructionImpl(var, myInstructionNumber++));
     }
 
     PsiElement child = closure.getFirstChild();
