@@ -10,6 +10,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -20,10 +21,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.psi.PsiManager;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
@@ -278,12 +279,19 @@ public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
       myFormatChanged = false;
     }
 
-    final VirtualFile[] files = queryNeededFiles(true, getFileTypesToRefresh());
-    for (int i = 0; i < files.length; i++) {
-      if (indicator != null) {
-        indicator.setFraction(((double)i)/ files.length);
+    PsiManager.getInstance(myProject).startBatchFilesProcessingMode();
+
+    try {
+      final VirtualFile[] files = queryNeededFiles(true, getFileTypesToRefresh());
+      for (int i = 0; i < files.length; i++) {
+        if (indicator != null) {
+          indicator.setFraction(((double)i)/ files.length);
+        }
+        doUpdateIndexEntry(files[i]);
       }
-      doUpdateIndexEntry(files[i]);
+    }
+    finally {
+      PsiManager.getInstance(myProject).finishBatchFilesProcessingMode();
     }
 
     if (indicator != null) {

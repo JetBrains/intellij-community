@@ -1,6 +1,5 @@
 package com.intellij.xml.util;
 
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -49,9 +48,7 @@ public class XmlIncludeHandler implements PsiIncludeManager.PsiIncludeHandler {
   }
 
   private static boolean canContainIncludeTag(final PsiFile psiFile) {
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-
-    final String text = LoadTextUtil.loadText(virtualFile).toString();
+    final String text = psiFile.getText();
 
     if (text.indexOf(INCLUDE_TAG_NAME) < 0 || text.indexOf(XmlUtil.XINCLUDE_URI) < 0) return false;
     return true;
