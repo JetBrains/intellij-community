@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -61,28 +62,28 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   public void checkFileElement(DomFileElement<T> domFileElement, final DomElementAnnotationHolder holder) {
     final DomHighlightingHelper helper =
       DomElementAnnotationsManager.getInstance(domFileElement.getManager().getProject()).getHighlightingHelper();
-    domFileElement.acceptChildren(new DomElementVisitor() {
-      public void visitDomElement(DomElement element) {
+    final Consumer<DomElement> consumer = new Consumer<DomElement>() {
+      public void consume(final DomElement element) {
         checkChildren(element, this);
         checkDomElement(element, holder, helper);
       }
-
-    });
+    };
+    consumer.consume(domFileElement.getRootElement());
   }
 
   @SuppressWarnings({"MethodMayBeStatic"})
-  protected void checkChildren(final DomElement element, DomElementVisitor visitor) {
+  protected void checkChildren(final DomElement element, Consumer<DomElement> visitor) {
     final XmlElement xmlElement = element.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       for (final DomElement child : DomUtil.getDefinedChildren(element, true, true)) {
-        child.accept(visitor);
+        visitor.consume(child);
       }
 
       for (final AbstractDomChildrenDescription description : element.getGenericInfo().getChildrenDescriptions()) {
         if (description.getAnnotation(Required.class) != null) {
           for (final DomElement child : description.getValues(element)) {
             if (child.getXmlElement() == null) {
-              child.accept(visitor);
+              visitor.consume(child);
             }
           }
         }
