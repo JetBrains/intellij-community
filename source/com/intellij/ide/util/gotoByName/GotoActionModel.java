@@ -91,7 +91,7 @@ public class GotoActionModel implements ChooseByNameModel {
           final Icon icon = templatePresentation.getIcon();
           final LayeredIcon layeredIcon = new LayeredIcon(2);
           layeredIcon.setIcon(EMPTY_ICON, 0);
-          if (icon != null){
+          if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
             layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
           }
 
