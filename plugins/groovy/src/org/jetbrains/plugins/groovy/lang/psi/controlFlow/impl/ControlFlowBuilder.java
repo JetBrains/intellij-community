@@ -109,7 +109,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
           if (!(refExpr.getParent() instanceof GrCall)) {
             final String refName = refExpr.getReferenceName();
             PropertyResolverProcessor processor = new PropertyResolverProcessor(refName, refExpr, false);
-            ResolveUtil.treeWalkUp(refExpr, processor, closure);
+            ResolveUtil.treeWalkUp(refExpr, processor, closure.getParent());
             if (!processor.hasCandidates()) {
               names.add(refName);
             }
