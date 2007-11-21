@@ -84,13 +84,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     final InstructionImpl first = startNode(null);
     if (scope instanceof GrClosableBlock) {
-      PsiElement child = scope.getFirstChild();
-      while (child != null) {
-        if (child instanceof GroovyPsiElement) {
-          ((GroovyPsiElement) child).accept(this);
-        }
-        child = child.getNextSibling();
-      }
+      buildFlowForClosure((GrClosableBlock) scope);
     }
     scope.accept(this);
 
@@ -100,6 +94,20 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final InstructionImpl end = startNode(null);
     checkPending(end); //collect return edges
     return myInstructions.toArray(new Instruction[myInstructions.size()]);
+  }
+
+  private void buildFlowForClosure(GrClosableBlock closure) {
+    for (GrParameter parameter : closure.getParameters()) {
+      addNode(new ReadWriteVariableInstructionImpl(parameter, myInstructionNumber++));
+    }
+
+    PsiElement child = closure.getFirstChild();
+    while (child != null) {
+      if (child instanceof GroovyPsiElement) {
+        ((GroovyPsiElement) child).accept(this);
+      }
+      child = child.getNextSibling();
+    }
   }
 
   private void addNode(InstructionImpl instruction) {
