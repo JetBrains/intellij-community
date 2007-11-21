@@ -22,7 +22,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -246,7 +246,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         if (!lineSeparator.equals("\n")){
           text = StringUtil.convertLineSeparators(text, lineSeparator);
         }
-        Project project = ProjectUtil.guessProjectForFile(file);
+        Project project = ProjectLocator.getInstance().guessProjectForFile(file);
         writer = LoadTextUtil.getWriter(project, file, this, text, document.getModificationStamp());
         writer.write(text);
         committed = true;
@@ -461,7 +461,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")){
       public void actionPerformed(ActionEvent e) {
         String windowtitle = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
-        final ProjectEx project = (ProjectEx)ProjectUtil.guessProjectForFile(file);
+        final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
 
         SimpleDiffRequest request = new SimpleDiffRequest(project, windowtitle);
         FileType fileType = file.getFileType();

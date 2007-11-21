@@ -11,5 +11,8 @@
 
     <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
                         serviceImplementation="com.intellij.codeStyle.DefaultCodeStyleFacade"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
+      serviceImplementation="com.intellij.openapi.project.impl.DefaultProjectLocator"/>
   </extensions>
 </idea-plugin>

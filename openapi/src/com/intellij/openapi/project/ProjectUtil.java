@@ -5,7 +5,6 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,17 +34,6 @@ public class ProjectUtil {
 
   @Nullable
   public static Project guessProjectForFile(VirtualFile file) {
-    ProjectManager projectManager = ProjectManager.getInstance();
-    if (projectManager == null) return null;
-    final Project[] projects = projectManager.getOpenProjects();
-    if (projects.length == 1) return projects[0];
-
-    for (Project project : projects) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
-        return project;
-      }
-    }
-
-    return projects.length == 0 ? null : projects[0];
+    return ProjectLocator.getInstance().guessProjectForFile(file);
   }
 }
