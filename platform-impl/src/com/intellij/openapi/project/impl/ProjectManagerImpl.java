@@ -2,8 +2,6 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.impl.convert.ProjectConversionHelper;
-import com.intellij.ide.impl.convert.ProjectConversionUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -160,14 +158,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private ProjectImpl createProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
-                                    @Nullable ProjectConversionHelper conversionHelper) {
+                                    @Nullable Pair<Class, Object>[] additionalPicoContainerComponents) {
     final ProjectImpl project;
     if (isDummy) {
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
     }
     project = new ProjectImpl(this, filePath, isDefault, isOptimiseTestLoadSpeed);
-    if (conversionHelper != null) {
-      project.getPicoContainer().registerComponentInstance(ProjectConversionHelper.class, conversionHelper);
+
+    if (additionalPicoContainerComponents != null) {
+      for (Pair<Class, Object> additionalPicoContainerComponent : additionalPicoContainerComponents) {
+        project.getPicoContainer().registerComponentInstance(additionalPicoContainerComponent.first, additionalPicoContainerComponent.second);
+      }
     }
 
     try {
@@ -213,9 +214,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Nullable
-  private Project loadProject(String filePath, ProjectConversionHelper conversionHelper) throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
+  private Project loadProject(String filePath, Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
     filePath = canonicalize(filePath);
-    ProjectImpl project = createProject(filePath, false, false, false, conversionHelper);
+    ProjectImpl project = createProject(filePath, false, false, false, additionalPicoContainerComponents);
     try {
       project.getStateStore().loadProject();
     }
@@ -228,7 +229,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Nullable
-  private static String canonicalize(final String filePath) {
+  protected static String canonicalize(final String filePath) {
     if (filePath == null) return null;
     try {
       return FileUtil.resolveShortWindowsName(filePath);
@@ -314,19 +315,17 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project loadAndOpenProject(final String filePath, final boolean convert) throws IOException, JDOMException, InvalidDataException {
     try {
 
-      final ProjectConversionHelper conversionHelper;
-      final String fp = canonicalize(filePath);
-
-      final File f = new File(fp);
-      if (convert && f.exists() && f.isFile() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        final ProjectConversionUtil.ProjectConversionResult result = ProjectConversionUtil.convertProject(fp);
-        if (result.isOpeningCancelled()) {
+      final Pair<Class, Object> convertorComponent;
+      if (convert) {
+        try {
+          convertorComponent = convertProject(filePath);
+        }
+        catch (ProcessCanceledException e) {
           return null;
         }
-        conversionHelper = result.getConversionHelper();
       }
       else {
-        conversionHelper = null;
+        convertorComponent = null;
       }
 
       final Project[] project = new Project[1];
@@ -345,7 +344,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
               indicator.setIndeterminate(true);
             }
 
-            project[0] = loadProject(filePath, conversionHelper);
+            if (convertorComponent != null) {
+              //noinspection unchecked
+              project[0] = loadProject(filePath, new Pair[]{convertorComponent});
+            }
+            else {
+              project[0] = loadProject(filePath, null);
+            }
           }
           catch (IOException e) {
             io[0] = e;
@@ -397,6 +402,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     catch (StateStorage.StateStorageException e) {
       throw new IOException(e.getMessage());
     }
+  }
+
+  @Nullable
+  protected Pair<Class, Object> convertProject(final String filePath) throws ProcessCanceledException {
+    return null;
   }
 
   private static void notifyProjectOpenFailed() {
