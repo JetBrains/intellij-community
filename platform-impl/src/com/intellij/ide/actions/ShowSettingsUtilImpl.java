@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
@@ -21,12 +23,23 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final String PREFER_CLASSIC_OPTIONS_EDITOR = "PREFER_CLASSIC_OPTIONS_EDITOR";
 
   public void showSettingsDialog(Project project, ConfigurableGroup[] group) {
+    group = filterEmptyGroups(group);
     if (Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(PREFER_CLASSIC_OPTIONS_EDITOR))) {
       showExplorerOptions(project, group);
     }
     else {
       showControlPanelOptions(project, group, null);
     }
+  }
+
+  private static ConfigurableGroup[] filterEmptyGroups(final ConfigurableGroup[] group) {
+    List<ConfigurableGroup> groups = new ArrayList<ConfigurableGroup>();
+    for (ConfigurableGroup g : group) {
+      if (g.getConfigurables().length > 0) {
+        groups.add(g);
+      }
+    }
+    return groups.toArray(new ConfigurableGroup[groups.size()]);
   }
 
   public void showControlPanelOptions(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {

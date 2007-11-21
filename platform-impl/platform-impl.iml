@@ -64,6 +64,7 @@
     </orderEntry>
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="boot" />
+    <orderEntry type="module" module-name="bootstrap" />
     <orderEntryProperties />
   </component>
 </module>

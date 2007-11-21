@@ -14,5 +14,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
       serviceImplementation="com.intellij.openapi.project.impl.DefaultProjectLocator"/>
+
+    <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
   </extensions>
 </idea-plugin>

@@ -33,6 +33,9 @@
       <interface-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.platform.PlatformProjectStarter</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
