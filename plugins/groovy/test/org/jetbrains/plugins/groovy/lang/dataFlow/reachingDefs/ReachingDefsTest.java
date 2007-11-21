@@ -6,6 +6,7 @@ import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -38,7 +39,7 @@ public class ReachingDefsTest extends SimpleGroovyFileSetTestCase {
     final GroovyFile file = (GroovyFile) TestUtils.createPseudoPhysicalFile(myProject, text);
     final PsiElement start = file.findElementAt(selStart);
     final PsiElement end = file.findElementAt(selEnd - 1);
-    final PsiElement parent = PsiTreeUtil.findCommonParent(start, end);
+    final PsiElement parent = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
     assert parent != null;
     GrStatement firstStatement = getStatement(start, parent);
     GrStatement lastStatement = getStatement(end, parent);
@@ -62,8 +63,6 @@ public class ReachingDefsTest extends SimpleGroovyFileSetTestCase {
   }
 
   private GrStatement getStatement(@NotNull PsiElement element, PsiElement context) {
-    if (context instanceof GrStatement) return (GrStatement) context;
-
     while (element.getParent() != context) {
       element = element.getParent();
       assert element != null;

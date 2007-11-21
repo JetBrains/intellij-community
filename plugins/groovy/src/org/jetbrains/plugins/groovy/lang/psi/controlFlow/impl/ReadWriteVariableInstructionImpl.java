@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
@@ -10,6 +11,12 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstru
 class ReadWriteVariableInstructionImpl extends InstructionImpl implements ReadWriteVariableInstruction {
   private boolean myIsWrite;
   public String myName;
+
+  ReadWriteVariableInstructionImpl(String varName, PsiElement element, int num, boolean isWrite) {
+    super(element, num);
+    myName = varName;
+    myIsWrite = isWrite;
+  }
 
   ReadWriteVariableInstructionImpl(PsiVariable variable, int num) {
     super(variable, num);

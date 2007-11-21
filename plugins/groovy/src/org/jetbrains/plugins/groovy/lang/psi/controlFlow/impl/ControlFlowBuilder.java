@@ -1,21 +1,21 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -96,9 +96,53 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     return myInstructions.toArray(new Instruction[myInstructions.size()]);
   }
 
-  private void buildFlowForClosure(GrClosableBlock closure) {
-    for (GrParameter parameter : closure.getParameters()) {
-      addNode(new ReadWriteVariableInstructionImpl(parameter, myInstructionNumber++));
+  private void buildFlowForClosure(final GrClosableBlock closure) {
+    final Set<String> names = new LinkedHashSet<String>();
+    final Set<PsiVariable> vars = new LinkedHashSet<PsiVariable>();
+    closure.accept(new GroovyRecursiveElementVisitor() {
+      public void visitReferenceExpression(GrReferenceExpression refExpr) {
+        super.visitReferenceExpression(refExpr);
+        if (refExpr.getQualifierExpression() == null && !PsiUtil.isLValue(refExpr)) {
+          if (!(refExpr.getParent() instanceof GrCall)) {
+            final String refName = refExpr.getReferenceName();
+            final PsiElement resolved = refExpr.resolve();
+            if (resolved == null) {
+              names.add(refName);
+            } else if (resolved instanceof PsiField) {
+              final PsiClass clazz = ((PsiField) resolved).getContainingClass();
+              final PsiClass closureClass = resolved.getManager().findClass(GrClosableBlock.GROOVY_LANG_CLOSURE, closure.getResolveScope());
+              if (InheritanceUtil.isInheritorOrSelf(clazz, closureClass, true)) {
+                vars.add((PsiVariable) resolved);
+              }
+            } else if (resolved instanceof PsiMethod) {
+              final PsiMethod method = (PsiMethod) resolved;
+              final String propName = PsiUtil.getPropertyNameByGetter(method);
+              if (propName != null) {
+                final PsiClass clazz = method.getContainingClass();
+                final PsiClass closureClass = resolved.getManager().findClass(GrClosableBlock.GROOVY_LANG_CLOSURE, closure.getResolveScope());
+                if (InheritanceUtil.isInheritorOrSelf(clazz, closureClass, true)) {
+                  names.add(propName);
+                }
+              }
+            } else if (resolved instanceof PsiParameter) {
+              vars.add((PsiVariable) resolved);
+            } else if (resolved instanceof PsiVariable && !PsiTreeUtil.isAncestor(closure, resolved, true)) {
+              vars.add((PsiVariable) resolved);
+            }
+          } else {
+            //important not to resolve not to fall into infinite recursion
+            //names.add("delegate");
+          }
+        }
+      }
+    });
+
+    for (String name : names) {
+      addNode(new ReadWriteVariableInstructionImpl(name, closure.getLBrace(), myInstructionNumber++, true));
+    }
+
+    for (PsiVariable var : vars) {
+      addNode(new ReadWriteVariableInstructionImpl(var, myInstructionNumber++));
     }
 
     PsiElement child = closure.getFirstChild();
