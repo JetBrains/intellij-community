@@ -207,9 +207,10 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     buffer.append("(");
     String[] params = ExtractMethodUtil.getParameterString(myHelper);
     if (params.length > 0) {
+      String INDENT = "    ";
       buffer.append("\n");
       for (String param : params) {
-        buffer.append("  ").append(param).append("\n");
+        buffer.append(INDENT).append(param).append("\n");
       }
     }
     buffer.append(")");
