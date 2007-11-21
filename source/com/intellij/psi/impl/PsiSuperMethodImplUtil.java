@@ -153,12 +153,7 @@ public class PsiSuperMethodImplUtil {
           map.put(superSignature, copy(hierarchicalMethodSignature));
         }
         else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
-          PsiMethod existingMethod = existing.getMethod();
-          if (existingMethod.equals(hierarchicalMethodSignature.getMethod())) continue;
-          for (HierarchicalMethodSignature existingSuper : existing.getSuperSignatures()) {
-            if (existingSuper.getMethod().equals(hierarchicalMethodSignature.getMethod())) continue nextSuperSignature;
-          }
-          existing.addSuperSignature(copy(hierarchicalMethodSignature)); //method inherited from class or first interface from extends list is considered to be overriding subsequent signatures
+          mergeSupers(existing, hierarchicalMethodSignature);
         }
         // just drop an invalid method declaration there - to highlight accordingly
         else if (!cached.containsKey(superSignature)) {
@@ -174,6 +169,18 @@ public class PsiSuperMethodImplUtil {
         cached.put(methodSignature, hierarchicalMethodSignature);
       }
     }
+  }
+
+  private static void mergeSupers(final HierarchicalMethodSignatureImpl existing, final HierarchicalMethodSignature superSignature) {
+    for (HierarchicalMethodSignature existingSuper : existing.getSuperSignatures()) {
+      if (existingSuper.getMethod() == superSignature.getMethod()) {
+        for (HierarchicalMethodSignature signature : superSignature.getSuperSignatures()) {
+          mergeSupers((HierarchicalMethodSignatureImpl)existingSuper, signature);
+        }
+        return;
+      }
+    }
+    existing.addSuperSignature(copy(superSignature));
   }
 
   private static boolean isSuperMethod(PsiClass aClass, HierarchicalMethodSignatureImpl hierarchicalMethodSignature,
@@ -193,7 +200,7 @@ public class PsiSuperMethodImplUtil {
     return false;
   }
 
-  private static HierarchicalMethodSignatureImpl copy(HierarchicalMethodSignatureImpl hi) {
+  private static HierarchicalMethodSignatureImpl copy(HierarchicalMethodSignature hi) {
     HierarchicalMethodSignatureImpl hierarchicalMethodSignature = new HierarchicalMethodSignatureImpl(hi);
     for (HierarchicalMethodSignature his : hi.getSuperSignatures()) {
       hierarchicalMethodSignature.addSuperSignature(his);
