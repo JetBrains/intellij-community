@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.ui.BooleanTableCellRenderer;
@@ -27,6 +27,7 @@ import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import javax.swing.*;
@@ -387,7 +388,7 @@ public class ParameterTablePanel extends JPanel {
         case PARAMETER_NAME_COLUMN: {
           ParameterInfo info = myParameterInfos[rowIndex];
           String name = (String) aValue;
-          if (PsiManager.getInstance(myProject).getNameHelper().isIdentifier(name)) {
+          if (GroovyNamesUtil.isIdentifier(name)) {
             info.setNewName(name);
           }
           updateSignature();
