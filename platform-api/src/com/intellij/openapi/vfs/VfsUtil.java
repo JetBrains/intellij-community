@@ -576,4 +576,25 @@ public class VfsUtil {
     }
     return dir.createChildData(requestor, fileName);
   }
+
+  public static String[] filterNames(String[] names) {
+    int filteredCount = 0;
+    for (String string : names) {
+      if (isBadName(string)) filteredCount++;
+    }
+    if (filteredCount == 0) return names;
+
+    String[] result = new String[names.length - filteredCount];
+    int count = 0;
+    for (String string : names) {
+      if (isBadName(string)) continue;
+      result[count++] = string;
+    }
+
+    return result;
+  }
+
+  public static boolean isBadName(final String name) {
+    return name == null || name.length() == 0 || "/".equals(name) || "\\".equals(name);
+  }
 }

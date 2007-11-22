@@ -3,7 +3,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -48,7 +48,7 @@ public class RefreshWorker {
           final boolean fullSync = dir.allChildrenLoaded();
           if (fullSync) {
             Set<String> currentNames = new HashSet<String>(Arrays.asList(persistence.list(file)));
-            Set<String> uptodateNames = new HashSet<String>(Arrays.asList(StringUtil.filterEmptyStrings(delegate.list(file))));
+            Set<String> uptodateNames = new HashSet<String>(Arrays.asList(VfsUtil.filterNames(delegate.list(file))));
 
             Set<String> newNames = new HashSet<String>(uptodateNames);
             newNames.removeAll(currentNames);

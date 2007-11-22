@@ -106,34 +106,13 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return names;
   }
 
-  private static String[] filterNames(String[] names) {
-    int filteredCount = 0;
-    for (String string : names) {
-      if (isBadName(string)) filteredCount++;
-    }
-    if (filteredCount == 0) return names;
-
-    String[] result = new String[names.length - filteredCount];
-    int count = 0;
-    for (String string : names) {
-      if (isBadName(string)) continue;
-      result[count++] = string;
-    }
-
-    return result;
-  }
-
-  private static boolean isBadName(final String name) {
-    return name == null || name.length() == 0 || "/".equals(name) || "\\".equals(name);
-  }
-
   private String[] persistAllChildren(final VirtualFile file) {
     int id = getFileId(file);
     String[] currentNames = listPersisted(file);
     int[] currentIds = myRecords.list(id);
 
     final NewVirtualFileSystem delegate = getDelegate(file);
-    String[] names = filterNames(delegate.list(file));
+    String[] names = VfsUtil.filterNames(delegate.list(file));
     final int[] childrenIds = new int[names.length];
 
     for (int i = 0; i < names.length; i++) {
