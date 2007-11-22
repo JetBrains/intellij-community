@@ -674,9 +674,15 @@ public class GroovyAnnotator implements Annotator {
         registerAddImportFixes(refExpr, annotation);
       }
 
+      addDynamickSuggestions(annotation, refExpr);
+
       //annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.black, EffectType.LINE_UNDERSCORE, 0));
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
     }
+  }
+
+  private void addDynamickSuggestions(Annotation annotation, GrReferenceExpression refExpr) {
+    annotation.registerFix(new AddDynamicAttributes(refExpr));
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {

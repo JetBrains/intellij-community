@@ -37,15 +37,6 @@ public class SecondUnsafeCallInspection extends LocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
-//      public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
-//        a?.b.c()
-//        final GrExpression expression = methodCallExpression.getInvokedExpression();
-//
-//                a?.b.c
-//        if (!(expression instanceof GrReferenceExpression)) return;
-//        checkForSecondUnsafeCall(expression, holder, methodCallExpression);
-//      }
-
       public void visitReferenceExpression(GrReferenceExpression refExpression) {
         checkForSecondUnsafeCall(refExpression, holder);
       }
