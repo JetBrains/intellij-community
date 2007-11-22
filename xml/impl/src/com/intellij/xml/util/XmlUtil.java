@@ -307,8 +307,6 @@ public class XmlUtil {
                                            final boolean deepFlag,
                                            final boolean wideFlag,
                                            final PsiFile baseFile) {
-    final PsiIncludeManager includeManager =
-      (PsiIncludeManager)element.getProject().getPicoContainer().getComponentInstanceOfType(PsiIncludeManager.class);
     return new XmlElementProcessor(processor, baseFile).processXmlElements(element, deepFlag, wideFlag);
   }
 
