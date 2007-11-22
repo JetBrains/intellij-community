@@ -100,6 +100,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   private void buildFlowForClosure(final GrClosableBlock closure) {
+    for (GrParameter parameter : closure.getParameters()) {
+      addNode(new ReadWriteVariableInstructionImpl(parameter, myInstructionNumber++));
+    }
+
     final Set<String> names = new LinkedHashSet<String>();
 
     closure.accept(new GroovyRecursiveElementVisitor() {
@@ -117,6 +121,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         }
       }
     });
+
+    names.add("owner");
 
     for (String name : names) {
       addNode(new ReadWriteVariableInstructionImpl(name, closure.getLBrace(), myInstructionNumber++, true));

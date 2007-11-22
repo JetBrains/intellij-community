@@ -37,9 +37,10 @@ public class ReachingDefinitionsSemilattice implements Semilattice<TIntObjectHas
   private void merge(final TIntObjectHashMap<TIntHashSet> result, TIntObjectHashMap<TIntHashSet> map2) {
     map2.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
       public boolean execute(int num, TIntHashSet defs) {
-        final TIntHashSet defs2 = result.get(num);
+        TIntHashSet defs2 = result.get(num);
         if (defs2 == null) {
-          result.put(num, defs);
+          defs2 = new TIntHashSet(defs.toArray());
+          result.put(num, defs2);
         } else {
           defs2.addAll(defs.toArray());
         }

@@ -183,4 +183,27 @@ public class ReachingDefinitionsCollector {
 
     return result;
   }
+
+  private static String dumpDfaResult(ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult, ReachingDefinitionsDfaInstance dfa) {
+    final StringBuffer buffer = new StringBuffer();
+    for (int i = 0; i < dfaResult.size(); i++) {
+      TIntObjectHashMap<TIntHashSet> map = dfaResult.get(i);
+      buffer.append("At " + i + ":\n");
+      map.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+        public boolean execute(int i, TIntHashSet defs) {
+          buffer.append(i).append(" -> ");
+          defs.forEach(new TIntProcedure() {
+            public boolean execute(int i) {
+              buffer.append(i).append(" ");
+              return true;
+            }
+          });
+          return true;
+        };
+      });
+      buffer.append("\n");
+    }
+
+    return buffer.toString();
+  }
 }
