@@ -17,17 +17,19 @@ package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,6 +47,7 @@ public class ExtractMethodInfoHelper {
   private boolean mySpecifyType;
   private final PsiElement[] myInnerElements;
   private String myVisibility;
+  private final Project myProject;
   private final GrStatement[] myStatements;
 
   public ExtractMethodInfoHelper(String[] inputNames,
@@ -57,6 +60,8 @@ public class ExtractMethodInfoHelper {
     myStatements = statements;
     myIsStatic = isStatic;
     myVisibility = PsiModifier.PRIVATE;
+    assert myStatements.length > 0;
+    myProject = myStatements[0].getProject();
     int i = 0;
     for (String name : inputNames) {
       PsiType type = typeMap.get(name);
@@ -72,14 +77,14 @@ public class ExtractMethodInfoHelper {
     } else {
       if (ExtractMethodUtil.isSingleExpression(statements) ||
           statements.length == 1 && statements[0] instanceof GrExpression &&
-          !(statements[0] instanceof GrAssignmentExpression)) {
+              !(statements[0] instanceof GrAssignmentExpression)) {
         PsiType type = ((GrExpression) statements[0]).getType();
         if (type != null) {
           myOutputType = TypeConversionUtil.erasure(type);
         } else {
           myOutputType = PsiType.VOID;
         }
-      } else  {
+      } else {
         PsiType returnType = referTypeFromContext(myStatements);
         myOutputType = returnType == null ? PsiType.VOID : returnType;
       }
@@ -99,7 +104,7 @@ public class ExtractMethodInfoHelper {
       } else if (parent instanceof GrOpenBlock && parent.getParent() instanceof GrMethod) {
         grStatements = ((GrOpenBlock) parent).getStatements();
       }
-      if (grStatements.length > 0 && grStatements[grStatements.length -1] == expr) {
+      if (grStatements.length > 0 && grStatements[grStatements.length - 1] == expr) {
         PsiType type = expr.getType();
         if (type != null) {
           type = TypeConversionUtil.erasure(type);
@@ -112,8 +117,7 @@ public class ExtractMethodInfoHelper {
 
   @NotNull
   public Project getProject() {
-    assert getInnerElements().length > 0;
-    return getInnerElements()[0].getProject();
+    return myProject;
   }
 
   public boolean validateName(String newName) {
@@ -155,7 +159,7 @@ public class ExtractMethodInfoHelper {
     for (ParameterInfo info : infos) {
       int position = info.getPosition();
       assert position < argNames.length;
-      argNames[position] = info.getOldName();
+      argNames[position] = info.passAsParameter() ? info.getOldName() : "";
     }
     return argNames;
   }

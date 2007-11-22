@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -179,7 +180,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
-          methodOwner.addMethod(method);
+          GrMethod newMethod = methodOwner.addMethod(method);
+          ExtractMethodUtil.renameParameterOccurrences(newMethod, helper);
+          PsiUtil.shortenReferences(newMethod);
           GrStatement realStatement;
 
           if (declarationOwner != null && !ExtractMethodUtil.isSingleExpression(helper.getStatements())) {

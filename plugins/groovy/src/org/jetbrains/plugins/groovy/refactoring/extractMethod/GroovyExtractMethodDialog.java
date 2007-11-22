@@ -15,26 +15,26 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.HelpID;
 import com.intellij.ui.EditorTextField;
-import com.intellij.psi.PsiModifier;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
-import javax.swing.event.EventListenerList;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.EventListenerList;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -57,6 +57,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
   private JLabel myNameLabel;
   private JTextArea mySignatureArea;
   private VisibilityPanel myVisibilityPanel;
+  private ParameterTablePanel myParameterTablePanel;
   private JButton buttonOK;
 
   public GroovyExtractMethodDialog(ExtractMethodInfoHelper helper, Project project) {
@@ -64,6 +65,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     myProject = project;
     myHelper = helper;
     setUpNameField();
+    myParameterTablePanel.init(this, myHelper);
 
     setModal(true);
     getRootPane().setDefaultButton(buttonOK);
@@ -177,6 +179,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
         updateSignature();
       }
     });
+
+    myParameterTablePanel = new ParameterTablePanel();
   }
 
   class DataChangedListener implements EventListener {
@@ -197,11 +201,11 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
   /*
   Update signature text area
    */
-  private void updateSignature() {
+  void updateSignature() {
     if (mySignatureArea == null) return;
     @NonNls StringBuffer buffer = new StringBuffer();
     buffer.append(ExtractMethodUtil.getModifierString(myHelper));
-    buffer.append(ExtractMethodUtil.getTypeString(myHelper));
+    buffer.append(ExtractMethodUtil.getTypeString(myHelper, true));
     String name = getEnteredName() == null ? "" : getEnteredName();
     buffer.append(name);
     buffer.append("(");

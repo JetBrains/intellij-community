@@ -15,29 +15,30 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
@@ -80,6 +81,27 @@ public class ExtractMethodUtil {
     }
   }
 
+  static GrExpression[] findVariableOccurrences(final GrStatement[] statements, final String name) {
+    final GrVariable variable = getVariableDeclaration(statements, name);
+    if (variable == null) return GrExpression.EMPTY_ARRAY;
+    final ArrayList<GrExpression> result = new ArrayList<GrExpression>();
+    for (final GrStatement statement : statements) {
+      statement.accept(new PsiRecursiveElementVisitor() {
+        public void visitElement(final PsiElement element) {
+          super.visitElement(element);
+          if (element instanceof GrReferenceExpression) {
+            GrReferenceExpression expr = (GrReferenceExpression) element;
+            if (expr.isQualified() && expr.isReferenceTo(variable)) {
+              result.add(expr);
+            }
+          }
+        }
+      });
+    }
+    return result.toArray(new GrExpression[result.size()]);
+  }
+
+
 
   /*
   Collect variable types in code block to be extracted
@@ -111,15 +133,45 @@ public class ExtractMethodUtil {
     return false;
   }
 
+  static void renameParameterOccurrences(GrMethod method, ExtractMethodInfoHelper helper) throws IncorrectOperationException {
+    GrOpenBlock block = method.getBlock();
+    if (block == null) return;
+    GrStatement[] statements = block.getStatements();
+
+    final GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
+    for (ParameterInfo info : helper.getParameterInfos()) {
+      final String oldName = info.getOldName();
+      final String newName = info.getName();
+      final ArrayList<GrExpression> result = new ArrayList<GrExpression>();
+      if (!oldName.equals(newName)) {
+        for (final GrStatement statement : statements) {
+          statement.accept(new PsiRecursiveElementVisitor() {
+            public void visitElement(final PsiElement element) {
+              super.visitElement(element);
+              if (element instanceof GrReferenceExpression) {
+                GrReferenceExpression expr = (GrReferenceExpression) element;
+                if (!expr.isQualified() && oldName.equals(expr.getName())) {
+                  result.add(expr);
+                }
+              }
+            }
+          });
+          for (GrExpression expr : result) {
+            expr.replaceWithExpression(factory.createExpressionFromText(newName), false);
+          }
+        }
+      }
+    }
+  }
+
   static GrMethod createMethodByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
-    //todo change names in statements
     StringBuffer buffer = new StringBuffer();
 
     //Add signature
     PsiType type = helper.getOutputType();
     final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
     if (outUnboxed != null) type = outUnboxed;
-    String typeText = getTypeString(helper);
+    String typeText = getTypeString(helper, false);
     buffer.append(getModifierString(helper));
     buffer.append(typeText);
     buffer.append(name);
@@ -164,23 +216,29 @@ public class ExtractMethodUtil {
   static String[] getParameterString(ExtractMethodInfoHelper helper) {
     int i = 0;
     ParameterInfo[] infos = helper.getParameterInfos();
-    String[] params = new String[infos.length];
+    int number = 0;
     for (ParameterInfo info : infos) {
-      PsiType paramType = info.getType();
-      final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(paramType);
-      if (unboxed != null) paramType = unboxed;
-      String paramTypeText = paramType == null || paramType.equalsToText("java.lang.Object") ? "" : paramType.getPresentableText() + " ";
-      params[i] = paramTypeText + info.getName() + (i < infos.length - 1 ? ", " : "");
-      i++;
+      if (info.passAsParameter()) number++ ;
     }
-    return params;
+    ArrayList<String> params = new ArrayList<String>();
+    for (ParameterInfo info : infos) {
+      if (info.passAsParameter()) {
+        PsiType paramType = info.getType();
+        final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(paramType);
+        if (unboxed != null) paramType = unboxed;
+        String paramTypeText = paramType == null || paramType.equalsToText("java.lang.Object") ? "" : paramType.getPresentableText() + " ";
+        params.add(paramTypeText + info.getName() + (i < number - 1 ? ", " : ""));
+        i++;
+      }
+    }
+    return params.toArray(new String[params.size()]);
   }
 
-  static String getTypeString(ExtractMethodInfoHelper helper) {
+  static String getTypeString(ExtractMethodInfoHelper helper, boolean forPresentation) {
     PsiType type = helper.getOutputType();
     final PsiPrimitiveType outUnboxed = PsiPrimitiveType.getUnboxedType(type);
     if (outUnboxed != null) type = outUnboxed;
-    String typeText = type.getPresentableText();
+    String typeText = forPresentation ? type.getPresentableText() : type.getCanonicalText();
     String returnType = typeText.equals("void") || typeText.equals("Object") || !helper.specifyType() ? "" : typeText;
     if (returnType.length() == 0) {
       typeText = "def ";
@@ -302,14 +360,20 @@ public class ExtractMethodUtil {
   static GrMethodCallExpression createMethodCallByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
     StringBuffer buffer = new StringBuffer();
     buffer.append(name).append("(");
+    int number = 0;
+    for (ParameterInfo info : helper.getParameterInfos()) {
+      if (info.passAsParameter()) number++ ;
+    }
     int i = 0;
     String[] argumentNames = helper.getArgumentNames();
     for (String argName : argumentNames) {
-      buffer.append(argName);
-      if (i < argumentNames.length - 1) {
-        buffer.append(",");
+      if (argName.length() > 0) {
+        buffer.append(argName);
+        if (i < number - 1) {
+          buffer.append(",");
+        }
+        i++;
       }
-      i++;
     }
 
     buffer.append(")");

@@ -25,11 +25,12 @@ public class ParameterInfo {
   private final String myOldName;
   private String myNewName;
   private int myPosition;
-  private final PsiType myType;
+  private boolean myPassAsParameter = true;
+  private PsiType myType;
 
   public ParameterInfo(@NotNull String oldName, int position, PsiType psiType){
     myOldName = oldName;
-    myType = psiType;
+    setType(psiType);
     myNewName = myOldName;
     myPosition = position;
   }
@@ -56,5 +57,17 @@ public class ParameterInfo {
 
   public void setNewName(String newName) {
     myNewName = newName;
+  }
+
+  public boolean passAsParameter() {
+    return myPassAsParameter;
+  }
+
+  public void setPassAsParameter(boolean passAsParameter) {
+    myPassAsParameter = passAsParameter;
+  }
+
+  public void setType(PsiType type) {
+    myType = type;
   }
 }

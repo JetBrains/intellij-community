@@ -29,6 +29,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 public interface GrReferenceExpression extends GrExpression, GrReferenceElement, GrNamedElement {
   GrExpression getQualifierExpression();
 
+  boolean isQualified();
+
   @Nullable
   IElementType getDotTokenType();
 

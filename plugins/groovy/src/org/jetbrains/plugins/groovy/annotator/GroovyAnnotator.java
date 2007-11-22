@@ -37,6 +37,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
@@ -61,7 +62,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -453,36 +453,7 @@ public class GroovyAnnotator implements Annotator {
     HashSet<GrMethod> duplicateMethodsWarning = new HashSet<GrMethod>();
     HashSet<GrMethod> duplicateMethodsErrors = new HashSet<GrMethod>();
 
-    for (GrMethod method : map.keySet()) {
-      List<GrMethod> duplicateMethods = map.get(method);
-
-      if (duplicateMethods != null && duplicateMethods.size() > 1) {
-        HashMap<PsiType, GrMethod> duplicateMethodsToReturnTypeMap = new HashMap<PsiType, GrMethod>();
-
-        for (GrMethod duplicateMethod : duplicateMethods) {
-          GrTypeElement typeElement = duplicateMethod.getReturnTypeElementGroovy();
-
-          PsiType methodReturnType;
-          if (typeElement != null) {
-            methodReturnType = typeElement.getType();
-          } else {
-            methodReturnType = PsiType.NULL;
-          }
-
-          duplicateMethodsWarning.add(duplicateMethod);
-
-          GrMethod grMethodWithType = duplicateMethodsToReturnTypeMap.get(methodReturnType);
-          if (grMethodWithType != null) {
-            duplicateMethodsErrors.add(duplicateMethod);
-            duplicateMethodsErrors.add(grMethodWithType);
-            duplicateMethodsWarning.remove(duplicateMethod);
-            duplicateMethodsWarning.remove(grMethodWithType);
-          }
-
-          duplicateMethodsToReturnTypeMap.put(methodReturnType, duplicateMethod);
-        }
-      }
-    }
+    DuplicatesUtil.collectMethodDuplicates(map, duplicateMethodsWarning, duplicateMethodsErrors);
 
     for (GrMethod duplicateMethod : duplicateMethodsErrors) {
       holder.createErrorAnnotation(duplicateMethod.getNameIdentifierGroovy(), GroovyBundle.message("repetitive.method.name.signature.and.return.type"));

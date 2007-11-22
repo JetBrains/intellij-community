@@ -451,6 +451,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return findChildByClass(GrExpression.class);
   }
 
+  public boolean isQualified() {
+    return getQualifierExpression() != null;
+  }
+
   @Nullable
   public PsiElement getDotToken() {
     return findChildByType(GroovyTokenTypes.DOTS);
