@@ -24,6 +24,7 @@ import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -560,7 +561,9 @@ public class UIUtil {
     }
   }
 
+  @TestOnly
   public static void dispatchAllInvocationEvents() {
+    assert SwingUtilities.isEventDispatchThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();

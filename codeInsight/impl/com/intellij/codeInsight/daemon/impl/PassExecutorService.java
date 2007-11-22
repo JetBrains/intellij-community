@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobScheduler;
@@ -330,9 +329,6 @@ public abstract class PassExecutorService {
               applied = true;
               log(updateProgress, pass, " Applied");
               pass.applyInformationToEditor();
-              if (pass instanceof GeneralHighlightingPass && pass.getId() == Pass.UPDATE_ALL) {
-                ((GeneralHighlightingPass)pass).reportErrorsToWolf();
-              }
             }
             afterApplyInformationToEditor(pass, fileEditor, updateProgress);
           }

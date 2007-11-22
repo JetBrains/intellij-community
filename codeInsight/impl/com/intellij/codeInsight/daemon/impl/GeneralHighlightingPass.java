@@ -376,6 +376,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     collection.addAll(myHighlights);
     myInjectedPsiHighlights.put(range, collection);
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myInjectedPsiHighlights, Pass.UPDATE_ALL);
+
+    if (myUpdateAll) {
+      reportErrorsToWolf();
+    }
   }
 
   public Collection<LineMarkerInfo> queryLineMarkers() {
@@ -570,7 +574,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
 
-  public void reportErrorsToWolf() {
+  private void reportErrorsToWolf() {
     if (!myFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
     Project project = myFile.getProject();
     if (!PsiManager.getInstance(project).isInProject(myFile)) return; // do not report problems in libraries
@@ -580,7 +584,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     List<Problem> problems = convertToProblems(getHighlights(), file, myHasErrorElement);
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(project);
 
-    if (isWholeFileHighlighting()) {
+    HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(getDocument(), HighlightSeverity.ERROR, project);
+    if (errors.length == 0 || isWholeFileHighlighting()) {
       wolf.reportProblems(file, problems);
     }
     else {

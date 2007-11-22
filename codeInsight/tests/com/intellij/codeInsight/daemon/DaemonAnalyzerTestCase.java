@@ -43,6 +43,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
+    //DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(getProject());
+    //codeAnalyzer.projectOpened();
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
     for (LocalInspectionTool tool : tools) {
       enableInspectionTool(tool);
