@@ -127,7 +127,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
   }
 
   private static void excludeProblem(final String externalName, final Map<String, Set<OfflineProblemDescriptor>> content) {
-    for (String packageName : content.keySet()) {
+    for (Iterator<String> iter = content.keySet().iterator(); iter.hasNext();) {
+      String packageName = iter.next();
       final Set<OfflineProblemDescriptor> descriptors = content.get(packageName);
       for (OfflineProblemDescriptor descriptor : descriptors) {
         if (Comparing.strEqual(descriptor.getFQName(), externalName)) {
@@ -139,7 +140,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
             }
           }
           if (excluded.isEmpty()) {
-            content.remove(packageName);
+            iter.remove();
           } else {
             content.put(packageName, excluded);
           }
