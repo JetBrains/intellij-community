@@ -43,7 +43,6 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -251,15 +250,6 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistentData(), element);
     EnvironmentVariablesComponent.writeExternal(element, getPersistentData().getEnvs());
-  }
-
-  @NotNull
-  public String getCoverageFileName() {
-    final String name = getGeneratedName();
-    if (name.equals(DEFAULT_PACKAGE_NAME)) {
-      return DEFAULT_PACKAGE_CONFIGURATION_NAME;
-    }
-    return name;
   }
 
   public void restoreOriginalModule(final Module originalModule) {

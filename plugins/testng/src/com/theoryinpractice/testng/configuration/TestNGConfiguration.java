@@ -29,7 +29,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.xml.Parser;
 
@@ -105,15 +104,6 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
 
   public TestData getPersistantData() {
     return data;
-  }
-
-  @NotNull
-  public String getCoverageFileName() {
-    final String name = getGeneratedName();
-    if (name.equals(DEFAULT_PACKAGE_NAME)) {
-      return DEFAULT_PACKAGE_CONFIGURATION_NAME;
-    }
-    return name;
   }
 
   protected boolean isMergeDataByDefault() {
