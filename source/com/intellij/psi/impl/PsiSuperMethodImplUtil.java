@@ -180,7 +180,7 @@ public class PsiSuperMethodImplUtil {
         return;
       }
     }
-    existing.addSuperSignature(copy(superSignature));
+    if (existing.getMethod() != superSignature.getMethod()) existing.addSuperSignature(copy(superSignature));
   }
 
   private static boolean isSuperMethod(PsiClass aClass, HierarchicalMethodSignatureImpl hierarchicalMethodSignature,
