@@ -5,7 +5,9 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -66,6 +68,12 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
       }
     }
     return RunManagerEx.getInstanceEx(project).createConfiguration("", myConfigurationFactory);
+  }
+
+  protected void copyStepsBeforeRun(Project project, RunConfiguration runConfiguration) {
+    final RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
+    final RunnerAndConfigurationSettingsImpl template = manager.getConfigurationTemplate(myConfigurationFactory);
+    manager.createStepsBeforeRun(template, runConfiguration);
   }
 
   protected static PsiMethod getContainingMethod(PsiElement element) {
