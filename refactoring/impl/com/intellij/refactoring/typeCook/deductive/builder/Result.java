@@ -2,6 +2,7 @@ package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Iterator;
 
 /**
  * @author db
@@ -97,7 +99,8 @@ public class Result {
         for (final Map.Entry<PsiTypeCastExpression,PsiType> entry : myCastToOperandType.entrySet()) {
           final PsiTypeCastExpression cast = entry.getKey();
           final PsiType operandType = myBinding.apply(entry.getValue());
-          if (!(operandType instanceof PsiTypeVariable) && cast.getType().isAssignableFrom(operandType)) {
+          final PsiType castType = cast.getType();
+          if (!(operandType instanceof PsiTypeVariable) && castType != null && !isBottomArgument(operandType) && castType.isAssignableFrom(operandType)) {
             set.add(cast);
           }
         }
@@ -105,6 +108,20 @@ public class Result {
     }
 
     return set;
+  }
+
+  private static boolean isBottomArgument(final PsiType type) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
+    final PsiClass clazz = resolveResult.getElement();
+    if (clazz != null) {
+      final Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator(clazz);
+      while (it.hasNext()) {
+        final PsiType t = resolveResult.getSubstitutor().substitute(it.next());
+        if (t == Bottom.BOTTOM) return true;
+      }
+    }
+
+    return false;
   }
 
   public void apply(final HashSet<PsiElement> victims) {
