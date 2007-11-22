@@ -41,6 +41,7 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
     configuration.beClassConfiguration(myTestClass);
     configuration.restoreOriginalModule(originalModule);
     configuration.setUpCoverageFilters();
+    copyStepsBeforeRun(project, configuration);
     return settings;
   }
 

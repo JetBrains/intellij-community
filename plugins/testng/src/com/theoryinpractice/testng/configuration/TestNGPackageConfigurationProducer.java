@@ -55,6 +55,7 @@ public class TestNGPackageConfigurationProducer extends TestNGConfigurationProdu
       }
     }
     configuration.setGeneratedName();
+    copyStepsBeforeRun(project, configuration);
     return settings;
   }
 

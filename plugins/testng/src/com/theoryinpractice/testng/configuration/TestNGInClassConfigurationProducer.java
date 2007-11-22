@@ -53,6 +53,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
     }
     configuration.restoreOriginalModule(originalModule);
     settings.setName(configuration.getName());
+    copyStepsBeforeRun(project, configuration);
     return (RunnerAndConfigurationSettingsImpl)settings;
   }
 

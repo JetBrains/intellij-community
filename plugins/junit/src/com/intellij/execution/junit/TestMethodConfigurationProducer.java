@@ -40,6 +40,7 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
     configuration.beMethodConfiguration(myMethodLocation);
     configuration.restoreOriginalModule(originalModule);
     configuration.setUpCoverageFilters();
+    copyStepsBeforeRun(project, configuration);
     return settings;
   }
 

@@ -69,6 +69,7 @@ public class AllInPackageConfigurationProducer extends JUnitConfigurationProduce
       }
     }
     configuration.setGeneratedName();
+    copyStepsBeforeRun(project, configuration);
     return settings;
   }
 
