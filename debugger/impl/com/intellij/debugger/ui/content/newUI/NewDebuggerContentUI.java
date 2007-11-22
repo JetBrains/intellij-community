@@ -45,8 +45,8 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   Project myProject;
 
   DefaultActionGroup myDebuggerActions = new DefaultActionGroup();
-  DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
 
+  Map <Grid, DefaultActionGroup> myMinimizedViewActions = new HashMap<Grid, DefaultActionGroup>();
   Map<Grid, Wrapper> myToolbarPlaceholders = new HashMap<Grid, Wrapper>();
 
   boolean myUiLastStateWasRestored;
@@ -110,6 +110,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     if (grid.isEmpty()) {
       myTabs.removeTab(grid);
       myToolbarPlaceholders.remove(grid);
+      myMinimizedViewActions.remove(grid);
     }
   }
 
@@ -129,11 +130,14 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
 
     Wrapper placeholder = new Wrapper();
-
     myToolbarPlaceholders.put(grid, placeholder);
     wrapper.add(placeholder, BorderLayout.EAST);
     toolbar.add(wrapper, BorderLayout.CENTER);
 
+
+    if (!myMinimizedViewActions.containsKey(grid)) {
+      myMinimizedViewActions.put(grid, new DefaultActionGroup());
+    }
 
     tab.setSideComponent(toolbar);
 
@@ -144,10 +148,12 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   }
 
   private void rebuildMinimizedActions() {
-    for (Wrapper each : myToolbarPlaceholders.values()) {
-      each.removeAll();
-      JComponent minimized = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myMinimizedViewActions, true).getComponent();
-      each.setContent(minimized);
+    for (Grid eachGrid : myMinimizedViewActions.keySet()) {
+      DefaultActionGroup eachGroup = myMinimizedViewActions.get(eachGrid);
+      Wrapper eachPlaceholder = myToolbarPlaceholders.get(eachGrid);
+
+      JComponent minimized = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, eachGroup, true).getComponent();
+      eachPlaceholder.setContent(minimized);
     }
 
     myTabs.revalidate();
@@ -343,7 +349,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     if (c.getRootPane() == null) return false;
 
      Container eachParent = c.getParent();
-     while (eachParent == null || eachParent.isValid()) {
+     while (eachParent != null && eachParent.isValid()) {
        eachParent = eachParent.getParent();
      }
 
@@ -360,9 +366,9 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
   public void minimize(final Content content, final CellTransform.Restore restore) {
     final Ref<AnAction> restoreAction = new Ref<AnAction>();
-    myMinimizedViewActions.add(new RestoreViewAction(content, new CellTransform.Restore() {
+    restoreAction.set(new RestoreViewAction(content, new CellTransform.Restore() {
       public ActionCallback restoreInGrid() {
-        myMinimizedViewActions.remove(restoreAction.get());
+        myMinimizedViewActions.get(getGridFor(content, false)).remove(restoreAction.get());
         return restore.restoreInGrid().doWhenDone(new Runnable() {
           public void run() {
             rebuildMinimizedActions();
@@ -370,6 +376,9 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
         });
       }
     }));
+
+    Grid grid = getGridFor(content, false);
+    myMinimizedViewActions.get(grid).add(restoreAction.get());
 
     rebuildMinimizedActions();
   }

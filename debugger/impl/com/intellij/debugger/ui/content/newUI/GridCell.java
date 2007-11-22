@@ -13,12 +13,15 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Set;
 
 public class GridCell {
@@ -53,6 +56,13 @@ public class GridCell {
     });
     myTabs.setSideComponentVertical(!horizontalToolbars);
     myTabs.setStealthTabMode(true);
+    myTabs.addTabMouseListener(new MouseAdapter() {
+      public void mousePressed(final MouseEvent e) {
+        if (UIUtil.isCloseClick(e)) {
+          minimize();
+        }
+      }
+    });
 
   }
 
@@ -112,6 +122,7 @@ public class GridCell {
       .setObject(content)
       .setPreferredFocusableComponent(content.getPreferredFocusableComponent());
 
+    myContents.remove(content);
     myContents.put(content, tabInfo);
 
     ActionGroup group = (ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW);
@@ -151,6 +162,8 @@ public class GridCell {
 
   public void minimize() {
     final Content content = getContentFor(myTabs.getSelectedInfo());
+    myMinimizedContents.add(content);
+    remove(content);
     myContainer.minimize(content, new CellTransform.Restore() {
       public ActionCallback restoreInGrid() {
         return restore(content);
@@ -159,6 +172,8 @@ public class GridCell {
   }
 
   private ActionCallback restore(Content content) {
+    myMinimizedContents.remove(content);
+    add(content);
     return new ActionCallback.Done();
   }
 
