@@ -1205,6 +1205,14 @@ class JavaDocInfoGenerator {
       PsiDocTagValue valueElement = localTags[i].getValueElement();
 
       if (valueElement != null) {
+        boolean contains = false;
+        for (PsiClassType classType : holder) {
+          if (Comparing.strEqual(valueElement.getText(), classType.getClassName())) {
+            contains = true;
+            break;
+          }
+        }
+        if (contains) continue;
         try {
           PsiClassType t = (PsiClassType)method.getManager().getElementFactory().createTypeFromText(valueElement.getText(), method);
 
