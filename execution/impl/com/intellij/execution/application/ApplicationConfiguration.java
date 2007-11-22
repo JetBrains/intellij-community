@@ -35,6 +35,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ApplicationConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, SingleClassConfiguration {
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.application.ApplicationConfiguration");
@@ -48,6 +50,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
   public boolean ENABLE_SWING_INSPECTOR;
 
   public String ENV_VARIABLES;
+  private Map<String,String> myEnvs = new LinkedHashMap<String, String>();
   public boolean PASS_PARENT_ENVS = true;
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
@@ -178,17 +181,27 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     readModule(element);
+    EnvironmentVariablesComponent.readExternal(element, getEnvs());
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
+    EnvironmentVariablesComponent.writeExternal(element, getEnvs());
   }
 
   @NotNull
   public String getCoverageFileName() {
     return MAIN_CLASS_NAME;
+  }
+
+  public Map<String, String> getEnvs() {
+    return myEnvs;
+  }
+
+  public void setEnvs(final Map<String, String> envs) {
+    this.myEnvs = envs;
   }
 
   private class MyJavaCommandLineState extends JavaCommandLineState {
@@ -200,7 +213,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
 
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
-      EnvironmentVariablesComponent.setupEnvs(params, ENV_VARIABLES, PASS_PARENT_ENVS);
+      EnvironmentVariablesComponent.setupEnvs(params, getEnvs(), PASS_PARENT_ENVS);
       final int classPathType = JavaParametersUtil.getClasspathType(getConfigurationModule(), MAIN_CLASS_NAME, false);
       JavaParametersUtil.configureModule(getConfigurationModule(), params, classPathType, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
       JavaParametersUtil.configureConfiguration(params, ApplicationConfiguration.this);
@@ -210,7 +223,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         ext.updateJavaParameters(ApplicationConfiguration.this, params);
       }
 
-      if (isCoverageEnabled()) {
+      if (!(getRunnerSettings().getData() instanceof DebuggingRunnerData) && isCoverageEnabled()) {
         final String coverageFileName = getCoverageFilePath();
         final long lastCoverageTime = System.currentTimeMillis();
         String name = getName();

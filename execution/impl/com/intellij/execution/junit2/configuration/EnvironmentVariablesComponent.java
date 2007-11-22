@@ -11,7 +11,9 @@ import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,12 +22,20 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> {
   private boolean myPassParentEnvs;
+  private Map<String, String> myEnvs;
+  @NonNls private static final String ENVS = "envs";
+  @NonNls private static final String ENV = "env";
+  @NonNls private static final String NAME = "name";
+  @NonNls private static final String VALUE = "value";
+  @NonNls private static final String OPTION = "option";
+  @NonNls private static final String ENV_VARIABLES = "ENV_VARIABLES";
+
   public EnvironmentVariablesComponent() {
     super();
     setComponent(new TextFieldWithBrowseButton());
@@ -37,12 +47,23 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     });
   }
 
-  public void setEnvs(String envs) {
-    getComponent().setText(envs);
+  public void setEnvs(Map<String, String> envs) {
+    myEnvs = envs;
+    @NonNls final StringBuilder buf = StringBuilderSpinAllocator.alloc();
+    try {
+      for (String variable : myEnvs.keySet()) {
+        buf.append(variable).append("=").append(myEnvs.get(variable)).append(";");
+      }
+      if (buf.length() > 0) buf.deleteCharAt(buf.length() - 1); //trim last ;
+      getComponent().setText(buf.toString());
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(buf);
+    }
   }
 
-  public String getEnvs() {
-    return getComponent().getText();
+  public Map<String, String> getEnvs() {
+    return myEnvs;
   }
 
   public boolean isPassParentEnvs() {
@@ -53,26 +74,55 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     myPassParentEnvs = passDefaultVariables;
   }
 
-  private static void envsFromString(final String envs, final Map<String, String> envsMap) {
-    if (envs == null || envs.length() == 0) return;
-    final String[] envVars = envs.split(";");
-    for (String envVar : envVars) {
-      final String[] nameValue = envVar.split("=");
-      if (nameValue != null && nameValue.length > 0) {
-        envsMap.put(nameValue[0], nameValue.length > 1 ? nameValue[1] : "");
-      }
-    }
-  }
-
-  public static void setupEnvs(JavaParameters javaParameters, String envs, boolean passDefault) {
-    final HashMap<String, String> envsMap = new HashMap<String, String>();
-    envsFromString(envs, envsMap);
-    if (!envsMap.isEmpty()) {
-      javaParameters.setEnv(envsMap);
+  public static void setupEnvs(JavaParameters javaParameters, Map<String, String> envs, boolean passDefault) {
+    if (!envs.isEmpty()) {
+      javaParameters.setEnv(envs);
       javaParameters.setPassParentEnvs(passDefault);
     }
   }
 
+  public static void readExternal(Element element, Map<String, String> envs) {
+    final Element envsElement = element.getChild(ENVS);
+    if (envsElement != null) {
+      for (Object o : envsElement.getChildren(ENV)) {
+        Element envElement = (Element)o;
+        final String envName = envElement.getAttributeValue(NAME);
+        final String envValue = envElement.getAttributeValue(VALUE);
+        if (envName != null && envValue != null) {
+          envs.put(envName, envValue);
+        }
+      }
+    } else { //compatibility
+      for (Object o : element.getChildren(OPTION)) {
+        if (Comparing.strEqual(((Element)o).getAttributeValue(NAME), ENV_VARIABLES)) {
+          final String val = ((Element)o).getAttributeValue(VALUE);
+          if (val != null) {
+            final String[] envVars = val.split(";");
+            if (envVars != null) {
+              for (String envVar : envVars) {
+                final int idx = envVar.indexOf('=');
+                if (idx > -1) {
+                  envs.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
+                }
+              }
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  public static void writeExternal(Element element, Map<String, String> envs) {
+    final Element envsElement = new Element(ENVS);
+    for (String envName : envs.keySet()) {
+      final Element envElement = new Element(ENV);
+      envElement.setAttribute(NAME, envName);
+      envElement.setAttribute(VALUE, envs.get(envName));
+      envsElement.addContent(envElement);
+    }
+    element.addContent(envsElement);
+  }
 
   private class MyEnvironmentVariablesDialog extends DialogWrapper {
     private final EnvVariablesTable myEnvVariablesTable;
@@ -83,10 +133,8 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
       super(EnvironmentVariablesComponent.this, true);
       myEnvVariablesTable = new EnvVariablesTable();
       final List<EnvironmentVariable> envVariables = new ArrayList<EnvironmentVariable>();
-      final HashMap<String, String> envsMap = new HashMap<String, String>();
-      envsFromString(getComponent().getText(), envsMap);
-      for (String envVariable : envsMap.keySet()) {
-        envVariables.add(new EnvironmentVariable(envVariable, envsMap.get(envVariable), false));
+      for (String envVariable : myEnvs.keySet()) {
+        envVariables.add(new EnvironmentVariable(envVariable, myEnvs.get(envVariable), false));
       }
       myEnvVariablesTable.setValues(envVariables);
       myUseDefaultCb.setSelected(isPassParentEnvs());
@@ -102,18 +150,12 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     }
 
     protected void doOKAction() {
-      @NonNls final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-      try {
-        for (EnvironmentVariable variable : myEnvVariablesTable.getEnvironmentVariables()) {
-          buf.append(variable.getName()).append("=").append(variable.getValue()).append(";");
-        }
-        if (buf.length() > 0) buf.deleteCharAt(buf.length() - 1); //trim last ;
-        setEnvs(buf.toString());
-        setPassParentEnvs(myUseDefaultCb.isSelected());
+      final Map<String, String> envs = new LinkedHashMap<String, String>();
+      for (EnvironmentVariable variable : myEnvVariablesTable.getEnvironmentVariables()) {
+        envs.put(variable.getName(), variable.getValue());
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(buf);
-      }
+      setEnvs(envs);
+      setPassParentEnvs(myUseDefaultCb.isSelected());
       super.doOKAction();
     }
   }
