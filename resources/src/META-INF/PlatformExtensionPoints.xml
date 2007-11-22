@@ -25,6 +25,9 @@
   <extensionPoint name="fileTypeFactory"
                   interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
 
+  <extensionPoint name="lang.languageProvider"
+                  interface="com.intellij.lang.LanguageProvider"/>
+
   <extensionPoint name="keymapExtension"
                   interface="com.intellij.openapi.keymap.KeymapExtension"/>
 
@@ -53,6 +56,5 @@
   <extensionPoint name="lang.syntaxHighlighterFactory"
                   beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
   <extensionPoint name="projectOpenProcessor"
-                  interface="com.intellij.projectImport.ProjectOpenProcessor"/>  
+                  interface="com.intellij.projectImport.ProjectOpenProcessor"/>
 </extensionPoints>
-  

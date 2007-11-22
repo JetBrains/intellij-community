@@ -236,7 +236,7 @@ public class BlockSupportImpl extends BlockSupport {
       final PsiElementFactoryImpl factory = (PsiElementFactoryImpl)manager.getElementFactory();
 
       final PsiFileImpl newFile = 
-        (PsiFileImpl)factory.createFileFromText(fileImpl.getName(), fileType, fileImpl.getLanguage(), fileImpl.getLanguageDialect(), newFileText, fileImpl.getModificationStamp(), true, false);
+        (PsiFileImpl)factory.createFileFromText(fileImpl.getName(), fileType, fileImpl.getViewProvider().getBaseLanguage(), fileImpl.getLanguage(), fileImpl.getLanguageDialect(), newFileText, fileImpl.getModificationStamp(), true, false);
       newFile.setOriginalFile(fileImpl);
 
       final FileElement newFileElement = (FileElement)newFile.getNode();

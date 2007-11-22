@@ -4,9 +4,12 @@ import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.LanguageProvider;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.*;
@@ -137,14 +140,31 @@ public class FileManagerImpl implements FileManager {
 
   private FileViewProvider createFileViewProvider(final VirtualFile file) {
     FileViewProvider viewProvider = null;
-    final FileType fileType = file.getFileType();
-    if (fileType instanceof LanguageFileType) {
-      final LanguageFileType languageFileType = (LanguageFileType)fileType;
-      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(languageFileType.getLanguage());
-      viewProvider = factory != null ? factory.createFileViewProvider(file, languageFileType.getLanguage(), myManager, true) : null;
+    Language language = getLanguage(file);
+    if (language != null) {
+      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
+      viewProvider = factory != null ? factory.createFileViewProvider(file, language, myManager, true) : null;
     }
     if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, file);
     return viewProvider;
+  }
+
+  @Nullable
+  public Language getLanguage(final VirtualFile file) {
+    Language language = null;
+    final LanguageProvider[] providers = Extensions.getExtensions(LanguageProvider.EP_NAME);
+    for (LanguageProvider provider : providers) {
+      language = provider.getLanguage(file, myManager.getProject());
+      if (language != null)
+        break;
+    }
+    if (language == null) {
+      final FileType fileType = file.getFileType();
+      if (fileType instanceof LanguageFileType) {
+        language = ((LanguageFileType)fileType).getLanguage();
+      }
+    }
+    return language;
   }
 
   public void runStartupActivity() {

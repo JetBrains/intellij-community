@@ -113,8 +113,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public PsiFile createFileFromText(@NotNull String name,
-                                    @NotNull FileType fileType,
-                                    @NotNull Language targetLanguage,
+                                    @NotNull FileType fileType, final Language language, @NotNull Language targetLanguage,
                                     LanguageDialect dialect, @NotNull CharSequence text,
                                     long modificationStamp,
                                     final boolean physical,
@@ -122,7 +121,6 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     final LightVirtualFile virtualFile = new LightVirtualFile(name, fileType, text, modificationStamp);
 
     if(fileType instanceof LanguageFileType){
-      final Language language = ((LanguageFileType)fileType).getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
       final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
       FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
