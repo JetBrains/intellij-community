@@ -61,12 +61,6 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
   }
 
-  protected boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
-    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
-    conflictsDialog.show();
-    return conflictsDialog.isOK();
-  }
-
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     // select editor text fragment
@@ -153,7 +147,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
     boolean canBeStatic = ExtractMethodUtil.canBeStatic(statements[0]);
 
-    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputNames, outputName, typeMap, elements, statements, canBeStatic);
+    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputNames, outputName, typeMap, elements, statements, methodOwner, canBeStatic);
 
     ExtractMethodSettings settings = getSettings(helper);
     if (!settings.isOK()) {

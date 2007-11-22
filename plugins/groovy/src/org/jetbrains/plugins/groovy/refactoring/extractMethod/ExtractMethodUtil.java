@@ -18,12 +18,18 @@ package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -40,10 +46,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
+import gnu.trove.TObjectHashingStrategy;
 
 /**
  * @author ilyas
@@ -67,6 +75,62 @@ public class ExtractMethodUtil {
     } else {
       return factory.createExpressionFromText(name + "= " + callExpression.getText());
     }
+  }
+
+  static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
+    ArrayList<String> conflicts = new ArrayList<String>();
+    GrMethodOwner owner = helper.getOwner();
+    assert owner != null;
+    PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.class);
+    final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<PsiMethod>() {
+      public int computeHashCode(PsiMethod method) {
+        return method.getSignature(PsiSubstitutor.EMPTY).hashCode();
+      }
+
+      public boolean equals(PsiMethod method1, PsiMethod method2) {
+        return method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY));
+      }
+    });
+
+    List<PsiMethod> list = map.get(method);
+    if (list == null) return true;
+    for (PsiMethod psiMethod : list) {
+      if (psiMethod != method) {
+        PsiClass containingClass = psiMethod.getContainingClass();
+        if (containingClass == null) return true;
+        String message = containingClass instanceof GroovyScriptClass ?
+            GroovyRefactoringBundle.message("method.is.alredy.defined.in.script", getMethodSignature(method),
+                CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName())) :
+            GroovyRefactoringBundle.message("method.is.alredy.defined.in.class", getMethodSignature(method),
+                CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName()));
+        conflicts.add(message);
+      }
+    }
+
+    return conflicts.size() <= 0 || reportConflicts(conflicts, helper.getProject());
+  }
+
+  private static String getMethodSignature(PsiMethod method) {
+    MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
+    String s = signature.getName() + "(";
+    int i = 0;
+    PsiType[] types = signature.getParameterTypes();
+    for (PsiType type : types) {
+      s += type.getPresentableText();
+      if (i < types.length - 1) {
+        s += ", ";
+      }
+      i++;
+    }
+    s += ")";
+    return s;
+
+  }
+
+  static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {
+    ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+    conflictsDialog.show();
+    return conflictsDialog.isOK();
   }
 
 
@@ -102,10 +166,9 @@ public class ExtractMethodUtil {
   }
 
 
-
   /*
-  Collect variable types in code block to be extracted
-   */
+ Collect variable types in code block to be extracted
+  */
   @Nullable
   static Map<String, PsiType> getVariableTypes(GrStatement[] statements) {
     if (statements.length == 0) return null;
@@ -218,7 +281,7 @@ public class ExtractMethodUtil {
     ParameterInfo[] infos = helper.getParameterInfos();
     int number = 0;
     for (ParameterInfo info : infos) {
-      if (info.passAsParameter()) number++ ;
+      if (info.passAsParameter()) number++;
     }
     ArrayList<String> params = new ArrayList<String>();
     for (ParameterInfo info : infos) {
@@ -362,7 +425,7 @@ public class ExtractMethodUtil {
     buffer.append(name).append("(");
     int number = 0;
     for (ParameterInfo info : helper.getParameterInfos()) {
-      if (info.passAsParameter()) number++ ;
+      if (info.passAsParameter()) number++;
     }
     int i = 0;
     String[] argumentNames = helper.getArgumentNames();
@@ -418,7 +481,7 @@ public class ExtractMethodUtil {
   static boolean canBeStatic(GrStatement statement) {
     PsiElement parent = statement.getParent();
     while (parent != null && !(parent instanceof PsiFile)) {
-      if (parent instanceof GrMethod){
+      if (parent instanceof GrMethod) {
         return ((GrMethod) parent).hasModifierProperty(PsiModifier.STATIC);
       }
       parent = parent.getParent();

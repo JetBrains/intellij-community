@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings;
@@ -76,6 +77,12 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
   }
 
   protected void doOKAction() {
+    String name = getEnteredName();
+    if (name == null) return;
+    GrMethod method = ExtractMethodUtil.createMethodByHelper(name, myHelper);
+    if (method != null && !ExtractMethodUtil.validateMethod(method, myHelper)) {
+      return;
+    }
     if (myCbSpecifyType.isEnabled()) {
       GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE = myCbSpecifyType.isSelected();
     }

@@ -32,7 +32,6 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
@@ -246,7 +245,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkMap(GrNamedArgument[] namedArguments, AnnotationHolder holder) {
-    final Map<GrNamedArgument, List<GrNamedArgument>> map = factorDuplicates(namedArguments, new TObjectHashingStrategy<GrNamedArgument>() {
+    final Map<GrNamedArgument, List<GrNamedArgument>> map = DuplicatesUtil.factorDuplicates(namedArguments, new TObjectHashingStrategy<GrNamedArgument>() {
       public int computeHashCode(GrNamedArgument arg) {
         final GrArgumentLabel label = arg.getLabel();
         if (label == null) return 0;
@@ -437,7 +436,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkDuplicateMethod(GrMethod[] methods, AnnotationHolder holder) {
-    final Map<GrMethod, List<GrMethod>> map = factorDuplicates(methods, new TObjectHashingStrategy<GrMethod>() {
+    final Map<GrMethod, List<GrMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<GrMethod>() {
       public int computeHashCode(GrMethod method) {
         return method.getSignature(PsiSubstitutor.EMPTY).hashCode();
       }
@@ -879,23 +878,6 @@ public class GroovyAnnotator implements Annotator {
 
   }
 
-
-  public static <D extends GroovyPsiElement> Map<D, List<D>> factorDuplicates(D[] elements, TObjectHashingStrategy<D> strategy) {
-    if (elements == null || elements.length == 0) return Collections.emptyMap();
-
-    THashMap<D, List<D>> map = new THashMap<D, List<D>>(strategy);
-
-    for (D element : elements) {
-      List<D> list = map.get(element);
-      if (list == null) {
-        list = new ArrayList<D>();
-      }
-      list.add(element);
-      map.put(element, list);
-    }
-
-    return map;
-  }
 
   private static String buildArgTypesList(PsiType[] argTypes) {
     StringBuilder builder = new StringBuilder();

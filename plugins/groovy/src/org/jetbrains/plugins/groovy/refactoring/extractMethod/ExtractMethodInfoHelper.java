@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,6 +44,7 @@ public class ExtractMethodInfoHelper {
   private final Map<String, ParameterInfo> myInputNamesMap = new HashMap<String, ParameterInfo>();
   private final String myOutputName;
   private final PsiType myOutputType;
+  private final GrMethodOwner myOwner;
   private final boolean myIsStatic;
   private boolean mySpecifyType;
   private final PsiElement[] myInnerElements;
@@ -55,9 +57,10 @@ public class ExtractMethodInfoHelper {
                                  Map<String, PsiType> typeMap,
                                  PsiElement[] innerElements,
                                  GrStatement[] statements,
-                                 boolean isStatic) {
+                                 GrMethodOwner owner, boolean isStatic) {
     myInnerElements = innerElements;
     myStatements = statements;
+    myOwner = owner;
     myIsStatic = isStatic;
     myVisibility = PsiModifier.PRIVATE;
     assert myStatements.length > 0;
@@ -118,10 +121,6 @@ public class ExtractMethodInfoHelper {
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  public boolean validateName(String newName) {
-    return true;
   }
 
   public ParameterInfo[] getParameterInfos() {
@@ -197,5 +196,9 @@ public class ExtractMethodInfoHelper {
 
   public void setSpecifyType(boolean specifyType) {
     mySpecifyType = specifyType;
+  }
+
+  public GrMethodOwner getOwner() {
+    return myOwner;
   }
 }

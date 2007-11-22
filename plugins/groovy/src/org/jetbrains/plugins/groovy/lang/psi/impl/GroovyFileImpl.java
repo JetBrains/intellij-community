@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -287,6 +288,16 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
     assert element instanceof GrMethod;
     return ((GrMethod) element);
+  }
+
+  public PsiMethod[] getAllMethods() {       // todo add inherited methods
+    ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
+    for (GrTopStatement statement : getTopStatements()) {
+      if (statement instanceof PsiMethod) {
+        methods.add(((PsiMethod) statement));
+      }
+    }
+    return methods.toArray(new PsiMethod[methods.size()]);
   }
 
   public void clearCaches() {
