@@ -41,36 +41,13 @@ public class ParametersList implements Cloneable{
   }
 
   public String getParametersString() {
-    final ArrayList<String> quoted = quoteParameters(myParameters);
     final StringBuffer buffer = new StringBuffer();
     final String separator = " ";
-    for (final String param : quoted) {
+    for (final String param : myParameters) {
       buffer.append(separator);
-      buffer.append(param);
+      buffer.append(GeneralCommandLine.quote(param));
     }
     return buffer.toString();
-  }
-
-  private static ArrayList<String> quoteParameters(final List<String> parameters) {
-    final ArrayList<String> result = new ArrayList<String>(parameters.size());
-    for (String parameter : parameters) {
-      if (hasWhitespace(parameter) && !(StringUtil.startsWithChar(parameter, '\"') && StringUtil.endsWithChar(parameter, '\"')))
-      {
-        parameter = "\"" + parameter + "\"";
-      }
-      result.add(parameter);
-    }
-    return result;
-  }
-
-  private static boolean hasWhitespace(final String string) {
-    final int length = string.length();
-    for (int i = 0; i < length; i++) {
-      if (Character.isWhitespace(string.charAt(i))) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public String[] getArray() {

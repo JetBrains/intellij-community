@@ -41,7 +41,7 @@ public class GeneralCommandLine {
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
 
   public void setExePath(@NonNls final String exePath) {
-    myExePath = quote(exePath.trim());
+    myExePath = exePath.trim();
   }
 
   public void setWorkDirectory(@NonNls final String path) {
@@ -80,11 +80,11 @@ public class GeneralCommandLine {
 
   public void addParameter(@NonNls final String parameter) {
     LOG.assertTrue(parameter != null);
-    myProgramParams.add(quote(parameter));
+    myProgramParams.add(parameter);
   }
 
   public String getCommandLineString() {
-    final StringBuffer buffer = new StringBuffer(myExePath);
+    final StringBuffer buffer = new StringBuffer(quoteParameter(myExePath));
     appendParams( buffer );
     return buffer.toString();
   }
@@ -95,10 +95,10 @@ public class GeneralCommandLine {
     return buffer.toString();
   }
 
-  private void appendParams( StringBuffer buffer )
-  {
-    for( final String s : myProgramParams.getList() )
-      buffer.append(" ").append(s);
+  private void appendParams( StringBuffer buffer ) {
+    for( final String param : myProgramParams.getList() ) {
+      buffer.append(" ").append(quoteParameter(param));
+    }
   }
 
   public Charset getCharset() {
@@ -165,14 +165,32 @@ public class GeneralCommandLine {
     return myProgramParams;
   }
 
+  private static String quoteParameter(final String param) {
+    if (!SystemInfo.isWindows) {
+      return param;
+    }
+    return quote(param);
+  }
+
   public static String quote(final String parameter) {
-    if (parameter.indexOf(' ') < 0) {
+    if (parameter == null || !hasWhitespace(parameter)) {
       return parameter; // no need to quote
     }
-    if (parameter.length() >= 2 && parameter.charAt(0) == '"' && parameter.charAt(parameter.length() - 1) == '"' && !parameter.endsWith("\\\"")) {
+    if (parameter.length() >= 2 && parameter.startsWith("\"") && parameter.endsWith("\"")) {
       return parameter; // already quoted
     }
-    return SystemInfo.isWindows ? "\"" + parameter + "\"" : parameter;
+    // need to escape trailing slash if any, otherwise it will escape the ending quote
+    return "\"" + parameter + (parameter.endsWith("\\")? "\\\"" : "\"");
+  }
+
+  private static boolean hasWhitespace(final String string) {
+    final int length = string.length();
+    for (int i = 0; i < length; i++) {
+      if (Character.isWhitespace(string.charAt(i))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public GeneralCommandLine clone() {
