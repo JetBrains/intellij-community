@@ -32,7 +32,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -189,11 +188,6 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
-  }
-
-  @NotNull
-  public String getCoverageFileName() {
-    return MAIN_CLASS_NAME;
   }
 
   public Map<String, String> getEnvs() {
