@@ -251,6 +251,10 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   public void restoreLayout() {
   }
 
+  public static boolean isActive() {
+    return "true".equalsIgnoreCase(System.getProperty("new.debugger.ui"));
+  }
+
   private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
     public MyComponent() {
       setOpaque(true);
