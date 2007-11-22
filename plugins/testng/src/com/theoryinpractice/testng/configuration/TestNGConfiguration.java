@@ -11,6 +11,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
+import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -255,6 +256,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistantData(), element);
+    EnvironmentVariablesComponent.readExternal(element, getPersistantData().getEnvs());
 
     Map<String, String> properties = getPersistantData().TEST_PROPERTIES;
     properties.clear();
@@ -284,6 +286,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistantData(), element);
+    EnvironmentVariablesComponent.writeExternal(element, getPersistantData().getEnvs());
 
     Element propertiesElement = element.getChild("properties");
 

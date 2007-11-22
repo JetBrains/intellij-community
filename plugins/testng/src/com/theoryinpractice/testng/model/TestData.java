@@ -14,10 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:11:01 PM
@@ -37,6 +34,7 @@ public class TestData implements Cloneable
   public String ANNOTATION_TYPE;
 
   public String ENV_VARIABLES;
+  private Map<String, String> ENVS = new LinkedHashMap<String, String>();
   public boolean PASS_PARENT_ENVS = true;
 
   public AdditionalClasspath ADDITIONAL_CLASS_PATH;
@@ -242,5 +240,13 @@ public class TestData implements Cloneable
       return Comparing.strEqual(MAIN_CLASS_NAME, ExecutionUtil.getRuntimeQualifiedName((PsiClass) element));
     }
     return false;
+  }
+
+  public Map<String, String> getEnvs() {
+    return ENVS;
+  }
+
+  public void setEnvs(final Map<String, String> envs) {
+    ENVS = envs;
   }
 }

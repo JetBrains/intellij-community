@@ -31,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
@@ -95,7 +94,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
     configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
 
-    configuration.getPersistentData().ENV_VARIABLES = myEnvVariablesComponent.getEnvs().trim().length() > 0 ? FileUtil.toSystemIndependentName(myEnvVariablesComponent.getEnvs()) : null;
+    configuration.getPersistentData().setEnvs(myEnvVariablesComponent.getEnvs());
     configuration.getPersistentData().PASS_PARENT_ENVS = myEnvVariablesComponent.isPassParentEnvs();
   }
 
@@ -115,7 +114,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     }
     myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
 
-    myEnvVariablesComponent.setEnvs(configuration.getPersistentData().ENV_VARIABLES != null ? FileUtil.toSystemDependentName(configuration.getPersistentData().ENV_VARIABLES) : "");
+    myEnvVariablesComponent.setEnvs(configuration.getPersistentData().getEnvs());
     myEnvVariablesComponent.setPassParentEnvs(configuration.getPersistentData().PASS_PARENT_ENVS);
   }
 

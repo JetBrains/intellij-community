@@ -21,6 +21,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.junit.coverage.JUnitCoverageConfigurable;
+import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -46,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class JUnitConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.JUnitConfiguration");
@@ -176,7 +179,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
   }
 
   public void setGeneratedName() {
-    setName(getGeneratedName());    
+    setName(getGeneratedName());
   }
 
   public void beMethodConfiguration(final Location<PsiMethod> methodLocation) {
@@ -239,6 +242,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistentData(), element);
+    EnvironmentVariablesComponent.readExternal(element, getPersistentData().getEnvs());
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
@@ -246,6 +250,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistentData(), element);
+    EnvironmentVariablesComponent.writeExternal(element, getPersistentData().getEnvs());
   }
 
   @NotNull
@@ -289,9 +294,11 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
 
+    //iws/ipr compatibility
     public String ENV_VARIABLES;
+    private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
     public boolean PASS_PARENT_ENVS = true;
-   
+
     public AdditionalClasspath ADDITIONAL_CLASS_PATH;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
 
@@ -448,6 +455,13 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
       TEST_SEARCH_SCOPE.setScope(scope);
     }
 
+    public Map<String, String> getEnvs() {
+      return myEnvs;
+    }
+
+    public void setEnvs(final Map<String, String> envs) {
+      myEnvs = envs;
+    }
   }
 
 }

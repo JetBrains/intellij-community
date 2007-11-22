@@ -22,7 +22,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -204,8 +203,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       packagesInProject.setSelected(true);
     }
     alternateJDK.init(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
-    envVariablesComponent.setEnvs(
-        config.getPersistantData().ENV_VARIABLES != null ? FileUtil.toSystemDependentName(config.getPersistantData().ENV_VARIABLES) : "");
+    envVariablesComponent.setEnvs(config.getPersistantData().getEnvs());
     envVariablesComponent.setPassParentEnvs(config.getPersistantData().PASS_PARENT_ENVS);
     propertiesList = new ArrayList<Map.Entry>();
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
@@ -246,8 +244,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     data.TEST_LISTENERS.clear();
     data.TEST_LISTENERS.addAll(listenerModel.getListenerList());
 
-    data.ENV_VARIABLES =
-        envVariablesComponent.getEnvs().trim().length() > 0 ? FileUtil.toSystemIndependentName(envVariablesComponent.getEnvs()) : null;
+    data.setEnvs(envVariablesComponent.getEnvs());
     data.PASS_PARENT_ENVS = envVariablesComponent.isPassParentEnvs();
   }
 

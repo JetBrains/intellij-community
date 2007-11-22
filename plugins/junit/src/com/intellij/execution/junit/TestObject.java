@@ -169,8 +169,7 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   protected void initialize() throws ExecutionException {
-    EnvironmentVariablesComponent.setupEnvs(myJavaParameters,
-                                            myConfiguration.getPersistentData().ENV_VARIABLES, myConfiguration.getPersistentData().PASS_PARENT_ENVS);
+    EnvironmentVariablesComponent.setupEnvs(myJavaParameters, myConfiguration.getPersistentData().getEnvs(), myConfiguration.getPersistentData().PASS_PARENT_ENVS);
     JavaParametersUtil.configureConfiguration(myJavaParameters, myConfiguration);
     myJavaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
     final Module module = myConfiguration.getConfigurationModule().getModule();
@@ -186,7 +185,7 @@ public abstract class TestObject implements JavaCommandLine {
     PathUtilEx.addRtJar(myJavaParameters.getClassPath());
     PathUtilEx.addJunit4RtJar(myJavaParameters.getClassPath());
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
-    if (myConfiguration.isCoverageEnabled()) {
+    if (!(myRunnerSettings.getData() instanceof DebuggingRunnerData) && myConfiguration.isCoverageEnabled()) {
       final String coverageFileName = myConfiguration.getCoverageFilePath();
       final long lastCoverageTime = System.currentTimeMillis();
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(myProject);
