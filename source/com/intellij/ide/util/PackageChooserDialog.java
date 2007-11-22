@@ -1,5 +1,7 @@
 package com.intellij.ide.util;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -9,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.util.Comparing;
@@ -19,15 +22,13 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiPackage;
+import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.Icons;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Icons;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.ide.IdeBundle;
-import com.intellij.CommonBundle;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -258,7 +259,16 @@ public class PackageChooserDialog extends PackageChooser {
     final PsiPackage selectedPackage = getTreeSelection();
     if (selectedPackage == null) return;
 
-    final String newPackageName = Messages.showInputDialog(myProject, IdeBundle.message("prompt.enter.a.new.package.name"), IdeBundle.message("title.new.package"), Messages.getQuestionIcon());
+    final String newPackageName = Messages.showInputDialog(myProject, IdeBundle.message("prompt.enter.a.new.package.name"), IdeBundle.message("title.new.package"), Messages.getQuestionIcon(), "",
+                                                           new InputValidator() {
+                                                             public boolean checkInput(final String inputString) {
+                                                               return inputString != null && inputString.length() > 0;
+                                                             }
+
+                                                             public boolean canClose(final String inputString) {
+                                                               return checkInput(inputString);
+                                                             }
+                                                           });
     if (newPackageName == null) return;
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
