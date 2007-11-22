@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -31,12 +30,13 @@ import java.util.List;
 public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions, CellTransform.Facade {
 
   ContentManager myManager;
-  private MyComponent myComponent = new MyComponent();
   DebuggerSettings mySettings;
 
-  private JBTabs myTabs;
   ActionManager myActionManager;
-  private String mySessionName;
+  String mySessionName;
+  MyComponent myComponent = new MyComponent();
+
+  JBTabs myTabs;
   private Comparator<TabInfo> myTabsComparator = new Comparator<TabInfo>() {
     public int compare(final TabInfo o1, final TabInfo o2) {
       return ((Integer)o1.getObject()).compareTo(((Integer)o2.getObject()));
@@ -44,10 +44,12 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   };
   Project myProject;
 
-  private DefaultActionGroup myDebuggerActions = new DefaultActionGroup();
-  private DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
+  DefaultActionGroup myDebuggerActions = new DefaultActionGroup();
+  DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
 
-  private Map<Grid, Wrapper> myToolbarPlaceholders = new HashMap<Grid, Wrapper>();
+  Map<Grid, Wrapper> myToolbarPlaceholders = new HashMap<Grid, Wrapper>();
+
+  boolean myUiLastStateWasRestored;
 
   public NewDebuggerContentUI(Project project, ActionManager actionManager, DebuggerSettings settings, String sessionName) {
     myProject = project;
@@ -84,7 +86,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
       public void contentAdded(final ContentManagerEvent event) {
         getGridFor(event.getContent(), true).add(event.getContent(), false);
 
-        updateTabsUI(true);
+        updateTabsUI();
       }
 
       public void contentRemoved(final ContentManagerEvent event) {
@@ -93,7 +95,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
           grid.remove(event.getContent());
           removeGridIfNeeded(grid);
         }
-        updateTabsUI(false);
+        updateTabsUI();
       }
 
       public void contentRemoveQuery(final ContentManagerEvent event) {
@@ -127,7 +129,6 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
 
     Wrapper placeholder = new Wrapper();
-    placeholder.setBorder(new LineBorder(Color.blue));
 
     myToolbarPlaceholders.put(grid, placeholder);
     wrapper.add(placeholder, BorderLayout.EAST);
@@ -153,19 +154,19 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     myTabs.repaint();
   }
 
-  private void updateTabsUI(boolean isAddingContent) {
+  private void updateTabsUI() {
     java.util.List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo each : tabs) {
-      updateTabUI(each, isAddingContent);
+      updateTabUI(each);
     }
   }
 
-  private void updateTabUI(TabInfo tab, boolean isAddingContent) {
+  private void updateTabUI(TabInfo tab) {
     String title = getSettings().getTabTitle(getTabIndex(tab));
     Icon icon = getSettings().getTabIcon(getTabIndex(tab));
 
     Grid grid = getGridFor(tab);
-    grid.updateGridUI(isAddingContent);
+    grid.updateGridUI();
 
     List<Content> contents = grid.getContents();
     if (title == null) {
@@ -186,6 +187,31 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
 
     tab.setText(title).setIcon(icon);
+  }
+
+  private void restoreLastUiState() {
+    if (!NewDebuggerContentUI.enusreValid(myTabs)) return;
+
+
+    List<TabInfo> tabs = myTabs.getTabs();
+    for (TabInfo each : tabs) {
+      getGridFor(each).restoreLastUiState();
+    }
+
+    int selected = getSettings().getSelectedTab();
+
+    if (myTabs.getTabCount() > 0) {
+      myTabs.setSelected(myTabs.getTabAt(0), false);
+    }
+
+    for (TabInfo each : myTabs.getTabs()) {
+      int index = getTabIndex(each);
+      if (index == selected) {
+        myTabs.setSelected(each, false);
+        break;
+      }
+    }
+
   }
 
   private int getTabIndex(final TabInfo tab) {
@@ -270,6 +296,20 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
         return null;
       }
     }
+
+    public void addNotify() {
+      super.addNotify();
+
+      if (!myUiLastStateWasRestored) {
+        myUiLastStateWasRestored = true;
+
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            restoreLastUiState();
+          }
+        });
+      }
+    }
   }
 
   public static void removeScrollBorder(final Component c) {
@@ -294,8 +334,24 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     }
   }
 
+
   private static boolean isPrimitive(Component c) {
     return c instanceof JPanel;
+  }
+
+  public static boolean enusreValid(JComponent c) {
+    if (c.getRootPane() == null) return false;
+
+     Container eachParent = c.getParent();
+     while (eachParent == null || eachParent.isValid()) {
+       eachParent = eachParent.getParent();
+     }
+
+     if (eachParent == null) return false;
+
+     eachParent.validate();
+
+    return true;
   }
 
   public ContentUI getContentUI() {

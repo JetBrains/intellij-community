@@ -6,14 +6,13 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.HashMap;
 
-import javax.swing.*;
 import java.util.*;
 
 class Grid extends Wrapper implements Disposable, CellTransform.Facade {
@@ -43,6 +42,8 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
   ContentManager myContentManager;
 
   private NewDebuggerContentUI myUI;
+
+  private boolean myLastUiStateWasRestored;
 
   public Grid(NewDebuggerContentUI ui, String sessionName, boolean horizontalToolbars) {
     myUI = ui;
@@ -74,18 +75,17 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
 
   public void addNotify() {
     super.addNotify();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        restoreProportions();
-      }
-    });
+
+    if (!myLastUiStateWasRestored) {
+      myLastUiStateWasRestored = true;
+      restoreLastUiState();
+    }
 
     updateSelection(true);
   }
 
   public void removeNotify() {
     super.removeNotify();
-
     updateSelection(false);
   }
 
@@ -95,11 +95,6 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
     }
   }
 
-  private void restoreProportions() {
-    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
-      cell.restoreProportion();
-    }
-  }
 
   public void add(final Content content, final boolean select) {
     GridCell cell = getCellFor(content);
@@ -131,24 +126,22 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
     return mySettings.getNewContentState(content);
   }
 
-  public void updateGridUI(boolean restorePropertions) {
+  public void updateGridUI() {
     Iterator<GridCell> cells = myPlaceInGrid2Cell.values().iterator();
     while (cells.hasNext()) {
       GridCell each = cells.next();
       each.setHideTabs(myContents.size() == 1);
     }
-
-    if (restorePropertions) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          restoreProportions();
-        }
-      });
-    }
   }
 
   public boolean isEmpty() {
     return myContent2Cell.isEmpty();
+  }
+
+  public void restoreLastUiState() {
+    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
+      cell.restoreLastUiState();
+    }
   }
 
   static class Placeholder extends Wrapper implements NullableComponent {
@@ -160,7 +153,9 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
   public void dispose() {
   }
 
-  void restoreProportion(PlaceInGrid placeInGrid) {
+  void restoreLastSplitterProportions(PlaceInGrid placeInGrid) {
+    if (!NewDebuggerContentUI.enusreValid(this)) return;
+
     final float proportion = mySettings.getSplitProportion(placeInGrid);
     switch (placeInGrid) {
       case left:

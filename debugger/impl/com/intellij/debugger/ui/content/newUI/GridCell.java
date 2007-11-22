@@ -90,7 +90,7 @@ public class GridCell {
       }
     }
 
-    restoreProportion();
+    restoreLastUiState();
 
     myTabs.revalidate();
     myTabs.repaint();
@@ -134,8 +134,8 @@ public class GridCell {
     myTabs.setSideComponentVertical(!horizontal);
   }
 
-  public void restoreProportion() {
-    myContainer.restoreProportion(myPlaceInGrid);
+  public void restoreLastUiState() {
+    myContainer.restoreLastSplitterProportions(myPlaceInGrid);
   }
 
   public void updateSelection(final boolean isShowing) {

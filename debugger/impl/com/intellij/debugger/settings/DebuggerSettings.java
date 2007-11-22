@@ -309,6 +309,10 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     return null;
   }
 
+  public int getSelectedTab() {
+    return 0;
+  }
+
   public boolean isToolbarHorizontal() {
     return HORIZONTAL_TOOLBAR;
   }
