@@ -281,6 +281,11 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertNull(ref.resolve());
   }
 
+  public void testGrvy723() throws Exception {
+    PsiReference ref = configureByFile("grvy723/A.groovy");
+    assertNotNull(ref.resolve());
+  }
+
   public void testAliasedConstructor() throws Exception {
     PsiReference ref = configureByFile("aliasedConstructor/A.groovy");
     PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
