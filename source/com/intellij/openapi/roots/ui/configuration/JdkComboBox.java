@@ -24,9 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -195,6 +193,11 @@ class JdkComboBox extends JComboBox{
     public JdkComboBoxModel(final ProjectJdksModel jdksModel) {
       super();
       final Sdk[] jdks = jdksModel.getSdks();
+      Arrays.sort(jdks, new Comparator<Sdk>() {
+        public int compare(final Sdk s1, final Sdk s2) {
+          return s1.getName().compareToIgnoreCase(s2.getName());
+        }
+      });
       for (Sdk jdk : jdks) {
         addElement(new JdkComboBoxItem((ProjectJdk)jdk));
       }
