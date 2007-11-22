@@ -74,9 +74,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
     // trim it if it's necessary
     GroovyRefactoringUtil.trimSpacesAndComments(editor, file, false);
-    if (invokeOnEditor(project, editor, file)) {
-      editor.getSelectionModel().removeSelection();
-    }
+    invokeOnEditor(project, editor, file);
   }
 
   private boolean invokeOnEditor(Project project, Editor editor, PsiFile file) {
@@ -219,6 +217,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(runnable);
+            editor.getSelectionModel().removeSelection();
           }
         }, REFACTORING_NAME, null);
 
