@@ -159,11 +159,6 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     }
   }
 
-  // For tests
-  public void setMethodName(@NotNull String s) {
-    myNameField.setText(s);
-  }
-
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
