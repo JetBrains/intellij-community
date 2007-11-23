@@ -37,7 +37,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     return collectAllVisiblePlugins(xmlFile);
   }
 
-  public static Collection<? extends IdeaPlugin> collectAllVisiblePlugins(final XmlFile xmlFile) {
+  public static Collection<IdeaPlugin> collectAllVisiblePlugins(final XmlFile xmlFile) {
     List<IdeaPlugin> ideaPlugins = new ArrayList<IdeaPlugin>();
     final Project project = xmlFile.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);

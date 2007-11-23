@@ -39,7 +39,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
     final Collection<String> dependencies = getDependencies(ideaPlugin);
 
-    final Collection<? extends IdeaPlugin> allVisiblePlugins = IdeaPluginConverter.collectAllVisiblePlugins(xmlFile);
+    final Collection<IdeaPlugin> allVisiblePlugins = IdeaPluginConverter.collectAllVisiblePlugins(xmlFile);
 
     List<IdeaPlugin> depPlugins = new ArrayList<IdeaPlugin>();
 
@@ -63,6 +63,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       }
     }));
     deps.add(ProjectRootManager.getInstance(xmlFile.getProject()));
+    deps.add(ideaPlugin.getRoot());
 
     //dependencies
     return deps.toArray(new Object[deps.size()]);
