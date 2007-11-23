@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -392,7 +393,10 @@ public class FetchExtResourceAction extends BaseIntentionAction {
       resPath += Integer.toHexString(resourceUrl.hashCode()) + "_" + resourceUrl.substring(slashIndex + 1);
     }
 
-    if (resourceUrl.indexOf('.',slashIndex) == -1) {
+    final int lastDoPosInResourceUrl = resourceUrl.lastIndexOf('.', slashIndex);
+    if (lastDoPosInResourceUrl == -1 || 
+        FileTypeManager.getInstance().getFileTypeByExtension(resourceUrl.substring(lastDoPosInResourceUrl + 1)) == StdFileTypes.UNKNOWN
+       ) {
       // remote url does not contain file with extension
       resPath += "." + StdFileTypes.XML.getDefaultExtension();
     }
