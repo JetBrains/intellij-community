@@ -157,7 +157,7 @@ public class PluginBuildParticipant extends BuildParticipantBase {
           if (file.getFileSystem() instanceof JarFileSystem) {
             file = ((JarFileSystem)file.getFileSystem()).getVirtualFileForJar(file);
           }
-          if (libDir != null && VfsUtil.isAncestor(libDir, file, false)) {
+          if (libDir != null && file != null && VfsUtil.isAncestor(libDir, file, false)) {
             context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("dont.add.idea.libs.to.classpath", file.getName()), null,
                                -1, -1);
           }
