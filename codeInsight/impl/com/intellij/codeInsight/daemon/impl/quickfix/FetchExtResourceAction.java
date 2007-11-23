@@ -445,7 +445,15 @@ public class FetchExtResourceAction extends BaseIntentionAction {
             
             if (schemaLocation != null) {
               final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
-              if (references.length > 0) result.add(schemaLocation);
+              if (references.length > 0) {
+                final String namespace = tag.getAttributeValue("namespace");
+
+                if (namespace != null) {
+                  result.add(namespace);
+                } else {
+                  result.add(schemaLocation);
+                }
+              }
             }
 
             final String prefix = tag.getPrefixByNamespace(XmlUtil.XML_SCHEMA_INSTANCE_URI);
