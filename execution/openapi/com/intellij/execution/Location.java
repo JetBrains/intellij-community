@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 
@@ -32,8 +33,10 @@ public abstract class Location<E extends PsiElement> {
   @NotNull public abstract Project getProject();
   @NotNull public abstract <T extends PsiElement> Iterator<Location<T>> getAncestors(Class<T> ancestorClass, boolean strict);
 
+  @Nullable
   public OpenFileDescriptor getOpenFileDescriptor() {
     final E psiElement = getPsiElement();
+    if (!psiElement.isValid()) return null;
     final PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) return null;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
