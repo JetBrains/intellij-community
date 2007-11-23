@@ -50,10 +50,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class JavaFileHighlighter extends SyntaxHighlighterBase {
-  private static Map<IElementType, TextAttributesKey> ourMap1;
-  private static Map<IElementType, TextAttributesKey> ourMap2;
+  private static final Map<IElementType, TextAttributesKey> ourMap1;
+  private static final Map<IElementType, TextAttributesKey> ourMap2;
 
-  private LanguageLevel myLanguageLevel;
+  private final LanguageLevel myLanguageLevel;
 
   public JavaFileHighlighter() {
     this(LanguageLevel.HIGHEST);
@@ -77,8 +77,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
       }
     });
 
-    for (int i = 0; i < javadoc.length; i++) {
-      IElementType type = javadoc[i];
+    for (IElementType type : javadoc) {
       ourMap1.put(type, HighlighterColors.JAVA_DOC_COMMENT);
     }
 
@@ -132,8 +131,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
                                         XmlTokenType.XML_CHAR_ENTITY_REF,
                                         XmlTokenType.XML_EQ};
 
-    for (int i = 0; i < javaDocMarkup.length; i++) {
-      IElementType idx = javaDocMarkup[i];
+    for (IElementType idx : javaDocMarkup) {
       ourMap1.put(idx, HighlighterColors.JAVA_DOC_COMMENT);
       ourMap2.put(idx, HighlighterColors.JAVA_DOC_MARKUP);
     }
