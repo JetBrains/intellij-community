@@ -17,11 +17,12 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.*;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -34,7 +35,11 @@ import java.util.*;
  */
 public class ReachingDefinitionsCollector {
   public static VariableInfo obtainVariableFlowInformation(final GrStatement first, final GrStatement last) {
-    GrControlFlowOwner flowOwner = PsiTreeUtil.getParentOfType(first, GrControlFlowOwner.class);
+    GroovyPsiElement context = PsiTreeUtil.getParentOfType(first, GrMethod.class, GrClosableBlock.class, GroovyFileBase.class);
+    GrControlFlowOwner flowOwner;
+    if (context instanceof GrMethod) flowOwner = ((GrMethod) context).getBlock();
+    else flowOwner = (GrControlFlowOwner) context;
+
     assert flowOwner != null;
     assert PsiTreeUtil.isAncestor(flowOwner, last, true);
 
