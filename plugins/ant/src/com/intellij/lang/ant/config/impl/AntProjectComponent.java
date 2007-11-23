@@ -36,12 +36,16 @@ public class AntProjectComponent implements ProjectComponent {
         final PomChangeSet changeSet = event.getChangeSet(xmlAspect);
         if (changeSet instanceof XmlChangeSet) {
           final XmlChangeSet xmlChangeSet = (XmlChangeSet)changeSet;
-          final XmlFile file = xmlChangeSet.getChangedFile();
-          if (file == null || !AntLanguageExtension.isAntFile(file)) return;
-          
-          final AntChangeVisitor visitor = AntSupport.getChangeVisitor();
-          for (XmlChange change : xmlChangeSet.getChanges()) {
-            change.accept(visitor);
+
+          for (XmlFile file : xmlChangeSet.getChangedFiles()) {
+            if (file != null && AntLanguageExtension.isAntFile(file)) {
+              final AntChangeVisitor visitor = AntSupport.getChangeVisitor();
+              for (XmlChange change : xmlChangeSet.getChanges()) {
+                change.accept(visitor);
+              }
+
+              break;
+            }
           }
         }
       }

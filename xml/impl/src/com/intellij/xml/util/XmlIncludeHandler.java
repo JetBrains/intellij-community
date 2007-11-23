@@ -3,8 +3,13 @@ package com.intellij.xml.util;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.paths.PathReferenceManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.xml.XmlAspect;
+import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
+import com.intellij.pom.xml.impl.events.XmlElementChangedImpl;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
+import com.intellij.psi.impl.source.xml.XmlElementImpl;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +23,13 @@ import java.util.List;
  */
 public class XmlIncludeHandler implements PsiIncludeManager.PsiIncludeHandler {
   @NonNls private static final String INCLUDE_TAG_NAME = "include";
+  private final XmlAspect myXmlAspect;
+  private final PomModel myModel;
+
+  public XmlIncludeHandler(XmlAspect xmlAspect, final PomModel model) {
+    myXmlAspect = xmlAspect;
+    myModel = model;
+  }
 
   public boolean shouldCheckFile(@NotNull final VirtualFile psiFile) {
     return psiFile.getFileType() == StdFileTypes.XML;
@@ -49,11 +61,19 @@ public class XmlIncludeHandler implements PsiIncludeManager.PsiIncludeHandler {
     return result.toArray(new PsiIncludeManager.IncludeInfo[result.size()]);
   }
 
-  public void includeChanged(final PsiElement includeDirective, final PsiFile targetFile, final PsiTreeChangeEvent event) {
-    assert includeDirective instanceof XmlTagImpl;
+  public void includeChanged(final PsiElement includeDirective, final PsiFile targetFile, final PomModelEvent event) {
+    final PsiElement parent = includeDirective.getParent();
+    assert parent instanceof XmlElementImpl;
 
-    ((XmlTagImpl)includeDirective).clearCaches();
-    //todo: fire pom event
+    final XmlFile xmlFile = (XmlFile)includeDirective.getContainingFile();
+
+    final XmlElementImpl xmlParent = (XmlElementImpl)parent;
+    xmlParent.clearCaches();
+
+    final XmlAspectChangeSetImpl changeSet = event.registerChangeSetIfAbsent(myXmlAspect, new XmlAspectChangeSetImpl(myModel));
+    changeSet.addChangedFile(xmlFile);
+
+    changeSet.add(new XmlElementChangedImpl(xmlParent));
   }
 
   private static boolean canContainIncludeTag(final PsiFile psiFile) {

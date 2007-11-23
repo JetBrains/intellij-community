@@ -76,7 +76,9 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
     final XmlElement xmlElement = element.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       for (final DomElement child : DomUtil.getDefinedChildren(element, true, true)) {
-        visitor.consume(child);
+        if (child.getXmlElement().isPhysical()) {
+          visitor.consume(child);
+        }
       }
 
       for (final AbstractDomChildrenDescription description : element.getGenericInfo().getChildrenDescriptions()) {

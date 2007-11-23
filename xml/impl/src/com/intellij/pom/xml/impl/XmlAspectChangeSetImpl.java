@@ -7,20 +7,25 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.events.XmlChange;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Collections;
 
 public class XmlAspectChangeSetImpl implements XmlChangeSet {
   private final PomModel myModel;
   private List<XmlChange> myChanges = new ArrayList<XmlChange>();
-  private final XmlFile mySubjectToChange;
+  private List<XmlFile> myChangedFiles = new ArrayList<XmlFile>();
 
-  public XmlAspectChangeSetImpl(PomModel model, XmlFile fileChanged) {
+  public XmlAspectChangeSetImpl(PomModel model) {
     myModel = model;
-    mySubjectToChange = fileChanged;
+  }
+
+  public XmlAspectChangeSetImpl(final PomModel model, final XmlFile xmlFile) {
+    this(model);
+    addChangedFile(xmlFile);
   }
 
   public List<XmlChange> getChanges(){
@@ -46,8 +51,9 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
     myChanges.clear();
   }
 
-  public XmlFile getChangedFile(){
-    return mySubjectToChange;
+  @NotNull
+  public Iterable<XmlFile> getChangedFiles() {
+    return myChangedFiles;
   }
 
   public String toString(){
@@ -61,5 +67,9 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
       if(iterator.hasNext()) buffer.append(", ");
     }
     return buffer.toString();
+  }
+
+  public void addChangedFile(final XmlFile xmlFile) {
+    myChangedFiles.add(xmlFile);
   }
 }

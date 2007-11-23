@@ -136,10 +136,15 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
       public void modelChanged(PomModelEvent event) {
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(xmlAspect);
         if (changeSet != null) {
-          final XmlFile file = changeSet.getChangedFile();
-          if (file != null && getCachedFileElement(file) != null && processXmlFileChange(file, false)) return;
+          final Iterable<XmlFile> changedFiles = changeSet.getChangedFiles();
+          boolean processExternalChange = false;
+          for (XmlFile file : changedFiles) {
+            if (file == null || getCachedFileElement(file) == null || !processXmlFileChange(file, false)) {
+              processExternalChange = true;
+            }
+          }
 
-          if (!myChanging) {
+          if (processExternalChange && !myChanging) {
             new ExternalChangeProcessor(DomManagerImpl.this, changeSet).processChanges();
           }
         }

@@ -43,8 +43,8 @@ public class XmlAspectImpl implements XmlAspect {
     final ASTNode rootElement = changeSet.getRootElement();
     final PsiFile file = (PsiFile)rootElement.getPsi();
     if (!(file instanceof XmlFile)) return;
-    final XmlAspectChangeSetImpl xmlChangeSet = new XmlAspectChangeSetImpl(myModel, (XmlFile)file);
-    event.registerChangeSet(this, xmlChangeSet);
+    final XmlAspectChangeSetImpl xmlChangeSet = event.registerChangeSetIfAbsent(this, new XmlAspectChangeSetImpl(myModel));
+    xmlChangeSet.addChangedFile((XmlFile)file);
 
     final ASTNode[] changedElements = changeSet.getChangedElements();
     final CharTable table = ((FileElement)changeSet.getRootElement()).getCharTable();

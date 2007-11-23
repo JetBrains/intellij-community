@@ -2,6 +2,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.event.PomModelEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public interface PsiIncludeManager {
     boolean shouldCheckFile(@NotNull VirtualFile psiFile);
     IncludeInfo[] findIncludes(PsiFile psiFile);
 
-    void includeChanged(final PsiElement includeDirective, final PsiFile targetFile, final PsiTreeChangeEvent event);
+    void includeChanged(final PsiElement includeDirective, final PsiFile targetFile, final PomModelEvent event);
   }
 
   final class IncludeInfo {

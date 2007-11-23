@@ -32,7 +32,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> {
+public abstract class AbstractFileIndex<IndexEntry extends FileIndexEntry> implements FileIndex<IndexEntry> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.fileIndex.AbstractFileIndex");
   private final Map<String, IndexEntry> myFileUrl2IndexEntry = new HashMap<String, IndexEntry>();
   private ProjectFileIndex myProjectFileIndex;
