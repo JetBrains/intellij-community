@@ -7,8 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -43,20 +42,20 @@ public class ReachingDefsTest extends SimpleGroovyFileSetTestCase {
     assert parent != null;
     GrStatement firstStatement = getStatement(start, parent);
     GrStatement lastStatement = getStatement(end, parent);
-    final VariableInfo variableInfo = ReachingDefinitionsCollector.obtainVariableFlowInformation(firstStatement, lastStatement);
-    return dumpInfo(variableInfo);
+    final FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(firstStatement, lastStatement);
+    return dumpInfo(fragmentVariableInfos);
   }
 
-  private String dumpInfo(VariableInfo variableInfo) {
+  private String dumpInfo(FragmentVariableInfos fragmentVariableInfos) {
     StringBuilder builder = new StringBuilder();
     builder.append("input:\n");
-    for (String varName : variableInfo.getInputVariableNames()) {
-      builder.append(varName).append("\n");
+    for (VariableInfo info : fragmentVariableInfos.getInputVariableNames()) {
+      builder.append(info.getName()).append("\n");
     }
 
     builder.append("output:\n");
-    for (String varName : variableInfo.getOutputVariableNames()) {
-      builder.append(varName).append("\n");
+    for (VariableInfo info : fragmentVariableInfos.getOutputVariableNames()) {
+      builder.append(info.getName()).append("\n");
     }
 
     return builder.toString();

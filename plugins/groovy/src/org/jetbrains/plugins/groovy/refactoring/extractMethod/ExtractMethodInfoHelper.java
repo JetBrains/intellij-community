@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -52,9 +53,8 @@ public class ExtractMethodInfoHelper {
   private final Project myProject;
   private final GrStatement[] myStatements;
 
-  public ExtractMethodInfoHelper(String[] inputNames,
-                                 String outputName,
-                                 Map<String, PsiType> typeMap,
+  public ExtractMethodInfoHelper(VariableInfo[] inputInfos,
+                                 VariableInfo outputInfo,
                                  PsiElement[] innerElements,
                                  GrStatement[] statements,
                                  GrMethodOwner owner, boolean isStatic) {
@@ -66,18 +66,20 @@ public class ExtractMethodInfoHelper {
     assert myStatements.length > 0;
     myProject = myStatements[0].getProject();
     int i = 0;
-    for (String name : inputNames) {
-      PsiType type = typeMap.get(name);
-      ParameterInfo info = new ParameterInfo(name, i, type);
-      myInputNamesMap.put(name, info);
+    for (VariableInfo info : inputInfos) {
+      PsiType type = info.getType();
+      ParameterInfo pInfo = new ParameterInfo(info.getName(), i, type);
+      myInputNamesMap.put(info.getName(), pInfo);
       i++;
     }
-    myOutputName = outputName;
-    if (myOutputName != null) {
-      PsiType type = typeMap.get(myOutputName);
+
+    if (outputInfo != null) {
+      myOutputName = outputInfo.getName();
+      PsiType type = outputInfo.getType();
       if (type == null) myOutputType = PsiType.VOID;
       else myOutputType = type;
     } else {
+      myOutputName = null;
       if (ExtractMethodUtil.isSingleExpression(statements) ||
           statements.length == 1 && statements[0] instanceof GrExpression &&
               !(statements[0] instanceof GrAssignmentExpression)) {

@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.*;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -27,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -34,7 +37,7 @@ import java.util.*;
  * @author ven
  */
 public class ReachingDefinitionsCollector {
-  public static VariableInfo obtainVariableFlowInformation(final GrStatement first, final GrStatement last) {
+  public static FragmentVariableInfos obtainVariableFlowInformation(final GrStatement first, final GrStatement last) {
     GroovyPsiElement context = PsiTreeUtil.getParentOfType(first, GrMethod.class, GrClosableBlock.class, GroovyFileBase.class);
     GrControlFlowOwner flowOwner;
     if (context instanceof GrMethod) flowOwner = ((GrMethod) context).getBlock();
@@ -53,24 +56,21 @@ public class ReachingDefinitionsCollector {
     TIntHashSet reachableFromFragmentReads = getReachable(fragmentInstructions, flow);
     TIntHashSet fragmentReads = filterReads(fragmentInstructions, flow);
 
-    final Set<String> inames = new LinkedHashSet<String>();
-    final Set<String> onames = new LinkedHashSet<String>();
+    final Map<String, VariableInfo> iinfos = new LinkedHashMap<String, VariableInfo>();
+    final Map<String, VariableInfo> oinfos = new LinkedHashMap<String, VariableInfo>();
 
-    addNames(fragmentReads, inames, flow, dfaResult, first, last, false);
-    addNames(reachableFromFragmentReads, onames, flow, dfaResult, first, last, true);
+    addInfos(fragmentReads, iinfos, flow, dfaResult, first, last, false);
+    addInfos(reachableFromFragmentReads, oinfos, flow, dfaResult, first, last, true);
 
-    filterNonlocals(inames, first);
-    filterNonlocals(onames, first);
+    final VariableInfo[] iarr = filterNonlocals(iinfos, first);
+    final VariableInfo[] oarr = filterNonlocals(oinfos, first);
 
-    final String[] iarr = inames.toArray(new String[inames.size()]);
-    final String[] oarr = onames.toArray(new String[onames.size()]);
-
-    return new VariableInfo() {
-      public String[] getInputVariableNames() {
+    return new FragmentVariableInfos() {
+      public VariableInfo[] getInputVariableNames() {
         return iarr;
       }
 
-      public String[] getOutputVariableNames() {
+      public VariableInfo[] getOutputVariableNames() {
         return oarr;
       }
     };
@@ -90,8 +90,8 @@ public class ReachingDefinitionsCollector {
     return result;
   }
 
-  private static void addNames(final TIntHashSet reads,
-                               final Set<String> names,
+  private static void addInfos(final TIntHashSet reads,
+                               final Map<String, VariableInfo> infos,
                                final Instruction[] flow,
                                final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult,
                                final GrStatement first,
@@ -104,9 +104,17 @@ public class ReachingDefinitionsCollector {
           public boolean execute(TIntHashSet defs) {
             defs.forEach(new TIntProcedure() {
               public boolean execute(int def) {
-                final String defName = ((ReadWriteVariableInstruction) flow[def]).getVariableName();
+                ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[def];
+                final String defName = rwInstruction.getVariableName();
                 if (defName.equals(useName) && isInFragment(flow[def], first, last) == isInfragment) {
-                  names.add(((ReadWriteVariableInstruction) flow[def]).getVariableName());
+                  String name = rwInstruction.getVariableName();
+                  VariableInfoImpl info = (VariableInfoImpl) infos.get(name);
+                  if (info == null) {
+                    info = new VariableInfoImpl(name, first.getManager());
+                    infos.put(name, info);
+                  }
+
+                  info.addSubtype(getType(rwInstruction.getElement()));
                 }
                 return true;
               }
@@ -119,22 +127,31 @@ public class ReachingDefinitionsCollector {
     });
   }
 
-  private static void filterNonlocals(Set<String> names, GrStatement place) {
-    for (Iterator<String> iterator = names.iterator(); iterator.hasNext();) {
-      String name =  iterator.next();
-      final GroovyPsiElement resolved = ResolveUtil.resolveVariable(place, name);
+  private static PsiType getType(PsiElement element) {
+    if (element instanceof GrVariable) return ((GrVariable) element).getTypeGroovy();
+    else if (element instanceof GrReferenceExpression) return ((GrReferenceExpression) element).getType();
+    return null;
+  }
+
+  private static VariableInfo[] filterNonlocals(Map<String, VariableInfo> names, GrStatement place) {
+    List<VariableInfo> result = new ArrayList<VariableInfo>();
+    for (Iterator<VariableInfo> iterator = names.values().iterator(); iterator.hasNext();) {
+      VariableInfo info = iterator.next();
+      final GroovyPsiElement resolved = ResolveUtil.resolveVariable(place, info.getName());
       if (resolved instanceof PsiField) iterator.remove();
       else if (resolved instanceof GrReferenceExpression) {
         GrMember member = PsiTreeUtil.getParentOfType(resolved, GrMember.class);
-        if (member == null) iterator.remove();
+        if (member == null) continue;
         else if (!member.hasModifierProperty(PsiModifier.STATIC)) {
           if (member.getContainingClass() instanceof GroovyScriptClass) {
             //binding variable
-            iterator.remove();
+            continue;
           }
         }
       }
+      result.add(info);
     }
+    return result.toArray(new VariableInfo[result.size()]);
   }
 
   private static TIntHashSet getFragmentInstructions(GrStatement first, GrStatement last, Instruction[] flow) {
@@ -218,5 +235,43 @@ public class ReachingDefinitionsCollector {
     }
 
     return buffer.toString();
+  }
+
+  private static class VariableInfoImpl implements VariableInfo {
+    private @NotNull String myName;
+    private PsiManager myManager;
+
+    private @Nullable PsiType myType;
+
+    VariableInfoImpl(@NotNull String name, PsiManager manager) {
+      myName = name;
+      myManager = manager;
+    }
+
+    @NotNull
+    public String getName() {
+      return myName;
+    }
+
+    @Nullable
+    public PsiType getType() {
+      if (myType instanceof PsiIntersectionType) return ((PsiIntersectionType) myType).getConjuncts()[0];
+      return myType;
+    }
+
+    void addSubtype(PsiType t) {
+      if (t != null) {
+        if (myType == null) myType = t;
+        else {
+          if (!myType.isAssignableFrom(t)) {
+            if (t.isAssignableFrom(myType)) {
+              myType = t;
+            } else {
+              myType = GenericsUtil.getLeastUpperBound(myType, t, myManager);
+            }
+          }
+        }
+      }
+    }
   }
 }

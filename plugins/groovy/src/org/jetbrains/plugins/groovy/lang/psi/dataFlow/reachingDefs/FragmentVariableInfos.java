@@ -14,15 +14,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
-import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiVariable;
 
 /**
  * @author ven
  */
-public interface VariableInfo {
-  @NotNull String getName();
+public interface FragmentVariableInfos {
+  VariableInfo[] getInputVariableNames();
 
-  @Nullable PsiType getType();
+  VariableInfo[] getOutputVariableNames();
 }

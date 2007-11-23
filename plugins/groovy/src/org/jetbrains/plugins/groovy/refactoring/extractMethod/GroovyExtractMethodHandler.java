@@ -30,7 +30,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -40,14 +39,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author ilyas
@@ -127,27 +125,19 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
 
     // get information about variables in selected block
-    VariableInfo variableInfo = ReachingDefinitionsCollector.obtainVariableFlowInformation(statements[0], statements[statements.length - 1]);
-    String[] inputNames = variableInfo.getInputVariableNames();
-    String[] outputNames = variableInfo.getOutputVariableNames();
-    if (outputNames.length > 1) {
+    FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(statements[0], statements[statements.length - 1]);
+    VariableInfo[] inputInfos = fragmentVariableInfos.getInputVariableNames();
+    VariableInfo[] outputInfos = fragmentVariableInfos.getOutputVariableNames();
+    if (outputInfos.length > 1) {
       String message = GroovyRefactoringBundle.message("multiple.output.values");
       showErrorMessage(message, project);
       return false;
     }
 
-    // map names to types
-    String outputName = outputNames.length == 0 ? null : outputNames[0];
-    Map<String, PsiType> typeMap = ExtractMethodUtil.getVariableTypes(statements);
-    if (typeMap == null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("cannot.perform.analysis"));
-      showErrorMessage(message, project);
-      return false;
-    }
-
+    VariableInfo outputInfo = outputInfos.length == 0 ? null : outputInfos[0];
     boolean canBeStatic = ExtractMethodUtil.canBeStatic(statements[0]);
 
-    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputNames, outputName, typeMap, elements, statements, methodOwner, canBeStatic);
+    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputInfos, outputInfo, elements, statements, methodOwner, canBeStatic);
 
     ExtractMethodSettings settings = getSettings(helper);
     if (!settings.isOK()) {
