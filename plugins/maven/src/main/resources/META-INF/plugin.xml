@@ -10,7 +10,7 @@
   </change-notes>
   <idea-version since-build="6800"/>
   <extensionPoints>
-    <extensionPoint name="packagingConverter" interface="org.jetbrains.idea.maven.project.PackagingConverter"/>
+    <extensionPoint name="facetConverter" interface="org.jetbrains.idea.maven.project.FacetConverter"/>
   </extensionPoints>
   <extensions xmlns="com.intellij">
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenProjectImportProvider"/>

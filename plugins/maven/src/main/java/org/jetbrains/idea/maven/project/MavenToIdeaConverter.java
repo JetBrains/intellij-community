@@ -103,7 +103,7 @@ public class MavenToIdeaConverter {
     }
 
     convertRootModel(module, mavenProject);
-    createFacets(module, mavenProject);
+    configureFacets(module, mavenProject, profiles);
     SyntheticModuleUtil.setSynthetic(module, myMarkSynthetic && !node.isLinked());
   }
 
@@ -117,13 +117,10 @@ public class MavenToIdeaConverter {
     rootModel.commit();
   }
 
-  private void createFacets(Module module, MavenProject mavenProject) {
-    final String packaging = mavenProject.getPackaging();
-    if (!packaging.equals("jar")) {
-      for (PackagingConverter converter : Extensions.getExtensions(PackagingConverter.EXTENSION_POINT_NAME)) {
-        if (converter.isApplicable(packaging)) {
-          converter.convert(module, mavenProject, myProfiles, myMapping, myModuleModel);
-        }
+  private void configureFacets(Module module, MavenProject mavenProject, Collection<String> profiles) {
+    for (FacetConverter converter : Extensions.getExtensions(FacetConverter.EXTENSION_POINT_NAME)) {
+      if (converter.isApplicable(mavenProject, profiles)) {
+        converter.convert(module, mavenProject, myProfiles, myMapping, myModuleModel);
       }
     }
   }
