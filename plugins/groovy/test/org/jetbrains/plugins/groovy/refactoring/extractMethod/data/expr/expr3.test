@@ -1,0 +1,11 @@
+iii = null
+
+jjj = <begin>iii + 1<end>
+-----
+iii = null
+
+jjj = <caret>testMethod()
+
+private def testMethod() {
+  iii + 1
+}

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -53,9 +54,14 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.refactoring.extractMethod.GroovyExtractMethodHandler");
   protected static String REFACTORING_NAME = GroovyRefactoringBundle.message("extract.method.title");
+  private String myInvokeResult = "ok";
 
   protected void showErrorMessage(String message, final Project project) {
-    CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
+    Application application = ApplicationManager.getApplication();
+    myInvokeResult = message;
+    if (!application.isUnitTestMode()) {
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_METHOD, project);
+    }
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -87,7 +93,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     if (elements.length == 1 && elements[0] instanceof GrExpression) {
       selectionModel.setSelection(startOffset, elements[0].getTextRange().getEndOffset());
     }
-    
+
     GrStatement[] statements = ExtractMethodUtil.getStatementsByElements(elements);
 
     if (statements.length == 0) {
@@ -122,7 +128,6 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       return false;
     }
 
-
     // get information about variables in selected block
     FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(statements[0], statements[statements.length - 1]);
     VariableInfo[] inputInfos = fragmentVariableInfos.getInputVariableNames();
@@ -139,7 +144,8 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputInfos, outputInfo, elements, statements, methodOwner, canBeStatic);
 
     ExtractMethodSettings settings = getSettings(helper);
-    if (!settings.isOK()) {
+    Application application = ApplicationManager.getApplication();
+    if (!settings.isOK() && !application.isUnitTestMode()) {
       return false;
     }
 
@@ -182,11 +188,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
             // Expression call replace
             GrExpression methodCall = ExtractMethodUtil.createMethodCallByHelper(methodName, helper);
             GrExpression oldExpr = (GrExpression) helper.getStatements()[0];
-            realStatement = oldExpr.replaceWithExpression(methodCall , true);
+            realStatement = oldExpr.replaceWithExpression(methodCall, true);
           }
-          if (realStatement != null ) {
-            PsiUtil.shortenReferences(realStatement);
-          }
+          PsiUtil.shortenReferences(realStatement);
 
           // move to offset
           if (editor != null) {
@@ -215,12 +219,21 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
   private ExtractMethodSettings getSettings(@NotNull ExtractMethodInfoHelper helper) {
     GroovyExtractMethodDialog dialog = new GroovyExtractMethodDialog(helper, helper.getProject());
-    dialog.show();
+    Application application = ApplicationManager.getApplication();
+    if (!application.isUnitTestMode()) {
+      dialog.show();
+    } else {
+      dialog.setMethodName("testMethod");
+    }
     return dialog;
   }
 
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     // does nothing
+  }
+
+  public String getInvokeResult() {
+    return myInvokeResult;
   }
 }

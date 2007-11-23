@@ -27,6 +27,9 @@ public interface ExtractMethodSettings {
 
   String getEnteredName();
 
+  // For tests
+  void setMethodName(@NotNull String s);
+
   boolean isOK();
 
 }

@@ -21,6 +21,10 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
@@ -36,9 +40,7 @@ import java.io.IOException;
 public class ExtractMethodTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/introduceVariable/data";
-
-  protected static final String ALL_MARKER = "<all>";
+  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/extractMethod/data";
 
   protected Editor myEditor;
   protected FileEditorManager fileEditorManager;
@@ -68,12 +70,11 @@ public class ExtractMethodTest extends ActionTestCase {
     Assert.assertTrue(myFile instanceof GroovyFile);
     try {
       myEditor.getSelectionModel().setSelection(startOffset, endOffset);
-
-
-
-      result = myEditor.getDocument().getText();
+      GroovyExtractMethodHandler handler = new GroovyExtractMethodHandler();
+      boolean invoked = handler.invokeOnEditor(myProject, myEditor, myFile);
+      result = invoked ? myEditor.getDocument().getText() : "FAILED: " + handler.getInvokeResult() ;
       int caretOffset = myEditor.getCaretModel().getOffset();
-      result = result.substring(0, caretOffset) + TestUtils.CARET_MARKER + result.substring(caretOffset);
+      result = invoked ? result.substring(0, caretOffset) + TestUtils.CARET_MARKER + result.substring(caretOffset) : result;
     } finally {
       fileEditorManager.closeFile(myFile.getVirtualFile());
       myEditor = null;
@@ -99,10 +100,14 @@ public class ExtractMethodTest extends ActionTestCase {
     return new ExtractMethodTest();
   }
 
-  protected String removeAllMarker(String text) {
-    int index = text.indexOf(ALL_MARKER);
-    myOffset = index - 1;
-    return text.substring(0, index) + text.substring(index + ALL_MARKER.length());
+  protected IdeaProjectTestFixture createFixture() {
+    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder();
+    JavaModuleFixtureBuilder fixtureBuilder = builder.addModule(JavaModuleFixtureBuilder.class);
+    fixtureBuilder.addJdk(TestUtils.getMockJdkHome());
+    fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGrailsLibraryHome(), TestUtils.GROOVY_JAR);
+    return builder.getFixture();
   }
+
 
 }

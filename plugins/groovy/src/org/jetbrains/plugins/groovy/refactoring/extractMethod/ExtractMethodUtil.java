@@ -148,40 +148,6 @@ public class ExtractMethodUtil {
     }
   }
 
-  static GrExpression[] findVariableOccurrences(final GrStatement[] statements, final String name) {
-    final GroovyPsiElement variable = getVariableDeclaration(statements, name);
-    if (variable == null) return GrExpression.EMPTY_ARRAY;
-    final ArrayList<GrExpression> result = new ArrayList<GrExpression>();
-    for (final GrStatement statement : statements) {
-      statement.accept(new PsiRecursiveElementVisitor() {
-        public void visitElement(final PsiElement element) {
-          super.visitElement(element);
-          if (element instanceof GrReferenceExpression) {
-            GrReferenceExpression expr = (GrReferenceExpression) element;
-            if (expr.isQualified() && expr.isReferenceTo(variable)) {
-              result.add(expr);
-            }
-          }
-        }
-      });
-    }
-    return result.toArray(new GrExpression[result.size()]);
-  }
-
-
-  /*
- Collect variable types in code block to be extracted
-  */
-  @Nullable
-  static Map<String, PsiType> getVariableTypes(GrStatement[] statements) {
-    if (statements.length == 0) return null;
-    Map<String, PsiType> map = new HashMap<String, PsiType>();
-    for (GrStatement statement : statements) {
-      addContainingVariableTypes(statement, map);
-    }
-    return map;
-  }
-
   /*
   To declare or not a variable to which method call result will be assigned.
    */
@@ -403,36 +369,6 @@ public class ExtractMethodUtil {
       if (res != null) return res;
     }
     return null;
-  }
-
-  private static void addContainingVariableTypes(PsiElement statement, Map<String, PsiType> map) {
-    if (statement instanceof GrVariable) {
-      GrVariable variable = (GrVariable) statement;
-      String name = variable.getName();
-      if (name != null) {
-        PsiType type = variable.getTypeGroovy();
-        if (type != null) {
-          type = TypeConversionUtil.erasure(type);
-        }
-        map.put(name, type);
-      }
-    }
-    if (statement instanceof GrReferenceExpression) {
-      GrReferenceExpression expr = (GrReferenceExpression) statement;
-      String name = expr.getName();
-      PsiReference ref = expr.getReference();
-      if (name != null && (ref == null || !(ref.resolve() instanceof GrField))) {
-        PsiType type = expr.getType();
-        if (type != null) {
-          type = TypeConversionUtil.erasure(type);
-        }
-        map.put(name, type);
-      }
-    }
-    for (PsiElement element : statement.getChildren()) {
-      addContainingVariableTypes(element, map);
-    }
-
   }
 
   static GrMethodCallExpression createMethodCallByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
