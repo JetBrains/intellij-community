@@ -360,7 +360,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
 
     public Object[] getElementsByName(final String name, final boolean checkBoxState) {
       final PsiManager manager = PsiManager.getInstance(myProject);
-      PsiClass[] classes = manager.getShortNamesCache().getClassesByName(name, myScope);
+      PsiClass[] classes = manager.getShortNamesCache().getClassesByName(name, checkBoxState ? myScope : GlobalSearchScope.projectScope(myProject).intersectWith(myScope));
 
       ArrayList<PsiClass> list = new ArrayList<PsiClass>();
       for (PsiClass aClass : classes) {
