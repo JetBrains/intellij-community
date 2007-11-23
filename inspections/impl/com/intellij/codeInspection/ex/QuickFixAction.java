@@ -85,17 +85,16 @@ public class QuickFixAction extends AnAction {
     if (isProblemDescriptorsAcceptable()) {
       final CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
       if (descriptors.length > 0) {
-        doApplyFix(view.getProject(), (DescriptorProviderInspection)tool, descriptors);
+        doApplyFix(view.getProject(), descriptors);
         return;
       }
     }
 
-    doApplyFix(getSelectedElements(e), tool, view);
+    doApplyFix(getSelectedElements(e), view);
   }
 
 
   private void doApplyFix(final Project project,
-                          final DescriptorProviderInspection tool,
                           final CommonProblemDescriptor[] descriptors) {
     final Set<VirtualFile> readOnlyFiles = new THashSet<VirtualFile>();
     for (CommonProblemDescriptor descriptor : descriptors) {
@@ -110,7 +109,7 @@ public class QuickFixAction extends AnAction {
       if (operationStatus.hasReadonlyFiles()) return;
     }
 
-    final RefManagerImpl refManager = ((RefManagerImpl)tool.getContext().getRefManager());
+    final RefManagerImpl refManager = ((RefManagerImpl)myTool.getContext().getRefManager());
 
     final boolean initial = refManager.isInProcess();
 
@@ -141,7 +140,7 @@ public class QuickFixAction extends AnAction {
                       fix.applyFix(project, descriptor);
                       if (startCount != tracker.getModificationCount()) {
                         DaemonCodeAnalyzer.getInstance(project).restart();
-                        tool.ignoreProblem(descriptor, fix);
+                        ((DescriptorProviderInspection)myTool).ignoreProblem(descriptor, fix);
                         if (descriptor instanceof ProblemDescriptor) {
                           ignoredElements.add(((ProblemDescriptor)descriptor).getPsiElement());
                         }
@@ -155,15 +154,15 @@ public class QuickFixAction extends AnAction {
         }
       }, getTemplatePresentation().getText(), null);
 
-      refreshViews(project, ignoredElements, tool);
+      refreshViews(project, ignoredElements, myTool);
     }
     finally { //to make offline view lazy
       if (initial) refManager.inspectionReadActionStarted();
     }
   }
 
-  public void doApplyFix(final RefElement[] refElements, final InspectionTool tool, InspectionResultsView view) {
-    final RefManagerImpl refManager = ((RefManagerImpl)tool.getContext().getRefManager());
+  public void doApplyFix(final RefElement[] refElements, InspectionResultsView view) {
+    final RefManagerImpl refManager = ((RefManagerImpl)myTool.getContext().getRefManager());
 
     final boolean initial = refManager.isInProcess();
 
