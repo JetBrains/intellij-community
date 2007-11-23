@@ -1101,7 +1101,7 @@ public final class PsiUtil {
    * inner-to-outer, right-to-left order.
    * @param owner
    */
-  public static Iterator<PsiTypeParameter> typeParametersIterator(PsiTypeParameterListOwner owner) {
+  public static Iterator<PsiTypeParameter> typeParametersIterator(@NotNull PsiTypeParameterListOwner owner) {
     return new TypeParameterIterator(owner);
   }
 
@@ -1146,7 +1146,7 @@ public final class PsiUtil {
     return element instanceof PsiNamedElement && name.equals(((PsiNamedElement)element).getName());
   }
 
-  public static boolean isRawSubstitutor (PsiTypeParameterListOwner owner, PsiSubstitutor substitutor) {
+  public static boolean isRawSubstitutor (@NotNull PsiTypeParameterListOwner owner, PsiSubstitutor substitutor) {
     final Iterator<PsiTypeParameter> iterator = typeParametersIterator(owner);
     while (iterator.hasNext()) {
       PsiTypeParameter parameter = iterator.next();

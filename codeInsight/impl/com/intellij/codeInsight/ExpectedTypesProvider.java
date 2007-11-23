@@ -445,6 +445,8 @@ public class ExpectedTypesProvider {
         if (newClass instanceof PsiAnonymousClass) {
           final PsiAnonymousClass anonymous = (PsiAnonymousClass)newClass;
           newClass = anonymous.getBaseClassType().resolve();
+          if (newClass == null) return;
+
           substitutor = TypeConversionUtil.getSuperClassSubstitutor(newClass, anonymous, PsiSubstitutor.EMPTY);
         } else if (newClass != null) {
           substitutor = resolveResult.getSubstitutor();

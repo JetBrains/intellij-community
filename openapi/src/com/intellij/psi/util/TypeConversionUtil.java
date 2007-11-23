@@ -838,7 +838,7 @@ public class TypeConversionUtil {
    * @see InheritanceUtil#isInheritor(PsiClass, PsiClass, boolean)
    */
   @NotNull
-  public static PsiSubstitutor getSuperClassSubstitutor(PsiClass superClass,
+  public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
                                                         PsiClass derivedClass,
                                                         PsiSubstitutor derivedSubstitutor) {
     // [dsl] assertion commented out since we no longer cache isInheritor
