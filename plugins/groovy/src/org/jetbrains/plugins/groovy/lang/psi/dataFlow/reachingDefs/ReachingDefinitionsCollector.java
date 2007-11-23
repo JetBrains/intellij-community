@@ -56,14 +56,16 @@ public class ReachingDefinitionsCollector {
     TIntHashSet reachableFromFragmentReads = getReachable(fragmentInstructions, flow);
     TIntHashSet fragmentReads = filterReads(fragmentInstructions, flow);
 
-    final Map<String, VariableInfo> iinfos = new LinkedHashMap<String, VariableInfo>();
-    final Map<String, VariableInfo> oinfos = new LinkedHashMap<String, VariableInfo>();
+    final Map<String, VariableInfo> imap = new HashMap<String, VariableInfo>();
+    final Set<VariableInfo> iset = new LinkedHashSet<VariableInfo>();
+    final Map<String, VariableInfo> omap = new HashMap<String, VariableInfo>();
+    final Set<VariableInfo> oset = new LinkedHashSet<VariableInfo>();
 
-    addInfos(fragmentReads, iinfos, flow, dfaResult, first, last, false);
-    addInfos(reachableFromFragmentReads, oinfos, flow, dfaResult, first, last, true);
+    addInfos(fragmentReads, imap, iset, flow, dfaResult, first, last, false);
+    addInfos(reachableFromFragmentReads, omap, oset, flow, dfaResult, first, last, true);
 
-    final VariableInfo[] iarr = filterNonlocals(iinfos, first);
-    final VariableInfo[] oarr = filterNonlocals(oinfos, first);
+    final VariableInfo[] iarr = filterNonlocals(iset, first);
+    final VariableInfo[] oarr = filterNonlocals(oset, first);
 
     return new FragmentVariableInfos() {
       public VariableInfo[] getInputVariableNames() {
@@ -91,8 +93,8 @@ public class ReachingDefinitionsCollector {
   }
 
   private static void addInfos(final TIntHashSet reads,
-                               final Map<String, VariableInfo> infos,
-                               final Instruction[] flow,
+                               final Map<String, VariableInfo> infoMap,
+                               final Set<VariableInfo> infos, final Instruction[] flow,
                                final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult,
                                final GrStatement first,
                                final GrStatement last, final boolean isInfragment) {
@@ -106,15 +108,16 @@ public class ReachingDefinitionsCollector {
               public boolean execute(int def) {
                 ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[def];
                 final String defName = rwInstruction.getVariableName();
-                if (defName.equals(useName) && isInFragment(flow[def], first, last) == isInfragment) {
+                if (defName.equals(useName)) {
                   String name = rwInstruction.getVariableName();
-                  VariableInfoImpl info = (VariableInfoImpl) infos.get(name);
+                  VariableInfoImpl info = (VariableInfoImpl) infoMap.get(name);
                   if (info == null) {
                     info = new VariableInfoImpl(name, first.getManager());
-                    infos.put(name, info);
+                    infoMap.put(name, info);
                   }
 
                   info.addSubtype(getType(rwInstruction.getElement()));
+                  if (isInFragment(flow[def], first, last) == isInfragment) infos.add(info);
                 }
                 return true;
               }
@@ -133,9 +136,9 @@ public class ReachingDefinitionsCollector {
     return null;
   }
 
-  private static VariableInfo[] filterNonlocals(Map<String, VariableInfo> names, GrStatement place) {
+  private static VariableInfo[] filterNonlocals(Set<VariableInfo> infos, GrStatement place) {
     List<VariableInfo> result = new ArrayList<VariableInfo>();
-    for (Iterator<VariableInfo> iterator = names.values().iterator(); iterator.hasNext();) {
+    for (Iterator<VariableInfo> iterator = infos.iterator(); iterator.hasNext();) {
       VariableInfo info = iterator.next();
       final GroovyPsiElement resolved = ResolveUtil.resolveVariable(place, info.getName());
       if (resolved instanceof PsiField) iterator.remove();
@@ -185,11 +188,11 @@ public class ReachingDefinitionsCollector {
     return true;
   }
 
-  private static TIntHashSet getReachable(final TIntHashSet fragmentReads, final Instruction[] flow) {
+  private static TIntHashSet getReachable(final TIntHashSet fragmentInsns, final Instruction[] flow) {
     final TIntHashSet visited = new TIntHashSet();
     final TIntHashSet result = new TIntHashSet();
     final CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
-    fragmentReads.forEach(new TIntProcedure() {
+    fragmentInsns.forEach(new TIntProcedure() {
       public boolean execute(int insnNum) {
         processInsn(flow[insnNum], visited, result);
         return true;
@@ -201,7 +204,7 @@ public class ReachingDefinitionsCollector {
         visited.add(num);
         if (instruction instanceof ReadWriteVariableInstruction &&
             !((ReadWriteVariableInstruction) instruction).isWrite() &&
-            !fragmentReads.contains(num)) {
+            !fragmentInsns.contains(num)) {
           result.add(num);
         }
 
