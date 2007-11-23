@@ -61,7 +61,7 @@ public class LibraryDownloadInfo {
 
   @NotNull
   public String getDownloadUrl() {
-    return myRelativeDownloadUrl;
+    return myRemoteRepository != null ? getDownloadUrl(myRemoteRepository.getDefaultMirror()) : myRelativeDownloadUrl;
   }
 
   @NotNull
@@ -86,7 +86,8 @@ public class LibraryDownloadInfo {
 
   @NotNull
   public String getPresentableUrl() {
-    return myPresentableUrl;
+    return myPresentableUrl != null ? myPresentableUrl
+           : myRemoteRepository != null ? myRemoteRepository.getDefaultMirror() : myRelativeDownloadUrl;
   }
 
 
