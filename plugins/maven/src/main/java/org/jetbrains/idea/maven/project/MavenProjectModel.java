@@ -20,6 +20,7 @@ import java.util.*;
 public class MavenProjectModel {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.project.MavenProjectModel");
 
+  @NotNull
   private final List<Node> rootProjects = new ArrayList<Node>();
 
   public MavenProjectModel(Map<VirtualFile, Module> filesToRefresh,
@@ -51,6 +52,7 @@ public class MavenProjectModel {
     }
   }
 
+  @NotNull
   public List<Node> getRootProjects() {
     return rootProjects;
   }
@@ -78,7 +80,6 @@ public class MavenProjectModel {
     }
     catch (Exception e) {
       LOG.info(e);
-      e.printStackTrace();
       return null;
     }
 
