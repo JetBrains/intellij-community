@@ -647,6 +647,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public PsiDirectory findDirectory(@NotNull VirtualFile file) {
+    myProgressManager.checkCanceled();
+
     return myFileManager.findDirectory(file);
   }
 
