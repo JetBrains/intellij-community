@@ -30,6 +30,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -122,15 +123,16 @@ public class FileGroupingRule implements UsageGroupingRule {
     }
 
     public void calcData(final DataKey key, final DataSink sink) {
+      if (!isValid()) return;
       if (key == PlatformDataKeys.VIRTUAL_FILE) {
-        VirtualFile file = myFile != null && myFile.isValid() ? myFile : null;
-        sink.put(PlatformDataKeys.VIRTUAL_FILE, file);
+        sink.put(PlatformDataKeys.VIRTUAL_FILE, myFile);
       }
       if (key == DataKeys.PSI_ELEMENT) {
         sink.put(DataKeys.PSI_ELEMENT, getPsiFile());
       }
     }
 
+    @Nullable
     public PsiFile getPsiFile() {
       return myFile != null && myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
     }

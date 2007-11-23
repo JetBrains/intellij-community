@@ -15,7 +15,10 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,12 +26,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.usageView.UsageInfo;
 
 import javax.swing.*;
 
@@ -167,6 +170,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
 
     public void calcData(final DataKey key, final DataSink sink) {
+      if (!isValid()) return;
       if (DataKeys.PSI_ELEMENT == key) {
         sink.put(DataKeys.PSI_ELEMENT, getPsiClass());
       }

@@ -15,15 +15,18 @@
  */
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInLibrary;
 import com.intellij.usages.rules.UsageInModule;
@@ -168,6 +171,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
     }
 
     public void calcData(final DataKey key, final DataSink sink) {
+      if (!isValid()) return;
       if (DataKeys.MODULE_CONTEXT == key) {
         sink.put(DataKeys.MODULE_CONTEXT, myModule);
       }

@@ -26,12 +26,12 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.usageView.UsageInfo;
 
 import javax.swing.*;
 
@@ -118,7 +118,8 @@ public class MethodGroupingRule implements UsageGroupingRule {
     }
 
     public boolean isValid() {
-      return getMethod() != null;
+      final PsiMethod method = getMethod();
+      return method != null && method.isValid();
     }
 
     public void navigate(boolean focus) throws UnsupportedOperationException {
@@ -144,6 +145,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
     }
 
     public void calcData(final DataKey key, final DataSink sink) {
+      if (!isValid()) return;
       if (DataKeys.PSI_ELEMENT == key) {
         sink.put(DataKeys.PSI_ELEMENT, getMethod());
       }

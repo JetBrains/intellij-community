@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,13 @@ public class TestsUIUtil {
     if (DataConstants.NAVIGATABLE.equals(dataId)) return getOpenFileDescriptor(testProxy, model);
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       final Location location = testProxy.getLocation(project);
-      return location != null ? location.getPsiElement() : null;
+      if (location != null) {
+        final PsiElement element = location.getPsiElement();
+        return element.isValid() ? element : null;
+      }
+      else {
+        return null;
+      }
     }
     if (Location.LOCATION.equals(dataId)) return testProxy.getLocation(project);
     if (DataConstantsEx.RUNTIME_CONFIGURATION.equals(dataId)) return model.getProperties().getConfiguration();

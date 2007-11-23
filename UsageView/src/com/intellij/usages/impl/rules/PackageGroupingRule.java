@@ -122,6 +122,7 @@ public class PackageGroupingRule implements UsageGroupingRule {
     }
 
     public void calcData(final DataKey key, final DataSink sink) {
+      if (!isValid()) return;
       if (DataKeys.PSI_ELEMENT == key) {
         sink.put(DataKeys.PSI_ELEMENT, myPackage);
       }
@@ -188,6 +189,7 @@ public class PackageGroupingRule implements UsageGroupingRule {
     }
 
     public void calcData(final DataKey key, final DataSink sink) {
+      if (!isValid()) return;
       if (PlatformDataKeys.VIRTUAL_FILE == key) {
         sink.put(PlatformDataKeys.VIRTUAL_FILE, myDir);
       }
