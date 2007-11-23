@@ -14,17 +14,17 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.*;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -119,8 +119,16 @@ public class ReachingDefinitionsCollector {
       String name =  iterator.next();
       final GroovyPsiElement resolved = ResolveUtil.resolveVariable(place, name);
       if (resolved instanceof PsiField) iterator.remove();
-      else if (resolved instanceof GrReferenceExpression && //binding variables 
-          PsiTreeUtil.getParentOfType(resolved, GrTypeDefinition.class) == null) iterator.remove();
+      else if (resolved instanceof GrReferenceExpression) {
+        GrMember member = PsiTreeUtil.getParentOfType(resolved, GrMember.class);
+        if (member == null) iterator.remove();
+        else if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+          if (member.getContainingClass() instanceof GroovyScriptClass) {
+            //binding variable
+            iterator.remove();
+          }
+        }
+      }
     }
   }
 
