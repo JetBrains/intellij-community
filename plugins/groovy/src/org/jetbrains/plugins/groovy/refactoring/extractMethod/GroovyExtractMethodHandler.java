@@ -39,13 +39,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.*;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-
-import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author ilyas
@@ -65,12 +64,12 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     if (!editor.getSelectionModel().hasSelection()) {
       editor.getSelectionModel().selectLineAtCaret();
     }
-    // trim it if it's necessary
-    GroovyRefactoringUtil.trimSpacesAndComments(editor, file, false);
     invokeOnEditor(project, editor, file);
   }
 
-  private boolean invokeOnEditor(Project project, Editor editor, PsiFile file) {
+  boolean invokeOnEditor(Project project, Editor editor, PsiFile file) {
+    // trim it if it's necessary
+    GroovyRefactoringUtil.trimSpacesAndComments(editor, file, false);
 
     //todo implement in GSP files
     if (!(file instanceof GroovyFileBase /* || file instanceof GspFile*/)) {
@@ -184,6 +183,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
             GrExpression methodCall = ExtractMethodUtil.createMethodCallByHelper(methodName, helper);
             GrExpression oldExpr = (GrExpression) helper.getStatements()[0];
             realStatement = oldExpr.replaceWithExpression(methodCall , true);
+          }
+          if (realStatement != null ) {
+            PsiUtil.shortenReferences(realStatement);
           }
 
           // move to offset

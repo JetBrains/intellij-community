@@ -16,20 +16,22 @@
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -45,13 +47,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwne
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.*;
-
-import gnu.trove.TObjectHashingStrategy;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author ilyas
@@ -146,7 +149,7 @@ public class ExtractMethodUtil {
   }
 
   static GrExpression[] findVariableOccurrences(final GrStatement[] statements, final String name) {
-    final GrVariable variable = getVariableDeclaration(statements, name);
+    final GroovyPsiElement variable = getVariableDeclaration(statements, name);
     if (variable == null) return GrExpression.EMPTY_ARRAY;
     final ArrayList<GrExpression> result = new ArrayList<GrExpression>();
     for (final GrStatement statement : statements) {
@@ -183,7 +186,7 @@ public class ExtractMethodUtil {
   To declare or not a variable to which method call result will be assigned.
    */
   private static boolean mustAddVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
-    GrVariable ourDeclaration = getVariableDeclaration(statements, varName);
+    GroovyPsiElement ourDeclaration = getVariableDeclaration(statements, varName);
     if (ourDeclaration == null) return true;
     for (GrStatement statement : statements) {
       if (statement instanceof GrVariableDeclaration) {
@@ -370,8 +373,8 @@ public class ExtractMethodUtil {
   }
 
   // Get declaration of variable to which method call expression will be assigned
-  private static GrVariable getVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
-    GrVariable variable = null;
+  private static GroovyPsiElement getVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
+    GroovyPsiElement variable = null;
     for (GrStatement statement : statements) {
       variable = getInnerVariableDeclaration(statement, varName);
       if (variable != null) break;
@@ -379,15 +382,15 @@ public class ExtractMethodUtil {
     return variable;
   }
 
-  private static GrVariable getInnerVariableDeclaration(@NotNull PsiElement element, @NotNull String name) {
+  private static GroovyPsiElement getInnerVariableDeclaration(@NotNull PsiElement element, @NotNull String name) {
     if (element instanceof GrReferenceExpression) {
       GrReferenceExpression expr = (GrReferenceExpression) element;
       if (name.equals(expr.getName())) {
         PsiReference ref = expr.getReference();
         if (ref != null) {
           PsiElement resolved = ref.resolve();
-          if (resolved instanceof GrVariable && !(resolved instanceof GrField)) {
-            return ((GrVariable) resolved);
+          if ((resolved instanceof GrVariable || resolved instanceof GrReferenceExpression) && !(resolved instanceof GrField)) {
+            return ((GroovyPsiElement) resolved);
           }
         }
         return null;
@@ -396,7 +399,7 @@ public class ExtractMethodUtil {
       }
     }
     for (PsiElement child : element.getChildren()) {
-      GrVariable res = getInnerVariableDeclaration(child, name);
+      GroovyPsiElement res = getInnerVariableDeclaration(child, name);
       if (res != null) return res;
     }
     return null;
