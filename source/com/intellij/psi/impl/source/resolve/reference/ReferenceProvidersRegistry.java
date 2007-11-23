@@ -191,7 +191,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
         )
       ),
       true,
-      new JspxIncludePathReferenceProvider()
+      uriProvider
     );
 
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();

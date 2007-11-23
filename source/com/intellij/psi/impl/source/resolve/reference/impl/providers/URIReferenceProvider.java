@@ -137,7 +137,11 @@ public class URIReferenceProvider implements PsiReferenceProvider {
   }
 
   static boolean isUrlText(final String s) {
-    return s.startsWith(HTTP) || s.startsWith(URN);
+    final boolean surelyUrl = s.startsWith(HTTP) || s.startsWith(URN);
+    if (surelyUrl) return surelyUrl;
+    int protocolIndex = s.indexOf(":/");
+    if (protocolIndex > 1 && !s.regionMatches(0,"classpath",0,protocolIndex)) return true;
+    return false;
   }
 
   private static URLReference[] getUrlReference(final PsiElement element, boolean soft) {
