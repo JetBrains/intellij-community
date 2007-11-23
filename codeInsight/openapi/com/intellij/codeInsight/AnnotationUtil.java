@@ -171,6 +171,7 @@ public class AnnotationUtil {
   }
 
   private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NonNls String annotationFQN, boolean checkHierarchy, Set<PsiMethod> processed) {
+    if (!listOwner.isValid()) return false;
     if (listOwner instanceof PsiParameter) {
       // this is more efficient than getting the modifier list
       PsiAnnotation[] paramAnnotations = ((PsiParameter)listOwner).getAnnotations();
