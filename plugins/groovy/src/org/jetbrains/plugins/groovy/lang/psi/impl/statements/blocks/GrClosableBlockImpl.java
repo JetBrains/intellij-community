@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
@@ -143,7 +142,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
         type = factory.createTypeByFQClassName("java.lang.Object", getResolveScope());
       }
 
-      myOwner = GroovyElementFactory.getInstance(getProject()).createVariableDeclaration(null, OWNER_NAME, null, type).getVariables()[0];
+      myOwner = GroovyElementFactory.getInstance(getProject()).createVariableDeclaration(null, OWNER_NAME, null, type, false).getVariables()[0];
     }
 
     return myOwner;

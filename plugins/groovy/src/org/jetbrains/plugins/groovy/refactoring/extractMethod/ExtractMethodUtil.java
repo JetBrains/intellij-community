@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
@@ -52,7 +51,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -74,7 +72,7 @@ public class ExtractMethodUtil {
     if (name == null || type == PsiType.VOID) return callExpression;
     GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
     if (mustAddVariableDeclaration(statements, name)) {
-      return factory.createVariableDeclaration(new String[0], name, callExpression, type.equalsToText("java.lang.Object") ? null : type);
+      return factory.createVariableDeclaration(new String[0], name, callExpression, type.equalsToText("java.lang.Object") ? null : type, false);
     } else {
       return factory.createExpressionFromText(name + "= " + callExpression.getText());
     }
@@ -225,11 +223,21 @@ public class ExtractMethodUtil {
         }
       }
     }
+    ArrayList<GrVariableDeclaration> missedDeclarations = new ArrayList<GrVariableDeclaration>();
+    for (ParameterInfo info : infos) {
+      if (!info.passAsParameter()) {
+        missedDeclarations.add(factory.createVariableDeclaration(new String[0], info.getName(), null, info.getType(), true));
+      }
+    }
 
     if (type != PsiType.VOID && outputName != null && !outputIsParameter &&
         !mustAddVariableDeclaration(helper.getStatements(), outputName)) {
-      GrVariableDeclaration decl = factory.createVariableDeclaration(new String[0], outputName, null, type);
+      GrVariableDeclaration decl = factory.createVariableDeclaration(new String[0], outputName, null, type, false);
       buffer.append(decl.getText()).append("\n");
+    }
+    // Add missed parameter declarations
+    for (GrVariableDeclaration declaration : missedDeclarations) {
+      buffer.append(declaration.getText()).append(" ;\n");
     }
 
     if (!ExtractMethodUtil.isSingleExpression(helper.getStatements())) {
