@@ -246,7 +246,19 @@ public class ExtractMethodUtil {
 
     GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
     String outputName = helper.getOutputName();
-    if (type != PsiType.VOID && outputName != null && !mustAddVariableDeclaration(helper.getStatements(), outputName)) {
+
+    ParameterInfo[] infos = helper.getParameterInfos();
+    boolean outputIsParameter = false;
+    if (outputName != null) {
+      for (ParameterInfo info : infos) {
+        if (info.passAsParameter() && outputName.equals(info.getOldName())) {
+          outputIsParameter = true;
+        }
+      }
+    }
+
+    if (type != PsiType.VOID && outputName != null && !outputIsParameter &&
+        !mustAddVariableDeclaration(helper.getStatements(), outputName)) {
       GrVariableDeclaration decl = factory.createVariableDeclaration(new String[0], outputName, null, type);
       buffer.append(decl.getText()).append("\n");
     }
