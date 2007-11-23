@@ -11,8 +11,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.BidirectionalMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -24,11 +24,11 @@ public class RefCountHolder {
   private final PsiFile myFile;
   private final BidirectionalMap<PsiReference,PsiElement> myLocalRefsMap = new BidirectionalMap<PsiReference, PsiElement>();
 
-  private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new THashMap<PsiNamedElement, Boolean>();
-  private final Map<String, XmlAttribute> myXmlId2AttributeMap = new THashMap<String, XmlAttribute>();
-  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new THashMap<PsiReference, PsiImportStatementBase>();
-  private final Set<PsiNamedElement> myUsedElements = new THashSet<PsiNamedElement>();
-  private final THashMap<PsiElement,Boolean> myPossiblyDuplicatedElementsSoftMap = new THashMap<PsiElement,Boolean>();
+  private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new ConcurrentHashMap<PsiNamedElement, Boolean>();
+  private final Map<String, XmlAttribute> myXmlId2AttributeMap = new ConcurrentHashMap<String, XmlAttribute>();
+  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new ConcurrentHashMap<PsiReference, PsiImportStatementBase>();
+  private final Set<PsiNamedElement> myUsedElements = new ConcurrentHashSet<PsiNamedElement>();
+  private final Map<PsiElement,Boolean> myPossiblyDuplicateElements = new ConcurrentHashMap<PsiElement, Boolean>();
   private final AtomicInteger myState = new AtomicInteger(State.VIRGIN);
 
   private interface State {
@@ -44,12 +44,13 @@ public class RefCountHolder {
   }
 
   public void clear() {
+    assertIsAnalyzing();
     myLocalRefsMap.clear();
     myImportStatements.clear();
     myDclsUsedMap.clear();
     myXmlId2AttributeMap.clear();
     myUsedElements.clear();
-    myPossiblyDuplicatedElementsSoftMap.clear();
+    myPossiblyDuplicateElements.clear();
   }
 
   public void registerLocallyReferenced(@NotNull PsiNamedElement result) {
@@ -57,9 +58,14 @@ public class RefCountHolder {
     myDclsUsedMap.put(result,Boolean.TRUE);
   }
 
-  public void registerPossiblyDuplicatedElement(@NotNull PsiElement result, Boolean status) {
+  public void registerPossiblyDuplicateElement(@NotNull PsiElement result, Boolean status) {
     assertIsAnalyzing();
-    myPossiblyDuplicatedElementsSoftMap.put(result, status);
+    myPossiblyDuplicateElements.put(result, status);
+  }
+
+  public Map<PsiElement, Boolean> getPossiblyDuplicateElementsMap() {
+    assertIsRetrieving();
+    return myPossiblyDuplicateElements;
   }
 
   private static void addStatistics(final PsiNamedElement dcl) {
@@ -105,7 +111,9 @@ public class RefCountHolder {
   private void registerLocalRef(@NotNull PsiReference ref, PsiElement refElement) {
     if (refElement instanceof PsiMethod && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter self-recursive calls
     if (refElement instanceof PsiClass && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter inner use of itself
-    myLocalRefsMap.put(ref, refElement);
+    synchronized (myLocalRefsMap) {
+      myLocalRefsMap.put(ref, refElement);
+    }
     if(refElement instanceof PsiNamedElement) {
       PsiNamedElement namedElement = (PsiNamedElement)refElement;
       if(myUsedElements.add(namedElement)) {
@@ -116,14 +124,16 @@ public class RefCountHolder {
 
   public void removeInvalidRefs() {
     assertIsAnalyzing();
-    for(Iterator<PsiReference> iterator = myLocalRefsMap.keySet().iterator(); iterator.hasNext();){
-      PsiReference ref = iterator.next();
-      if (!ref.getElement().isValid()){
-        PsiElement value = myLocalRefsMap.get(ref);
-        iterator.remove();
-        List<PsiReference> array = myLocalRefsMap.getKeysByValue(value);
-        LOG.assertTrue(array != null);
-        array.remove(ref);
+    synchronized (myLocalRefsMap) {
+      for(Iterator<PsiReference> iterator = myLocalRefsMap.keySet().iterator(); iterator.hasNext();){
+        PsiReference ref = iterator.next();
+        if (!ref.getElement().isValid()){
+          PsiElement value = myLocalRefsMap.get(ref);
+          iterator.remove();
+          List<PsiReference> array = myLocalRefsMap.getKeysByValue(value);
+          LOG.assertTrue(array != null);
+          array.remove(ref);
+        }
       }
     }
     for (Iterator<PsiReference> iterator = myImportStatements.keySet().iterator(); iterator.hasNext();) {
@@ -217,11 +227,6 @@ public class RefCountHolder {
       }
     }
     return false;
-  }
-
-  public Map<PsiElement, Boolean> getPossiblyDuplicatedElementsMap() {
-    assertIsRetrieving();
-    return myPossiblyDuplicatedElementsSoftMap;
   }
 
   public List<PsiNamedElement> getUnusedDcls() {

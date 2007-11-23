@@ -685,7 +685,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   private static boolean doAddValueWithIdType(final XmlAttributeValue value,
                                        final RefCountHolder refCountHolder, boolean soft) {
-    refCountHolder.registerPossiblyDuplicatedElement(value, soft ? Boolean.TRUE: Boolean.FALSE);
+    refCountHolder.registerPossiblyDuplicateElement(value, soft ? Boolean.TRUE: Boolean.FALSE);
 
     return false;
   }

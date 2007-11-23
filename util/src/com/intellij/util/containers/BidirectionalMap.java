@@ -21,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class BidirectionalMap<K,V> implements Map<K,V>{
-  private Map<K,V> myKeyToValueMap = new THashMap<K,V>();
-  private Map<V,List<K>> myValueToKeysMap = new THashMap<V,List<K>>();
+  private final Map<K,V> myKeyToValueMap = new THashMap<K,V>();
+  private final Map<V,List<K>> myValueToKeysMap = new THashMap<V,List<K>>();
 
   public V put(K key, V value){
     V oldValue = myKeyToValueMap.put(key, value);
@@ -46,7 +46,8 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
     myValueToKeysMap.clear();
   }
 
-  public @Nullable List<K> getKeysByValue(V value){
+  @Nullable
+  public List<K> getKeysByValue(V value){
     return myValueToKeysMap.get(value);
   }
 
@@ -91,11 +92,8 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
   }
 
   public void putAll(Map<? extends K, ? extends V> t){
-    Set<? extends K> ks = t.keySet();
-    final Iterator<? extends K> iterator = ks.iterator();
-    while (iterator.hasNext()) {
-      final K k = iterator.next();
-      put(k, t.get(k));
+    for (final K k1 : t.keySet()) {
+      put(k1, t.get(k1));
     }
   }
 
@@ -103,7 +101,7 @@ public class BidirectionalMap<K,V> implements Map<K,V>{
     return myValueToKeysMap.keySet();
   }
 
-  public Set<Map.Entry<K, V>> entrySet(){
+  public Set<Entry<K, V>> entrySet(){
     return myKeyToValueMap.entrySet();
   }
 }

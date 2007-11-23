@@ -121,7 +121,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           elementSet.addAll(elements);
         }
 
-        XmlHighlightVisitor.checkDuplicates(myRefCountHolder.getPossiblyDuplicatedElementsMap(), myRefCountHolder, highlights);
+        XmlHighlightVisitor.checkDuplicates(myRefCountHolder.getPossiblyDuplicateElementsMap(), myRefCountHolder, highlights);
         collectHighlights(elementSet, highlights);
 
         boolean doubleCheckUsages = false;
