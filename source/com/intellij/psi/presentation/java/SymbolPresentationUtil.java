@@ -34,12 +34,13 @@ package com.intellij.psi.presentation.java;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -47,7 +48,7 @@ public class SymbolPresentationUtil {
   private SymbolPresentationUtil() {
   }
 
-  public static String getSymbolPresentableText(PsiElement element) {
+  public static String getSymbolPresentableText(@NotNull PsiElement element) {
     if (element instanceof PsiMethod){
       return PsiFormatUtil.formatMethod(
         (PsiMethod)element,

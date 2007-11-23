@@ -227,7 +227,9 @@ public class JavaDocManager implements ProjectComponent {
       }
     }
 
-    if (element == null && file != null) { // look if we are within a javadoc comment
+    if (element == null && file == null) return null; //file == null for text field editor
+
+    if (element == null) { // look if we are within a javadoc comment
       element = originalElement;
       if (element == null) return null;
       PsiDocComment comment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
@@ -240,7 +242,7 @@ public class JavaDocManager implements ProjectComponent {
     if (oldHint != null) {
       JavaDocInfoComponent component = (JavaDocInfoComponent)oldHint.getComponent();
       PsiElement element1 = component.getElement();
-      if (element != null && Comparing.equal(element, element1)) {
+      if (Comparing.equal(element, element1)) {
         if (requestFocus) {
           component.getComponent().requestFocus();
         }
@@ -402,6 +404,7 @@ public class JavaDocManager implements ProjectComponent {
         return getDocInfo(element.getElement());
       }
 
+      @Nullable
       public PsiElement getElement() {
         return element.getElement();
       }
@@ -658,6 +661,7 @@ public class JavaDocManager implements ProjectComponent {
         }
 
         final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
+          @Nullable
           public PsiElement compute() {
             return provider.getElement();
           }

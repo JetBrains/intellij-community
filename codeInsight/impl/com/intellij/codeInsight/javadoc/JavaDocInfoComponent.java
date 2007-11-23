@@ -3,6 +3,7 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
@@ -16,7 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.lang.StdLanguages;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -223,6 +224,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
         return myEditorPane;
     }
 
+    @Nullable
     public PsiElement getElement() {
         return myElement != null ? myElement.getElement() : null;
     }
