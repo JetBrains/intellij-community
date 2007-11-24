@@ -1,19 +1,16 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.debugger.ui.content.newUI.NewContentState;
-import com.intellij.debugger.ui.content.newUI.PlaceInGrid;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.ui.content.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -268,49 +265,8 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
     }
   }
 
-  public NewContentState getNewContentState(Content content) {
-    final Key kind = content.getUserData(DebuggerContentInfo.CONTENT_KIND);
-    if (DebuggerContentInfo.FRAME_CONTENT.equals(kind)) {
-      return new NewContentState(0, PlaceInGrid.left, getSplitProportion(PlaceInGrid.left));
-    } else if (DebuggerContentInfo.VARIABLES_CONTENT.equals(kind)) {
-      return new NewContentState(0, PlaceInGrid.center, getSplitProportion(PlaceInGrid.center));
-    } else if (DebuggerContentInfo.WATCHES_CONTENT.equals(kind)) {
-      return new NewContentState(0, PlaceInGrid.right, getSplitProportion(PlaceInGrid.right));
-    } else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(kind)) {
-      return new NewContentState(1, PlaceInGrid.bottom, getSplitProportion(PlaceInGrid.bottom));
-    } else {
-      return new NewContentState(Integer.MAX_VALUE, PlaceInGrid.unknown, getSplitProportion(PlaceInGrid.unknown));
-    }
-  }
-
-  public float getSplitProportion(PlaceInGrid placeInGrid) {
-    switch (placeInGrid) {
-      case left:
-        return .2f;
-      case center:
-        return 0f;
-      case right:
-        return .2f;
-      case bottom:
-        return .5f;
-      default:
-        return -1f;
-    }
-  }
-
-
-  public @Nullable
-  String getTabTitle(final int index) {
-    return index == 0 ? "Debugger" : null;
-  }
-
-  @Nullable
-  public Icon getTabIcon(final int tabIndex) {
-    return null;
-  }
-
-  public int getSelectedTab() {
-    return 0;
+  public DebuggerLayoutSettings getLayoutSettings() {
+    return ApplicationManager.getApplication().getComponent(DebuggerLayoutSettings.class);
   }
 
   public boolean isToolbarHorizontal() {
@@ -320,4 +276,6 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public void setToolbarHorizontal(boolean horizontal) {
     HORIZONTAL_TOOLBAR = horizontal;
   }
+
+
 }

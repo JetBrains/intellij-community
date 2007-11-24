@@ -290,6 +290,9 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     return false;
   }
 
+  public void beforeDispose() {
+  }
+
   public void dispose() {
   }
 }

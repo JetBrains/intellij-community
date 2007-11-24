@@ -19,4 +19,6 @@ public interface ObjectTreeAction {
 
   void execute(Object each);
 
+  void beforeTreeExecution(Object parent);
+
 }

@@ -1,6 +1,6 @@
 package com.intellij.debugger.ui.content.newUI;
 
-import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.settings.DebuggerLayoutSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.ui.NullableComponent;
@@ -16,7 +16,7 @@ import com.intellij.util.containers.HashMap;
 import java.util.*;
 
 class Grid extends Wrapper implements Disposable, CellTransform.Facade {
-  private DebuggerSettings mySettings;
+  DebuggerLayoutSettings mySettings;
 
   private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
   private Splitter mySplitter = new Splitter(true);
@@ -51,7 +51,7 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
     Disposer.register(myUI, this);
 
     myContentManager = ui.myManager;
-    mySettings = ui.mySettings;
+    mySettings = ui.mySettings.getLayoutSettings();
     myActionManager = ui.myActionManager;
     mySessionName = sessionName;
 
@@ -86,6 +86,9 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
 
   public void removeNotify() {
     super.removeNotify();
+
+    if (Disposer.isDisposed(this)) return;
+
     updateSelection(false);
   }
 
@@ -122,8 +125,8 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
     return cell;
   }
 
-  private NewContentState getStateFor(final Content content) {
-    return mySettings.getNewContentState(content);
+  NewContentState getStateFor(final Content content) {
+    return mySettings.getStateFor(content);
   }
 
   public void updateGridUI() {
@@ -144,6 +147,17 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
     }
   }
 
+  public void saveUiState() {
+    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
+      cell.saveUiState();
+    }
+  }
+
+  public Tab getTabIndex() {
+    return getTab();
+  }
+
+
   static class Placeholder extends Wrapper implements NullableComponent {
     public boolean isNull() {
       return getComponentCount() == 0;
@@ -151,21 +165,44 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
   }
 
   public void dispose() {
+
+  }
+
+  void saveSplitterProportions(final PlaceInGrid placeInGrid) {
+    if (!NewDebuggerContentUI.ensureValid(this)) return;
+
+    switch (placeInGrid) {
+      case left:
+        getTab().setLeftProportion(getLeftProportion());
+        break;
+      case right:
+        getTab().setRightProportion(getRightProportion());
+        break;
+      case bottom:
+        getTab().setBottomProportion(getBottomPropertion());
+      case center:
+        break;
+      case unknown:
+        break;
+    }
+  }
+
+  private Tab getTab() {
+    return myUI.getTabFor(this);
   }
 
   void restoreLastSplitterProportions(PlaceInGrid placeInGrid) {
-    if (!NewDebuggerContentUI.enusreValid(this)) return;
+    if (!NewDebuggerContentUI.ensureValid(this)) return;
 
-    final float proportion = mySettings.getSplitProportion(placeInGrid);
     switch (placeInGrid) {
       case left:
-        setLeftProportion(proportion);
+        setLeftProportion(getTab().getLeftProportion());
         break;
       case right:
-        setRightProportion(proportion);
+        setRightProportion(getTab().getRightProportion());
         break;
       case bottom:
-        mySplitter.setProportion(proportion);
+        mySplitter.setProportion(getTab().getBottomProportion());
       case center:
         break;
       case unknown:
@@ -177,6 +214,7 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
   float getLeftProportion() {
     final float totalSize = myTopSplit.getOrientation() ? myTopSplit.getHeight() : myTopSplit.getWidth();
     final float componentSize = myTopSplit.getFirstSize();
+
     return componentSize / (totalSize - 2.0f * myTopSplit.getDividerWidth());
   }
 
@@ -188,6 +226,7 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
   float getRightProportion() {
     final float totalSize = myTopSplit.getOrientation() ? myTopSplit.getHeight() : myTopSplit.getWidth();
     final float componentSize = myTopSplit.getLastSize();
+
     return componentSize / (totalSize - 2.0f * myTopSplit.getDividerWidth());
   }
 
@@ -195,6 +234,7 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
     final float totalSize = mySplitter.getOrientation() ? mySplitter.getHeight() : mySplitter.getWidth();
     final float componentSize =
       mySplitter.getOrientation() ? mySplitter.getFirstComponent().getHeight() : mySplitter.getFirstComponent().getWidth();
+
     return componentSize / (totalSize - mySplitter.getDividerWidth());
   }
 

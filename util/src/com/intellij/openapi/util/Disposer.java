@@ -34,6 +34,12 @@ public class Disposer {
     public void execute(final Object each) {
       ((Disposable)each).dispose();
     }
+
+    public void beforeTreeExecution(final Object parent) {
+      if (parent instanceof Disposable.Parent) {
+        ((Disposable.Parent)parent).beforeTreeDispose();
+      }
+    }
   };
   private static boolean ourDebugMode;
 
@@ -62,6 +68,10 @@ public class Disposer {
         }
       });
     }
+  }
+
+  public static boolean isDisposed(Disposable disposable) {
+    return !getTree().getObject2NodeMap().containsKey(disposable);
   }
 
   public static Disposable get(String key) {

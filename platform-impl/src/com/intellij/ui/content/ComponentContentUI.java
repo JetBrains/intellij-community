@@ -62,6 +62,9 @@ public class ComponentContentUI implements ContentUI {
     return false;
   }
 
+  public void beforeDispose() {
+  }
+
   public void dispose() {
   }
 }

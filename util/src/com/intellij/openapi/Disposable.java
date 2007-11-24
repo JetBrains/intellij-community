@@ -25,4 +25,9 @@ package com.intellij.openapi;
  */
 public interface Disposable {
   void dispose();
+
+  interface Parent extends Disposable {
+    void beforeTreeDispose();
+  }
+
 }

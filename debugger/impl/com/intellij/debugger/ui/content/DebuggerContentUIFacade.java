@@ -11,4 +11,5 @@ public interface DebuggerContentUIFacade {
   boolean isHorizontalToolbar();
 
   void setHorizontalToolbar(final boolean state);
+
 }

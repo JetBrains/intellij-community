@@ -95,6 +95,8 @@ public final class ObjectNode {
 
     myTree.getExecutedObjects().add(this);
 
+    action.beforeTreeExecution(myObject);
+
     if (myChildren != null) {
       final ObjectNode[] children = myChildren.toArray(new ObjectNode[myChildren.size()]);
       for (int i = children.length - 1; i >= 0; i--) {

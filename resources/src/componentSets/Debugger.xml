@@ -12,6 +12,9 @@
     <component>
       <implementation-class>com.intellij.debugger.settings.DebuggerSettings</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.debugger.settings.DebuggerLayoutSettings</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

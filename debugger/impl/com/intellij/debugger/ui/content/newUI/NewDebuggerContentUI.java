@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.settings.DebuggerLayoutSettings;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.content.DebuggerContentUI;
@@ -10,6 +11,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -39,7 +41,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   JBTabs myTabs;
   private Comparator<TabInfo> myTabsComparator = new Comparator<TabInfo>() {
     public int compare(final TabInfo o1, final TabInfo o2) {
-      return ((Integer)o1.getObject()).compareTo(((Integer)o2.getObject()));
+      return getTabFor(o1).getIndex() - getTabFor(o2).getIndex();
     }
   };
   Project myProject;
@@ -168,8 +170,8 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   }
 
   private void updateTabUI(TabInfo tab) {
-    String title = getSettings().getTabTitle(getTabIndex(tab));
-    Icon icon = getSettings().getTabIcon(getTabIndex(tab));
+    String title = getTabFor(tab).getDisplayName();
+    Icon icon = getTabFor(tab).getIcon();
 
     Grid grid = getGridFor(tab);
     grid.updateGridUI();
@@ -196,7 +198,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   }
 
   private void restoreLastUiState() {
-    if (!NewDebuggerContentUI.enusreValid(myTabs)) return;
+    if (!NewDebuggerContentUI.ensureValid(myTabs)) return;
 
 
     List<TabInfo> tabs = myTabs.getTabs();
@@ -204,24 +206,39 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
       getGridFor(each).restoreLastUiState();
     }
 
-    int selected = getSettings().getSelectedTab();
+    restoreLastSelectedTab();
+  }
+
+  private void restoreLastSelectedTab() {
+    Tab selected = getSettings().getSelectedTab();
 
     if (myTabs.getTabCount() > 0) {
       myTabs.setSelected(myTabs.getTabAt(0), false);
     }
 
     for (TabInfo each : myTabs.getTabs()) {
-      int index = getTabIndex(each);
-      if (index == selected) {
+      Tab tab = getTabFor(each);
+      if (tab.equals(selected)) {
         myTabs.setSelected(each, false);
         break;
       }
     }
-
   }
 
-  private int getTabIndex(final TabInfo tab) {
-    return ((Integer)tab.getObject()).intValue();
+  public void saveUiState() {
+    for (TabInfo each : myTabs.getTabs()) {
+      Grid eachGrid = getGridFor(each);
+      eachGrid.saveUiState();
+    }
+  }
+
+  public Tab getTabFor(final Grid grid) {
+    TabInfo info = myTabs.findInfo(grid);
+    return getTabFor(info);
+  }
+
+  private Tab getTabFor(final TabInfo tab) {
+    return ((Tab)tab.getObject());
   }
 
   private Grid getGridFor(TabInfo tab) {
@@ -230,9 +247,9 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
   @Nullable
   private Grid findGridFor(Content content) {
-    int tabIndex = getContentState(content).getTab();
+    Tab tab = getContentState(content).getTab();
     for (TabInfo each : myTabs.getTabs()) {
-      if (getTabIndex(each) == tabIndex) return getGridFor(each);
+      if (getTabFor(each).equals(tab)) return getGridFor(each);
     }
 
     return null;
@@ -258,11 +275,11 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   }
 
   public static NewContentState getContentState(Content content) {
-    return getSettings().getNewContentState(content);
+    return getSettings().getStateFor(content);
   }
 
-  private static DebuggerSettings getSettings() {
-    return DebuggerSettings.getInstance();
+  private static DebuggerLayoutSettings getSettings() {
+    return DebuggerSettings.getInstance().getLayoutSettings();
   }
 
   public boolean isSingleSelection() {
@@ -277,7 +294,14 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     return true;
   }
 
+  public void beforeDispose() {
+    if (myComponent.getRootPane() != null) {
+      saveUiState();
+    }
+  }
+
   public void dispose() {
+
   }
 
   public void restoreLayout() {
@@ -286,6 +310,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   public static boolean isActive() {
     return "true".equalsIgnoreCase(System.getProperty("new.debugger.ui"));
   }
+
 
   private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
     public MyComponent() {
@@ -316,6 +341,14 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
         });
       }
     }
+
+    public void removeNotify() {
+      super.removeNotify();
+
+      if (Disposer.isDisposed(NewDebuggerContentUI.this)) return;
+
+      saveUiState();
+    }
   }
 
   public static void removeScrollBorder(final Component c) {
@@ -345,7 +378,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     return c instanceof JPanel;
   }
 
-  public static boolean enusreValid(JComponent c) {
+  public static boolean ensureValid(JComponent c) {
     if (c.getRootPane() == null) return false;
 
      Container eachParent = c.getParent();
@@ -371,6 +404,8 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
         myMinimizedViewActions.get(getGridFor(content, false)).remove(restoreAction.get());
         return restore.restoreInGrid().doWhenDone(new Runnable() {
           public void run() {
+            saveUiState();
+
             rebuildMinimizedActions();
           }
         });
@@ -380,6 +415,9 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     Grid grid = getGridFor(content, false);
     myMinimizedViewActions.get(grid).add(restoreAction.get());
 
+    saveUiState();
     rebuildMinimizedActions();
   }
+
+
 }

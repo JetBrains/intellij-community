@@ -33,7 +33,7 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class ContentManagerImpl implements ContentManager, PropertyChangeListener, Disposable {
+public class ContentManagerImpl implements ContentManager, PropertyChangeListener, Disposable.Parent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.content.impl.ContentManagerImpl");
 
   private ContentUI myUI;
@@ -474,6 +474,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   public ContentFactory getFactory() {
     return ServiceManager.getService(ContentFactory.class);
+  }
+
+  public void beforeTreeDispose() {
+    myUI.beforeDispose();
   }
 
   public void dispose() {

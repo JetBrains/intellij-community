@@ -36,6 +36,8 @@ public class DisposerTest extends TestCase {
 
   private List myDisposedObjects = new ArrayList();
 
+  private List myDisposeActions = new ArrayList();
+
   protected void setUp() throws Exception {
     myRoot = new MyDisposable("root");
 
@@ -44,6 +46,8 @@ public class DisposerTest extends TestCase {
 
     myLeaf1 = new MyDisposable("leaf1");
     myLeaf2 = new MyDisposable("leaf2");
+
+    myDisposeActions.clear();
   }
 
   public void testDiposalAndAbsenceOfReferences() throws Exception {
@@ -162,6 +166,31 @@ public class DisposerTest extends TestCase {
     assertDisposed(myLeaf1);
   }
 
+  public void testDisposableParentNotify() throws Exception {
+    MyParentDisposable root = new MyParentDisposable("root");
+    Disposer.register(root, myFolder1);
+
+    MyParentDisposable sub = new MyParentDisposable("subFolder");
+    Disposer.register(myFolder1, sub);
+
+    Disposer.register(sub, myLeaf1);
+
+    Disposer.dispose(root);
+
+
+    ArrayList expected = new ArrayList();
+    expected.add("beforeDispose: root");
+    expected.add("beforeDispose: subFolder");
+    expected.add("dispose: leaf1");
+    expected.add("dispose: subFolder");
+    expected.add("dispose: folder1");
+    expected.add("dispose: root");
+
+
+    assertEquals(toString(expected), toString(myDisposeActions));
+  }
+
+
   private void assertDisposed(MyDisposable aDisposable) {
     assertTrue(aDisposable.isDisposed());
     assertFalse(aDisposable.toString(), Disposer.getTree().getObject2NodeMap().containsKey(aDisposable));
@@ -186,7 +215,7 @@ public class DisposerTest extends TestCase {
   private class MyDisposable implements Disposable {
 
     private boolean myDisposed = false;
-    private String myName;
+    protected String myName;
 
     public MyDisposable(String aName) {
       myName = aName;
@@ -195,6 +224,7 @@ public class DisposerTest extends TestCase {
     public void dispose() {
       myDisposed = true;
       myDisposedObjects.add(this);
+      myDisposeActions.add("dispose: " + myName);
     }
 
     public boolean isDisposed() {
@@ -203,6 +233,16 @@ public class DisposerTest extends TestCase {
 
     public String toString() {
       return myName;
+    }
+  }
+
+  private class MyParentDisposable extends MyDisposable implements Disposable.Parent {
+    private MyParentDisposable(final String aName) {
+      super(aName);
+    }
+
+    public void beforeTreeDispose() {
+      myDisposeActions.add("beforeDispose: " + myName);
     }
   }
 
@@ -215,5 +255,19 @@ public class DisposerTest extends TestCase {
       Disposer.dispose(this);
       super.dispose();
     }
+  }
+
+  private String toString(List list) {
+    StringBuffer result = new StringBuffer();
+
+    for (int i = 0; i < list.size(); i++) {
+      String each = (String)list.get(i);
+      result.append(each.toString());
+      if (i < list.size() - 1) {
+        result.append("\n");
+      }
+    }
+
+    return result.toString();
   }
 }

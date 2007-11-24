@@ -447,6 +447,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return false;
   }
 
+  public void beforeDispose() {
+  }
+
   static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
     if (c.getClientProperty(ui) != null) return;
 

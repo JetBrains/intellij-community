@@ -100,7 +100,7 @@ public class GridCell {
       }
     }
 
-    restoreLastUiState();
+    restoreProportions();
 
     myTabs.revalidate();
     myTabs.repaint();
@@ -146,6 +146,36 @@ public class GridCell {
   }
 
   public void restoreLastUiState() {
+    restoreProportions();
+
+    Content[] contents = myContents.getKeys().toArray(new Content[myContents.size()]);
+    for (Content each : contents) {
+      if (myContainer.getStateFor(each).isMinimizedInGrid()) {
+        minimize();
+      }
+    }
+  }
+
+  public void saveUiState() {
+    myContainer.saveSplitterProportions(myPlaceInGrid);
+
+    for (Content each : myContents.getKeys()) {
+      saveState(each, false);
+    }
+
+    for (Content each : myMinimizedContents) {
+      saveState(each, true);
+    }
+  }
+
+  private void saveState(Content content, boolean minimized) {
+    NewContentState state = myContainer.mySettings.getStateFor(content);
+    state.setMinimizedInGrid(minimized);
+    state.setPlaceInGrid(myPlaceInGrid);
+    state.setTab(myContainer.getTabIndex());
+  }
+
+  private void restoreProportions() {
     myContainer.restoreLastSplitterProportions(myPlaceInGrid);
   }
 
@@ -161,6 +191,8 @@ public class GridCell {
   }
 
   public void minimize() {
+    saveUiState();
+
     final Content content = getContentFor(myTabs.getSelectedInfo());
     myMinimizedContents.add(content);
     remove(content);
