@@ -14,9 +14,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -69,7 +67,7 @@ public class DFAEngine<E> {
     boolean[] visited = new boolean[myFlow.length];
 
     final boolean forward = myDfa.isForward();
-    int[] order = preorder(); //todo for backward?
+    int[] order = ControlFlowUtil.postorder(myFlow); //todo for backward?
     for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0;) {
       Instruction instr = myFlow[order[i]];
 
@@ -101,34 +99,6 @@ public class DFAEngine<E> {
 
 
     return info;
-  }
-
-  private int[] preorder() {
-    int[] result = new int[myFlow.length];
-    boolean[] visited = new boolean[myFlow.length];
-    for (int i = 0; i < result.length; i++) visited[i] = false;
-
-    int M = 0;
-    CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
-    for (int i = 0; i < myFlow.length; i++) {
-      if (!visited[i]) {
-        Queue<Instruction> worklist = new LinkedList<Instruction>();
-        worklist.add(myFlow[i]);
-        while (!worklist.isEmpty()) {
-          final Instruction curr = worklist.remove();
-          final int num = curr.num();
-          if (!visited[num]) {
-            result[M++] = num;
-            visited[num] = true;
-            for (Instruction succ : curr.succ(env)) {
-              worklist.add(succ);
-            }
-          }
-        }
-
-      }
-    }
-    return result;
   }
 
   private E join(Instruction instruction, ArrayList<E> info, CallEnvironment env) {

@@ -53,7 +53,9 @@ public class ReachingDefinitionsCollector {
     TIntObjectHashMap<TIntHashSet> dfaResult = postprocess(engine.performDFA(), flow, dfaInstance);
 
     TIntHashSet fragmentInstructions = getFragmentInstructions(first, last, flow);
-    TIntHashSet reachableFromFragmentReads = getReachable(fragmentInstructions, flow);
+    TIntHashSet reachableFromFragmentReads = getReachable(fragmentInstructions, flow,
+        dfaResult,
+        ControlFlowUtil.postorder(flow));
     TIntHashSet fragmentReads = filterReads(fragmentInstructions, flow);
 
     final Map<String, VariableInfo> imap = new HashMap<String, VariableInfo>();
@@ -182,31 +184,26 @@ public class ReachingDefinitionsCollector {
     return true;
   }
 
-  private static TIntHashSet getReachable(final TIntHashSet fragmentInsns, final Instruction[] flow) {
-    final TIntHashSet visited = new TIntHashSet();
+  private static TIntHashSet getReachable(final TIntHashSet fragmentInsns, final Instruction[] flow, TIntObjectHashMap<TIntHashSet> dfaResult, final int[] postorder) {
     final TIntHashSet result = new TIntHashSet();
-    final CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
-    fragmentInsns.forEach(new TIntProcedure() {
-      public boolean execute(int insnNum) {
-        processInsn(flow[insnNum], visited, result);
-        return true;
+    for (Instruction insn : flow) {
+      if (insn instanceof ReadWriteVariableInstruction &&
+          !((ReadWriteVariableInstruction) insn).isWrite()) {
+        final int ref = insn.num();
+        TIntHashSet defs = dfaResult.get(ref);
+        defs.forEach(new TIntProcedure() {
+          public boolean execute(int def) {
+            if (fragmentInsns.contains(def)) {
+              if (!fragmentInsns.contains(ref) || postorder[ref] < postorder[def]) {
+                result.add(ref);
+                return false;
+              }
+            }
+            return true;
+          }
+        });
       }
-
-      private void processInsn(Instruction instruction, TIntHashSet visited, TIntHashSet result) {
-        final int num = instruction.num();
-        if (visited.contains(num)) return;
-        visited.add(num);
-        if (instruction instanceof ReadWriteVariableInstruction &&
-            !((ReadWriteVariableInstruction) instruction).isWrite() &&
-            !fragmentInsns.contains(num)) {
-          result.add(num);
-        }
-
-        for (Instruction succ : instruction.succ(env)) {
-          processInsn(succ, visited, result);
-        }
-      }
-    });
+    }
 
     return result;
   }
