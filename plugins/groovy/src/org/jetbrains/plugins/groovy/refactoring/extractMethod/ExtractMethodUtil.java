@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -150,17 +151,7 @@ public class ExtractMethodUtil {
   To declare or not a variable to which method call result will be assigned.
    */
   private static boolean mustAddVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
-    GroovyPsiElement ourDeclaration = getVariableDeclaration(statements, varName);
-    if (ourDeclaration == null) return true;
-    for (GrStatement statement : statements) {
-      if (statement instanceof GrVariableDeclaration) {
-        GrVariable[] variables = ((GrVariableDeclaration) statement).getVariables();
-        for (GrVariable variable : variables) {
-          if (ourDeclaration == variable) return true;
-        }
-      }
-    }
-    return false;
+    return ResolveUtil.resolveVariable(statements[0], varName) == null;
   }
 
   static void renameParameterOccurrences(GrMethod method, ExtractMethodInfoHelper helper) throws IncorrectOperationException {
