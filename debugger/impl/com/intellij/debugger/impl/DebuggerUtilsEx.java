@@ -502,6 +502,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (PsiType.CHAR.getPresentableText().equals(expectedType)) {
       return vm.mirrorOf((char)value);
     }
+    if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
+      return vm.mirrorOf((double)value);
+    }
+    if (PsiType.FLOAT.getPresentableText().equals(expectedType)) {
+      return vm.mirrorOf((float)value);
+    }
     return null;
   }
 
