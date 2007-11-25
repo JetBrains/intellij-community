@@ -928,7 +928,7 @@ public class BindingFactory {
   public Binding rise(final PsiType x, final PsiType y, final HashSet<Constraint> constraints) {
     final Binding binding = balance(x, y, new Balancer() {
                                       public Binding varType(final PsiTypeVariable x, final PsiType y) {
-                                        if (y instanceof Bottom) {
+                                        if (y instanceof Bottom || y instanceof PsiWildcardType) {
                                           return create();
                                         }
 
@@ -951,9 +951,8 @@ public class BindingFactory {
                                       }
 
                                       public Binding typeVar(final PsiType x, final PsiTypeVariable y) {
-                                        if (x == null) {
-                                          return create(y, Bottom.BOTTOM);
-                                        }
+                                        if (x == null) return create(y, Bottom.BOTTOM);
+                                        if (x instanceof PsiWildcardType) return create();
 
                                         return create(y, x);
                                       }
