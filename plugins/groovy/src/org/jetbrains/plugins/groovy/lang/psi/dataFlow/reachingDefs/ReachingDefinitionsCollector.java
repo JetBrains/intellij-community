@@ -50,7 +50,7 @@ public class ReachingDefinitionsCollector {
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
-    final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFA();
+    TIntObjectHashMap<TIntHashSet> dfaResult = postprocess(engine.performDFA(), flow, dfaInstance);
 
     TIntHashSet fragmentInstructions = getFragmentInstructions(first, last, flow);
     TIntHashSet reachableFromFragmentReads = getReachable(fragmentInstructions, flow);
@@ -94,37 +94,31 @@ public class ReachingDefinitionsCollector {
 
   private static void addInfos(final TIntHashSet reads,
                                final Map<String, VariableInfo> infoMap,
-                               final Set<VariableInfo> infos, final Instruction[] flow,
-                               final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult,
+                               final Set<VariableInfo> infos,
+                               final Instruction[] flow,
+                               final TIntObjectHashMap<TIntHashSet> dfaResult,
                                final GrStatement first,
                                final GrStatement last, final boolean isInfragment) {
     reads.forEach(new TIntProcedure() {
       public boolean execute(int insNum) {
-        final TIntObjectHashMap<TIntHashSet> info = dfaResult.get(insNum);
-        final String useName = ((ReadWriteVariableInstruction) flow[insNum]).getVariableName();
-        info.forEachValue(new TObjectProcedure<TIntHashSet>() {
-          public boolean execute(TIntHashSet defs) {
-            defs.forEach(new TIntProcedure() {
-              public boolean execute(int def) {
-                ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[def];
-                final String defName = rwInstruction.getVariableName();
-                if (defName.equals(useName)) {
-                  String name = rwInstruction.getVariableName();
-                  VariableInfoImpl info = (VariableInfoImpl) infoMap.get(name);
-                  if (info == null) {
-                    info = new VariableInfoImpl(name, first.getManager());
-                    infoMap.put(name, info);
-                  }
+        final TIntHashSet defs = dfaResult.get(insNum);
+        defs.forEach(new TIntProcedure() {
+          public boolean execute(int def) {
+            ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[def];
+            final String defName = rwInstruction.getVariableName();
+            String name = rwInstruction.getVariableName();
+            VariableInfoImpl info = (VariableInfoImpl) infoMap.get(name);
+            if (info == null) {
+              info = new VariableInfoImpl(name, first.getManager());
+              infoMap.put(name, info);
+            }
 
-                  info.addSubtype(getType(rwInstruction.getElement()));
-                  if (isInFragment(flow[def], first, last) == isInfragment) infos.add(info);
-                }
-                return true;
-              }
-            });
+            info.addSubtype(getType(rwInstruction.getElement()));
+            if (isInFragment(flow[def], first, last) == isInfragment) infos.add(info);
             return true;
           }
         });
+
         return true;
       }
     });
@@ -276,5 +270,22 @@ public class ReachingDefinitionsCollector {
         }
       }
     }
+  }
+
+  private static TIntObjectHashMap<TIntHashSet> postprocess(final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult, Instruction[] flow, ReachingDefinitionsDfaInstance dfaInstance) {
+    TIntObjectHashMap<TIntHashSet> result = new TIntObjectHashMap<TIntHashSet>();
+    for (int i = 0; i < flow.length; i++) {
+      Instruction insn = flow[i];
+      if (insn instanceof ReadWriteVariableInstruction) {
+        ReadWriteVariableInstruction rwInsn = (ReadWriteVariableInstruction) insn;
+        if (!rwInsn.isWrite()) {
+          int idx = dfaInstance.getVarIndex(rwInsn.getVariableName());
+          TIntHashSet defs = dfaResult.get(i).get(idx);
+          if (defs == null) defs = new TIntHashSet();
+          result.put(i, defs);
+        }
+      }
+    }
+    return result;
   }
 }
