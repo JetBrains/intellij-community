@@ -52,9 +52,13 @@ public class UnusedImportInspection extends BaseInspection {
                 return;
             }
             final PsiClass[] classes = file.getClasses();
+            final PsiPackageStatement packageStatement =
+                    file.getPackageStatement();
+            final PsiModifierList annotationList =
+                    packageStatement.getAnnotationList();
             final PsiImportStatement[] importStatements =
                     importList.getImportStatements();
-            checkImports(importStatements, classes);
+            checkImports(importStatements, classes, annotationList);
             final PsiImportStaticStatement[] importStaticStatements =
                     importList.getImportStaticStatements();
             checkStaticImports(importStaticStatements, classes);
@@ -77,12 +81,14 @@ public class UnusedImportInspection extends BaseInspection {
         }
 
         private void checkImports(PsiImportStatement[] importStatements,
-                                  PsiClass[] classes) {
+                                  PsiClass[] classes,
+                                  PsiModifierList annotationList) {
             final ImportsAreUsedVisitor visitor =
                     new ImportsAreUsedVisitor(importStatements);
             for (PsiClass aClass : classes) {
                 aClass.accept(visitor);
             }
+            annotationList.accept(visitor);
             final PsiImportStatement[] unusedImportStatements =
                     visitor.getUnusedImportStatements();
             for (PsiImportStatement unusedImportStatement :

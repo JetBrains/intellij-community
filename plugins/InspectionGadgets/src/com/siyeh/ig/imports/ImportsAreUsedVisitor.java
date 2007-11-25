@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,7 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
     private final List<PsiImportStatement> importStatements;
 
     ImportsAreUsedVisitor(PsiImportStatement[] importStatements) {
-        super();
-        this.importStatements = new ArrayList<PsiImportStatement>(Arrays.asList(importStatements));
+        this.importStatements = new ArrayList(Arrays.asList(importStatements));
         Collections.reverse(this.importStatements);
     }
 
@@ -49,12 +48,13 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
     private void followReferenceToImport(
             PsiJavaCodeReferenceElement reference) {
         if (reference.getQualifier() != null) {
-            //it's already fully qualified, so the import statement wasn't
+            // it's already fully qualified, so the import statement wasn't
             // responsible
             return;
         }
         // during typing there can be incomplete code
-        final PsiElement element = reference.advancedResolve(true).getElement();
+        final JavaResolveResult resolveResult = reference.advancedResolve(true);
+        final PsiElement element = resolveResult.getElement();
         if (!(element instanceof PsiClass)) {
             return;
         }
@@ -64,7 +64,7 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final List<PsiImportStatement> importStatementsCopy =
-                new ArrayList<PsiImportStatement>(importStatements);
+                new ArrayList(importStatements);
         for (PsiImportStatement importStatement : importStatementsCopy) {
             final String importName = importStatement.getQualifiedName();
             if (importName == null) {
@@ -91,8 +91,9 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
     private void removeAll(@NotNull PsiImportStatement importStatement) {
         for (int i = importStatements.size() - 1; i >= 0; i--) {
             final PsiImportStatement statement = importStatements.get(i);
-            final String text = statement.getText();
-            if (importStatement.getText().equals(text)) {
+            final String statementText = statement.getText();
+            final String importText = importStatement.getText();
+            if (importText.equals(statementText)) {
                 importStatements.remove(i);
             }
         }
@@ -101,9 +102,8 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
     public PsiImportStatement[] getUnusedImportStatements() {
         if (importStatements.isEmpty()) {
             return PsiImportStatement.EMPTY_ARRAY;
-        } else {
-            return importStatements.toArray(
-                    new PsiImportStatement[importStatements.size()]);
         }
+        return importStatements.toArray(
+                new PsiImportStatement[importStatements.size()]);
     }
 }
