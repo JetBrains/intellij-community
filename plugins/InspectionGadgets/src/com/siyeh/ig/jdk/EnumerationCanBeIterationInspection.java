@@ -294,7 +294,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (nameInfo.names.length <= 0) {
                 return "iterator";
             }
-            System.out.println("nameInfo: " + nameInfo);
             return nameInfo.names[0];
         }
     }
@@ -309,7 +308,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
         public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
-
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             @NonNls final String methodName =
