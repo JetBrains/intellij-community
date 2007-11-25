@@ -344,10 +344,6 @@ public class GroovyAnnotator implements Annotator {
             if (isMethodAbstract) {
               holder.createErrorAnnotation(modifiersList, GroovyBundle.message("not.abstract.class.cannot.have.abstract.method"));
             }
-          } else {
-            if (isMethodStatic) {
-              holder.createErrorAnnotation(modifiersList, GroovyBundle.message("abstract.class.cannot.have.static.method"));
-            }
           }
 
           if (!isMethodAbstract) {
