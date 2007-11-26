@@ -133,39 +133,44 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
   private PsiImportStatementBaseImpl[] calcRepositoryImports() {
     PsiImportStatementBaseImpl[] repositoryImports = myRepositoryImports;
     if (repositoryImports != null) return repositoryImports;
-    ASTNode treeElement = getTreeElement();
-    if (treeElement == null) {
-      final FileView fileView = getRepositoryManager().getFileView();
-      final long repositoryId = getRepositoryId();
-      int count = fileView.getImportStatementsCount(repositoryId);
-      repositoryImports = count == 0 ? PsiImportStatementBaseImpl.EMPTY_ARRAY : new PsiImportStatementBaseImpl[count];
-      for (int i = 0; i < repositoryImports.length; i++) {
-        if (fileView.isImportStatic(repositoryId, i)) {
-          repositoryImports[i] = new PsiImportStaticStatementImpl(myManager, this, i);
-        }
-        else {
-          repositoryImports[i] = new PsiImportStatementImpl(myManager, this, i);
-        }
-      }
-    }
-    else {
-      final ASTNode[] imports = treeElement.getChildren(IMPORT_STATEMENT_BASE_BIT_SET);
-      int count = imports.length;
-      repositoryImports = count == 0 ? PsiImportStatementBaseImpl.EMPTY_ARRAY : new PsiImportStatementBaseImpl[count];
-      for (int i = 0; i < repositoryImports.length; i++) {
-        final IElementType type = imports[i].getElementType();
-        if (type == IMPORT_STATEMENT) {
-          repositoryImports[i] = new PsiImportStatementImpl(myManager, this, i);
-        }
-        else if (imports[i].getElementType() == IMPORT_STATIC_STATEMENT) {
-          repositoryImports[i] = new PsiImportStaticStatementImpl(myManager, this, i);
-        }
-        else {
-          LOG.assertTrue(false, "Unknown child: " + type.toString() + " " + type);
+
+    synchronized (PsiLock.LOCK) {
+      if (myRepositoryImports != null) return myRepositoryImports; // Double checking...
+
+      ASTNode treeElement = getTreeElement();
+      if (treeElement == null) {
+        final FileView fileView = getRepositoryManager().getFileView();
+        final long repositoryId = getRepositoryId();
+        int count = fileView.getImportStatementsCount(repositoryId);
+        repositoryImports = count == 0 ? PsiImportStatementBaseImpl.EMPTY_ARRAY : new PsiImportStatementBaseImpl[count];
+        for (int i = 0; i < repositoryImports.length; i++) {
+          if (fileView.isImportStatic(repositoryId, i)) {
+            repositoryImports[i] = new PsiImportStaticStatementImpl(myManager, this, i);
+          }
+          else {
+            repositoryImports[i] = new PsiImportStatementImpl(myManager, this, i);
+          }
         }
       }
+      else {
+        final ASTNode[] imports = treeElement.getChildren(IMPORT_STATEMENT_BASE_BIT_SET);
+        int count = imports.length;
+        repositoryImports = count == 0 ? PsiImportStatementBaseImpl.EMPTY_ARRAY : new PsiImportStatementBaseImpl[count];
+        for (int i = 0; i < repositoryImports.length; i++) {
+          final IElementType type = imports[i].getElementType();
+          if (type == IMPORT_STATEMENT) {
+            repositoryImports[i] = new PsiImportStatementImpl(myManager, this, i);
+          }
+          else if (imports[i].getElementType() == IMPORT_STATIC_STATEMENT) {
+            repositoryImports[i] = new PsiImportStaticStatementImpl(myManager, this, i);
+          }
+          else {
+            LOG.assertTrue(false, "Unknown child: " + type.toString() + " " + type);
+          }
+        }
+      }
+      return myRepositoryImports = repositoryImports;
     }
-    return myRepositoryImports = repositoryImports;
   }
 
   public PsiImportStatement findSingleClassImportStatement(String name) {
