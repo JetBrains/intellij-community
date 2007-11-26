@@ -522,32 +522,32 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
 
-  public OccurenceNavigator getOccurenceNavigator() {
+  private OccurenceNavigator getOccurenceNavigator() {
     return myOccurenceNavigator;
   }
 
   public boolean hasNextOccurence() {
-    return myOccurenceNavigator.hasNextOccurence();
+    return myOccurenceNavigator != null && myOccurenceNavigator.hasNextOccurence();
   }
 
   public boolean hasPreviousOccurence() {
-    return myOccurenceNavigator.hasPreviousOccurence();
+    return myOccurenceNavigator != null && myOccurenceNavigator.hasPreviousOccurence();
   }
 
   public OccurenceNavigator.OccurenceInfo goNextOccurence() {
-    return myOccurenceNavigator.goNextOccurence();
+    return myOccurenceNavigator != null ? myOccurenceNavigator.goNextOccurence() : null;
   }
 
   public OccurenceNavigator.OccurenceInfo goPreviousOccurence() {
-    return myOccurenceNavigator.goPreviousOccurence();
+    return myOccurenceNavigator != null ? myOccurenceNavigator.goPreviousOccurence() : null;
   }
 
   public String getNextOccurenceActionName() {
-    return myOccurenceNavigator.getNextOccurenceActionName();
+    return myOccurenceNavigator != null ? myOccurenceNavigator.getNextOccurenceActionName() : "";
   }
 
   public String getPreviousOccurenceActionName() {
-    return myOccurenceNavigator.getPreviousOccurenceActionName();
+    return myOccurenceNavigator != null ? myOccurenceNavigator.getPreviousOccurenceActionName() : "";
   }
 
   public Project getProject() {
