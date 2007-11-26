@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Map;
 
 /**
@@ -87,13 +88,14 @@ public class BreadcrumbsLoaderComponentImpl extends BreadcrumbsLoaderComponent {
         final FileEditor[] fileEditors = source.getEditors(file);
         for (final FileEditor each : fileEditors) {
           if (each instanceof TextEditor) {
-            final BreadcrumbsComponent component = new BreadcrumbsComponent(((TextEditor)each).getEditor(), myLoaderComponent);
-            source.addTopComponent(each, component);
+            final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(((TextEditor)each).getEditor(), myLoaderComponent);
+            final JComponent c = wrapper.getComponent();
+            source.addTopComponent(each, c);
 
-            Disposer.register(each, component);
+            Disposer.register(each, wrapper);
             Disposer.register(each, new Disposable() {
               public void dispose() {
-                source.removeTopComponent(each, component);
+                source.removeTopComponent(each, c);
               }
             });
           }
