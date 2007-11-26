@@ -281,8 +281,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
     StringBuilder outChars = new StringBuilder(chars.length());
     boolean success = parseStringCharacters(chars, outChars, null);
     if (!success) return null;
-    // should return interned strings since ConstantEvaluator should compute ("0" == "0") to true
-    return outChars.toString().intern();
+    return outChars.toString();
   }
 
   public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {

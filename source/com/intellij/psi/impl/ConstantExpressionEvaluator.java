@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
 
 import java.util.Collections;
@@ -13,6 +14,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class ConstantExpressionEvaluator extends PsiElementVisitor {
+  private final StringInterner myInterner = new StringInterner();
+
   private Set<PsiVariable> myVisitedVars;
   private final boolean myThrowExceptionOnOverflow;
   private final Project myProject;
@@ -30,7 +33,8 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
   }
 
   public void visitLiteralExpression(PsiLiteralExpression expression) {
-    myValue = expression.getValue();
+    final Object value = expression.getValue();
+    myValue = value instanceof String? myInterner.intern((String)value) : value;
   }
 
   public void visitBinaryExpression(PsiBinaryExpression expression) {
@@ -106,7 +110,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     }
     else if (tokenType == JavaTokenType.PLUS) {
       if (lOperandValue instanceof String || rOperandValue instanceof String) {
-        value = (lOperandValue.toString() + rOperandValue.toString()).intern();
+        value = myInterner.intern(lOperandValue.toString() + rOperandValue.toString());
       }
       else {
         if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
