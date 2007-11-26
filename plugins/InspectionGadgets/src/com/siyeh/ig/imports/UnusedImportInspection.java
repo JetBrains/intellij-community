@@ -54,6 +54,7 @@ public class UnusedImportInspection extends BaseInspection {
             final PsiClass[] classes = file.getClasses();
             final PsiPackageStatement packageStatement =
                     file.getPackageStatement();
+            if (packageStatement == null) return;
             final PsiModifierList annotationList =
                     packageStatement.getAnnotationList();
             final PsiImportStatement[] importStatements =
