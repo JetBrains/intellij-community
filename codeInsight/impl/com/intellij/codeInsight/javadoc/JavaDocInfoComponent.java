@@ -247,7 +247,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
             myForwardStack.clear();
         }
 
-        final SmartPsiElementPointer element = _element != null ?
+        final SmartPsiElementPointer element = _element != null && _element.isValid() ?
           SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element):
           null;
 
