@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +32,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -43,13 +41,11 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -123,28 +119,6 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
         XmlHighlightVisitor.checkDuplicates(myRefCountHolder.getPossiblyDuplicateElementsMap(), myRefCountHolder, highlights);
         collectHighlights(elementSet, highlights);
-
-        boolean doubleCheckUsages = false;
-        if (PsiUtil.isInJspFile(myFile)) {
-          final JspFile jspFile = PsiUtil.getJspFile(myFile);
-          if (jspFile != null) {
-            doubleCheckUsages = JspSpiUtil.isIncludedOrIncludesSomething(jspFile);
-          }
-        }
-
-        List<PsiNamedElement> unusedDcls = myRefCountHolder.getUnusedDcls();
-        for (PsiNamedElement unusedDcl : unusedDcls) {
-          if (doubleCheckUsages) {
-            if (ReferencesSearch.search(unusedDcl).findFirst() != null) continue;
-          }
-
-          String dclType = StringUtil.capitalize(UsageViewUtil.getType(unusedDcl));
-          if (dclType.length() == 0) dclType = LangBundle.message("java.terms.symbol");
-          String message = MessageFormat.format(JavaErrorMessages.message("symbol.is.never.used"), dclType, unusedDcl.getName());
-
-          HighlightInfo highlightInfo = createUnusedSymbolInfo(unusedDcl.getNavigationElement(), message);
-          highlights.add(highlightInfo);
-        }
 
         myHighlights = highlights;
         for (HighlightInfo info : highlights) {
