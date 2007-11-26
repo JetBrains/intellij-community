@@ -33,7 +33,7 @@ public class TreeChangeImpl implements TreeChange {
     }
 
     if(changeInfo.getChangeType() == ChangeInfo.REPLACE){
-      final ReplaceChangeInfoImpl replaceChangeInfo = ((ReplaceChangeInfoImpl)changeInfo);
+      final ReplaceChangeInfoImpl replaceChangeInfo = (ReplaceChangeInfoImpl)changeInfo;
       final ASTNode replaced = replaceChangeInfo.getReplaced();
       final ChangeInfo replacedInfo = myChanges.get(replaced);
 
@@ -93,7 +93,6 @@ public class TreeChangeImpl implements TreeChange {
 
     if(current == null){
       addChangeInternal(child, changeInfo);
-      return;
     }
   }
 
@@ -109,17 +108,16 @@ public class TreeChangeImpl implements TreeChange {
     int index = 0;
     for (Pair<ASTNode, Integer> pair : myOffsets) {
       if(child == pair.getFirst()) return;
-      if(nodeOffset < pair.getSecond().intValue() ||
-         (nodeOffset == pair.getSecond().intValue() && isAfter(pair.getFirst(), child))){
-        myOffsets.add(index, new Pair<ASTNode, Integer>(child, new Integer(nodeOffset)));
+      if(nodeOffset < pair.getSecond().intValue() || nodeOffset == pair.getSecond().intValue() && isAfter(pair.getFirst(), child)){
+        myOffsets.add(index, new Pair<ASTNode, Integer>(child, Integer.valueOf(nodeOffset)));
         return;
       }
       index++;
     }
-    myOffsets.add(new Pair<ASTNode, Integer>(child, new Integer(nodeOffset)));
+    myOffsets.add(new Pair<ASTNode, Integer>(child, Integer.valueOf(nodeOffset)));
   }
 
-  private boolean isAfter(final ASTNode what, final ASTNode afterWhat) {
+  private static boolean isAfter(final ASTNode what, final ASTNode afterWhat) {
     ASTNode current = afterWhat.getTreeNext();
 
     while(current != null){
@@ -157,9 +155,7 @@ public class TreeChangeImpl implements TreeChange {
   public TreeElement[] getAffectedChildren() {
     final TreeElement[] treeElements = new TreeElement[myChanges.size()];
     int index = 0;
-    final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
-    while(iterator.hasNext()){
-      final Pair<ASTNode, Integer> pair = iterator.next();
+    for (final Pair<ASTNode, Integer> pair : myOffsets) {
       treeElements[index++] = (TreeElement)pair.getFirst();
     }
     return treeElements;
@@ -177,9 +173,7 @@ public class TreeChangeImpl implements TreeChange {
   public void composite(TreeChange treeChange) {
     final TreeChangeImpl change = (TreeChangeImpl)treeChange;
     final Set<Map.Entry<ASTNode,ChangeInfo>> entries = change.myChanges.entrySet();
-    final Iterator<Map.Entry<ASTNode, ChangeInfo>> iterator = entries.iterator();
-    while (iterator.hasNext()) {
-      final Map.Entry<ASTNode, ChangeInfo> entry = iterator.next();
+    for (final Map.Entry<ASTNode, ChangeInfo> entry : entries) {
       addChange(entry.getKey(), entry.getValue());
     }
   }
@@ -195,9 +189,7 @@ public class TreeChangeImpl implements TreeChange {
   public void add(final TreeChange value) {
     final TreeChangeImpl impl = (TreeChangeImpl)value;
     LOG.assertTrue(impl.myParent == myParent);
-    final Iterator<Pair<ASTNode, Integer>> newChangesIterator = impl.myOffsets.iterator();
-    while (newChangesIterator.hasNext()) {
-      Pair<ASTNode, Integer> pair = newChangesIterator.next();
+    for (final Pair<ASTNode, Integer> pair : impl.myOffsets) {
       final ASTNode child = pair.getFirst();
       ChangeInfo change = impl.getChangeByChild(child);
 
@@ -209,7 +201,7 @@ public class TreeChangeImpl implements TreeChange {
               removeChangeInternal(child);
               break;
             case ChangeInfo.REPLACE:
-              final ASTNode replaced = ((ReplaceChangeInfoImpl)oldChange).getReplaced();
+              final ASTNode replaced = ((ReplaceChangeInfo)oldChange).getReplaced();
               removeChangeInternal(child);
               myChanges.put(replaced, ChangeInfoImpl.create(ChangeInfo.REMOVED, replaced));
               addChangeAtOffset(replaced, getOldOffset(pair.getSecond().intValue()));
@@ -238,7 +230,7 @@ public class TreeChangeImpl implements TreeChange {
               ((ChangeInfoImpl)change).setOldLength(oldChange.getOldLength());
               break;
             case ChangeInfo.REPLACE:
-              final ASTNode oldReplaced = ((ReplaceChangeInfoImpl)oldChange).getReplaced();
+              final ASTNode oldReplaced = ((ReplaceChangeInfo)oldChange).getReplaced();
               change = ChangeInfoImpl.create(ChangeInfo.REPLACE, child);
               ((ReplaceChangeInfoImpl)change).setReplaced(oldReplaced);
               break;
@@ -255,13 +247,11 @@ public class TreeChangeImpl implements TreeChange {
 
   public int getOldLength() {
     int oldLength = TreeUtil.getNotCachedLength(myParent);
-    final Iterator<Map.Entry<ASTNode, ChangeInfo>> iterator = myChanges.entrySet().iterator();
-    while (iterator.hasNext()) {
-      final Map.Entry<ASTNode, ChangeInfo> entry = iterator.next();
+    for (final Map.Entry<ASTNode, ChangeInfo> entry : myChanges.entrySet()) {
       final ASTNode key = entry.getKey();
       final ChangeInfo change = entry.getValue();
       final int length = TreeUtil.getNotCachedLength(key);
-      switch(change.getChangeType()){
+      switch (change.getChangeType()) {
         case ChangeInfo.ADD:
           oldLength -= length;
           break;
@@ -286,26 +276,18 @@ public class TreeChangeImpl implements TreeChange {
     LOG.assertTrue(child.getTreeParent() == myParent);
     int oldOffsetInParent = 0;
 
-    {
-      // calculate not changed elements
-      ASTNode current = child.getTreeParent().getFirstChildNode();
-      while(current != child) {
-        if(!myChanges.containsKey(current))
-          oldOffsetInParent += current.getTextLength();
-        current = current.getTreeNext();
+    // find last changed element before child
+    ASTNode lastChangedElementBeforeChild = null;
+    ASTNode current = myParent.getFirstChildNode();
+    // calculate not changed elements
+    while(current != child) {
+      if (!myChanges.containsKey(current)) {
+        oldOffsetInParent += current.getTextLength();
       }
-    }
-
-    final ASTNode lastChangedElementBeforeChild;
-    {
-      // find last changed element before child
-      ASTNode current = myParent.getFirstChildNode();
-      ASTNode lastChanged = null;
-      while(current != child) {
-        if(myChanges.containsKey(child)) lastChanged = current;
-        current = current.getTreeNext();
+      if (myChanges.containsKey(child)) {
+        lastChangedElementBeforeChild = current;
       }
-      lastChangedElementBeforeChild = lastChanged;
+      current = current.getTreeNext();
     }
 
     for (Pair<ASTNode, Integer> offset : myOffsets) {
@@ -338,7 +320,6 @@ public class TreeChangeImpl implements TreeChange {
     Pair<ASTNode, Integer> currentChange = i.hasNext() ? i.next() : null;
     int currentOffsetInNewTree = 0;
     int currentOldOffset = 0;
-    boolean inMergedOLE = false;
 
     while(current != null) {
       boolean counted = false;
@@ -371,14 +352,14 @@ public class TreeChangeImpl implements TreeChange {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString(){
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
     while (iterator.hasNext()) {
       final Pair<ASTNode, Integer> pair = iterator.next();
       final ASTNode node = pair.getFirst();
       buffer.append("(");
       buffer.append(node.getElementType().toString());
-      buffer.append(" at " + pair.getSecond() + ", ");
+      buffer.append(" at ").append(pair.getSecond()).append(", ");
       buffer.append(getChangeByChild(node).toString());
       buffer.append(")");
       if(iterator.hasNext()) buffer.append(", ");
