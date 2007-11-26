@@ -50,8 +50,6 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
   private final Project myProject;
   private EventListenerList myListenerList = new EventListenerList();
 
-  private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("extract.method.title");
-
   private JPanel contentPane;
   private EditorTextField myNameField;
   private JCheckBox myCbSpecifyType;
@@ -70,7 +68,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
 
     setModal(true);
     getRootPane().setDefaultButton(buttonOK);
-    setTitle(REFACTORING_NAME);
+    setTitle(GroovyExtractMethodHandler.REFACTORING_NAME);
     init();
     setUpDialog();
     update();
