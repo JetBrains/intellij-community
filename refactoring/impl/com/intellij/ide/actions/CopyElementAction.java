@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.copy.CopyHandler;
+import org.jetbrains.annotations.Nullable;
 
 public class CopyElementAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -19,25 +20,24 @@ public class CopyElementAction extends AnAction {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
       }}, "", null
     );
-
+    final Editor editor = DataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
-    PsiDirectory defaultTargetDirectory;
-    if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
-      Editor editor = DataKeys.EDITOR.getData(dataContext);
+
+    PsiDirectory defaultTargetDirectory = null;
+    if (editor != null) {
       PsiClass aClass = getTopLevelClass(editor, project);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       elements = new PsiElement[]{aClass};
       if (aClass == null || !CopyHandler.canCopy(elements)) {
         elements = new PsiElement[]{file};
       }
+      assert file != null;
       defaultTargetDirectory = file.getContainingDirectory();
-    }
-    else {
+    } else {
       Object element = dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);
       defaultTargetDirectory = element instanceof PsiDirectory ? (PsiDirectory)element : null;
-      elements = (PsiElement[])dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
+      elements = DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     }
-
     doCopy(elements, defaultTargetDirectory);
   }
 
@@ -49,12 +49,13 @@ public class CopyElementAction extends AnAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    presentation.setEnabled(false);
     if (project == null) {
-      presentation.setEnabled(false);
       return;
     }
 
-    if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
+    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    if (editor != null) {
       updateForEditor(dataContext, presentation);
     }
     else {
@@ -66,7 +67,6 @@ public class CopyElementAction extends AnAction {
   protected void updateForEditor(DataContext dataContext, Presentation presentation) {
     Editor editor = DataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
-      presentation.setEnabled(false);
       presentation.setVisible(false);
       return;
     }
@@ -86,12 +86,12 @@ public class CopyElementAction extends AnAction {
   }
 
   protected void updateForToolWindow(String toolWindowId, DataContext dataContext,Presentation presentation) {
-    PsiElement[] elements = (PsiElement[])dataContext.getData(DataConstants.PSI_ELEMENT_ARRAY);
+    PsiElement[] elements = DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     presentation.setEnabled(elements != null && CopyHandler.canCopy(elements));
-    presentation.setVisible(true);
   }
 
-  private PsiClass getTopLevelClass(final Editor editor, final Project project) {
+  @Nullable
+  private static PsiClass getTopLevelClass(final Editor editor, final Project project) {
     int offset = editor.getCaretModel().getOffset();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;

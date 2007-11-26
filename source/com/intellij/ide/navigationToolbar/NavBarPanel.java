@@ -17,9 +17,9 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeView;
-import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -678,6 +678,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       final PsiElement element = getSelectedElement(PsiElement.class);
       return element != null && element.isValid() ? element : null;
     }
+    if (dataId.equals(DataConstants.PSI_ELEMENT_ARRAY)) {
+      final PsiElement element = getSelectedElement(PsiElement.class);
+      return element != null && element.isValid() ? new PsiElement[]{element} : null;
+    }
+
     if (dataId.equals(DataConstants.CONTEXT_COMPONENT)) {
       return this;
     }
