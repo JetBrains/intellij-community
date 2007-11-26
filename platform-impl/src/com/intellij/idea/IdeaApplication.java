@@ -149,10 +149,6 @@ public class IdeaApplication {
           }
 
           PluginManager.reportPluginError();
-
-          if (myPerformProjectLoad) {
-            loadProject();
-          }
         }
       }, ModalityState.NON_MODAL);
 
@@ -173,8 +169,12 @@ public class IdeaApplication {
               // It's not a problem on automatic check
             }
           }
+
+          if (myPerformProjectLoad) {
+            loadProject();
+          }
         }
-      });
+      }, ModalityState.NON_MODAL);
     }
   }
 
