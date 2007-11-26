@@ -8,8 +8,8 @@ import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
@@ -25,7 +25,6 @@ import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.core.util.Strings;
 
-import java.io.File;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -349,9 +348,6 @@ public class MavenToIdeaConverter {
     String path = artifactPath;
     if (classifier != null) {
       path = MessageFormat.format("{0}-{1}.jar", path.substring(0, path.lastIndexOf(".")), classifier);
-      if (!new File(path).exists()) {
-        return null;
-      }
     }
     String normalizedPath = FileUtil.toSystemIndependentName(path);
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, normalizedPath) + JarFileSystem.JAR_SEPARATOR;

@@ -22,7 +22,9 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
 
     assertModules("project");
     assertModuleLibDep("project", "junit:junit:4.0",
-                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/");
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 
   public void testProjectWithEnvironmentProperty() throws IOException {

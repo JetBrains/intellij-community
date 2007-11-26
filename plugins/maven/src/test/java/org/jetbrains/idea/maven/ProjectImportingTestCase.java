@@ -201,6 +201,10 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
   }
 
   protected void assertModuleLibDep(String moduleName, String depName, String path) {
+    assertModuleLibDep(moduleName, depName, path, null, null);
+  }
+
+  protected void assertModuleLibDep(String moduleName, String depName, String path, String sourcePath, String javadocPath) {
     LibraryOrderEntry lib = null;
 
     for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {
@@ -209,7 +213,15 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
       }
     }
     assertNotNull(lib);
-    String[] urls = lib.getUrls(OrderRootType.CLASSES);
+    assertModuleLibDepPath(lib, OrderRootType.CLASSES, path);
+    assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePath);
+    assertModuleLibDepPath(lib, OrderRootType.JAVADOC, javadocPath);
+  }
+
+  private void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, String path) {
+    if (path == null) return;
+
+    String[] urls = lib.getUrls(type);
     assertEquals(1, urls.length);
     assertEquals(path, urls[0]);
   }
@@ -292,7 +304,8 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
 
   private String createValidPom(String xml) {
     return "<?xml version=\"1.0\"?>" +
-           "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
+           "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
+           "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
            "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
            "  <modelVersion>4.0.0</modelVersion>" +
            xml +
