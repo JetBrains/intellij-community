@@ -1,9 +1,9 @@
 package com.intellij.compiler;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -69,7 +69,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
           final int lineEnd = document.getLineEndOffset(line);
           final CharSequence chText = document.getCharsSequence().subSequence(lineStart, lineEnd);
           final int tabSize = CodeStyleSettingsManager.getSettings(myProject).getTabSize(FileTypeManager.getInstance().getFileTypeByFile(virtualFile));
-          offset = lineStart + EditorUtil.calcOffset(null, chText, 0, chText.length(), getColumn(), tabSize) - 1;
+          offset = lineStart + EditorUtil.calcOffset(null, chText, 0, chText.length(), getColumn(), tabSize);
         }
         else {
           offset = document.getLineStartOffset(line);

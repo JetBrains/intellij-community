@@ -109,10 +109,12 @@ public class JavacOutputParser extends OutputParser {
               return false;
             }
             if (nextLine.trim().equals("^")){
-              final int fakeColNum = nextLine.indexOf('^') + 1;
               final CharSequence chars = prevLine == null ? line : prevLine;
-              final int offsetColNum = EditorUtil.calcOffset(null, chars, 0, chars.length(), fakeColNum, 8);
-              colNum = EditorUtil.calcColumnNumber(null, chars,0, offsetColNum, myTabSize);
+              int offset = nextLine.indexOf('^');
+              if (offset < 0) {
+                offset = 0;
+              }
+              colNum = EditorUtil.calcColumnNumber(null, chars,0, offset, myTabSize);
               break;
             }
             if (prevLine != null) {
@@ -122,7 +124,7 @@ public class JavacOutputParser extends OutputParser {
           }
           while(true);
 
-          if (colNum > 0){
+          if (colNum >= 0){
             messages = convertMessages(messages);
             final StringBuilder buf = StringBuilderSpinAllocator.alloc();
             try {
@@ -140,7 +142,7 @@ public class JavacOutputParser extends OutputParser {
             return true;
           }
         }
-        catch (NumberFormatException e) {
+        catch (NumberFormatException ignored) {
         }
       }
     }
