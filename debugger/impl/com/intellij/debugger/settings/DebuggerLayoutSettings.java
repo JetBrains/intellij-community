@@ -47,10 +47,10 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
       myContentStates.put(state.getID(), state);
     }
 
-    myTabs.clear();
     List tabs = parentNode.getChildren(Tab.TAB);
     for (Object eachTabElement : tabs) {
-      myTabs.add(new Tab((Element)eachTabElement));
+      Tab eachTab = new Tab((Element)eachTabElement);
+      getOrCreateTab(eachTab.getIndex()).read((Element)eachTabElement);
     }
 
     return parentNode;

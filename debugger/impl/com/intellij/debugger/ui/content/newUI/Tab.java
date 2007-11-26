@@ -23,6 +23,10 @@ public class Tab {
   float myBottomProportion = .5f;
 
   public Tab(Element element) {
+    read(element);
+  }
+
+  public void read(final Element element) {
     myIndex = Integer.valueOf(element.getAttributeValue(INDEX)).intValue();
     myDisplayName = element.getAttributeValue(NAME);
     setLeftProportion(Float.valueOf(element.getAttributeValue(LEFT_SPLIT)).floatValue());
@@ -89,4 +93,5 @@ public class Tab {
     if (bottomProportion <= 0 || bottomProportion >= 1.0) return;
     myBottomProportion = bottomProportion;
   }
+
 }
