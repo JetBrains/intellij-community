@@ -30,9 +30,14 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class EnumerationCanBeIterationInspection extends BaseInspection {
 
@@ -81,6 +86,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             final PsiElement parent =
                     methodCallExpression.getParent();
             final PsiVariable variable;
+            boolean deleteInitializationStatement = false;
             if (parent instanceof PsiVariable) {
                 variable = (PsiVariable) parent;
             } else if (parent instanceof PsiAssignmentExpression) {
@@ -97,18 +103,18 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                     return;
                 }
                 variable = (PsiVariable) target;
+                deleteInitializationStatement = true;
             } else {
                 return;
             }
             final String variableName = createVariableName(element);
-            final PsiStatement statement = PsiTreeUtil.getParentOfType(element,
-                    PsiStatement.class);
+            final PsiStatement statement =
+                    PsiTreeUtil.getParentOfType(element, PsiStatement.class);
             if (statement == null) {
                 return;
             }
-            final boolean deleteInitialization =
-                    replaceMethodCalls(variable, statement.getTextOffset(),
-                            variableName);
+            deleteInitializationStatement |= replaceMethodCalls(variable,
+                    statement.getTextOffset(), variableName);
             final PsiType variableType = variable.getType();
             if (!(variableType instanceof PsiClassType)) {
                 return;
@@ -127,7 +133,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (newStatement == null) {
                 return;
             }
-            if (deleteInitialization) {
+            if (deleteInitializationStatement) {
                 statement.replace(newStatement);
             } else {
                 final PsiElement statementParent = statement.getParent();
@@ -139,6 +145,10 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                 } else {
                     statementParent.addAfter(newStatement, statement);
                 }
+                if (parent == variable) {
+                    variable.getInitializer().delete();
+                }
+
             }
         }
 
@@ -218,17 +228,22 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                 throws IncorrectOperationException {
             final PsiManager manager = enumerationVariable.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
-            boolean deleteInitialization = true;
             final Query<PsiReference> query = ReferencesSearch.search(
                     enumerationVariable);
+            final List<PsiElement> referenceElements = new ArrayList();
             for (PsiReference reference : query) {
                 final PsiElement referenceElement = reference.getElement();
+                referenceElements.add(referenceElement);
+            }
+            Collections.sort(referenceElements,
+                    PsiElementOrderComparator.getInstance());
+            boolean deleteInitialization = true;
+            for (PsiElement referenceElement : referenceElements) {
                 if (!(referenceElement instanceof PsiReferenceExpression)) {
                     deleteInitialization = false;
                     continue;
                 }
-                if (referenceElement.getTextOffset() <=
-                        startOffset) {
+                if (referenceElement.getTextOffset() <= startOffset) {
                     continue;
                 }
                 final PsiReferenceExpression referenceExpression =
@@ -237,9 +252,9 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                         referenceExpression.getParent();
                 if (!(referenceParent instanceof PsiReferenceExpression)) {
                     if (referenceParent instanceof PsiAssignmentExpression) {
+                        deleteInitialization = false;
                         break;
                     }
-                    deleteInitialization = false;
                     continue;
                 }
                 final PsiElement referenceGrandParent =
