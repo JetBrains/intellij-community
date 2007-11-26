@@ -2,14 +2,12 @@ package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.MutualMap;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.containers.HashSet;
@@ -36,25 +34,22 @@ public class GridCell {
   private JBTabs myTabs;
   private Grid.Placeholder myPlaceholder;
   private PlaceInGrid myPlaceInGrid;
-  private ContentManager myContentManager;
 
-  private ActionManager myActionManager;
+  private ViewContext myContext;
 
-
-  public GridCell(Grid container, Project project, Grid.Placeholder placeholder, boolean horizontalToolbars, PlaceInGrid placeInGrid) {
+  public GridCell(ViewContext context, Grid container, Grid.Placeholder placeholder, PlaceInGrid placeInGrid) {
+    myContext = context;
     myContainer = container;
 
-    myContentManager = container.myContentManager;
-    myActionManager = container.myActionManager;
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
-    myTabs = new MyTabs(project, container);
+    myTabs = new MyTabs(context.getProject(), container);
     myTabs.setUiDecorator(new JBTabs.UiDecorator() {
       public JBTabs.UiDecoration getDecoration() {
         return new JBTabs.UiDecoration(null, new Insets(0, -1, 0, -1));
       }
     });
-    myTabs.setSideComponentVertical(!horizontalToolbars);
+    myTabs.setSideComponentVertical(!context.getSettings().isToolbarHorizontal());
     myTabs.setStealthTabMode(true);
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
@@ -125,7 +120,7 @@ public class GridCell {
     myContents.remove(content);
     myContents.put(content, tabInfo);
 
-    ActionGroup group = (ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW);
+    ActionGroup group = (ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW);
     tabInfo.setTabActions(group);
 
     return tabInfo;
@@ -169,7 +164,7 @@ public class GridCell {
   }
 
   private void saveState(Content content, boolean minimized) {
-    NewContentState state = myContainer.mySettings.getStateFor(content);
+    NewContentState state = myContext.getStateFor(content);
     state.setMinimizedInGrid(minimized);
     state.setPlaceInGrid(myPlaceInGrid);
     state.setTab(myContainer.getTabIndex());
@@ -183,15 +178,15 @@ public class GridCell {
     for (Content each : myContents.getKeys()) {
       final TabInfo eachTab = getTabFor(each);
       if (eachTab != null && myTabs.getSelectedInfo() == eachTab && isShowing) {
-        myContentManager.addSelectedContent(each);
+        myContext.getContentManager().addSelectedContent(each);
       } else {
-        myContentManager.removeFromSelection(each);
+        myContext.getContentManager().removeFromSelection(each);
       }
     }
   }
 
   public void minimize() {
-    saveUiState();
+    myContext.saveUiState();
 
     final Content content = getContentFor(myTabs.getSelectedInfo());
     myMinimizedContents.add(content);
@@ -211,7 +206,7 @@ public class GridCell {
 
   private class MyTabs extends JBTabs implements DataProvider {
     public MyTabs(final Project project, final Grid container) {
-      super(project, container.myActionManager, container);
+      super(project, myContext.getActionManager(), container);
     }
 
     @Nullable

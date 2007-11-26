@@ -1,8 +1,6 @@
 package com.intellij.debugger.ui.content.newUI;
 
-import com.intellij.debugger.settings.DebuggerLayoutSettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -10,19 +8,16 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
 class Grid extends Wrapper implements Disposable, CellTransform.Facade {
-  DebuggerLayoutSettings mySettings;
 
   private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
   private Splitter mySplitter = new Splitter(true);
 
   private HashMap<PlaceInGrid, GridCell> myPlaceInGrid2Cell = new HashMap<PlaceInGrid, GridCell>();
-  ActionManager myActionManager;
 
   private Placeholder myLeft = new Placeholder();
   private Placeholder myCenter = new Placeholder();
@@ -39,30 +34,25 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
       return getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
     }
   };
-  ContentManager myContentManager;
-
-  private NewDebuggerContentUI myUI;
 
   private boolean myLastUiStateWasRestored;
+  private ViewContext myViewContext;
 
-  public Grid(NewDebuggerContentUI ui, String sessionName, boolean horizontalToolbars) {
-    myUI = ui;
-
-    Disposer.register(myUI, this);
-
-    myContentManager = ui.myManager;
-    mySettings = ui.mySettings.getLayoutSettings();
-    myActionManager = ui.myActionManager;
+  public Grid(ViewContext viewContext, String sessionName) {
+    myViewContext = viewContext;
     mySessionName = sessionName;
 
-    setOpaque(false);
+    Disposer.register(myViewContext, this);
 
-    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(this, myUI.myProject, myLeft, horizontalToolbars, PlaceInGrid.left));
-    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(this, myUI.myProject, myCenter, horizontalToolbars, PlaceInGrid.center));
-    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(this, myUI.myProject, myRight, horizontalToolbars, PlaceInGrid.right));
-    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(this, myUI.myProject, myBottom, horizontalToolbars, PlaceInGrid.bottom));
+    myPlaceInGrid2Cell.put(PlaceInGrid.left, new GridCell(myViewContext, this, myLeft, PlaceInGrid.left));
+    myPlaceInGrid2Cell.put(PlaceInGrid.center, new GridCell(myViewContext, this, myCenter, PlaceInGrid.center));
+    myPlaceInGrid2Cell.put(PlaceInGrid.right, new GridCell(myViewContext, this, myRight, PlaceInGrid.right));
+    myPlaceInGrid2Cell.put(PlaceInGrid.bottom, new GridCell(myViewContext, this, myBottom, PlaceInGrid.bottom));
 
     setContent(mySplitter);
+    setOpaque(false);
+    setFocusCycleRoot(true);
+
 
     myTopSplit.setFirstComponent(myLeft);
     myTopSplit.setInnerComponent(myCenter);
@@ -70,7 +60,6 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
     mySplitter.setFirstComponent(myTopSplit);
     mySplitter.setSecondComponent(myBottom);
 
-    setFocusCycleRoot(true);
   }
 
   public void addNotify() {
@@ -126,14 +115,12 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
   }
 
   NewContentState getStateFor(final Content content) {
-    return mySettings.getStateFor(content);
+    return myViewContext.getStateFor(content);
   }
 
   public void updateGridUI() {
-    Iterator<GridCell> cells = myPlaceInGrid2Cell.values().iterator();
-    while (cells.hasNext()) {
-      GridCell each = cells.next();
-      each.setHideTabs(myContents.size() == 1);
+    for (final GridCell cell : myPlaceInGrid2Cell.values()) {
+      cell.setHideTabs(myContents.size() == 1);
     }
   }
 
@@ -156,7 +143,6 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
   public Tab getTabIndex() {
     return getTab();
   }
-
 
   static class Placeholder extends Wrapper implements NullableComponent {
     public boolean isNull() {
@@ -188,7 +174,7 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
   }
 
   private Tab getTab() {
-    return myUI.getTabFor(this);
+    return myViewContext.getTabFor(this);
   }
 
   void restoreLastSplitterProportions(PlaceInGrid placeInGrid) {
@@ -248,9 +234,8 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
   }
 
   public void minimize(final Content content, final CellTransform.Restore restore) {
-    myUI.minimize(content, new CellTransform.Restore() {
+    myViewContext.getCellTransform().minimize(content, new CellTransform.Restore() {
       public ActionCallback restoreInGrid() {
-        // my restore
         return restore.restoreInGrid();
       }
     });

@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -37,7 +38,9 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class JBTabs extends JComponent implements PropertyChangeListener, TimerListener {
+public class JBTabs extends JComponent implements PropertyChangeListener, TimerListener, DataProvider {
+
+  private static DataKey<JBTabs> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
   private ActionManagerEx myActionManager;
   private List<TabInfo> myInfos = new ArrayList<TabInfo>();
@@ -57,7 +60,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private ActionGroup myPopupGroup;
   private String myPopupPlace;
   private TabInfo myPopupInfo;
-  private DefaultActionGroup myOwnGroup;
+  private DefaultActionGroup myNavigationActions;
 
   private PopupMenuListener myPopupListener;
   private JPopupMenu myActivePopup;
@@ -97,11 +100,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     myProject = project;
     myActionManager = (ActionManagerEx)actionManager;
 
-    myOwnGroup = new DefaultActionGroup();
+    myNavigationActions = new DefaultActionGroup();
 
     if (myActionManager != null) {
-      myOwnGroup.add(new SelectNextAction());
-      myOwnGroup.add(new SelectPreviousAction());
+      myNavigationActions.add(new SelectNextAction(this));
+      myNavigationActions.add(new SelectPreviousAction(this));
     }
 
     UIUtil.addAwtListener(new AWTEventListener() {
@@ -875,6 +878,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     return myStealthTabMode && getTabCount() == 1 && isSideComponentVertical();
   }
 
+  private boolean isNavigationVisible() {
+    if (myStealthTabMode && getTabCount() == 1) return false;
+    return myInfos.size() > 0;
+  }
+
 
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
@@ -1131,7 +1139,13 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         toShow.addAll(getPopupGroup());
         toShow.addSeparator();
       }
-      toShow.addAll(myOwnGroup);
+
+      Object tabs = DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()).getData(NAVIGATION_ACTIONS_KEY.getName());
+      if (tabs == JBTabs.this) {
+        toShow.addAll(myNavigationActions);
+      }
+
+      if (toShow.getChildrenCount() == 0) return;
 
       myActivePopup = myActionManager.createActionPopupMenu(place, toShow).getComponent();
       myActivePopup.addPopupMenuListener(myPopupListener);
@@ -1238,64 +1252,67 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     myPaintFocus = paintFocus;
   }
 
-  private abstract class BaseAction extends AnAction {
+  private static abstract class BaseNavigationAction extends AnAction {
 
     private ShadowAction myShadow;
-
-    protected BaseAction(final String copyFromID) {
-      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), JBTabs.this);
+    
+    protected BaseNavigationAction(final String copyFromID, JComponent c) {
+      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(copyFromID), c);
     }
 
     public final void update(final AnActionEvent e) {
-      final boolean visible = myInfos.size() > 0;
-      e.getPresentation().setVisible(visible);
-      if (!visible) return;
+      JBTabs tabs = e.getData(NAVIGATION_ACTIONS_KEY);
+      e.getPresentation().setVisible(tabs != null);
+      if (tabs == null) return;
 
-      final int selectedIndex = myInfos.indexOf(getSelectedInfo());
-      final boolean enabled = myInfos.size() > 0 && selectedIndex >= 0;
+      final int selectedIndex = tabs.myInfos.indexOf(tabs.getSelectedInfo());
+      final boolean enabled = tabs.myInfos.size() > 0 && selectedIndex >= 0;
       e.getPresentation().setEnabled(enabled);
       if (enabled) {
-        _update(e, selectedIndex);
+        _update(e, tabs, selectedIndex);
       }
     }
 
-    protected abstract void _update(AnActionEvent e, int selectedIndex);
+    protected abstract void _update(AnActionEvent e, final JBTabs tabs, int selectedIndex);
 
     public final void actionPerformed(final AnActionEvent e) {
-      final int index = myInfos.indexOf(getSelectedInfo());
+      JBTabs tabs = e.getData(NAVIGATION_ACTIONS_KEY);
+      if (tabs == null) return;
+
+      final int index = tabs.myInfos.indexOf(tabs.getSelectedInfo());
       if (index == -1) return;
-      _actionPerformed(e, index);
+      _actionPerformed(e, tabs, index);
     }
 
-    protected abstract void _actionPerformed(final AnActionEvent e, final int selectedIndex);
+    protected abstract void _actionPerformed(final AnActionEvent e, final JBTabs tabs, final int selectedIndex);
   }
 
-  private class SelectNextAction extends BaseAction {
+  private static class SelectNextAction extends BaseNavigationAction {
 
-    public SelectNextAction() {
-      super(IdeActions.ACTION_NEXT_TAB);
+    public SelectNextAction(JComponent c) {
+      super(IdeActions.ACTION_NEXT_TAB, c);
     }
 
-    protected void _update(final AnActionEvent e, int selectedIndex) {
-      e.getPresentation().setEnabled(myInfos.size() > 0 && selectedIndex < myInfos.size() - 1);
+    protected void _update(final AnActionEvent e, final JBTabs tabs, int selectedIndex) {
+      e.getPresentation().setEnabled(tabs.myInfos.size() > 0 && selectedIndex < tabs.myInfos.size() - 1);
     }
 
-    protected void _actionPerformed(final AnActionEvent e, final int selectedIndex) {
-      setSelected(myInfos.get(selectedIndex + 1), true);
+    protected void _actionPerformed(final AnActionEvent e, final JBTabs tabs, final int selectedIndex) {
+      tabs.setSelected(tabs.myInfos.get(selectedIndex + 1), true);
     }
   }
 
-  private class SelectPreviousAction extends BaseAction {
-    public SelectPreviousAction() {
-      super(IdeActions.ACTION_PREVIOUS_TAB);
+  private static class SelectPreviousAction extends BaseNavigationAction {
+    public SelectPreviousAction(JComponent c) {
+      super(IdeActions.ACTION_PREVIOUS_TAB, c);
     }
 
-    protected void _update(final AnActionEvent e, int selectedIndex) {
-      e.getPresentation().setEnabled(myInfos.size() > 0 && selectedIndex > 0);
+    protected void _update(final AnActionEvent e, final JBTabs tabs, int selectedIndex) {
+      e.getPresentation().setEnabled(tabs.myInfos.size() > 0 && selectedIndex > 0);
     }
 
-    protected void _actionPerformed(final AnActionEvent e, final int selectedIndex) {
-      setSelected(myInfos.get(selectedIndex - 1), true);
+    protected void _actionPerformed(final AnActionEvent e, final JBTabs tabs, final int selectedIndex) {
+      tabs.setSelected(tabs.myInfos.get(selectedIndex - 1), true);
     }
   }
 
@@ -1499,6 +1516,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       DataContext context = DataManager.getInstance().getDataContext(JBTabs.this);
       return new AnActionEvent(e, context, myPopupPlace != null ? myPopupPlace : ActionPlaces.UNKNOWN, presentation, myActionManager, 0);
     }
+  }
+
+  @Nullable
+  public Object getData(@NonNls final String dataId) {
+    if (!NAVIGATION_ACTIONS_KEY.getName().equals(dataId)) return null;
+    return isNavigationVisible() ? this : null;
   }
 
   public static void main(String[] args) {

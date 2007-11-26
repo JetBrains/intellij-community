@@ -1,7 +1,6 @@
 package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.settings.DebuggerLayoutSettings;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.content.DebuggerContentUI;
@@ -29,7 +28,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions, CellTransform.Facade {
+public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions, CellTransform.Facade, ViewContext {
 
   ContentManager myManager;
   DebuggerSettings mySettings;
@@ -52,6 +51,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   Map<Grid, Wrapper> myToolbarPlaceholders = new HashMap<Grid, Wrapper>();
 
   boolean myUiLastStateWasRestored;
+  private boolean myStateIsBeingRestored;
 
   public NewDebuggerContentUI(Project project, ActionManager actionManager, DebuggerSettings settings, String sessionName) {
     myProject = project;
@@ -121,10 +121,10 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     Grid grid = findGridFor(content);
     if (grid != null || !createIfMissing) return grid;
 
-    grid = new Grid(this, mySessionName, isHorizontalToolbar());
+    grid = new Grid(this, mySessionName);
     grid.setBorder(new EmptyBorder(1, 0, 0, 0));
 
-    TabInfo tab = new TabInfo(grid).setObject(getContentState(content).getTab()).setText("Tab");
+    TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
 
     NonOpaquePanel toolbar = new NonOpaquePanel(new BorderLayout());
     toolbar.add(myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myDebuggerActions, true).getComponent(), BorderLayout.WEST);
@@ -198,19 +198,28 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   }
 
   private void restoreLastUiState() {
-    if (!NewDebuggerContentUI.ensureValid(myTabs)) return;
+    if (myStateIsBeingRestored) return;
+
+    try {
+      myStateIsBeingRestored = true;
+
+      if (!NewDebuggerContentUI.ensureValid(myTabs)) return;
 
 
-    List<TabInfo> tabs = myTabs.getTabs();
-    for (TabInfo each : tabs) {
-      getGridFor(each).restoreLastUiState();
+      List<TabInfo> tabs = myTabs.getTabs();
+      for (TabInfo each : tabs) {
+        getGridFor(each).restoreLastUiState();
+      }
+
+      restoreLastSelectedTab();
     }
-
-    restoreLastSelectedTab();
+    finally {
+      myStateIsBeingRestored = false;
+    }
   }
 
   private void restoreLastSelectedTab() {
-    Tab selected = getSettings().getSelectedTab();
+    Tab selected = getSettings().getLayoutSettings().getSelectedTab();
 
     if (myTabs.getTabCount() > 0) {
       myTabs.setSelected(myTabs.getTabAt(0), false);
@@ -226,6 +235,8 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   }
 
   public void saveUiState() {
+    if (myStateIsBeingRestored) return;
+
     for (TabInfo each : myTabs.getTabs()) {
       Grid eachGrid = getGridFor(each);
       eachGrid.saveUiState();
@@ -247,7 +258,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
   @Nullable
   private Grid findGridFor(Content content) {
-    Tab tab = getContentState(content).getTab();
+    Tab tab = getStateFor(content).getTab();
     for (TabInfo each : myTabs.getTabs()) {
       if (getTabFor(each).equals(tab)) return getGridFor(each);
     }
@@ -263,9 +274,6 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     return result;
   }
 
-  public boolean isHorizontalToolbar() {
-    return mySettings.isToolbarHorizontal();
-  }
 
   public void setHorizontalToolbar(final boolean state) {
     mySettings.setToolbarHorizontal(state);
@@ -274,13 +282,6 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     }
   }
 
-  public static NewContentState getContentState(Content content) {
-    return getSettings().getStateFor(content);
-  }
-
-  private static DebuggerLayoutSettings getSettings() {
-    return DebuggerSettings.getInstance().getLayoutSettings();
-  }
 
   public boolean isSingleSelection() {
     return false;
@@ -419,5 +420,31 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     rebuildMinimizedActions();
   }
 
+  public Project getProject() {
+    return myProject;
+  }
 
+  public CellTransform.Facade getCellTransform() {
+    return this;
+  }
+
+  public ContentManager getContentManager() {
+    return myManager;
+  }
+
+  public ActionManager getActionManager() {
+    return myActionManager;
+  }
+
+  public DebuggerSettings getSettings() {
+    return DebuggerSettings.getInstance();
+  }
+
+  public NewContentState getStateFor(final Content content) {
+    return getSettings().getLayoutSettings().getStateFor(content);
+  }
+
+  public boolean isHorizontalToolbar() {
+    return getSettings().isToolbarHorizontal();
+  }
 }
