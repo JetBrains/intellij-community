@@ -11,13 +11,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 
 public class PsiChangeHandler extends PsiTreeChangeAdapter {
   private final Project myProject;
@@ -127,24 +124,6 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
         return;
       }
       PsiElement pparent = parent.getParent();
-
-      if (parent instanceof XmlTag) {
-        PsiElement dirtyScope = pparent;
-
-        if (pparent instanceof XmlTag && "head".equals(((XmlTag)pparent).getLocalName())) {
-          final PsiFile containingFile = parent.getContainingFile();
-          final FileType fileType = containingFile == null ? null : containingFile.getFileType();
-
-          if (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX || fileType == StdFileTypes.HTML ||
-              fileType == StdFileTypes.XHTML) {
-            // change in head will result in changes for css/javascript code highlighting
-            dirtyScope = containingFile;
-          }
-        }
-
-        myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, dirtyScope);
-        return;
-      }
 
       if (parent instanceof PsiCodeBlock && pparent instanceof PsiMethod && !((PsiMethod)pparent).isConstructor() &&
           pparent.getParent()instanceof PsiClass && !(pparent.getParent()instanceof PsiAnonymousClass)) {

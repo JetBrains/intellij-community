@@ -20,9 +20,10 @@ import com.intellij.psi.PsiFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CompositeLanguage extends Language{
-  private List<LanguageFilter> myFilters = new ArrayList<LanguageFilter>();
+  private final List<LanguageFilter> myFilters = new CopyOnWriteArrayList<LanguageFilter>();
 
   protected CompositeLanguage(final String id) {
     super(id);
@@ -34,6 +35,9 @@ public class CompositeLanguage extends Language{
 
   public void registerLanguageExtension(LanguageFilter filter){
     if(!myFilters.contains(filter)) myFilters.add(filter);
+  }
+  public boolean unregisterLanguageExtension(LanguageFilter filter){
+    return myFilters.remove(filter);
   }
 
   public Language[] getLanguageExtensionsForFile(final PsiFile psi) {
