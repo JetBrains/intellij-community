@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UnusedImportInspection extends BaseInspection {
 
@@ -54,9 +55,12 @@ public class UnusedImportInspection extends BaseInspection {
             final PsiClass[] classes = file.getClasses();
             final PsiPackageStatement packageStatement =
                     file.getPackageStatement();
-            if (packageStatement == null) return;
-            final PsiModifierList annotationList =
-                    packageStatement.getAnnotationList();
+            final PsiModifierList annotationList;
+            if (packageStatement != null) {
+                annotationList = packageStatement.getAnnotationList();
+            } else {
+                annotationList =  null;
+            }
             final PsiImportStatement[] importStatements =
                     importList.getImportStatements();
             checkImports(importStatements, classes, annotationList);
@@ -68,6 +72,9 @@ public class UnusedImportInspection extends BaseInspection {
         private void checkStaticImports(
                 PsiImportStaticStatement[] importStaticStatements,
                 PsiClass[] classes) {
+            if (importStaticStatements.length == 0) {
+                return;
+            }
             final StaticImportsAreUsedVisitor visitor =
                     new StaticImportsAreUsedVisitor(importStaticStatements);
             for (PsiClass aClass : classes) {
@@ -83,13 +90,18 @@ public class UnusedImportInspection extends BaseInspection {
 
         private void checkImports(PsiImportStatement[] importStatements,
                                   PsiClass[] classes,
-                                  PsiModifierList annotationList) {
+                                  @Nullable PsiModifierList annotationList) {
+            if (importStatements.length == 0) {
+                return;
+            }
             final ImportsAreUsedVisitor visitor =
                     new ImportsAreUsedVisitor(importStatements);
             for (PsiClass aClass : classes) {
                 aClass.accept(visitor);
             }
-            annotationList.accept(visitor);
+            if (annotationList != null) {
+                annotationList.accept(visitor);
+            }
             final PsiImportStatement[] unusedImportStatements =
                     visitor.getUnusedImportStatements();
             for (PsiImportStatement unusedImportStatement :
