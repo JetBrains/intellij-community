@@ -1194,7 +1194,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
       if (group == null) return;
 
-      myActionPanel = new ActionPanel(myInfo.getTabActions());
+      myActionPanel = new ActionPanel(myInfo.getTabActions(), myInfo.getTabActionPlace());
       add(myActionPanel, BorderLayout.EAST);
 
       revalidate();
@@ -1429,12 +1429,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     private ActionGroup myGroup;
     private List<ActionButton> myButtons = new ArrayList<ActionButton>();
 
-    private ActionPanel(final ActionGroup group) {
+    private ActionPanel(final ActionGroup group, String place) {
       myGroup = group != null ? group : new DefaultActionGroup();
       AnAction[] children = myGroup.getChildren(null);
       setLayout(new GridLayout(1, children.length));
       for (AnAction each : children) {
-        ActionButton eachButton = new ActionButton(each);
+        ActionButton eachButton = new ActionButton(each, place);
         myButtons.add(eachButton);
         add(eachButton.getComponent());
       }
@@ -1458,10 +1458,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     private InplaceButton myButton;
     private Presentation myPrevPresentation;
     private AnAction myAction;
+    private String myPlace;
 
-    private ActionButton(AnAction action) {
+    private ActionButton(AnAction action, String place) {
       super(null, action.getTemplatePresentation().getIcon());
       myAction = action;
+      myPlace = place;
       myButton = new InplaceButton(this, this);
     }
 
@@ -1514,7 +1516,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     private AnActionEvent createAnEvent(InputEvent e) {
       Presentation presentation = (Presentation)myAction.getTemplatePresentation().clone();
       DataContext context = DataManager.getInstance().getDataContext(JBTabs.this);
-      return new AnActionEvent(e, context, myPopupPlace != null ? myPopupPlace : ActionPlaces.UNKNOWN, presentation, myActionManager, 0);
+      return new AnActionEvent(e, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation, myActionManager, 0);
     }
   }
 

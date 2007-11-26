@@ -4,6 +4,7 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.MutualMap;
@@ -25,6 +26,9 @@ import java.util.Set;
 public class GridCell {
 
   public static final DataKey<GridCell> KEY = DataKey.create("DebuggerGridCell");
+
+  public static final String TOOLBAR_PLACE = "GridCellToolbarPlace";
+  public static final String POPUP_PLACE = "GridCellPopupPlace";
 
   private Grid myContainer;
 
@@ -58,6 +62,9 @@ public class GridCell {
         }
       }
     });
+    DefaultActionGroup popup = new DefaultActionGroup();
+    popup.add(myContext.getActionManager().getAction("Debugger.CloseView"));
+    myTabs.setPopupGroup(popup, POPUP_PLACE);
 
   }
 
@@ -121,7 +128,7 @@ public class GridCell {
     myContents.put(content, tabInfo);
 
     ActionGroup group = (ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW);
-    tabInfo.setTabActions(group);
+    tabInfo.setTabActions(group, TOOLBAR_PLACE);
 
     return tabInfo;
   }

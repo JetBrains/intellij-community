@@ -30,6 +30,7 @@ public final class TabInfo {
 
 
   private ActionGroup myTabActions;
+  private String myTabActionPlace;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -117,9 +118,14 @@ public final class TabInfo {
     return myTabActions;
   }
 
-  public void setTabActions(final ActionGroup tabActions) {
+  public String getTabActionPlace() {
+    return myTabActionPlace;
+  }
+
+  public void setTabActions(final ActionGroup tabActions, String place) {
     ActionGroup old = myTabActions;
     myTabActions = tabActions;
+    myTabActionPlace = place;
     myChangeSupport.firePropertyChange(TAB_ACTION_GROUP, old, myTabActions);
   }
 
