@@ -119,6 +119,9 @@ public class DiffTree<OT, NT> {
           build(oldChild, newChild, level + 1);
           walkedDeep = true;
         }
+        else if (dp == ThreeState.NO) {
+          myConsumer.nodeReplaced(oldChild, newChild);
+        }
       }
 
       start++;
@@ -143,6 +146,9 @@ public class DiffTree<OT, NT> {
         if (dp == ThreeState.UNSURE) {
           build(oldChild, newChild, level + 1);
           walkedDeep = true;
+        }
+        else if (dp == ThreeState.NO) {
+          myConsumer.nodeReplaced(oldChild, newChild);
         }
       }
 
