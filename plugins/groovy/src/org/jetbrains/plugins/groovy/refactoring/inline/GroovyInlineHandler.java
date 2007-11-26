@@ -20,7 +20,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -32,10 +31,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -136,54 +132,9 @@ public class GroovyInlineHandler implements InlineHandler {
   public Inliner createInliner(PsiElement element) {
     if (element instanceof GrVariable &&
         GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) {
-      return createInlinerForLocalVariable(((GrVariable) element));
+      return GroovyInlineUtil.createInlinerForLocalVariable(((GrVariable) element));
     }
     return null;
-  }
-
-  /**
-   * Creates new inliner for local variable occurences
-   */
-  private Inliner createInlinerForLocalVariable(final GrVariable variable) {
-    return new Inliner() {
-
-      @Nullable
-      public Collection<String> getConflicts(PsiReference reference, PsiElement referenced) {
-        ArrayList<String> conflicts = new ArrayList<String>();
-        GrExpression expr = (GrExpression) reference.getElement();
-        if (expr.getParent() instanceof GrAssignmentExpression) {
-          GrAssignmentExpression parent = (GrAssignmentExpression) expr.getParent();
-          if (expr.equals(parent.getLValue())) {
-            conflicts.add(GroovyRefactoringBundle.message("local.varaible.is.lvalue"));
-          }
-        }
-        return conflicts;
-      }
-
-      public void inlineReference(final PsiReference reference, final PsiElement referenced) {
-        GrExpression exprToBeReplaced = (GrExpression) reference.getElement();
-        assert variable.getInitializerGroovy() != null;
-        GrExpression initializerGroovy = variable.getInitializerGroovy();
-        assert initializerGroovy != null;
-        GrExpression tempExpr = initializerGroovy;
-        while (tempExpr instanceof GrParenthesizedExpression) {
-          tempExpr = ((GrParenthesizedExpression) tempExpr).getOperand();
-        }
-        Project project = variable.getProject();
-        GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
-        GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText());
-
-        try {
-          newExpr = exprToBeReplaced.replaceWithExpression(newExpr, true);
-          FileEditorManager manager = FileEditorManager.getInstance(project);
-          Editor editor = manager.getSelectedTextEditor();
-          GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});
-          WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        } catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-    };
   }
 
 }
