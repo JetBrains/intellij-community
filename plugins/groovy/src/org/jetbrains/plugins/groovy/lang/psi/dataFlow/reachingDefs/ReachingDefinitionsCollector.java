@@ -50,11 +50,10 @@ public class ReachingDefinitionsCollector {
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
-    TIntObjectHashMap<TIntHashSet> dfaResult = postprocess(engine.performDFA(), flow, dfaInstance);
+    final TIntObjectHashMap<TIntHashSet> dfaResult = postprocess(engine.performDFA(), flow, dfaInstance);
 
-    TIntHashSet fragmentInstructions = getFragmentInstructions(first, last, flow);
-    TIntHashSet reachableFromFragmentReads = getReachable(fragmentInstructions, flow,
-        dfaResult,
+    final TIntHashSet fragmentInstructions = getFragmentInstructions(first, last, flow);
+    TIntHashSet reachableFromFragmentReads = getReachable(fragmentInstructions, flow, dfaResult,
         ControlFlowUtil.postorder(flow));
     TIntHashSet fragmentReads = filterReads(fragmentInstructions, flow);
 
@@ -63,11 +62,40 @@ public class ReachingDefinitionsCollector {
     final Map<String, VariableInfo> omap = new HashMap<String, VariableInfo>();
     final Set<VariableInfo> oset = new LinkedHashSet<VariableInfo>();
 
-    addInfos(fragmentReads, imap, iset, flow, dfaResult, first, last, false);
-    addInfos(reachableFromFragmentReads, omap, oset, flow, dfaResult, first, last, true);
+    final PsiManager manager = first.getManager();
 
-    final VariableInfo[] iarr = filterNonlocals(iset, first);
-    final VariableInfo[] oarr = filterNonlocals(oset, first);
+    fragmentReads.forEach(new TIntProcedure() {
+      public boolean execute(int ref) {
+        ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[ref];
+        String name = rwInstruction.getVariableName();
+        final int[] defs = dfaResult.get(ref).toArray();
+        if (!allDefsInFragment(defs, fragmentInstructions)) {
+          addVariable(name, imap, manager, getType(rwInstruction.getElement()));
+        }
+
+        return true;
+      }
+    });
+
+    reachableFromFragmentReads.forEach(new TIntProcedure() {
+      public boolean execute(int ref) {
+        ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[ref];
+        String name = rwInstruction.getVariableName();
+        final int[] defs = dfaResult.get(ref).toArray();
+        if (anyDefInFragment(defs, fragmentInstructions)) {
+          addVariable(name, omap, manager, getType(rwInstruction.getElement()));
+
+          if (!allDefsInFragment(defs, fragmentInstructions)) {
+            addVariable(name, imap, manager, getType(rwInstruction.getElement()));
+          }
+        }
+
+        return true;
+      }
+    });
+
+    final VariableInfo[] iarr = filterNonlocals(imap, first);
+    final VariableInfo[] oarr = filterNonlocals(omap, first);
 
     return new FragmentVariableInfos() {
       public VariableInfo[] getInputVariableNames() {
@@ -78,6 +106,15 @@ public class ReachingDefinitionsCollector {
         return oarr;
       }
     };
+  }
+
+  private static void addVariable(String name, Map<String, VariableInfo> omap, PsiManager manager, PsiType type) {
+    VariableInfoImpl info = (VariableInfoImpl) omap.get(name);
+    if (info == null) {
+      info = new VariableInfoImpl(name, manager);
+      omap.put(name, info);
+    }
+    info.addSubtype(type);
   }
 
   private static TIntHashSet filterReads(final TIntHashSet instructions, final Instruction[] flow) {
@@ -94,36 +131,20 @@ public class ReachingDefinitionsCollector {
     return result;
   }
 
-  private static void addInfos(final TIntHashSet reads,
-                               final Map<String, VariableInfo> infoMap,
-                               final Set<VariableInfo> infos,
-                               final Instruction[] flow,
-                               final TIntObjectHashMap<TIntHashSet> dfaResult,
-                               final GrStatement first,
-                               final GrStatement last, final boolean isInfragment) {
-    reads.forEach(new TIntProcedure() {
-      public boolean execute(int insNum) {
-        final TIntHashSet defs = dfaResult.get(insNum);
-        defs.forEach(new TIntProcedure() {
-          public boolean execute(int def) {
-            ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction) flow[def];
-            final String defName = rwInstruction.getVariableName();
-            String name = rwInstruction.getVariableName();
-            VariableInfoImpl info = (VariableInfoImpl) infoMap.get(name);
-            if (info == null) {
-              info = new VariableInfoImpl(name, first.getManager());
-              infoMap.put(name, info);
-            }
+  private static boolean allDefsInFragment(int[] defs, TIntHashSet fragmentInstructions) {
+    for (int def : defs) {
+      if (!fragmentInstructions.contains(def)) return false;
+    }
 
-            info.addSubtype(getType(rwInstruction.getElement()));
-            if (isInFragment(flow[def], first, last) == isInfragment) infos.add(info);
-            return true;
-          }
-        });
+    return true;
+  }
 
-        return true;
-      }
-    });
+  private static boolean anyDefInFragment(int[] defs, TIntHashSet fragmentInstructions) {
+    for (int def : defs) {
+      if (fragmentInstructions.contains(def)) return true;
+    }
+
+    return false;
   }
 
   private static PsiType getType(PsiElement element) {
@@ -132,9 +153,9 @@ public class ReachingDefinitionsCollector {
     return null;
   }
 
-  private static VariableInfo[] filterNonlocals(Set<VariableInfo> infos, GrStatement place) {
+  private static VariableInfo[] filterNonlocals(Map<String, VariableInfo> infos, GrStatement place) {
     List<VariableInfo> result = new ArrayList<VariableInfo>();
-    for (Iterator<VariableInfo> iterator = infos.iterator(); iterator.hasNext();) {
+    for (Iterator<VariableInfo> iterator = infos.values().iterator(); iterator.hasNext();) {
       VariableInfo info = iterator.next();
       final GroovyPsiElement resolved = ResolveUtil.resolveVariable(place, info.getName());
       if (resolved instanceof PsiField) iterator.remove();
@@ -223,7 +244,9 @@ public class ReachingDefinitionsCollector {
             }
           });
           return true;
-        };
+        }
+
+        ;
       });
       buffer.append("\n");
     }
@@ -232,10 +255,14 @@ public class ReachingDefinitionsCollector {
   }
 
   private static class VariableInfoImpl implements VariableInfo {
-    private @NotNull String myName;
+    private
+    @NotNull
+    String myName;
     private PsiManager myManager;
 
-    private @Nullable PsiType myType;
+    private
+    @Nullable
+    PsiType myType;
 
     VariableInfoImpl(@NotNull String name, PsiManager manager) {
       myName = name;
