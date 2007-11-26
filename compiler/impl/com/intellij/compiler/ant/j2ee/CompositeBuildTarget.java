@@ -36,10 +36,11 @@ public class CompositeBuildTarget extends CompositeGenerator {
     final String baseDirProperty = BuildProperties.getModuleChunkBasedirProperty(parameters.getChunk());
     if (buildConfiguration.isExplodedEnabled()) {
       final String explodedPath = buildConfiguration.getExplodedPath();
-
-      String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(explodedPath), moduleBaseDir, baseDirProperty,
-                                                       parameters.getGenerationOptions(), !containingModule.isSavePathsRelative());
-      add(new Property(parameters.getExplodedPathProperty(), location));
+      if (explodedPath != null) {
+        String location = GenerationUtils.toRelativePath(VirtualFileManager.extractPath(explodedPath), moduleBaseDir, baseDirProperty,
+                                                         parameters.getGenerationOptions(), !containingModule.isSavePathsRelative());
+        add(new Property(parameters.getExplodedPathProperty(), location));
+      }
 
       final AntCall antCall = new AntCall(parameters.getBuildExplodedTargetName());
       buildTarget.add(antCall);
