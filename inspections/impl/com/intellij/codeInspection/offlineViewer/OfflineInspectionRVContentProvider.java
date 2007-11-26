@@ -128,23 +128,18 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
 
   private static void excludeProblem(final String externalName, final Map<String, Set<OfflineProblemDescriptor>> content) {
     for (Iterator<String> iter = content.keySet().iterator(); iter.hasNext();) {
-      String packageName = iter.next();
-      final Set<OfflineProblemDescriptor> descriptors = content.get(packageName);
-      for (OfflineProblemDescriptor descriptor : descriptors) {
-        if (Comparing.strEqual(descriptor.getFQName(), externalName)) {
-          final Set<OfflineProblemDescriptor> excluded = new HashSet<OfflineProblemDescriptor>(descriptors);
-          for (Iterator<OfflineProblemDescriptor> it = excluded.iterator(); it.hasNext();) {
-            final OfflineProblemDescriptor ex = it.next();
-            if (Comparing.strEqual(ex.getFQName(), externalName)) {
-              it.remove();
-            }
-          }
-          if (excluded.isEmpty()) {
-            iter.remove();
-          } else {
-            content.put(packageName, excluded);
-          }
+      final String packageName = iter.next();
+      final Set<OfflineProblemDescriptor> excluded = new HashSet<OfflineProblemDescriptor>(content.get(packageName));
+      for (Iterator<OfflineProblemDescriptor> it = excluded.iterator(); it.hasNext();) {
+        final OfflineProblemDescriptor ex = it.next();
+        if (Comparing.strEqual(ex.getFQName(), externalName)) {
+          it.remove();
         }
+      }
+      if (excluded.isEmpty()) {
+        iter.remove();
+      } else {
+        content.put(packageName, excluded);
       }
     }
   }
