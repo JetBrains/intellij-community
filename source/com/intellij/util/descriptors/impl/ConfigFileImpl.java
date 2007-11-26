@@ -76,7 +76,7 @@ public class ConfigFileImpl implements ConfigFile {
   }
 
   @Nullable
-  public PsiFile getPsiFile() {
+  public synchronized PsiFile getPsiFile() {
     if (myPsiFile != null && myPsiFile.isValid()) {
       return myPsiFile;
     }
