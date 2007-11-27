@@ -408,6 +408,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
         openSourceListener.structure = null;
         openSourceListener.console = null;
         tree.getSelectionModel().removeTreeSelectionListener(openSourceListener);
+        myLogFilesManager.unregisterFileMatcher();
     }
 
   public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent) {
