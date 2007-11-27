@@ -389,7 +389,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     if (myViewsContentManager != null) {
       Content[] contents = myViewsContentManager.getContents();
       for (Content content : contents) {
-        Key kind = content.getUserData(DebuggerContentInfo.CONTENT_KIND);
+        Key kind = content.getUserData(DebuggerContentInfo.CONTENT_ID);
         if (key.equals(kind)) {
           return content;
         }
@@ -514,7 +514,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   }
 
   private Content addLogComponent(final AdditionalTabComponent tabComponent) {
-    Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), null, DebuggerContentInfo.LOG_CONTENT,
+    Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), null, Key.create("Log-" + tabComponent.getTabTitle()),
                                        tabComponent.getPreferredFocusableComponent());
     logContent.setDescription(tabComponent.getTooltip());
     myAdditionalContent.put(tabComponent, logContent);
@@ -634,7 +634,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
   private static Content createContent(JComponent component, String displayName, Icon icon, Key kind, JComponent focusable) {
     final Content content = getContentFactory().createContent(component, displayName, false);
-    content.putUserData(DebuggerContentInfo.CONTENT_KIND, kind);
+    content.putUserData(DebuggerContentInfo.CONTENT_ID, kind);
     content.setIcon(icon);
     if (focusable != null) {
       content.setPreferredFocusableComponent(focusable);

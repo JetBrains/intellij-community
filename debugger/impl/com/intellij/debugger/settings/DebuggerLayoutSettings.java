@@ -99,7 +99,10 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
   }
 
   public NewContentState getStateFor(Content content) {
-    Key key = content.getUserData(DebuggerContentInfo.CONTENT_KIND);
+    Key key = content.getUserData(DebuggerContentInfo.CONTENT_ID);
+
+    assert key != null : "Content for debugger UI must be specified with: " + DebuggerContentInfo.CONSOLE_CONTENT;
+
     NewContentState state = myContentStates.get(key.toString());
     return state != null ? state : getDefaultContentState(content);
   }
@@ -107,7 +110,7 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
   private NewContentState getDefaultContentState(final Content content) {
     NewContentState state;
 
-    final Key kind = content.getUserData(DebuggerContentInfo.CONTENT_KIND);
+    final Key kind = content.getUserData(DebuggerContentInfo.CONTENT_ID);
     if (DebuggerContentInfo.FRAME_CONTENT.equals(kind)) {
       state =  new NewContentState(kind.toString(), getOrCreateTab(0), PlaceInGrid.left, false);
     } else if (DebuggerContentInfo.VARIABLES_CONTENT.equals(kind)) {
@@ -117,7 +120,7 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
     } else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(kind)) {
       state =  new NewContentState(kind.toString(), getOrCreateTab(1), PlaceInGrid.bottom, false);
     } else {
-      state =  new NewContentState(content.getDisplayName(), getOrCreateTab(Integer.MAX_VALUE), PlaceInGrid.bottom, false);
+      state =  new NewContentState(kind.toString(), getOrCreateTab(Integer.MAX_VALUE), PlaceInGrid.bottom, false);
     }
 
     myContentStates.put(state.getID(), state);
