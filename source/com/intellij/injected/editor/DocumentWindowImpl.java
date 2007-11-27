@@ -52,22 +52,12 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
       rangeMarker.setGreedyToRight(true);
       myRelevantRangesInHostDocument[i] = rangeMarker;
     }
-    myPrefixLineCount = Math.max(1, countLineSeparators(myPrefixes[0]));
-    mySuffixLineCount = Math.max(1, countLineSeparators(mySuffixes[mySuffixes.length-1]));
+    myPrefixLineCount = Math.max(1, 1 + StringUtil.countNewLines(myPrefixes[0]));
+    mySuffixLineCount = Math.max(1, 1 + StringUtil.countNewLines(mySuffixes[mySuffixes.length - 1]));
   }
 
   public int getLineCount() {
-    return countLineSeparators(getText());
-  }
-
-  private static int countLineSeparators(String text) {
-    int lineCount = 1;
-    for (int i=0; i<text.length();i++) {
-      if (text.charAt(i) == '\n') {
-        lineCount++;
-      }
-    }
-    return lineCount;
+    return 1 + StringUtil.countNewLines(getText());
   }
 
   public int getLineStartOffset(int line) {
@@ -201,7 +191,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
     assert startOffset <= endOffset;
-    TextRange hostRange = injectedToHost(new TextRange(startOffset, endOffset));
+    TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
     return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
   }
@@ -210,7 +200,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     if (!surviveOnExternalChange) {
       return createRangeMarker(startOffset, endOffset);
     }
-    TextRange hostRange = injectedToHost(new TextRange(startOffset, endOffset));
+    TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     //todo persistent?
     return myDelegate.createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
   }
@@ -238,7 +228,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public RangeMarker createGuardedBlock(final int startOffset, final int endOffset) {
-    TextRange hostRange = injectedToHost(new TextRange(startOffset, endOffset));
+    TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myDelegate.createGuardedBlock(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
 
@@ -251,7 +241,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public RangeMarker getRangeGuard(final int startOffset, final int endOffset) {
-    TextRange hostRange = injectedToHost(new TextRange(startOffset, endOffset));
+    TextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
 
     return myDelegate.getRangeGuard(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
@@ -406,7 +396,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public TextRange injectedToHost(TextRange injected) {
-    return new TextRange(injectedToHost(injected.getStartOffset()), injectedToHost(injected.getEndOffset(), false));
+    return new ProperTextRange(injectedToHost(injected.getStartOffset()), injectedToHost(injected.getEndOffset(), false));
   }
 
   public int injectedToHostLine(int line) {
@@ -426,7 +416,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public boolean containsRange(int start, int end) {
     if (end - start > myRelevantRangesInHostDocument[0].getEndOffset() - myRelevantRangesInHostDocument[0].getStartOffset()) return false;
     for (RangeMarker hostRange : myRelevantRangesInHostDocument) {
-      if (InjectedLanguageUtil.toTextRange(hostRange).contains(new TextRange(start, end))) return true;
+      if (InjectedLanguageUtil.toTextRange(hostRange).contains(new ProperTextRange(start, end))) return true;
     }
     return false;
   }
@@ -444,7 +434,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
       RangeMarker hostRange = myRelevantRangesInHostDocument[i];
       offset += myPrefixes[i].length();
       int length = hostRange.getEndOffset() - hostRange.getStartOffset();
-      TextRange intersection = new TextRange(offset, offset + length).intersection(rangeToEdit);
+      TextRange intersection = new ProperTextRange(offset, offset + length).intersection(rangeToEdit);
       if (intersection != null) {
         if (startOffset == -1) {
           startOffset = intersection.getStartOffset();
@@ -455,7 +445,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
       offset += mySuffixes[i].length();
     }
     if (startOffset == -1) return null;
-    return new TextRange(startOffset, endOffset);
+    return new ProperTextRange(startOffset, endOffset);
   }
 
   public boolean intersects(DocumentWindowImpl documentWindow) {
