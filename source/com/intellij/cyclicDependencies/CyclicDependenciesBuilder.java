@@ -86,16 +86,16 @@ public class CyclicDependenciesBuilder{
           builder.setInitialFileCount(++myFileCount);
           builder.analyze();
           final Set<PsiFile> psiFiles = builder.getDependencies().get(psiJavaFile);
-          for (Iterator<PsiPackage> iterator = packs.iterator(); iterator.hasNext();) {
-            PsiPackage pack = iterator.next();
+          if (psiFiles == null) return;
+          for (PsiPackage pack : packs) {
             Set<PsiPackage> pack2Packages = myPackageDependencies.get(pack);
             if (pack2Packages == null) {
               pack2Packages = new HashSet<PsiPackage>();
               myPackageDependencies.put(pack, pack2Packages);
             }
-            for (Iterator<PsiFile> it = psiFiles.iterator(); it.hasNext();) {
-              PsiFile psiFile = it.next();
-              if (!(psiFile instanceof PsiJavaFile) || !projectFileIndex.isInSourceContent(psiFile.getVirtualFile()) ||
+            for (PsiFile psiFile : psiFiles) {
+              if (!(psiFile instanceof PsiJavaFile) ||
+                  !projectFileIndex.isInSourceContent(psiFile.getVirtualFile()) ||
                   !getScope().contains(psiFile)) {
                 continue;
               }
@@ -103,7 +103,7 @@ public class CyclicDependenciesBuilder{
               // construct dependent packages
               final String packageName = ((PsiJavaFile)psiFile).getPackageName();
               //do not depend on parent packages
-              if (packageName == null || packageName.startsWith(pack.getQualifiedName())) {
+              if (packageName.startsWith(pack.getQualifiedName())) {
                 continue;
               }
               final PsiPackage depPackage = findPackage(packageName);
