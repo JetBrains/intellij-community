@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
@@ -517,7 +518,14 @@ public class LibraryTableEditor implements Disposable {
       if (library != null) {
         myDescriptor.setTitle(getTitle());
         myDescriptor.setTitle(getDescription());
-        attachFiles(library, scanForActualRoots(FileChooser.chooseFiles(myPanel, myDescriptor)), getRootType(), addAsJarDirectories());
+        VirtualFile toSelect = null;
+        if (Comparing.strEqual(myLibraryTableProvider.getTableLevel(), LibraryTablesRegistrar.PROJECT_LEVEL)) {
+          final Project project = myProject;
+          if (project != null) {
+            toSelect = project.getBaseDir();
+          }
+        }
+        attachFiles(library, scanForActualRoots(FileChooser.chooseFiles(myPanel, myDescriptor, toSelect)), getRootType(), addAsJarDirectories());
       }
       fireLibrariesChanged();
       myTree.requestFocus();

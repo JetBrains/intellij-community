@@ -4,8 +4,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTableUtil;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.List;
 
@@ -13,8 +13,7 @@ import java.util.List;
  *  @author dsl
  */
 public class LibraryTableImplUtil extends LibraryTableUtil {
-  public static final String MODULE_LEVEL = ProjectBundle.message("library.level.module");
-
+  @NonNls public static final String MODULE_LEVEL = "module";
 
   public static Library loadLibrary(Element rootElement, final LibraryTable libraryTable) throws InvalidDataException {
     final LibraryImpl library = new LibraryImpl(libraryTable);
