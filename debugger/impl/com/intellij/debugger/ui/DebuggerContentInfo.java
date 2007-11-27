@@ -9,4 +9,6 @@ public interface DebuggerContentInfo {
   Key VARIABLES_CONTENT = Key.create("VariablesContent");
   Key FRAME_CONTENT = Key.create("FrameContent");
   Key WATCHES_CONTENT = Key.create("WatchesContent");
+  Key LOG_CONTENT = Key.create("LogContent");
+
 }

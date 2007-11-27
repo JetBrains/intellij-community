@@ -97,7 +97,8 @@ public class GridCell {
 
       myTabs.removeAllTabs();
 
-      for (Content each : myContents.getKeys()) {
+      Content[] contents = myContents.getKeys().toArray(new Content[myContents.size()]);
+      for (Content each : contents) {
         myTabs.addTab(createTabInfoFor(each));
       }
     }

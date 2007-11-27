@@ -168,8 +168,6 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
         getTab().setBottomProportion(getBottomPropertion());
       case center:
         break;
-      case unknown:
-        break;
     }
   }
 
@@ -190,8 +188,6 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
       case bottom:
         mySplitter.setProportion(getTab().getBottomProportion());
       case center:
-        break;
-      case unknown:
         break;
     }
   }

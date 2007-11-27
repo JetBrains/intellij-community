@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -77,15 +78,24 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
     return parentNode;
   }
 
+  @NotNull
   public Tab getOrCreateTab(final int index) {
+    Tab tab = findTab(index);
+    if (tab != null) return tab;
+
+    tab = new Tab(index, index == 0 ? "Debugger" : null, null);
+    myTabs.add(tab);
+
+    return tab;
+  }
+
+  @Nullable
+  private Tab findTab(int index) {
     for (Tab each : myTabs) {
       if (index == each.getIndex()) return each;
     }
 
-    Tab tab = new Tab(index, index == 0 ? "Debugger" : null, null);
-    myTabs.add(tab);
-
-    return tab;
+    return null;
   }
 
   public NewContentState getStateFor(Content content) {
@@ -107,7 +117,7 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
     } else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(kind)) {
       state =  new NewContentState(kind.toString(), getOrCreateTab(1), PlaceInGrid.bottom, false);
     } else {
-      state =  new NewContentState(content.getDisplayName(), getOrCreateTab(Integer.MAX_VALUE), PlaceInGrid.unknown, false);
+      state =  new NewContentState(content.getDisplayName(), getOrCreateTab(Integer.MAX_VALUE), PlaceInGrid.bottom, false);
     }
 
     myContentStates.put(state.getID(), state);

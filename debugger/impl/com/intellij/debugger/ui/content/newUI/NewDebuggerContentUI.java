@@ -184,7 +184,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
         Content each = all.next();
         title += each.getTabName();
         if (all.hasNext()) {
-          title += "|";
+          title += " | ";
         }
       }
     }
