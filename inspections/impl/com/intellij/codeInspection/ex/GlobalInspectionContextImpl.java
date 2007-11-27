@@ -968,8 +968,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   private void processProfileTools(final InspectionProfileWrapper inspectionProfile,
                                    final Map<String, Set<InspectionTool>> tools,
                                    final Map<String, Set<InspectionTool>> localTools) {
-    inspectionProfile.getInspectionProfile().cleanup();
-    final InspectionTool[] usedTools = inspectionProfile.getInspectionTools();
+    final InspectionProfileEntry[] usedTools = inspectionProfile.getInspectionProfile().getModifiableModel().getInspectionTools();
     final Set<InspectionTool> profileTools = new TreeSet<InspectionTool>(new Comparator<InspectionTool>() {
       public int compare(final InspectionTool tool1, final InspectionTool tool2) {
         if (tool1.getShortName().equals(DeadCodeInspection.SHORT_NAME)) return -1;
@@ -980,7 +979,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     tools.put(inspectionProfile.getName(), profileTools);
     final HashSet<InspectionTool> localProfileTools = new HashSet<InspectionTool>();
     localTools.put(inspectionProfile.getName(), localProfileTools);
-    for (InspectionTool tool : usedTools) {
+    for (InspectionProfileEntry entry : usedTools) {
+      final InspectionTool tool = (InspectionTool)entry;
       final String shortName = tool.getShortName();
       final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (inspectionProfile.isToolEnabled(key)) {
