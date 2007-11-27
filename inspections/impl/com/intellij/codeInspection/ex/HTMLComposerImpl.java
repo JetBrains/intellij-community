@@ -17,6 +17,8 @@ import com.intellij.psi.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.net.URL;
+
 /**
  * @author max
  */
@@ -245,7 +247,10 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   public void appendElementReference(final StringBuffer buf, RefElement refElement, String linkText, @NonNls String frameName) {    
     if (myExporter == null) {
-      appendElementReference(buf, ((RefElementImpl) refElement).getURL().toString(), linkText, frameName);
+      final URL url = ((RefElementImpl)refElement).getURL();
+      if (url != null) {
+        appendElementReference(buf, url.toString(), linkText, frameName);
+      }
     }
     else {
       appendElementReference(buf, myExporter.getURL(refElement), linkText, frameName);
@@ -270,7 +275,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     if (myExporter == null) {
       buf.append(FONT_OPENING);
       buf.append(CLOSE_TAG);
-      buf.append("<a HREF=\"file://bred.txt#invoke:" + index);
+      buf.append("<a HREF=\"file://bred.txt#invoke:").append(index);
       buf.append("\">");
       buf.append(text);
       buf.append("</a></font>");
@@ -494,7 +499,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   protected void appendResolution(StringBuffer buf, InspectionTool tool, RefEntity where) {
     if (myExporter != null) return;
-    if (where instanceof RefElement && !((RefElement)where).isValid()) return;
+    if (where instanceof RefElement && !where.isValid()) return;
     QuickFixAction[] quickFixes = tool.getQuickFixes(new RefEntity[] {where});
     if (quickFixes != null) {
       boolean listStarted = false;
