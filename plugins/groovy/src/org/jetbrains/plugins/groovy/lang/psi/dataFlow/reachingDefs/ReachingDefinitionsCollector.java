@@ -53,8 +53,9 @@ public class ReachingDefinitionsCollector {
     final TIntObjectHashMap<TIntHashSet> dfaResult = postprocess(engine.performDFA(), flow, dfaInstance);
 
     final TIntHashSet fragmentInstructions = getFragmentInstructions(first, last, flow);
+    final int[] postorder = ControlFlowUtil.postorder(flow);
     TIntHashSet reachableFromFragmentReads = getReachable(fragmentInstructions, flow, dfaResult,
-        ControlFlowUtil.postorder(flow));
+        postorder);
     TIntHashSet fragmentReads = filterReads(fragmentInstructions, flow);
 
     final Map<String, VariableInfo> imap = new HashMap<String, VariableInfo>();
@@ -86,9 +87,9 @@ public class ReachingDefinitionsCollector {
           PsiType type = getType(rwInstruction.getElement());
           addVariable(name, omap, manager, type);
 
-          /*if (!allDefsInFragment(defs, fragmentInstructions)) {
+          if (!allProperDefsInFragment(defs, ref, fragmentInstructions, postorder)) {
             addVariable(name, imap, manager, type);
-          }*/
+          }
         }
 
         return true;
@@ -139,6 +140,15 @@ public class ReachingDefinitionsCollector {
 
     return true;
   }
+
+  private static boolean allProperDefsInFragment(int[] defs, int ref, TIntHashSet fragmentInstructions, int[] postorder) {
+    for (int def : defs) {
+      if (!fragmentInstructions.contains(def) && postorder[def] < postorder[ref]) return false;
+    }
+
+    return true;
+  }
+
 
   private static boolean anyDefInFragment(int[] defs, TIntHashSet fragmentInstructions) {
     for (int def : defs) {
