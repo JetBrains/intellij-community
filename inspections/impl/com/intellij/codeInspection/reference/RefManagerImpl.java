@@ -443,7 +443,7 @@ public class RefManagerImpl extends RefManager {
           return null;
         }
 
-        RefElementImpl refElement = ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
+        final RefElementImpl refElement = ApplicationManager.getApplication().runReadAction(new Computable<RefElementImpl>() {
           @Nullable
           public RefElementImpl compute() {
             if (elem instanceof PsiClass) {
@@ -466,7 +466,13 @@ public class RefManagerImpl extends RefManager {
         if (refElement == null) return null;
 
         putToRefTable(elem, refElement);
-        refElement.initialize();
+
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            refElement.initialize();
+          }
+        });
+
         return refElement;
       }
       return ref;
