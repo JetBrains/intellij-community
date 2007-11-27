@@ -560,7 +560,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       element = getAnnotationMemberSuppressedIn(classContainer, inspectionToolID);
       if (element != null) return element;
 
-      classContainer = classContainer.getContainingClass();
+      classContainer = PsiTreeUtil.getParentOfType(classContainer, PsiClass.class);
     }
     return null;
   }
