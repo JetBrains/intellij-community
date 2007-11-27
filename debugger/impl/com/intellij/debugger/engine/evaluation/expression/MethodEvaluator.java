@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,17 +62,37 @@ public class MethodEvaluator implements Evaluator {
       args.add(evaluator.evaluate(context));
     }
     try {
-      String className = myClassName.getName(debugProcess);
-      ReferenceType referenceType;
+      ReferenceType referenceType = null;
 
       if(object instanceof ObjectReference) {
-        referenceType = (ReferenceType)DebuggerUtilsEx.getSuperType(((ObjectReference)object).referenceType(), className);
+        final ReferenceType qualifierType = ((ObjectReference)object).referenceType();
+        //if (className != null) {
+        //  referenceType = (ReferenceType)DebuggerUtilsEx.getSuperType(qualifierType, className);
+        //}
+        //else {
+          referenceType = debugProcess.findClass(context, qualifierType.name(), context.getClassLoader());
+        //}
       }
       else if(object instanceof ClassType) {
-        referenceType = (ReferenceType)DebuggerUtilsEx.getSuperType((ClassType)object, className);
+        final ClassType qualifierType = (ClassType)object;
+        //if (className != null) {
+        //  referenceType = (ReferenceType)DebuggerUtilsEx.getSuperType(qualifierType, className);
+        //}
+        //else {
+          referenceType = debugProcess.findClass(context, qualifierType.name(), context.getClassLoader());
+        //}
       }
       else {
-        referenceType = debugProcess.findClass(context, className, context.getClassLoader());
+        final String className = myClassName != null? myClassName.getName(debugProcess) : null;
+        if (className != null) {
+          referenceType = debugProcess.findClass(context, className, context.getClassLoader());
+        }
+      }
+      
+      if (referenceType == null) {
+        throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
+          DebuggerBundle.message("evaluation.error.cannot.evaluate.qualifier", myMethodName))
+        );
       }
       final String signature = myMethodSignature != null ? myMethodSignature.getName(debugProcess) : null;
       final String methodName = DebuggerUtilsEx.methodName(referenceType.name(), myMethodName, signature);

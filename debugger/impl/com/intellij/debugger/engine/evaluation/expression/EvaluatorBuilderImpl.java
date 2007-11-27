@@ -609,7 +609,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       PsiExpression qualifier = methodExpr.getQualifierExpression();
       Evaluator objectEvaluator;
-      JVMName contextClass;
+      JVMName contextClass = null;
 
       if(psiMethod != null) {
         PsiClass methodPsiClass = psiMethod.getContainingClass();
@@ -638,16 +638,19 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         //trying to guess
         if (qualifier != null) {
           PsiType type = qualifier.getType();
-          if(type == null) {
-            throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
-              DebuggerBundle.message("evaluation.error.qualifier.type.unknown", qualifier.getText()))
-            );
-          }
+          //if(type == null) {
+          //  throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
+          //    DebuggerBundle.message("evaluation.error.qualifier.type.unknown", qualifier.getText()))
+          //  );
+          //}
 
-          contextClass = JVMNameUtil.getJVMQualifiedName(type);
+          if (type != null) {
+            contextClass = JVMNameUtil.getJVMQualifiedName(type);
+          }
 
           if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass) {
             // this is a call to a 'static' method
+            assert contextClass != null;
             objectEvaluator = new TypeEvaluator(contextClass);
           }
           else {
@@ -660,11 +663,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           if(myContextPsiClass != null) {
             contextClass = JVMNameUtil.getJVMQualifiedName(myContextPsiClass);
           }
-          else {
-            throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
-              DebuggerBundle.message("evaluation.error.method.not.found", methodExpr.getReferenceName()))
-            );
-          }
+          //else {
+          //  throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
+          //    DebuggerBundle.message("evaluation.error.method.not.found", methodExpr.getReferenceName()))
+          //  );
+          //}
         }
       }
 
