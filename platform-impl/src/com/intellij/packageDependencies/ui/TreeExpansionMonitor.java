@@ -95,7 +95,7 @@ public abstract class TreeExpansionMonitor<T> {
       myTree.getSelectionModel().addSelectionPath(findPathByNode(mySelectionNode));
     }
     for (final TreePath myExpandedPath : myExpandedPaths) {
-      myTree.expandPath(myExpandedPath);
+      myTree.expandPath(findPathByNode((T)myExpandedPath.getLastPathComponent()));
     }
     myFrozen = false;
   }

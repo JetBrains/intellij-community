@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.Convertor;
@@ -59,6 +60,7 @@ public class CustomizableActionsPanel {
   private JTextField myDescription;
   private JButton myAddSeparatorButton;
 
+  private TreeExpansionMonitor myTreeExpansionMonitor;
 
   private CustomActionsSchema mySelectedSchema;
 
@@ -297,10 +299,12 @@ public class CustomizableActionsPanel {
       public void valueChanged(ListSelectionEvent e) {
         final CustomActionsSchema selectedValue = (CustomActionsSchema)myList.getSelectedValue();
         if (selectedValue != null) {
+          myTreeExpansionMonitor.freeze();
           mySelectedSchema = selectedValue;
           setNameAndDescription(!mySelectedSchema.getName().equals(CustomizableActionsSchemas.DEFAULT_NAME),
                                 mySelectedSchema.getName(), mySelectedSchema.getDescription());
           patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
+          myTreeExpansionMonitor.restore();
         }
         else {
           mySelectedSchema = null;
@@ -344,6 +348,8 @@ public class CustomizableActionsPanel {
 
 
     patchActionsTreeCorrespondingToSchema(root);
+
+    myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree);
   }
 
   private void editToolbarIcon(String actionId, DefaultMutableTreeNode node, CustomizableActionsSchemas schemas) {
