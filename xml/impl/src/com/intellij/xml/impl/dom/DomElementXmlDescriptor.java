@@ -35,7 +35,10 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
   private final DomManager myManager;
 
   public DomElementXmlDescriptor(@NotNull final DomElement domElement) {
-    this(new MyRootDomChildrenDescription(domElement), domElement.getManager());
+    myChildrenDescription = new MyRootDomChildrenDescription(domElement);
+
+    myManager = domElement.getManager();
+
   }
 
   public DomElementXmlDescriptor(@NotNull final DomChildrenDescription childrenDescription, @NotNull DomManager manager) {

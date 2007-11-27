@@ -18,7 +18,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementType;
@@ -97,4 +99,10 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     }
     return null;
   }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return GlobalSearchScope.allScope(getManager().getProject());
+  }
+
 }

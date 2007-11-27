@@ -311,9 +311,19 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
     final DomElement domElement = DomManager.getDomManager(getProject()).getDomElement(this);
     if (domElement != null) {
-      final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
-      if (definesXml != null) {
-        return new DomElementXmlDescriptor(domElement);
+      if (parent instanceof XmlTag) {
+        final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
+
+        if (descriptor != null) {
+          elementDescriptor = descriptor.getElementDescriptor(this);
+          return elementDescriptor;
+        }
+      }
+      else {
+        final DefinesXml definesXml = domElement.getAnnotation(DefinesXml.class);
+        if (definesXml != null) {
+          return new DomElementXmlDescriptor(domElement);
+        }
       }
     }
 
