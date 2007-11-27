@@ -725,14 +725,16 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     return list.size();
   }
 
-  private static List<PsiElement> getSortedIDs(Map<PsiElement, ?> requests) {
+  private static List<PsiElement> getSortedIDs(final Map<PsiElement, ?> requests) {
     final List<PsiElement> result = new ArrayList<PsiElement>();
-    for (PsiElement id : requests.keySet()) {
-      result.add(id);
-    }
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
+        for (PsiElement id : requests.keySet()) {
+          if (id != null && id.isValid()) {
+            result.add(id);
+          }
+        }
         Collections.sort(result, new Comparator<PsiElement>() {
           public int compare(PsiElement o1, PsiElement o2) {
             final PsiFile psiFile1 = o1.getContainingFile();
