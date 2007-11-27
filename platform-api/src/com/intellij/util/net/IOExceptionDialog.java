@@ -15,17 +15,14 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.application.ApplicationManager;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -40,11 +37,10 @@ public class IOExceptionDialog extends JDialog {
   private JButton cancelButton;
   private JButton tryAgainButton;
   private JButton setupButton;
-  private JTextArea errorTextArea;
   private JLabel errorLabel;
   private boolean cancelPressed = false;
 
-  public IOExceptionDialog(IOException e, String title, String errorText)  {
+  public IOExceptionDialog(String title, String errorText)  {
     super (JOptionPane.getRootFrame(), title, true);
 
     new MnemonicHelper().register(getContentPane());
@@ -68,12 +64,6 @@ public class IOExceptionDialog extends JDialog {
       "close"
     );
 
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    PrintWriter writer = new PrintWriter (baos);
-    e.printStackTrace(writer);
-    writer.flush();
-    errorTextArea.setText(baos.toString());
-    errorTextArea.setCaretPosition(0);
     errorLabel.setText(errorText);
 
     setupButton.addActionListener(new ActionListener () {
@@ -110,8 +100,8 @@ public class IOExceptionDialog extends JDialog {
    * @return <code>true</code> if "Try Again" button pressed
    * @return <code>false</code> if "Cancel" button pressed
    */
-  public static boolean showErrorDialog (IOException e, String title, String text) {
-    final IOExceptionDialog dlg = new IOExceptionDialog(e, title, text);
+  public static boolean showErrorDialog(String title, String text) {
+    final IOExceptionDialog dlg = new IOExceptionDialog(title, text);
     try {
       final Runnable doRun = new Runnable() {
         public void run() {
@@ -137,6 +127,6 @@ public class IOExceptionDialog extends JDialog {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void main(String[] args) {
-    IOExceptionDialog.showErrorDialog(new IOException("test"), "Test", "Something failed");
+    IOExceptionDialog.showErrorDialog("Test", "Something failed");
   }
 }

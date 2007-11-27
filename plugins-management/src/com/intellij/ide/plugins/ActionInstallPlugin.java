@@ -82,7 +82,7 @@ public class ActionInstallPlugin extends AnAction {
       }
       catch (IOException e1) {
         PluginManagerMain.LOG.error(e1);
-        IOExceptionDialog.showErrorDialog(e1, IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
+        IOExceptionDialog.showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
       }
       getPluginTable().updateUI();
     }

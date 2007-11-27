@@ -1,18 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.util.net.IOExceptionDialog">
-  <grid id="8ea9b" binding="mainPanel" row-count="6" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="8ea9b" binding="mainPanel" layout-manager="GridLayoutManager" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="5" left="5" bottom="5" right="5"/>
     <constraints>
       <xy x="69" y="26" width="883" height="428"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
       <component id="44dd2" class="javax.swing.JButton" binding="setupButton">
         <constraints>
-          <xy x="5" y="398" width="410" height="25"/>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/CommonBundle" key="dialog.ioexception.proxy"/>
@@ -20,8 +18,7 @@
       </component>
       <component id="376c8" class="javax.swing.JButton" binding="tryAgainButton">
         <constraints>
-          <xy x="425" y="398" width="228" height="25"/>
-          <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/CommonBundle" key="dialog.ioexception.tryagain"/>
@@ -29,8 +26,7 @@
       </component>
       <component id="f4a4a" class="javax.swing.JButton" binding="cancelButton">
         <constraints>
-          <xy x="663" y="398" width="215" height="25"/>
-          <grid row="5" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+          <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/CommonBundle" key="button.cancel"/>
@@ -38,44 +34,16 @@
       </component>
       <vspacer id="2b050">
         <constraints>
-          <xy x="533" y="306" width="11" height="10"/>
-          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2">
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
             <minimum-size width="-1" height="10"/>
             <preferred-size width="-1" height="10"/>
             <maximum-size width="-1" height="10"/>
           </grid>
         </constraints>
       </vspacer>
-      <scrollpane id="b131b">
-        <constraints>
-          <xy x="5" y="55" width="873" height="184"/>
-          <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <component id="1e4f0" class="javax.swing.JTextArea" binding="errorTextArea">
-            <constraints/>
-            <properties>
-              <editable value="false"/>
-              <rows value="5"/>
-            </properties>
-          </component>
-        </children>
-      </scrollpane>
-      <component id="85c21" class="javax.swing.JLabel">
-        <constraints>
-          <xy x="5" y="33" width="263" height="14"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="messages/CommonBundle" key="dialog.ioexception.ioerror"/>
-        </properties>
-      </component>
       <component id="fe71b" class="javax.swing.JLabel" binding="errorLabel">
         <constraints>
-          <xy x="5" y="8" width="873" height="14"/>
-          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="1"/>
+          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="##"/>

@@ -8,8 +8,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -189,8 +189,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
               final IOException cause = (IOException)ioproblem.getCause();
               LOG.info(cause);
-              if (!IOExceptionDialog.showErrorDialog(cause,
-                message,
+              if (!IOExceptionDialog.showErrorDialog(message,
                 QuickFixBundle.message("error.fetching.resource", ioproblem.url))
               ) {
                 break; // cancel fetching

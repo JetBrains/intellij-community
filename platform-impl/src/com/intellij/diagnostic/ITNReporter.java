@@ -128,7 +128,7 @@ public class ITNReporter extends ErrorReportSubmitter {
         }
       }
       catch (IOException e) {
-        if (!IOExceptionDialog.showErrorDialog(e, DiagnosticBundle.message("error.report.exception.title"),
+        if (!IOExceptionDialog.showErrorDialog(DiagnosticBundle.message("error.report.exception.title"),
                                                DiagnosticBundle.message("error.report.failure.message"))) {
           break;
         }
