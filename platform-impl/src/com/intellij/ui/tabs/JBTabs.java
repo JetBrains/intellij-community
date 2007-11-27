@@ -1100,7 +1100,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     public TabLabel(final TabInfo info) {
       myInfo = info;
       setOpaque(false);
-      setLayout(new BorderLayout());
+      setLayout(new BorderLayout(myLabel.getIconTextGap() * 2, 0));
       add(myLabel, BorderLayout.CENTER);
 
 
@@ -1195,7 +1195,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       if (group == null) return;
 
       myActionPanel = new ActionPanel(myInfo.getTabActions(), myInfo.getTabActionPlace());
-      add(myActionPanel, BorderLayout.EAST);
+
+      NonOpaquePanel wrapper = new NonOpaquePanel(new GridBagLayout());
+      wrapper.add(myActionPanel);
+
+      add(wrapper, BorderLayout.EAST);
 
       revalidate();
       repaint();

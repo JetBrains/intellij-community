@@ -219,7 +219,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   }
 
   private void restoreLastSelectedTab() {
-    Tab selected = getSettings().getLayoutSettings().getSelectedTab();
+    int index = getSettings().getLayoutSettings().getDefaultSelectedTabIndex();
 
     if (myTabs.getTabCount() > 0) {
       myTabs.setSelected(myTabs.getTabAt(0), false);
@@ -227,8 +227,8 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
     for (TabInfo each : myTabs.getTabs()) {
       Tab tab = getTabFor(each);
-      if (tab.equals(selected)) {
-        myTabs.setSelected(each, false);
+      if (tab.getIndex() == index) {
+        myTabs.setSelected(each, true);
         break;
       }
     }
@@ -276,7 +276,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
 
   public void setHorizontalToolbar(final boolean state) {
-    mySettings.setToolbarHorizontal(state);
+    mySettings.getLayoutSettings().setToolbarHorizontal(state);
     for (Grid each : getGrids()) {
       each.setToolbarHorizontal(state);
     }
@@ -306,10 +306,18 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   }
 
   public void restoreLayout() {
+    Content[] all = myManager.getContents();
+    myManager.removeAllContents(false);
+
+    getSettings().getLayoutSettings().resetToDefault();
+    for (Content each : all) {
+      myManager.addContent(each);
+    }
+    restoreLastUiState();
   }
 
   public static boolean isActive() {
-    return "true".equalsIgnoreCase(System.getProperty("new.debugger.ui"));
+    return !"true".equalsIgnoreCase(System.getProperty("old.debugger.ui"));
   }
 
 
@@ -445,6 +453,6 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   }
 
   public boolean isHorizontalToolbar() {
-    return getSettings().isToolbarHorizontal();
+    return getSettings().getLayoutSettings().isToolbarHorizontal();
   }
 }

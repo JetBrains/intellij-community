@@ -53,7 +53,7 @@ public class GridCell {
         return new JBTabs.UiDecoration(null, new Insets(0, -1, 0, -1));
       }
     });
-    myTabs.setSideComponentVertical(!context.getSettings().isToolbarHorizontal());
+    myTabs.setSideComponentVertical(!context.getSettings().getLayoutSettings().isToolbarHorizontal());
     myTabs.setStealthTabMode(true);
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {

@@ -51,7 +51,6 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;
 
-  public volatile boolean HORIZONTAL_TOOLBAR = false;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
 
@@ -267,14 +266,6 @@ public class DebuggerSettings implements JDOMExternalizable, ApplicationComponen
 
   public DebuggerLayoutSettings getLayoutSettings() {
     return ApplicationManager.getApplication().getComponent(DebuggerLayoutSettings.class);
-  }
-
-  public boolean isToolbarHorizontal() {
-    return HORIZONTAL_TOOLBAR;
-  }
-
-  public void setToolbarHorizontal(boolean horizontal) {
-    HORIZONTAL_TOOLBAR = horizontal;
   }
 
 

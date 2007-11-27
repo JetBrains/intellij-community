@@ -10,6 +10,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,8 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
 
   private Map<String, NewContentState> myContentStates = new HashMap<String, NewContentState>();
   private Set<Tab> myTabs = new HashSet<Tab>();
+
+  private General myGeneral = new General();
 
   public Element getState() {
     return write(new Element("layout"));
@@ -53,6 +56,8 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
       getOrCreateTab(eachTab.getIndex()).read((Element)eachTabElement);
     }
 
+    XmlSerializer.deserializeInto(myGeneral, parentNode);
+
     return parentNode;
   }
 
@@ -66,6 +71,8 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
     for (Tab eachTab : myTabs) {
       eachTab.write(parentNode);
     }
+
+    parentNode.addContent(XmlSerializer.serialize(myGeneral));
 
     return parentNode;
   }
@@ -108,8 +115,12 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
     return state;
   }
 
-  public Tab getSelectedTab() {
-    return getOrCreateTab(0);
+  public int getDefaultSelectedTabIndex() {
+    return 0;
+  }
+
+  public void setSelectedTabIndex(int index) {
+    myGeneral.selectedTab = index;
   }
 
   @NonNls
@@ -123,4 +134,23 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
 
   public void disposeComponent() {
   }
+
+  public void resetToDefault() {
+    myContentStates.clear();
+    myTabs.clear();
+  }
+
+  public boolean isToolbarHorizontal() {
+    return myGeneral.horizontalToolbar;
+  }
+
+  public void setToolbarHorizontal(boolean horizontal) {
+    myGeneral.horizontalToolbar = horizontal;
+  }
+
+  public static class General {
+    public volatile boolean horizontalToolbar = false;
+    public volatile int selectedTab = 0;
+  }
+
 }
