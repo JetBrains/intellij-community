@@ -27,10 +27,13 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -40,6 +43,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -161,7 +165,7 @@ public class ClassFilterEditor extends JPanel {
     }
   }
 
-  protected final class FilterTableModel extends AbstractTableModel {
+  protected final class FilterTableModel extends AbstractTableModel implements ItemRemovable{
     private List<ClassFilter> myFilters = new LinkedList<ClassFilter>();
     public static final int CHECK_MARK = 0;
     public static final int FILTER = 1;
@@ -169,9 +173,7 @@ public class ClassFilterEditor extends JPanel {
     public final void setFilters(ClassFilter[] filters) {
       myFilters.clear();
       if (filters != null) {
-        for (ClassFilter filter : filters) {
-          myFilters.add(filter);
-        }
+        myFilters.addAll(Arrays.asList(filters));
       }
       fireTableDataChanged();
     }
@@ -199,16 +201,6 @@ public class ClassFilterEditor extends JPanel {
       myFilters.add(filter);
       int row = myFilters.size() - 1;
       fireTableRowsInserted(row, row);
-    }
-
-    public void removeRows(int[] rows) {
-      List<ClassFilter> toRemove = new LinkedList<ClassFilter>();
-      for (int row : rows) {
-        toRemove.add(myFilters.get(row));
-      }
-      myFilters.removeAll(toRemove);
-      toRemove.clear();
-      fireTableDataChanged();
     }
 
     public int getRowCount() {
@@ -250,10 +242,12 @@ public class ClassFilterEditor extends JPanel {
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      if (ClassFilterEditor.this.isEnabled()) {
-        return (columnIndex == CHECK_MARK);
-      }
-      return false;
+      return isEnabled() && (columnIndex == CHECK_MARK);
+    }
+
+    public void removeRow(final int idx) {
+      myFilters.remove(idx);
+      fireTableDataChanged();
     }
   }
 
@@ -300,13 +294,11 @@ public class ClassFilterEditor extends JPanel {
       String pattern = dialog.getPattern();
       if (pattern != null) {
         ClassFilter filter = createFilter(pattern);
-        if(filter != null){
-          myTableModel.addRow(filter);
-          int row = myTableModel.getRowCount() - 1;
-          myTable.getSelectionModel().setSelectionInterval(row, row);
-          myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
+        myTableModel.addRow(filter);
+        int row = myTableModel.getRowCount() - 1;
+        myTable.getSelectionModel().setSelectionInterval(row, row);
+        myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
 
-        }
         myTable.requestFocus();
       }
     }
@@ -319,18 +311,17 @@ public class ClassFilterEditor extends JPanel {
     PsiClass selectedClass = chooser.getSelectedClass();
     if (selectedClass != null) {
       ClassFilter filter = createFilter(getJvmClassName(selectedClass));
-      if(filter != null){
-        myTableModel.addRow(filter);
-        int row = myTableModel.getRowCount() - 1;
-        myTable.getSelectionModel().setSelectionInterval(row, row);
-        myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
+      myTableModel.addRow(filter);
+      int row = myTableModel.getRowCount() - 1;
+      myTable.getSelectionModel().setSelectionInterval(row, row);
+      myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
 
-      }
       myTable.requestFocus();
     }
   }
 
-  private String getJvmClassName(PsiClass aClass) {
+  @Nullable
+  private static String getJvmClassName(PsiClass aClass) {
     PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     if(parentClass != null) {
       final String parentName = getJvmClassName(parentClass);
@@ -344,36 +335,12 @@ public class ClassFilterEditor extends JPanel {
 
   public void addPattern(String pattern) {
     ClassFilter filter = createFilter(pattern);
-    if (filter != null) {
-      myTableModel.addRow(filter);
-    }
+    myTableModel.addRow(filter);
   }
 
   private final class RemoveAction implements ActionListener {
     public void actionPerformed(ActionEvent e) {
-      if(myTable.getRowCount() == 0) return;
-      int[] rows = myTable.getSelectedRows();
-      stopEditing();
-      if (rows.length > 0) {
-        int newRow = rows[0] - 1;
-        ClassFilter filter = (newRow >= 0 && newRow < myTableModel.getRowCount())? myTableModel.getFilterAt(newRow) : null;
-        myTableModel.removeRows(rows);
-        int indexToSelect = 0;
-        if (filter != null) {
-          indexToSelect = myTableModel.getFilterIndex(filter);
-          if (indexToSelect < 0) {
-            indexToSelect = 0;
-          }
-        }
-        if (myTableModel.getRowCount() > 0) {
-          myTable.getSelectionModel().setSelectionInterval(indexToSelect, indexToSelect);
-        }
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            myTable.requestFocus();
-          }
-        });
-      }
+      TableUtil.removeSelectedItems(myTable);
     }
   }
 }

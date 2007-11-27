@@ -21,7 +21,8 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class TableUtil {
@@ -89,12 +90,11 @@ public class TableUtil {
     if (count == 0) {
       table.clearSelection();
     }
-    else {
-      final int selectionIndex = selectionModel.getMinSelectionIndex();
-      if (selectionIndex < 0 || selectionIndex >= count) {
-        // if nothing remains selected, set selected row
-        int rowToSelect = Math.min(count -1, selectionIndex);
-        selectionModel.setSelectionInterval(rowToSelect, rowToSelect);
+    else if (table.getSelectedRow() == -1) {
+      if (minSelectionIndex >= model.getRowCount()) {
+        selectionModel.setSelectionInterval(model.getRowCount() - 1, model.getRowCount() - 1);
+      } else {
+        selectionModel.setSelectionInterval(minSelectionIndex, minSelectionIndex);
       }
     }
     return removedItems;
