@@ -729,7 +729,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
   private String computeTypeText(PsiType type) {
     if (type instanceof PsiArrayType) {
-      return computeTypeText(((PsiArrayType) type).getComponentType()) + "[]";
+      String componentText = computeTypeText(((PsiArrayType) type).getComponentType());
+      if (type instanceof PsiEllipsisType) return componentText + "...";
+      return componentText + "[]";
     }
 
     String canonicalText = type.getCanonicalText();
