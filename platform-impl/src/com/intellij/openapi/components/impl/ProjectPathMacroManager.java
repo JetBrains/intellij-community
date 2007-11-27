@@ -42,7 +42,7 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
     //LOG.assertTrue(f.exists());
 
     String macro = "$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$";
-
+    boolean check = false;
     while (f != null) {
       String path = PathMacroMap.quotePath(f.getAbsolutePath());
       String s = macro;
@@ -50,18 +50,19 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
       if (StringUtil.endsWithChar(path, '/')) s += "/";
       if (path.equals("/")) break;
 
-      result.put("file://" + path, "file://" + s);
-      result.put("file:/" + path, "file:/" + s);
-      result.put("file:" + path, "file:" + s);
-      result.put("jar://" + path, "jar://" + s);
-      result.put("jar:/" + path, "jar:/" + s);
-      result.put("jar:" + path, "jar:" + s);
+      putIfAbsent(result, "file://" + path, "file://" + s, check);
+      putIfAbsent(result, "file:/" + path, "file:/" + s, check);
+      putIfAbsent(result, "file:" + path, "file:" + s, check);
+      putIfAbsent(result, "jar://" + path, "jar://" + s, check);
+      putIfAbsent(result, "jar:/" + path, "jar:/" + s, check);
+      putIfAbsent(result, "jar:" + path, "jar:" + s, check);
       //noinspection HardCodedStringLiteral
       if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/") && !path.equalsIgnoreCase("p:/")) {
-        result.put(path, s);
+        putIfAbsent(result, path, s, check);
       }
 
       if (!savePathsRelative) break;
+      check = true;
       macro += "/..";
       f = f.getParentFile();
     }

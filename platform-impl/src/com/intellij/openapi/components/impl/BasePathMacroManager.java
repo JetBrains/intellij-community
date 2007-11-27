@@ -8,6 +8,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -76,6 +77,11 @@ public class BasePathMacroManager extends PathMacroManager {
     return myPathMacros;
   }
 
+
+  protected static void putIfAbsent(final ReplacePathToMacroMap result, @NonNls final String pathWithPrefix, @NonNls final String substWithPrefix, final boolean check) {
+    if (check && result.get(pathWithPrefix) != null) return;
+    result.put(pathWithPrefix, substWithPrefix);
+  }
 
   private class MyTrackingPathMacroSubstitutor implements TrackingPathMacroSubstitutor {
     private Set<String> myUsedMacros;

@@ -92,11 +92,6 @@ public class ModulePathMacroManager extends BasePathMacroManager {
     }
   }
 
-  private static void putIfAbsent(final ReplacePathToMacroMap result, @NonNls final String pathWithPrefix, @NonNls final String substWithPrefix, final boolean check) {
-    if (check && result.get(pathWithPrefix) != null) return;
-    result.put(pathWithPrefix, substWithPrefix);
-  }
-
   @Nullable
     private static String getModuleDir(String moduleFilePath) {
     String moduleDir = new File(moduleFilePath).getParent();
