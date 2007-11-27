@@ -332,7 +332,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     XmlElementDescriptor elementDescriptor = null;
 
     elementDescriptor = getDomDescriptor();
-    if (elementDescriptor != null) return null;
+    if (elementDescriptor != null) return elementDescriptor;
 
     if (XmlUtil.EMPTY_URI.equals(namespace)) { //nonqualified items
       final PsiElement parent = getParent();
