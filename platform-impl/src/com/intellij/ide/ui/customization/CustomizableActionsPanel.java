@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.keymap.impl.ui.ActionsTree;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
@@ -640,13 +641,7 @@ public class CustomizableActionsPanel {
           throw new IllegalArgumentException("unknown userObject: " + userObject);
         }
 
-        LayeredIcon layeredIcon = new LayeredIcon(2);
-        layeredIcon.setIcon(EMPTY_ICON, 0);
-        if (icon != null) {
-          layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2,
-                              (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
-        }
-        setIcon(layeredIcon);
+        setIcon(ActionsTree.getEvenIcon(icon));
 
         if (sel) {
           setForeground(UIUtil.getTreeSelectionForeground());

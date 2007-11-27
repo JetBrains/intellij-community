@@ -95,12 +95,7 @@ public class ActionsTree {
             throw new IllegalArgumentException("unknown userObject: " + userObject);
           }
 
-          LayeredIcon layeredIcon = new LayeredIcon(2);
-          layeredIcon.setIcon(EMPTY_ICON, 0);
-          if (icon != null){
-            layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
-          }
-          setIcon(layeredIcon);
+          setIcon(ActionsTree.getEvenIcon(icon));
 
           Color foreground;
           if (selected && hasFocus) {
@@ -359,6 +354,16 @@ public class ActionsTree {
       return ((QuickList)userObject).getDisplayName();
     }
     return null;
+  }
+
+  public static Icon getEvenIcon(Icon icon) {
+    LayeredIcon layeredIcon = new LayeredIcon(2);
+    layeredIcon.setIcon(EMPTY_ICON, 0);
+    if (icon != null && icon.getIconHeight() <= EMPTY_ICON.getIconHeight() && icon.getIconWidth() <= EMPTY_ICON.getIconWidth()) {
+      layeredIcon
+        .setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
+    }
+    return layeredIcon;
   }
 
   private class PathsKeeper {

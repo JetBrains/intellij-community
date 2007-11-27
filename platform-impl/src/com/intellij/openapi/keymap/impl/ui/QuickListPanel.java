@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -290,12 +289,8 @@ public class QuickListPanel {
           throw new IllegalArgumentException("unknown userObject: " + userObject);
         }
 
-        LayeredIcon layeredIcon = new LayeredIcon(2);
-        layeredIcon.setIcon(EMPTY_ICON, 0);
-        if (icon != null){
-          layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
-        }
-        setIcon(layeredIcon);
+        setIcon(ActionsTree.getEvenIcon(icon));
+
         if (sel) {
           setForeground(UIUtil.getTreeSelectionForeground());
         }
@@ -333,12 +328,7 @@ public class QuickListPanel {
         if (actionId.startsWith(QuickList.QUICK_LIST_PREFIX)){
           icon = QUICK_LIST_ICON;
         }
-        LayeredIcon layeredIcon = new LayeredIcon(2);
-        layeredIcon.setIcon(EMPTY_ICON, 0);
-        if (icon != null){
-          layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
-        }
-        setIcon(layeredIcon);
+        setIcon(ActionsTree.getEvenIcon(icon));
       }
 
       return this;
