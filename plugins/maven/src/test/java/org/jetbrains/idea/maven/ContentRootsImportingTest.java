@@ -42,6 +42,40 @@ public class ContentRootsImportingTest extends ProjectImportingTestCase {
     assertTestSources("project", "test", "testRes1", "testRes2");
   }
 
+  public void testCustomSourceFoldersWithRelativePaths() throws IOException {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    createModulePom("m", "<groupId>test</groupId>" +
+                         "<artifactId>m</artifactId>" +
+                         "<version>1</version>" +
+
+                         "<build>" +
+                         "  <sourceDirectory>../src</sourceDirectory>" +
+                         "  <testSourceDirectory>../test</testSourceDirectory>" +
+                         "  <resources>" +
+                         "    <resource><directory>../res</directory></resource>" +
+                         "  </resources>" +
+                         "  <testResources>" +
+                         "    <testResource><directory>../testRes</directory></testResource>" +
+                         "  </testResources>" +
+                         "</build>");
+    importProject();
+    assertModules("project", "m");
+    assertContentRoots("m",
+                       getProjectPath() + "/m",
+                       getProjectPath() + "/src",
+                       getProjectPath() + "/test",
+                       getProjectPath() + "/res",
+                       getProjectPath() + "/testRes");
+  }
+
   public void testBuildHelperPluginSources() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -80,7 +81,7 @@ class RootModelAdapter {
     return libraryTableModel;
   }
 
-  void addSourceDir(String path, boolean testSource) {
+  public void addSourceDir(String path, boolean testSource) {
     String url = toUrl(path);
     findOrCreateContentRoot(url).addSourceFolder(url, testSource);
   }
@@ -101,7 +102,9 @@ class RootModelAdapter {
   }
 
   private String toUrl(String path) {
-    return VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path));
+    path = PathUtil.getCanonicalPath(path);
+    path = FileUtil.toSystemIndependentName(path);
+    return VfsUtil.pathToUrl(path);
   }
 
   ContentEntry findOrCreateContentRoot(String url) {
