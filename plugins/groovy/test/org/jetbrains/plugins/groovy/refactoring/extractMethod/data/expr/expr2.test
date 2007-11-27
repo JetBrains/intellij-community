@@ -12,8 +12,8 @@ def vv = 6
 def gg = 7
 
 
-println(kkk + iii + <caret>testMethod(gg, vv))
+println(kkk + iii + <caret>testMethod(vv, gg))
 
-private int testMethod(int gg, int vv) {
+private int testMethod(int vv, int gg) {
   return vv + gg
 }

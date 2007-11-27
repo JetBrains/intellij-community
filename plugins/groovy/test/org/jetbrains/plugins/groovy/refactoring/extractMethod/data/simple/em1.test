@@ -18,14 +18,14 @@ def vv = 6
 def gg = 7
 
 
-int yyy = <caret>testMethod(kkk, gg, vv)
+int yyy = <caret>testMethod(vv, gg, kkk)
 
 www = kkk + 3
 
 println(yyy)
 println(www)
 
-private int testMethod(int kkk, int gg, int vv) {
+private int testMethod(int vv, int gg, int kkk) {
   println(kkk + iii + (vv + gg))
   yyy = kkk + 2
   return yyy
