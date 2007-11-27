@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmet
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -54,7 +55,16 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   @Nullable
   public PsiType getTypeGroovy() {
     GrTypeElement typeElement = getTypeElementGroovy();
-    if (typeElement != null) return typeElement.getType();
+    if (typeElement != null) {
+      if (!isVarArgs()) {
+        return typeElement.getType();
+      } else {
+        return typeElement.getType().createArrayType();
+      }
+    }
+    if (isVarArgs()) {
+      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope()).createArrayType();
+    }
     PsiElement parent = getParent();
     if (parent instanceof GrForInClause) {
       GrExpression iteratedExpression = ((GrForInClause) parent).getIteratedExpression();
@@ -88,6 +98,16 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     }
 
     return null;
+  }
+
+  @NotNull
+  public PsiType getType() {
+    PsiType type = super.getType();
+    if (isVarArgs()) {
+      return type.createArrayType();
+    } else {
+      return type;
+    }
   }
 
   public void setType(@Nullable PsiType type) {
@@ -143,7 +163,8 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   }
 
   public boolean isVarArgs() {
-    return false;
+    PsiElement dots = findChildByType(GroovyTokenTypes.mTRIPLE_DOT);
+    return dots != null;
   }
 
   @NotNull

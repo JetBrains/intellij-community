@@ -46,7 +46,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
 
     PsiBuilder.Marker rb = builder.mark();
     TypeSpec.parseStrict(builder);
-    if (!mIDENT.equals(builder.getTokenType())) {
+    if (!(mIDENT.equals(builder.getTokenType()) || mTRIPLE_DOT.equals(builder.getTokenType()))) {
       rb.rollbackTo();
     } else {
       rb.drop();

@@ -162,7 +162,8 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
   }
 
   public boolean isVarArgs() {
-    return false;
+    GrParameter[] parameters = getParameters();
+    return parameters.length > 0 && parameters[parameters.length - 1].isVarArgs();
   }
 
   @NotNull
