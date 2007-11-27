@@ -56,14 +56,16 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   public PsiType getTypeGroovy() {
     GrTypeElement typeElement = getTypeElementGroovy();
     if (typeElement != null) {
+      PsiType type = typeElement.getType();
       if (!isVarArgs()) {
-        return typeElement.getType();
+        return type;
       } else {
-        return typeElement.getType().createArrayType();
+        return new PsiEllipsisType(type);
       }
     }
     if (isVarArgs()) {
-      return getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope()).createArrayType();
+      PsiClassType type = getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
+      return new PsiEllipsisType(type);
     }
     PsiElement parent = getParent();
     if (parent instanceof GrForInClause) {
@@ -104,7 +106,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   public PsiType getType() {
     PsiType type = super.getType();
     if (isVarArgs()) {
-      return type.createArrayType();
+      return new PsiEllipsisType(type);
     } else {
       return type;
     }

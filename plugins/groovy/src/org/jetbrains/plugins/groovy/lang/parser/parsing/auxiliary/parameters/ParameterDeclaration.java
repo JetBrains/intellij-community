@@ -71,8 +71,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
     } else {
       // If has triple dots
       if (hasDots) {
-        builder.error(GroovyBundle.message("identifier.expected"));
-        pdMarker.done(PARAMETER);
+        pdMarker.error(GroovyBundle.message("identifier.expected"));
         return PARAMETER;
       } else {
         pdMarker.rollbackTo();

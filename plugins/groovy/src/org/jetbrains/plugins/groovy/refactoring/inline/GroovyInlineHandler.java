@@ -45,19 +45,19 @@ import java.util.Collection;
 public class GroovyInlineHandler implements InlineHandler {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler");
-  private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("inline.variable.title");
+  private static final String INLINE_VARIABLE_REFACTORING = GroovyRefactoringBundle.message("inline.variable.title");
+  private static final String INLINE_REFACTORING = GroovyRefactoringBundle.message("inline.refactoring.title");
 
   @Nullable
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
 
     if (element instanceof GrVariable &&
-        GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) { // todo add method && class
+        GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) { // todo add method
       return inlineLocalVariableSettings((GrVariable) element, editor);
     } else {
       String message = GroovyRefactoringBundle.message("wrong.element.to.inline");
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, element.getProject());
+      CommonRefactoringUtil.showErrorMessage(INLINE_REFACTORING, message, HelpID.INLINE_VARIABLE, element.getProject());
     }
-
     return null;
   }
 
@@ -76,12 +76,12 @@ public class GroovyInlineHandler implements InlineHandler {
     GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(PsiElement.EMPTY_ARRAY));
     if (variable.getInitializerGroovy() == null) {
       String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.local.var");
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, variable.getProject());
+      CommonRefactoringUtil.showErrorMessage(INLINE_VARIABLE_REFACTORING, message, HelpID.INLINE_VARIABLE, variable.getProject());
       return null;
     }
     if (refs.isEmpty()) {
       String message = GroovyRefactoringBundle.message("variable.is.never.used.0", variable.getNameIdentifierGroovy().getText());
-      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, variable.getProject());
+      CommonRefactoringUtil.showErrorMessage(INLINE_VARIABLE_REFACTORING, message, HelpID.INLINE_VARIABLE, variable.getProject());
       return null;
     }
 
@@ -96,7 +96,7 @@ public class GroovyInlineHandler implements InlineHandler {
     if (!application.isUnitTestMode()) {
       final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(
-          REFACTORING_NAME,
+          INLINE_VARIABLE_REFACTORING,
           question,
           HelpID.INLINE_VARIABLE,
           "OptionPane.questionIcon",
