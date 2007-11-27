@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class XmlElementImpl extends CompositePsiElement implements XmlElement {
   public XmlElementImpl(IElementType type) {
@@ -78,8 +79,10 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : StdLanguages.XML;
   }
 
+  @Nullable
   protected static String getNameFromEntityRef(final CompositeElement compositeElement, final IElementType xmlEntityDeclStart) {
     final ASTNode node = compositeElement.findChildByType(xmlEntityDeclStart);
+    if (node == null) return null;
     ASTNode name = node.getTreeNext();
 
     if (name != null && name.getElementType() == WHITE_SPACE) {

@@ -305,18 +305,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     return references.length > 0 ? references[0] : null;
   }
 
-  public XmlElementDescriptor getDescriptor() {
-    final String namespace = getNamespace();
-    XmlElementDescriptor elementDescriptor;
-
+  @Nullable
+  private XmlElementDescriptor getDomDescriptor() {
     final DomElement domElement = DomManager.getDomManager(getProject()).getDomElement(this);
     if (domElement != null) {
       if (parent instanceof XmlTag) {
         final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
 
-        if (descriptor != null) {
-          elementDescriptor = descriptor.getElementDescriptor(this);
-          return elementDescriptor;
+        if (descriptor != null && descriptor instanceof DomElementXmlDescriptor) {
+          return descriptor.getElementDescriptor(this);
         }
       }
       else {
@@ -326,6 +323,16 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
         }
       }
     }
+
+    return null;
+  }
+
+  public XmlElementDescriptor getDescriptor() {
+    final String namespace = getNamespace();
+    XmlElementDescriptor elementDescriptor = null;
+
+    elementDescriptor = getDomDescriptor();
+    if (elementDescriptor != null) return null;
 
     if (XmlUtil.EMPTY_URI.equals(namespace)) { //nonqualified items
       final PsiElement parent = getParent();
