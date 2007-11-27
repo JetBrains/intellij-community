@@ -126,14 +126,16 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   @Override
   public void contentsChanged(VirtualFileEvent e) {
     if (notAllowedOrNotUnderContentRoot(e)) return;
+    // todo catching IDEADEV-21269 exception (comment #2)
     assert fileIsValid(e.getFile());
     changeContent(e.getFile());
   }
 
   private boolean fileIsValid(VirtualFile f) {
-    if (f.isValid()) return true;
+    if (f.isValid() && hasEntryFor(f)) return true;
 
-    String s = "\nfile is not valid: " + f.getPath();
+    String s = "\nhas entry for file: " + hasEntryFor(f);
+    s += "\nfile is not valid: " + f.getPath();
 
     VirtualFile validParent = f.getParent();
     while(validParent != null && !validParent.isValid()) {

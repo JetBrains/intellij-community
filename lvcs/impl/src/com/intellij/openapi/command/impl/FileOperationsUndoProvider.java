@@ -176,11 +176,11 @@ class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvi
   }
 
   private class MyUndoableAction implements UndoableAction {
+    private DocumentReference myDocumentRef;
     private Checkpoint myAfterActionCheckpoint;
     private Checkpoint myBeforeUndoCheckpoint;
-    private boolean myUseUndo;
-    private boolean myUseRedo;
-    private DocumentReference myDocumentRef;
+    private boolean myProcessDuringUndo;
+    private boolean myProcessDuringRedo;
 
     public MyUndoableAction(DocumentReference r) {
       myDocumentRef = r;
@@ -188,17 +188,17 @@ class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvi
     }
 
     public void beFirstInCommand() {
-      myUseUndo = true;
+      myProcessDuringUndo = true;
     }
 
     public void beLastInCommand() {
-      myUseRedo = true;
+      myProcessDuringRedo = true;
     }
 
     public void undo() throws UnexpectedUndoException {
       myBeforeUndoCheckpoint = LocalHistory.putCheckpoint(myProject);
 
-      if (!myUseUndo) return;
+      if (!myProcessDuringUndo) return;
       try {
         myAfterActionCheckpoint.revertToPreviousState();
       }
@@ -208,7 +208,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvi
     }
 
     public void redo() throws UnexpectedUndoException {
-      if (!myUseRedo) return;
+      if (!myProcessDuringRedo) return;
       try {
         myBeforeUndoCheckpoint.revertToThatState();
       }
