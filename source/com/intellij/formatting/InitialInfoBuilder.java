@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.xml.SyntheticBlock;
+import com.intellij.psi.formatter.xml.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +30,7 @@ class InitialInfoBuilder {
   private LeafBlockWrapper myLastTokenBlock;
   private SpacingImpl myCurrentSpaceProperty;
   private final CodeStyleSettings.IndentOptions myOptions;
-
+  private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
                              final TextRange affectedRange,
@@ -94,18 +95,30 @@ class InitialInfoBuilder {
     myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
     boolean isReadOnly = isReadOnly(textRange, rootBlockIsRightBlock);
 
-    if (isReadOnly) {
-      return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
-    }
-    else {
-      final List<Block> subBlocks = rootBlock.getSubBlocks();
-      if (subBlocks.isEmpty()) {
-        return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index,parentBlock);
+    ReadOnlyBlockInformationProvider previousProvider = myReadOnlyBlockInformationProvider;
+    try {
+      if (rootBlock instanceof ReadOnlyBlockInformationProvider) {
+        myReadOnlyBlockInformationProvider = (ReadOnlyBlockInformationProvider)rootBlock;
+      }
+      if (isReadOnly) {
+        return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
       }
       else {
-        return processCompositeBlock(rootBlock, parent, textRange, index, subBlocks, currentWrapParent, rootBlockIsRightBlock);
+        final List<Block> subBlocks = rootBlock.getSubBlocks();
+        if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null &&
+              myReadOnlyBlockInformationProvider.isReadOnly(rootBlock)) {
+          final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
+          if (subBlocks.size() > 0) {
+            wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
+          }
+          return wrapper;
+        }
+        else {
+          return processCompositeBlock(rootBlock, parent, textRange, index, subBlocks, currentWrapParent, rootBlockIsRightBlock);
+        }
       }
-
+    } finally {
+      myReadOnlyBlockInformationProvider = previousProvider;
     }
   }
 
@@ -150,8 +163,10 @@ class InitialInfoBuilder {
 
       final AbstractBlockWrapper wrapper = buildFrom(block, i, info, currentWrapParent, blockRange,rootBlock,childBlockIsRightBlock);
       list.add(wrapper);
-      final IndentImpl indent = (IndentImpl)block.getIndent();
-      wrapper.setIndent(indent);
+
+      if (wrapper.getIndent() == null) {
+        wrapper.setIndent((IndentImpl)block.getIndent());
+      }
       previous = block;
 
       if (!blocksAreReadOnly) subBlocks.set(i, null); // to prevent extra strong refs during model building
