@@ -6,14 +6,15 @@ package com.intellij.codeInspection.unusedLibraries;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefProject;
+import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -23,7 +24,9 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -120,10 +123,9 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
         }
       }
       final RefManager refManager = getRefManager();
-      final RefProject refProject = refManager.getRefProject();
       for (OrderEntry orderEntry : unusedLibs.keySet()) {
         if (orderEntry instanceof LibraryOrderEntry) {
-          RefEntity problemEntity = refManager.getRefModule(orderEntry.getOwnerModule());
+          final RefModule refModule = refManager.getRefModule(orderEntry.getOwnerModule());
           final Set<VirtualFile> files = unusedLibs.get(orderEntry);
           if (files.size() < orderEntry.getFiles(OrderRootType.CLASSES).length) {
             final String unusedLibraryRoots = StringUtil.join(files, new Function<VirtualFile, String>() {
@@ -131,11 +133,11 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
                 return file.getPresentableName();
               }
             }, ",");
-            addProblemElement(problemEntity, manager.createProblemDescriptor(InspectionsBundle.message(
-              "unused.library.roots.problem.descriptor", unusedLibraryRoots, orderEntry.getPresentableName()), (LocalQuickFix)null));
+            addProblemElement(refModule, manager.createProblemDescriptor(InspectionsBundle.message(
+              "unused.library.roots.problem.descriptor", unusedLibraryRoots, orderEntry.getPresentableName()), new RemoveUnusedLibrary(refModule, orderEntry, files)));
           } else {
-            addProblemElement(problemEntity, manager.createProblemDescriptor(InspectionsBundle.message("unused.library.problem.descriptor",
-                                                                                                       orderEntry.getPresentableName()), (LocalQuickFix)null)); //todo
+            addProblemElement(refModule, manager.createProblemDescriptor(InspectionsBundle.message("unused.library.problem.descriptor",
+                                                                                                       orderEntry.getPresentableName()), new RemoveUnusedLibrary(refModule, orderEntry, null)));
           }
         }
       }
@@ -170,5 +172,55 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
   @NotNull
   public String getShortName() {
     return "UnusedLibrary";
+  }
+
+  private static class RemoveUnusedLibrary implements QuickFix {
+    private final RefModule myRefModule;
+    private final OrderEntry myOrderEntry;
+    private final Set<VirtualFile> myFiles;
+
+    public RemoveUnusedLibrary(final RefModule refModule, final OrderEntry orderEntry, final Set<VirtualFile> files) {
+      myRefModule = refModule;
+      myOrderEntry = orderEntry;
+      myFiles = files;
+    }
+
+    @NotNull
+    public String getName() {
+      return myFiles == null ? InspectionsBundle.message("detach.library.quickfix.name") : InspectionsBundle.message("detach.library.roots.quickfix.name");
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+
+    public void applyFix(@NotNull final Project project, @NotNull final CommonProblemDescriptor descriptor) {
+      final Module module = myRefModule.getModule();
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+          for (OrderEntry entry : model.getOrderEntries()) {
+            if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), myOrderEntry.getPresentableName())) {
+              if (myFiles == null) {
+                model.removeOrderEntry(entry);
+              }
+              else {
+                final Library library = ((LibraryOrderEntry)entry).getLibrary();
+                if (library != null) {
+                  final Library.ModifiableModel modifiableModel = library.getModifiableModel();
+                  for (VirtualFile file : myFiles) {
+                    modifiableModel.removeRoot(file.getUrl(), OrderRootType.CLASSES);
+                  }
+                  modifiableModel.commit();
+                }
+              }
+            }
+          }
+          model.commit();
+        }
+      });
+    }
   }
 }
