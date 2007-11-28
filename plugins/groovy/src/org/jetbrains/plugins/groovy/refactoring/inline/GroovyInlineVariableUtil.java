@@ -18,12 +18,19 @@ package org.jetbrains.plugins.groovy.refactoring.inline;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageDialog;
+import com.intellij.refactoring.HelpID;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -39,9 +46,10 @@ import java.util.ArrayList;
 /**
  * @author ilyas
  */
-public class GroovyInlineUtil {
+public class GroovyInlineVariableUtil {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineUtil");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineVariableUtil");
+  public static final String REFACTORING_NAME = GroovyRefactoringBundle.message("inline.variable.title");
 
 
   /**
@@ -85,6 +93,61 @@ public class GroovyInlineUtil {
         } catch (IncorrectOperationException e) {
           LOG.error(e);
         }
+      }
+    };
+  }
+
+  /**
+   * Returns Settings object for referenced definition in case of local variable
+   */
+  static InlineHandler.Settings inlineLocalVariableSettings(final GrVariable variable, Editor editor) {
+    final String localName = variable.getNameIdentifierGroovy().getText();
+    final Project project = variable.getProject();
+    final Collection<PsiReference> refs = ReferencesSearch.search(variable, GlobalSearchScope.projectScope(variable.getProject()), false).findAll();
+    ArrayList<PsiElement> exprs = new ArrayList<PsiElement>();
+    for (PsiReference ref : refs) {
+      exprs.add(ref.getElement());
+    }
+
+    GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(PsiElement.EMPTY_ARRAY));
+    if (variable.getInitializerGroovy() == null) {
+      String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.local.var");
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, variable.getProject());
+      return null;
+    }
+    if (refs.isEmpty()) {
+      String message = GroovyRefactoringBundle.message("variable.is.never.used.0", variable.getNameIdentifierGroovy().getText());
+      CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, variable.getProject());
+      return null;
+    }
+
+    return inlineDialogResult(localName, project, refs);
+  }
+
+  /**
+   * Shows dialog with question to inline
+   */
+  private static InlineHandler.Settings inlineDialogResult(String localName, Project project, Collection<PsiReference> refs) {
+    Application application = ApplicationManager.getApplication();
+    if (!application.isUnitTestMode()) {
+      final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
+      RefactoringMessageDialog dialog = new RefactoringMessageDialog(
+          REFACTORING_NAME,
+          question,
+          HelpID.INLINE_VARIABLE,
+          "OptionPane.questionIcon",
+          true,
+          project);
+      dialog.show();
+      if (!dialog.isOK()) {
+        WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        return null;
+      }
+    }
+
+    return new InlineHandler.Settings() {
+      public boolean isOnlyOneReferenceToInline() {
+        return false;
       }
     };
   }

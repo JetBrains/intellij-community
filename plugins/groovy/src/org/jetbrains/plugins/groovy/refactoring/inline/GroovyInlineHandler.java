@@ -16,28 +16,20 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Application;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author ilyas
@@ -45,75 +37,23 @@ import java.util.Collection;
 public class GroovyInlineHandler implements InlineHandler {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler");
-  private static final String INLINE_VARIABLE_REFACTORING = GroovyRefactoringBundle.message("inline.variable.title");
   private static final String INLINE_REFACTORING = GroovyRefactoringBundle.message("inline.refactoring.title");
 
   @Nullable
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
 
-    if (element instanceof GrVariable &&
-        GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) { // todo add method
-      return inlineLocalVariableSettings((GrVariable) element, editor);
+    if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) { // todo add method
+      return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable) element, editor);
+    } else if (element instanceof GrMethod) {
+      return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod) element, editor);
     } else {
-      String message = GroovyRefactoringBundle.message("wrong.element.to.inline");
-      CommonRefactoringUtil.showErrorMessage(INLINE_REFACTORING, message, HelpID.INLINE_VARIABLE, element.getProject());
+      Application application = ApplicationManager.getApplication();
+      if (!application.isUnitTestMode()) {
+        String message = GroovyRefactoringBundle.message("wrong.element.to.inline");
+        CommonRefactoringUtil.showErrorMessage(INLINE_REFACTORING, message, HelpID.INLINE_VARIABLE, element.getProject());
+      }
     }
     return null;
-  }
-
-  /**
-   * Returns Settings object for referenced definition in case of local variable
-   */
-  private Settings inlineLocalVariableSettings(final GrVariable variable, Editor editor) {
-    final String localName = variable.getNameIdentifierGroovy().getText();
-    final Project project = variable.getProject();
-    final Collection<PsiReference> refs = ReferencesSearch.search(variable, GlobalSearchScope.projectScope(variable.getProject()), false).findAll();
-    ArrayList<PsiElement> exprs = new ArrayList<PsiElement>();
-    for (PsiReference ref : refs) {
-      exprs.add(ref.getElement());
-    }
-
-    GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(PsiElement.EMPTY_ARRAY));
-    if (variable.getInitializerGroovy() == null) {
-      String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.local.var");
-      CommonRefactoringUtil.showErrorMessage(INLINE_VARIABLE_REFACTORING, message, HelpID.INLINE_VARIABLE, variable.getProject());
-      return null;
-    }
-    if (refs.isEmpty()) {
-      String message = GroovyRefactoringBundle.message("variable.is.never.used.0", variable.getNameIdentifierGroovy().getText());
-      CommonRefactoringUtil.showErrorMessage(INLINE_VARIABLE_REFACTORING, message, HelpID.INLINE_VARIABLE, variable.getProject());
-      return null;
-    }
-
-    return inlineDialogResult(localName, project, refs);
-  }
-
-  /**
-   * Shows dialog with question to inline
-   */
-  private Settings inlineDialogResult(String localName, Project project, Collection<PsiReference> refs) {
-    Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode()) {
-      final String question = GroovyRefactoringBundle.message("inline.local.variable.prompt.0.1", localName, refs.size());
-      RefactoringMessageDialog dialog = new RefactoringMessageDialog(
-          INLINE_VARIABLE_REFACTORING,
-          question,
-          HelpID.INLINE_VARIABLE,
-          "OptionPane.questionIcon",
-          true,
-          project);
-      dialog.show();
-      if (!dialog.isOK()) {
-        WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        return null;
-      }
-    }
-
-    return new Settings() {
-      public boolean isOnlyOneReferenceToInline() {
-        return false;
-      }
-    };
   }
 
   public void removeDefinition(final PsiElement element) {
@@ -132,7 +72,7 @@ public class GroovyInlineHandler implements InlineHandler {
   public Inliner createInliner(PsiElement element) {
     if (element instanceof GrVariable &&
         GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) {
-      return GroovyInlineUtil.createInlinerForLocalVariable(((GrVariable) element));
+      return GroovyInlineVariableUtil.createInlinerForLocalVariable(((GrVariable) element));
     }
     return null;
   }
