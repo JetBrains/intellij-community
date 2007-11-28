@@ -9,11 +9,11 @@ protected static def getGeneratedFileNames(String name, int boo) {
 protected static def getGeneratedFileNames(String name, int boo) {
     def names = new ArrayList<String>()
     foo = null
-    <caret>testMethod(boo, names, name, foo)
+    <caret>testMethod(foo, names, name, boo)
     names
 }
 
-private static def testMethod(int boo, ArrayList<String> names, String name, foo) {
+private static def testMethod(foo, ArrayList<String> names, String name, int boo) {
   println(names.toString() + boo + name)
   println(names + foo)
 }
