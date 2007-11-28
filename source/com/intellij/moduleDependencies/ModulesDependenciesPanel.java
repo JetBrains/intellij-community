@@ -12,6 +12,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -19,6 +21,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.ui.Tree;
@@ -31,7 +34,10 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -177,16 +183,31 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     root.removeAllChildren();
     myModulesGraph = buildGraph();
     setSplitterProportion();
-    for (Module module : myModules) {
-      if (!module.isDisposed()) {
-        final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(false, module));
-        root.add(moduleNode);
-        final Iterator<Module> out = myModulesGraph.getOut(module);
-        while (out.hasNext()) {
-          moduleNode.add(new DefaultMutableTreeNode(new MyUserObject(false, out.next())));
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        final Map<Module, Boolean> inCycle = new HashMap<Module, Boolean>();
+        for (Module module : myModules) {
+          if (progressIndicator != null) {
+            if (progressIndicator.isCanceled()) return;
+            progressIndicator.setText(AnalysisScopeBundle.message("update.module.tree.progress.text", module.getName()));
+          }
+          if (!module.isDisposed()) {
+            Boolean isInCycle = inCycle.get(module);
+            if (isInCycle == null) {
+              isInCycle = !CyclicGraphUtil.getNodeCycles(myModulesGraph, module).isEmpty();
+              inCycle.put(module, isInCycle);
+            }
+            final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(isInCycle.booleanValue(), module));
+            root.add(moduleNode);
+            final Iterator<Module> out = myModulesGraph.getOut(module);
+            while (out.hasNext()) {
+              moduleNode.add(new DefaultMutableTreeNode(new MyUserObject(false, out.next())));
+            }
+          }
         }
       }
-    }
+    }, AnalysisScopeBundle.message("update.module.tree.progress.title"), true, myProject);
     sortSubTree(root);
     myLeftTreeModel.reload();
   }
@@ -226,6 +247,14 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
         ((MyUserObject)node.getUserObject()).setInCycle(true);
       }
     }
+    if (current != null) current = (DefaultMutableTreeNode)current.getParent();
+    while (current != null) {
+      final Object userObject = current.getUserObject();
+      if (userObject instanceof MyUserObject) {
+        ((MyUserObject)userObject).setInCycle(false);
+      }
+      current = (DefaultMutableTreeNode)current.getParent();
+    }
     myLeftTree.repaint();
   }
 
@@ -260,19 +289,22 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     myLeftTree.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
-        if (myLeftTree.getSelectionPath() != null && myLeftTree.getSelectionPath().getLastPathComponent() != null){
-          TreeUtil.traverseDepth((TreeNode)myLeftTree.getModel().getRoot(), new TreeUtil.Traverse() {
-            public boolean accept(Object node) {
-              DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-              if (treeNode.getUserObject() instanceof MyUserObject){
-                ((MyUserObject)treeNode.getUserObject()).setInCycle(false);
+        final TreePath selectionPath = myLeftTree.getSelectionPath();
+        if (selectionPath != null) {
+          final DefaultMutableTreeNode selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+          if (selection != null){
+            TreeUtil.traverseDepth(selection, new TreeUtil.Traverse() {
+              public boolean accept(Object node) {
+                DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
+                if (treeNode.getUserObject() instanceof MyUserObject){
+                  ((MyUserObject)treeNode.getUserObject()).setInCycle(false);
+                }
+                return true;
               }
-              return true;
-            }
-          });
-          final DefaultMutableTreeNode selection = (DefaultMutableTreeNode)myLeftTree.getSelectionPath().getLastPathComponent();
-          selectCycleUpward(selection);
-          buildRightTree(((MyUserObject)selection.getUserObject()).getModule());
+            });
+            selectCycleUpward(selection);
+            buildRightTree(((MyUserObject)selection.getUserObject()).getModule());
+          }
         }
       }
     });
