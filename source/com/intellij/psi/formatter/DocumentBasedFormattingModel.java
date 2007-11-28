@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -63,11 +64,22 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     //  //}
     //
     //}
+    if (removesPattern(textRange, whiteSpace, "<![CDATA[") ||
+        removesPattern(textRange, whiteSpace, "]]>")
+      ) {
+      return textRange;
+    }
+
     myDocument.replaceString(textRange.getStartOffset(),
-                             textRange.getEndOffset(),
-                             whiteSpace);
+                           textRange.getEndOffset(),
+                           whiteSpace);
 
     return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + whiteSpace.length());
+  }
+
+  private boolean removesPattern(final TextRange textRange, final String whiteSpace, final String pattern) {
+    return CharArrayUtil.indexOf(myDocument.getCharsSequence(), pattern, textRange.getStartOffset(), textRange.getEndOffset() + 1) != -1 &&
+        CharArrayUtil.indexOf(whiteSpace, pattern, 0) == -1;
   }
 
   public TextRange shiftIndentInsideRange(TextRange range, int indent) {
