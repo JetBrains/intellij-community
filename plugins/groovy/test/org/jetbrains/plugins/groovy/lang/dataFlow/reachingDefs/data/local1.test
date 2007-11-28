@@ -7,8 +7,8 @@ protected static def getGeneratedFileNames(String name, int boo) {
 }
 -----
 input:
-boo
+foo
 names
 name
-foo
+boo
 output:

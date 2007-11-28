@@ -58,10 +58,8 @@ public class ReachingDefinitionsCollector {
         postorder);
     TIntHashSet fragmentReads = filterReads(fragmentInstructions, flow);
 
-    final Map<String, VariableInfo> imap = new HashMap<String, VariableInfo>();
-    final Set<VariableInfo> iset = new LinkedHashSet<VariableInfo>();
-    final Map<String, VariableInfo> omap = new HashMap<String, VariableInfo>();
-    final Set<VariableInfo> oset = new LinkedHashSet<VariableInfo>();
+    final Map<String, VariableInfo> imap = new LinkedHashMap<String, VariableInfo>();
+    final Map<String, VariableInfo> omap = new LinkedHashMap<String, VariableInfo>();
 
     final PsiManager manager = first.getManager();
 
