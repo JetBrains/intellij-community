@@ -111,7 +111,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
 
   @NotNull
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
-    return MethodSignatureBackedByPsiMethod.create(this, PsiSubstitutor.EMPTY);
+    return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
   @Nullable

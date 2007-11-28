@@ -16,11 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import com.intellij.navigation.NavigationItem;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -38,6 +38,12 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
   public GrTypeDefinitionBody getBody();
 
   @NotNull
+  GrMethod[] getMethods();
+
+  @NotNull
+  GrField[] getFields();
+
+  @NotNull
   public GrMembersDeclaration[] getMemberDeclarations();
 
   @Nullable
@@ -47,9 +53,6 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
 
   @NotNull
   PsiElement getNameIdentifierGroovy();
-
-  @NotNull
-  GrField[] getFields();
 
   @Nullable
   GrExtendsClause getExtendsClause();

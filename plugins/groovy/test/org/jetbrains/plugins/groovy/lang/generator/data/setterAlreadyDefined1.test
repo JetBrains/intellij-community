@@ -1,17 +1,17 @@
 class D {
   def DDD
- setDDD () {}
+  void setDDD (def ddd) {}
 }
 -----
 public class D extends groovy.lang.GroovyObjectSupport {
+  public void setDDD(java.lang.Object ddd) {
+    return ;
+  }
+
   private java.lang.Object DDD = null;
 
   public java.lang.Object getDDD() {
     return null;
-  }
-
-  public void setDDD(java.lang.Object p) {
-    return ;
   }
 }
 ---

@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
@@ -104,17 +103,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
       final Module module = getModuleByFile(context, file);
 
-//      GrMembersDeclaration[] topLevelClassMembersDeclarations = psiFile.getMemberDeclarations();
-//
-//      List<String> topLevelClassMembers = new LinkedList<String>();
-//      for (GrMembersDeclaration membersDeclaration : topLevelClassMembersDeclarations) {
-//        GrMember[] grMembers = membersDeclaration.getMembers();
-//
-//        for (GrMember grMember : grMembers) {
-//          topLevelClassMembers.add(grMember.getName());
-//        }
-//      }
-
       //top level class
       if (needCreateTopLevelClass) {
         generationItems.add(new GenerationItemImpl(prefix + file.getNameWithoutExtension() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources, file));
@@ -127,18 +115,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       });
 
       for (GrTypeDefinition typeDefinition : typeDefinitions) {
-//        GrMembersDeclaration[] membersDeclarations = typeDefinition.getMemberDeclarations();
-//
-//        List<String> members = new LinkedList<String>();
-//        for (GrMembersDeclaration membersDeclaration : membersDeclarations) {
-//          GrMember[] grMembers = membersDeclaration.getMembers();
-//
-//          for (GrMember grMember : grMembers) {
-//            members.add(grMember.getName());
-//          }
-//        }
-
-//        item = new GenerationItemImpl(prefix + typeDefinition.getName() + "." + "java", module, new TopLevelDependencyValidityState(file.getTimeStamp(), members), isInTestSources, file);
         item = new GenerationItemImpl(prefix + typeDefinition.getName() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources, file);
         generationItems.add(item);
       }
@@ -231,7 +207,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       assert virtualFile != null;
       String fileDefinitionName = virtualFile.getNameWithoutExtension();
 
-      String topLevelGeneratedItemPath = createJavaSourceFile(outputRootDirectory, file, fileDefinitionName, null, packageDefinition);
+      String topLevelGeneratedItemPath = createJavaSourceFile(outputRootDirectory, file, fileDefinitionName, file.getScriptClass(), packageDefinition);
       generatedItemsRelativePaths.add(topLevelGeneratedItemPath);
     }
 
@@ -253,7 +229,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return prefix;
   }
 
-  private String createJavaSourceFile(VirtualFile outputRootDirectory, GroovyFileBase file, String typeDefinitionName, GrTypeDefinition typeDefinition, GrPackageDefinition packageDefinition) {
+  private String createJavaSourceFile(VirtualFile outputRootDirectory, GroovyFileBase file, String typeDefinitionName, PsiClass groovyClass, GrPackageDefinition packageDefinition) {
     //prefix defines structure of directories tree
     String prefix = "";
     if (packageDefinition != null) {
@@ -262,7 +238,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     StringBuffer text = new StringBuffer();
 
-    writeTypeDefinition(text, typeDefinitionName, typeDefinition, packageDefinition);
+    writeTypeDefinition(text, typeDefinitionName, groovyClass, packageDefinition);
 
     VirtualFile virtualFile = file.getVirtualFile();
     assert virtualFile != null;
@@ -293,21 +269,21 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return isOnlyInnerTypeDef;
   }
 
-  private void writeTypeDefinition(StringBuffer text, String typeDefinitionName, GrTypeDefinition typeDefinition, GrPackageDefinition packageDefinition) {
-    final boolean isScript = typeDefinition == null;
+  private void writeTypeDefinition(StringBuffer text, String typeDefinitionName, PsiClass groovyClass, GrPackageDefinition packageDefinition) {
+    final boolean isScript = groovyClass == null;
 
     writePackageStatement(text, packageDefinition);
 
-    GrMembersDeclaration[] membersDeclarations = typeDefinition == null ? GrMembersDeclaration.EMPTY_ARRAY : typeDefinition.getMemberDeclarations();
+    GrMembersDeclaration[] membersDeclarations = groovyClass instanceof GrTypeDefinition ? ((GrTypeDefinition) groovyClass).getMemberDeclarations() : GrMembersDeclaration.EMPTY_ARRAY; //todo
 
-    boolean isClassDef = typeDefinition instanceof GrClassDefinition;
-    boolean isInterface = typeDefinition instanceof GrInterfaceDefinition;
+    boolean isClassDef = groovyClass instanceof GrClassDefinition;
+    boolean isInterface = groovyClass instanceof GrInterfaceDefinition;
 
 
-    if (typeDefinition != null) {
-      PsiModifierList modifierList = typeDefinition.getModifierList();
+    if (groovyClass != null) {
+      PsiModifierList modifierList = groovyClass.getModifierList();
 
-      boolean wasAddedModifiers = writeTypeDefinitionMethodModifiers(text, modifierList, JAVA_TYPE_DEFINITION_MODIFIERS, typeDefinition.isInterface());
+      boolean wasAddedModifiers = modifierList != null && writeTypeDefinitionMethodModifiers(text, modifierList, JAVA_TYPE_DEFINITION_MODIFIERS, groovyClass.isInterface());
       if (!wasAddedModifiers) {
         text.append("public ");
       }
@@ -331,7 +307,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("extends ");
       text.append("groovy.lang.Script ");
     } else {
-      final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
+      final PsiClassType[] extendsClassesTypes = groovyClass.getExtendsListTypes();
 
       if (extendsClassesTypes.length > 0) {
         text.append("extends ");
@@ -345,7 +321,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         }
       }
 
-      PsiClassType[] implementsTypes = typeDefinition.getImplementsListTypes();
+      PsiClassType[] implementsTypes = groovyClass.getImplementsListTypes();
 
       if (implementsTypes.length > 0) {
         text.append(isInterface ? "extends " : "implements ");
@@ -363,32 +339,22 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     boolean wasRunMethodPresent = false;
 
-//    Map<String, String> gettersNames = new HashMap<String, String>();
-//    Map<String, String> settersNames = new HashMap<String, String>();
-    List<String> gettersNames = new ArrayList<String>();
-    List<String> settersNames = new ArrayList<String>();
+    Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
 
-    List<Pair<String, MethodSignature>> methods = new ArrayList<Pair<String, MethodSignature>>();
+    PsiMethod[] methods = groovyClass.getMethods();
+    for (PsiMethod method : methods) {
+      if (method instanceof GrConstructor) {
+        writeConstructor(text, (GrConstructor) method);
+        continue;
+      }
+
+      MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
+      if (methodSignatures.add(signature)) writeMethod(text, method);
+
+      wasRunMethodPresent = wasRunMethod(method);
+    }
 
     for (GrMembersDeclaration declaration : membersDeclarations) {
-      if (declaration instanceof GrMethod) {
-        final GrMethod method = (GrMethod) declaration;
-        if (method instanceof GrConstructor) {
-          writeConstructor(text, (GrConstructor) method);
-          continue;
-        }
-
-        Pair<String, MethodSignature> methodNameSignature = new Pair<String, MethodSignature>(method.getName(), method.getSignature(PsiSubstitutor.EMPTY));
-        if (!methods.contains(methodNameSignature)) {
-          methods.add(methodNameSignature);
-          writeMethod(text, method);
-        }
-
-        getDefinedGetters(gettersNames, method);
-        getDefinedSetters(settersNames, method);
-
-        wasRunMethodPresent = wasRunMethod(method);
-      }
       if (declaration instanceof GrVariableDeclaration) {
         writeVariableDeclarations(text, (GrVariableDeclaration) declaration);
       }
@@ -400,13 +366,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
         for (GrVariable variable : variables) {
           if (variable instanceof GrField && ((GrField) variable).isProperty()) {
-            if (!gettersNames.contains(variable.getName())) {
-              writeMethod(text, ((GrField) variable).getGetter());
-            }
-
-            if (!settersNames.contains(variable.getName())) {
-              writeMethod(text, ((GrField) variable).getSetter());
-            }
+            PsiMethod getter = ((GrField) variable).getGetter();
+            if (getter != null) writeMethod(text, getter);
+            
+            PsiMethod setter = ((GrField) variable).getSetter();
+            if (setter != null) writeMethod(text, setter);
           }
         }
       }
@@ -435,7 +399,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     }
   }
 
-  private boolean wasRunMethod(GrMethod method) {
+  private boolean wasRunMethod(PsiMethod method) {
     boolean runMethodPresent = false;
     if ("run".equals(method.getName())) {
       PsiType returnType = method.getReturnType();
@@ -614,8 +578,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
     /************* type and name **********/
-//    GrTypeElement typeElement = method.getReturnTypeElementGroovy();
-//    String qualifiedTypeName = getTypeText(typeElement);
     String qualifiedTypeName = getTypeText(method.getReturnType());
 
     PsiModifierList modifierList = method.getModifierList();
@@ -635,8 +597,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     PsiParameter[] parameterList = method.getParameterList().getParameters();
 
     text.append("(");
-//    String paramType;
-//    GrTypeElement paramTypeElement;
 
     //writes parameters
     int i = 0;
@@ -644,9 +604,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       if (i > 0) text.append(", ");  //append ','
 
       PsiParameter parameter = parameterList[i];
-//      paramTypeElement = parameter.getTypeElement();
-//      paramType = getTypeText(paramTypeElement);
-
       text.append(getTypeText(parameter.getType()));
       text.append(" ");
       text.append(parameter.getName());
@@ -782,7 +739,6 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   public ValidityState createValidityState(DataInputStream is) throws IOException {
-//    return TopLevelDependencyValidityState.load(is);
     return TimestampValidityState.load(is);
   }
 

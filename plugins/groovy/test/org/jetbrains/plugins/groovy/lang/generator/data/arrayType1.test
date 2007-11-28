@@ -7,10 +7,6 @@ class Foo {
 }
 -----
 public class Foo extends groovy.lang.GroovyObjectSupport {
-  private int[] integers = null;
-
-  private String[] strings = null;
-
   public int[] foo() {
     return null;
   }
@@ -18,6 +14,10 @@ public class Foo extends groovy.lang.GroovyObjectSupport {
   public Object[] getObj() {
     return null;
   }
+
+  private int[] integers = null;
+
+  private String[] strings = null;
 
   public int[] getIntegers() {
     return null;
