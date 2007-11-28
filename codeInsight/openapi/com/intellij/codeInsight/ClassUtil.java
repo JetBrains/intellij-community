@@ -119,6 +119,7 @@ public class ClassUtil {
       PsiMethod superMethod = superS.getMethod();
       allMethods.remove(superMethod);
       suspects.remove(superMethod);
+      assert superS != hierarchicalMethodSignature;
       removeSupers(superS, allMethods, suspects);
     }
   }
