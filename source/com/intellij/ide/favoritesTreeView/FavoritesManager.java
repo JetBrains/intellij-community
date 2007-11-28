@@ -106,12 +106,14 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public boolean addRoots(final String name, final Collection<AbstractTreeNode> nodes) {
-    List<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
+    final List<Pair<AbstractUrl, String>> list = getFavoritesListRootUrls(name);
     for (AbstractTreeNode node : nodes) {
-      String className = node.getClass().getName();
-      Object value = node.getValue();
-      AbstractUrl url = createUrlByElement(value);
-      list.add(Pair.create(url, className));
+      final String className = node.getClass().getName();
+      final Object value = node.getValue();
+      final AbstractUrl url = createUrlByElement(value);
+      if (url != null) {
+        list.add(Pair.create(url, className));
+      }
     }
     fireListeners.rootsChanged(name);
     return true;
@@ -262,8 +264,9 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   private static void writeRoots(Element element, List<Pair<AbstractUrl, String>> roots) throws WriteExternalException {
     for (Pair<AbstractUrl, String> root : roots) {
-      final Element list = new Element(FAVORITES_ROOT);
       final AbstractUrl url = root.getFirst();
+      if (url == null) continue;
+      final Element list = new Element(FAVORITES_ROOT);
       url.write(list);
       list.setAttribute(CLASS_NAME, root.getSecond());
       element.addContent(list);
