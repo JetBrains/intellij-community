@@ -56,6 +56,7 @@ public class PatternPackageSet implements PackageSet {
                            String scope,
                            @NonNls String modulePattern,
                            @NonNls String filePattern) {
+    LOG.assertTrue((scope == SCOPE_FILE && filePattern != null) || (scope != SCOPE_FILE && aspectPattern != null));
     myAspectJSyntaxPattern = aspectPattern;
     myPathPattern = filePattern;
     myScope = scope;
@@ -76,9 +77,7 @@ public class PatternPackageSet implements PackageSet {
       }
     }
     myPattern = aspectPattern != null ? Pattern.compile(convertToRegexp(aspectPattern, '.')) : null;
-    if (filePattern != null){
-      myFilePattern = Pattern.compile(convertToRegexp(filePattern, '/'));
-    }
+    myFilePattern = filePattern != null ? Pattern.compile(convertToRegexp(filePattern, '/')) : null;
   }
 
   public boolean contains(PsiFile file, NamedScopesHolder holder) {
