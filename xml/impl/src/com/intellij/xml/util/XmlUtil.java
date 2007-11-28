@@ -127,6 +127,7 @@ public class XmlUtil {
   private XmlUtil() {
   }
 
+  @Nullable
   public static String getSchemaLocation(XmlTag tag, String namespace) {
     final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);
     if (uri != null && !uri.equals(namespace)) return uri;
@@ -201,6 +202,7 @@ public class XmlUtil {
     return result.toArray(new String[result.size()]);
   }
 
+  @Nullable
   public static String getXsiNamespace(XmlFile file) {
     return findNamespacePrefixByURI(file, XML_SCHEMA_INSTANCE_URI);
   }
@@ -210,6 +212,7 @@ public class XmlUtil {
     return xmlFile == null ? findXmlFile(base, uri) : xmlFile;
   }
 
+  @Nullable
   public static XmlFile findXmlFile(PsiFile base, @NotNull String uri) {
     PsiFile result = null;
     final JspFile jspFile = PsiUtil.getJspFile(base);
@@ -271,6 +274,7 @@ public class XmlUtil {
     return null;
   }
 
+  @Nullable
   public static XmlToken getTokenOfType(PsiElement element, IElementType type) {
     if (element == null) {
       return null;
@@ -506,40 +510,16 @@ public class XmlUtil {
     }
 
     private boolean processXInclude(final boolean deepFlag, final boolean wideFlag, final XmlTag xincludeTag) {
-      final PsiElement[] inclusion = xincludeTag.getManager().getCachedValuesManager()
+      final PsiElement[] inclusion;
+
+      inclusion = xincludeTag.getManager().getCachedValuesManager()
         .getCachedValue(xincludeTag, KEY_RESOLVED_XINCLUDE, new Function<XmlTag, CachedValueProvider<PsiElement[]>>() {
           public CachedValueProvider<PsiElement[]> fun(final XmlTag xmlTag) {
             return new CachedValueProvider<PsiElement[]>() {
               public Result<PsiElement[]> compute() {
-
-                //System.err.println("************ recomputing xInclude:" + xincludeTag.getText() + " : " + System.identityHashCode(this));
-                //Thread.dumpStack();
-                //
-                PsiElement[] result = null;
-                List<Object> deps = new ArrayList<Object>();
-                deps.add(xincludeTag.getContainingFile());
-
-                final XmlFile xmlFile = XmlIncludeHandler.resolveXIncludeFile(xincludeTag);
-
-                if (xmlFile != null) {
-                  deps.add(xmlFile);
-                  final XmlDocument document = xmlFile.getDocument();
-                  if (document != null) {
-                    XmlTag rootTag = document.getRootTag();
-                    if (rootTag != null) {
-                      final XmlTag[] includeTag = extractXpointer(rootTag, xincludeTag);
-                      result = ContainerUtil.map(includeTag, new Function<XmlTag, PsiElement>() {
-                        public PsiElement fun(final XmlTag xmlTag) {
-                          final PsiElement psiElement = xmlTag.copy();
-                          psiElement.putUserData(XmlElement.ORIGINAL_ELEMENT, xincludeTag.getParentTag());
-                          return psiElement;
-                        }
-                      }, new PsiElement[includeTag.length]);
-                    }
-                  }
-                }
-
-                return new Result<PsiElement[]>(result, deps.toArray());
+                final Result<PsiElement[]> result = computeInclusion(xincludeTag);
+                result.setLockValue(true);
+                return result;
               }
             };
           }
@@ -552,6 +532,34 @@ public class XmlUtil {
       }
 
       return true;
+    }
+
+    private CachedValueProvider.Result<PsiElement[]> computeInclusion(final XmlTag xincludeTag) {
+      PsiElement[] result = null;
+      List<Object> deps = new ArrayList<Object>();
+      deps.add(xincludeTag.getContainingFile());
+
+      final XmlFile xmlFile = XmlIncludeHandler.resolveXIncludeFile(xincludeTag);
+
+      if (xmlFile != null) {
+        deps.add(xmlFile);
+        final XmlDocument document = xmlFile.getDocument();
+        if (document != null) {
+          XmlTag rootTag = document.getRootTag();
+          if (rootTag != null) {
+            final XmlTag[] includeTag = extractXpointer(rootTag, xincludeTag);
+            result = ContainerUtil.map(includeTag, new Function<XmlTag, PsiElement>() {
+              public PsiElement fun(final XmlTag xmlTag) {
+                final PsiElement psiElement = xmlTag.copy();
+                psiElement.putUserData(XmlElement.ORIGINAL_ELEMENT, xincludeTag.getParentTag());
+                return psiElement;
+              }
+            }, new PsiElement[includeTag.length]);
+          }
+        }
+      }
+
+      return new CachedValueProvider.Result<PsiElement[]>(result, deps.toArray());
     }
 
     private static XmlTag[] extractXpointer(XmlTag rootTag, final XmlTag xincludeTag) {
@@ -767,6 +775,7 @@ public class XmlUtil {
     return curTag;
   }
 
+  @Nullable
   public static XmlTag findSubTagWithValue(XmlTag rootTag, String tagName, String tagValue) {
     if (rootTag == null) return null;
     final XmlTag[] subTags = rootTag.findSubTags(tagName);
@@ -779,6 +788,7 @@ public class XmlUtil {
   }
 
   // Read the function name and parameter names to find out what this function does... :-)
+  @Nullable
   public static XmlTag find(String subTag, String withValue, String forTag, XmlTag insideRoot) {
     final XmlTag[] forTags = insideRoot.findSubTags(forTag);
 
@@ -866,6 +876,7 @@ public class XmlUtil {
   }
 
 
+  @Nullable
   public static String getDtdUri(XmlDocument document) {
     if (document.getProlog() != null) {
       final XmlDoctype doctype = document.getProlog().getDoctype();
@@ -947,6 +958,7 @@ public class XmlUtil {
     }, tag);
   }
 
+  @Nullable
   public static XmlElementDescriptor findXmlDescriptorByType(final XmlTag xmlTag) {
     return findXmlDescriptorByType(xmlTag, null);
   }
@@ -1421,6 +1433,7 @@ public class XmlUtil {
     return null;
   }
 
+  @Nullable
   private static String detect(final byte[] bytes) {
     int start = 0;
     if (CharsetToolkit.hasUTF8Bom(bytes)) {
