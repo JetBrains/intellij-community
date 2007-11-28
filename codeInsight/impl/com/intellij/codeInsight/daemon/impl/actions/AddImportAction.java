@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.util.IncorrectOperationException;
@@ -107,7 +108,7 @@ public class AddImportAction implements QuestionAction {
     RangeMarker caretMarker = myEditor.getDocument().createRangeMarker(caretOffset, caretOffset);
     int colByOffset = myEditor.offsetToLogicalPosition(caretOffset).column;
     int col = myEditor.getCaretModel().getLogicalPosition().column;
-    int virtualSpace = col != colByOffset ? col - colByOffset : 0;
+    int virtualSpace = col == colByOffset ? 0 : col - colByOffset;
     int line = myEditor.getCaretModel().getLogicalPosition().line;
     LogicalPosition pos = new LogicalPosition(line, 0);
     myEditor.getCaretModel().moveToLogicalPosition(pos);
@@ -119,9 +120,11 @@ public class AddImportAction implements QuestionAction {
       else {
         ref.bindToElement(targetClass);
       }
-      Document document = myEditor.getDocument();
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      new OptimizeImportsProcessor(myProject, psiFile).runWithoutProgress();
+      if (CodeStyleSettingsManager.getSettings(myProject).OPTIMIZE_IMPORTS_ON_THE_FLY) {
+        Document document = myEditor.getDocument();
+        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        new OptimizeImportsProcessor(myProject, psiFile).runWithoutProgress();
+      }
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
