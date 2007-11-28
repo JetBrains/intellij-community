@@ -213,7 +213,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public void addMessage(int type, String[] text, String groupName, Navigatable navigatable, String exportTextPrefix, String rendererTextPrefix, Object data) {
-    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, data, exportTextPrefix, rendererTextPrefix, null);
+    myErrorViewStructure.addNavigatableMessage(groupName, navigatable, ErrorTreeElementKind.convertMessageFromCompilerErrorType(type), text, data, exportTextPrefix, rendererTextPrefix,
+                                               data instanceof VirtualFile ? (VirtualFile) data : null);
     myBuilder.updateTree();
   }
 

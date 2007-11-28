@@ -233,10 +233,10 @@ public class CompilerTask extends Task.Backgroundable {
         final String[] text = convertMessage(message);
         if (navigatable != null) {
           final String groupName = file != null? file.getPresentableUrl() : category.getPresentableText();
-          myErrorTreeView.addMessage(type, text, groupName, navigatable, message.getExportTextPrefix(), message.getRenderTextPrefix(), null);
+          myErrorTreeView.addMessage(type, text, groupName, navigatable, message.getExportTextPrefix(), message.getRenderTextPrefix(), message.getVirtualFile());
         }
         else {
-          myErrorTreeView.addMessage(type, text, file, -1, -1, null);
+          myErrorTreeView.addMessage(type, text, file, -1, -1, message.getVirtualFile());
         }
         
         final boolean shouldAutoActivate = !myMessagesAutoActivated && 
