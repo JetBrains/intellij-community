@@ -121,6 +121,7 @@ public class XmlUtil {
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
   public static final @NonNls String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
   public static final List<String> ourSchemaUrisList = Arrays.asList(MetaRegistry.SCHEMA_URIS);
+  private static final ThreadLocal<String> XML_FILE_IN_PROGRESS = new ThreadLocal<String>();
 
 
   private XmlUtil() {
@@ -204,8 +205,6 @@ public class XmlUtil {
     return findNamespacePrefixByURI(file, XML_SCHEMA_INSTANCE_URI);
   }
 
-  private static final Key<String> findXmlFileInProgressKey = Key.create("find.xml.file.in.progress");
-
   public static XmlFile findNamespace(PsiFile base, @NotNull String uri) {
     final XmlFile xmlFile = XmlSchemaProvider.findSchema(uri, base);
     return xmlFile == null ? findXmlFile(base, uri) : xmlFile;
@@ -247,8 +246,8 @@ public class XmlUtil {
         }
         else {
           // check facelets file
-          if (base instanceof XmlFile && base.getUserData(findXmlFileInProgressKey) == null) {
-            base.putUserData(findXmlFileInProgressKey, "");
+          if (base instanceof XmlFile && XML_FILE_IN_PROGRESS.get() == null) {
+            XML_FILE_IN_PROGRESS.set("");
             try {
               final XmlDocument document = ((XmlFile)base).getDocument();
               final XmlTag rootTag = document != null ? document.getRootTag() : null;
@@ -258,7 +257,7 @@ public class XmlUtil {
               }
             }
             finally {
-              base.putUserData(findXmlFileInProgressKey, null);
+              XML_FILE_IN_PROGRESS.set(null);
             }
           }
         }
