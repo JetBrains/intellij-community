@@ -157,6 +157,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     final XmlDocument document = myFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();
+      if (myManager.getFileDescription(this).acceptsOtherRootTagNames()) return tag;
       if (tag != null && myRootTagName.getXmlName().getLocalName().equals(tag.getLocalName()) && myRootTagName.isNamespaceAllowed(this, tag.getNamespace())) {
         return tag;
       }
