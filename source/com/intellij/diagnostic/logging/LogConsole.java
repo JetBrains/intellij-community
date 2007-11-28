@@ -138,6 +138,12 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
   public JComponent getComponent() {
     if (!myWasInitialized) {
       myWasInitialized = true;
+      final DefaultActionGroup group = new DefaultActionGroup();
+      final AnAction[] actions = myConsole.createUpDownStacktraceActions();
+      for (AnAction action : actions) {
+        group.add(action);
+      }
+      add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false).getComponent(), BorderLayout.WEST);
       add(myConsole.getComponent(), BorderLayout.CENTER);
       add(createToolbar(), BorderLayout.NORTH);
     }
