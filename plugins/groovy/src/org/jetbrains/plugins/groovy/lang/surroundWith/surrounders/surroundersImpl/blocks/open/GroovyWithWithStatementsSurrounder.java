@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovyManyStatementsSurrounder;
 
 /**
@@ -16,16 +17,16 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovyManyStat
 public class GroovyWithWithStatementsSurrounder extends GroovyManyStatementsSurrounder {
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
     GroovyElementFactory factory = GroovyElementFactory.getInstance(elements[0].getProject());
-    GrWithStatement withStatement = (GrWithStatement) factory.createTopElementFromText("with(a){\n}");
-    addStatements(withStatement.getBody(), elements);
-    return withStatement;
+    GrMethodCallExpression withCall = (GrMethodCallExpression) factory.createTopElementFromText("with(a){\n}");
+    addStatements(withCall.getClosureArguments()[0], elements);
+    return withCall;
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
-    assert element instanceof GrWithStatement;
+    assert element instanceof GrMethodCallExpression;
 
-    GrWithStatement withStatement = (GrWithStatement) element;
-    GrCondition condition = withStatement.getCondition();
+    GrMethodCallExpression withCall = (GrMethodCallExpression) element;
+    GrCondition condition = withCall.getExpressionArguments()[0];
     int endOffset = condition.getTextRange().getStartOffset();
 
     condition.getParent().getNode().removeChild(condition.getNode());

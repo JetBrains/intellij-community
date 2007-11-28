@@ -307,10 +307,6 @@ public abstract class GroovyElementVisitor {
     visitStatement(whileStatement);
   }
 
-  public void visitWithStatement(GrWithStatement withStatement) {
-    visitStatement(withStatement);
-  }
-
   public void visitSwitchStatement(GrSwitchStatement switchStatement) {
     visitStatement(switchStatement);
   }

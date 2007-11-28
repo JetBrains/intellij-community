@@ -3,9 +3,9 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersIm
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWithStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -17,18 +17,16 @@ public class GroovyWithWithExprSurrounder extends GroovyExpressionSurrounder {
   }
 
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
-    assert element instanceof GrWithStatement;
+    assert element instanceof GrMethodCallExpression;
 
-    GrWithStatement withStatement = (GrWithStatement) element;
+    GrMethodCallExpression withCall = (GrMethodCallExpression) element;
 
-    GrOpenBlock block = withStatement.getBody();
+    GrClosableBlock block = withCall.getClosureArguments()[0];
 
     GrStatement statementInBody = block.getStatements()[0];
     int endOffset = statementInBody.getTextRange().getEndOffset();
 
     statementInBody.getParent().getNode().removeChild(statementInBody.getNode());
-
-//    int endOffset = withStatement.getBody().getFirstChild().getTextRange().getEndOffset();
 
     return new TextRange(endOffset, endOffset);
   }

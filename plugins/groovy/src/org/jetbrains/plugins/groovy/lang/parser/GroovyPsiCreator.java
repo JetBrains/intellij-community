@@ -118,7 +118,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(FOR_IN_CLAUSE)) return new GrForInClauseImpl(node);
     if (elem.equals(FOR_TRADITIONAL_CLAUSE)) return new GrTraditionalForClauseImpl(node);
     if (elem.equals(WHILE_STATEMENT)) return new GrWhileStatementImpl(node);
-    if (elem.equals(WITH_STATEMENT)) return new GrWithStatementImpl(node);
     if (elem.equals(TRY_BLOCK_STATEMENT)) return new GrTryCatchStatementImpl(node);
     if (elem.equals(CATCH_CLAUSE)) return new GrCatchClauseImpl(node);
     if (elem.equals(FINALLY_CLAUSE)) return new GrFinallyClauseImpl(node);

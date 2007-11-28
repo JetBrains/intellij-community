@@ -3,17 +3,21 @@ do()
 }
 -----
 Groovy script
-  WITH statement
-    PsiElement(with)('with')
-    PsiWhiteSpace(' ')
-    PsiElement(()('(')
+  Method call
     Reference expression
-      PsiElement(identifier)('A')
-    PsiElement())(')')
+      PsiElement(identifier)('with')
     PsiWhiteSpace(' ')
-    Open block
+    Arguments
+      PsiElement(()('(')
+      Reference expression
+        PsiElement(identifier)('A')
+      PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Closable block
       PsiElement({)('{')
       PsiWhiteSpace('\n')
+      Parameter list
+        <empty list>
       Method call
         Reference expression
           PsiElement(identifier)('do')

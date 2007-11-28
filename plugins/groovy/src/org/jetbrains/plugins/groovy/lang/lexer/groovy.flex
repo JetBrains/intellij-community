@@ -712,7 +712,6 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 "if"                                      {  return( kIF );  }
 "else"                                    {  return( kELSE );  }
 "while"                                   {  return( kWHILE );  }
-"with"                                    {  return( kWITH );  }
 "switch"                                  {  return( kSWITCH );  }
 "for"                                     {  return( kFOR );  }
 "in"                                      {  return( kIN );  }

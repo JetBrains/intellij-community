@@ -182,7 +182,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType IF_STATEMENT = new GroovyElementType("if statement");
   GroovyElementType FOR_STATEMENT = new GroovyElementType("for statement");
   GroovyElementType WHILE_STATEMENT = new GroovyElementType("while statement");
-  GroovyElementType WITH_STATEMENT = new GroovyElementType("with statement");
   GroovyElementType USE_STATEMENT = new GroovyElementType("with statement");
 
   // switch dtatement

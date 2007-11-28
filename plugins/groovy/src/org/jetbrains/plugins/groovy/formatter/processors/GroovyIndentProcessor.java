@@ -155,11 +155,6 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
         return Indent.getContinuationWithoutFirstIndent();
       }
     }
-    if (psiParent instanceof GrWithStatement) {
-      if (child.getPsi().equals(((GrWithStatement) psiParent).getCondition())) {
-        return Indent.getContinuationWithoutFirstIndent();
-      }
-    }
     if (psiParent instanceof GrSynchronizedStatement) {
       if (child.getPsi().equals(((GrSynchronizedStatement) psiParent).getMonitor())) {
         return Indent.getContinuationWithoutFirstIndent();
