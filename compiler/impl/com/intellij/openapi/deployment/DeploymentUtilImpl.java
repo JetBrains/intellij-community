@@ -398,7 +398,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
           continue;
         }
 
-        PackagingFileFilter fileFilter = fileFilters != null ? fileFilters.get(module) : null;
+        PackagingFileFilter fileFilter = fileFilters != null ? fileFilters.get(childModule) : null;
 
         if (PackagingMethod.JAR_AND_COPY_FILE.equals(packagingMethod)) {
           addJarJavaModuleOutput(instructions, childModule, moduleLink.getURI(), context, linkContainerDescription, fileFilter);
