@@ -3,18 +3,17 @@ package com.intellij.psi.formatter.common;
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 public abstract class AbstractBlock implements Block {
-  protected static final List<Block> EMPTY = Collections.unmodifiableList(new ArrayList<Block>(0));
+  public static final List<Block> EMPTY = Collections.unmodifiableList(new ArrayList<Block>(0));
   protected final ASTNode myNode;
   private List<Block> mySubBlocks;
   protected final Wrap myWrap;
@@ -30,8 +29,6 @@ public abstract class AbstractBlock implements Block {
   public TextRange getTextRange() {
     return myNode.getTextRange();
   }
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.common.AbstractBlock");
 
   @NotNull
   public List<Block> getSubBlocks() {

@@ -118,7 +118,7 @@ public class FormatterUtil {
     return isWhiteSpaceElement(treePrev);
   }
 
-  public static String replaceWhiteSpace(final String whiteSpace,
+  public static void replaceWhiteSpace(final String whiteSpace,
                                          final ASTNode leafElement,
                                          final IElementType whiteSpaceToken,
                                          final @Nullable TextRange textRange) {
@@ -132,7 +132,7 @@ public class FormatterUtil {
                                                                0, newText.length(), charTable, leafElement.getPsi().getManager());
 
       leafElement.getTreeParent().replaceChild(leafElement, newElement);
-      return whiteSpace;
+      return;
     }
 
     ASTNode treePrev = findPreviousWhiteSpace(leafElement);
@@ -167,7 +167,7 @@ public class FormatterUtil {
         }
       }
       else if (!isWhiteSpaceElement(treePrev)) {
-        return getWhiteSpaceBefore(leafElement);
+        return;
       }
       else {
         final CompositeElement treeParent = (CompositeElement)treePrev.getTreeParent();
@@ -182,7 +182,6 @@ public class FormatterUtil {
       }
 
     }
-    return getWhiteSpaceBefore(leafElement);
   }
 
   private static StringBuilder createNewLeafChars(final ASTNode leafElement, final TextRange textRange, final String whiteSpace) {

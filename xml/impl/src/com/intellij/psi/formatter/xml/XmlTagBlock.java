@@ -3,6 +3,10 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
@@ -110,6 +114,28 @@ public class XmlTagBlock extends AbstractXmlBlock{
   @Nullable
   ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
     if (child.getElementType() == XmlElementType.XML_TEXT) {
+      final PsiElement parent = child.getPsi().getParent();
+
+      if (parent instanceof XmlTag && ((XmlTag)parent).getSubTags().length == 0) {
+        final PsiFile[] injectedFile = new PsiFile[1];
+
+        ((PsiLanguageInjectionHost)child.getPsi()).processInjectedPsi(new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+          public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+            if (places.size() == 1) {
+              final TextRange textRange = places.get(0).getRangeInsideHost();
+
+              if (child.getTextLength() == textRange.getEndOffset() && textRange.getStartOffset() == 0) {
+                injectedFile[0] = injectedPsi;
+              }
+            }
+          }
+        });
+
+        if  (injectedFile[0] != null) {
+          createAnotherLanguageBlockWrapper(injectedFile[0].getLanguage(), injectedFile[0].getNode(), result, indent, child.getTextRange().getStartOffset());
+          return child;
+        }
+      }
       return createXmlTextBlocks(result, child, wrap, alignment);
     } else {
       return super.processChild(result, child, wrap, alignment, indent);

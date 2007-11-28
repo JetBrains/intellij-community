@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
@@ -30,6 +31,8 @@ class WhiteSpace {
   private static final byte CONTAINS_SPACES_INITIALLY = 0x40;
   private static final int LF_COUNT_SHIFT = 7;
   private static final int MAX_LF_COUNT = 1 << 24;
+  @NonNls private static final String CDATA_START = "<![CDATA[";
+  @NonNls private static final String CDATA_END = "]]>";
 
   public WhiteSpace(int startOffset, boolean isFirst) {
     myStart = startOffset;
@@ -87,12 +90,14 @@ class WhiteSpace {
 
   private boolean coveredByBlock(final FormattingDocumentModel model) {
     if (myInitial == null) return true;
-    if (myInitial.toString().trim().length() == 0) return true;
+    final String s = myInitial.toString().trim();
+    if (s.length() == 0) return true;
     if (!(model instanceof FormattingDocumentModelImpl)) return false;
     PsiFile psiFile = ((FormattingDocumentModelImpl)model).getFile();
     if (psiFile == null) return false;
     PsiElement start = psiFile.findElementAt(myStart);
     PsiElement end = psiFile.findElementAt(myEnd-1);
+    if (CDATA_START.equals(s) || CDATA_END.equals(s)) return true;
     return start == end && start instanceof PsiWhiteSpace; // there maybe non-white text inside CDATA-encoded injected elements
   }
 

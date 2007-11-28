@@ -163,7 +163,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
     }
     else {
-      return createAnotherLanguageBlockWrapper(childLanguage, child, result, indent);
+      return createAnotherLanguageBlockWrapper(childLanguage, child, result, indent, 0);
     }
   }
 
@@ -275,18 +275,20 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
   }
 
-  private ASTNode createAnotherLanguageBlockWrapper(final Language childLanguage,
+  protected ASTNode createAnotherLanguageBlockWrapper(final Language childLanguage,
                                                     final ASTNode child,
                                                     final List<Block> result,
-                                                    final Indent indent) {
+                                                    final Indent indent,
+                                                    int offset
+                                                      ) {
     final PsiElement childPsi = child.getPsi();
-    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childPsi);
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, childPsi);
     LOG.assertTrue(builder != null);
     final FormattingModel childModel = builder.createModel(childPsi, getSettings());
     result.add(new AnotherLanguageBlockWrapper(child,
                                                myXmlFormattingPolicy,
                                                childModel.getRootBlock(),
-                                               indent));
+                                               indent, offset));
     return child;
   }
 
