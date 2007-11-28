@@ -11,5 +11,9 @@ public class getterAlredyDefined {
   public java.lang.Object run() {
     return null;
   }
+
+  public java.lang.Object getFoo() {
+    return null;
+  }
 }
 ---

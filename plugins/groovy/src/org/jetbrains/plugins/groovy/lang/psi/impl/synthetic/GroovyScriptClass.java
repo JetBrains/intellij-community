@@ -31,7 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -160,7 +162,12 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
 
   @NotNull
   public PsiMethod[] getMethods() {
-    return new PsiMethod[] {myMainMethod, myRunMethod};
+    GrMethod[] methods = myFile.getTopLevelMethods();
+    PsiMethod[] result = new PsiMethod[methods.length + 2];
+    result[0] = myMainMethod;
+    result[1] = myRunMethod;
+    System.arraycopy(methods, 0, result, 2, methods.length);
+    return result;
   }
 
   @NotNull
@@ -305,9 +312,9 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
       if (!ResolveUtil.processElement(processor, method)) return false;
     }
 
-    final GrTopLevelDefintion[] definitions = myFile.getTopLevelDefinitions();
-    for (GrTopLevelDefintion toplevel : definitions) {
-      if (!ResolveUtil.processElement(processor, toplevel)) return false;
+    final GrField[] fields = myFile.getTopLevelFields();
+    for (GrField field : fields) {
+      if (!ResolveUtil.processElement(processor, field)) return false;
     }
 
     return true;

@@ -15,17 +15,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassOwner;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -48,6 +46,10 @@ public interface GroovyFileBase extends PsiFile, GroovyPsiElement, GrVariableDec
   GrTypeDefinition[] getTypeDefinitions();
 
   GrTopLevelDefintion[] getTopLevelDefinitions();
+
+  GrMethod[] getTopLevelMethods();
+
+  GrField[] getTopLevelFields();
 
   GrTopStatement[] getTopStatements();
 

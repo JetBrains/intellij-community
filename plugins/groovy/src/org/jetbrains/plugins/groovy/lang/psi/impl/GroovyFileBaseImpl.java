@@ -19,10 +19,7 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -30,20 +27,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author ilyas
  */
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
+  private GrField[] myTopLevelFields;
 
   protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
@@ -69,6 +68,28 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   public GrTopLevelDefintion[] getTopLevelDefinitions() {
     return findChildrenByClass(GrTopLevelDefintion.class);
+  }
+
+  public GrMethod[] getTopLevelMethods() {
+    return findChildrenByClass(GrMethod.class);
+  }
+
+  public GrField[] getTopLevelFields() {
+    if (myTopLevelFields == null) {
+      GrVariableDeclaration[] declarations = findChildrenByClass(GrVariableDeclaration.class);
+      if (declarations.length == 0) return GrField.EMPTY_ARRAY;
+      List<GrField> result = new ArrayList<GrField>();
+      for (GrVariableDeclaration declaration : declarations) {
+        GrVariable[] variables = declaration.getVariables();
+        for (GrVariable variable : variables) {
+          result.add((GrField) variable);
+        }
+      }
+
+      myTopLevelFields = result.toArray(new GrField[result.size()]);
+    }
+
+    return myTopLevelFields;
   }
 
   public GrTopStatement[] getTopStatements() {
@@ -132,6 +153,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   public void clearCaches() {
     super.clearCaches();
     myControlFlow = null;
+    myTopLevelFields = null;
   }
 
 
