@@ -103,4 +103,8 @@ public class BidirectionalMultiMap<K, V> {
   public Set<K> getKeys() {
     return myKey2Values.keySet();
   }
+
+  public Set<V> getValues() {
+    return myValue2Keys.keySet();
+  }
 }
