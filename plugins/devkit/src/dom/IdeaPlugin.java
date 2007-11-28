@@ -24,6 +24,9 @@ public interface IdeaPlugin extends DomElement {
   GenericAttributeValue<String> getUrl();
 
   @NotNull
+  GenericAttributeValue<Boolean> getUseIdeaClassloader();
+
+  @NotNull
   GenericDomValue<String> getName();
 
 
