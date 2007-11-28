@@ -39,6 +39,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   public void initialize(@NotNull GlobalInspectionContextImpl context) {
     myContext = context;
+    projectOpened(context.getProject());
   }
 
   public GlobalInspectionContextImpl getContext() {
@@ -85,6 +86,9 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   public void cleanup() {
+    if (myContext != null) {
+      projectClosed(myContext.getProject());
+    }
     myContext = null;
   }
 
