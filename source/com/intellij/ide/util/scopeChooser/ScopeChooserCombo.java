@@ -5,9 +5,12 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
@@ -27,8 +30,8 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.rules.PsiElementUsage;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -154,17 +157,26 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     model.addElement(new ScopeDescriptor(GlobalSearchScope.projectProductionScope(myProject, true)));
     model.addElement(new ScopeDescriptor(GlobalSearchScope.projectTestScope(myProject, true)));
 
+    final DataContext dataContext = DataManager.getInstance().getDataContext();
+    final PsiElement dataContextElement = DataKeys.PSI_ELEMENT.getData(dataContext);
+    if (dataContextElement != null) {
+      Module module = ModuleUtil.findModuleForPsiElement(dataContextElement);
+      if (module == null) {
+        module = DataKeys.MODULE.getData(dataContext);
+      }
+      if (module != null) {
+        model.addElement(new ScopeDescriptor(module.getModuleScope()));
+      }
+      if (dataContextElement.getContainingFile() != null) {
+        model.addElement(new ScopeDescriptor(new LocalSearchScope(dataContextElement, IdeBundle.message("scope.current.file"))));
+      }
+    }
+
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     final Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor();
     if (selectedTextEditor != null) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(selectedTextEditor.getDocument());
       if (psiFile != null) {
-        final Module module = ModuleUtil.findModuleForPsiElement(psiFile);
-        if (module != null) {
-          model.addElement(new ScopeDescriptor(module.getModuleScope()));
-        }
-        model.addElement(new ScopeDescriptor(new LocalSearchScope(psiFile, IdeBundle.message("scope.current.file"))));
-
         if (selectedTextEditor.getSelectionModel().hasSelection()) {
           PsiElement[] elements = CodeInsightUtil.findStatementsInRange(
             psiFile,
