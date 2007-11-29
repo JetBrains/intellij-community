@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -171,11 +172,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       if (element == null) return false;
 
       if (RUN_WITH_EDITOR_PROFILE) {
-        final InspectionProfileEntry inspectionTool =
-          InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element)
-            .getInspectionTool(tool.getShortName());
-        if (inspectionTool instanceof GlobalInspectionToolWrapper && ((GlobalInspectionToolWrapper)inspectionTool).getTool() != tool) {
-          return false;
+        final InspectionProfile inspectionProfile =
+          InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
+        final Set<Pair<InspectionTool, InspectionProfile>> tools = myTools.get(tool.getShortName());
+        for (Pair<InspectionTool, InspectionProfile> inspectionProfilePair : tools) {
+          if (Comparing.strEqual(inspectionProfilePair.second.getName(), inspectionProfile.getName())) {
+            return ((GlobalInspectionToolWrapper)inspectionProfilePair.first).getTool() == tool;
+          }
         }
       }
     }
