@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -176,9 +177,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
           if (!CommonRefactoringUtil.checkReadOnlyStatus(project, destClass.getContainingFile())) return;
 
-          PsiField field = createField(fieldName, type, initializer,
-                                       initializerPlace == IN_FIELD_DECLARATION && initializer != null
-          );
+          PsiField field = createField(fieldName, type, initializer, initializerPlace == IN_FIELD_DECLARATION && initializer != null);
           field.getModifierList().setModifierProperty(settings.getFieldVisibility(), true);
           if (settings.isDeclareFinal()) {
             field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
@@ -187,7 +186,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
           }
           if (settings.isAnnotateAsNonNls()) {
-            PsiAnnotation annotation = myParentClass.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, myParentClass);
+            PsiAnnotation annotation =
+              myParentClass.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, myParentClass);
             field.getModifierList().addAfter(annotation, null);
             CodeStyleManager.getInstance(myParentClass.getProject()).shortenClassReferences(field.getModifierList());
           }
@@ -208,15 +208,15 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           else {
             field = (PsiField)destClass.add(field);
           }
-          PsiStatement assignStatement;
-          if ((initializerPlace == IN_CURRENT_METHOD && initializer != null)
-              || (initializerPlace == IN_CONSTRUCTOR && enclosingConstructor != null && initializer != null)) {
-            final PsiElement anchorElementHere;
+          PsiStatement assignStatement = null;
+          PsiElement anchorElementHere = null;
+          if ((initializerPlace == IN_CURRENT_METHOD && initializer != null) || (initializerPlace == IN_CONSTRUCTOR && enclosingConstructor != null && initializer != null)) {
             if (replaceAll) {
               if (enclosingConstructor != null) {
                 final PsiElement anchorInConstructor = occurenceManager.getAnchorStatementForAllInScope(enclosingConstructor);
                 anchorElementHere = anchorInConstructor != null ? anchorInConstructor : anchorStatementIfAll;
-              } else {
+              }
+              else {
                 anchorElementHere = anchorStatementIfAll;
               }
             }
@@ -224,7 +224,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
               anchorElementHere = anchorElementIfOne;
             }
             assignStatement = createAssignment(field, initializer, anchorElementHere);
-            anchorElementHere.getParent().addBefore(assignStatement, getNormalizedAnchor(anchorElementHere));
+            if (!IntroduceVariableBase.isLoopOrIf(anchorElementHere.getParent())) {
+              anchorElementHere.getParent().addBefore(assignStatement, getNormalizedAnchor(anchorElementHere));
+            }
           }
           if (initializerPlace == IN_CONSTRUCTOR && initializer != null) {
             addInitializationToConstructors(initializer, field, enclosingConstructor);
@@ -264,6 +266,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
               expr = RefactoringUtil.outermostParenthesizedExpression(expr);
               RefactoringUtil.replaceOccurenceWithFieldRef(expr, field, destClass);
             }
+          }
+
+          if (anchorElementHere != null && IntroduceVariableBase.isLoopOrIf(anchorElementHere.getParent())) {
+            IntroduceVariableBase.putStatementInLoopBody(assignStatement, anchorElementHere.getParent(), anchorElementHere);
           }
 
 

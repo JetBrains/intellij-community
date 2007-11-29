@@ -278,24 +278,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
             }
           }
 
-          if(isLoopOrIf(container)) {
-            PsiStatement loopBody = getLoopBody(container, finalAnchorStatement);
-            PsiStatement loopBodyCopy = loopBody != null ? (PsiStatement) loopBody.copy() : null;
-            PsiBlockStatement blockStatement = (PsiBlockStatement) factory.createStatementFromText("{}", null);
-            blockStatement = (PsiBlockStatement) CodeStyleManager.getInstance(project).reformat(blockStatement);
-            final PsiElement prevSibling = loopBody.getPrevSibling();
-            if(prevSibling instanceof PsiWhiteSpace) {
-              final PsiElement pprev = prevSibling.getPrevSibling();
-              if (!(pprev instanceof PsiComment) || !((PsiComment)pprev).getTokenType().equals(JavaTokenType.END_OF_LINE_COMMENT)) {
-                prevSibling.delete();
-              }
-            }
-            blockStatement = (PsiBlockStatement) loopBody.replace(blockStatement);
-            final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-            declaration = (PsiDeclarationStatement) codeBlock.add(declaration);
-            declaration.getManager().getCodeStyleManager().shortenClassReferences(declaration);
-            if (loopBodyCopy != null) codeBlock.add(loopBodyCopy);
-          }
+          declaration = (PsiDeclarationStatement) putStatementInLoopBody(declaration, container, finalAnchorStatement);
           PsiVariable var = (PsiVariable) declaration.getDeclaredElements()[0];
           var.getModifierList().setModifierProperty(PsiModifier.FINAL, declareFinal);
 
@@ -314,6 +297,29 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         }
       }, REFACTORING_NAME, null);
     return true;
+  }
+
+  public static PsiStatement putStatementInLoopBody(PsiStatement declaration, PsiElement container, PsiElement finalAnchorStatement)
+    throws IncorrectOperationException {
+    if(isLoopOrIf(container)) {
+      PsiStatement loopBody = getLoopBody(container, finalAnchorStatement);
+      PsiStatement loopBodyCopy = loopBody != null ? (PsiStatement) loopBody.copy() : null;
+      PsiBlockStatement blockStatement = (PsiBlockStatement) container.getManager().getElementFactory().createStatementFromText("{}", null);
+      blockStatement = (PsiBlockStatement) CodeStyleManager.getInstance(container.getProject()).reformat(blockStatement);
+      final PsiElement prevSibling = loopBody.getPrevSibling();
+      if(prevSibling instanceof PsiWhiteSpace) {
+        final PsiElement pprev = prevSibling.getPrevSibling();
+        if (!(pprev instanceof PsiComment) || !((PsiComment)pprev).getTokenType().equals(JavaTokenType.END_OF_LINE_COMMENT)) {
+          prevSibling.delete();
+        }
+      }
+      blockStatement = (PsiBlockStatement) loopBody.replace(blockStatement);
+      final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
+      declaration = (PsiStatement) codeBlock.add(declaration);
+      declaration.getManager().getCodeStyleManager().shortenClassReferences(declaration);
+      if (loopBodyCopy != null) codeBlock.add(loopBodyCopy);
+    }
+    return declaration;
   }
 
   private boolean parentStatementNotFound(final Project project) {
@@ -372,7 +378,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   }
 
 
-  private static boolean isLoopOrIf(PsiElement element) {
+  public static boolean isLoopOrIf(PsiElement element) {
     return element instanceof PsiLoopStatement || element instanceof PsiIfStatement;
   }
 
