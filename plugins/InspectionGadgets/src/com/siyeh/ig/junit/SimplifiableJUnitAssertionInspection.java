@@ -18,13 +18,13 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -34,10 +34,6 @@ import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.ArrayList;
 
 public class SimplifiableJUnitAssertionInspection extends BaseInspection {
 
@@ -150,8 +146,10 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             PsiExpression lhs = null;
             PsiExpression rhs = null;
             if (testArgument instanceof PsiBinaryExpression) {
-                lhs = ((PsiBinaryExpression)testArgument).getLOperand();
-                rhs = ((PsiBinaryExpression)testArgument).getROperand();
+                final PsiBinaryExpression binaryExpression =
+                        (PsiBinaryExpression)testArgument;
+                lhs = binaryExpression.getLOperand();
+                rhs = binaryExpression.getROperand();
             } else if (testArgument instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression call =
                         (PsiMethodCallExpression)testArgument;
@@ -221,9 +219,8 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                 testPosition = 0;
                 message = null;
             }
-            final PsiExpression testArgument = arguments[testPosition];
             final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)testArgument;
+                    (PsiBinaryExpression)arguments[testPosition];
             final PsiExpression lhs = binaryExpression.getLOperand();
             PsiExpression rhs = binaryExpression.getROperand();
             if (rhs == null) {
@@ -285,9 +282,8 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
                 testPosition = 0;
                 message = null;
             }
-            final PsiExpression testArgument = arguments[testPosition];
             final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression)testArgument;
+                    (PsiBinaryExpression)arguments[testPosition];
             PsiExpression lhs = binaryExpression.getLOperand();
             PsiExpression rhs = binaryExpression.getROperand();
             final IElementType tokenType =
@@ -358,7 +354,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
             final PsiExpression secondTestArgument = arguments[secondTestPosition];
             final String literalValue;
             final String compareValue;
-            if (isSimpleLiteral(firstTestArgument)) {
+            if (isSimpleLiteral(firstTestArgument, secondTestArgument)) {
                 literalValue = firstTestArgument.getText();
                 compareValue = secondTestArgument.getText();
             } else {
@@ -602,34 +598,42 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         final PsiExpression[] arguments = argumentList.getExpressions();
         final PsiExpression firstTestArgument = arguments[firstTestPosition];
         final PsiExpression secondTestArgument = arguments[secondTestPosition];
-        if (firstTestArgument == null) {
+        if (firstTestArgument == null || secondTestArgument == null) {
             return false;
         }
-        return secondTestArgument != null && (isSimpleLiteral(firstTestArgument) ||
-                isSimpleLiteral(secondTestArgument));
+        return isSimpleLiteral(firstTestArgument, secondTestArgument) ||
+                isSimpleLiteral(secondTestArgument, firstTestArgument);
     }
 
-    static boolean isSimpleLiteral(PsiExpression expression) {
-        if (!(expression instanceof PsiLiteralExpression)) {
+    static boolean isSimpleLiteral(PsiExpression expression1,
+                                   PsiExpression expression2) {
+        if (!(expression1 instanceof PsiLiteralExpression)) {
             return false;
         }
-        final String text = expression.getText();
-        return PsiKeyword.NULL.equals(text) || PsiKeyword.TRUE.equals(text) ||
-                PsiKeyword.FALSE.equals(text);
+        final String text = expression1.getText();
+        if (PsiKeyword.NULL.equals(text)) {
+            return true;
+        }
+        if (!PsiKeyword.TRUE.equals(text) &&
+                !PsiKeyword.FALSE.equals(text)) {
+            return false;
+        }
+        final PsiType type = expression2.getType();
+        return type == PsiType.BOOLEAN;
     }
 
     private static boolean isEqualityComparison(PsiExpression expression) {
         if (expression instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression)expression;
             final PsiJavaToken sign =
-                    ((PsiBinaryExpression)expression).getOperationSign();
+                    binaryExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (!tokenType.equals(JavaTokenType.EQEQ)) {
                 return false;
             }
-            final PsiExpression lhs =
-                    ((PsiBinaryExpression)expression).getLOperand();
-            final PsiExpression rhs =
-                    ((PsiBinaryExpression)expression).getROperand();
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiExpression rhs = binaryExpression.getROperand();
             if (rhs == null) {
                 return false;
             }
@@ -727,8 +731,8 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         if (targetClass == null) {
             return false;
         }
-        return ClassUtils.isSubclass(targetClass, "junit.framework.Assert")
-                || ClassUtils.isSubclass(targetClass, "org.junit.Assert");
-
+        final String qualifiedName = targetClass.getQualifiedName();
+        return "junit.framework.Assert".equals(qualifiedName) ||
+                "org.junit.Assert".equals(qualifiedName);
     }
 }

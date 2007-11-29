@@ -10,4 +10,24 @@ public class SimplifiableJUnitAssertionInspection extends TestCase{
         assertTrue(false);
         assertFalse("foo", true);
     }
+
+
+    static class IDEABugTest extends TestCase {
+        public static enum Input { value1 }
+
+        public void testAssertEqualsSimplificationShouldNotSimplifyOverridenAssertEquals() throws Exception {
+            assertEquals(Input.value1, null, new Exception());
+            assertEquals("value1", null, new Exception());
+            assertEquals("value1", true, new Exception());
+        }
+
+        @SuppressWarnings({"UnusedDeclaration"})
+        public static void assertEquals(Enum expectedValue1, Integer expectedValue2, Exception actual) {
+        }
+
+        @SuppressWarnings({"UnusedDeclaration"})
+        public static void assertEquals(String expectedValue1, Integer expectedValue2, Exception actual) {
+        }
+
+    }
 }
