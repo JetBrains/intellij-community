@@ -594,6 +594,7 @@ public class ApplyPatchDialog extends DialogWrapper {
 
     private boolean assumeProblemWillBeFixed(final FilePatch filePatch) {
       // if some of the files are valid, assume that "red" new files will be fixed by creating directories
+      if (myPatches == null || myPatchesFailedToLoad == null) return false;
       return (filePatch.isNewFile() && myPatchesFailedToLoad.size() != myPatches.size());
     }
 
