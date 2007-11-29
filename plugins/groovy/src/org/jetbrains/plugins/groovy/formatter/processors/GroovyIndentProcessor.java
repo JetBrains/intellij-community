@@ -64,7 +64,12 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
     }
 
     if (psiParent instanceof GrListOrMap) {
-      return Indent.getContinuationIndent();
+      if (mLBRACK.equals(child.getElementType()) ||
+          mRBRACK.equals(child.getElementType())) {
+        return Indent.getNoneIndent();
+      } else {
+        return Indent.getContinuationWithoutFirstIndent();
+      }
     }
 
     // For common code block
