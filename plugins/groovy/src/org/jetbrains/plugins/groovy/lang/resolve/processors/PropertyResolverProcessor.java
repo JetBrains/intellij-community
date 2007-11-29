@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.EnumSet;
@@ -39,15 +41,15 @@ public class PropertyResolverProcessor extends ResolverProcessor {
       PsiMethod method = (PsiMethod) element;
       boolean lValue = myPlace instanceof GroovyPsiElement && PsiUtil.isLValue((GroovyPsiElement)myPlace);
       if (!lValue && PsiUtil.isSimplePropertyGetter(method)) {
-        String propName = PsiUtil.getPropertyNameByGetter(method);
-        if (myName.equals(propName)) {
+        String getterName = PsiUtil.getGetterNameByPropertyName(myName);
+        if (method.getName().equals(getterName)) {
           myCandidates.clear();
           super.execute(element, substitutor);
           return false;
         }
       } else if (lValue && PsiUtil.isSimplePropertySetter(method)) {
-        String propName = PsiUtil.getPropertyNameBySetter(method);
-        if (myName.equals(propName)) {
+        String setterName = PsiUtil.getSetterNameByPropertyName(myName);
+        if (method.getName().equals(setterName)) {
           myCandidates.clear();
           super.execute(element, substitutor);
           return false;

@@ -18,11 +18,12 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
@@ -353,6 +354,14 @@ public class PsiUtil {
     return methodName.startsWith("set") && methodName.length() > 3 ?
            decapitalize(methodName.substring(3)) :
            methodName;
+  }
+
+  public static String getGetterNameByPropertyName(String propertyName) {
+    return "get" + StringUtil.capitalize(propertyName);
+  }
+
+  public static String getSetterNameByPropertyName(String propertyName) {
+    return "set" + StringUtil.capitalize(propertyName);
   }
 
   private static String decapitalize(String s) {
