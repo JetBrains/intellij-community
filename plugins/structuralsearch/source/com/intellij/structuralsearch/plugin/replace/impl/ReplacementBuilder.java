@@ -427,7 +427,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
         ParameterInfo nameInfo = findParameterization(name);
         ParameterInfo typeInfo = findParameterization(type);
 
-        if (nameInfo!=null && typeInfo!=null) {
+        if (nameInfo!=null && typeInfo!=null && !(parameter.getParent() instanceof PsiCatchSection)) {
           nameInfo.parameterContext=false;
           typeInfo.parameterContext=false;
           typeInfo.methodParameterContext=true;

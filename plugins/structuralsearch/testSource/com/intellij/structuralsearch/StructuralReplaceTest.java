@@ -1856,6 +1856,24 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+  public void testReplaceTry() {
+    String s1 = "try {\n" +
+                "            em.persist(p);\n" +
+                "        } catch (PersistenceException e) {\n" +
+                "            // good\n" +
+                "        }";
+    String s2 = "try { 'TryStatement; } catch('ExceptionType 'ExceptionDcl) { /* 'CommentContent */ }";
+    String replacement = "try { $TryStatement$; } catch($ExceptionType$ $ExceptionDcl$) { _logger.warning(\"$CommentContent$\", $ExceptionDcl$); }";
+    String expected = "try { em.persist(p); } catch(PersistenceException e) { _logger.warning(\" good\", e); }";
+
+    actualResult = replacer.testReplace(s1,s2,replacement,options);
+
+    assertEquals(
+      expected,
+      actualResult
+    );
+  }
+
   public void testReplaceExtraSemicolon() {
     String s1 = "try {\n" +
                 "      String[] a = {\"a\"};\n" +
