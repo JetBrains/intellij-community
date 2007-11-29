@@ -106,8 +106,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     try {
       CodeStyleSettings clon = (CodeStyleSettings)super.clone();
 
+      clon.myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
       for (final CustomCodeStyleSettings settings : myCustomSettings.values()) {
-        clon.addCustomSettings(settings);
+        clon.addCustomSettings((CustomCodeStyleSettings) settings.clone());
       }
 
       clon.FIELD_TYPE_TO_NAME = (TypeToNameMap)FIELD_TYPE_TO_NAME.clone();
