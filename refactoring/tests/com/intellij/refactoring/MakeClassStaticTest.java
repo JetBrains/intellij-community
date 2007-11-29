@@ -7,6 +7,8 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
 import com.intellij.refactoring.makeStatic.Settings;
@@ -31,6 +33,18 @@ public class MakeClassStaticTest extends CodeInsightTestCase {
 
   public void testRegularReference() throws Exception {
     perform();
+  }
+
+  public void testFieldWithPrefix() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    String oldPrefix = settings.FIELD_NAME_PREFIX;
+    settings.FIELD_NAME_PREFIX = "my";
+    try {
+      performWithFields();
+    }
+    finally {
+      settings.FIELD_NAME_PREFIX = oldPrefix;
+    }
   }
 
   private void perform() throws Exception {

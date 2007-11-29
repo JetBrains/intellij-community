@@ -263,7 +263,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
 
       for (Settings.FieldParameter fieldParameter : parameters) {
         PsiReferenceExpression fieldRef;
-        final String fieldName = convertToFieldName(fieldParameter.field.getName());
+        final String fieldName = fieldParameter.field.getName();
         if (newQualifier != null) {
           fieldRef = (PsiReferenceExpression)factory.createExpressionFromText(
             "a." + fieldName, null);
