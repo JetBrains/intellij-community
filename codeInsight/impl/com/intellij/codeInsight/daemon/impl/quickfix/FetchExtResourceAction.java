@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -22,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +102,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
     }
   }
 
-  protected void doInvoke(final PsiFile file, final int offset, final String uri) {
+  protected void doInvoke(final PsiFile file, final int offset, final String uri, final Editor editor) throws IncorrectOperationException {
     final String url = findUrl(file, offset, uri);
     final Project project = file.getProject();
 

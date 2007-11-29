@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReferenc
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,7 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
     return QuickFixBundle.message(getQuickFixKeyId());
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     int offset = editor.getCaretModel().getOffset();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -53,10 +54,11 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
     final String uri = findUri(file, offset);
     if (uri == null) return;
 
-    doInvoke(file, offset, uri);
+    doInvoke(file, offset, uri, editor);
   }
 
-  protected abstract void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri);
+  protected abstract void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor)
+    throws IncorrectOperationException;
 
   @Nullable
   public static String findUri(PsiFile file, int offset) {
