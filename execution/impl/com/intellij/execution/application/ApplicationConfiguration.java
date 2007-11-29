@@ -228,7 +228,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
           new DefaultCoverageFileProvider(coverageFileName),
           getCoveragePatterns(),
           lastCoverageTime,
-          !isMergeWithPreviousResults()
+          getSuiteToMergeWith()
         );
         appendCoverageArgument(params);
       }
