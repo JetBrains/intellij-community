@@ -13,6 +13,7 @@
     <orderEntry type="library" exported="" name="picocontainer" level="project" />
     <orderEntry type="library" exported="" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="bootstrap" />
+    <orderEntry type="library" exported="" name="jgoodies-forms" level="project" />
     <orderEntryProperties />
   </component>
 </module>
