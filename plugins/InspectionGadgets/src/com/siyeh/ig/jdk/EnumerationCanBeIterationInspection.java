@@ -146,9 +146,11 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                     statementParent.addAfter(newStatement, statement);
                 }
                 if (parent == variable) {
-                    variable.getInitializer().delete();
+                    final PsiExpression initializer = variable.getInitializer();
+                    if (initializer != null) {
+                        initializer.delete();
+                    }
                 }
-
             }
         }
 
