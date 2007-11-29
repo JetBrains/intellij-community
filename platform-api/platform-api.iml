@@ -14,6 +14,7 @@
     <orderEntry type="library" exported="" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="library" exported="" name="jgoodies-forms" level="project" />
+    <orderEntry type="module" module-name="forms_rt" exported="" />
     <orderEntryProperties />
   </component>
 </module>
