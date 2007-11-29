@@ -11,13 +11,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlElementType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBasedFormattingModel implements FormattingModel {
@@ -42,8 +44,10 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   public TextRange replaceWhiteSpace(TextRange textRange,
                                 String whiteSpace) {
-    if (replaceWithPSI(textRange, whiteSpace)){
-      return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + whiteSpace.length());
+    final String wsReplaced = replaceWithPSI(textRange, whiteSpace);
+    
+    if (wsReplaced != null){
+      return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + wsReplaced.length());
     } else {
       return textRange;
     }
@@ -73,38 +77,72 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   }
 
-  private boolean replaceWithPSI(final TextRange textRange, final String whiteSpace) {
+  private String replaceWithPSI(final TextRange textRange, String whiteSpace) {
     final int offset = textRange.getEndOffset();
-    final ASTNode leafElement = findElementAt(offset);
+    ASTNode leafElement = findElementAt(offset);
+
     if (leafElement != null) {
       if (!myCanModifyAllWhiteSpaces) {
-        if (leafElement.getElementType() == ElementType.WHITE_SPACE) return false;
+        if (leafElement.getElementType() == ElementType.WHITE_SPACE) return null;
         LOG.assertTrue(leafElement.getPsi().isValid());
         ASTNode prevNode = TreeUtil.prevLeaf(leafElement);
 
         if (prevNode != null) {
           IElementType type = prevNode.getElementType();
           if(type == ElementType.WHITE_SPACE) {
-            final String s = prevNode.getText();
+            final String text = prevNode.getText();
 
-            if (s.indexOf("<![CDATA[") != -1) {
-              return false;
+            final @NonNls String cdataStartMarker = "<![CDATA[";
+            final int cdataPos = text.indexOf(cdataStartMarker);
+            if (cdataPos != -1 && whiteSpace.indexOf(cdataStartMarker) == -1) {
+              whiteSpace = mergeWsWithCdataMarker(whiteSpace, text, cdataPos);
+              if (whiteSpace == null) return null;
             }
 
             prevNode = TreeUtil.prevLeaf(prevNode);
             type = prevNode != null ? prevNode.getElementType():null;
           }
-          if(type == XmlElementType.XML_CDATA_END) return false;
+
+          final @NonNls String cdataEndMarker = "]]>";
+          if(type == XmlElementType.XML_CDATA_END && whiteSpace.indexOf(cdataEndMarker) == -1) {
+            final ASTNode at = findElementAt(prevNode.getStartOffset());
+
+            if (at != null && at.getPsi() instanceof PsiWhiteSpace) {
+              final String s = at.getText();
+              final int cdataEndPos = s.indexOf(cdataEndMarker);
+              whiteSpace = mergeWsWithCdataMarker(whiteSpace, s, cdataEndPos);
+              leafElement = at;
+            } else {
+              whiteSpace = null;
+            }
+            if (whiteSpace == null) return null;
+          }
         }
       }
       FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE, textRange);
-      return true;
+      return whiteSpace;
     } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
       FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange);
-      return true;
+      return whiteSpace;
     } else {
-      return false;
+      return null;
     }
+  }
+
+  private static String mergeWsWithCdataMarker(String whiteSpace, final String s, final int cdataPos) {
+    final int firstCrInGeneratedWs = whiteSpace.indexOf('\n');
+    final int secondCrInGeneratedWs = firstCrInGeneratedWs != -1 ? whiteSpace.indexOf('\n', firstCrInGeneratedWs + 1):-1;
+    final int firstCrInPreviousWs = s.indexOf('\n');
+    final int secondCrInPreviousWs = firstCrInPreviousWs != -1 ? s.indexOf('\n', firstCrInPreviousWs + 1):-1;
+
+    boolean knowHowToModifyCData = false;
+
+    if (secondCrInPreviousWs != -1 && secondCrInGeneratedWs != -1 && cdataPos > firstCrInPreviousWs && cdataPos < secondCrInPreviousWs ) {
+      whiteSpace = whiteSpace.substring(0, secondCrInGeneratedWs) + s.substring(firstCrInPreviousWs + 1, secondCrInPreviousWs) + whiteSpace.substring(secondCrInGeneratedWs);
+      knowHowToModifyCData = true;
+    }
+    if (!knowHowToModifyCData) whiteSpace = null;
+    return whiteSpace;
   }
 
   private ASTNode findElementAt(final int offset) {
