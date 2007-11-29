@@ -16,8 +16,8 @@
 
 package com.intellij.util;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author spleaner
