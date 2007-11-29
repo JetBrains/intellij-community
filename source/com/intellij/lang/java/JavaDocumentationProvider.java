@@ -5,7 +5,9 @@
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.lang.*;
+import com.intellij.lang.CodeDocumentationAwareCommenter;
+import com.intellij.lang.LangBundle;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.module.Module;
@@ -14,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -381,37 +384,58 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
 
   public String generateDocumentationContentStub(PsiComment _element) {
     PsiElement parentElement = _element.getParent();
+    final Project project = _element.getProject();
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    try {
+      if (parentElement instanceof PsiMethod) {
+        PsiMethod psiMethod = (PsiMethod)parentElement;
+        final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+        final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
+          .forLanguage(parentElement.getLanguage());
+        for (PsiParameter parameter : parameters) {
+          builder.append(createDocCommentLine(PARAM_TAG, project, commenter));
+          builder.append(parameter.getName());
+          builder.append(LINE_SEPARATOR);
+        }
 
-    if (parentElement instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)parentElement;
-      final StringBuffer buffer = new StringBuffer();
-      final Project project = parentElement.getProject();
-      final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-      final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
-        .forLanguage(parentElement.getLanguage());
+        final PsiTypeParameterList typeParameterList = psiMethod.getTypeParameterList();
+        if (typeParameterList != null) {
+          createTypeParamsListComment(builder, project, commenter, typeParameterList);
+        }
+        if (psiMethod.getReturnType() != null && psiMethod.getReturnType() != PsiType.VOID) {
+          builder.append(createDocCommentLine(RETURN_TAG, project, commenter));
+          builder.append(LINE_SEPARATOR);
+        }
 
-      for (PsiParameter parameter : parameters) {
-
-        buffer.append(createDocCommentLine(PARAM_TAG, project, commenter));
-        buffer.append(parameter.getName());
-        buffer.append(LINE_SEPARATOR);
+        final PsiJavaCodeReferenceElement[] references = psiMethod.getThrowsList().getReferenceElements();
+        for (PsiJavaCodeReferenceElement reference : references) {
+          builder.append(createDocCommentLine(THROWS_TAG, project,commenter));
+          builder.append(reference.getText());
+          builder.append(LINE_SEPARATOR);
+        }
+      } else if (parentElement instanceof PsiClass) {
+        final PsiTypeParameterList typeParameterList = ((PsiClass)parentElement).getTypeParameterList();
+        if (typeParameterList != null) {
+           final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
+          .forLanguage(parentElement.getLanguage());
+          createTypeParamsListComment(builder, project, commenter, typeParameterList);
+        }
       }
-
-      if (psiMethod.getReturnType() != null && psiMethod.getReturnType() != PsiType.VOID) {
-        buffer.append(createDocCommentLine(RETURN_TAG, project, commenter));
-        buffer.append(LINE_SEPARATOR);
-      }
-
-      final PsiJavaCodeReferenceElement[] references = psiMethod.getThrowsList().getReferenceElements();
-      for (PsiJavaCodeReferenceElement reference : references) {
-        buffer.append(createDocCommentLine(THROWS_TAG, project,commenter));
-        buffer.append(reference.getText());
-        buffer.append(LINE_SEPARATOR);
-      }
-
-      return buffer.toString();
+      return builder.length() > 0 ? builder.toString() : null;
     }
-    return null;
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+  }
+
+  private static void createTypeParamsListComment(final StringBuilder buffer, final Project project, final CodeDocumentationAwareCommenter commenter,
+                                           final PsiTypeParameterList typeParameterList) {
+    final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
+    for (PsiTypeParameter typeParameter : typeParameters) {
+      buffer.append(createDocCommentLine(PARAM_TAG, project, commenter));
+      buffer.append("<").append(typeParameter.getName()).append(">");
+      buffer.append(LINE_SEPARATOR);
+    }
   }
 
   public static String createDocCommentLine(String lineData, Project project, CodeDocumentationAwareCommenter commenter) {
