@@ -63,6 +63,7 @@ import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.text.MessageFormat;
@@ -988,140 +989,37 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
       boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
-      if (unitTestMode) doFindUris(acceptTaglib, project, file, possibleUris, acceptXmlNs);
-      else {
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-          new Runnable() {
-            public void run() {
-              doFindUris(acceptTaglib, project, file, possibleUris, acceptXmlNs);
-            }
-          },
-          XmlErrorMessages.message("finding.acceptable.uri"),
-          false,
-          project
-        );
-      }
-
-      return possibleUris.toArray( new String[possibleUris.size()] );
-    }
-
-    private void doFindUris(final boolean acceptTaglib,
-                            final Project project,
-                            final PsiFile file,
-                            final List<String> possibleUris,
-                            final boolean acceptXmlNs) {
-      if (!(myElement instanceof XmlTag)) return;
-      final XmlTag tag = (XmlTag)myElement;
-      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-
-      final JspManager jspManager = JspManager.getInstance(project);
-      final String localName = tag.getLocalName();
-
-      if (acceptTaglib && jspManager != null) {
-        if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.tlds"));
-        final JspFile jspFile = (JspFile)file;
-        final String[] possibleTldUris = jspManager.getPossibleTldUris(jspFile);
-
-        Arrays.sort(possibleTldUris);
-        int i = 0;
-
-        for(String uri:possibleTldUris) {
-          if (pi != null) {
-            pi.setFraction((double)i/possibleTldUris.length);
-            pi.setText2(uri);
-            ++i;
-          }
-
-          final XmlFile tldFileByUri = jspManager.getTldFileByUri(uri, jspFile);
-          if (tldFileByUri == null) continue;
-
-          final boolean wordFound = checkIfGivenXmlHasTheseWords(localName, tldFileByUri);
-          if (!wordFound) continue;
-          final PsiMetaDataBase metaData = tldFileByUri.getDocument().getMetaData();
-
-          if (metaData instanceof TldDescriptor) {
-            if ( ((TldDescriptor)metaData).getElementDescriptor(tag) != null) {
-              possibleUris.add(uri);
-            }
-          }
+      final ExternalUriProcessor processor = new ExternalUriProcessor() {
+        public void process(String ns, final String url) {
+          possibleUris.add(ns);
         }
 
-        if (file.getFileType() == StdFileTypes.JSPX && possibleUris.isEmpty()) {
-          final XmlElementDescriptor descriptor = ((XmlNSDescriptorImpl)jspManager.getActionsLibrary(file)).getElementDescriptor(localName, XmlUtil.JSP_URI);
-          if (descriptor != null) possibleUris.add(XmlUtil.JSP_URI);
+        public boolean acceptXmlNs() {
+          return acceptXmlNs;
         }
-      }
 
-      if (acceptXmlNs) {
-        if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.schemas"));
-        final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
-        final String[] availableUrls = instanceEx.getResourceUrls(null,true);
-        int i = 0;
-
-        for(String url:availableUrls) {
-          if (pi != null) {
-            pi.setFraction((double)i /availableUrls.length);
-            pi.setText2(url);
-            ++i;
-          }
-          final XmlFile xmlFile = XmlUtil.findNamespace(file, url);
-
-          if (xmlFile != null) {
-            final boolean wordFound = checkIfGivenXmlHasTheseWords(localName, xmlFile);
-            if (!wordFound) continue;
-            final PsiMetaDataBase metaData = xmlFile.getDocument().getMetaData();
-
-            if (metaData instanceof XmlNSDescriptorImpl) {
-              final XmlNSDescriptorImpl descriptor = (XmlNSDescriptorImpl)metaData;
-              XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(tag.getLocalName(),url);
-
-              if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
-                final String defaultNamespace = descriptor.getDefaultNamespace();
-
-                // Skip rare stuff
-                if (!XmlUtil.XML_SCHEMA_URI2.equals(defaultNamespace) &&
-                    !XmlUtil.XML_SCHEMA_URI3.equals(defaultNamespace)
-                    ) {
-                  possibleUris.add(defaultNamespace);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    private static boolean checkIfGivenXmlHasTheseWords(final String name, final XmlFile tldFileByUri) {
-      final String[] words = StringUtil.getWordsIn(name).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
-      final boolean[] wordsFound = new boolean[words.length];
-      final int[] wordsFoundCount = new int[1];
-
-      IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
-        public void run(final CharSequence chars, int start, int end, char[] charArray) {
-          if (wordsFoundCount[0] == words.length) return;
-          final int foundWordLen = end - start;
-
-          Next:
-          for(int i = 0; i < words.length;++i) {
-            final String localName = words[i];
-            if (wordsFound[i] || localName.length() != foundWordLen) continue;
-
-            for(int j = 0; j < localName.length(); ++j) {
-              if (chars.charAt(start + j) != localName.charAt(j)) continue Next;
-            }
-
-            wordsFound[i] = true;
-            wordsFoundCount[0]++;
-            break;
-          }
+        public boolean acceptTaglib() {
+          return acceptTaglib;
         }
       };
 
-      final CharSequence contents = tldFileByUri.getViewProvider().getContents();
+      if (myElement instanceof XmlTag) {
+        if (unitTestMode) processExternalUris((XmlTag)myElement, file, processor);
+        else {
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            new Runnable() {
+              public void run() {
+                processExternalUris((XmlTag)myElement, file, processor);
+              }
+            },
+            XmlErrorMessages.message("finding.acceptable.uri"),
+            false,
+            project
+          );
+        }
+      }
 
-      IdTableBuilding.scanWords(wordProcessor, contents, 0, contents.length());
-
-      return wordsFoundCount[0] == words.length;
+      return possibleUris.toArray( new String[possibleUris.size()] );
     }
 
     public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
@@ -1243,4 +1141,131 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       return true;
     }
   }
+
+  public interface ExternalUriProcessor {
+    void process(@NotNull String uri,@Nullable final String url);
+    boolean acceptXmlNs();
+    boolean acceptTaglib();
+  }
+
+  public static void processExternalUris(@NotNull XmlTag tag,
+                                 final PsiFile file,
+                                 ExternalUriProcessor processor) {
+    final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+
+    final JspManager jspManager = JspManager.getInstance(file.getProject());
+    final String localName = tag.getLocalName();
+
+    if (processor.acceptTaglib() && jspManager != null) {
+      if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.tlds"));
+      final JspFile jspFile = (JspFile)file;
+      final String[] possibleTldUris = jspManager.getPossibleTldUris(jspFile);
+
+      Arrays.sort(possibleTldUris);
+      int i = 0;
+
+      boolean foundSomething = false;
+
+      for (String uri : possibleTldUris) {
+        if (pi != null) {
+          pi.setFraction((double)i / possibleTldUris.length);
+          pi.setText2(uri);
+          ++i;
+        }
+
+        final XmlFile tldFileByUri = jspManager.getTldFileByUri(uri, jspFile);
+        if (tldFileByUri == null) continue;
+
+        final boolean wordFound = checkIfGivenXmlHasTheseWords(localName, tldFileByUri);
+        if (!wordFound) continue;
+        final PsiMetaDataBase metaData = tldFileByUri.getDocument().getMetaData();
+
+        if (metaData instanceof TldDescriptor) {
+          if (((TldDescriptor)metaData).getElementDescriptor(tag) != null) {
+            processor.process(uri, null);
+            foundSomething = true;
+          }
+        }
+      }
+
+      if (file.getFileType() == StdFileTypes.JSPX && !foundSomething) {
+        final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)jspManager.getActionsLibrary(file);
+        final XmlElementDescriptor descriptor =
+          nsDescriptor.getElementDescriptor(localName, XmlUtil.JSP_URI);
+        if (descriptor != null) {
+          processor.process(XmlUtil.JSP_URI, null);
+        }
+      }
+    }
+
+    if (processor.acceptXmlNs()) {
+      if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.schemas"));
+      final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
+      final String[] availableUrls = instanceEx.getResourceUrls(null, true);
+      int i = 0;
+
+      for (String url : availableUrls) {
+        if (pi != null) {
+          pi.setFraction((double)i / availableUrls.length);
+          pi.setText2(url);
+          ++i;
+        }
+        final XmlFile xmlFile = XmlUtil.findNamespace(file, url);
+
+        if (xmlFile != null) {
+          final boolean wordFound = checkIfGivenXmlHasTheseWords(localName, xmlFile);
+          if (!wordFound) continue;
+          final PsiMetaDataBase metaData = xmlFile.getDocument().getMetaData();
+
+          if (metaData instanceof XmlNSDescriptorImpl) {
+            final XmlNSDescriptorImpl descriptor = (XmlNSDescriptorImpl)metaData;
+            XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(tag.getLocalName(), url);
+
+            if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
+              final String defaultNamespace = descriptor.getDefaultNamespace();
+
+              // Skip rare stuff
+              if (!XmlUtil.XML_SCHEMA_URI2.equals(defaultNamespace) && !XmlUtil.XML_SCHEMA_URI3.equals(defaultNamespace)) {
+                processor.process(defaultNamespace, url);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private static boolean checkIfGivenXmlHasTheseWords(final String name, final XmlFile tldFileByUri) {
+    final String[] words = StringUtil.getWordsIn(name).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    final boolean[] wordsFound = new boolean[words.length];
+    final int[] wordsFoundCount = new int[1];
+
+    IdTableBuilding.ScanWordProcessor wordProcessor = new IdTableBuilding.ScanWordProcessor() {
+      public void run(final CharSequence chars, int start, int end, char[] charArray) {
+        if (wordsFoundCount[0] == words.length) return;
+        final int foundWordLen = end - start;
+
+        Next:
+        for (int i = 0; i < words.length; ++i) {
+          final String localName = words[i];
+          if (wordsFound[i] || localName.length() != foundWordLen) continue;
+
+          for (int j = 0; j < localName.length(); ++j) {
+            if (chars.charAt(start + j) != localName.charAt(j)) continue Next;
+          }
+
+          wordsFound[i] = true;
+          wordsFoundCount[0]++;
+          break;
+        }
+      }
+    };
+
+    final CharSequence contents = tldFileByUri.getViewProvider().getContents();
+
+    IdTableBuilding.scanWords(wordProcessor, contents, 0, contents.length());
+
+    return wordsFoundCount[0] == words.length;
+  }
+
 }

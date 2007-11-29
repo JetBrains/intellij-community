@@ -1,13 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -18,8 +16,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,7 +24,6 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,7 +37,7 @@ import java.util.*;
 /**
  * @author mike
  */
-public class FetchExtResourceAction extends BaseIntentionAction {
+public class FetchExtResourceAction extends BaseExtResourceAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.FetchDtdAction");
   private static final @NonNls String HTML_MIME = "text/html";
   private static final @NonNls String HTTP_PROTOCOL = "http://";
@@ -50,26 +45,12 @@ public class FetchExtResourceAction extends BaseIntentionAction {
   private static final @NonNls String FTP_PROTOCOL = "ftp://";
   private static final @NonNls String EXT_RESOURCES_FOLDER = "extResources";
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof XmlFile)) return false;
-
-    int offset = editor.getCaretModel().getOffset();
-    String uri = findUri(file, offset);
-
-    if (uri == null) return false;
-
-    XmlFile xmlFile = XmlUtil.findNamespace(file, uri);
-    if (xmlFile != null) return false;
-
-    if (!uri.startsWith(HTTP_PROTOCOL) && !uri.startsWith(FTP_PROTOCOL) && !uri.startsWith(HTTPS_PROTOCOL)) return false;
-
-    setText(QuickFixBundle.message("fetch.external.resource"));
-    return true;
+  protected String getQuickFixKeyId() {
+    return "fetch.external.resource";
   }
 
-  @NotNull
-  public String getFamilyName() {
-    return QuickFixBundle.message("fetch.external.resource");
+  protected boolean isAcceptableUri(final String uri) {
+    return uri.startsWith(HTTP_PROTOCOL) || uri.startsWith(FTP_PROTOCOL) && uri.startsWith(HTTPS_PROTOCOL);
   }
 
   public static String findUrl(PsiFile file, int offset, String uri) {
@@ -104,20 +85,6 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return uri;
   }
 
-  @Nullable
-  public static String findUri(PsiFile file, int offset) {
-    PsiReference currentRef = file.getViewProvider().findReferenceAt(offset, file.getLanguage());
-    if (currentRef == null) currentRef = file.getViewProvider().findReferenceAt(offset);
-    if (( currentRef instanceof URLReference ||
-          currentRef instanceof URIReferenceProvider.DependentNSReference
-        ) &&
-        currentRef.resolve() == null
-       ) {
-      return currentRef.getCanonicalText();
-    }
-    return null;
-  }
-
   static class FetchingResourceIOException extends IOException {
     private String url;
 
@@ -133,14 +100,9 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     }
   }
 
-  public void invoke(final Project project, Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    final String uri = findUri(file, offset);
-    if (uri == null) return;
-
+  protected void doInvoke(final PsiFile file, final int offset, final String uri) {
     final String url = findUrl(file, offset, uri);
+    final Project project = file.getProject();
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -393,7 +355,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     }
 
     final int lastDoPosInResourceUrl = resourceUrl.lastIndexOf('.', slashIndex);
-    if (lastDoPosInResourceUrl == -1 || 
+    if (lastDoPosInResourceUrl == -1 ||
         FileTypeManager.getInstance().getFileTypeByExtension(resourceUrl.substring(lastDoPosInResourceUrl + 1)) == StdFileTypes.UNKNOWN
        ) {
       // remote url does not contain file with extension
@@ -441,7 +403,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
           } else if (element instanceof XmlTag) {
             final XmlTag tag = (XmlTag)element;
             String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
-            
+
             if (schemaLocation != null) {
               final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
               if (references.length > 0) {

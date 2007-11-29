@@ -8,10 +8,7 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.util.TextRange;
@@ -220,6 +217,11 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
     QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction());
     QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
+    final PsiElement parentElement = reference.getElement().getParent();
+
+    if (parentElement instanceof XmlAttribute && ((XmlAttribute)parentElement).isNamespaceDeclaration()) {
+      QuickFixAction.registerQuickFixAction(info, new AddXsiSchemaLocationForExtResourceAction());
+    }
   }
 
   public String getUnresolvedMessagePattern() {
