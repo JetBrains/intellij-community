@@ -42,10 +42,10 @@ public class GroovyInlineHandler implements InlineHandler {
   @Nullable
   public Settings prepareInlineElement(final PsiElement element, Editor editor, boolean invokedOnReference) {
 
-    if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) { // todo add method
+    if (element instanceof GrVariable && GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) { 
       return GroovyInlineVariableUtil.inlineLocalVariableSettings((GrVariable) element, editor);
     } else if (element instanceof GrMethod) {
-      return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod) element, editor);
+      return GroovyInlineMethodUtil.inlineMethodSettings((GrMethod) element, editor, invokedOnReference);
     } else {
       Application application = ApplicationManager.getApplication();
       if (!application.isUnitTestMode()) {
@@ -73,6 +73,9 @@ public class GroovyInlineHandler implements InlineHandler {
     if (element instanceof GrVariable &&
         GroovyRefactoringUtil.isLocalVariable((GrVariable) element)) {
       return GroovyInlineVariableUtil.createInlinerForLocalVariable(((GrVariable) element));
+    }
+    if (element instanceof GrMethod) {
+      return new GroovyMethodInliner((GrMethod) element);
     }
     return null;
   }

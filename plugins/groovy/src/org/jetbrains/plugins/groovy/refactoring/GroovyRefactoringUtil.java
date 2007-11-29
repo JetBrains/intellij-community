@@ -25,9 +25,11 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
@@ -35,13 +37,17 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -380,5 +386,137 @@ public abstract class GroovyRefactoringUtil {
     GrConstructorInvocation expr = (GrConstructorInvocation) statement;
     return (testForSuper && expr.isSuperCall()) || (testForThis && expr.isThisCall());
   }
+
+  public static GrReturnStatement[] findReturnStatements(GrMethod method) {
+    ArrayList<GrReturnStatement> vector = new ArrayList<GrReturnStatement>();
+    GrOpenBlock block = method.getBlock();
+    if (block != null) {
+      addReturnStatements(vector, block);
+    }
+    return vector.toArray(new GrReturnStatement[vector.size()]);
+  }
+
+  private static void addReturnStatements(ArrayList<GrReturnStatement> vector, PsiElement element) {
+    if (element instanceof GrReturnStatement) {
+      vector.add((GrReturnStatement) element);
+    } else if (!(element instanceof PsiClass ||
+        element instanceof GrClosableBlock)) {
+      PsiElement[] children = element.getChildren();
+      for (PsiElement child : children) {
+        addReturnStatements(vector, child);
+      }
+    }
+  }
+
+
+  public static void replaceParamatersWithArguments(GrMethodCallExpression call, GrMethod method) throws IncorrectOperationException {
+    GrArgumentList argumentList = call.getArgumentList();
+    if (argumentList == null) {
+      setDefaultValuesToParameters(method, null);
+      return;
+    }
+    ArrayList<GrExpression> exprs = new ArrayList<GrExpression>();
+    exprs.addAll(Arrays.asList(argumentList.getExpressionArguments()));
+
+    // first parameter may have map type
+    boolean firstParamIsMap = argumentList.getNamedArguments().length > 0;
+    GrParameter[] parameters = method.getParameters();
+    if (parameters.length == 0) return;
+    GrParameter firstParam = parameters[0];
+    while (exprs.size() > parameters.length - (firstParamIsMap ? 1 : 0)) {
+      exprs.remove(exprs.size() - 1);
+    }
+
+    int nonDefault = 0;
+    for (GrParameter parameter : parameters) {
+      if (!(firstParam == parameter && firstParamIsMap)) {
+        if (parameter.getDefaultInitializer() == null) {
+          nonDefault++;
+        }
+      }
+    }
+    nonDefault = exprs.size() - nonDefault;
+    // Parameters that will be replaced by its default values
+    Set<String> nameFilter = new HashSet<String>();
+    for (GrParameter parameter : parameters) {
+      if (!(firstParam == parameter && firstParamIsMap)) {
+        GrExpression initializer = parameter.getDefaultInitializer();
+        if (initializer != null) {
+          if (nonDefault > 0) {
+            nonDefault--;
+          } else {
+            nameFilter.add(parameter.getName());
+          }
+        }
+      }
+    }
+    // todo add named arguments
+    setDefaultValuesToParameters(method, nameFilter);
+    setValuesToParameters(method, exprs, nameFilter, firstParamIsMap);
+  }
+
+  /**
+   * replaces parameter occurrences in method with its default values (if it's possible)
+   *
+   * @param method     given method
+   * @param nameFilter specified parameter names (which ma have default initializers)
+   */
+  private static void setDefaultValuesToParameters(GrMethod method, Collection<String> nameFilter) throws IncorrectOperationException {
+    if (nameFilter == null) {
+      nameFilter = new ArrayList<String>();
+      for (GrParameter parameter : method.getParameters()) {
+        nameFilter.add(parameter.getName());
+      }
+    }
+    GrParameter[] parameters = method.getParameters();
+    GroovyElementFactory factory = GroovyElementFactory.getInstance(method.getProject());
+    for (GrParameter parameter : parameters) {
+      GrExpression initializer = parameter.getDefaultInitializer();
+      if (nameFilter.contains(parameter.getName()) && initializer != null) {
+        Collection<PsiReference> refs = ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(parameter.getProject()), false).findAll();
+        for (PsiReference ref : refs) {
+          PsiElement element = ref.getElement();
+          if (element instanceof GrReferenceExpression) {
+            ((GrReferenceExpression) element).replaceWithExpression(factory.createExpressionFromText(initializer.getText()), true);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Replace first m parameters by given values, where m is lenhgth of given values vector
+   *
+   * @param method
+   * @param values     values vector
+   * @param nameFilter
+   * @param firstParamIsMap
+   * @throws IncorrectOperationException
+   */
+  private static void setValuesToParameters(GrMethod method, List<GrExpression> values, Set<String> nameFilter, boolean firstParamIsMap)
+      throws IncorrectOperationException {
+    if (nameFilter == null) {
+      nameFilter = new HashSet<String>();
+    }
+    GrParameter[] parameters = method.getParameters();
+    if (parameters.length == 0) return;
+    GroovyElementFactory factory = GroovyElementFactory.getInstance(method.getProject());
+    int i = firstParamIsMap ? 1 : 0;
+    for (GrExpression value : values) {
+      while (i < parameters.length && nameFilter.contains(parameters[i].getName())) i++;
+      if (i < parameters.length) {
+        GrParameter parameter = parameters[i];
+        Collection<PsiReference> refs = ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(parameter.getProject()), false).findAll();
+        for (PsiReference ref : refs) {
+          PsiElement element = ref.getElement();
+          if (element instanceof GrReferenceExpression) {
+            ((GrReferenceExpression) element).replaceWithExpression(factory.createExpressionFromText(value.getText()), true);
+          }
+        }
+      }
+      i++;
+    }
+  }
+
 
 }

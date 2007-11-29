@@ -117,7 +117,7 @@ public class InlineMethodTest extends CommonRefactoringTestCase {
       int caretOffset = myEditor.getCaretModel().getOffset();
       String invokedResult = GroovyInlineMethodUtil.getInvokedResult();
       result = "ok".equals(invokedResult) ?
-          result.substring(0, caretOffset) + CARET_MARKER + result.substring(caretOffset) :
+          result : //result.substring(0, caretOffset) + CARET_MARKER + result.substring(caretOffset) :
           "FAIL: " + invokedResult;
     } finally {
       fileEditorManager.closeFile(virtualFile);
