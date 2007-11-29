@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -149,10 +148,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
 
   private void checkFile(final PsiFile file, final InspectionManager manager) {
     if (!(file instanceof PropertiesFile)) return;
-    if (getContext().RUN_WITH_EDITOR_PROFILE &&
-        InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile(file).getInspectionTool(getShortName()) != this) {
-      return;
-    }
+    if (!getContext().isToCheckMember(file, this)) return;
     final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
     final PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<Property> properties = propertiesFile.getProperties();

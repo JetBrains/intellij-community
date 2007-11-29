@@ -28,7 +28,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
@@ -287,8 +286,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
           if (element == null) return;
-          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
-          if (getContext().RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
+          if (!getContext().isToCheckMember(refElement, DeadCodeInspection.this)) return;
           if (!refElement.isSuspicious()) return;
           refElement.accept(new RefVisitor() {
             public void visitElement(final RefEntity elem) {
@@ -794,8 +792,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
           if (element == null) return;
-          final InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
-          if (getContext().RUN_WITH_EDITOR_PROFILE && profile.getInspectionTool(getShortName()) != DeadCodeInspection.this) return;
+          if (!getContext().isToCheckMember(refElement, DeadCodeInspection.this)) return;
           refElement.setReachable(false);
         }
       }

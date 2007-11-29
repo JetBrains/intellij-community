@@ -568,14 +568,26 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     return null;
   }
 
-  @SuppressWarnings({"SimplifiableIfStatement"})
-  public boolean isToCheckMember(RefElement owner, InspectionTool tool) {
+  public boolean isToCheckMember(@NotNull RefElement owner, InspectionTool tool) {
     final PsiElement element = owner.getElement();
-    if (RUN_WITH_EDITOR_PROFILE && InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element)
-      .getInspectionTool(tool.getShortName()) != tool) {
-      return false;
+    return isToCheckMember(element, tool) && !((RefElementImpl)owner).isSuppressed(tool.getShortName());
+  }
+
+  public boolean isToCheckMember(final PsiElement element, final InspectionTool tool) {
+    if (RUN_WITH_EDITOR_PROFILE) {
+      final InspectionProfile inspectionProfile =
+        InspectionProjectProfileManager.getInstance(element.getProject()).getInspectionProfile(element);
+      final Set<Pair<InspectionTool, InspectionProfile>> tools = myTools.get(tool.getShortName());
+      for (Pair<InspectionTool, InspectionProfile> inspectionProfilePair : tools) {
+        if (Comparing.strEqual(inspectionProfilePair.second.getName(), inspectionProfile.getName())) {
+          if (inspectionProfilePair.first != tool) {
+            return false;
+          }
+          break;
+        }
+      }
     }
-    return !((RefElementImpl)owner).isSuppressed(tool.getShortName());
+    return true;
   }
 
   @Nullable
