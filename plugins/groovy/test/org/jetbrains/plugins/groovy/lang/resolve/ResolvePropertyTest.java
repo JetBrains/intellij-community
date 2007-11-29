@@ -172,8 +172,8 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     doTest("GRVY575/A.groovy");
   }
 
-  public void testGRVY746() throws Exception {
-    PsiReference ref = configureByFile("GRVY746/A.groovy");
+  public void testGRVY747() throws Exception {
+    PsiReference ref = configureByFile("GRVY747/A.groovy");
     assertTrue(ref.resolve() instanceof AccessorMethod);
   }
 
