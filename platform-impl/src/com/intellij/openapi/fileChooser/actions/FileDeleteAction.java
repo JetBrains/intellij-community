@@ -2,19 +2,16 @@ package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.DeleteAction;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -27,13 +24,16 @@ public class FileDeleteAction extends DeleteAction {
 
   protected DeleteProvider getDeleteProvider(DataContext dataContext) {
     final FileSystemTreeImpl fileSystemTree = FileChooserDialogImpl.FILE_SYSTEM_TREE.getData(dataContext);
-    return new FileSystemDeleteProvider(fileSystemTree);
+    if (fileSystemTree != null) {
+      return new FileSystemDeleteProvider(fileSystemTree);
+    }
+    return null;
   }
 
   private static final class FileSystemDeleteProvider implements DeleteProvider {
     private final FileSystemTree myTree;
 
-    public FileSystemDeleteProvider(FileSystemTree tree) {
+    public FileSystemDeleteProvider(@NotNull FileSystemTree tree) {
       myTree = tree;
     }
 
@@ -51,19 +51,17 @@ public class FileDeleteAction extends DeleteAction {
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          for (int i = 0; i < files.length; i++) {
-            final VirtualFile file = files[i];
+          for (final VirtualFile file : files) {
             try {
               file.delete(this);
             }
             catch (IOException e) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
-                          public void run() {
-                            Messages.showMessageDialog(
-                              UIBundle.message("file.chooser.could.not.erase.file.or.folder.error.messabe", file.getName()),
-                              UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
-                          }
-                        });
+                public void run() {
+                  Messages.showMessageDialog(UIBundle.message("file.chooser.could.not.erase.file.or.folder.error.messabe", file.getName()),
+                                             UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
+                }
+              });
             }
           }
         }
@@ -71,8 +69,7 @@ public class FileDeleteAction extends DeleteAction {
       );
     }
 
-    private String createConfirmationMessage(VirtualFile[] filesToDelete) {
-      String deleteWhat;
+    private static String createConfirmationMessage(VirtualFile[] filesToDelete) {
       if (filesToDelete.length == 1){
         if (filesToDelete[0].isDirectory()) return UIBundle.message("are.you.sure.you.want.to.delete.selected.folder.confirmation.message");
         else return UIBundle.message("are.you.sure.you.want.to.delete.selected.file.confirmation.message");
@@ -80,8 +77,7 @@ public class FileDeleteAction extends DeleteAction {
       else {
         boolean hasFiles = false;
         boolean hasFolders = false;
-        for (int i = 0; i < filesToDelete.length; i++) {
-          VirtualFile file = filesToDelete[i];
+        for (VirtualFile file : filesToDelete) {
           boolean isDirectory = file.isDirectory();
           hasFiles |= !isDirectory;
           hasFolders |= isDirectory;

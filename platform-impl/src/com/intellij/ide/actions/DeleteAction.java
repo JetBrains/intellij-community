@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -29,8 +30,9 @@ public class DeleteAction extends AnAction {
     }
   }
 
+  @Nullable
   protected DeleteProvider getDeleteProvider(DataContext dataContext) {
-    return (DeleteProvider)dataContext.getData(DataConstants.DELETE_ELEMENT_PROVIDER);
+    return PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(dataContext);
   }
 
   public void update(AnActionEvent event){
@@ -48,7 +50,7 @@ public class DeleteAction extends AnAction {
     }
     DeleteProvider provider = getDeleteProvider(dataContext);
     if (event.getInputEvent() instanceof KeyEvent) {
-      Object component = dataContext.getData(DataConstants.CONTEXT_COMPONENT);
+      Object component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component instanceof JTextComponent) provider = null; // Do not override text deletion
     }
     presentation.setEnabled(provider != null && provider.canDeleteElement(dataContext));
