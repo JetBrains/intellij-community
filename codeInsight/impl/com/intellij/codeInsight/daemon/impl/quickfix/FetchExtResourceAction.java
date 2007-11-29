@@ -447,8 +447,8 @@ public class FetchExtResourceAction extends BaseIntentionAction {
               if (references.length > 0) {
                 final String namespace = tag.getAttributeValue("namespace");
 
-                if (namespace != null) {
-                  result.add(namespace);
+                if (namespace != null && schemaLocation.indexOf('/') == -1) {
+                  result.add(namespace.substring(0, namespace.lastIndexOf('/') + 1) + schemaLocation);
                 } else {
                   result.add(schemaLocation);
                 }
