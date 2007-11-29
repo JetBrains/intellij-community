@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="extensions" exported="" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="bootstrap" />
+    <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntryProperties />
   </component>
 </module>
