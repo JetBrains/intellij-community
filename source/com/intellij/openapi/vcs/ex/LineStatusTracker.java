@@ -242,7 +242,10 @@ public class LineStatusTracker {
       LOG.assertTrue(!myIsReleased);
 
       removeHighlighters(new ArrayList<Range>());
-      myDocument.removeDocumentListener(myDocumentListener);
+      if (myDocumentListener != null) {
+        myDocument.removeDocumentListener(myDocumentListener);
+        myDocumentListener = null;
+      }
     }
     finally {
       myIsReleased = true;
