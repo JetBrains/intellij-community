@@ -56,6 +56,11 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
                                           new RemoveSerialVersionUIDFix()};
     }
 
+    private static boolean isSerialVersionUID(PsiField field) {
+        final String fieldName = field.getName();
+        return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName);
+    }
+
     private static class RemoveSerialVersionUIDFix extends InspectionGadgetsFix{
 
         @NotNull
@@ -67,8 +72,14 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiElement nameElement = descriptor.getPsiElement();
-            final PsiField field = (PsiField)nameElement.getParent();
-            field.delete();
+            final PsiClass aClass = (PsiClass)nameElement.getParent();
+            final PsiField[] fields = aClass.getFields();
+            for (PsiField field : fields) {
+                if (isSerialVersionUID(field)) {
+                    field.delete();
+                    return;
+                }
+            }
         }
     }
 
@@ -98,12 +109,6 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
                 return;
             }
             registerClassError(aClass);
-        }
-
-        private static boolean isSerialVersionUID(PsiField field) {
-            final String fieldName = field.getName();
-            return HardcodedMethodConstants.SERIAL_VERSION_UID.equals(
-                    fieldName);
         }
     }
 }
