@@ -882,10 +882,24 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     for (PsiElement dataElement : dataElements) {
       if (dataElement instanceof PsiInlineDocTag) {
         final PsiInlineDocTag inlineDocTag = (PsiInlineDocTag)dataElement;
+        final PsiElement nameElement = inlineDocTag.getNameElement();
         if (manager.getTagInfo(inlineDocTag.getName()) == null) {
-          final PsiElement nameElement = inlineDocTag.getNameElement();
           if (nameElement != null) {
             problems.add(createDescriptor(nameElement, InspectionsBundle.message("inspection.javadoc.problem.wrong.tag", "<code>" + inlineDocTag.getName() + "</code>"), new AddUnknownTagToCustoms(inlineDocTag), inspectionManager));
+          }
+        }
+        final PsiDocTagValue value = inlineDocTag.getValueElement();
+        if (value != null) {
+          final PsiReference reference = value.getReference();
+          if (reference != null) {
+            final PsiElement ref = reference.resolve();
+            if (ref != null){
+              if (PsiTreeUtil.getParentOfType(inlineDocTag, PsiDocCommentOwner.class) == PsiTreeUtil.getParentOfType(ref, PsiDocCommentOwner.class, false)) {
+                if (nameElement != null) {
+                  problems.add(createDescriptor(nameElement, InspectionsBundle.message("inspection.javadoc.problem.pointing.to.itself"), inspectionManager));
+                }
+              }
+            }
           }
         }
       }
