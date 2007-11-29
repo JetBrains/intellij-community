@@ -29,25 +29,21 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListSeparator;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.dialogs.BranchConfigurationDialog;
+import org.jetbrains.idea.svn.SvnBranchConfiguration;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnProgressCanceller;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.status.SvnDiffEditor;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -56,20 +52,13 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.ByteBuffer;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -82,19 +71,12 @@ public class CompareWithBranchAction extends AnAction {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
     VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(virtualFile);
-    final SvnBranchConfiguration configuration;
-    try {
-      configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
-    }
-    catch (VcsException e1) {
-      Messages.showErrorDialog(project, SvnBundle.message("compare.with.branch.configuration.error", e1.getMessage()),
-                               SvnBundle.message("compare.with.branch.error.title"));
-      return;
-    }
-
-    BranchBasesPopupStep step = new BranchBasesPopupStep(project, virtualFile, vcsRoot, configuration);
-    JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
+    SelectBranchPopup.show(project, virtualFile, new SelectBranchPopup.BranchSelectedCallback() {
+      public void branchSelected(final Project project, final VirtualFile virtualFile, final SvnBranchConfiguration configuration,
+                                 final String url, final long revision) {
+        new CompareWithBranchOperation(project, virtualFile, configuration).compareWithBranch(url, revision);
+      }
+    });
   }
 
   @Override
@@ -115,142 +97,6 @@ public class CompareWithBranchAction extends AnAction {
     return true;
   }
 
-  private class BranchBasesPopupStep extends BaseListPopupStep<String> {
-    protected final Project myProject;
-    private final VirtualFile myVirtualFile;
-    private final VirtualFile myVcsRoot;
-    private final SvnBranchConfiguration myConfiguration;
-    private final boolean myTopLevel;
-
-    protected BranchBasesPopupStep(final Project project, final VirtualFile virtualFile, final VirtualFile vcsRoot,
-                                final SvnBranchConfiguration configuration, boolean topLevel) {
-      myProject = project;
-      myVirtualFile = virtualFile;
-      myVcsRoot = vcsRoot;
-      myConfiguration = configuration;
-      myTopLevel = topLevel;
-    }
-
-    public BranchBasesPopupStep(final Project project, final VirtualFile virtualFile, final VirtualFile vcsRoot,
-                                final SvnBranchConfiguration configuration) {
-      this(project, virtualFile, vcsRoot, configuration, true);
-      List<String> items = new ArrayList<String>();
-      items.add(myConfiguration.getTrunkUrl());
-      items.addAll(myConfiguration.getBranchUrls());
-      items.add(SvnBundle.message("configure.branches.item"));
-      init(SvnBundle.message("compare.with.branch.popup.title"), items, null);
-    }
-
-    @Override
-    public ListSeparator getSeparatorAbove(final String value) {
-      return value.equals(SvnBundle.message("configure.branches.item")) ? new ListSeparator("") : null;
-    }
-
-    @NotNull
-    @Override
-    public String getTextFor(final String value) {
-      int pos = value.lastIndexOf('/');
-      if (pos < 0) {
-        return value;
-      }
-      if (myTopLevel && !value.startsWith(myConfiguration.getTrunkUrl())) {
-        return value.substring(pos+1) + "...";
-      }
-      return value.substring(pos+1);
-    }
-
-    @Override
-    public boolean hasSubstep(final String selectedValue) {
-      return false;
-    }
-
-    @Override
-    public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-      if (selectedValue.equals(SvnBundle.message("configure.branches.item"))) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            BranchConfigurationDialog.configureBranches(myProject, myVcsRoot);
-          }
-        });
-      }
-      else if (!myTopLevel || selectedValue.equals(myConfiguration.getTrunkUrl())) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            new CompareWithBranchOperation(myProject, myVirtualFile, myConfiguration).compareWithBranch(selectedValue, -1);
-          }
-        });
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            showBranchPopup(selectedValue);
-          }
-        });
-      }
-      return null;
-    }
-
-    private void showBranchPopup(final String selectedValue) {
-      List<SvnBranchItem> branches;
-      try {
-        branches = getBranches(selectedValue);
-      }
-      catch (SVNException e) {
-        Messages.showErrorDialog(myProject, e.getMessage(), SvnBundle.message("compare.with.branch.list.error"));
-        return;
-      }
-      final JList branchList = new JList(branches.toArray());
-      branchList.setCellRenderer(new BranchRenderer());
-      JBPopupFactory.getInstance().createListPopupBuilder(branchList)
-              .setTitle(SVNPathUtil.tail(selectedValue))
-              .setResizable(true)
-              .setDimensionServiceKey("Svn.CompareWithBranchPopup")
-              .setItemChoosenCallback(new Runnable() {
-                public void run() {
-                  SvnBranchItem item = (SvnBranchItem) branchList.getSelectedValue();
-                  if (item != null) {
-                    new CompareWithBranchOperation(myProject, myVirtualFile, myConfiguration).compareWithBranch(item.myUrl, item.getRevision());
-                  }
-                }
-              })
-              .createPopup().showCenteredInCurrentWindow(myProject);
-    }
-
-    private List<SvnBranchItem> getBranches(final String url) throws SVNException {
-      final ArrayList<SvnBranchItem> result = new ArrayList<SvnBranchItem>();
-      final Ref<SVNException> ex = new Ref<SVNException>();
-      boolean rc = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-          if (indicator != null) {
-            indicator.setIndeterminate(true);
-          }
-          final SVNLogClient logClient;
-          try {
-            logClient = SvnVcs.getInstance(myProject).createLogClient();
-            logClient.doList(SVNURL.parseURIEncoded(url), SVNRevision.UNDEFINED, SVNRevision.HEAD, false, new ISVNDirEntryHandler() {
-              public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
-                ProgressManager.getInstance().checkCanceled();
-                final String url = dirEntry.getURL().toString();
-                result.add(new SvnBranchItem(url, dirEntry.getDate(), dirEntry.getRevision()));
-              }
-            });
-            Collections.sort(result);
-          }
-          catch (SVNException e) {
-            ex.set(e);
-          }
-        }
-      }, SvnBundle.message("compare.with.branch.progress.loading.branches"), true, myProject);
-      if (!rc) {
-        return Collections.emptyList();
-      }
-      if (!ex.isNull()) {
-        throw ex.get();
-      }
-      return result;
-    }
-  }
 
   private class CompareWithBranchOperation {
     private Project myProject;
@@ -408,64 +254,6 @@ public class CompareWithBranchAction extends AnAction {
                                      SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
         }
       });
-    }
-  }
-
-  private static class SvnBranchItem implements Comparable<SvnBranchItem> {
-    private String myUrl;
-    private Date myCreationDate;
-    private long myRevision;
-
-    public SvnBranchItem(final String url, final Date creationDate, final long revision) {
-      myUrl = url;
-      myCreationDate = creationDate;
-      myRevision = revision;
-    }
-
-    public String getUrl() {
-      return myUrl;
-    }
-
-    @Nullable
-    public Date getCreationDate() {
-      return myCreationDate;
-    }
-
-    public long getRevision() {
-      return myRevision;
-    }
-
-    public int compareTo(SvnBranchItem o) {
-      return -Comparing.compare(myCreationDate, o.getCreationDate());
-    }
-  }
-
-  private static class BranchRenderer extends JPanel implements ListCellRenderer {
-    private JLabel myUrlLabel = new JLabel();
-    private JLabel myDateLabel = new JLabel();
-
-    public BranchRenderer() {
-      super(new BorderLayout());
-      add(myUrlLabel, BorderLayout.WEST);
-      add(myDateLabel, BorderLayout.EAST);
-      myUrlLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-      myDateLabel.setHorizontalAlignment(JLabel.RIGHT);
-      myDateLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-      myDateLabel.setForeground(UIUtil.getTextInactiveTextColor());
-    }
-
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (isSelected || cellHasFocus) {
-        setBackground(UIUtil.getListSelectionBackground());
-      }
-      else {
-        setBackground(UIUtil.getListBackground());
-      }
-      SvnBranchItem item = (SvnBranchItem) value;
-      myUrlLabel.setText(SVNPathUtil.tail(item.getUrl()));
-      final Date creationDate = item.getCreationDate();
-      myDateLabel.setText(creationDate != null ? SimpleDateFormat.getDateInstance(DateFormat.SHORT).format(creationDate) : "");
-      return this;
     }
   }
 }
