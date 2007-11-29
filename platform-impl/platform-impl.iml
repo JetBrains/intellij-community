@@ -65,6 +65,7 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="bootstrap" />
+    <orderEntry type="module" module-name="lvcs-openapi" />
     <orderEntryProperties />
   </component>
 </module>
