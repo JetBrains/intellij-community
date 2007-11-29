@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
 import com.intellij.refactoring.util.JavaDocPolicy;
@@ -93,7 +94,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     }
     for (final PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
-      if (!canTurnToSuper(element)) {
+      if (!canTurnToSuper(element) && PsiTreeUtil.getParentOfType(element, PsiImportStatement.class) == null) {
         result.add(new BindToOldUsageInfo(element, ref, myClass));
       }
     }
