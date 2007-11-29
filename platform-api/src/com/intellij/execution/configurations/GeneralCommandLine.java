@@ -15,9 +15,9 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -109,7 +109,7 @@ public class GeneralCommandLine {
     checkWorkingDirectory();
     try {
       final String[] commands = getCommands();
-      if(commands[0] == null) throw new ExecutionException(ExecutionBundle.message("run.configuration.error.executable.not.specified"));
+      if(commands[0] == null) throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
 
       return myWorkDirectory != null
              ? Runtime.getRuntime().exec(commands, getEnvParamsArray(), myWorkDirectory)
@@ -126,10 +126,10 @@ public class GeneralCommandLine {
     }
     if (!myWorkDirectory.exists()) {
       throw new ExecutionException(
-        ExecutionBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
+        IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
     }
     if (!myWorkDirectory.isDirectory()) {
-      throw new ExecutionException(ExecutionBundle.message("run.configuration.error.working.directory.not.directory"));
+      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory"));
     }
   }
 

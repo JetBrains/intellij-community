@@ -10,9 +10,9 @@
     <orderEntry type="module" module-name="Annotations" exported="" />
     <orderEntry type="module" module-name="util" exported="" />
     <orderEntry type="module" module-name="extensions" exported="" />
-    <orderEntry type="library" name="picocontainer" level="project" />
+    <orderEntry type="library" exported="" name="picocontainer" level="project" />
+    <orderEntry type="library" exported="" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="bootstrap" />
-    <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntryProperties />
   </component>
 </module>

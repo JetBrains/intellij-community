@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.process;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -51,7 +51,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
   }
 
   public static void attach(final ProcessHandler processHandler, final Project project) {
-    String message = ExecutionBundle.message("finished.with.exit.code.text.message", EXIT_CODE_ENTRY);
+    String message = IdeBundle.message("finished.with.exit.code.text.message", EXIT_CODE_ENTRY);
     attach(processHandler, project, "\n" + message + "\n");
   }
 

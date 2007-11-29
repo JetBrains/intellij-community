@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="platform-api" exported="" />
     <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntryProperties />
   </component>
