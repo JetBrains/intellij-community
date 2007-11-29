@@ -105,10 +105,9 @@ public class CopyDialog extends DialogWrapper {
     });
     myRepositoryField.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        SelectLocationDialog dlg = new SelectLocationDialog(project, myRepositoryField.getText());
-        dlg.show();
-        if (dlg.isOK()) {
-          myRepositoryField.setText(dlg.getSelectedURL());
+        String url = SelectLocationDialog.selectLocation(project, myRepositoryField.getText());
+        if (url != null) {
+          myRepositoryField.setText(url);
         }
       }
     });
