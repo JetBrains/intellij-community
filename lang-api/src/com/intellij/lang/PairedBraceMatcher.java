@@ -15,9 +15,9 @@
  */
 package com.intellij.lang;
 
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.tree.IElementType;
 
 /**
  * Defines the brace matching support required for a custom language. For paired

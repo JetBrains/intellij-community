@@ -15,8 +15,8 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.infos.CandidateInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

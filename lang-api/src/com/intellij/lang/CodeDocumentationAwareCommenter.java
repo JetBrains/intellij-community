@@ -16,8 +16,8 @@
 
 package com.intellij.lang;
 
-import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines support for "Enter within comments" actions in a custom language.

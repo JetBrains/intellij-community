@@ -7,10 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="util" exported="" />
-    <orderEntry type="module" module-name="Annotations" exported="" />
-    <orderEntry type="library" name="picocontainer" level="project" />
-    <orderEntry type="module" module-name="bootstrap" />
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntryProperties />
   </component>
 </module>

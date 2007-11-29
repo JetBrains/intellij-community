@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.psi.PsiFile;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -16,8 +16,8 @@
 
 package com.intellij.psi;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Trivial implementation of {@link ResolveResult}.

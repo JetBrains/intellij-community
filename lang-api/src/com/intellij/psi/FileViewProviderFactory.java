@@ -1,7 +1,7 @@
 package com.intellij.psi;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.lang.Language;
+import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author yole

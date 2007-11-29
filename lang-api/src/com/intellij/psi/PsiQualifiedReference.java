@@ -13,28 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.util.TextRange;
 
 /**
- * @author Dmitry Avdeev
+ * @author peter
  */
-public abstract class PsiPolyVariantReferenceBase<T extends PsiElement> extends PsiReferenceBase<T> implements PsiPolyVariantReference {
-
-  public PsiPolyVariantReferenceBase(final T psiElement) {
-    super(psiElement);
-  }
-
-  public PsiPolyVariantReferenceBase(final T element, final TextRange range, final boolean soft) {
-    super(element, range, soft);
-  }
-
+public interface PsiQualifiedReference extends PsiElement {
+  /**
+   * Returns the qualifier of the reference (the element representing the content up to the
+   * last period).
+   *
+   * @return the qualifier, or null if the reference is not qualified.
+   */
   @Nullable
-  public PsiElement resolve() {
-    ResolveResult[] resolveResults = multiResolve(false);
-    return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
-  }
+  PsiElement getQualifier();
+
+  /**
+   * Returns the text of the reference not including its qualifier.
+   *
+   * @return the non-qualified text of the reference, or null if the reference
+   * element is incomplete.
+   */
+  @Nullable @NonNls
+  String getReferenceName();
 }

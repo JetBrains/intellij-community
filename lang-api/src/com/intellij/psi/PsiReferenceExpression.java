@@ -16,8 +16,8 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a reference in Java code used as part of an expression.

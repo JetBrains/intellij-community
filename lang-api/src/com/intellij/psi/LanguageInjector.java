@@ -16,8 +16,8 @@
 
 package com.intellij.psi;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Describes logic for injecting language inside hosting PSI element.

@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.search;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
 
