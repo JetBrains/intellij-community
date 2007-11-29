@@ -24,8 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
@@ -42,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -274,31 +274,53 @@ public class PsiUtil {
 
   //do not check return type
   public static boolean isSimplePropertyGetter(PsiMethod method) {
-    if (method == null) return false;
-
-    if (method.isConstructor()) return false;
-
-    String methodName = method.getName();
-    if (methodName.startsWith("get") && methodName.length() > "get".length()) {
-      if (Character.isLowerCase(methodName.charAt("get".length()))
-          && (methodName.length() == "get".length() + 1 || Character.isLowerCase(methodName.charAt("get".length() + 1)))) {
-        return false;
-      }
-      return method.getParameterList().getParametersCount() == 0;
-    }
-
-    return false;
+    return isSimplePropertyGetter(method, null);
   }
 
+  //do not check return type
+  public static boolean isSimplePropertyGetter(PsiMethod method, String propertyName) {
+    if (method == null) return false;
+
+    if (method.isConstructor()) return false;
+
+    String methodName = method.getName();
+    if (!methodName.startsWith("get") || methodName.length() <= "get".length() ||
+        !Character.isUpperCase(methodName.charAt("get".length()))) return false;
+
+    if (propertyName != null && !checkPropertyName(method, propertyName)) return false;
+
+    return method.getParameterList().getParameters().length == 0;
+  }
+
+  private static boolean checkPropertyName(PsiMethod method, @NotNull String propertyName) {
+    String methodName = method.getName();
+    String accessorNamePart;
+    if (method instanceof AccessorMethod) accessorNamePart = ((AccessorMethod) method).getProperty().getName();
+    else {
+      accessorNamePart = methodName.substring(3); //"set" or "get"
+      if (Character.isLowerCase(accessorNamePart.charAt(0))) return false;
+      accessorNamePart = StringUtil.decapitalize(accessorNamePart);
+    }
+
+    if (!propertyName.equals(accessorNamePart)) return false;
+    return true;
+  }
+  
   public static boolean isSimplePropertySetter(PsiMethod method) {
+    return isSimplePropertySetter(method, null);
+  }
+
+  public static boolean isSimplePropertySetter(PsiMethod method, String propertyName) {
     if (method == null) return false;
 
     if (method.isConstructor()) return false;
 
     String methodName = method.getName();
 
-    if (!(methodName.startsWith("set") && methodName.length() > "set".length())) return false;
-    if (Character.isLowerCase(methodName.charAt("set".length()))) return false;
+    if (!methodName.startsWith("set") || methodName.length() <= "set".length() ||
+        !Character.isUpperCase(methodName.charAt("set".length()))) return false;
+
+    if (propertyName != null && !checkPropertyName(method, propertyName)) return false;
 
     return method.getParameterList().getParametersCount() == 1;
   }

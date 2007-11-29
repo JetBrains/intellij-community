@@ -40,20 +40,14 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     if (myName != null && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       boolean lValue = myPlace instanceof GroovyPsiElement && PsiUtil.isLValue((GroovyPsiElement)myPlace);
-      if (!lValue && PsiUtil.isSimplePropertyGetter(method)) {
-        String getterName = PsiUtil.getGetterNameByPropertyName(myName);
-        if (method.getName().equals(getterName)) {
-          myCandidates.clear();
-          super.execute(element, substitutor);
-          return false;
-        }
-      } else if (lValue && PsiUtil.isSimplePropertySetter(method)) {
-        String setterName = PsiUtil.getSetterNameByPropertyName(myName);
-        if (method.getName().equals(setterName)) {
-          myCandidates.clear();
-          super.execute(element, substitutor);
-          return false;
-        }
+      if (!lValue && PsiUtil.isSimplePropertyGetter(method, myName)) {
+        myCandidates.clear();
+        super.execute(element, substitutor);
+        return false;
+      } else if (lValue && PsiUtil.isSimplePropertySetter(method, myName)) {
+        myCandidates.clear();
+        super.execute(element, substitutor);
+        return false;
       }
     } else if (myName == null || myName.equals(((PsiNamedElement) element).getName())) {
       if (element instanceof GrField && ((GrField) element).isProperty()) return true;
