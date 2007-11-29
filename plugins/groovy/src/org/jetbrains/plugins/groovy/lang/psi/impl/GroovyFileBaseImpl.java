@@ -35,14 +35,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 
-import java.util.List;
 import java.util.ArrayList;
 
 /**
  * @author ilyas
  */
 public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFileBase, GrControlFlowOwner {
-  private GrField[] myTopLevelFields;
+  private GrVariable[] myTopLevelVariables;
 
   protected GroovyFileBaseImpl(FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider, language);
@@ -74,22 +73,22 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return findChildrenByClass(GrMethod.class);
   }
 
-  public GrField[] getTopLevelFields() {
-    if (myTopLevelFields == null) {
+  public GrVariable[] getTopLevelVariables() {
+    if (myTopLevelVariables == null) {
       GrVariableDeclaration[] declarations = findChildrenByClass(GrVariableDeclaration.class);
       if (declarations.length == 0) return GrField.EMPTY_ARRAY;
-      List<GrField> result = new ArrayList<GrField>();
+      ArrayList<GrVariable> result = new ArrayList<GrVariable>();
       for (GrVariableDeclaration declaration : declarations) {
         GrVariable[] variables = declaration.getVariables();
         for (GrVariable variable : variables) {
-          result.add((GrField) variable);
+          result.add(variable);
         }
       }
 
-      myTopLevelFields = result.toArray(new GrField[result.size()]);
+      myTopLevelVariables = result.toArray(new GrVariable[result.size()]);
     }
 
-    return myTopLevelFields;
+    return myTopLevelVariables;
   }
 
   public GrTopStatement[] getTopStatements() {
@@ -153,7 +152,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   public void clearCaches() {
     super.clearCaches();
     myControlFlow = null;
-    myTopLevelFields = null;
+    myTopLevelVariables = null;
   }
 
 
