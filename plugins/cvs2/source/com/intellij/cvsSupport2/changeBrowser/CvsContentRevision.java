@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 
 public class CvsContentRevision implements ContentRevision {
   protected final RevisionOrDate myRevision;
@@ -59,12 +58,7 @@ public class CvsContentRevision implements ContentRevision {
     if (myContent == null) {
       byte[] content = loadContent();
       if (content != null) {
-        try {
-          myContent = new String(content, CharsetToolkit.getIDEOptionsCharset().name());
-        }
-        catch(UnsupportedEncodingException ex) {
-          throw new VcsException(ex);
-        }
+        myContent = CharsetToolkit.bytesToString(content);
       }
     }
     return myContent;

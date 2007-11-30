@@ -25,6 +25,8 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.nio.CharBuffer;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 
 /**
@@ -192,6 +194,14 @@ public class CharsetToolkit {
     }
     return null;
   }
+
+  public static String bytesToString(final byte[] bytes) {
+    Charset charset = new CharsetToolkit(bytes, getIDEOptionsCharset()).guessEncoding(bytes.length);
+    int bomLength = getBOMLength(bytes, charset);
+    final CharBuffer charBuffer = charset.decode(ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength));
+    return charBuffer.toString();
+  }
+
   public enum GuessedEncoding {
     SEVEN_BIT,
     VALID_UTF8,
