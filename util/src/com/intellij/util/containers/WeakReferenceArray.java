@@ -23,7 +23,6 @@ import java.lang.ref.WeakReference;
 
 public class WeakReferenceArray <T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.WeakReferenceArray");
-  private static final Object ourLock = new Object();
 
   static boolean PEFORM_CHECK_THREAD = true;
   static final int MINIMUM_CAPACITY = 5;
@@ -72,6 +71,7 @@ public class WeakReferenceArray <T> {
     MyWeakReference.createAt(myReferences, mySize, object, myQueue);
     mySize++;
   }
+  
   public void add(int index, T element) {
     ensureCapacity(mySize + 1);
     if (index < 0 || index > mySize) {
@@ -170,12 +170,8 @@ public class WeakReferenceArray <T> {
   }
 
   private T getImpl(int index) {
-    MyWeakReference<T> reference = MyWeakReference.getFrom(myReferences, index);
-    if (reference == null) return null;
-    else
-      synchronized(ourLock) {
-        return reference.get();
-      }
+    final MyWeakReference<T> reference = MyWeakReference.getFrom(myReferences, index);
+    return (reference != null) ? reference.get() : null;
   }
 
   public int getCapacity() {
@@ -231,7 +227,9 @@ public class WeakReferenceArray <T> {
 
     public static <E> MyWeakReference<E> getFrom(MyWeakReference[] array, int index) {
       MyWeakReference<E> reference = array[index];
-      if (reference == null) return null;
+      if (reference == null) {
+        return null;
+      }
       LOG.assertTrue(index == reference.myIndex);
       return reference;
     }
@@ -242,13 +240,11 @@ public class WeakReferenceArray <T> {
     }
 
     public boolean removeFrom(MyWeakReference[] array) {
-      synchronized(ourLock) {
-        LOG.assertTrue(array[myIndex] == this);
-        clear();
-        array[myIndex] = null;
-        myIndex = -1;
-        return enqueue();
-      }
+      LOG.assertTrue(array[myIndex] == this);
+      clear();
+      array[myIndex] = null;
+      myIndex = -1;
+      return enqueue();
     }
 
     public void moveTo(MyWeakReference[] fromArray, MyWeakReference[] toArray, int newIndex) {
