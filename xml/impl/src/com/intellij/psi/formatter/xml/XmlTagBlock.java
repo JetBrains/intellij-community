@@ -3,6 +3,8 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -132,8 +134,13 @@ public class XmlTagBlock extends AbstractXmlBlock{
         });
 
         if  (injectedFile[0] != null) {
-          createAnotherLanguageBlockWrapper(injectedFile[0].getLanguage(), injectedFile[0].getNode(), result, indent, child.getTextRange().getStartOffset());
-          return child;
+          final Language childLanguage = injectedFile[0].getLanguage();
+          final ASTNode astNode = injectedFile[0].getNode();
+          
+          if (LanguageFormatting.INSTANCE.forContext(childLanguage, injectedFile[0]) != null) {
+            createAnotherLanguageBlockWrapper(childLanguage, astNode, result, indent, child.getTextRange().getStartOffset());
+            return child;
+          }
         }
       }
       return createXmlTextBlocks(result, child, wrap, alignment);
