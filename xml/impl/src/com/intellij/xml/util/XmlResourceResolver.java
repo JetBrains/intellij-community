@@ -13,12 +13,15 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.xml.actions.ValidateXmlActionHandler;
+import com.intellij.xml.XmlBundle;
 import org.apache.xerces.xni.XMLResourceIdentifier;
 import org.apache.xerces.xni.XNIException;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
 import org.apache.xerces.xni.parser.XMLInputSource;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.SAXParseException;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,10 +46,12 @@ public class XmlResourceResolver implements XMLEntityResolver {
   private boolean myStopOnUnDeclaredResource;
   @NonNls
   public static final String FILE_PREFIX = "file://";
+  private ValidateXmlActionHandler.ErrorReporter myErrorReporter;
 
-  public XmlResourceResolver(XmlFile _xmlFile, Project _project) {
+  public XmlResourceResolver(XmlFile _xmlFile, Project _project, final ValidateXmlActionHandler.ErrorReporter errorReporter) {
     myFile = _xmlFile;
     myProject = _project;
+    myErrorReporter = errorReporter;
   }
 
   public String getPathByPublicId(String baseId) {
@@ -193,7 +198,18 @@ public class XmlResourceResolver implements XMLEntityResolver {
         publicId = xmlResourceIdentifier.getNamespace()
       );
     }
-    if (psiFile == null) return null;
+
+    if (psiFile == null) {
+      if (publicId != null && publicId.indexOf(":/") != -1) {
+        myErrorReporter.processError(
+          new SAXParseException(XmlBundle.message("xml.validate.external.resource.is.not.registered", publicId), publicId, null, 0,0), false);
+        final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
+        source.setPublicId(publicId);
+        source.setCharacterStream(new StringReader(""));
+        return source;
+      }
+      return null;
+    }
 
     XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
     if (xmlResourceIdentifier.getLiteralSystemId() == null) {
