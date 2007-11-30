@@ -16,10 +16,8 @@
 
 package com.intellij.codeInspection;
 
-import org.jetbrains.annotations.Nullable;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
