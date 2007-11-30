@@ -42,10 +42,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.FileNotFoundException;
 import java.io.StringReader;
-import java.net.ConnectException;
-import java.net.MalformedURLException;
-import java.net.NoRouteToHostException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -109,6 +106,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
       if (ex instanceof FileNotFoundException ||
             ex instanceof MalformedURLException ||
             ex instanceof NoRouteToHostException ||
+            ex instanceof SocketTimeoutException ||
+            ex instanceof UnknownHostException ||
             ex instanceof ConnectException
             ) {
         // do not log problems caused by malformed and/or ignored external resources
@@ -153,6 +152,11 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
     public boolean isStopOnUndeclaredResource() {
       return true;
+    }
+
+    public boolean filterValidationException(final Exception ex) {
+      if (ex instanceof XmlResourceResolver.IgnoredResourceException) throw (XmlResourceResolver.IgnoredResourceException)ex;
+      return errors.add(ex.getMessage());
     }
 
     public void processError(SAXParseException ex, boolean warning) {
@@ -338,7 +342,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     myProject = project;
     myFile = (XmlFile)file;
 
-    myXmlResourceResolver = new XmlResourceResolver(myFile, myProject);
+    myXmlResourceResolver = new XmlResourceResolver(myFile, myProject, myErrorReporter);
     myXmlResourceResolver.setStopOnUnDeclaredResource( myErrorReporter.isStopOnUndeclaredResource() );
 
     try {
@@ -415,8 +419,6 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         catch (SAXException e) {
           LOG.debug(e);
 //          processError(e.getMessage(), false, 0, 0);
-        } catch(UnknownHostException ex) {
-          LOG.debug(ex);
         }
       }
       else {
