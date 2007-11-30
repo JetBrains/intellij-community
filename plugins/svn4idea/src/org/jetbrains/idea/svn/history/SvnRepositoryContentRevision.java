@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +65,8 @@ public class SvnRepositoryContentRevision implements ContentRevision {
   @Nullable
   public String getContent() throws VcsException {
     if (myContent == null) {
-      final OutputStream buffer = loadContent();
-      myContent = buffer.toString();
+      final ByteArrayOutputStream buffer = loadContent();
+      myContent = CharsetToolkit.bytesToString(buffer.toByteArray());
     }
     return myContent;
   }
