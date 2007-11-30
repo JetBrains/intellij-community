@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class ScriptSupportUtil {
   private static final Key<XmlTag[]> CachedScriptTagsKey = Key.create("script tags");
-  private static final Key<String> ProcessingDeclarationsKey = Key.create("processingDeclarationd");
+  private static final ThreadLocal<String> ProcessingDeclarationsFlag = new ThreadLocal<String>();
   private static final @NonNls String SCRIPT_TAG = "script";
 
   public static void clearCaches(XmlFile element) {
@@ -62,10 +62,10 @@ public class ScriptSupportUtil {
       element.putUserData(CachedScriptTagsKey, myCachedScriptTags);
     }
 
-    if (element.getUserData(ProcessingDeclarationsKey) != null) return true;
+    if (ProcessingDeclarationsFlag.get() != null) return true;
     
     try {
-      element.putUserData(ProcessingDeclarationsKey, "");
+      ProcessingDeclarationsFlag.set("");
 
       for (XmlTag tag : myCachedScriptTags) {
         final XmlTagChild[] children = tag.getValue().getChildren();
@@ -95,7 +95,7 @@ public class ScriptSupportUtil {
         }
       }
     } finally {
-      element.putUserData(ProcessingDeclarationsKey, null);
+      ProcessingDeclarationsFlag.set(null);
     }
 
     return true;
