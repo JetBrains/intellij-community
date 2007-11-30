@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -33,7 +34,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
  */
 public abstract class InlineMethodConflictSolver {
 
-  static String suggestNewName(GrVariable variable, GrMethod method, GrMethodCallExpression call) {
+  static String suggestNewName(GrVariable variable, GrMethod method, GrCallExpression call) {
     String name = variable.getName();
     assert name != null;
     String newName = name;
@@ -62,7 +63,7 @@ public abstract class InlineMethodConflictSolver {
     return true;
   }
 
-  static boolean isValidName(@NotNull String name, PsiElement scopeElement, GrMethodCallExpression call) {
+  static boolean isValidName(@NotNull String name, PsiElement scopeElement, GrCallExpression call) {
     if (isValidNameDown(name, scopeElement, call)) {
       if (!(scopeElement instanceof GroovyFileBase)) {
         return isValidNameUp(name, scopeElement, call);
@@ -74,7 +75,7 @@ public abstract class InlineMethodConflictSolver {
     }
   }
 
-  private static boolean isValidNameDown(@NotNull String name, PsiElement startElement, GrMethodCallExpression call) {
+  private static boolean isValidNameDown(@NotNull String name, PsiElement startElement, GrCallExpression call) {
 
     PsiElement child = startElement.getFirstChild();
     while (child != null) {
@@ -97,7 +98,7 @@ public abstract class InlineMethodConflictSolver {
     return true;
   }
 
-  private static boolean isValidNameUp(@NotNull String name, PsiElement startElement, GrMethodCallExpression call) {
+  private static boolean isValidNameUp(@NotNull String name, PsiElement startElement, GrCallExpression call) {
     PsiElement prevSibling = startElement.getPrevSibling();
     while (prevSibling != null) {
       if (!isValidNameDown(name, prevSibling, call)) return false;

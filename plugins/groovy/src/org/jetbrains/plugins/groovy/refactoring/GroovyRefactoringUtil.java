@@ -25,19 +25,19 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -48,7 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -387,13 +387,13 @@ public abstract class GroovyRefactoringUtil {
     return (testForSuper && expr.isSuperCall()) || (testForThis && expr.isThisCall());
   }
 
-  public static GrReturnStatement[] findReturnStatements(GrMethod method) {
+  public static Collection<GrReturnStatement> findReturnStatements(GrMethod method) {
     ArrayList<GrReturnStatement> vector = new ArrayList<GrReturnStatement>();
     GrOpenBlock block = method.getBlock();
     if (block != null) {
       addReturnStatements(vector, block);
     }
-    return vector.toArray(new GrReturnStatement[vector.size()]);
+    return vector;
   }
 
   private static void addReturnStatements(ArrayList<GrReturnStatement> vector, PsiElement element) {
@@ -409,7 +409,7 @@ public abstract class GroovyRefactoringUtil {
   }
 
 
-  public static void replaceParamatersWithArguments(GrMethodCallExpression call, GrMethod method) throws IncorrectOperationException {
+  public static void replaceParamatersWithArguments(GrCallExpression call, GrMethod method) throws IncorrectOperationException {
     GrArgumentList argumentList = call.getArgumentList();
     if (argumentList == null) {
       setDefaultValuesToParameters(method, null);

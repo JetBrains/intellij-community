@@ -16,23 +16,22 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
@@ -57,8 +56,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
   public void inlineReference(PsiReference reference, PsiElement referenced) {
     PsiElement element = reference.getElement();
-    assert element instanceof GrExpression && element.getParent() instanceof GrMethodCallExpression;
-    GrMethodCallExpression call = (GrMethodCallExpression) element.getParent();
+    assert element instanceof GrExpression && element.getParent() instanceof GrCallExpression;
+    GrCallExpression call = (GrCallExpression) element.getParent();
     if (isOnExpressionPlace(call)) {
       replaceMethodCall(call, myMethod);
     }
@@ -90,7 +89,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     return null;
   }
 
-  static PsiElement replaceMethodCall(GrMethodCallExpression call, GrMethod method) {
+  static PsiElement replaceMethodCall(GrCallExpression call, GrMethod method) {
     try {
       GrMethod newMethod = prepareNewMethod(call, method);
       GrExpression result = getAloneResultExpression(newMethod);
@@ -106,7 +105,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   /*
   Parepare remporary method sith non-conflicting local names
   */
-  private static GrMethod prepareNewMethod(GrMethodCallExpression call, GrMethod method) throws IncorrectOperationException {
+  private static GrMethod prepareNewMethod(GrCallExpression call, GrMethod method) throws IncorrectOperationException {
     GroovyElementFactory factory = GroovyElementFactory.getInstance(method.getProject());
     GrMethod newMethod = factory.createMethodFromText(method.getText());
     ArrayList<GrVariable> innerVariables = new ArrayList<GrVariable>();

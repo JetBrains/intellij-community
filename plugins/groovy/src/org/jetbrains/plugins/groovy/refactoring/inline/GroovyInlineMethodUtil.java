@@ -29,6 +29,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -58,7 +60,7 @@ public abstract class GroovyInlineMethodUtil {
     ArrayList<PsiElement> exprs = new ArrayList<PsiElement>();
     for (PsiReference ref : refs) {
       PsiElement element = ref.getElement();
-      if (element!= null && element.getContainingFile() instanceof GroovyFile) {
+      if (element != null && element.getContainingFile() instanceof GroovyFile) {
         if (isStaticMethod(method) || areInSameClass(element, method)) { // todo implement for other cases
           exprs.add(element);
         }
@@ -78,7 +80,7 @@ public abstract class GroovyInlineMethodUtil {
       return null;
     }
 
-    if (checkBadReturns(method)) { //todo process tail method calls
+    if (hasBadReturns(method)) { //todo process tail method calls
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
       showErrorMessage(message, project);
       return null;
@@ -96,7 +98,7 @@ public abstract class GroovyInlineMethodUtil {
       return null;
     }
 
-    return new InlineHandler.Settings(){
+    return new InlineHandler.Settings() {
 
       public boolean isOnlyOneReferenceToInline() {
         return false;
@@ -104,17 +106,48 @@ public abstract class GroovyInlineMethodUtil {
     };
   }
 
-  private static boolean checkBadReturns(GrMethod method) {
-    GrReturnStatement[] returnStatements = GroovyRefactoringUtil.findReturnStatements(method);
+  private static boolean hasBadReturns(GrMethod method) {
+    Collection<GrReturnStatement> returnStatements = GroovyRefactoringUtil.findReturnStatements(method);
     GrOpenBlock block = method.getBlock();
-    if (block == null || returnStatements.length == 0) return false;
+    if (block == null || returnStatements.size() == 0) return false;
+    boolean checked = checkTailOpenBlock(block, returnStatements);
+    return !(checked && returnStatements.isEmpty());
+  }
+
+  private static boolean checkTailIfStatement(GrIfStatement ifStatement, Collection<GrReturnStatement> returnStatements) {
+    GrStatement thenBranch = ifStatement.getThenBranch();
+    GrStatement elseBranch = ifStatement.getElseBranch();
+    if (elseBranch == null) return false;
+    boolean tb = false;
+    boolean eb = false;
+    if (thenBranch instanceof GrReturnStatement) {
+      tb = returnStatements.remove(thenBranch);
+    } else if (thenBranch instanceof GrBlockStatement) {
+      tb = checkTailOpenBlock(((GrBlockStatement) thenBranch).getBlock(), returnStatements);
+    }
+    if (elseBranch instanceof GrReturnStatement) {
+      eb = returnStatements.remove(elseBranch);
+    } else if (thenBranch instanceof GrBlockStatement) {
+      eb = checkTailOpenBlock(((GrBlockStatement) elseBranch).getBlock(), returnStatements);
+    }
+
+    return tb && eb;
+  }
+
+  private static boolean checkTailOpenBlock(GrOpenBlock block, Collection<GrReturnStatement> returnStatements){
+    if (block == null) return false;
     GrStatement[] statements = block.getStatements();
     if (statements.length == 0) return false;
-
-    ControlFlowBuilder builder = new ControlFlowBuilder();
-    Instruction[] instructions = builder.buildControlFlow(block, null, null);
-
+    GrStatement last = statements[statements.length - 1];
+    if (last instanceof GrReturnStatement && returnStatements.contains(last)) {
+      returnStatements.remove(last);
+      return true;
+    }
+    if (last instanceof GrIfStatement) {
+      return checkTailIfStatement(((GrIfStatement) last), returnStatements);
+    }
     return false;
+
   }
 
   private static void showErrorMessage(String message, final Project project) {
@@ -155,13 +188,13 @@ public abstract class GroovyInlineMethodUtil {
     return false;
   }
 
-  static boolean isStaticMethod(@NotNull GrMethod method){
+  static boolean isStaticMethod(@NotNull GrMethod method) {
     return method.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  static boolean areInSameClass(PsiElement element, GrMethod method){
+  static boolean areInSameClass(PsiElement element, GrMethod method) {
     PsiElement parent = element;
-    while (!(parent == null || parent instanceof PsiClass || parent instanceof PsiFile)){
+    while (!(parent == null || parent instanceof PsiClass || parent instanceof PsiFile)) {
       parent = parent.getParent();
     }
     if (parent instanceof PsiClass) {
@@ -170,7 +203,7 @@ public abstract class GroovyInlineMethodUtil {
     }
     if (parent instanceof GroovyFile) {
       PsiElement mParent = method.getParent();
-      return  mParent instanceof GroovyFile && mParent == parent;
+      return mParent instanceof GroovyFile && mParent == parent;
     }
     return false;
   }
