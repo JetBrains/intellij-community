@@ -2,12 +2,11 @@ package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.MutualMap;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
@@ -24,11 +23,6 @@ import java.awt.event.MouseEvent;
 import java.util.Set;
 
 public class GridCell {
-
-  public static final DataKey<GridCell> KEY = DataKey.create("DebuggerGridCell");
-
-  public static final String TOOLBAR_PLACE = "GridCellToolbarPlace";
-  public static final String POPUP_PLACE = "GridCellPopupPlace";
 
   private Grid myContainer;
 
@@ -62,9 +56,7 @@ public class GridCell {
         }
       }
     });
-    DefaultActionGroup popup = new DefaultActionGroup();
-    popup.add(myContext.getActionManager().getAction("Debugger.CloseView"));
-    myTabs.setPopupGroup(popup, POPUP_PLACE);
+    myTabs.setPopupGroup((ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW), ViewContext.CELL_POPUP_PLACE);
 
   }
 
@@ -88,14 +80,14 @@ public class GridCell {
 
   private void revalidateCell() {
 
+    myTabs.removeAllTabs();
+
     if (myContents.size() == 0) {
       myPlaceholder.removeAll();
     } else {
       if (myPlaceholder.isNull()) {
         myPlaceholder.setContent(myTabs);
       }
-
-      myTabs.removeAllTabs();
 
       Content[] contents = myContents.getKeys().toArray(new Content[myContents.size()]);
       for (Content each : contents) {
@@ -118,7 +110,7 @@ public class GridCell {
 
     NewDebuggerContentUI.removeScrollBorder(c);
 
-    final TabInfo tabInfo = new TabInfo(c)
+    final TabInfo tabInfo = new TabInfo(new ProviderWrapper(content, myContext))
       .setIcon(content.getIcon())
       .setText(content.getDisplayName())
       .setActions(content.getActions(), content.getPlace())
@@ -129,9 +121,32 @@ public class GridCell {
     myContents.put(content, tabInfo);
 
     ActionGroup group = (ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW);
-    tabInfo.setTabActions(group, TOOLBAR_PLACE);
+    tabInfo.setTabLabelActions(group, ViewContext.CELL_TOOLBAR_PLACE);
 
     return tabInfo;
+  }
+
+  private static class ProviderWrapper extends NonOpaquePanel implements DataProvider {
+
+    Content myContent;
+    ViewContext myContext;
+
+    private ProviderWrapper(final Content content, final ViewContext context) {
+      myContent = content;
+      myContext = context;
+      setLayout(new BorderLayout());
+      add(content.getComponent(), BorderLayout.CENTER);
+    }
+
+    @Nullable
+    public Object getData(@NonNls final String dataId) {
+      if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
+        return new Content[] {myContent};
+      } else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+        return myContext;
+      }
+      return null;
+    }
   }
 
   @Nullable
@@ -219,7 +234,19 @@ public class GridCell {
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      return KEY.getName().equals(dataId) ? GridCell.this : null;
+      if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
+        TabInfo target = myTabs.getTargetInfo();
+        if (target != null) {
+          Content content = getContentFor(target);
+          if (content != null) {
+            return new Content[] {content};
+          }
+        }
+      } else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+        return myContext;
+      }
+
+      return super.getData(dataId);
     }
   }
 

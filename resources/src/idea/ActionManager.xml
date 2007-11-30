@@ -629,9 +629,9 @@
       </group>
 
       <group id="Debugger.View">
+        <action id="Debugger.MoveViewToGrid" class="com.intellij.debugger.ui.content.newUI.actions.MoveToGridAction" icon="/debugger/toGrid.png"/>
+        <action id="Debugger.MoveViewToTab" class="com.intellij.debugger.ui.content.newUI.actions.MoveToTabAction" icon="/debugger/toTab.png"/>
         <action id="Debugger.CloseView" class="com.intellij.debugger.ui.content.newUI.actions.CloseViewAction" icon="/actions/cross.png"/>
-        <!--<action id="Debugger.MoveViewToGrid" class="com.intellij.debugger.ui.content.newUI.actions.MoveToGridAction" icon="/debugger/toGrid.png"/>-->
-        <!--<action id="Debugger.MoveViewToTab" class="com.intellij.debugger.ui.content.newUI.actions.MoveToTabAction" icon="/debugger/toTab.png"/>-->
       </group>
 
     </group>

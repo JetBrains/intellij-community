@@ -29,7 +29,7 @@ public final class TabInfo {
   private WeakReference<JComponent> myLastFocusOwner;
 
 
-  private ActionGroup myTabActions;
+  private ActionGroup myTabLabelActions;
   private String myTabActionPlace;
 
   public TabInfo(final JComponent component) {
@@ -114,19 +114,19 @@ public final class TabInfo {
     myLastFocusOwner = new WeakReference<JComponent>(owner);
   }
 
-  public ActionGroup getTabActions() {
-    return myTabActions;
+  public ActionGroup getTabLabelActions() {
+    return myTabLabelActions;
   }
 
   public String getTabActionPlace() {
     return myTabActionPlace;
   }
 
-  public void setTabActions(final ActionGroup tabActions, String place) {
-    ActionGroup old = myTabActions;
-    myTabActions = tabActions;
+  public void setTabLabelActions(final ActionGroup tabActions, String place) {
+    ActionGroup old = myTabLabelActions;
+    myTabLabelActions = tabActions;
     myTabActionPlace = place;
-    myChangeSupport.firePropertyChange(TAB_ACTION_GROUP, old, myTabActions);
+    myChangeSupport.firePropertyChange(TAB_ACTION_GROUP, old, myTabLabelActions);
   }
 
   @Nullable
@@ -134,4 +134,7 @@ public final class TabInfo {
     return myLastFocusOwner != null ? myLastFocusOwner.get() : null;
   }
 
+  public String toString() {
+    return myText;
+  }
 }

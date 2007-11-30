@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -9,10 +10,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class Grid extends Wrapper implements Disposable, CellTransform.Facade {
+public class Grid extends Wrapper implements Disposable, CellTransform.Facade, DataProvider {
 
   private ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
   private Splitter mySplitter = new Splitter(true);
@@ -108,7 +111,7 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
     }
   }
 
-  private GridCell getCellFor(final Content content) {
+  public GridCell getCellFor(final Content content) {
     final GridCell cell = myPlaceInGrid2Cell.get(getStateFor(content).getPlaceInGrid());
     assert cell != null : "Unknown place in grid: " + getStateFor(content).getPlaceInGrid().name();
     return cell;
@@ -235,5 +238,16 @@ class Grid extends Wrapper implements Disposable, CellTransform.Facade {
         return restore.restoreInGrid();
       }
     });
+  }
+
+  @Nullable
+  public Object getData(@NonNls final String dataId) {
+    if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+      return myViewContext;
+    } else if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
+      List<Content> contents = getContents();
+      return contents.toArray(new Content[contents.size()]);
+    }
+    return null;
   }
 }

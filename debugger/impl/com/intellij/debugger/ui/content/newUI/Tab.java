@@ -94,4 +94,7 @@ public class Tab {
     myBottomProportion = bottomProportion;
   }
 
+  public boolean isDefault() {
+    return myIndex == 0;
+  }
 }

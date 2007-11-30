@@ -2,6 +2,7 @@ package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.settings.DebuggerLayoutSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.content.DebuggerContentUI;
 import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
@@ -19,7 +20,6 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,7 +28,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions, CellTransform.Facade, ViewContext {
+public class NewDebuggerContentUI
+  implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions, CellTransform.Facade, ViewContext {
 
   ContentManager myManager;
   DebuggerSettings mySettings;
@@ -47,7 +48,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
   DefaultActionGroup myDebuggerActions = new DefaultActionGroup();
 
-  Map <Grid, DefaultActionGroup> myMinimizedViewActions = new HashMap<Grid, DefaultActionGroup>();
+  Map<Grid, DefaultActionGroup> myMinimizedViewActions = new HashMap<Grid, DefaultActionGroup>();
   Map<Grid, Wrapper> myToolbarPlaceholders = new HashMap<Grid, Wrapper>();
 
   boolean myUiLastStateWasRestored;
@@ -59,7 +60,21 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     myActionManager = actionManager;
     mySessionName = sessionName;
 
-    myTabs = new JBTabs(project, actionManager, this);
+    myTabs = new JBTabs(project, actionManager, this) {
+      @Nullable
+      public Object getData(@NonNls final String dataId) {
+        if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
+          TabInfo info = myTabs.getTargetInfo();
+          if (info != null) {
+            return getGridFor(info).getData(dataId);
+          }
+        } else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+          return NewDebuggerContentUI.this;
+        }
+        return super.getData(dataId);
+      }
+    };
+    myTabs.setPopupGroup((ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW), TAB_POPUP_PLACE);
     myTabs.setPaintBorder(false);
     myTabs.setPaintFocus(false);
     myTabs.setRequestFocusOnLastFocusedComponent(true);
@@ -113,10 +128,10 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
       myTabs.removeTab(grid);
       myToolbarPlaceholders.remove(grid);
       myMinimizedViewActions.remove(grid);
+      Disposer.dispose(grid);
     }
   }
 
-  @NotNull
   private Grid getGridFor(Content content, boolean createIfMissing) {
     Grid grid = findGridFor(content);
     if (grid != null || !createIfMissing) return grid;
@@ -127,7 +142,8 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
     TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
 
     NonOpaquePanel toolbar = new NonOpaquePanel(new BorderLayout());
-    toolbar.add(myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myDebuggerActions, true).getComponent(), BorderLayout.WEST);
+    toolbar
+      .add(myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myDebuggerActions, true).getComponent(), BorderLayout.WEST);
 
     NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
 
@@ -143,10 +159,19 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
     tab.setSideComponent(toolbar);
 
+    tab.setTabLabelActions((ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW), TAB_TOOLBAR_PLACE);
+
     myTabs.addTab(tab);
     myTabs.sortTabs(myTabsComparator);
 
     return grid;
+  }
+
+  @Nullable
+  public GridCell findCellFor(final Content content) {
+    Grid cell = getGridFor(content, false);
+    assert cell != null;
+    return cell.getCellFor(content);
   }
 
   private void rebuildMinimizedActions() {
@@ -257,7 +282,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   }
 
   @Nullable
-  private Grid findGridFor(Content content) {
+  public Grid findGridFor(Content content) {
     Tab tab = getStateFor(content).getTab();
     for (TabInfo each : myTabs.getTabs()) {
       if (getTabFor(each).equals(tab)) return getGridFor(each);
@@ -276,7 +301,7 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
 
   public void setHorizontalToolbar(final boolean state) {
-    mySettings.getLayoutSettings().setToolbarHorizontal(state);
+    getLayoutSettings().setToolbarHorizontal(state);
     for (Grid each : getGrids()) {
       each.setToolbarHorizontal(state);
     }
@@ -390,14 +415,14 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
   public static boolean ensureValid(JComponent c) {
     if (c.getRootPane() == null) return false;
 
-     Container eachParent = c.getParent();
-     while (eachParent != null && eachParent.isValid()) {
-       eachParent = eachParent.getParent();
-     }
+    Container eachParent = c.getParent();
+    while (eachParent != null && eachParent.isValid()) {
+      eachParent = eachParent.getParent();
+    }
 
-     if (eachParent == null) return false;
+    if (eachParent == null) return false;
 
-     eachParent.validate();
+    eachParent.validate();
 
     return true;
   }
@@ -426,6 +451,24 @@ public class NewDebuggerContentUI implements ContentUI, DebuggerContentInfo, Dis
 
     saveUiState();
     rebuildMinimizedActions();
+  }
+
+  public void moveToTab(final Content content) {
+    myManager.removeContent(content, false);
+    getStateFor(content).setTab(getLayoutSettings().createNewTab());
+    getStateFor(content).setPlaceInGrid(PlaceInGrid.center);
+    myManager.addContent(content);
+  }
+
+  public void moveToGrid(final Content content) {
+    myManager.removeContent(content, false);
+    getStateFor(content).setTab(getLayoutSettings().getDefaultTab());
+    getStateFor(content).setPlaceInGrid(getLayoutSettings().getDefaultGridPlace(content));
+    myManager.addContent(content);
+  }
+
+  private DebuggerLayoutSettings getLayoutSettings() {
+    return mySettings.getLayoutSettings();
   }
 
   public Project getProject() {

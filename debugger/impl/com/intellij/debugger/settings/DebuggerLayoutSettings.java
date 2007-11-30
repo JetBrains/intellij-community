@@ -31,7 +31,11 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
   private static final String VIEW_STATE = "viewState";
 
   private Map<String, NewContentState> myContentStates = new HashMap<String, NewContentState>();
-  private Set<Tab> myTabs = new HashSet<Tab>();
+  private Set<Tab> myTabs = new TreeSet<Tab>(new Comparator<Tab>() {
+    public int compare(final Tab o1, final Tab o2) {
+      return o1.getIndex() - o2.getIndex();
+    }
+  });
 
   private General myGeneral = new General();
 
@@ -83,10 +87,43 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
     Tab tab = findTab(index);
     if (tab != null) return tab;
 
-    tab = new Tab(index, index == 0 ? "Debugger" : null, null);
-    myTabs.add(tab);
+    tab = createNewTab(index);
 
     return tab;
+  }
+
+  public Tab getDefaultTab() {
+    return getOrCreateTab(0);
+  }
+
+  private Tab createNewTab(final int index) {
+    final Tab tab;
+    tab = new Tab(index, index == 0 ? "Debugger" : null, null);
+    myTabs.add(tab);
+    return tab;
+  }
+
+  public Tab createNewTab() {
+    int index = 0;
+    for (Tab each : myTabs) {
+      if (!isUsed(each)) return each;
+
+      if (each.getIndex() < Integer.MAX_VALUE) {
+        index = each.getIndex() + 1;
+      } else {
+        break;
+      }
+    }
+
+    return createNewTab(index);
+  }
+
+  private boolean isUsed(Tab tab) {
+    for (NewContentState each : myContentStates.values()) {
+      if (each.getTab() == tab) return true;
+    }
+
+    return false;
   }
 
   @Nullable
@@ -99,7 +136,7 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
   }
 
   public NewContentState getStateFor(Content content) {
-    Key key = content.getUserData(DebuggerContentInfo.CONTENT_ID);
+    Key key = getContentID(content);
 
     assert key != null : "Content for debugger UI must be specified with: " + DebuggerContentInfo.CONSOLE_CONTENT;
 
@@ -110,23 +147,48 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
   private NewContentState getDefaultContentState(final Content content) {
     NewContentState state;
 
-    final Key kind = content.getUserData(DebuggerContentInfo.CONTENT_ID);
+    final Key kind = getContentID(content);
     if (DebuggerContentInfo.FRAME_CONTENT.equals(kind)) {
-      state =  new NewContentState(kind.toString(), getOrCreateTab(0), PlaceInGrid.left, false);
+      state =  new NewContentState(kind.toString(), getOrCreateTab(0), getDefaultGridPlace(kind), false);
     } else if (DebuggerContentInfo.VARIABLES_CONTENT.equals(kind)) {
-      state =  new NewContentState(kind.toString(), getOrCreateTab(0), PlaceInGrid.center, false);
+      state =  new NewContentState(kind.toString(), getOrCreateTab(0), getDefaultGridPlace(kind), false);
     } else if (DebuggerContentInfo.WATCHES_CONTENT.equals(kind)) {
-      state =  new NewContentState(kind.toString(), getOrCreateTab(0), PlaceInGrid.right, false);
+      state =  new NewContentState(kind.toString(), getOrCreateTab(0), getDefaultGridPlace(kind), false);
     } else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(kind)) {
-      state =  new NewContentState(kind.toString(), getOrCreateTab(1), PlaceInGrid.bottom, false);
+      state =  new NewContentState(kind.toString(), getOrCreateTab(1), getDefaultGridPlace(kind), false);
     } else {
-      state =  new NewContentState(kind.toString(), getOrCreateTab(Integer.MAX_VALUE), PlaceInGrid.bottom, false);
+      state =  new NewContentState(kind.toString(), getOrCreateTab(Integer.MAX_VALUE), getDefaultGridPlace(kind), false);
     }
 
     myContentStates.put(state.getID(), state);
 
     return state;
   }
+
+  public PlaceInGrid getDefaultGridPlace(Content content) {
+    Key id = getContentID(content);
+    return getDefaultGridPlace(id);
+  }
+
+  public PlaceInGrid getDefaultGridPlace(Key id) {
+    if (DebuggerContentInfo.FRAME_CONTENT.equals(id)) {
+      return PlaceInGrid.left;
+    } else if (DebuggerContentInfo.VARIABLES_CONTENT.equals(id)) {
+      return PlaceInGrid.center;
+    } else if (DebuggerContentInfo.WATCHES_CONTENT.equals(id)) {
+      return PlaceInGrid.right;
+    } else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(id)) {
+      return PlaceInGrid.bottom;
+    } else {
+      return PlaceInGrid.bottom;
+    }
+  }
+
+
+  private Key getContentID(final Content content) {
+    return content.getUserData(DebuggerContentInfo.CONTENT_ID);
+  }
+
 
   public int getDefaultSelectedTabIndex() {
     return 0;

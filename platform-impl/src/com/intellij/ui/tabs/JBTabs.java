@@ -38,7 +38,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class JBTabs extends JComponent implements PropertyChangeListener, TimerListener, DataProvider {
+public class JBTabs extends JComponent implements PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener {
 
   private static DataKey<JBTabs> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
@@ -412,7 +412,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   private void updateTabActions(final TabInfo info) {
-    myInfo2Label.get(info).setTabActions(info.getTabActions());
+    myInfo2Label.get(info).setTabActions(info.getTabLabelActions());
   }
 
   @Nullable
@@ -433,6 +433,21 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   public List<TabInfo> getTabs() {
     return Collections.unmodifiableList(myInfos);
+  }
+
+  public TabInfo getTargetInfo() {
+    return myPopupInfo != null ? myPopupInfo : getSelectedInfo();
+  }
+
+  public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
+  }
+
+  public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
+    myPopupInfo = null;
+  }
+
+  public void popupMenuCanceled(final PopupMenuEvent e) {
+    myPopupInfo = null;
   }
 
   private class Toolbar extends JPanel {
@@ -1150,9 +1165,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       myActivePopup = myActionManager.createActionPopupMenu(place, toShow).getComponent();
       myActivePopup.addPopupMenuListener(myPopupListener);
 
+      myActivePopup.addPopupMenuListener(JBTabs.this);
       myActivePopup.show(e.getComponent(), e.getX(), e.getY());
       onPopup(myPopupInfo);
     }
+
+
 
     public void setText(final String text) {
       myLabel.setText(text);
@@ -1194,7 +1212,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
       if (group == null) return;
 
-      myActionPanel = new ActionPanel(myInfo.getTabActions(), myInfo.getTabActionPlace());
+      myActionPanel = new ActionPanel(myInfo);
 
       NonOpaquePanel wrapper = new NonOpaquePanel(new GridBagLayout());
       wrapper.add(myActionPanel);
@@ -1432,13 +1450,15 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
     private ActionGroup myGroup;
     private List<ActionButton> myButtons = new ArrayList<ActionButton>();
+    private TabInfo myTabInfo;
 
-    private ActionPanel(final ActionGroup group, String place) {
-      myGroup = group != null ? group : new DefaultActionGroup();
+    private ActionPanel(TabInfo tabInfo) {
+      myTabInfo = tabInfo;
+      myGroup = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
       AnAction[] children = myGroup.getChildren(null);
-      setLayout(new GridLayout(1, children.length));
+      setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
       for (AnAction each : children) {
-        ActionButton eachButton = new ActionButton(each, place);
+        ActionButton eachButton = new ActionButton(tabInfo, each, tabInfo.getTabActionPlace());
         myButtons.add(eachButton);
         add(eachButton.getComponent());
       }
@@ -1451,9 +1471,17 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       }
 
       if (changed) {
-        revalidate();
-        repaint();
+        JBTabs.this.update(true);
       }
+    }
+
+    public Dimension getPreferredSize() {
+      for (ActionButton each : myButtons) {
+        if (each.getComponent().isVisible()) {
+          return super.getPreferredSize();
+        }
+      }
+      return new Dimension(0, 0);
     }
   }
 
@@ -1463,12 +1491,15 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     private Presentation myPrevPresentation;
     private AnAction myAction;
     private String myPlace;
+    private TabInfo myTabInfo;
 
-    private ActionButton(AnAction action, String place) {
+    private ActionButton(TabInfo tabInfo, AnAction action, String place) {
       super(null, action.getTemplatePresentation().getIcon());
+      myTabInfo = tabInfo;
       myAction = action;
       myPlace = place;
       myButton = new InplaceButton(this, this);
+      myButton.setVisible(false);
     }
 
     public InplaceButton getComponent() {
@@ -1519,7 +1550,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     @Nullable
     private AnActionEvent createAnEvent(InputEvent e) {
       Presentation presentation = (Presentation)myAction.getTemplatePresentation().clone();
-      DataContext context = DataManager.getInstance().getDataContext(JBTabs.this);
+      DataContext context = DataManager.getInstance().getDataContext(myTabInfo.getComponent());
       return new AnActionEvent(e, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation, myActionManager, 0);
     }
   }
