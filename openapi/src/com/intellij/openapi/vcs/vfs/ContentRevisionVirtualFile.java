@@ -74,6 +74,10 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
     final VcsFileSystem vcsFileSystem = ((VcsFileSystem)getFileSystem());
 
     try {
+      final String content = myContentRevision.getContent();
+      if (content == null) {
+        throw new VcsException("Could not load content");
+      }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           vcsFileSystem.fireBeforeContentsChange(this, ContentRevisionVirtualFile.this);
@@ -82,7 +86,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
 
       myModificationStamp++;
       setRevision(myContentRevision.getRevisionNumber().asString());
-      final ByteBuffer byteBuffer = getCharset().encode(myContentRevision.getContent());
+      final ByteBuffer byteBuffer = getCharset().encode(content);
       myContent = byteBuffer.compact().array();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
