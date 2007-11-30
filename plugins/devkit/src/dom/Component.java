@@ -7,6 +7,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
+import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,34 +17,22 @@ import java.util.List;
  */
 public interface Component extends DomElement {
 
-	/**
-	 * Returns the list of implementation-class children.
-	 * @return the list of implementation-class children.
-	 */
-        @NotNull
-        @Required
-        GenericDomValue<PsiClass> getImplementationClass();
+  @NotNull
+  @Required
+  GenericDomValue<PsiClass> getImplementationClass();
 
 
-	/**
-	 * Returns the list of interface-class children.
-	 * @return the list of interface-class children.
-	 */
-	@NotNull
-	GenericDomValue<PsiClass> getInterfaceClass();
+  @NotNull
+  GenericDomValue<PsiClass> getInterfaceClass();
 
 
-	/**
-	 * Returns the list of option children.
-	 * @return the list of option children.
-	 */
-	@NotNull
-	List<Option> getOptions();
-	/**
-	 * Adds new child to the list of option children.
-	 * @return created child
-	 */
-	Option addOption();
+  @NotNull
+  List<Option> getOptions();
+
+  Option addOption();
 
 
+  @NotNull
+  @SubTag(value = "skipForDummyProject", indicator = true)
+  GenericDomValue<Boolean> getSkipForDummyProject();
 }
