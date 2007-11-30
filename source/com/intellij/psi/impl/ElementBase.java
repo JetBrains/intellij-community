@@ -19,10 +19,7 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.IconUtil;
-import com.intellij.util.Icons;
-import com.intellij.util.PsiIconUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,7 +125,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static Icon addVisibilityIcon(final PsiElement element, final int flags, final RowIcon baseIcon) {
     if ((flags & ICON_FLAG_VISIBILITY) != 0) {
       PsiModifierList modifierList = element instanceof PsiModifierListOwner ? ((PsiModifierListOwner)element).getModifierList() : null;
-      PsiIconUtil.setVisibilityIcon(modifierList, baseIcon);
+      VisibilityIcons.setVisibilityIcon(modifierList, baseIcon);
     }
     return baseIcon;
   }

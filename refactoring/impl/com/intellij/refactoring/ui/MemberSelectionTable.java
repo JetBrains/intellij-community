@@ -20,7 +20,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
-import com.intellij.util.PsiIconUtil;
+import com.intellij.util.VisibilityIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
@@ -312,7 +312,7 @@ public class MemberSelectionTable extends Table {
             icon.setIcon(memberIcon, 0);
             PsiModifierList modifiers = member instanceof PsiModifierListOwner ? ((PsiModifierListOwner)member).getModifierList() : null;
             if (modifiers != null) {
-              PsiIconUtil.setVisibilityIcon(modifiers, icon);
+              VisibilityIcons.setVisibilityIcon(modifiers, icon);
             }
             else {
               icon.setIcon(IconUtil.getEmptyIcon(true), 1);
