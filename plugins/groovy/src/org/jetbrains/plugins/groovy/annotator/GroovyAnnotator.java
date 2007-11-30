@@ -677,7 +677,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void addDynamickSuggestions(Annotation annotation, GrReferenceExpression refExpr) {
-    annotation.registerFix(new AddDynamicAttributes(refExpr));
+    annotation.registerFix(new AddDynamicPropertyIntention(refExpr));
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
