@@ -198,6 +198,11 @@ public class DomUtil {
 
     if (parent instanceof GenericAttributeValue) return Collections.emptyList();
 
+    if (parent instanceof DomFileElement) {
+      final DomFileElement element = (DomFileElement)parent;
+      return tags ? Arrays.asList(element.getRootElement()) : Collections.<DomElement>emptyList();
+    }
+
     final XmlElement xmlElement = parent.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       XmlTag tag = (XmlTag) xmlElement;

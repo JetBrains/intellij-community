@@ -44,6 +44,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
       return new DomResolveConverter(key);
     }
   };
+  private final boolean myAttribute;
   private final SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>>() {
     @NotNull
     protected CachedValue<Map<String, DomElement>> create(final DomElement scope) {
@@ -52,20 +53,24 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
       return PsiManager.getInstance(project).getCachedValuesManager().createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
         public Result<Map<String, DomElement>> compute() {
           final Map<String, DomElement> map = new THashMap<String, DomElement>();
-          scope.acceptChildren(new DomElementVisitor() {
-            public void visitDomElement(DomElement element) {
-              if (myClass.isInstance(element)) {
-                final String name = ElementPresentationManager.getElementName(element);
-                if (name != null && !map.containsKey(name)) {
-                  map.put(name, element);
-                }
-              } else {
-                element.acceptChildren(this);
-              }
-            }
-          });
+          visitDomElement(scope, map);
           return new Result<Map<String, DomElement>>(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
+
+        private void visitDomElement(DomElement element, final Map<String, DomElement> map) {
+          if (myClass.isInstance(element)) {
+            final String name = ElementPresentationManager.getElementName(element);
+            if (name != null && !map.containsKey(name)) {
+              map.put(name, element);
+            }
+          } else {
+            for (final DomElement child : DomUtil.getDefinedChildren(element, true, myAttribute)) {
+              visitDomElement(child, map);
+            }
+          }
+
+        }
+
       }, false);
     }
   };
@@ -74,6 +79,7 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
 
   public DomResolveConverter(final Class<T> aClass) {
     myClass = aClass;
+    myAttribute = GenericAttributeValue.class.isAssignableFrom(myClass);
   }
 
   public static <T extends DomElement> DomResolveConverter<T> createConverter(Class<T> aClass) {
