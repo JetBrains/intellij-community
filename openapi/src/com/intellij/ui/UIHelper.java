@@ -25,14 +25,19 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.treetable.TreeTable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 
+/**
+ * @see com.intellij.peer.PeerFactory#getUIHelper()
+ */
 public interface UIHelper {
   void installToolTipHandler(JTree tree);
 
@@ -47,6 +52,8 @@ public interface UIHelper {
   void installTreeTableSpeedSearch(TreeTable treeTable);
 
   void installTreeSpeedSearch(JTree tree);
+
+  void installTreeSpeedSearch(JTree tree, Convertor<TreePath, String> convertor);
 
   void installListSpeedSearch(JList list);
 

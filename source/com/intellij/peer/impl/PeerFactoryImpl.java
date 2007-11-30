@@ -55,6 +55,7 @@ import com.intellij.ui.errorView.impl.ErrorViewFactoryImpl;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.Function;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.treetable.TreeTable;
@@ -67,6 +68,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.net.InetAddress;
@@ -143,6 +145,10 @@ public class PeerFactoryImpl extends PeerFactory {
 
     public void installTreeSpeedSearch(JTree tree) {
       new TreeSpeedSearch(tree);
+    }
+
+    public void installTreeSpeedSearch(final JTree tree, final Convertor<TreePath, String> convertor) {
+      new TreeSpeedSearch(tree, convertor);
     }
 
     public void installListSpeedSearch(JList list) {
