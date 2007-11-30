@@ -52,7 +52,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction {
   }
 
   protected boolean isAcceptableUri(final String uri) {
-    return uri.startsWith(HTTP_PROTOCOL) || uri.startsWith(FTP_PROTOCOL) && uri.startsWith(HTTPS_PROTOCOL);
+    return uri.startsWith(HTTP_PROTOCOL) || uri.startsWith(FTP_PROTOCOL) || uri.startsWith(HTTPS_PROTOCOL);
   }
 
   public static String findUrl(PsiFile file, int offset, String uri) {
