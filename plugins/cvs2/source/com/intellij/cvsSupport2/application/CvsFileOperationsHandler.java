@@ -1,9 +1,11 @@
 package com.intellij.cvsSupport2.application;
 
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,8 +35,9 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
 
   private boolean processDeletedFile(final VirtualFile file) throws IOException {
     if (myInternalDelete) return false;
-    file.putUserData(CvsStorageSupportingDeletionComponent.FILE_VCS,
-                     ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file));
+    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+    if (vcs != CvsVcs2.getInstance(myProject)) return false;    
+    file.putUserData(CvsStorageSupportingDeletionComponent.FILE_VCS, vcs);
     if (!CvsUtil.fileIsUnderCvs(file)) return false;
     myComponent.getDeleteHandler().addDeletedRoot(file);
     if (file.isDirectory()) {
