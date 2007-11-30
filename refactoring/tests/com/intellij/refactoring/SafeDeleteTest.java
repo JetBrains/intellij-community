@@ -7,11 +7,14 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.idea.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
 public class SafeDeleteTest extends MultiFileTestCase {
+  private VirtualFile myRootBefore;
+  
   public void testImplicitCtrCall() throws Exception {
     try {
       doTest("Super");
@@ -33,10 +36,16 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
+  public void testMultipleInterfacesImplementation() throws Exception {
+    myDoCompare = false;
+    doTest("IFoo");
+  }
+
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
         SafeDeleteTest.this.performAction(qClassName);
+        IdeaTestUtil.assertDirectoriesEqual(rootAfter, myRootBefore, CVS_FILE_FILTER);
       }
     });
   }
@@ -46,7 +55,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     assertNotNull("Class " + qClassName + " not found", aClass);
 
     String root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0].getPath();
-    configureByFiles(new File(root), new VirtualFile[]{aClass.getContainingFile().getVirtualFile()});
+    myRootBefore = configureByFiles(new File(root), new VirtualFile[]{aClass.getContainingFile().getVirtualFile()});
     final PsiElement psiElement = TargetElementUtil
           .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
 

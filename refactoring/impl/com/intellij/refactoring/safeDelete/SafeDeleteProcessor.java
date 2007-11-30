@@ -32,6 +32,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
@@ -337,6 +338,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Nullable
   private UsageInfo[] filterAndQueryOverriding(UsageInfo[] usages) {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     ArrayList<UsageInfo> overridingMethods = new ArrayList<UsageInfo>();
@@ -353,10 +355,15 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
 
     if(!overridingMethods.isEmpty()) {
-      OverridingMethodsDialog dialog = new OverridingMethodsDialog(myProject, overridingMethods);
-      dialog.show();
-      if(!dialog.isOK()) return null;
-      result.addAll(dialog.getSelected());
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        result.addAll(overridingMethods);
+      }
+      else {
+        OverridingMethodsDialog dialog = new OverridingMethodsDialog(myProject, overridingMethods);
+        dialog.show();
+        if(!dialog.isOK()) return null;
+        result.addAll(dialog.getSelected());
+      }
     }
 
     final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
@@ -624,6 +631,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private Set<PsiMethod> validateOverridingMethods(PsiMethod originalMethod, final Collection<PsiReference> originalReferences,
                                                    Collection<PsiMethod> overridingMethods, HashMap<PsiMethod, Collection<PsiReference>> methodToReferences, List<UsageInfo> usages) {
     Set<PsiMethod> validOverriding = new LinkedHashSet<PsiMethod>(overridingMethods);
+    Set<PsiMethod> multipleInterfaceImplementations = new HashSet<PsiMethod>();
     boolean anyNewBadRefs;
     do {
       anyNewBadRefs = false;
@@ -637,6 +645,10 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
               anyOverridingRefs = true;
               break;
             }
+          }
+          if (!anyOverridingRefs && isMultipleInterfacesImplementation(overridingMethod)) {
+            anyOverridingRefs = true;
+            multipleInterfaceImplementations.add(overridingMethod);
           }
 
           if (anyOverridingRefs) {
@@ -664,7 +676,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
 
     for (PsiMethod method : overridingMethods) {
-      if (!validOverriding.contains(method)) {
+      if (!validOverriding.contains(method) && !multipleInterfaceImplementations.contains(method)) {
         final boolean methodCanBePrivate =
           canBePrivate(method, methodToReferences.get(method), validOverriding);
         if (methodCanBePrivate) {
@@ -673,6 +685,16 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
     return validOverriding;
+  }
+
+  private boolean isMultipleInterfacesImplementation(final PsiMethod method) {
+    final PsiMethod[] methods = method.findSuperMethods();
+    for(PsiMethod superMethod: methods) {
+      if (ArrayUtil.find(myElements, superMethod) < 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static PsiMethod getOverridingConstructorOfSuperCall(final PsiElement element) {
