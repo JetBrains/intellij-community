@@ -3,7 +3,6 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
@@ -520,7 +519,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
     }
 
     private static boolean isExternalDocActionEnabled(PsiElement element) {
-        boolean actionEnabled = element != null && (element.getLanguage() == StdLanguages.JAVA || JavaDocManager.getExternalJavaDocUrl(element) != null);
+        boolean actionEnabled = element != null && JavaDocManager.getExternalJavaDocUrl(element) != null;
 
         if (element instanceof PsiVariable && !(element instanceof PsiField)) {
           actionEnabled = false;
