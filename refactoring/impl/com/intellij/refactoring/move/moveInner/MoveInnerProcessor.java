@@ -23,7 +23,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -31,6 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -165,7 +169,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         newClass.getModifierList().setModifierProperty(PsiModifier.STATIC, false);
         newClass.getModifierList().setModifierProperty(PsiModifier.PRIVATE, false);
         newClass.getModifierList().setModifierProperty(PsiModifier.PROTECTED, false);
-        if (myOuterClass.isInterface()) {
+        if (needPublicAccess()) {
           newClass.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
         }
 
@@ -269,6 +273,19 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  private boolean needPublicAccess() {
+    if (myOuterClass.isInterface()) {
+      return true;
+    }
+    if (myTargetContainer instanceof PsiDirectory) {
+      PsiPackage targetPackage = ((PsiDirectory) myTargetContainer).getPackage();
+      if (targetPackage != null && !isInPackage(myOuterClass.getContainingFile(), targetPackage)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   protected void performPsiSpoilingRefactoring() {
@@ -439,6 +456,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     return statement;
   }
 
+  @Nullable
   private static PsiElement getAnchorElement(PsiCodeBlock body) {
     PsiStatement[] statements = body.getStatements();
     if (statements.length > 0) {
