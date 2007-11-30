@@ -378,14 +378,6 @@ public class PsiUtil {
            methodName;
   }
 
-  public static String getGetterNameByPropertyName(String propertyName) {
-    return "get" + StringUtil.capitalize(propertyName);
-  }
-
-  public static String getSetterNameByPropertyName(String propertyName) {
-    return "set" + StringUtil.capitalize(propertyName);
-  }
-
   private static String decapitalize(String s) {
     final char[] chars = s.toCharArray();
     chars[0] = Character.toLowerCase(chars[0]);
