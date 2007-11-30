@@ -110,10 +110,7 @@ public class JavacOutputParser extends OutputParser {
             }
             if (nextLine.trim().equals("^")){
               final CharSequence chars = prevLine == null ? line : prevLine;
-              int offset = nextLine.indexOf('^');
-              if (offset < 0) {
-                offset = 0;
-              }
+              final int offset = Math.max(0, Math.min(chars.length(), nextLine.indexOf('^')));
               colNum = EditorUtil.calcColumnNumber(null, chars,0, offset, myTabSize);
               break;
             }
