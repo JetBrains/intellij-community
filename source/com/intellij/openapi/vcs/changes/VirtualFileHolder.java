@@ -2,8 +2,9 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -31,11 +32,22 @@ public class VirtualFileHolder {
       public void run() {
         // to avoid deadlocks caused by incorrect lock ordering, need to lock on this after taking read action
         synchronized(VirtualFileHolder.this) {
-          if (myProject.isDisposed()) return;
+          if (myProject.isDisposed() || myFiles.isEmpty()) return;
           final List<VirtualFile> currentFiles = new ArrayList<VirtualFile>(myFiles);
-          for (VirtualFile file : currentFiles) {
-            if (fileDropped(file) || scope.belongsTo(new FilePathImpl(file))) {
-              myFiles.remove(file);
+          if (scope.getRecursivelyDirtyDirectories().size() == 0) {
+            final Set<FilePath> dirtyFiles = scope.getDirtyFiles();
+            for(FilePath dirtyFile: dirtyFiles) {
+              VirtualFile f = dirtyFile.getVirtualFile();
+              if (f != null) {
+                myFiles.remove(f);
+              }
+            }
+          }
+          else {
+            for (VirtualFile file : currentFiles) {
+              if (fileDropped(file) || scope.belongsTo(new FilePathImpl(file))) {
+                myFiles.remove(file);
+              }
             }
           }
         }
