@@ -1,4 +1,4 @@
-package com.siyeh.igtest.verbose;
+package com.siyeh.igtest.style.unnecessary_this;
 
 public class UnnecessaryThisInspection
 {
@@ -40,4 +40,17 @@ public class UnnecessaryThisInspection
         this.fooBar();
     }
 
+    private Throwable throwable = null;
+
+    public void method()
+    {
+        try
+        {
+        }
+        catch (Throwable throwable)
+        {
+            this.throwable = throwable;
+            throwable.printStackTrace();
+        }
+    }
 }

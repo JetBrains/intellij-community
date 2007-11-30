@@ -27,21 +27,24 @@ public class VariableSearchUtils {
 
     private VariableSearchUtils() {}
 
-    public static boolean existsLocalOrParameter(@NotNull String varName,
+    public static boolean existsLocalOrParameter(@NotNull String variableName,
                                                  @Nullable PsiElement context) {
         if (context == null) {
             return false;
         }
-        if (existsParameter(varName, context)) {
+        if (existsParameter(variableName, context)) {
             return true;
         }
-        if (existsLocal(varName, context)) {
+        if (existsLocal(variableName, context)) {
             return true;
         }
-        if (existsForLoopLocal(varName, context)) {
+        if (existsCatchSectionLocal(variableName, context)) {
             return true;
         }
-        return existsForeachLoopLocal(varName, context);
+        if (existsForLoopLocal(variableName, context)) {
+            return true;
+        }
+        return existsForeachLoopLocal(variableName, context);
     }
 
     private static boolean existsParameter(@NotNull String variableName,
@@ -90,6 +93,26 @@ public class VariableSearchUtils {
             }
             ancestor =
                     PsiTreeUtil.getParentOfType(ancestor, PsiCodeBlock.class);
+        }
+        return false;
+    }
+
+    private static boolean existsCatchSectionLocal(@NotNull String variableName,
+                                                   PsiElement context) {
+        PsiCatchSection catchSectionAncestor =
+                PsiTreeUtil.getParentOfType(context, PsiCatchSection.class);
+        while (catchSectionAncestor != null) {
+            final PsiParameter parameter =
+                    catchSectionAncestor.getParameter();
+            if (parameter != null) {
+                final String parameterName = parameter.getName();
+                if (variableName.equals(parameterName)) {
+                    return true;
+                }
+            }
+            catchSectionAncestor =
+                    PsiTreeUtil.getParentOfType(catchSectionAncestor,
+                            PsiCatchSection.class);
         }
         return false;
     }
