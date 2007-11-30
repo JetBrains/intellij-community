@@ -178,6 +178,11 @@ public class ApplyPatchAction extends AnAction {
                                VcsBundle.message("patch.apply.dialog.title"));
       return ApplyPatchStatus.FAILURE;
     }
+    if (file.isDirectory() && !patch.isNewFile() && !patch.isDeletedFile()) {
+      Messages.showErrorDialog(project, "Expected to find a file but found a directory: " + patch.getBeforeName(),
+                               VcsBundle.message("patch.apply.dialog.title"));
+      return ApplyPatchStatus.FAILURE;
+    }
 
     try {
       return patch.apply(file, context);
