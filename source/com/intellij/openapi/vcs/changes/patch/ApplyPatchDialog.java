@@ -5,6 +5,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
@@ -15,8 +16,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooserPanel;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -504,16 +506,19 @@ public class ApplyPatchDialog extends DialogWrapper {
     int rc = Messages.showYesNoCancelDialog(myProject, messageBuilder.toString(), VcsBundle.message("patch.apply.dialog.title"),
                                             Messages.getQuestionIcon());
     if (rc == 0) {
-      for(String dir: missingDirs) {
-        new File(dir).mkdirs();
-      }
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
           for(String dir: missingDirs) {
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(dir);
+            try {
+              VfsUtil.createDirectories(dir);
+            }
+            catch (IOException e) {
+              Messages.showErrorDialog(myProject, "Error creating directories: " + e.getMessage(),
+                                       VcsBundle.message("patch.apply.dialog.title"));
+            }
           }
         }
-      });
+      }, "Creating directories for new files in patch", null);
     }
     else if (rc != 1) {
       return false;

@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -596,5 +598,35 @@ public class VfsUtil {
 
   public static boolean isBadName(final String name) {
     return name == null || name.length() == 0 || "/".equals(name) || "\\".equals(name);
+  }
+
+  public static void createDirectories(final String dir) throws IOException {
+    final String path = FileUtil.toSystemIndependentName(dir);
+    final Ref<IOException> err = new Ref<IOException>();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        try {
+          createDirectoryIfMissing(path);
+        }
+        catch (IOException e) {
+          err.set(e);
+        }
+      }
+    });
+    if (!err.isNull()) throw err.get();
+  }
+
+  @Nullable
+  private static VirtualFile createDirectoryIfMissing(final String dir) throws IOException {
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir);
+    if (file == null) {
+      int pos = dir.lastIndexOf('/');
+      if (pos < 0) return null;
+      VirtualFile parent = createDirectoryIfMissing(dir.substring(0, pos));
+      if (parent == null) return null;
+      final String dirName = dir.substring(pos + 1);
+      return parent.createChildDirectory(LocalFileSystem.getInstance(), dirName);
+    }
+    return file;
   }
 }
