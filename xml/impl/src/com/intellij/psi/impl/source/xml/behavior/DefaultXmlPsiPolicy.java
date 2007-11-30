@@ -1,26 +1,53 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.*;
 import com.intellij.util.CharTable;
 
 public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
   public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable table) {
-    final XmlTag rootTag =
-      ((XmlFile)text.getManager().getElementFactory().createFileFromText("a.xml", "<a>" + displayText + "</a>")).getDocument().getRootTag();
-    assert rootTag != null;
-    final XmlTagChild[] tagChildren = rootTag.getValue().getChildren();
-    final XmlTagChild child = tagChildren.length > 0 ? tagChildren[0]:null;
-    assert child != null;
+    final PsiFile containingFile = text.getContainingFile();
     final FileElement dummyParent = new DummyHolder(text.getManager(), null, table).getTreeElement();
-    final TreeElement element = (TreeElement)child.getNode();
-    TreeUtil.removeRange(element.getTreeNext(), null);
-    TreeUtil.addChildren(dummyParent, element);
-    TreeUtil.clearCaches(dummyParent);
-    return element.getFirstChildNode();
+
+    if (containingFile instanceof JspFile) {
+      boolean wsChars = false;
+      int fragmentStart = 0;
+
+      for(int i = 0; i < displayText.length(); i++){
+        if(wsChars != Character.isWhitespace(displayText.charAt(i))){
+          final ASTNode next = createNextToken(fragmentStart, i, wsChars, dummyParent, displayText);
+          if(next != null){
+            TreeUtil.addChildren(dummyParent, (TreeElement)next);
+            fragmentStart = i;
+          }
+          wsChars = Character.isWhitespace(displayText.charAt(i));
+        }
+      }
+      final ASTNode next = createNextToken(fragmentStart, displayText.length(), wsChars, dummyParent, displayText);
+      if(next != null) TreeUtil.addChildren(dummyParent, (TreeElement)next);
+      dummyParent.acceptTree(new GeneratedMarkerVisitor());
+      return dummyParent.getFirstChildNode();
+    } else {
+      final XmlTag rootTag =
+        ((XmlFile)containingFile.getManager().getElementFactory().createFileFromText("a.xml", "<a>" + displayText + "</a>")).getDocument().getRootTag();
+
+      assert rootTag != null;
+      final XmlTagChild[] tagChildren = rootTag.getValue().getChildren();
+      final XmlTagChild child = tagChildren.length > 0 ? tagChildren[0]:null;
+      assert child != null;
+
+      final TreeElement element = (TreeElement)child.getNode();
+      TreeUtil.removeRange((TreeElement)tagChildren[tagChildren.length - 1].getNode().getTreeNext(), null);
+      TreeUtil.addChildren(dummyParent, element);
+      TreeUtil.clearCaches(dummyParent);
+      return element.getFirstChildNode();
+    }
   }
 
   private static LeafElement createNextToken(final int startOffset,
