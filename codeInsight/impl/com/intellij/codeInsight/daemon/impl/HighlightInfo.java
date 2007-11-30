@@ -311,7 +311,10 @@ public class HighlightInfo {
           }
           myOptions.add(new CleanupInspectionIntention(localInspectionTool, aClass));
           if (localInspectionTool instanceof CustomSuppressableInspectionTool) {
-             myOptions.addAll(Arrays.asList(((CustomSuppressableInspectionTool)localInspectionTool).getSuppressActions(element)));
+            final IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)localInspectionTool).getSuppressActions(element);
+            if (suppressActions != null) {
+              myOptions.addAll(Arrays.asList(suppressActions));
+            }
           }
         }
         myKey = null;
