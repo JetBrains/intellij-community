@@ -291,7 +291,7 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
         if (XmlUtil.JSP_URI.equals(namespace)) {
           JspFile file = PsiUtil.getJspFile(element);
 
-          if (file.getFileType() == StdFileTypes.JSP) {
+          if (file != null && file.getFileType() == StdFileTypes.JSP) {
             final XmlTag jspRootTag = file.getDocument().getRootTag(); // jsp implicit root tag
             if (jspRootTag != null) {
               parentDescriptor = (parentTag = jspRootTag).getDescriptor();
