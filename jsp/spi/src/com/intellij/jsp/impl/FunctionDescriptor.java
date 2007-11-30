@@ -3,6 +3,7 @@
  */
 package com.intellij.jsp.impl;
 
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiWritableMetaData;
@@ -35,4 +36,6 @@ public interface FunctionDescriptor extends PsiWritableMetaData, PsiMetaData {
 
   @Nullable
   PsiType getResultType();
+
+  @Nullable PsiMethod getReferencedMethod();
 }
