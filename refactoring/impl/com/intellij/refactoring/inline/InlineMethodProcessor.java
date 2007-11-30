@@ -233,6 +233,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                 inlineConstructorCall(constructorCall);
               }
             }
+            else if (element instanceof PsiEnumConstant) {
+              inlineConstructorCall((PsiEnumConstant) element);
+            }
           }
           myMethod.delete();
         }
