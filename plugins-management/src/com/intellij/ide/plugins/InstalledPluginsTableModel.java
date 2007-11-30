@@ -71,6 +71,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           updateExistingPluginInfo(descr, existing);
         } else {
           view.add(descr);
+          myEnabled.put(descr.getPluginId(), ((IdeaPluginDescriptorImpl)descr).isEnabled());
         }
       }
     }
@@ -110,7 +111,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   public boolean isEnabled(final PluginId pluginId) {
-    return myEnabled.get(pluginId).booleanValue();
+    final Boolean enabled = myEnabled.get(pluginId);
+    return enabled != null && enabled.booleanValue();
   }
 
   private class EnabledPluginInfo extends ColumnInfo<IdeaPluginDescriptorImpl, Boolean> {
@@ -182,7 +184,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         else {
           cellRenderer.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
         }
-        if (myEnabled.get(ideaPluginDescriptor.getPluginId()).booleanValue()) {
+        final Boolean enabled = myEnabled.get(ideaPluginDescriptor.getPluginId());
+        if (enabled != null && enabled.booleanValue()) {
           PluginManager.checkDependants(ideaPluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
             @Nullable
             public IdeaPluginDescriptor fun(final PluginId pluginId) {
@@ -190,7 +193,8 @@ public class InstalledPluginsTableModel extends PluginTableModel {
             }
           }, new Condition<PluginId>() {
             public boolean value(final PluginId pluginId) {
-              if (!myEnabled.get(pluginId).booleanValue()) {
+              final Boolean enabled = myEnabled.get(pluginId);
+              if (enabled != null && !enabled.booleanValue()) {
                 cellRenderer.setForeground(Color.red);
                 final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
                 if (plugin != null) {
