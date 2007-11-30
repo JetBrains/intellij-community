@@ -15,9 +15,15 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -392,9 +398,39 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
         final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
         final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
           .forLanguage(parentElement.getLanguage());
+        final Map<String, String> param2Description = new HashMap<String, String>();
+        final PsiMethod[] superMethods = psiMethod.findSuperMethods();
+        for (PsiMethod superMethod : superMethods) {
+          final PsiDocComment comment = superMethod.getDocComment();
+          if (comment != null) {
+            final PsiDocTag[] params = comment.findTagsByName("param");
+            for (PsiDocTag param : params) {
+              final PsiElement[] dataElements = param.getDataElements();
+              if (dataElements != null) {
+                String paramName = null;
+                for (PsiElement dataElement : dataElements) {
+                  if (dataElement instanceof PsiDocParamRef) {
+                    paramName = dataElement.getReference().getCanonicalText();
+                    break;
+                  }
+                }
+                if (paramName != null) {
+                  param2Description.put(paramName, param.getText());
+                }
+              }
+            }
+          }
+        }
         for (PsiParameter parameter : parameters) {
-          builder.append(createDocCommentLine(PARAM_TAG, project, commenter));
-          builder.append(parameter.getName());
+          String description = param2Description.get(parameter.getName());
+          if (description != null) {
+            builder.append(createDocCommentLine("", project, commenter));
+            if (description.indexOf('\n') > -1) description = description.substring(0, description.lastIndexOf('\n'));
+            builder.append(description);
+          } else {
+            builder.append(createDocCommentLine(PARAM_TAG, project, commenter));
+            builder.append(parameter.getName());
+          }
           builder.append(LINE_SEPARATOR);
         }
 
