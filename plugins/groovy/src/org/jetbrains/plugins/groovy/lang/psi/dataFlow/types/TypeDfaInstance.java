@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
@@ -59,7 +60,7 @@ public class TypeDfaInstance implements DfaInstance<Map<String, PsiType>> {
     if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).getQualifierExpression() == null &&
           element.getParent() instanceof GrAssignmentExpression) {
         return ((GrAssignmentExpression) element.getParent()).getRValue();
-    } else if (element instanceof GrVariable) {
+    } else if (element instanceof GrVariable && !(element instanceof GrParameter)) {
       return ((GrVariable) element).getInitializerGroovy();
     }
 
