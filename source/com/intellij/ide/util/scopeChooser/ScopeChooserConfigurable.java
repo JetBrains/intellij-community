@@ -11,8 +11,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.InputValidator;
@@ -54,7 +55,7 @@ import java.util.*;
   storages = {@Storage(
     id = "other",
     file = "$WORKSPACE_FILE$")})
-public class ScopeChooserConfigurable extends MasterDetailsComponent implements NonDefaultProjectConfigurable {
+public class ScopeChooserConfigurable extends MasterDetailsComponent implements NonDefaultProjectConfigurable, SearchableConfigurable {
   private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
 
@@ -290,6 +291,20 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       final NamedScope scope = new NamedScope(newName, set);
       addNewScope(scope, isLocal);
     }
+  }
+
+  @NonNls
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public boolean clearSearch() {
+    return false;
+  }
+
+  @Nullable
+  public Runnable enableSearch(final String option) {
+    return null;
   }
 
   private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection {
