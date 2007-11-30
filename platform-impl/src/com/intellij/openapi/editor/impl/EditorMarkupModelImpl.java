@@ -398,6 +398,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myTooltipRendererProvider = provider;
   }
 
+  public ErrorStripTooltipRendererProvider getErrorStripTooltipRendererProvider() {
+    return myTooltipRendererProvider;
+  }
+
   public Editor getEditor() {
     return myEditor;
   }
@@ -535,7 +539,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       if (e.getY() < buttonHeight && myErrorStripeRenderer != null) {
         String tooltipMessage = myErrorStripeRenderer.getTooltipMessage();
-        showTooltip(e, new LineTooltipRenderer(tooltipMessage));
+        showTooltip(e, myTooltipRendererProvider.calcTooltipRenderer(tooltipMessage));
         return;
       }
 
@@ -651,5 +655,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
         return bigRenderer;
       }
+
+    public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
+      return new LineTooltipRenderer(text);
+    }
+
+    public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
+      return new LineTooltipRenderer(text, width);
+    }
   }
 }

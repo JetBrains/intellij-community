@@ -13,4 +13,6 @@ import java.util.Collection;
 public interface ErrorStripTooltipRendererProvider {
   @Nullable
   TooltipRenderer calcTooltipRenderer(@NotNull Collection<RangeHighlighter> highlighters);
+  TooltipRenderer calcTooltipRenderer(@NotNull String text);
+  TooltipRenderer calcTooltipRenderer(@NotNull String text, int width);
 }

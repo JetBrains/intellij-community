@@ -9,7 +9,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.ui.LafManager;
@@ -23,10 +22,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -943,7 +939,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     if (tooltip != null && tooltip.length() != 0) {
-      controller.showTooltipByMouseMove(myEditor, e, new LineTooltipRenderer(tooltip), false, GUTTER_TOOLTIP_GROUP);
+      controller.showTooltipByMouseMove(myEditor, e, ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(tooltip), false, GUTTER_TOOLTIP_GROUP);
     }
     else {
       controller.cancelTooltip(GUTTER_TOOLTIP_GROUP);

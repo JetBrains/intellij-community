@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.LightweightHint;
@@ -74,11 +75,11 @@ public class TooltipController {
   }
 
   public void showTooltip(final Editor editor, Point p, String text, boolean alignToRight, TooltipGroup group) {
-    showTooltip(editor, p, new LineTooltipRenderer(text), alignToRight, group);
+    showTooltip(editor, p, ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text), alignToRight, group);
   }
 
   public void showTooltip(final Editor editor, Point p, String text, int currentWidth, boolean alignToRight, TooltipGroup group) {
-    showTooltip(editor, p, new LineTooltipRenderer(text, currentWidth), alignToRight, group);
+    showTooltip(editor, p, ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(text, currentWidth), alignToRight, group);
   }
 
   public void showTooltip(final Editor editor, Point p, TooltipRenderer tooltipRenderer, boolean alignToRight, TooltipGroup group) {

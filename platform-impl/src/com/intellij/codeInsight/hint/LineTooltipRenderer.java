@@ -139,7 +139,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
         if (myCurrentWidth > 0) {
           stripDescription();
         }
-        new LineTooltipRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()).show(editor, new Point(p.x -3, p.y -3), false, group);
+        createRenderer(myText, myCurrentWidth > 0 ? 0 : pane.getWidth()).show(editor, new Point(p.x -3, p.y -3), false, group);
       }
     });
 
@@ -165,7 +165,7 @@ public class LineTooltipRenderer implements TooltipRenderer {
           } else { //less -> more
             stripDescription();
             hint.hide();
-            new LineTooltipRenderer(myText, 0).show(editor, new Point(p.x - 3, p.y - 3), false, group);
+            createRenderer(myText, 0).show(editor, new Point(p.x - 3, p.y - 3), false, group);
           }
         }
       }
@@ -181,6 +181,10 @@ public class LineTooltipRenderer implements TooltipRenderer {
   }
 
   protected void onHide(JComponent contentComponent) {
+  }
+
+  protected LineTooltipRenderer createRenderer(String text, int width) {
+    return new LineTooltipRenderer(text, width);
   }
 
   protected boolean dressDescription() { return false; }

@@ -21,6 +21,8 @@ public interface EditorMarkupModel extends MarkupModel {
 
   void setErrorStripTooltipRendererProvider(@NotNull ErrorStripTooltipRendererProvider provider);
 
+  ErrorStripTooltipRendererProvider getErrorStripTooltipRendererProvider();
+
   int getMinMarkHeight();
 
   void setMinMarkHeight(int minMarkHeight);

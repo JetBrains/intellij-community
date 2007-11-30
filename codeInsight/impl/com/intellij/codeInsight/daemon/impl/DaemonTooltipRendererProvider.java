@@ -82,9 +82,21 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     return bigRenderer;
   }
 
+  public TooltipRenderer calcTooltipRenderer(@NotNull final String text) {
+    return new MyRenderer(text);
+  }
+
+  public TooltipRenderer calcTooltipRenderer(@NotNull final String text, final int width) {
+    return new MyRenderer(text, width);
+  }
+
   private static class MyRenderer extends LineTooltipRenderer {
     public MyRenderer(final String text) {
       super(text);
+    }
+
+    public MyRenderer(final String text, final int width) {
+      super(text, width);
     }
 
     protected String convertTextOnLinkHandled(final String text) {
@@ -144,6 +156,10 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
         }
       }
       myText = StringUtil.trimEnd(myText, BORDER_LINE) + "</body></html>";
+    }
+
+    protected LineTooltipRenderer createRenderer(final String text, final int width) {
+      return new MyRenderer(text, width);
     }
   }
 }
