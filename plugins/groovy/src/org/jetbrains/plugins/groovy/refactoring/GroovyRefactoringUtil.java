@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
@@ -409,6 +410,13 @@ public abstract class GroovyRefactoringUtil {
   }
 
 
+  /**
+   * Inline method call's arguments as its parameters
+   *
+   * @param call   method call
+   * @param method given method
+   * @throws IncorrectOperationException
+   */
   public static void replaceParamatersWithArguments(GrCallExpression call, GrMethod method) throws IncorrectOperationException {
     GrArgumentList argumentList = call.getArgumentList();
     if (argumentList == null) {
@@ -488,7 +496,7 @@ public abstract class GroovyRefactoringUtil {
    * Replace first m parameters by given values, where m is lenhgth of given values vector
    *
    * @param method
-   * @param values     values vector
+   * @param values          values vector
    * @param nameFilter
    * @param firstParamIsMap
    * @throws IncorrectOperationException
@@ -510,7 +518,9 @@ public abstract class GroovyRefactoringUtil {
         for (PsiReference ref : refs) {
           PsiElement element = ref.getElement();
           if (element instanceof GrReferenceExpression) {
-            ((GrReferenceExpression) element).replaceWithExpression(factory.createExpressionFromText(value.getText()), true);
+            GrExpression newExpr = factory.createExpressionFromText(value.getText());
+            ((GrReferenceExpression) element).replaceWithExpression(newExpr, true);
+            System.out.println("");
           }
         }
       }
@@ -518,5 +528,30 @@ public abstract class GroovyRefactoringUtil {
     }
   }
 
+  public static boolean hasTailReturnExpression(GrMethod method) {
+    GrOpenBlock body = method.getBlock();
+    if (body == null) return false;
+    GrStatement[] statements = body.getStatements();
+    if (statements.length == 0) return false;
+    GrStatement last = statements[statements.length - 1];
+    return last instanceof GrExpression && PsiType.VOID != ((GrExpression) last).getType();
+  }
 
+
+  public static String getMethodSignature(PsiMethod method) {
+    MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
+    String s = signature.getName() + "(";
+    int i = 0;
+    PsiType[] types = signature.getParameterTypes();
+    for (PsiType type : types) {
+      s += type.getPresentableText();
+      if (i < types.length - 1) {
+        s += ", ";
+      }
+      i++;
+    }
+    s += ")";
+    return s;
+
+  }
 }

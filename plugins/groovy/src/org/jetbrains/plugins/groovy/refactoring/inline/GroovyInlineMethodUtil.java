@@ -21,23 +21,24 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -54,20 +55,29 @@ public abstract class GroovyInlineMethodUtil {
 
   public static InlineHandler.Settings inlineMethodSettings(GrMethod method, Editor editor, boolean invokedOnReference) {
 
-    final String methodName = method.getNameIdentifierGroovy().getText();
     final Project project = method.getProject();
-    final Collection<PsiReference> refs = ReferencesSearch.search(method, GlobalSearchScope.projectScope(method.getProject()), false).findAll();
-    ArrayList<PsiElement> exprs = new ArrayList<PsiElement>();
-    for (PsiReference ref : refs) {
-      PsiElement element = ref.getElement();
-      if (element != null && element.getContainingFile() instanceof GroovyFile) {
-        if (isStaticMethod(method) || areInSameClass(element, method)) { // todo implement for other cases
-          exprs.add(element);
-        }
-      }
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+    if (!invokedOnReference || reference == null) {
+      String message = GroovyRefactoringBundle.message("multiple.method.inline.is.not.suppored", REFACTORING_NAME);
+      showErrorMessage(message, project);
+      return null;
     }
 
-    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+    final Collection<PsiReference> refs = ReferencesSearch.search(method, GlobalSearchScope.projectScope(method.getProject()), false).findAll();
+    ArrayList<PsiElement> exprs = new ArrayList<PsiElement>();
+    PsiElement element = reference.getElement();
+    if (element != null && element.getContainingFile() instanceof GroovyFile) {
+      if (isStaticMethod(method) || areInSameClass(element, method)) { // todo implement for other cases
+        exprs.add(element);
+      }
+    }
+    if (element instanceof GrExpression && PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
+      String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", REFACTORING_NAME);
+      showErrorMessage(message, project);
+      return null;
+    }
+
+
     GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(PsiElement.EMPTY_ARRAY));
     if (method.getBlock() == null) {
       String message;
@@ -85,25 +95,43 @@ public abstract class GroovyInlineMethodUtil {
       showErrorMessage(message, project);
       return null;
     }
-    // if invoked on method definition
-    if (reference == null && checkRecursive(method)) {
-      String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", REFACTORING_NAME);
-      showErrorMessage(message, project);
-      return null;
-    }
 
-    if (method.isConstructor()) { // todo implement refactoring for some constructor cases
+    if (method.isConstructor()) {
       String message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.constructors", REFACTORING_NAME);
       showErrorMessage(message, project);
       return null;
     }
 
-    return new InlineHandler.Settings() {
+    return inlineMethodDialogResult(GroovyRefactoringUtil.getMethodSignature(method), project);
+  }
 
+  /**
+   * Shows dialog with question to inline
+   */
+  private static InlineHandler.Settings inlineMethodDialogResult(String methodSignature, Project project) {
+    Application application = ApplicationManager.getApplication();
+    if (!application.isUnitTestMode()) {
+      final String question = GroovyRefactoringBundle.message("inline.method.prompt.0", methodSignature);
+      RefactoringMessageDialog dialog = new RefactoringMessageDialog(
+          REFACTORING_NAME,
+          question,
+          HelpID.INLINE_METHOD,
+          "OptionPane.questionIcon",
+          true,
+          project);
+      dialog.show();
+      if (!dialog.isOK()) {
+        WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        return null;
+      }
+    }
+    return new InlineHandler.Settings() {
       public boolean isOnlyOneReferenceToInline() {
-        return false;
+        // todo implement multiple inline
+        return true;
       }
     };
+
   }
 
   private static boolean hasBadReturns(GrMethod method) {
@@ -134,7 +162,7 @@ public abstract class GroovyInlineMethodUtil {
     return tb && eb;
   }
 
-  private static boolean checkTailOpenBlock(GrOpenBlock block, Collection<GrReturnStatement> returnStatements){
+  private static boolean checkTailOpenBlock(GrOpenBlock block, Collection<GrReturnStatement> returnStatements) {
     if (block == null) return false;
     GrStatement[] statements = block.getStatements();
     if (statements.length == 0) return false;
@@ -167,25 +195,6 @@ public abstract class GroovyInlineMethodUtil {
     } else {
       return null;
     }
-  }
-
-  public static boolean checkRecursive(GrMethod method) {
-    return checkCalls(method.getBlock(), method);
-  }
-
-  private static boolean checkCalls(PsiElement scope, GrMethod method) {
-    if (scope instanceof GrMethodCallExpression) {
-      GrExpression expression = ((GrMethodCallExpression) scope).getInvokedExpression();
-      PsiReference ref = expression.getReference();
-      if (ref != null) {
-        PsiElement element = ref.resolve();
-        if (element instanceof GrMethod && method.equals(element)) return true;
-      }
-    }
-    for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (checkCalls(child, method)) return true;
-    }
-    return false;
   }
 
   static boolean isStaticMethod(@NotNull GrMethod method) {

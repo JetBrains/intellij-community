@@ -287,7 +287,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return result;
   }
 
-  private static MethodSignature createMethodSignature(PsiMethod method) {
+  public static MethodSignature createMethodSignature(PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType[] types = new PsiType[parameters.length];
     for (int i = 0; i < types.length; i++) {

@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.MethodSignature;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
@@ -101,32 +100,15 @@ public class ExtractMethodUtil {
         PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass == null) return true;
         String message = containingClass instanceof GroovyScriptClass ?
-            GroovyRefactoringBundle.message("method.is.alredy.defined.in.script", getMethodSignature(method),
+            GroovyRefactoringBundle.message("method.is.alredy.defined.in.script", GroovyRefactoringUtil.getMethodSignature(method),
                 CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName())) :
-            GroovyRefactoringBundle.message("method.is.alredy.defined.in.class", getMethodSignature(method),
+            GroovyRefactoringBundle.message("method.is.alredy.defined.in.class", GroovyRefactoringUtil.getMethodSignature(method),
                 CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName()));
         conflicts.add(message);
       }
     }
 
     return conflicts.size() <= 0 || reportConflicts(conflicts, helper.getProject());
-  }
-
-  private static String getMethodSignature(PsiMethod method) {
-    MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
-    String s = signature.getName() + "(";
-    int i = 0;
-    PsiType[] types = signature.getParameterTypes();
-    for (PsiType type : types) {
-      s += type.getPresentableText();
-      if (i < types.length - 1) {
-        s += ", ";
-      }
-      i++;
-    }
-    s += ")";
-    return s;
-
   }
 
   static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;

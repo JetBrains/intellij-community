@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -34,20 +33,18 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
  */
 public abstract class InlineMethodConflictSolver {
 
-  static String suggestNewName(GrVariable variable, GrMethod method, GrCallExpression call) {
-    String name = variable.getName();
-    assert name != null;
-    String newName = name;
+  static String suggestNewName(@NotNull String startName, GrMethod method, GrCallExpression call) {
+    String newName = startName;
     int i = 1;
     PsiElement parent = call.getParent();
     while (!(parent instanceof GrVariableDeclarationOwner) && parent != null) {
       parent = parent.getParent();
     }
-    if (parent == null || isValidName(name, parent, call)) {
-      return name;
+    if (parent == null || isValidName(startName, parent, call)) {
+      return startName;
     }
     do {
-      newName = name + i;
+      newName = startName + i;
       i++;
     } while (!(isValidNameInMethod(newName, method) && isValidName(newName, parent, call)));
     return newName;
@@ -106,7 +103,7 @@ public abstract class InlineMethodConflictSolver {
     }
 
     PsiElement parent = startElement.getParent();
-    return parent == null || parent instanceof PsiDirectory || isValidNameUp(name, prevSibling, call);
+    return parent == null || parent instanceof PsiDirectory || isValidNameUp(name, parent, call);
   }
 
 
