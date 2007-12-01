@@ -3,12 +3,16 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.jsp.impl.TldDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -26,7 +30,10 @@ import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaDataBase;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
@@ -49,7 +56,7 @@ import java.util.List;
 * Time: 11:13:33 PM
 * To change this template use File | Settings | File Templates.
 */
-public class CreateNSDeclarationIntentionFix implements IntentionAction {
+public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQuickFix {
   final boolean myTaglibDeclaration;
   private final XmlElement myElement;
   private final String myNamespacePrefix;
@@ -72,8 +79,24 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction {
   }
 
   @NotNull
+  public String getName() {
+    return getFamilyName();
+  }
+
+  @NotNull
   public String getFamilyName() {
     return getText();
+  }
+
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    final PsiFile containingFile = descriptor.getPsiElement().getContainingFile();
+    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(project, containingFile.getVirtualFile());
+    Editor editor = FileEditorManager.getInstance(project).openTextEditor(
+      openFileDescriptor, false
+    );
+
+    openFileDescriptor.navigate(false);
+    try { invoke(project, editor, containingFile); } catch (IncorrectOperationException ex) { ex.printStackTrace(); }
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
@@ -97,7 +120,7 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction {
     };
 
     if (myElement instanceof XmlTag) {
-      processExternalUris((XmlTag)myElement, file, processor);
+      processExternalUris(createMetaHandler((XmlTag)myElement), file, processor);
     }
 
     return possibleUris.toArray( new String[possibleUris.size()] );
@@ -239,31 +262,77 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction {
         );
       }
     }
-
   }
+
   public static void processExternalUris(@NotNull final XmlTag tag,
                                  final PsiFile file,
                                  final ExternalUriProcessor processor) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) processExternalUrisImpl(tag, file, processor);
+    processExternalUris(createDefaultMetaHandlerStatic(tag), file, processor);
+  }
+
+  protected MetaHandler createMetaHandler(final XmlTag tag) {
+    return createDefaultMetaHandlerStatic(tag);
+  }
+
+  private static MetaHandler createDefaultMetaHandlerStatic(final XmlTag tag) {
+    return new TagMetaHandler(tag);
+  }
+
+  public static void processExternalUris(final MetaHandler metaHandler,
+                                 final PsiFile file,
+                                 final ExternalUriProcessor processor) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) processExternalUrisImpl(metaHandler, file, processor);
     else {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
         new Runnable() {
           public void run() {
-            processExternalUrisImpl(tag, file, processor);
+            processExternalUrisImpl(metaHandler, file, processor);
           }
         },
         XmlErrorMessages.message("finding.acceptable.uri"),
         false,
-        tag.getProject()
+        file.getProject()
       );
     }
   }
 
-  public static void processExternalUrisImpl(final XmlTag tag, final PsiFile file, final ExternalUriProcessor processor) {
+  public interface MetaHandler {
+    boolean isAcceptableMetaData(PsiMetaDataBase metadata, final String url);
+    String searchFor();
+  }
+
+  public static class TagMetaHandler implements MetaHandler {
+    private final XmlTag tag;
+
+    public TagMetaHandler(final XmlTag tag) {
+      this.tag = tag;
+    }
+
+    public boolean isAcceptableMetaData(final PsiMetaDataBase metaData, final String url) {
+      if (metaData instanceof TldDescriptor) {
+        if (((TldDescriptor)metaData).getElementDescriptor(tag) != null) return true;
+        return false;
+      } else if (metaData instanceof XmlNSDescriptorImpl) {
+        final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)metaData;
+
+        final XmlElementDescriptor descriptor = nsDescriptor.getElementDescriptor(searchFor(), url);
+        return descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor);
+      }
+      return false;
+    }
+
+    public String searchFor() {
+      return tag.getLocalName();
+    }
+  }
+
+  private static void processExternalUrisImpl(final MetaHandler metaHandler,
+                                              final PsiFile file,
+                                              final ExternalUriProcessor processor) {
     final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
     final JspManager jspManager = JspManager.getInstance(file.getProject());
-    final String localName = tag.getLocalName();
+    final String searchFor = metaHandler.searchFor();
 
     if (processor.acceptTaglib() && jspManager != null) {
       if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.tlds"));
@@ -285,23 +354,19 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction {
         final XmlFile tldFileByUri = jspManager.getTldFileByUri(uri, jspFile);
         if (tldFileByUri == null) continue;
 
-        final boolean wordFound = checkIfGivenXmlHasTheseWords(localName, tldFileByUri);
+        final boolean wordFound = checkIfGivenXmlHasTheseWords(searchFor, tldFileByUri);
         if (!wordFound) continue;
         final PsiMetaDataBase metaData = tldFileByUri.getDocument().getMetaData();
 
-        if (metaData instanceof TldDescriptor) {
-          if (((TldDescriptor)metaData).getElementDescriptor(tag) != null) {
-            processor.process(uri, null);
-            foundSomething = true;
-          }
+        if (metaHandler.isAcceptableMetaData(metaData, uri)) {
+          processor.process(uri, null);
+          foundSomething = true;
         }
       }
 
       if (file.getFileType() == StdFileTypes.JSPX && !foundSomething) {
         final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)jspManager.getActionsLibrary(file);
-        final XmlElementDescriptor descriptor =
-          nsDescriptor.getElementDescriptor(localName, XmlUtil.JSP_URI);
-        if (descriptor != null) {
+        if (metaHandler.isAcceptableMetaData(nsDescriptor, XmlUtil.JSP_URI)) {
           processor.process(XmlUtil.JSP_URI, null);
         }
       }
@@ -322,21 +387,17 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction {
         final XmlFile xmlFile = XmlUtil.findNamespace(file, url);
 
         if (xmlFile != null) {
-          final boolean wordFound = checkIfGivenXmlHasTheseWords(localName, xmlFile);
+          final boolean wordFound = checkIfGivenXmlHasTheseWords(searchFor, xmlFile);
           if (!wordFound) continue;
           final PsiMetaDataBase metaData = xmlFile.getDocument().getMetaData();
 
-          if (metaData instanceof XmlNSDescriptorImpl) {
-            final XmlNSDescriptorImpl descriptor = (XmlNSDescriptorImpl)metaData;
-            XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(tag.getLocalName(), url);
+          if (metaHandler.isAcceptableMetaData(metaData, url)) {
+            final XmlNSDescriptorImpl descriptor = metaData instanceof XmlNSDescriptorImpl ? (XmlNSDescriptorImpl)metaData:null;
+            final String defaultNamespace = descriptor != null ? descriptor.getDefaultNamespace():url;
 
-            if (elementDescriptor != null && !(elementDescriptor instanceof AnyXmlElementDescriptor)) {
-              final String defaultNamespace = descriptor.getDefaultNamespace();
-
-              // Skip rare stuff
-              if (!XmlUtil.XML_SCHEMA_URI2.equals(defaultNamespace) && !XmlUtil.XML_SCHEMA_URI3.equals(defaultNamespace)) {
-                processor.process(defaultNamespace, url);
-              }
+            // Skip rare stuff
+            if (!XmlUtil.XML_SCHEMA_URI2.equals(defaultNamespace) && !XmlUtil.XML_SCHEMA_URI3.equals(defaultNamespace)) {
+              processor.process(defaultNamespace, url);
             }
           }
         }
@@ -345,6 +406,7 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction {
   }
 
   public static boolean checkIfGivenXmlHasTheseWords(final String name, final XmlFile tldFileByUri) {
+    if (name == null || name.length() == 0) return true;
     final String[] words = StringUtil.getWordsIn(name).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
     final boolean[] wordsFound = new boolean[words.length];
     final int[] wordsFoundCount = new int[1];
