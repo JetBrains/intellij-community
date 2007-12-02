@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.sillyAssignment;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 15-Nov-2005
  */
-public class SillyAssignmentInspection extends LocalInspectionTool {
+public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   public String getGroupDisplayName() {
     return "";

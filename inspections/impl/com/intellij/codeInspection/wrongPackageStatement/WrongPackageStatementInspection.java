@@ -33,7 +33,7 @@ import java.util.List;
  * User: anna
  * Date: 14-Nov-2005
  */
-public class WrongPackageStatementInspection extends LocalInspectionTool {
+public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool {
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     // does not work in tests since CodeInsightTestCase copies file into temporary location

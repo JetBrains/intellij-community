@@ -4,7 +4,7 @@
 
 package com.intellij.uiDesigner.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class BoundFieldAssignmentInspection extends LocalInspectionTool {
+public class BoundFieldAssignmentInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   public String getGroupDisplayName() {
     return UIDesignerBundle.message("form.inspections.group");

@@ -21,7 +21,7 @@ import java.io.*;
 /**
  * @author max
  */
-public class Java15APIUsageInspection extends LocalInspectionTool {
+public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "Since15";
 
   private static THashSet<String> ourForbidden15API = new THashSet<String>(1500);

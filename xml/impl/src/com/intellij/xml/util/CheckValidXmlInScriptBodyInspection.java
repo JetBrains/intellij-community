@@ -10,6 +10,7 @@
  */
 package com.intellij.xml.util;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
@@ -33,14 +34,13 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlBundle;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim Mossienko
  */
-public class CheckValidXmlInScriptBodyInspection extends LocalInspectionTool {
+public class CheckValidXmlInScriptBodyInspection extends BaseJavaLocalInspectionTool {
   @NonNls
   private static final String SCRIPT_TAG_NAME = "script";
   private Lexer myXmlLexer;

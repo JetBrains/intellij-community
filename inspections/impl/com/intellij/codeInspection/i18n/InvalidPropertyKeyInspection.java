@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class InvalidPropertyKeyInspection extends LocalInspectionTool {
+public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {

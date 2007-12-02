@@ -4,23 +4,23 @@
 
 package com.intellij.xml.util;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlBundle;
-import com.intellij.lang.StdLanguages;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.PropertyKey;
 /**
  * @author Maxim Mossienko
  */
-public class CheckDtdReferencesInspection extends LocalInspectionTool {
+public class CheckDtdReferencesInspection extends BaseJavaLocalInspectionTool {
   public boolean isEnabledByDefault() {
     return true;
   }

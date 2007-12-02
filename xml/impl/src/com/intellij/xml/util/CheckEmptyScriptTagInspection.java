@@ -5,23 +5,23 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Maxim Mossienko
  */
-public class CheckEmptyScriptTagInspection extends LocalInspectionTool {
+public class CheckEmptyScriptTagInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.CheckEmptyScriptTagInspection");
   @NonNls private static final String SCRIPT_TAG_NAME = "script";
 

@@ -26,7 +26,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CustomSuppressableInspectionTool extends LocalInspectionTool {
+public abstract class CustomSuppressableInspectionTool extends BaseJavaLocalInspectionTool {
 
   @Nullable
   @Deprecated

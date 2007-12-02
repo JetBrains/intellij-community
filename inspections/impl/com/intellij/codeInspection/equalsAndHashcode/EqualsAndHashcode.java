@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.equalsAndHashcode;
 
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author max
  */
-public class EqualsAndHashcode extends LocalInspectionTool {
+public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
 
   private PsiMethod myHashCode;
   private PsiMethod myEquals;

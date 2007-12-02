@@ -6,7 +6,7 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Maxim Mossienko
  */
-public class CheckTagEmptyBodyInspection extends LocalInspectionTool {
+public class CheckTagEmptyBodyInspection extends BaseJavaLocalInspectionTool {
   public boolean isEnabledByDefault() {
     return true;
   }

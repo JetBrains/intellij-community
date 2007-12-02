@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public abstract class BaseFormInspection extends LocalInspectionTool implements FileCheckingInspection, FormInspectionTool {
+public abstract class BaseFormInspection extends BaseJavaLocalInspectionTool implements FileCheckingInspection, FormInspectionTool {
   private String myInspectionKey;
 
   public BaseFormInspection(@NonNls String inspectionKey) {

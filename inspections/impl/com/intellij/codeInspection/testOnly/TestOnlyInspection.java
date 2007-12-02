@@ -3,8 +3,8 @@ package com.intellij.codeInspection.testOnly;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -13,7 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class TestOnlyInspection extends LocalInspectionTool {
+public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.test.only.problems.display.name");

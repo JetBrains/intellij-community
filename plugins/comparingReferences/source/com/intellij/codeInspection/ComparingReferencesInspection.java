@@ -20,7 +20,7 @@ import java.util.StringTokenizer;
 /**
  * @author max
  */
-public class ComparingReferencesInspection extends LocalInspectionTool {
+public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ComparingReferencesInspection");
 
   private LocalQuickFix myQuickFix = new MyQuickFix();

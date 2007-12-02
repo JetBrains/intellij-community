@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 
-public class LossyEncodingInspection extends LocalInspectionTool {
+public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {

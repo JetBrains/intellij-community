@@ -2,8 +2,8 @@ package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class DeprecationInspection extends LocalInspectionTool {
+public class DeprecationInspection extends BaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "Deprecation";
   @NonNls public static final String ID = "deprecation";
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
