@@ -312,7 +312,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected boolean clearModelBeforeConfiguring() {
-    return true;
+    return false;
   }
 
   protected void setupCursorAndSelection(Editor editor) {

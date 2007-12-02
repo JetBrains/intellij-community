@@ -14,7 +14,11 @@ import java.io.File;
 
 public class SafeDeleteTest extends MultiFileTestCase {
   private VirtualFile myRootBefore;
-  
+
+  protected boolean clearModelBeforeConfiguring() {
+    return true;
+  }
+
   public void testImplicitCtrCall() throws Exception {
     try {
       doTest("Super");

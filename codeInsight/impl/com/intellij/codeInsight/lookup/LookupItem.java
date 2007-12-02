@@ -333,6 +333,7 @@ public class LookupItem<T> implements Comparable, LookupElement<T>{
       catch (IncorrectOperationException e) {
         throw new RuntimeException(e);
       }
+      assert !PsiDocumentManager.getInstance(context.project).isDocumentBlockedByPsi(editor.getDocument()) : "InsertHandler has left document locked by PSI operations: " + myHandler;
       tailType.processTail(editor, tailOffset);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();

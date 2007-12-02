@@ -41,10 +41,6 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
     return module;
   }
 
-  protected boolean clearModelBeforeConfiguring() {
-    return false;
-  }
-
   public void testInSetUp() throws Exception {
     doTest();
   }
