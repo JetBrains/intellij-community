@@ -35,8 +35,8 @@ import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class SSBasedInspection extends LocalInspectionTool {
+public class SSBasedInspection extends BaseJavaLocalInspectionTool {
   private List<Configuration> myConfigurations = new ArrayList<Configuration>();
   private MatcherImpl.CompiledOptions compiledConfigurations;
 
