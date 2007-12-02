@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 
-@Bombed(month = Calendar.NOVEMBER, day = 31, user = "anton")
+@Bombed(month = Calendar.DECEMBER, day = 10, user = "anton")
 public class BasicsTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testBuildingTree() {

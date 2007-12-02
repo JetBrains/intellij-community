@@ -1,17 +1,17 @@
 package com.intellij.historyPerfTests;
 
-import com.intellij.idea.Bombed;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.ui.models.NullProgress;
 import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.history.utils.RunnableAdapter;
+import com.intellij.idea.Bombed;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Calendar;
 import java.util.List;
 
-@Bombed(month = Calendar.NOVEMBER, day = 31, user = "anton")
+@Bombed(month = Calendar.DECEMBER, day = 10, user = "anton")
 public class SelectionCalculatorTest extends LocalVcsPerformanceTestCase {
   private List<Revision> rr;
   private SelectionCalculator c;

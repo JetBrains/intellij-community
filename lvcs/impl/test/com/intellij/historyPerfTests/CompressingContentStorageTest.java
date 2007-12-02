@@ -10,7 +10,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Calendar;
 
-@Bombed(month = Calendar.NOVEMBER, day = 31, user = "anton")
+@Bombed(month = Calendar.DECEMBER, day = 10, user = "anton")
 public class CompressingContentStorageTest extends PerformanceTestCase {
   CompressingContentStorage s;
 
