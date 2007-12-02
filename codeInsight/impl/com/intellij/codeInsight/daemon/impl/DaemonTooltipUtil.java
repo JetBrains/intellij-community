@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +22,8 @@ public class DaemonTooltipUtil {
     HintManager.getInstance().getTooltipController().cancelTooltip(DAEMON_INFO_GROUP);
   }
 
-  public static void showInfoTooltip(final HighlightInfo info, final Editor editor, final int defaultOffset, final int currentWidth) {
+  public static void showInfoTooltip(@NotNull final HighlightInfo info, final Editor editor, final int defaultOffset, final int currentWidth) {
+    if (info.toolTip == null) return;
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     int endOffset = info.highlighter.getEndOffset();
     int startOffset = info.highlighter.getStartOffset();
