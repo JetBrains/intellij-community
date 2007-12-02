@@ -14,12 +14,12 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PrattTokenType extends IElementType {
-  private final Nud myNud;
-  private final Led myLed;
+  private Nud myNud;
+  private Led myLed;
   private final int myPriority;
 
   public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, final int priority, @NotNull final Nud nud, @NotNull final Led led) {
+                          @Nullable final Language language, final int priority, @Nullable final Nud nud, @Nullable final Led led) {
     super(tokenName, language);
     myPriority = priority;
     myNud = nud;
@@ -27,33 +27,18 @@ public class PrattTokenType extends IElementType {
   }
 
   public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, final int priority, @NotNull final Nud nud) {
-    this(tokenName, language, priority, nud, Led.EMPTY);
+                          @Nullable final Language language, final int priority, @Nullable final Nud nud) {
+    this(tokenName, language, priority, nud, null);
   }
 
   public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, final int priority, @NotNull final Led led) {
-    this(tokenName, language, priority, Nud.EMPTY, led);
+                          @Nullable final Language language, final int priority, @Nullable final Led led) {
+    this(tokenName, language, priority, null, led);
   }
 
   public PrattTokenType(@NotNull final String tokenName,
                           @Nullable final Language language, final int priority) {
-    this(tokenName, language, priority, Nud.EMPTY, Led.EMPTY);
-  }
-
-  public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, @NotNull final Nud nud, @NotNull final Led led) {
-    this(tokenName, language, 0, nud, led);
-  }
-
-  public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, @NotNull final Nud nud) {
-    this(tokenName, language, nud, Led.EMPTY);
-  }
-
-  public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, @NotNull final Led led) {
-    this(tokenName, language, Nud.EMPTY, led);
+    this(tokenName, language, priority, null, null);
   }
 
   public String getExpectedText() {
@@ -64,13 +49,13 @@ public class PrattTokenType extends IElementType {
     return myPriority;
   }
 
-  @Nullable
-  public final IElementType parseInfix(final IElementType left, final PrattBuilder builder) {
-    return myLed.parseInfix(left, builder);
+  @Nullable public Led getLed() {
+    return myLed;
   }
 
   @Nullable
-  public final IElementType parsePrefix(final PrattBuilder builder) {
-    return myNud.parsePrefix(builder);
+  public Nud getNud() {
+    return myNud;
   }
+
 }

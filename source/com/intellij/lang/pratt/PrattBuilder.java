@@ -4,15 +4,12 @@
  */
 package com.intellij.lang.pratt;
 
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.Set;
 
 /**
  * @author peter
@@ -32,23 +29,6 @@ public class PrattBuilder {
     return marker;
   }
 
-  public void parseUnless(int rbp, PrattTokenType... endTypes) {
-    final Set<IElementType> set = new THashSet<IElementType>();
-    set.addAll(Arrays.asList(endTypes));
-    while (true) {
-      final IElementType tokenType = getTokenType();
-      if (tokenType == null) {
-        assertToken(endTypes[0]);
-        return;
-      }
-      if (set.contains(tokenType)) {
-        advance();
-        return;
-      }
-      parse(rbp);
-    }
-  }
-
   @Nullable
   public IElementType parseOption(int rightPriority) {
     final PsiBuilder.Marker marker = mark();
@@ -66,25 +46,53 @@ public class PrattBuilder {
     IElementType tokenType = getTokenType();
     if (tokenType == null) return null;
 
+    if (!(tokenType instanceof PrattTokenType) || ((PrattTokenType)tokenType).getPriority() <= rightPriority) {
+      myBuilder.error(JavaErrorMessages.message("unexpected.token"));
+      return null;
+    }
+
+    final Nud nud = ((PrattTokenType)tokenType).getNud();
+    if (nud == null) {
+      myBuilder.error(JavaErrorMessages.message("unexpected.token"));
+      return null;
+    }
+
     PsiBuilder.Marker marker = myBuilder.mark();
-    myBuilder.advanceLexer();
-    IElementType left = tokenType instanceof PrattTokenType ? ((PrattTokenType)tokenType).parsePrefix(this) : null;
 
-    while (left != null) {
-      final PsiBuilder.Marker marker1 = marker.precede();
-      marker.done(left);
-      marker = marker1;
+    ParseResult left;
+    IElementType result;
 
+    final PsiBuilder.Marker oldMarker = myPrevMarker;
+    myPrevMarker = myBuilder.mark();
+    try {
+      myBuilder.advanceLexer();
+      left = nud.parsePrefix(this);
+      result = left.getDoneType();
+    }
+    finally {
+      myPrevMarker.drop();
+      myPrevMarker = oldMarker;
+    }
+
+    while (!left.isError()) {
       tokenType = myBuilder.getTokenType();
-      if (tokenType == null || tokenType instanceof PrattTokenType && rightPriority >= ((PrattTokenType)tokenType).getPriority()) break;
+      if (!(tokenType instanceof PrattTokenType) || rightPriority >= ((PrattTokenType)tokenType).getPriority()) break;
 
-      final PsiBuilder.Marker oldMarker = myPrevMarker;
+      final Led led = ((PrattTokenType)tokenType).getLed();
+      if (led == null) break;
+
       myPrevMarker = myBuilder.mark();
       try {
         myBuilder.advanceLexer();
-        if (!(tokenType instanceof PrattTokenType)) break;
 
-        left = ((PrattTokenType)tokenType).parseInfix(left, this);
+        left = led.parseInfix(result, this);
+
+        if (result != null && left.getDoneType() != null) {
+          final PsiBuilder.Marker marker1 = marker.precede();
+          marker.doneBefore(result, myPrevMarker);
+          marker = marker1;
+          result = left.getDoneType();
+        }
       }
       finally {
         myPrevMarker.drop();
@@ -92,21 +100,29 @@ public class PrattBuilder {
       }
 
     }
-    marker.drop();
+    if (result != null) {
+      marker.done(result);
+    } else {
+      marker.drop();
+    }
 
-    return left;
+    return result;
   }
 
   public boolean assertToken(final PrattTokenType type) {
-    return checkToken(type, true);
+    return _checkToken(type, true);
   }
 
   public PsiBuilder.Marker mark() {
     return myBuilder.mark();
   }
 
-  public boolean checkToken(final PrattTokenType type, final boolean error) {
-    if (getTokenType() == type) {
+  public boolean checkToken(final PrattTokenType type) {
+    return _checkToken(type, false);
+  }
+
+  private boolean _checkToken(final PrattTokenType type, final boolean error) {
+    if (isToken(type)) {
       advance();
       return true;
     }
@@ -116,7 +132,7 @@ public class PrattBuilder {
     return false;
   }
 
-  private void advance() {
+  public void advance() {
     myBuilder.advanceLexer();
   }
 
@@ -134,7 +150,11 @@ public class PrattBuilder {
 
 
   public boolean isEof() {
-    return getTokenType() == null;
+    return isToken(null);
+  }
+
+  public boolean isToken(@Nullable IElementType type) {
+    return getTokenType() == type;
   }
 
   @Nullable
