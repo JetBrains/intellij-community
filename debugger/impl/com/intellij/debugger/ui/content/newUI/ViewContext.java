@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 
@@ -42,4 +43,6 @@ public interface ViewContext extends Disposable {
   void moveToTab(final Content content);
 
   void moveToGrid(final Content content);
+
+  ActionCallback select(Content content, boolean requestFocus);
 }

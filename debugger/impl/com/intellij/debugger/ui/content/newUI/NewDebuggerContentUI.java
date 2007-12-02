@@ -439,7 +439,7 @@ public class NewDebuggerContentUI
         return restore.restoreInGrid().doWhenDone(new Runnable() {
           public void run() {
             saveUiState();
-
+            select(content, true);
             rebuildMinimizedActions();
           }
         });
@@ -497,5 +497,23 @@ public class NewDebuggerContentUI
 
   public boolean isHorizontalToolbar() {
     return getSettings().getLayoutSettings().isToolbarHorizontal();
+  }
+
+  public ActionCallback select(final Content content, final boolean requestFocus) {
+    final Grid grid = findGridFor(content);
+    if (grid == null) return new ActionCallback.Done();
+
+
+    final TabInfo info = myTabs.findInfo(grid);
+    if (info == null) return new ActionCallback.Done();
+
+    final ActionCallback result = new ActionCallback();
+    myTabs.select(info, false).doWhenDone(new Runnable() {
+      public void run() {
+        grid.select(content, requestFocus).markDone(result);
+      }
+    });
+
+    return result;
   }
 }

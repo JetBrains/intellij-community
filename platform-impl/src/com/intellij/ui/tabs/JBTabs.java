@@ -337,7 +337,15 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     return (JComponent)(owner instanceof JComponent ? owner : null);
   }
 
+  public ActionCallback select(TabInfo info, boolean requestFocus) {
+    return _setSelected(info, requestFocus);
+  }
+
   public void setSelected(final TabInfo info, final boolean requestFocus) {
+    _setSelected(info, requestFocus);
+  }
+
+  private ActionCallback _setSelected(final TabInfo info, final boolean requestFocus) {
     if (myRequestFocusOnLastFocusedComponent && mySelectedInfo != null) {
       if (isMyChildIsFocusedNow()) {
         mySelectedInfo.setLastFocusOwner(getFocusOwner());
@@ -361,7 +369,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     if (requestFocus) {
       final JComponent toFocus = getToFocus();
       if (myProject != null && toFocus != null) {
-        ToolWindowManager.getInstance(myProject).requestFocus(new ActionCallback.Runnable() {
+        return ToolWindowManager.getInstance(myProject).requestFocus(new ActionCallback.Runnable() {
           public ActionCallback run() {
             toFocus.requestFocus();
             return new ActionCallback.Done();
@@ -369,8 +377,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         }, true);
       } else {
         requestFocus();
+        return new ActionCallback.Done();
       }
     }
+
+    return new ActionCallback.Done();
   }
 
 

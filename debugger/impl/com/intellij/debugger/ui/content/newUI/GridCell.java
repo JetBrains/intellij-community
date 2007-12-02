@@ -126,6 +126,11 @@ public class GridCell {
     return tabInfo;
   }
 
+  public ActionCallback select(final Content content, final boolean requestFocus) {
+    final TabInfo tabInfo = myContents.getValue(content);
+    return tabInfo != null ? myTabs.select(tabInfo, requestFocus) : new ActionCallback.Done();
+  }
+
   private static class ProviderWrapper extends NonOpaquePanel implements DataProvider {
 
     Content myContent;
