@@ -6,7 +6,7 @@
  */
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Hani Suleiman Date: Aug 3, 2005 Time: 4:17:59 PM
  */
-public class ConvertOldAnnotationInspection extends LocalInspectionTool {
+public class ConvertOldAnnotationInspection extends BaseJavaLocalInspectionTool {
   private static final String DISPLAY_NAME = "Convert old @Configuration TestNG annotations";
 
   @Nls

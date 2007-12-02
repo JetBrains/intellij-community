@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class UndeclaredTestInspection extends LocalInspectionTool {
+public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + UndeclaredTestInspection.class.getName());
 
   @Nls

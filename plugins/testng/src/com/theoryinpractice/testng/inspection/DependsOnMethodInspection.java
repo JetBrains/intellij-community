@@ -1,21 +1,24 @@
 package com.theoryinpractice.testng.inspection;
 
+import com.intellij.codeInspection.*;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNameValuePair;
+import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.intellij.codeInspection.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
-import com.theoryinpractice.testng.util.TestNGUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
  */
-public class DependsOnMethodInspection extends LocalInspectionTool
+public class DependsOnMethodInspection extends BaseJavaLocalInspectionTool
 {
     private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
     private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"");

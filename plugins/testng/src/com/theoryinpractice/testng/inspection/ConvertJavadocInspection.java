@@ -1,6 +1,7 @@
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.CommonBundle;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -15,7 +16,6 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.CommonBundle;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Hani Suleiman Date: Aug 3, 2005 Time: 4:18:11 PM
  */
-public class ConvertJavadocInspection extends LocalInspectionTool {
+public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
   @NonNls private static final String TESTNG_PREFIX = "testng.";
   private static final String DISPLAY_NAME = "Convert TestNG Javadoc to 1.5 annotations";
 

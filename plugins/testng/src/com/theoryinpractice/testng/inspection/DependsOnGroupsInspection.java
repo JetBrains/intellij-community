@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 /**
  * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
  */
-public class DependsOnGroupsInspection extends LocalInspectionTool {
+public class DependsOnGroupsInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_\\(\\)]*)\"");
   private static final ProblemDescriptor[] EMPTY = new ProblemDescriptor[0];

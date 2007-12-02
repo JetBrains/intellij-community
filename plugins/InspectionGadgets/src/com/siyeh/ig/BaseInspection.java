@@ -16,7 +16,7 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JFormattedTextField;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.lang.reflect.Field;
@@ -39,7 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class BaseInspection extends LocalInspectionTool {
+public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
 
     private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 

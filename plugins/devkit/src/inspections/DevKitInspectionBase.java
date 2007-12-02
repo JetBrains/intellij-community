@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
@@ -41,7 +41,7 @@ import java.util.Set;
 /**
  * @author swr
  */
-public abstract class DevKitInspectionBase extends LocalInspectionTool {
+public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {

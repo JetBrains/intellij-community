@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
  */
-public class JUnitConvertTool extends LocalInspectionTool {
+public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
 
   private static final Logger LOG = Logger.getInstance("TestNG QuickFix");
   private static final String DISPLAY_NAME = "Convert JUnit Tests to TestNG";
