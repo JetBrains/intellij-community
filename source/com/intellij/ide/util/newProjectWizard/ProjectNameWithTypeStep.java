@@ -211,7 +211,13 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       setModuleName(moduleName);
       setModuleContentRoot(baseDir.getPath() + "/" + moduleName);
       setImlFileLocation(baseDir.getPath() + "/" + moduleName);
+      myModuleName.setSelectionStart(0);
+      myModuleName.setSelectionEnd(moduleName.length());
     }
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myWizardContext.isCreatingNewProject() ? super.getPreferredFocusedComponent() : myModuleName;
   }
 
   private void setImlFileLocation(final String path) {
