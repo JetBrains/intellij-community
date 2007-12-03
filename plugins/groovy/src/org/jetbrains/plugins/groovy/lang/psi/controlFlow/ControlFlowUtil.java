@@ -14,6 +14,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
+import com.intellij.openapi.util.Ref;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+
 /**
  * @author ven
  */
@@ -27,7 +31,7 @@ public class ControlFlowUtil {
     CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
     for (int i = 0; i < flow.length; i++) {
       if (!visited[i]) {
-        N = doVisit(flow[i], flow, N, env, result, visited);
+        N = doVisitForPostorder(flow[i], flow, N, env, result, visited);
       }
     }
 
@@ -35,14 +39,45 @@ public class ControlFlowUtil {
     return result;
   }
 
-  public static int doVisit(Instruction curr, Instruction[] flow, int currN, CallEnvironment env, int[] postorder, boolean[] visited) {
+  private static int doVisitForPostorder(Instruction curr, Instruction[] flow, int currN, CallEnvironment env, int[] postorder, boolean[] visited) {
     visited[curr.num()] = true;
     for (Instruction succ : curr.succ(env)) {
       if (!visited[succ.num()]) {
-        currN = doVisit(succ, flow, currN, env, postorder, visited);
+        currN = doVisitForPostorder(succ, flow, currN, env, postorder, visited);
       }
     }
     postorder[curr.num()] = --currN;
     return currN;
+  }
+
+  public static boolean isImplicitSingleExit(GrMethod method) {
+    GrOpenBlock block = method.getBlock();
+    if (block == null) return false;
+    Instruction[] flow = block.getControlFlow();
+    boolean[] visited = new boolean[flow.length];
+    CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
+    return doVisitForImplicitSingleExit(flow[0], flow, env, visited, new Ref<Boolean>(false));
+  }
+
+  private static boolean doVisitForImplicitSingleExit(Instruction curr,
+                                                      Instruction[] flow,
+                                                      CallEnvironment env,
+                                                      boolean[] visited,
+                                                      Ref<Boolean> returnEncountered) {
+    if (curr == flow[flow.length - 1]) {
+      return !returnEncountered.get();
+    } else if (curr.isReturn()) {
+      returnEncountered.set(true);
+      return false;
+    }
+
+    visited[curr.num()] = true;
+    for (Instruction succ : curr.succ(env)) {
+      if (!visited[succ.num()]) {
+        if (!doVisitForImplicitSingleExit(succ, flow, env, visited, returnEncountered)) return false;
+      }
+    }
+
+    return true;
   }
 }

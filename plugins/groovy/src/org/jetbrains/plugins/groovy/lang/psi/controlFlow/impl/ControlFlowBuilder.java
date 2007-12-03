@@ -4,7 +4,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -15,11 +14,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -183,6 +180,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final GrExpression value = returnStatement.getReturnValue();
     if (value != null) value.accept(this);
 
+    if (myHead != null) myHead.setIsReturn(true);
+    
     addPendingEdge(null, myHead);
     flowAbrupted();
   }

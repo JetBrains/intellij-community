@@ -22,6 +22,7 @@ class InstructionImpl implements Instruction, Cloneable {
 
   PsiElement myPsiElement;
   private int myNumber;
+  private boolean myIsReturn;
 
   @Nullable
   public PsiElement getElement() {
@@ -55,6 +56,10 @@ class InstructionImpl implements Instruction, Cloneable {
     return myPred;
   }
 
+  public boolean isReturn() {
+    return myIsReturn;
+  }
+
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(myNumber);
@@ -63,7 +68,9 @@ class InstructionImpl implements Instruction, Cloneable {
       if (i > 0) builder.append(',');
       builder.append(mySucc.get(i).myNumber);
     }
-    builder.append(") ").append(getElementPresentation());
+    builder.append(") ");
+    if (myIsReturn) builder.append("return ");
+    builder.append(getElementPresentation());
     return builder.toString();
   }
 
@@ -73,5 +80,9 @@ class InstructionImpl implements Instruction, Cloneable {
 
   public int num() {
     return myNumber;
+  }
+
+  public void setIsReturn(boolean isReturn) {
+    myIsReturn = isReturn;
   }
 }
