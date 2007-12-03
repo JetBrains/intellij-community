@@ -23,7 +23,10 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -35,4 +38,6 @@ public interface VcsDataKeys {
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create(VcsDataConstants.VCS_VIRTUAL_FILE);
   DataKey<FilePath> FILE_PATH = DataKey.create(VcsDataConstants.FILE_PATH);
   DataKey<FilePath[]> FILE_PATH_ARRAY = DataKey.create(VcsDataConstants.FILE_PATH_ARRAY);
+  DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create(DataConstants.CHANGE_LISTS);
+  DataKey<Change[]> CHANGES = DataKey.create(DataConstants.CHANGES);
 }

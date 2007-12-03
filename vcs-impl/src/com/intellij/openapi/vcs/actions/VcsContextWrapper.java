@@ -33,7 +33,6 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -45,7 +44,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -64,10 +62,6 @@ public class VcsContextWrapper implements VcsContext {
 
   public String getPlace() {
     return myPlace;
-  }
-
-  public PsiElement getPsiElement() {
-    return DataKeys.PSI_ELEMENT.getData(myContext);
   }
 
   public static VcsContext createCachedInstanceOn(AnActionEvent event) {
@@ -117,7 +111,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public Editor getEditor() {
-    return DataKeys.EDITOR.getData(myContext);
+    return PlatformDataKeys.EDITOR.getData(myContext);
   }
 
   public Collection<VirtualFile> getSelectedFilesCollection() {
@@ -205,11 +199,11 @@ public class VcsContextWrapper implements VcsContext {
 
   @Nullable
   public ChangeList[] getSelectedChangeLists() {
-    return DataKeys.CHANGE_LISTS.getData(myContext);
+    return VcsDataKeys.CHANGE_LISTS.getData(myContext);
   }
 
   @Nullable
   public Change[] getSelectedChanges() {
-    return DataKeys.CHANGES.getData(myContext);
+    return VcsDataKeys.CHANGES.getData(myContext);
   }
 }

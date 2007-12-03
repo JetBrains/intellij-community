@@ -46,7 +46,10 @@ public final class DataKeys extends PlatformDataKeys {
   public static final DataKey<PsiFile> PSI_FILE = DataKey.create(DataConstants.PSI_FILE);
   public static final DataKey<Language> LANGUAGE = DataKey.create(DataConstants.LANGUAGE);
   public static final DataKey<IdeView> IDE_VIEW = DataKey.create(DataConstants.IDE_VIEW);
+
+  @Deprecated
   public static final DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create(DataConstants.CHANGE_LISTS);
+  @Deprecated
   public static final DataKey<Change[]> CHANGES = DataKey.create(DataConstants.CHANGES);
   public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create(DataConstants.PSI_ELEMENT_ARRAY);
 
