@@ -32,6 +32,7 @@
  */
 package org.jetbrains.idea.svn.actions;
 
+import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,7 +76,7 @@ public abstract class BasicAction extends AnAction {
     final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
     LocalHistoryAction action = LocalHistoryAction.NULL;
     if (actionName != null) {
-      action = helper.startLocalHistoryAction(actionName);
+      action = LocalHistory.startAction(project, actionName);
     }
 
     try {
