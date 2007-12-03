@@ -157,6 +157,7 @@ public class FileReference
       final List<CandidateInfo> ret = new ArrayList<CandidateInfo>();
       final List<Class> allowedClasses = new ArrayList<Class>();
       allowedClasses.add(PsiFile.class);
+      allowedClasses.add(PackagePrefixFileSystemItem.class);
       for (final FileReferenceHelper helper : getHelpers()) {
         allowedClasses.add(helper.getDirectoryClass());
       }

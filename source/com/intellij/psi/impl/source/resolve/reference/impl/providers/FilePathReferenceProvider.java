@@ -124,9 +124,16 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
       moduleRootManager = ModuleRootManager.getInstance(module);
       VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
       for (VirtualFile root : sourceRoots) {
-        PsiDirectory directory = psiManager.findDirectory(root);
+        final PsiDirectory directory = psiManager.findDirectory(root);
         if (directory != null) {
-          result.add(directory);
+          final PsiPackage aPackage = directory.getPackage();
+          if (aPackage != null && aPackage.getName() != null) {
+            // package prefix
+            result.add(PackagePrefixFileSystemItem.create(directory));
+          }
+          else {
+            result.add(directory);
+          }
         }
       }
     }
