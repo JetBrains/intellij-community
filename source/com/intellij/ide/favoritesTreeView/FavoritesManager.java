@@ -12,15 +12,13 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -35,6 +33,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   // fav list name -> list of (root: root url, root class)
   private Map<String, List<Pair<AbstractUrl,String>>> myName2FavoritesRoots = new LinkedHashMap<String, List<Pair<AbstractUrl, String>>>();
   private final Project myProject;
+  private final MyRootsChangeAdapter myPsiTreeChangeAdapter = new MyRootsChangeAdapter();
   private final List<FavoritesListener> myListeners = new ArrayList<FavoritesListener>();
   public interface FavoritesListener {
     void rootsChanged(String listName);
@@ -156,11 +155,13 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
           final String name = myProject.getName();
           createNewList(name);
         }
+        PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
       }
     });
   }
 
   public void projectClosed() {
+    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
   }
 
   @NotNull
@@ -380,4 +381,71 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return false;
   }
 
+  private class MyRootsChangeAdapter extends PsiTreeChangeAdapter {
+    public void beforeChildMovement(final PsiTreeChangeEvent event) {
+      final PsiElement oldParent = event.getOldParent();
+      final PsiElement newParent = event.getNewParent();
+      final PsiElement child = event.getChild();
+      if (newParent instanceof PsiDirectory) {
+        final Module module = ModuleUtil.findModuleForPsiElement(newParent);
+        if (module == null) return;
+        AbstractUrl childUrl = null;
+        if (child instanceof PsiFile) {
+          childUrl =
+            new PsiFileUrl(((PsiDirectory)newParent).getVirtualFile().getUrl() + "/" + ((PsiFile)child).getName(), module.getName());
+        }
+        else if (child instanceof PsiDirectory) {
+          childUrl =
+            new DirectoryUrl(((PsiDirectory)newParent).getVirtualFile().getUrl() + "/" + ((PsiDirectory)child).getName(), module.getName());
+        }
+        for (String listName : myName2FavoritesRoots.keySet()) {
+          final List<Pair<AbstractUrl, String>> roots = myName2FavoritesRoots.get(listName);
+          final List<Pair<AbstractUrl, String>> newRoots = new ArrayList<Pair<AbstractUrl, String>>();
+          for (Pair<AbstractUrl, String> root : roots) {
+            final Object[] path = root.first.createPath(myProject);
+            if (path == null || path.length < 1 || path[0] == null) {
+              continue;
+            }
+            final Object element = path[path.length - 1];
+            if (element == child && childUrl != null) {
+              newRoots.add(Pair.create(childUrl, root.second));
+            }
+            else if (element == oldParent) {
+              newRoots.add(Pair.create(root.first.createUrlByElement(newParent), root.second));
+            }
+          }
+          myName2FavoritesRoots.put(listName, newRoots);
+        }
+      }
+    }
+
+    public void beforePropertyChange(final PsiTreeChangeEvent event) {
+      if (event.getPropertyName().equals(PsiTreeChangeEvent.PROP_FILE_NAME) || event.getPropertyName().equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)) {
+        final PsiElement psiElement = event.getChild();
+        if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
+          final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+          if (module == null) return;
+          final String url = ((PsiDirectory)psiElement.getParent()).getVirtualFile().getUrl() + "/" + event.getNewValue();
+          final AbstractUrl childUrl = psiElement instanceof PsiFile ? new PsiFileUrl(url, module.getName()) : new DirectoryUrl(url, module.getName());
+          for (String listName : myName2FavoritesRoots.keySet()) {
+            final List<Pair<AbstractUrl, String>> roots = myName2FavoritesRoots.get(listName);
+            final List<Pair<AbstractUrl, String>> newRoots = new ArrayList<Pair<AbstractUrl, String>>();
+            for (Pair<AbstractUrl, String> root : roots) {
+              final Object[] path = root.first.createPath(myProject);
+              if (path == null || path.length < 1 || path[0] == null) {
+                continue;
+              }
+              final Object element = path[path.length - 1];
+              if (element == psiElement && psiElement instanceof PsiFile) {
+                newRoots.add(Pair.create(childUrl, root.second));
+              } else {
+                newRoots.add(root);
+              }
+            }
+            myName2FavoritesRoots.put(listName, newRoots);
+          }
+        }
+      }
+    }
+  }
 }
