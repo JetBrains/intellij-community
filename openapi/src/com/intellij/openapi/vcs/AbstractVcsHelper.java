@@ -55,11 +55,6 @@ public abstract class AbstractVcsHelper {
    */
   public abstract List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters);
 
-  public abstract void optimizeImportsAndReformatCode(Collection<VirtualFile> files,
-                                                      VcsConfiguration configuration,
-                                                      Runnable finishAction,
-                                                      boolean checkinProject);
-
   public void showError(final VcsException e, final String s) {
     showErrors(Arrays.asList(e), s);
   }

@@ -249,7 +249,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       public
       @NotNull
       CheckinHandler createHandler(final CheckinProjectPanel panel) {
-        return new StandardBeforeCheckinHandler(myProject);
+        return new StandardBeforeCheckinHandler(myProject, panel);
       }
     });
     registerCheckinHandlerFactory(new CheckinHandlerFactory() {

@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
+import com.intellij.openapi.vcs.checkin.CheckinMetaHandler;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -452,10 +453,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       }
     };
 
-    AbstractVcsHelper.getInstance(myProject).optimizeImportsAndReformatCode(getVirtualFiles(),
-                                                                            VcsConfiguration.getInstance(myProject),
-                                                                            proceedRunnable,
-                                                                            true);
+    for(CheckinHandler handler: myHandlers) {
+      if (handler instanceof CheckinMetaHandler) {
+        ((CheckinMetaHandler) handler).runCheckinHandlers(proceedRunnable);
+        return;
+      }
+    }
+    proceedRunnable.run();
   }
 
   protected void doOKAction() {

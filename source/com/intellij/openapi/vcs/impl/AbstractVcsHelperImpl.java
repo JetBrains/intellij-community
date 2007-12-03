@@ -1,7 +1,5 @@
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
-import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.actions.CloseTabToolbarAction;
@@ -45,8 +43,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -277,38 +273,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return exceptions;
   }
 
-  public void optimizeImportsAndReformatCode(final Collection<VirtualFile> files,
-                                             final VcsConfiguration configuration,
-                                             final Runnable finishAction,
-                                             final boolean checkinProject) {
-
-    final Runnable performCheckoutAction = new Runnable() {
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        finishAction.run();
-      }
-    };
-
-    final Runnable reformatCodeAndPerformCheckout = new Runnable() {
-      public void run() {
-        if (reformat(configuration, checkinProject)) {
-          new ReformatCodeProcessor(myProject, getPsiFiles(files), performCheckoutAction).run();
-        }
-        else {
-          performCheckoutAction.run();
-        }
-      }
-    };
-
-    if (configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT) {
-      new OptimizeImportsProcessor(myProject, getPsiFiles(files), reformatCodeAndPerformCheckout).run();
-    }
-    else {
-      reformatCodeAndPerformCheckout.run();
-    }
-
-  }
-
   public void showAnnotation(FileAnnotation annotation, VirtualFile file) {
     new Annotater(annotation, myProject, file).showAnnotation();
   }
@@ -497,23 +461,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     else {
       return new SimpleContent(new String(version.getContent()), FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
     }
-  }
-
-  private static boolean reformat(final VcsConfiguration configuration, boolean checkinProject) {
-    return checkinProject ? configuration.REFORMAT_BEFORE_PROJECT_COMMIT : configuration.REFORMAT_BEFORE_FILE_COMMIT;
-  }
-
-  private PsiFile[] getPsiFiles(Collection<VirtualFile> selectedFiles) {
-    ArrayList<PsiFile> result = new ArrayList<PsiFile>();
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-
-    for (VirtualFile file : selectedFiles) {
-      if (file.isValid()) {
-        PsiFile psiFile = psiManager.findFile(file);
-        if (psiFile != null) result.add(psiFile);
-      }
-    }
-    return result.toArray(new PsiFile[result.size()]);
   }
 
   public void openCommittedChangesTab(final CommittedChangesProvider provider,
