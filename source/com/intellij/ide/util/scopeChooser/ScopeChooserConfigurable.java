@@ -102,6 +102,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   public void apply() throws ConfigurationException {
     final Set<MyNode> roots = new HashSet<MyNode>();
+    roots.add(myRoot);
     checkApply(roots, ProjectBundle.message("rename.message.prefix.scope"), ProjectBundle.message("rename.scope.title"));
     super.apply();
     processScopes();

@@ -31,7 +31,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.Profile;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -554,34 +553,26 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
   }
 
   protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
-    String alreadyExist = null;
     for (MyNode rootNode : rootNodes) {
-      alreadyExist = alreadyExist(rootNode);
-      if (alreadyExist != null) {
-        break;
+      final Set<String> names = new HashSet<String>();
+      for (int i = 0; i < rootNode.getChildCount(); i++) {
+        final MyNode node = (MyNode)rootNode.getChildAt(i);
+        final NamedConfigurable scopeConfigurable = node.getConfigurable();
+        final String name = scopeConfigurable.getDisplayName();
+        if (name.trim().length() == 0) {
+          selectNodeInTree(node);
+          throw new ConfigurationException("Name should contain non-space characters");
+        }
+        if (names.contains(name)) {
+          final NamedConfigurable selectedConfugurable = getSelectedConfugurable();
+          if (selectedConfugurable == null || !Comparing.strEqual(selectedConfugurable.getDisplayName(), name)) {
+            selectNodeInTree(node);
+          }
+          throw new ConfigurationException(CommonBundle.message("smth.already.exist.error.message", prefix, name), title);
+        }
+        names.add(name);
       }
     }
-    if (alreadyExist != null) {
-      final Object o = getSelectedObject();
-      if (o instanceof NamedScope && !Comparing.strEqual(alreadyExist, ((NamedScope)o).getName())) {
-        selectNodeInTree(alreadyExist);
-      }
-      throw new ConfigurationException(CommonBundle.message("smth.already.exist.error.message", prefix, alreadyExist), title);
-    }
-  }
-
-  @Nullable
-  private static String alreadyExist(MyNode root) {
-    final Set<String> names = new HashSet<String>();
-    for (int i = 0; i < root.getChildCount(); i++) {
-      final NamedConfigurable scopeConfigurable = ((MyNode)root.getChildAt(i)).getConfigurable();
-      final String name = scopeConfigurable.getDisplayName();
-      if (names.contains(name)) {
-        return name;
-      }
-      names.add(name);
-    }
-    return null;
   }
 
   public Tree getTree() {
