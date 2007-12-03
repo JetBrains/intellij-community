@@ -31,7 +31,6 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -47,15 +46,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -265,9 +260,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     final StartupManager manager = StartupManager.getInstance(myProject);
     manager.registerStartupActivity(new Runnable() {
       public void run() {
-        if (!myHaveLegacyVcsConfiguration && !myMappingsLoaded) {
-          autoDetectVcsMappings();
-        }
         updateActiveVcss();
       }
     });
@@ -282,17 +274,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           toolWindow.installWatcher(myContentManager);
         } else {
           myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
-        }
-        if (myMessageBus != null) {
-          myMessageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
-            public void moduleAdded(final Project project, final Module module) {
-              autoDetectModuleVcsMapping(module);
-            }
-
-            public void beforeModuleRemoved(final Project project, final Module module) {
-              checkRemoveVcsRoot(module);
-            }
-          });
         }
       }
     });
@@ -641,6 +622,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myDirectoryMappingList.setDirectoryMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
+  public void setAutoDirectoryMapping(String path, String activeVcsName) {
+    myDirectoryMappingList.setDirectoryMapping(path, activeVcsName);
+  }
+
+  public void removeDirectoryMapping(VcsDirectoryMapping mapping) {
+    myDirectoryMappingList.removeDirectoryMapping(mapping);
+  }
+
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
     myDirectoryMappingList.setDirectoryMappings(items);
   }
@@ -932,75 +921,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
   }
 
-  @Nullable
-  private AbstractVcs findVersioningVcs(VirtualFile file) {
-    for(AbstractVcs vcs: getAllVcss()) {
-      if (vcs.isVersionedDirectory(file)) {
-        return vcs;
-      }
-    }
-    return null;
-  }
-
-  private void autoDetectVcsMappings() {
-    Set<AbstractVcs> usedVcses = new HashSet<AbstractVcs>();
-    Map<VirtualFile, AbstractVcs> vcsMap = new HashMap<VirtualFile, AbstractVcs>();
-    for(Module module: ModuleManager.getInstance(myProject).getModules()) {
-      final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-      for(VirtualFile file: files) {
-        AbstractVcs contentRootVcs = findVersioningVcs(file);
-        if (contentRootVcs != null) {
-          vcsMap.put(file, contentRootVcs);
-        }
-        usedVcses.add(contentRootVcs);
-      }
-    }
-    if (usedVcses.size() == 1) {
-      final AbstractVcs[] abstractVcses = usedVcses.toArray(new AbstractVcs[1]);
-      if (abstractVcses [0] != null) {
-        myDirectoryMappingList.setDirectoryMapping("", abstractVcses [0].getName());
-      }
-    }
-    else {
-      for(Map.Entry<VirtualFile, AbstractVcs> entry: vcsMap.entrySet()) {
-        myDirectoryMappingList.setDirectoryMapping(entry.getKey().getPath(), entry.getValue() == null ? "" : entry.getValue().getName());
-      }
-      myDirectoryMappingList.cleanupMappings();
-    }
-  }
-
-  private void autoDetectModuleVcsMapping(final Module module) {
-    final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-    for(VirtualFile file: files) {
-      AbstractVcs vcs = findVersioningVcs(file);
-      if (vcs != null && vcs != getVcsFor(file)) {
-        myDirectoryMappingList.setDirectoryMapping(file.getPath(), vcs.getName());
-      }
-    }
-    myDirectoryMappingList.cleanupMappings();
-    updateActiveVcss();
-  }
-
-  private void checkRemoveVcsRoot(final Module module) {
-    final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-    final String moduleName = module.getName();
-    for(final VirtualFile file: files) {
-      for(final VcsDirectoryMapping mapping: myDirectoryMappingList.getDirectoryMappings()) {
-        if (FileUtil.toSystemIndependentName(mapping.getDirectory()).equals(file.getPath())) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (myProject.isDisposed()) return;
-              final String msg = VcsBundle.message("vcs.root.remove.prompt", FileUtil.toSystemDependentName(file.getPath()), moduleName);
-              int rc = Messages.showYesNoDialog(myProject, msg, VcsBundle.message("vcs.root.remove.title"), Messages.getQuestionIcon());
-              if (rc == 0) {
-                myDirectoryMappingList.removeDirectoryMapping(mapping);
-                updateActiveVcss();
-              }
-            }
-          }, ModalityState.NON_MODAL);
-          break;
-        }
-      }
-    }
+  public boolean needAutodetectMappings() {
+    return !myHaveLegacyVcsConfiguration && !myMappingsLoaded;
   }
 }

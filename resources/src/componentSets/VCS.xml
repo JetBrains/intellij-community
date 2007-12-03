@@ -87,6 +87,10 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.ModuleVcsDetector</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
   <module-components>
