@@ -14,6 +14,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -35,7 +36,7 @@ public class ShowDiffAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    Change[] changes = e.getData(DataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null && canShowDiff(changes));
   }
@@ -47,7 +48,7 @@ public class ShowDiffAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(DataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     List<Change> changesInList = e.getData(ChangesListView.CHANGES_IN_LIST_KEY);
     if (project == null || changes == null) return;
 

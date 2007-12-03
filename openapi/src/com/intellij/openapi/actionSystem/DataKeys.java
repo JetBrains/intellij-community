@@ -24,9 +24,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.IdeView;
-import com.intellij.ide.TreeExpander;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -53,6 +51,5 @@ public final class DataKeys extends PlatformDataKeys {
   public static final DataKey<Change[]> CHANGES = DataKey.create(DataConstants.CHANGES);
   public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create(DataConstants.PSI_ELEMENT_ARRAY);
 
-  public static final DataKey<TreeExpander> TREE_EXPANDER = DataKey.create(DataConstantsEx.TREE_EXPANDER);
 }
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -120,18 +121,18 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   }
 
   public void calcData(DataKey key, DataSink sink) {
-    if (key == DataKeys.CHANGES) {
+    if (key == VcsDataKeys.CHANGES) {
       final List<Change> list = myViewer.getSelectedChanges();
-      sink.put(DataKeys.CHANGES, list.toArray(new Change [list.size()]));
+      sink.put(VcsDataKeys.CHANGES, list.toArray(new Change [list.size()]));
     }
-    else if (key == DataKeys.CHANGE_LISTS) {
-      sink.put(DataKeys.CHANGE_LISTS, getSelectedChangeLists());
+    else if (key == VcsDataKeys.CHANGE_LISTS) {
+      sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists());
     }
     else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
       sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
     }
-    else if (key == DataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(DataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
+    else if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {
+      sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
     }
   }
 
@@ -285,14 +286,14 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
     public void actionPerformed(AnActionEvent e) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      Change[] changes = e.getData(DataKeys.CHANGES);
+      Change[] changes = e.getData(VcsDataKeys.CHANGES);
       RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes), true);
       ChangeListManager.getInstance(myProject).ensureUpToDate(false);
       rebuildList();
     }
 
     public void update(AnActionEvent e) {
-      Change[] changes = e.getData(DataKeys.CHANGES);
+      Change[] changes = e.getData(VcsDataKeys.CHANGES);
       e.getPresentation().setEnabled(changes != null);
     }
   }

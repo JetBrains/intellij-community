@@ -8,6 +8,7 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -16,13 +17,13 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
@@ -69,7 +70,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private final Splitter myFilterSplitter;
   private final JPanel myLeftPanel;
   private final FilterChangeListener myFilterChangeListener = new FilterChangeListener();
-  private final SplitterProportionsData mySplitterProportionsData = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
+  private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
   private final CopyProvider myCopyProvider;
   private final TreeExpander myTreeExpander;
 
@@ -272,32 +273,32 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void calcData(DataKey key, DataSink sink) {
-    if (key.equals(DataKeys.CHANGES)) {
+    if (key.equals(VcsDataKeys.CHANGES)) {
       final CommittedChangeList list = getSelectedChangeList();
       if (list != null) {
         final Collection<Change> changes = list.getChanges();
-        sink.put(DataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+        sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
       }
     }
-    else if (key.equals(DataKeys.CHANGE_LISTS)) {
+    else if (key.equals(VcsDataKeys.CHANGE_LISTS)) {
       final List<CommittedChangeList> lists = getSelectedChangeLists();
       if (lists.size() > 0) {
-        sink.put(DataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
+        sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
       }
     }
     else if (key.equals(PlatformDataKeys.COPY_PROVIDER)) {
       sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
     }
-    else if (key.equals(DataKeys.NAVIGATABLE_ARRAY)) {
+    else if (key.equals(PlatformDataKeys.NAVIGATABLE_ARRAY)) {
       final CommittedChangeList list = getSelectedChangeList();
       if (list != null) {
         final Collection<Change> changes = list.getChanges();
         Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
-        sink.put(DataKeys.NAVIGATABLE_ARRAY, result);
+        sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, result);
       }
     }
-    else if (key.equals(DataKeys.TREE_EXPANDER)) {
-      sink.put(DataKeys.TREE_EXPANDER, myTreeExpander);
+    else if (key.equals(PlatformDataKeys.TREE_EXPANDER)) {
+      sink.put(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
       sink.put(PlatformDataKeys.HELP_ID, ourHelpId);
