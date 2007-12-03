@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -26,7 +25,7 @@ import java.util.List;
 public class EditAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    List<VirtualFile> files = e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY);
+    List<VirtualFile> files = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     editFiles(project, files, exceptions);
     if (!exceptions.isEmpty()) {
@@ -55,7 +54,7 @@ public class EditAction extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    List<VirtualFile> files = e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY);
+    List<VirtualFile> files = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     boolean enabled = files != null && !files.isEmpty();
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled);

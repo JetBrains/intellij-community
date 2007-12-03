@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -26,7 +27,7 @@ import java.util.List;
 public class RemoveChangeListAction extends AnAction {
   public void update(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
+    ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
     final boolean visible = canRemoveChangeLists(project, lists);
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
       e.getPresentation().setVisible(visible);
@@ -47,7 +48,7 @@ public class RemoveChangeListAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    final ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
+    final ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
     assert lists != null;
     int rc;
 

@@ -2,12 +2,12 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
@@ -26,7 +26,7 @@ public class OpenRepositoryVersionAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(DataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     assert changes != null;
     for(Change change: changes) {
       ContentRevision revision = change.getAfterRevision();
@@ -39,7 +39,7 @@ public class OpenRepositoryVersionAction extends AnAction {
 
   public void update(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(DataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     e.getPresentation().setEnabled(project != null && changes != null && hasValidChanges(changes));
   }
 

@@ -116,7 +116,7 @@ public class RollbackAction extends AnAction {
 
   @Nullable
   private static List<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e) {
-    final List<VirtualFile> modifiedWithoutEditing = e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY);
+    final List<VirtualFile> modifiedWithoutEditing = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     if (modifiedWithoutEditing != null && modifiedWithoutEditing.size() > 0) {
       return modifiedWithoutEditing;
     }
