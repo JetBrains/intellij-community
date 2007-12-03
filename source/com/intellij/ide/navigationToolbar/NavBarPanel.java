@@ -113,6 +113,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private Alarm myUpdateAlarm = new Alarm();
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.navigationToolbar.NavigationToolbarPanel");
   private MessageBusConnection myConnection;
+  private WeakTimerListener myWeakTimerListener;
 
   public NavBarPanel(final Project project) {
     myProject = project;
@@ -659,7 +660,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   @Nullable
   public Object getData(String dataId) {
     if (dataId.equals(DataConstants.PROJECT)) {
-      return myProject;
+      return !myProject.isDisposed() ? myProject : null;
     }
     if (dataId.equals(DataConstants.MODULE)) {
       final Module module = getSelectedElement(Module.class);
@@ -780,7 +781,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   public void addNotify() {
     super.addNotify();
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.addTimerListener(500, new WeakTimerListener(actionManager, myTimerListener));
+    myWeakTimerListener = new WeakTimerListener(actionManager, myTimerListener);
+    actionManager.addTimerListener(500, myWeakTimerListener);
+  }
+
+  public void removeNotify() {
+    super.removeNotify();
+    ActionManagerEx.getInstanceEx().removeTimerListener(myWeakTimerListener);
   }
 
   public void updateState(final boolean show) {
@@ -904,13 +911,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
 
       Window mywindow = SwingUtilities.windowForComponent(NavBarPanel.this);
       if (mywindow != null && !mywindow.isActive()) return;
-
-
-      final MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-      final MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
-      if (selectedPath.length > 0) {
-        return;
-      }
 
       final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
       if (window instanceof Dialog) {

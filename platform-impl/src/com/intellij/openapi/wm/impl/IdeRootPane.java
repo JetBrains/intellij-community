@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.StatusBarImpl;
@@ -38,7 +39,6 @@ public class IdeRootPane extends JRootPane{
 
   private JPanel myNorthPanel = new JPanel(new GridBagLayout());
   private List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<IdeRootPaneNorthExtension>();
-  private JPanel myNorthComponentsPanel = new JPanel(new GridBagLayout());
 
   /**
    * Current <code>ToolWindowsPane</code>. If there is no such pane then this field is null.
@@ -197,9 +197,9 @@ public class IdeRootPane extends JRootPane{
 
   public void deinstallNorthComponents(){
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      northComponent.dispose();
+      myNorthPanel.remove(northComponent.getComponent());
+      Disposer.dispose(northComponent);
     }
-    myNorthComponentsPanel.removeAll();
   }
 
   public IdeRootPaneNorthExtension findByName(String name) {

@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -180,15 +179,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   public void setProject(final Project project) {
     getStatusBar().cleanupCustomComponents();
     myProject = project;
-    if (myProject != null) {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){
-        public void run() {
-          if (myRootPane != null) {
-            myRootPane.installNorthComponents(project);
-          }
-        }
-      });
-    } else {
+    if (project != null) {
+      if (myRootPane != null) {
+        myRootPane.installNorthComponents(project);
+      }
+    }
+    else {
       if (myRootPane != null) { //already disposed
         myRootPane.deinstallNorthComponents();
       }
