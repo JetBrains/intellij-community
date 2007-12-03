@@ -15,6 +15,7 @@ import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.text.Document;
 import javax.swing.text.html.HTMLDocument;
 import java.io.IOException;
 import java.io.StringReader;
@@ -50,7 +51,10 @@ public class TipUIUtil {
       StringBuffer text = new StringBuffer(ResourceUtil.loadText(url));
       updateShortcuts(text);
       browser.read(new StringReader(text.toString()), null);
-      ((HTMLDocument)browser.getDocument()).setBase(url);
+      final Document document = browser.getDocument();
+      if (document instanceof HTMLDocument) {
+        ((HTMLDocument)document).setBase(url);
+      }
     }
     catch (IOException e) {
       setCantReadText(browser);
