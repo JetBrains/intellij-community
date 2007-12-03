@@ -5,6 +5,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.templateLanguages.TemplateDataElementType;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
@@ -468,6 +469,9 @@ public class Factory implements Constants, XmlElementType {
     }
     else if (type == ANNOTATION_PARAMETER_LIST) {
       element = new PsiAnnotationParameterListImpl();
+    }
+    else if (type instanceof TemplateDataElementType) {
+      element = new XmlFileElement(type);
     }
     else{
       for (int size = ourElementFactories.size(), i = 0; i < size; i++) {

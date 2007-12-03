@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +35,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   @NotNull Language getBaseLanguage();
   @NotNull Set<Language> getRelevantLanguages();
   @NotNull Set<Language> getPrimaryLanguages();
+  @Nullable
   PsiFile getPsi(@NotNull Language target);
 
   @NotNull List<PsiFile> getAllFiles();
@@ -62,7 +62,6 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   PsiElement findElementAt(int offset, Class<? extends Language> lang);
   @Nullable
   PsiReference findReferenceAt(final int offsetInElement, @NotNull Language language);
-  Lexer createLexer(@NotNull Language language);
 
   boolean isLockedByPsiOperations();
 }

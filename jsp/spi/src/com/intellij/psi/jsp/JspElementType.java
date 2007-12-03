@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.jsp.el.IELElementType;
 
@@ -48,8 +47,6 @@ public interface JspElementType extends JspTokenType {
   IElementType JSP_SCRIPTLET = JspSpiUtil.createSimpleChameleon("JSP_SCRIPTLET", JspTokenType.JSP_SCRIPTLET_START, JspTokenType.JSP_SCRIPTLET_END, 2);
   IElementType JSP_EXPRESSION = JspSpiUtil.createSimpleChameleon("JSP_EXPRESSION", JspTokenType.JSP_EXPRESSION_START, JspTokenType.JSP_EXPRESSION_END, 3);
   IElementType JSP_DECLARATION = JspSpiUtil.createSimpleChameleon("JSP_DECLARATION_NEW", JspTokenType.JSP_DECLARATION_START, JspTokenType.JSP_DECLARATION_END, 3);
-
-  IFileElementType JSP_TEMPLATE = JspSpiUtil.createTemplateType();
 
   IElementType JSP_CLASS = new IJspElementType("JSP_CLASS");
   IElementType JSP_METHOD_CALL = new IElementType("JSP_METHOD_CALL", StdLanguages.JAVA);

@@ -1,7 +1,5 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -22,7 +20,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -192,16 +189,6 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
 
   public String toString() {
     return "PsiCodeFragment:" + getName();
-  }
-
-  public Lexer createLexer() {
-    final PsiElement context = getContext();
-    if (context != null) {
-      return new JavaLexer(PsiUtil.getLanguageLevel(context));
-    }
-
-    final PsiManager manager = getManager();
-    return new JavaLexer(manager.getEffectiveLanguageLevel());
   }
 
   public boolean importClass(PsiClass aClass) {

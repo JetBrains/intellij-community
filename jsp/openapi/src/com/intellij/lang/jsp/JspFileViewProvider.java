@@ -17,6 +17,7 @@
 package com.intellij.lang.jsp;
 
 import com.intellij.lang.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -28,6 +29,7 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public interface JspFileViewProvider extends JspxFileViewProvider {
+  @NotNull
   Language getTemplateDataLanguage();
   Set<String> getKnownTaglibPrefixes();
 }

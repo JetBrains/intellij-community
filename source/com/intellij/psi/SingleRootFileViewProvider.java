@@ -9,7 +9,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -110,6 +109,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return getRelevantLanguages();
   }
 
+  @Nullable
   public final PsiFile getPsi(@NotNull Language target) {
     if (!isPhysical()) {
       ((PsiManagerEx)myManager).getFileManager().setViewProvider(getVirtualFile(), this);
@@ -343,6 +343,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
   }
 
+  public void setDocument(final SoftReference<Document> document) {
+    myDocument = document;
+  }
+
   public Document getDocument() {
     Document document = myDocument != null ? myDocument.get() : null;
     if (document == null/* TODO[ik] make this change && isEventSystemEnabled()*/) {
@@ -377,13 +381,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   public PsiReference findReferenceAt(final int offset, @NotNull final Language language) {
     final PsiFile psiFile = getPsi(language);
     return psiFile != null ? findReferenceAt(psiFile, offset) : null;
-  }
-
-  public Lexer createLexer(@NotNull final Language language) {
-    if (language != getBaseLanguage() && language != Language.ANY) return null;
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-    if (parserDefinition == null) return ((PsiFileImpl)getPsi(getBaseLanguage())).createLexer();
-    return parserDefinition.createLexer(getManager().getProject());
   }
 
   public boolean isLockedByPsiOperations() {

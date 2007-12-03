@@ -3,7 +3,6 @@ package com.intellij.extapi.psi;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lexer.Lexer;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -27,10 +26,6 @@ public abstract class MetadataPsiFileBase extends PsiFileImpl {
     myParserDefinition = parserDefinition;
     final IFileElementType nodeType = parserDefinition.getFileNodeType();
     init(nodeType, nodeType);
-  }
-
-  public Lexer createLexer() {
-    return myParserDefinition.createLexer(getProject());
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

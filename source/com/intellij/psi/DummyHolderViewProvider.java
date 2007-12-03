@@ -4,7 +4,6 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -123,10 +122,6 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
 
   public PsiReference findReferenceAt(final int offsetInElement, @NotNull final Language language) {
     return language == getBaseLanguage() ? findReferenceAt(offsetInElement) : null;
-  }
-
-  public Lexer createLexer(@NotNull final Language language) {
-    return myHolder.createLexer();
   }
 
   public boolean isLockedByPsiOperations() {

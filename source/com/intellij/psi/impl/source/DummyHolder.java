@@ -1,14 +1,9 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -18,7 +13,6 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -164,18 +158,6 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     if (myContext != null) return myContext.getManager().isInPackage(myContext, aPackage);
     if (aPackage == null) return true;
     return "".equals(aPackage.getQualifiedName());
-  }
-
-  public Lexer createLexer() {
-    final Language language = getLanguage();
-    if (language.equals(StdLanguages.JAVA)) {
-      LanguageLevel javaLanguageLevel;
-      final PsiElement context = getContext();
-      javaLanguageLevel = context != null ? PsiUtil.getLanguageLevel(context) : getManager().getEffectiveLanguageLevel();
-      return new JavaLexer(javaLanguageLevel);
-    }
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-    return parserDefinition.createLexer(getManager().getProject());
   }
 
   public FileElement getTreeElement() {

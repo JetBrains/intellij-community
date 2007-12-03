@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.jsp.JspxFileViewProvider;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -12,7 +11,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.html.ScriptSupportUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -80,10 +78,6 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
       }
     }
     return myType;
-  }
-
-  public Lexer createLexer() {
-    return new XmlPsiLexer();
   }
 
   public void subtreeChanged() {

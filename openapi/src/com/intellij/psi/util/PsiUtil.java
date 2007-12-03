@@ -982,12 +982,17 @@ public final class PsiUtil {
     return baseLanguage == StdLanguages.JSP || baseLanguage == StdLanguages.JSPX;
   }
 
-  public static JspFile getJspFile(final PsiElement element) {
+  public static PsiFile getTemplateLanguageFile(final PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
 
     final FileViewProvider viewProvider = containingFile.getViewProvider();
-    final PsiFile psiFile = viewProvider.getPsi(viewProvider.getBaseLanguage());
+    return viewProvider.getPsi(viewProvider.getBaseLanguage());
+  }
+
+
+  public static JspFile getJspFile(final PsiElement element) {
+    final PsiFile psiFile = getTemplateLanguageFile(element);
     return psiFile instanceof JspFile ? (JspFile)psiFile : null;
   }
 

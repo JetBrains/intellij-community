@@ -26,13 +26,13 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.diff.DiffTree;
+import com.intellij.psi.templateLanguages.TemplateDataElementType;
 
 public class BlockSupportImpl extends BlockSupport {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.BlockSupportImpl");
@@ -101,7 +101,7 @@ public class BlockSupportImpl extends BlockSupport {
       fileType = FileTypes.PLAIN_TEXT;
     }
 
-    if (treeFileElement.getElementType() == JspElementType.JSP_TEMPLATE ||
+    if (treeFileElement.getElementType() instanceof TemplateDataElementType ||
         treeFileElement.getFirstChildNode() instanceof ChameleonElement
       ) { // Not able to perform incremental reparse for template data in JSP
       makeFullParse(treeFileElement, newFileText, textLength, fileImpl, fileType);

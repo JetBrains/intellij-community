@@ -16,9 +16,8 @@
 
 package com.intellij.lang.jsp;
 
-import com.intellij.psi.FileViewProvider;
 import com.intellij.lang.Language;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,9 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 7:40:40 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface JspxFileViewProvider extends FileViewProvider {
+public interface JspxFileViewProvider extends TemplateLanguageFileViewProvider {
   Language JAVA_HOLDER_METHOD_TREE_LANGUAGE = new Language("JAVA_HOLDER_METHOD_TREE", "") {};
 
-  @Nullable
-  Language getTemplateDataLanguage();
 }

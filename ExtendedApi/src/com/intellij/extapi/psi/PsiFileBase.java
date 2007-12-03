@@ -3,7 +3,6 @@ package com.intellij.extapi.psi;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,10 +62,6 @@ public abstract class PsiFileBase extends PsiFileImpl {
   @NotNull
   public final Language getLanguage() {
     return myLanguage;
-  }
-
-  public final Lexer createLexer() {
-    return myParserDefinition.createLexer(getProject());
   }
 
   protected final FileElement createFileElement(final CharSequence docText) {

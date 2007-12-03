@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.ParsingContext;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement2;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
 import com.intellij.psi.jsp.AbstractJspJavaLexer;
@@ -265,7 +265,7 @@ public class ParseUtil implements Constants {
   }
 
   private static void passTokenOrChameleon(final ASTNode next, Lexer lexer, boolean gtUse) {
-    if (next instanceof LeafElement && (((LeafElement)next).isChameleon() || next instanceof OuterLanguageElement2)) {
+    if (next instanceof LeafElement && (((LeafElement)next).isChameleon() || next instanceof OuterLanguageElement)) {
       final int endOfChameleon = next.getTextLength() + lexer.getTokenStart();
       while (lexer.getTokenType() != null && lexer.getTokenEnd() < endOfChameleon) {
         lexer.advance();

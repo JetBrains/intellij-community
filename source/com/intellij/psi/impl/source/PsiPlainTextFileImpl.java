@@ -1,10 +1,6 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiReference;
@@ -31,10 +27,6 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
   @NotNull
   public FileType getFileType() {
     return myFileType;
-  }
-
-  public Lexer createLexer() {
-    return null;
   }
 
   @NotNull
