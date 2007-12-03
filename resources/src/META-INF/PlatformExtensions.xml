@@ -61,7 +61,9 @@
                       serviceImplementation="com.intellij.openapi.keymap.impl.KeymapGroupFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.editor.highlighter.EditorHighlighterFactory"
                       serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
-  
+  <applicationService serviceInterface="com.intellij.ide.dnd.DnDManager"
+                      serviceImplementation="com.intellij.ide.dnd.DnDManagerImpl"/>
+
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
   <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
