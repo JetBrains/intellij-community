@@ -441,13 +441,16 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<properties>" +
-                     "  <xxx>123</xxx>" +
+                     "  <xxx>1.0-beta-2</xxx>" +
                      "</properties>" +
+                                       
                      "<modules>" +
                      "  <module>m</module>" +
-                     "</modules>");
+                     "</modules>"
+    );
 
     createModulePom("m", "<groupId>test</groupId>" +
                          "<artifactId>m</artifactId>" +
@@ -461,8 +464,8 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                          "<build>" +
                          "  <extensions>" +
                          "    <extension>" +
-                         "      <groupId>some.groupId</groupId>" +
-                         "      <artifactId>some.artifactId</artifactId>" +
+                         "      <groupId>org.apache.maven.wagon</groupId>" +
+                         "      <artifactId>wagon-webdav</artifactId>" +
                          "      <version>${xxx}</version>" +
                          "    </extension>" +
                          "  </extensions>" +

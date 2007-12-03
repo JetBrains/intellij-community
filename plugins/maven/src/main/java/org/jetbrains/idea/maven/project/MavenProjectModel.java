@@ -21,9 +21,9 @@ public class MavenProjectModel {
   private final List<Node> rootProjects = new ArrayList<Node>();
 
   public MavenProjectModel(Map<VirtualFile, Module> filesToRefresh,
-                           final Collection<VirtualFile> importRoots,
-                           final Collection<String> profiles,
-                           final MavenProjectReader projectReader) {
+                           Collection<VirtualFile> importRoots,
+                           Collection<String> profiles,
+                           MavenProjectReader projectReader) {
 
     Map<VirtualFile, Module> fileToModule = new HashMap<VirtualFile, Module>();
 
@@ -38,14 +38,15 @@ public class MavenProjectModel {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
     while (fileToModule.size() != 0) {
-      if (indicator != null && indicator.isCanceled()) {
-        break;
-      }
-      final MavenProjectModel.Node node =
-        createMavenTree(projectReader, fileToModule.keySet().iterator().next(), profiles, fileToModule, false);
-      if (node != null) {
-        rootProjects.add(node);
-      }
+      if (indicator != null && indicator.isCanceled()) break;
+
+      MavenProjectModel.Node node = createMavenTree(projectReader,
+                                                    fileToModule.keySet().iterator().next(),
+                                                    profiles,
+                                                    fileToModule,
+                                                    false,
+                                                    indicator);
+      if (node != null) rootProjects.add(node);
     }
   }
 
@@ -55,18 +56,16 @@ public class MavenProjectModel {
   }
 
   @Nullable
-  private Node createMavenTree(final MavenProjectReader projectReader,
+  private Node createMavenTree(MavenProjectReader projectReader,
                                @NotNull VirtualFile pomFile,
-                               final Collection<String> profiles,
-                               final Map<VirtualFile, Module> unprocessedFiles,
-                               boolean imported) {
-    final Module linkedModule = unprocessedFiles.get(pomFile);
+                               Collection<String> profiles,
+                               Map<VirtualFile, Module> unprocessedFiles,
+                               boolean imported,
+                               ProgressIndicator indicator) {
+    Module linkedModule = unprocessedFiles.get(pomFile);
     unprocessedFiles.remove(pomFile);
 
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null && indicator.isCanceled()) {
-      return null;
-    }
+    if (indicator != null && indicator.isCanceled()) return null;
     if (indicator != null) {
       indicator.setText(ProjectBundle.message("maven.reading.pom", FileUtil.toSystemDependentName(pomFile.getPath())));
     }
@@ -89,19 +88,44 @@ public class MavenProjectModel {
 
     final Node node = new Node(pomFile, mavenProject, imported ? null : linkedModule);
 
+    if (!createChildNodes(projectReader,
+                          pomFile,
+                          profiles,
+                          unprocessedFiles,
+                          imported,
+                          indicator,
+                          mavenProject,
+                          node)) return null;
+    return node;
+  }
+
+  private boolean createChildNodes(MavenProjectReader projectReader,
+                                   VirtualFile pomFile,
+                                   Collection<String> profiles,
+                                   Map<VirtualFile,
+                                   Module> unprocessedFiles,
+                                   boolean imported,
+                                   ProgressIndicator indicator,
+                                   MavenProject mavenProject,
+                                   Node node) {
     for (String modulePath : ProjectUtil.collectRelativeModulePaths(mavenProject, profiles, new HashSet<String>())) {
       if (indicator != null && indicator.isCanceled()) {
-        return null;
+        return false;
       }
       VirtualFile childFile = getMavenModuleFile(pomFile, modulePath);
       if (childFile != null) {
-        final Node existingRoot = findExistingRoot(childFile);
+        Node existingRoot = findExistingRoot(childFile);
         if (existingRoot != null) {
           rootProjects.remove(existingRoot);
           node.mavenModules.add(existingRoot);
         }
         else if (imported || unprocessedFiles.containsKey(childFile)) {
-          Node module = createMavenTree(projectReader, childFile, profiles, unprocessedFiles, imported);
+          Node module = createMavenTree(projectReader,
+                                        childFile,
+                                        profiles,
+                                        unprocessedFiles,
+                                        imported,
+                                        indicator);
           if (module != null) {
             node.mavenModules.add(module);
           }
@@ -111,23 +135,7 @@ public class MavenProjectModel {
         LOG.info("Cannot find maven module " + modulePath);
       }
     }
-    return node;
-  }
-
-  public void resolve(final MavenProjectReader projectReader, final List<String> profiles) {
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    visit(new MavenProjectVisitorPlain() {
-      public void visit(final Node node) {
-        if (progressIndicator != null) {
-          if (progressIndicator.isCanceled()) {
-            setResult(node);
-            return;
-          }
-          progressIndicator.setText(ProjectBundle.message("maven.resolving", FileUtil.toSystemDependentName(node.getPath())));
-        }
-        node.resolve(projectReader, profiles);
-      }
-    });
+    return true;
   }
 
   @Nullable
@@ -152,6 +160,22 @@ public class MavenProjectModel {
 
       public Iterable<Node> getChildren(final Node node) {
         return null;
+      }
+    });
+  }
+
+  public void resolve(final MavenProjectReader projectReader, final List<String> profiles) {
+    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    visit(new MavenProjectVisitorPlain() {
+      public void visit(final Node node) {
+        if (progressIndicator != null) {
+          if (progressIndicator.isCanceled()) {
+            setResult(node);
+            return;
+          }
+          progressIndicator.setText(ProjectBundle.message("maven.resolving", FileUtil.toSystemDependentName(node.getPath())));
+        }
+        node.resolve(projectReader, profiles);
       }
     });
   }
