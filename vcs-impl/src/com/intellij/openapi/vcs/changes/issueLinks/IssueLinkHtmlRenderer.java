@@ -1,9 +1,9 @@
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.xml.util.XmlStringUtil;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration;
+import com.intellij.xml.util.XmlTagUtilBase;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class IssueLinkHtmlRenderer {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static String formatTextWithLinks(final Project project, final String c) {
     if (c == null) return "";
-    String comment = XmlStringUtil.escapeString(c);
+    String comment = XmlTagUtilBase.escapeString(c, false);
 
     StringBuilder commentBuilder = new StringBuilder();
     IssueNavigationConfiguration config = IssueNavigationConfiguration.getInstance(project);
