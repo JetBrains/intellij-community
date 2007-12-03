@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -20,10 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.impl.source.jsp.JspManager;
@@ -90,12 +86,10 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQu
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiFile containingFile = descriptor.getPsiElement().getContainingFile();
-    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(project, containingFile.getVirtualFile());
-    Editor editor = FileEditorManager.getInstance(project).openTextEditor(
-      openFileDescriptor, false
-    );
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    final PsiFile file = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()):null;
+    if (file == null || file.getVirtualFile() != containingFile.getVirtualFile()) return;
 
-    openFileDescriptor.navigate(false);
     try { invoke(project, editor, containingFile); } catch (IncorrectOperationException ex) { ex.printStackTrace(); }
   }
 
