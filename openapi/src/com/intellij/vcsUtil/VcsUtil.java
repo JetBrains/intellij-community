@@ -284,11 +284,6 @@ public class VcsUtil {
     });
   }
 
-  public static boolean isPathUnderProject(Project project, final String path) {
-    VirtualFile vfPath = getVirtualFile(path);
-    return isPathUnderProject(project, vfPath);
-  }
-
   public static boolean isPathUnderProject(Project project, final VirtualFile vf) {
     if (vf != null && !FileTypeManager.getInstance().isFileIgnored(vf.getPath())) {
       Module mod = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vf);
