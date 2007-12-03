@@ -1,0 +1,4 @@
+<extensions>
+  <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
+                      serviceImplementation="com.intellij.openapi.vcs.actions.VcsContextFactoryImpl"/>
+</extensions>

@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -131,6 +132,8 @@ public abstract class ProjectLevelVcsManager {
    * @return the relative path.
    */
   public abstract String getPresentableRelativePathFor(VirtualFile file);
+
+  public abstract String getPresentableRelativePath(ContentRevision fromRevision, ContentRevision toRevision);
 
   public abstract DataProvider createVirtualAndPsiFileDataProvider(VirtualFile[] virtualFileArray, VirtualFile selectedFile);
 

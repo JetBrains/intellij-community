@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.localVcs.LocalVcsItemsLocker;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
@@ -80,11 +79,6 @@ public abstract class AbstractVcs {
    */
   @Nullable
   public EditFileProvider getEditFileProvider() {
-    return null;
-  }
-
-  @Nullable
-  public LocalVcsItemsLocker getItemsLocker() {
     return null;
   }
 

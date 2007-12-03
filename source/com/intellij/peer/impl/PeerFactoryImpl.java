@@ -15,8 +15,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.editor.Document;
@@ -32,16 +30,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatusFactory;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.actions.VcsContextWrapper;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
@@ -70,7 +60,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.io.File;
 import java.net.InetAddress;
 
 public class PeerFactoryImpl extends PeerFactory {
@@ -242,64 +231,7 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public VcsContextFactory getVcsContextFactory() {
-    return new VcsContextFactory() {
-      public VcsContext createCachedContextOn(AnActionEvent event) {
-        return VcsContextWrapper.createCachedInstanceOn(event);
-      }
-
-      public VcsContext createContextOn(final AnActionEvent event) {
-        return new VcsContextWrapper(event.getDataContext(), event.getModifiers(), event.getPlace());
-      }
-
-      public FilePath createFilePathOn(@NotNull final VirtualFile virtualFile) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-          public FilePath compute() {
-            return new FilePathImpl(virtualFile);
-          }
-        });
-      }
-
-      public FilePath createFilePathOn(final File file) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-          public FilePath compute() {
-            return FilePathImpl.create(file);
-          }
-        });
-      }
-
-      public FilePath createFilePathOn(final File file, final boolean isDirectory) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-          public FilePath compute() {
-            return FilePathImpl.create(file, isDirectory);
-          }
-        });
-      }
-
-      @NotNull
-      public FilePath createFilePathOnNonLocal(final String path, final boolean isDirectory) {
-        return FilePathImpl.createNonLocal(path, isDirectory);
-      }
-
-      public FilePath createFilePathOnDeleted(final File file, final boolean isDirectory) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-          public FilePath compute() {
-            return FilePathImpl.createForDeletedFile(file, isDirectory);
-          }
-        });
-      }
-
-      public FilePath createFilePathOn(final VirtualFile parent, final String name) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<FilePath>() {
-          public FilePath compute() {
-            return new FilePathImpl(parent, name, false);
-          }
-        });
-      }
-
-      public LocalChangeList createLocalChangeList(Project project, @NotNull final String name) {
-        return LocalChangeListImpl.createEmptyChangeListImpl(project, name);
-      }
-    };
+    return VcsContextFactory.SERVICE.getInstance();
   }
 
   public StructureViewFactory getStructureViewFactory() {
@@ -334,4 +266,5 @@ public class PeerFactoryImpl extends PeerFactory {
   public EditorHighlighter createEditorHighlighter(final SyntaxHighlighter syntaxHighlighter, final EditorColorsScheme colors) {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(syntaxHighlighter, colors);
   }
+
 }

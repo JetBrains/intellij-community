@@ -17,7 +17,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.peer.PeerFactory;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -27,7 +27,7 @@ import java.util.Collection;
  */
 public abstract class LocalChangeList implements Cloneable, ChangeList {
   public static LocalChangeList createEmptyChangeList(Project project, @NotNull String name) {
-    return PeerFactory.getInstance().getVcsContextFactory().createLocalChangeList(project, name);
+    return VcsContextFactory.SERVICE.getInstance().createLocalChangeList(project, name);
   }
 
   public abstract Collection<Change> getChanges();

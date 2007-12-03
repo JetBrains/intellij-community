@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -43,4 +44,13 @@ public interface VcsContextFactory {
   FilePath createFilePathOn(VirtualFile parent, String name);
 
   LocalChangeList createLocalChangeList(Project project, @NotNull final String name);
+
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static VcsContextFactory getInstance() {
+      return ServiceManager.getService(VcsContextFactory.class);
+    }
+  }
 }

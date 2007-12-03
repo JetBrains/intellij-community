@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -77,10 +76,6 @@ public class CachedCvsContext implements CvsContext{
 
   public String getPlace() {
     return myVcsContext.getPlace();
-  }
-
-  public PsiElement getPsiElement() {
-    return myVcsContext.getPsiElement();
   }
 
   public File getSelectedIOFile() {

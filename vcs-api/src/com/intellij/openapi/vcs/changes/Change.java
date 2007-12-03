@@ -16,15 +16,11 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,19 +156,7 @@ public class Change {
       }
     }
     if (myMoved && myMoveRelativePath == null && project != null) {
-      // need to use parent path because the old file is already not there
-      final VirtualFile oldFile = myBeforeRevision.getFile().getParentPath().getVirtualFile();
-      final VirtualFile newFile = myAfterRevision.getFile().getParentPath().getVirtualFile();
-      if (oldFile != null && newFile != null) {
-        Module oldModule = ModuleUtil.findModuleForFile(oldFile, project);
-        Module newModule = ModuleUtil.findModuleForFile(newFile, project);
-        if (oldModule != newModule) {
-          myMoveRelativePath = ProjectLevelVcsManager.getInstance(project).getPresentableRelativePathFor(oldFile);
-        }
-      }
-      if (myMoveRelativePath == null) {
-        myMoveRelativePath = FileUtil.getRelativePath(myAfterRevision.getFile().getIOFile(), myBeforeRevision.getFile().getIOFile());
-      }
+      myMoveRelativePath = ProjectLevelVcsManager.getInstance(project).getPresentableRelativePath(myBeforeRevision, myAfterRevision);
     }
   }
 

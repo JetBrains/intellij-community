@@ -21,8 +21,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -33,10 +31,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -45,9 +41,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -93,82 +86,6 @@ public class VcsUtil {
         }
       }
     }
-  }
-
-  public static VcsSelection getSelection(VcsContext context) {
-
-    VcsSelection selectionFromEditor = getSelectionFromEditor(context);
-    if (selectionFromEditor != null) {
-      return selectionFromEditor;
-    }
-    return getSelectionFromPsiElement(context);
-  }
-
-  @Nullable
-  private static VcsSelection getSelectionFromPsiElement(VcsContext context) {
-    PsiElement psiElement = context.getPsiElement();
-    if (psiElement == null) {
-      return null;
-    }
-    if (!psiElement.isValid()) {
-      return null;
-    }
-    if (psiElement instanceof PsiCompiledElement) {
-      return null;
-    }
-
-    final String actionName;
-
-    if (psiElement instanceof PsiClass) {
-      actionName = VcsBundle.message("action.name.show.history.for.class");
-    }
-    else if (psiElement instanceof PsiField) {
-      actionName = VcsBundle.message("action.name.show.history.for.field");
-    }
-    else if (psiElement instanceof PsiMethod) {
-      actionName = VcsBundle.message("action.name.show.history.for.method");
-    }
-    else if (psiElement instanceof XmlTag) {
-      actionName = VcsBundle.message("action.name.show.history.for.tag");
-    }
-    else if (psiElement instanceof XmlText) {
-      actionName = VcsBundle.message("action.name.show.history.for.text");
-    }
-    else if (psiElement instanceof PsiCodeBlock) {
-      actionName = VcsBundle.message("action.name.show.history.for.code.block");
-    }
-    else if (psiElement instanceof PsiStatement) {
-      actionName = VcsBundle.message("action.name.show.history.for.statement");
-    }
-    else {
-      return null;
-    }
-
-    TextRange textRange = psiElement.getTextRange();
-    if (textRange == null) {
-      return null;
-    }
-
-    VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
-    if (virtualFile == null) {
-      return null;
-    }
-    if (!virtualFile.isValid()) {
-      return null;
-    }
-
-    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    return new VcsSelection(document, textRange, actionName);
-  }
-
-  private static VcsSelection getSelectionFromEditor(VcsContext context) {
-    Editor editor = context.getEditor();
-    if (editor == null) return null;
-    SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection()) {
-      return null;
-    }
-    return new VcsSelection(editor.getDocument(), selectionModel);
   }
 
   /**

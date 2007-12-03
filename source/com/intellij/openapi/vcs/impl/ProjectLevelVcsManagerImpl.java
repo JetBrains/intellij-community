@@ -48,6 +48,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -493,6 +494,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         return result.toString();
       }
     });
+  }
+
+  public String getPresentableRelativePath(final ContentRevision fromRevision, final ContentRevision toRevision) {
+    // need to use parent path because the old file is already not there
+    final VirtualFile oldFile = fromRevision.getFile().getParentPath().getVirtualFile();
+    final VirtualFile newFile = toRevision.getFile().getParentPath().getVirtualFile();
+    if (oldFile != null && newFile != null) {
+      Module oldModule = ModuleUtil.findModuleForFile(oldFile, myProject);
+      Module newModule = ModuleUtil.findModuleForFile(newFile, myProject);
+      if (oldModule != newModule) {
+        return getPresentableRelativePathFor(oldFile);
+      }
+    }
+    return FileUtil.getRelativePath(toRevision.getFile().getIOFile(), fromRevision.getFile().getIOFile());
   }
 
   public DataProvider createVirtualAndPsiFileDataProvider(VirtualFile[] virtualFileArray, VirtualFile selectedFile) {

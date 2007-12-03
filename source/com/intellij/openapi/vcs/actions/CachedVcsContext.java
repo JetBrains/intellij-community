@@ -38,7 +38,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -54,7 +53,6 @@ public class CachedVcsContext implements VcsContext {
   private final int myModifiers;
   private final Refreshable myRefreshablePanel;
   private final String myPlace;
-  private final PsiElement myPsiElement;
   private final File mySelectedIOFile;
   private final FilePath[] mySelectedFilePaths;
   private final FilePath mySelectedFilePath;
@@ -71,7 +69,6 @@ public class CachedVcsContext implements VcsContext {
     myModifiers = baseContext.getModifiers();
     myRefreshablePanel = baseContext.getRefreshableDialog();
     myPlace = baseContext.getPlace();
-    myPsiElement = baseContext.getPsiElement();
     mySelectedIOFile = baseContext.getSelectedIOFile();
     mySelectedFilePaths = baseContext.getSelectedFilePaths();
     mySelectedFilePath = baseContext.getSelectedFilePath();
@@ -81,10 +78,6 @@ public class CachedVcsContext implements VcsContext {
 
   public String getPlace() {
     return myPlace;
-  }
-
-  public PsiElement getPsiElement() {
-    return myPsiElement;
   }
 
   public Project getProject() {

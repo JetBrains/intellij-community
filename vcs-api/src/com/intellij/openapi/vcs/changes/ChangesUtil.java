@@ -24,9 +24,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +72,7 @@ public class ChangesUtil {
   }
 
   public static AbstractVcs getVcsForFile(File file, Project project) {
-    return ProjectLevelVcsManager.getInstance(project).getVcsFor(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file));
+    return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file));
   }
 
   public static Collection<FilePath> getPaths(final List<Change> changes) {

@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.history.impl.VcsBlockHistoryDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.vcsUtil.VcsSelection;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vcsUtil.VcsSelectionUtil;
 
 public class SelectedBlockHistoryAction extends AbstractVcsAction {
 
@@ -31,7 +31,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
     if (vcsHistoryProvider == null) return false;
     if (!vcs.fileExistsInVcs(new FilePathImpl(file))) return false;
 
-    VcsSelection selection = VcsUtil.getSelection(context);
+    VcsSelection selection = VcsSelectionUtil.getSelection(context);
     if (selection == null) {
       return false;
     }
@@ -40,7 +40,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
 
   public void actionPerformed(VcsContext context) {
     try {
-      VcsSelection selection = VcsUtil.getSelection(context);
+      VcsSelection selection = VcsSelectionUtil.getSelection(context);
       VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
       Project project = context.getProject();
       AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
@@ -71,7 +71,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
 
   protected void update(VcsContext context, Presentation presentation) {
     presentation.setEnabled(isEnabled(context));
-    VcsSelection selection = VcsUtil.getSelection(context);
+    VcsSelection selection = VcsSelectionUtil.getSelection(context);
     if (selection != null) {
       presentation.setText(selection.getActionName());
     }
