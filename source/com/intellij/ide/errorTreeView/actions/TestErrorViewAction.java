@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
@@ -95,7 +95,7 @@ public abstract class TestErrorViewAction extends AnAction{
 
   protected void openView(Project project, JComponent component) {
     final MessageView messageView = project.getComponent(MessageView.class);
-    final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, getContentName(), true);
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(component, getContentName(), true);
     messageView.getContentManager().addContent(content);
     messageView.getContentManager().setSelectedContent(content);
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);

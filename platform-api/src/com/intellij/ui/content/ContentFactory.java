@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.content;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
@@ -25,4 +26,13 @@ public interface ContentFactory {
   ContentManager createContentManager(ContentUI contentUI, boolean canCloseContents, Project project);
 
   ContentManager createContentManager(boolean canCloseContents, Project project);
+
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static ContentFactory getInstance() {
+      return ServiceManager.getService(ContentFactory.class);
+    }
+  }
 }
