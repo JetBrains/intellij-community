@@ -35,9 +35,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooserPanel;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
@@ -363,25 +360,13 @@ public class ApplyPatchDialog extends DialogWrapper {
   }
 
   private boolean detectDirectoryByName(final String patchFileName) {
-    String[] nameComponents = patchFileName.split("/");
-    final String patchName = nameComponents[nameComponents.length - 1];
-    final PsiFile[] psiFiles = PsiManager.getInstance(myProject).getShortNamesCache().getFilesByName(patchName);
-    if (psiFiles.length == 1) {
-      PsiDirectory parent = psiFiles [0].getContainingDirectory();
-      for(int i=nameComponents.length-2; i >= 0; i--) {
-        if (!parent.getName().equals(nameComponents [i]) || parent.getVirtualFile() == myProject.getBaseDir()) {
-          myDetectedStripLeadingDirs = i+1;
-          myDetectedBaseDirectory = parent.getVirtualFile().getPresentableUrl();
-          return true;
-        }
-        parent = parent.getParentDirectory();
-      }
-      if (parent == null) return false;
-      myDetectedStripLeadingDirs = 0;
-      myDetectedBaseDirectory = parent.getVirtualFile().getPresentableUrl();
-      return true;
-    }
-    return false;
+    PatchBaseDirectoryDetector detector = PatchBaseDirectoryDetector.getInstance(myProject);
+    if (detector == null) return false;
+    final PatchBaseDirectoryDetector.Result result = detector.detectBaseDirectory(patchFileName);
+    if (result == null) return false;
+    myDetectedBaseDirectory = result.baseDir;
+    myDetectedStripLeadingDirs = result.stripDirs;
+    return true;
   }
 
   private void queueUpdateStatus(final String s) {
