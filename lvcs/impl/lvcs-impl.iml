@@ -16,6 +16,7 @@
     <orderEntry type="library" name="Mocks" level="project" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="module" module-name="vcs-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
