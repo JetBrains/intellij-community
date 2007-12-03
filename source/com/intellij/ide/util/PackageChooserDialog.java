@@ -7,9 +7,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -29,6 +31,8 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -49,6 +53,16 @@ public class PackageChooserDialog extends PackageChooser {
   private DefaultTreeModel myModel;
   private Project myProject;
   private String myTitle;
+  private Module myModule;
+
+  public PackageChooserDialog(String title, @NotNull Module module) {
+    super(module.getProject(), true);
+    setTitle(title);
+    myTitle = title;
+    myProject = module.getProject();
+    myModule = module;
+    init();
+  }
 
   public PackageChooserDialog(String title, Project project) {
     super(project, true);
@@ -178,6 +192,7 @@ public class PackageChooserDialog extends PackageChooser {
       }, ModalityState.stateForComponent(getRootPane()));
   }
 
+  @Nullable
   private PsiPackage getTreeSelection() {
     if (myTree == null) return null;
     TreePath path = myTree.getSelectionPath();
@@ -188,12 +203,14 @@ public class PackageChooserDialog extends PackageChooser {
 
   private void createTreeModel() {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    projectFileIndex.iterateContent(
+    final FileIndex fileIndex = myModule != null ? ModuleRootManager.getInstance(myModule).getFileIndex() : ProjectRootManager.getInstance(myProject).getFileIndex();
+    fileIndex.iterateContent(
       new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
-          if (fileOrDir.isDirectory() && projectFileIndex.isInSourceContent(fileOrDir)){
-            PsiPackage aPackage = psiManager.findDirectory(fileOrDir).getPackage();
+          if (fileOrDir.isDirectory() && fileIndex.isInSourceContent(fileOrDir)){
+            final PsiDirectory psiDirectory = psiManager.findDirectory(fileOrDir);
+            LOG.assertTrue(psiDirectory != null);
+            PsiPackage aPackage = psiDirectory.getPackage();
             if (aPackage != null){
               addPackage(aPackage);
             }
