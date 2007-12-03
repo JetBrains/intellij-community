@@ -598,10 +598,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return updateInfoTree;
   }
 
-  public void addMappingFromModule(final Module module, final String activeVcsName) {
-    for(VirtualFile file: ModuleRootManager.getInstance(module).getContentRoots()) {
-      setDirectoryMapping(file.getPath(), activeVcsName);
-    }
+  public void cleanupMappings() {
     myDirectoryMappingList.cleanupMappings();
   }
 

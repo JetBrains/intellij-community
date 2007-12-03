@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.update.ActionInfo;
@@ -31,6 +30,4 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   public abstract void notifyDirectoryMappingChanged();
 
   public abstract UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo);
-
-  public abstract void addMappingFromModule(final Module module, final String activeVcsName);
 }
