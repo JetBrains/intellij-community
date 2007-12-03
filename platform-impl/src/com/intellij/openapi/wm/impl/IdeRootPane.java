@@ -197,7 +197,7 @@ public class IdeRootPane extends JRootPane{
 
   public void deinstallNorthComponents(){
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
-      myNorthPanel.remove(northComponent.getComponent());
+      northComponent.deinstallComponent(myNorthPanel);
       Disposer.dispose(northComponent);
     }
   }

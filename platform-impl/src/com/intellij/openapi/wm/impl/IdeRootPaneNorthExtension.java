@@ -18,6 +18,10 @@ public abstract class IdeRootPaneNorthExtension implements Disposable {
 
   public abstract void installComponent(Project project, final JPanel northPanel);
 
+  public void deinstallComponent(JPanel northPanel) {
+    northPanel.remove(getComponent());
+  }
+
   public abstract JComponent getComponent();
 
   public abstract void uiSettingsChanged(UISettings settings);
