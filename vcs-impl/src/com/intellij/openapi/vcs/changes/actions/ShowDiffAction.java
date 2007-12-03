@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,10 +48,10 @@ public class ShowDiffAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    List<Change> changesInList = e.getData(ChangesListView.CHANGES_IN_LIST_KEY);
+    List<Change> changesInList = e.getData(VcsDataKeys.CHANGES_IN_LIST_KEY);
     if (project == null || changes == null) return;
 
-    changes = checkLoadFakeRevisions(project, changes);
+    changes = ((ChangeListManagerEx) ChangeListManager.getInstance(project)).checkLoadFakeRevisions(changes);
     if (changes == null || changes.length == 0) {
       // VCS synchronization was cancelled
       return;
@@ -64,7 +63,7 @@ public class ShowDiffAction extends AnAction {
       if (checkNotifyBinaryDiff(selectedChange)) {
         return;
       }
-      ChangeList changeList = ((ChangeListManagerImpl) ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChange);
+      ChangeList changeList = ((ChangeListManagerEx) ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChange);
       if (changeList != null) {
         if (changesInList == null) {
           changesInList = new ArrayList<Change>(changeList.getChanges());
@@ -85,39 +84,6 @@ public class ShowDiffAction extends AnAction {
     }
 
     showDiffForChange(changes, index, project);
-  }
-
-  @Nullable
-  private static Change[] checkLoadFakeRevisions(final Project project, final Change[] changes) {
-    for(Change change: changes) {
-      if (change.getBeforeRevision() instanceof ChangeListManagerImpl.FakeRevision ||
-          change.getAfterRevision() instanceof ChangeListManagerImpl.FakeRevision) {
-        return loadFakeRevisions(project, changes);
-      }
-    }
-    return changes;
-  }
-
-  @Nullable
-  private static Change[] loadFakeRevisions(final Project project, final Change[] changes) {
-    for(Change change: changes) {
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      final ContentRevision afterRevision = change.getAfterRevision();
-      if (beforeRevision instanceof ChangeListManagerImpl.FakeRevision) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(beforeRevision.getFile());
-      }
-      if (afterRevision instanceof ChangeListManagerImpl.FakeRevision) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(afterRevision.getFile());
-      }
-    }
-    if (!ChangeListManager.getInstance(project).ensureUpToDate(true)) {
-      return null;
-    }
-    List<Change> matchingChanges = new ArrayList<Change>();
-    for(Change change: changes) {
-      matchingChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
-    }
-    return matchingChanges.toArray(new Change[matchingChanges.size()]);
   }
 
   public static void showDiffForChange(final Change[] changes, final int index, final Project project) {

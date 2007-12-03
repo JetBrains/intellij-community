@@ -48,7 +48,7 @@ import java.util.regex.Pattern;
 /**
  * @author max
  */
-public class ChangeListManagerImpl extends ChangeListManager implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
+public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
 
   private Project myProject;
@@ -215,6 +215,39 @@ public class ChangeListManagerImpl extends ChangeListManager implements ProjectC
         break;
       }
     }
+  }
+
+  @Nullable
+  public Change[] checkLoadFakeRevisions(final Change[] changes) {
+    for(Change change: changes) {
+      if (change.getBeforeRevision() instanceof FakeRevision ||
+          change.getAfterRevision() instanceof FakeRevision) {
+        return loadFakeRevisions(changes);
+      }
+    }
+    return changes;
+  }
+
+  @Nullable
+  private Change[] loadFakeRevisions(final Change[] changes) {
+    for(Change change: changes) {
+      final ContentRevision beforeRevision = change.getBeforeRevision();
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (beforeRevision instanceof FakeRevision) {
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(beforeRevision.getFile());
+      }
+      if (afterRevision instanceof FakeRevision) {
+        VcsDirtyScopeManager.getInstance(myProject).fileDirty(afterRevision.getFile());
+      }
+    }
+    if (!ensureUpToDate(true)) {
+      return null;
+    }
+    List<Change> matchingChanges = new ArrayList<Change>();
+    for(Change change: changes) {
+      matchingChanges.addAll(getChangesIn(ChangesUtil.getFilePath(change)));
+    }
+    return matchingChanges.toArray(new Change[matchingChanges.size()]);
   }
 
   private static class DisposedException extends RuntimeException {}
