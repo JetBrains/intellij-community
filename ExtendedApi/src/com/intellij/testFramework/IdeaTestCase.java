@@ -333,14 +333,7 @@ import java.util.HashSet;
   }
 
   private void delete(File file) {
-    if (file.isDirectory()) {
-      File[] files = file.listFiles();
-      for (File fileToDelete : files) {
-        delete(fileToDelete);
-      }
-    }
-
-    boolean b = file.delete();
+    boolean b = FileUtil.delete(file);
     if (!b && file.exists() && !myAssertionsInTestDetected) {
       assertTrue("Can't delete " + file.getAbsolutePath() + " in " + getFullName(), false);
     }
