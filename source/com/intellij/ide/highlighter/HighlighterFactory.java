@@ -2,12 +2,10 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.ide.highlighter.custom.CustomFileHighlighter;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +41,7 @@ public class HighlighterFactory {
   }
 
   public static EditorHighlighter createHighlighter(Project project, String fileName) {
-    return createHighlighter(EditorColorsManager.getInstance().getGlobalScheme(), fileName, project);
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileName);
   }
 
   public static EditorHighlighter createHighlighter(Project project, VirtualFile file) {
@@ -55,8 +53,7 @@ public class HighlighterFactory {
   }
 
   public static EditorHighlighter createHighlighter(EditorColorsScheme settings, String fileName, Project project) {
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    return createHighlighter(fileType, settings, project);
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(settings, fileName, project);
   }
 
   public static EditorHighlighter createHighlighter(FileType fileType, EditorColorsScheme settings, Project project) {

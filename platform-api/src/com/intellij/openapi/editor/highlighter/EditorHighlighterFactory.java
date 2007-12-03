@@ -25,4 +25,8 @@ public abstract class EditorHighlighterFactory {
   public abstract EditorHighlighter createEditorHighlighter(final VirtualFile file, final EditorColorsScheme globalScheme, final Project project);
 
   public abstract EditorHighlighter createEditorHighlighter(final Project project, final VirtualFile file);
+
+  public abstract EditorHighlighter createEditorHighlighter(final Project project, final String fileName);
+
+  public abstract EditorHighlighter createEditorHighlighter(final EditorColorsScheme settings, final String fileName, final Project project);
 }

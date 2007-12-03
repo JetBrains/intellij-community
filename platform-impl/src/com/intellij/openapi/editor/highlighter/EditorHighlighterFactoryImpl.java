@@ -1,9 +1,6 @@
 package com.intellij.openapi.editor.highlighter;
 
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
@@ -44,5 +41,14 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
 
   public EditorHighlighter createEditorHighlighter(final Project project, final VirtualFile file) {
     return createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);
+  }
+
+  public EditorHighlighter createEditorHighlighter(final Project project, final String fileName) {
+    return createEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme(), fileName, project);
+  }
+
+  public EditorHighlighter createEditorHighlighter(final EditorColorsScheme settings, final String fileName, final Project project) {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    return createEditorHighlighter(fileType, settings, project);
   }
 }
