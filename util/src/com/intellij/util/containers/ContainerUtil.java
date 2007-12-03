@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -481,4 +482,16 @@ public class ContainerUtil {
     }
     return false;
   }
+
+  public static <T> List<T> unfold(@Nullable T t, @NotNull NullableFunction<T,T> next) {
+    if (t == null) return Collections.emptyList();
+
+    final ArrayList<T> list = new ArrayList<T>();
+    while (t != null) {
+      list.add(t);
+      t = next.fun(t);
+    }
+    return list;
+  }
+
 }
