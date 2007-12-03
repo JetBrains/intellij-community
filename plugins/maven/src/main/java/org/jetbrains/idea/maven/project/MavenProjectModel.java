@@ -10,10 +10,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.util.MavenEnv;
-import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.core.util.ProjectUtil;
-import org.jetbrains.idea.maven.core.util.Tree;
+import org.jetbrains.idea.maven.core.util.*;
 
 import java.util.*;
 
@@ -277,6 +274,6 @@ public class MavenProjectModel {
   }
 
   private static String getNormalizedPath(MavenProject mavenProject) {
-    return FileUtil.toSystemIndependentName(mavenProject.getFile().getAbsolutePath());
+    return new Path(mavenProject.getFile().getPath()).getPath();
   }
 }

@@ -7,11 +7,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.core.util.Path;
+import org.jetbrains.idea.maven.core.util.Url;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,13 +82,13 @@ class RootModelAdapter {
   }
 
   public void addSourceDir(String path, boolean testSource) {
-    String url = toUrl(path);
-    findOrCreateContentRoot(url).addSourceFolder(url, testSource);
+    Url url = toUrl(path);
+    findOrCreateContentRoot(url).addSourceFolder(url.getUrl(), testSource);
   }
 
   public void excludeRoot(String path) {
-    String url = toUrl(path);
-    findOrCreateContentRoot(url).addExcludeFolder(url);
+    Url url = toUrl(path);
+    findOrCreateContentRoot(url).addExcludeFolder(url.getUrl());
   }
 
   public void useProjectOutput() {
@@ -97,22 +97,20 @@ class RootModelAdapter {
 
   public void useModuleOutput(String production, String test) {
     modifiableRootModel.inheritCompilerOutputPath(false);
-    modifiableRootModel.setCompilerOutputPath(toUrl(production));
-    modifiableRootModel.setCompilerOutputPathForTests(toUrl(test));
+    modifiableRootModel.setCompilerOutputPath(toUrl(production).getUrl());
+    modifiableRootModel.setCompilerOutputPathForTests(toUrl(test).getUrl());
   }
 
-  private String toUrl(String path) {
-    path = PathUtil.getCanonicalPath(path);
-    path = FileUtil.toSystemIndependentName(path);
-    return VfsUtil.pathToUrl(path);
+  private Url toUrl(String path) {
+    return new Path(path).toUrl();
   }
 
-  ContentEntry findOrCreateContentRoot(String url) {
+  ContentEntry findOrCreateContentRoot(Url url) {
     try {
       for (ContentEntry e : modifiableRootModel.getContentEntries()) {
-        if (FileUtil.isAncestor(new File(e.getUrl()), new File(url), false)) return e;
+        if (FileUtil.isAncestor(new File(e.getUrl()), new File(url.getUrl()), false)) return e;
       }
-      return modifiableRootModel.addContentEntry(url);
+      return modifiableRootModel.addContentEntry(url.getUrl());
     }
     catch (IOException e) {
       throw new RuntimeException(e);

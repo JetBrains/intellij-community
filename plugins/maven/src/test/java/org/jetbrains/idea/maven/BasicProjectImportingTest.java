@@ -179,6 +179,44 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
     assertModules("project", "m (test.group1)", "m (test.group2)");
   }
 
+  public void testModuleWithRelativePath() throws IOException {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>../m</module>" +
+                     "</modules>");
+
+    createModulePom("../m", "<groupId>test</groupId>" +
+                            "<artifactId>m</artifactId>" +
+                            "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m");
+  }
+
+  public void testModuleWithRelativeParent() throws IOException {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>../parent</relativePath>" +
+                     "</parent>");
+
+    createModulePom("../parent", "<groupId>test</groupId>" +
+                                 "<artifactId>parent</artifactId>" +
+                                 "<version>1</version>");
+
+    importProject();
+    assertModules("project");
+  }
+
   public void testTestJarDependencies() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
