@@ -1,7 +1,5 @@
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -232,10 +230,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         }
       }
     }
-  }
-
-  public LocalHistoryAction startLocalHistoryAction(String actionName) {
-    return LocalHistory.startAction(myProject, actionName);
   }
 
   public List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters) {

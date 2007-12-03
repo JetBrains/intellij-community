@@ -31,6 +31,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -130,8 +131,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
               progressIndicator.setText2("");
             }
 
-            final LocalHistoryAction action = AbstractVcsHelper.getInstance(project).startLocalHistoryAction(VcsBundle.message(
-              "local.history.update.from.vcs"));
+            final LocalHistoryAction action = LocalHistory.startAction(project, VcsBundle.message("local.history.update.from.vcs"));
             try {
               final Semaphore semaphore = new Semaphore();
               semaphore.down();

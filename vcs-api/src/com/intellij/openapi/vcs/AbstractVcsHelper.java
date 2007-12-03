@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -46,8 +45,6 @@ public abstract class AbstractVcsHelper {
   }
 
   public abstract void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName);
-
-  public abstract LocalHistoryAction startLocalHistoryAction(String actionName);
 
   /**
    * Runs the runnable inside the vcs transaction (if needed), collects all exceptions, commits/rollbacks transaction
