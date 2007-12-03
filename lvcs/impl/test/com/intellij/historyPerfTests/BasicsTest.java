@@ -7,17 +7,16 @@ import com.intellij.history.integration.TestIdeaGateway;
 import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.history.integration.Updater;
 import com.intellij.history.utils.RunnableAdapter;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import static org.easymock.classextension.EasyMock.*;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.List;
 
-@Bombed(month = Calendar.DECEMBER, day = 10, user = "anton")
+@Ignore
 public class BasicsTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testBuildingTree() {

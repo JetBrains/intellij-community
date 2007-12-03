@@ -6,11 +6,12 @@ import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.idea.Bombed;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.io.IOException;
 import java.util.Calendar;
 
-@Bombed(month = Calendar.DECEMBER, day = 10, user = "anton")
+@Ignore
 public class CompressingContentStorageTest extends PerformanceTestCase {
   CompressingContentStorage s;
 

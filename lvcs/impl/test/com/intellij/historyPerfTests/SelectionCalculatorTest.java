@@ -4,14 +4,13 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.ui.models.NullProgress;
 import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.history.utils.RunnableAdapter;
-import com.intellij.idea.Bombed;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Calendar;
 import java.util.List;
 
-@Bombed(month = Calendar.DECEMBER, day = 10, user = "anton")
+@Ignore
 public class SelectionCalculatorTest extends LocalVcsPerformanceTestCase {
   private List<Revision> rr;
   private SelectionCalculator c;

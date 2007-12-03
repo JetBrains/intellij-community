@@ -1,12 +1,10 @@
 package com.intellij.historyPerfTests;
 
 import com.intellij.history.utils.RunnableAdapter;
-import com.intellij.idea.Bombed;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Calendar;
-
-@Bombed(month = Calendar.DECEMBER, day = 10, user = "anton")
+@Ignore
 public class MemoryTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testMemoryAfterFirstBuild() {

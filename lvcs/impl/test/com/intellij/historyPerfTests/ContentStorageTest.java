@@ -6,6 +6,7 @@ import com.intellij.idea.Bombed;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-@Bombed(month = Calendar.DECEMBER, day = 10, user = "anton")
+@Ignore
 public class ContentStorageTest extends PerformanceTestCase {
   int ITERATIONS_COUNT = 1000;
   int MAX_RECORD_SIZE = 20 * 1024;
