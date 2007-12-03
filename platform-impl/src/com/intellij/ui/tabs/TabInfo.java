@@ -13,6 +13,9 @@ public final class TabInfo {
   static final String ICON = "icon";
   static final String TEXT = "text";
   static final String TAB_ACTION_GROUP = "tabActionGroup";
+  static final String ALERT_ICON = "alertIcon";
+
+  static final String ALERT_STATUS = "alertStatus";
 
   private JComponent myComponent;
   private JComponent myPreferredFocusableComponent;
@@ -31,6 +34,11 @@ public final class TabInfo {
 
   private ActionGroup myTabLabelActions;
   private String myTabActionPlace;
+
+  private Icon myAlertIcon;
+  private boolean myAlerting;
+
+  private int myBlinkCount;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -54,6 +62,8 @@ public final class TabInfo {
     myChangeSupport.firePropertyChange(ICON, old, icon);
     return this;
   }
+
+
 
   ActionGroup getGroup() {
     return myGroup;
@@ -132,6 +142,33 @@ public final class TabInfo {
   @Nullable
   JComponent getLastFocusOwner() {
     return myLastFocusOwner != null ? myLastFocusOwner.get() : null;
+  }
+
+  public TabInfo setAlertIcon(final Icon alertIcon) {
+    Icon old = myAlertIcon;
+    myAlertIcon = alertIcon;
+    myChangeSupport.firePropertyChange(ALERT_ICON, old, myAlertIcon);
+    return this;
+  }
+
+  public void startAlerting() {
+    boolean old = myAlerting;
+    myAlerting = true;
+    myChangeSupport.firePropertyChange(ALERT_STATUS, old, myAlerting);
+  }
+
+  public void stopAlerting() {
+    boolean old = myAlerting;
+    myAlerting = false;
+    myChangeSupport.firePropertyChange(ALERT_STATUS, old, myAlerting);
+  }
+
+  int getBlinkCount() {
+    return myBlinkCount;
+  }
+
+  void setBlinkCount(final int blinkCount) {
+    myBlinkCount = blinkCount;
   }
 
   public String toString() {

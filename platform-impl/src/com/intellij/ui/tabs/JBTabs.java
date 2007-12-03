@@ -17,12 +17,14 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObjectCheck;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -55,7 +57,6 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private List<MouseListener> myTabMouseListeners = new ArrayList<MouseListener>();
   private List<TabsListener> myTabListeners = new ArrayList<TabsListener>();
   private boolean myFocused;
-
 
   private ActionGroup myPopupGroup;
   private String myPopupPlace;
@@ -95,6 +96,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   private boolean myRequestFocusOnLastFocusedComponent = false;
   private boolean myListenerAdded;
+  private final Set<TabInfo> myAttractions = new HashSet<TabInfo>();
+  private Animator myAnimator;
 
   public JBTabs(@Nullable Project project, ActionManager actionManager, Disposable parent) {
     myProject = project;
@@ -149,6 +152,20 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         removeTimerUpdate();
       }
     });
+
+    myAnimator = new Animator("JBTabs Attractions", 2, 500, true, 0, -1) {
+      public void paintNow(final int frame) {
+        repaintAttractions();
+      }
+    };
+
+    Disposer.register(parent, myAnimator);
+  }
+
+  private void repaintAttractions() {
+    for (TabInfo each : myAttractions) {
+      myInfo2Label.get(each);
+    }
   }
 
   public void addNotify() {
@@ -177,6 +194,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   public void run() {
+    updateTabActions();
+  }
+
+  private void updateTabActions() {
     for (TabLabel label : myInfo2Label.values()) {
       label.updateTabActions();
     }
@@ -320,6 +341,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     update(false);
     updateListeners();
     updateSelected();
+
+    updateTabActions();
   }
 
   private void updateSelected() {
@@ -395,6 +418,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       updateIcon(tabInfo);
+    } else if (TabInfo.ALERT_ICON.equals(evt.getPropertyName())) {
+      updateAttractionIcon(tabInfo);
+    } else if (TabInfo.ALERT_STATUS.equals(evt.getPropertyName())) {
+      boolean start = ((Boolean)evt.getNewValue()).booleanValue();
+      updateAttraction(tabInfo, start);
     } else if (TabInfo.TAB_ACTION_GROUP.equals(evt.getPropertyName())) {
       updateTabActions(tabInfo);
     }
@@ -404,6 +432,24 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   private void updateIcon(final TabInfo tabInfo) {
     myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
+  }
+
+  private void updateAttractionIcon(final TabInfo tabInfo) {
+    myInfo2Label.get(tabInfo).setAttractionIcon(tabInfo.getIcon());
+  }
+
+  private void updateAttraction(final TabInfo tabInfo, boolean start) {
+    if (start) {
+      myAttractions.add(tabInfo);
+    } else {
+      myAttractions.remove(tabInfo);
+    }
+
+    if (start && !myAnimator.isRunning()) {
+      myAnimator.resume();
+    } else if (!start && myAttractions.size() == 0) {
+      myAnimator.suspend();
+    }
   }
 
   private void updateText(final TabInfo tabInfo) {
@@ -1129,6 +1175,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       setLayout(new BorderLayout(myLabel.getIconTextGap() * 2, 0));
       add(myLabel, BorderLayout.CENTER);
 
+      myLabel.setIcon(new LayeredIcon(2));
 
       addMouseListener(new MouseAdapter() {
         public void mousePressed(final MouseEvent e) {
@@ -1188,7 +1235,15 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
 
     public void setIcon(final Icon icon) {
-      myLabel.setIcon(icon);
+      ((LayeredIcon)myLabel.getIcon()).setIcon(icon, 0);
+    }
+
+    public void setAttractionIcon(final Icon icon) {
+      ((LayeredIcon)myLabel.getIcon()).setIcon(icon, 1);
+    }
+
+    public void setAttraction(boolean enabled) {
+      ((LayeredIcon)myLabel.getIcon()).setLayerEnabled(1, enabled);
     }
 
     public TabInfo getInfo() {
@@ -1572,6 +1627,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     return isNavigationVisible() ? this : null;
   }
 
+
   public static void main(String[] args) {
     System.out.println("JBTabs.main");
 
@@ -1660,7 +1716,23 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       }
     })).setText("Tree1").setActions(new DefaultActionGroup(), null)
       .setIcon(IconLoader.getIcon("/debugger/frame.png"));
-    tabs.addTab(new TabInfo(new JTree())).setText("Tree2");
+
+    final TabInfo toAnimate1 = new TabInfo(new JTree());
+    final JCheckBox attract1 = new JCheckBox("Attract 1");
+    attract1.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        toAnimate1.setAlertIcon(IconLoader.getIcon("/nodes/tabPin.png"));
+        if (attract1.isSelected()) {
+          toAnimate1.startAlerting();
+        } else {
+          toAnimate1.stopAlerting();
+        }
+      }
+    });
+
+    south.add(attract1);
+
+    tabs.addTab(toAnimate1).setText("Tree2");
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 2").setActions(new DefaultActionGroup(), null);
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 3").setActions(new DefaultActionGroup(), null);

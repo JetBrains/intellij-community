@@ -24,6 +24,7 @@ import java.util.Arrays;
 public class LayeredIcon implements Icon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
+  private final boolean[] myDisabledLayers;
   private final int[] myHShifts;
   private final int[] myVShifts;
 
@@ -34,6 +35,7 @@ public class LayeredIcon implements Icon {
 
   public LayeredIcon(int layerCount) {
     myIcons = new Icon[layerCount];
+    myDisabledLayers = new boolean[layerCount];
     myHShifts = new int[layerCount];
     myVShifts = new int[layerCount];
   }
@@ -83,9 +85,17 @@ public class LayeredIcon implements Icon {
   public void paintIcon(Component c, Graphics g, int x, int y) {
     for(int i = 0; i < myIcons.length; i++){
       Icon icon = myIcons[i];
-      if (icon == null) continue;
+      if (icon == null || myDisabledLayers[i]) continue;
       icon.paintIcon(c, g, myXShift + x + myHShifts[i], myYShift + y + myVShifts[i]);
     }
+  }
+
+  public boolean isLayerEnabled(int layer) {
+    return !myDisabledLayers[layer];
+  }
+
+  public void setLayerEnabled(int layer, boolean enabled) {
+    myDisabledLayers[layer] = !enabled;
   }
 
   public int getIconWidth() {

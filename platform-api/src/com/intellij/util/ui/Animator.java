@@ -16,9 +16,11 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.openapi.Disposable;
+
 import javax.swing.*;
 
-public abstract class Animator {
+public abstract class Animator implements Disposable {
 
   private String myName;
   private int myTotalFrames;
