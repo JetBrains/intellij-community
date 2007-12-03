@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -38,7 +39,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -68,7 +68,7 @@ public class VcsUtil {
   }
 
   public static void markFileAsDirty(final Project project, final String path) {
-    final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path));
+    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path));
     markFileAsDirty( project, filePath );
   }
 
@@ -287,7 +287,7 @@ public class VcsUtil {
   }
 
   public static FilePath getFilePath(File file) {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file);
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
   }
 
   public static FilePath getFilePath(String path, boolean isDirectory) {
@@ -295,11 +295,11 @@ public class VcsUtil {
   }
 
   public static FilePath getFilePath(File file, boolean isDirectory) {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file, isDirectory);
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file, isDirectory);
   }
 
   public static FilePath getFilePathForDeletedFile(String path, boolean isDirectory) {
-    return PeerFactory.getInstance().getVcsContextFactory().createFilePathOnDeleted(new File(path), isDirectory);
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(new File(path), isDirectory);
   }
 
   /**
