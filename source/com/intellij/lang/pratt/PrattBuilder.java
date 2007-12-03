@@ -158,7 +158,7 @@ public class PrattBuilder {
   }
 
   @Nullable
-  private IElementType getTokenType() {
+  public IElementType getTokenType() {
     return myBuilder.getTokenType();
   }
 
