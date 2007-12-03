@@ -2,9 +2,9 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiNewExpression;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
@@ -18,7 +18,15 @@ public class AnonymousToInnerAction extends BaseRefactoringAction {
     return false;
   }
 
-  protected boolean isAvailableOnElementInEditor(final PsiElement element) {
+  protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
+    Document document = editor.getDocument();
+    PsiFile file = PsiDocumentManager.getInstance(element.getProject()).getPsiFile(document);
+    if (file != null) {
+      final PsiElement targetElement = file.findElementAt(editor.getCaretModel().getOffset());
+      if (PsiTreeUtil.getParentOfType(targetElement, PsiAnonymousClass.class) != null) {
+        return true;
+      }
+    }
     if (PsiTreeUtil.getParentOfType(element, PsiAnonymousClass.class) != null) {
       return true;
     }

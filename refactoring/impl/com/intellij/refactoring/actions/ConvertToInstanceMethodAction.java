@@ -1,6 +1,7 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiIdentifier;
@@ -20,7 +21,7 @@ public class ConvertToInstanceMethodAction extends BaseRefactoringAction {
     return elements.length == 1 && elements[0] instanceof PsiMethod;
   }
 
-  protected boolean isAvailableOnElementInEditor(PsiElement element) {
+  protected boolean isAvailableOnElementInEditor(PsiElement element, final Editor editor) {
     if (element instanceof PsiIdentifier) element = element.getParent();
     return element instanceof PsiMethod && ((PsiMethod) element).hasModifierProperty(PsiModifier.STATIC);
   }

@@ -22,7 +22,7 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   protected abstract boolean isEnabledOnElements(PsiElement[] elements);
 
-  protected boolean isAvailableOnElementInEditor(final PsiElement element) {
+  protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
     return true;
   }
 
@@ -91,7 +91,7 @@ public abstract class BaseRefactoringAction extends AnAction {
         }
       }
       final boolean isEnabled = element != null && !isSyntheticJsp(element) && isAvailableForLanguage(element.getLanguage()) &&
-        isAvailableOnElementInEditor(element);
+        isAvailableOnElementInEditor(element, editor);
       if (!isEnabled) {
         disableAction(e);
       }

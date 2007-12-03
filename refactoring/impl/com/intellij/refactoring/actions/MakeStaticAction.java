@@ -9,6 +9,7 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.makeStatic.MakeStaticHandler;
@@ -22,7 +23,7 @@ public class MakeStaticAction extends BaseRefactoringAction {
     return (elements.length == 1) && (elements[0] instanceof PsiMethod) && !((PsiMethod)elements[0]).isConstructor();
   }
 
-  protected boolean isAvailableOnElementInEditor(PsiElement element) {
+  protected boolean isAvailableOnElementInEditor(PsiElement element, final Editor editor) {
     if (element instanceof PsiIdentifier) {
       element = element.getParent();
     }

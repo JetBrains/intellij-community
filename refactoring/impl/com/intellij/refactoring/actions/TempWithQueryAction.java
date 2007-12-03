@@ -2,6 +2,7 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -20,7 +21,7 @@ public class TempWithQueryAction extends BaseRefactoringAction{
     return new TempWithQueryHandler();
   }
 
-  protected boolean isAvailableOnElementInEditor(final PsiElement element) {
+  protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
     return element instanceof PsiLocalVariable && ((PsiLocalVariable) element).getInitializer() != null; 
   }
 }
