@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.table.TableView;
@@ -252,7 +251,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       String rightText = decodeContent(file, mergeData.LAST);
       String originalText = decodeContent(file, mergeData.ORIGINAL);
 
-      DiffRequestFactory diffRequestFactory = PeerFactory.getInstance().getDiffRequestFactory();
+      DiffRequestFactory diffRequestFactory = DiffRequestFactory.getInstance();
       MergeRequest request = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, myProject,
                                                                    ActionButtonPresentation.createApplyButton());
       String lastVersionTitle;
