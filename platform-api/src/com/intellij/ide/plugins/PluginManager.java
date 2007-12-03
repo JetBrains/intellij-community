@@ -675,6 +675,11 @@ public class PluginManager {
   }
 
   @Nullable
+  public static IdeaPluginDescriptorImpl loadDescriptorFromJar(File file) {
+    return loadDescriptorFromJar(file, PLUGIN_XML);
+  }
+
+  @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(File file, @NonNls String fileName) {
     try {
 

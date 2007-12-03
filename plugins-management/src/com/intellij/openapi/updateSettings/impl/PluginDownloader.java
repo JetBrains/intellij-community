@@ -67,9 +67,10 @@ public class PluginDownloader {
 
   public boolean prepareToInstall(ProgressIndicator pi) throws IOException {
     File oldFile = null;
+    IdeaPluginDescriptor ideaPluginDescriptor = null;
     if (PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
-      final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
+      ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(ideaPluginDescriptor != null);
       if (myPluginVersion != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), myPluginVersion) >= 0) return false;
       oldFile = ideaPluginDescriptor.getPath();
@@ -95,10 +96,15 @@ public class PluginDownloader {
       return false;
     }
 
-    if (oldFile != null) {
-      // add command to delete the 'action script' file
-      StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(oldFile);
-      StartupActionScriptManager.addActionCommand(deleteOld);
+    if (ideaPluginDescriptor != null) {
+      final IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(file);
+      if (descriptor == null) return false;
+      if (IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) return false; //was not updated
+      if (oldFile != null) {
+        // add command to delete the 'action script' file
+        StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(oldFile);
+        StartupActionScriptManager.addActionCommand(deleteOld);
+      }
     }
 
     //noinspection HardCodedStringLiteral
