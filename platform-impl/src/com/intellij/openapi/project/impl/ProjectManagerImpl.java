@@ -585,6 +585,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       public void run() {
         LOG.info("Reloading project.");
         ProjectImpl projectImpl = (ProjectImpl)project[0];
+        if (projectImpl.isDisposed()) return;
         IProjectStore projectStore = projectImpl.getStateStore();
         final String location = projectImpl.getLocation();
 
