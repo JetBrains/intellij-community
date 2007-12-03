@@ -1,28 +1,19 @@
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.codeInsight.CodeSmellInfo;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.actions.CloseTabToolbarAction;
-import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,7 +21,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -55,7 +45,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.Content;
@@ -74,7 +63,9 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
@@ -86,51 +77,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     myProject = project;
   }
 
-  public void showCodeSmellErrors(final List<CodeSmellInfo> smellList) {
-    Collections.sort(smellList, new Comparator<CodeSmellInfo>() {
-      public int compare(final CodeSmellInfo o1, final CodeSmellInfo o2) {
-        return o1.getTextRange().getStartOffset() - o2.getTextRange().getStartOffset();
-      }
-    });
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
-        if (smellList.isEmpty()) {
-          return;
-        }
-
-        final VcsErrorViewPanel errorTreeView = new VcsErrorViewPanel(myProject);
-        openMessagesView(errorTreeView, VcsBundle.message("code.smells.error.messages.tab.name"));
-
-        FileDocumentManager fileManager = FileDocumentManager.getInstance();
-
-        for (CodeSmellInfo smellInfo : smellList) {
-          final VirtualFile file = fileManager.getFile(smellInfo.getDocument());
-          final OpenFileDescriptor navigatable =
-            new OpenFileDescriptor(myProject, file, smellInfo.getStartLine(), smellInfo.getStartColumn());
-          final String exportPrefix = NewErrorTreeViewPanel.createExportPrefix(smellInfo.getStartLine() + 1);
-          final String rendererPrefix =
-            NewErrorTreeViewPanel.createRendererPrefix(smellInfo.getStartLine() + 1, smellInfo.getStartColumn() + 1);
-          if (smellInfo.getSeverity() == HighlightSeverity.ERROR) {
-            errorTreeView.addMessage(MessageCategory.ERROR, new String[]{smellInfo.getDescription()}, file.getPresentableUrl(), navigatable,
-                                     exportPrefix, rendererPrefix, null);
-          }
-          else {//if (smellInfo.getSeverity() == HighlightSeverity.WARNING) {
-            errorTreeView.addMessage(MessageCategory.WARNING, new String[]{smellInfo.getDescription()}, file.getPresentableUrl(),
-                                     navigatable, exportPrefix, rendererPrefix, null);
-          }
-
-        }
-
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
-      }
-
-    });
-
-  }
-
-  private void openMessagesView(final VcsErrorViewPanel errorTreeView, final String tabDisplayName) {
+  public void openMessagesView(final VcsErrorViewPanel errorTreeView, final String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, new Runnable() {
       public void run() {
@@ -542,92 +489,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return fileMergeDialog.getProcessedFiles();
   }
 
-  public List<CodeSmellInfo> findCodeSmells(final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
-    final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
-    final PsiManager manager = PsiManager.getInstance(myProject);
-    final FileDocumentManager fileManager = FileDocumentManager.getInstance();
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        @Nullable final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        for (int i = 0; i < filesToCheck.size(); i++) {
-
-          if (progress != null && progress.isCanceled()) throw new ProcessCanceledException();
-
-          VirtualFile file = filesToCheck.get(i);
-
-          if (progress != null) {
-            progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
-            progress.setFraction((double)i / (double)filesToCheck.size());
-          }
-
-          final PsiFile psiFile = manager.findFile(file);
-          if (psiFile != null) {
-            final Document document = fileManager.getDocument(file);
-            if (document != null) {
-              final List<CodeSmellInfo> codeSmells = findCodeSmells(psiFile, progress, document);
-              result.addAll(codeSmells);
-            }
-          }
-        }
-      }
-    }, VcsBundle.message("checking.code.smells.progress.title"), true, myProject);
-
-    if (!completed) throw new ProcessCanceledException();
-
-    return result;
-  }
-
-  private List<CodeSmellInfo> findCodeSmells(final PsiFile psiFile, final ProgressIndicator progress, final Document document) {
-
-    final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
-
-    GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), true);
-    action1.doCollectInformation(progress);
-
-    collectErrorsAndWarnings(action1.getHighlights(), result, document);
-
-    PostHighlightingPass action2 = new PostHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength());
-    action2.doCollectInformation(progress);
-
-    collectErrorsAndWarnings(action2.getHighlights(), result, document);
-
-    LocalInspectionsPass action3 = new LocalInspectionsPass(psiFile, document, 0, psiFile.getTextLength());
-    action3.doCollectInformation(progress);
-
-    collectErrorsAndWarnings(action3.getHighlights(), result, document);
-
-    return result;
-
-  }
-
-  private void collectErrorsAndWarnings(final Collection<HighlightInfo> highlights,
-                                               final List<CodeSmellInfo> result,
-                                               final Document document) {
-    if (highlights == null) return;
-    for (HighlightInfo highlightInfo : highlights) {
-      final HighlightSeverity severity = highlightInfo.getSeverity();
-      if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
-        result.add(new CodeSmellInfo(document, getDescription(highlightInfo),
-                                     new TextRange(highlightInfo.startOffset, highlightInfo.endOffset), severity));
-      }
-    }
-  }
-
-  private static String getDescription(final HighlightInfo highlightInfo) {
-    final String description = highlightInfo.description;
-    final HighlightInfoType type = highlightInfo.type;
-    if (type instanceof HighlightInfoType.HighlightInfoTypeSeverityByKey) {
-      final HighlightDisplayKey severityKey = ((HighlightInfoType.HighlightInfoTypeSeverityByKey)type).getSeverityKey();
-      final String id = severityKey.getID();
-      if (id != null) {
-        return "[" + id + "] " + description;
-      }
-    }
-    return description;
-  }
-
   private static DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (vFile != null && (version instanceof CurrentRevision) && !vFile.getFileType().isBinary()) {
@@ -694,13 +555,4 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  private static class VcsErrorViewPanel extends NewErrorTreeViewPanel {
-    public VcsErrorViewPanel(Project project) {
-      super(project, null);
-    }
-
-    protected boolean canHideWarnings() {
-      return false;
-    }
-  }
 }

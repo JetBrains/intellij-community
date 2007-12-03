@@ -22,10 +22,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,7 +91,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       VcsBundle.message("code.smells.error.messages.tab.name"), new String[]{VcsBundle.message("code.smells.review.button"),
       commitButtonText, CommonBundle.getCancelButtonText()}, 0, UIUtil.getWarningIcon());
     if (answer == 0) {
-      AbstractVcsHelper.getInstance(myProject).showCodeSmellErrors(codeSmells);
+      CodeSmellDetector.getInstance(myProject).showCodeSmellErrors(codeSmells);
       return ReturnResult.CLOSE_WINDOW;
     }
     else if (answer == 2 || answer == -1) {
@@ -117,7 +114,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
     if (getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT) {
       try {
         final List<CodeSmellInfo> codeSmells =
-          AbstractVcsHelper.getInstance(myProject).findCodeSmells(new ArrayList<VirtualFile>(myCheckinPanel.getVirtualFiles()));
+          CodeSmellDetector.getInstance(myProject).findCodeSmells(new ArrayList<VirtualFile>(myCheckinPanel.getVirtualFiles()));
         if (!codeSmells.isEmpty()) {
           return processFoundCodeSmells(codeSmells, executor);
         }
