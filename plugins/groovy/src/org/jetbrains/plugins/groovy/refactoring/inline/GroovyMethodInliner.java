@@ -17,15 +17,13 @@ package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +40,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -178,13 +176,11 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         } else {
           resultExpr = factory.createExpressionFromText("null");
         }
-//        CodeStyleManager.getInstance(owner.getProject()).reformat(owner);
         return call.replaceWithExpression(resultExpr, true);
       } else {
         // remove method call
-        PsiElement prev = call.getPrevSibling();
+//        PsiElement prev = call.getPrevSibling();
         call.removeStatement();
-//        CodeStyleManager.getInstance(owner.getProject()).reformat(owner);
 //        return prev;
         return null;
       }

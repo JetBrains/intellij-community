@@ -11,6 +11,6 @@ int fact(int n) {
 }
 
 int result
-if (3 > 0) result = 3 * fact(3-1);
-    else result = 1
+if (3 > 0) result = 3 * fact(3 - 1);
+else result = 1
 println(result)

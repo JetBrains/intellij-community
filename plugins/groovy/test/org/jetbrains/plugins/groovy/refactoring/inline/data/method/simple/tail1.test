@@ -1,33 +1,42 @@
 def result = 26
 
-int i = <begin>foo<end>(42, 239)
+def cl = { int x ->
+    <begin>foo<end>(x, 239)
+}
 
 def foo(int i, def j) {
     if (i > 42) {
         println("preved!")
         println("medved")
+        return i*i
     } else {
         println "bugoga"
+        return i
     }
-    239
 }
 -----
 def result = 26
 
-if (42 > 42) {
+def cl = { int x ->
+    int result1
+    if (x > 42) {
         println("preved!")
         println("medved")
+        result1 = x * x
     } else {
         println "bugoga"
+        result1 = x
     }
-int i = 239
+    result1
+}
 
 def foo(int i, def j) {
     if (i > 42) {
         println("preved!")
         println("medved")
+        return i*i
     } else {
         println "bugoga"
+        return i
     }
-    239
 }

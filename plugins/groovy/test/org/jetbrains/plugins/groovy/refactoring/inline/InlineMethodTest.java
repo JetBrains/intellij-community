@@ -15,35 +15,31 @@
 
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.*;
+import com.intellij.refactoring.inline.GenericInlineHandler;
+import com.intellij.util.IncorrectOperationException;
+import junit.framework.Assert;
+import junit.framework.Test;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.CommonRefactoringTestCase;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.refactoring.inline.GenericInlineHandler;
 
-import java.io.IOException;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.BufferedWriter;
-
-import junit.framework.Assert;
-import junit.framework.Test;
+import java.io.IOException;
 
 /**
  * @author ilyas
@@ -91,6 +87,7 @@ public class InlineMethodTest extends CommonRefactoringTestCase {
     file = PsiManager.getInstance(myProject).findFile(virtualFile);
     Assert.assertTrue(file instanceof GroovyFileBase);
 
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(myProject);
     try {
       myEditor.getSelectionModel().setSelection(startOffset, endOffset);
       myEditor.getCaretModel().moveToOffset(endOffset);

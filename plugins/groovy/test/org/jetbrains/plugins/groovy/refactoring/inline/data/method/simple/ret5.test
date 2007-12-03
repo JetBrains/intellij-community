@@ -17,13 +17,13 @@ def result = 26
 
 int result1
 if (42 > 42) {
-        println("preved!")
-        println("medved")
-        result1 = 42*42
-    } else {
-        println "bugoga"
-        result1 = 42
-    }
+    println("preved!")
+    println("medved")
+    result1 = 42 * 42
+} else {
+    println "bugoga"
+    result1 = 42
+}
 int i = result1
 
 def foo(int i, def j) {

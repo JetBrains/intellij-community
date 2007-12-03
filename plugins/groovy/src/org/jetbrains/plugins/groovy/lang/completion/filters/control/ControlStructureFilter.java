@@ -66,9 +66,12 @@ public class ControlStructureFilter implements ElementFilter {
 
         if (superParent instanceof GrOpenBlock ||
             superParent instanceof GrClosableBlock ||
+            superParent instanceof GrCaseSection ||
             superParent instanceof GrIfStatement ||
             superParent instanceof GrForStatement ||
-            superParent instanceof GrWhileStatement) {
+            superParent instanceof GrWhileStatement ||
+            superParent instanceof GrExpression
+                && superParent.getParent() instanceof GrCaseSection) {
           return true;
         }
       }

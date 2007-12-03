@@ -15,15 +15,16 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.util;
 
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
 /**
  * @author ilyas
  */
 public interface GrStatementOwner extends GroovyPsiElement {
 
-  GrStatement addStatementBefore(GrStatement statement, GrStatement anchor) throws IncorrectOperationException;
+  GrStatement addStatementBefore(@NotNull GrStatement statement, @NotNull GrStatement anchor) throws IncorrectOperationException;
 
 }

@@ -16,11 +16,11 @@ def result = 26
 
 int result1
 if (42 > 42) {
-        println("preved!")
-        println("medved")
-    } else {
-        println "bugoga"
-    }
+    println("preved!")
+    println("medved")
+} else {
+    println "bugoga"
+}
 result1 = 3
 int i = result1
 

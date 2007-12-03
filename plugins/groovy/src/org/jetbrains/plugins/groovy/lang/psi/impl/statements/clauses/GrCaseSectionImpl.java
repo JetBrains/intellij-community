@@ -16,23 +16,26 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ven
@@ -72,7 +75,7 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     return findChildrenByClass(GrStatement.class);
   }
 
-  public GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
+  public GrStatement addStatementBefore(@NotNull GrStatement element, @NotNull GrStatement anchor) throws IncorrectOperationException {
 
     if (anchor != null && !this.equals(anchor.getParent())) {
       throw new IncorrectOperationException();
@@ -85,6 +88,15 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     } else {
       getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchorNode);
     }
+    PsiFile file = anchor.getContainingFile();
+    assert file != null;
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
+    Document document = manager.getDocument(file);
+    if (document != null) {
+      manager.doPostponedOperationsAndUnblockDocument(document);
+    }
+    CodeStyleManager.getInstance(getProject()).adjustLineIndent(file, getTextRange());
+
     return (GrStatement) elemNode.getPsi();
   }
 
