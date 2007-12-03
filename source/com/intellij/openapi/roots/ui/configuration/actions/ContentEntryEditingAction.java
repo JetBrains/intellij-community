@@ -3,16 +3,13 @@ package com.intellij.openapi.roots.ui.configuration.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
-import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
-import com.intellij.openapi.fileChooser.ex.RootFileElement;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
@@ -38,7 +35,7 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
       return;
     }
     for (VirtualFile file : files) {
-      if (!file.isDirectory()) {
+      if (file == null || !file.isDirectory()) {
         presentation.setEnabled(false);
         break;
       }
