@@ -21,9 +21,9 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.*;
-import com.intellij.peer.PeerFactory;
 
 import java.util.*;
 
@@ -120,10 +120,10 @@ public abstract class VcsVFSListener {
     } else {
       final VcsDeleteType type = needConfirmDeletion(file);
       if (type == VcsDeleteType.CONFIRM) {
-        myDeletedFiles.add(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file));
+        myDeletedFiles.add(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file));
       }
       else if (type == VcsDeleteType.SILENT) {
-        myDeletedWithoutConfirmFiles.add(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file));
+        myDeletedWithoutConfirmFiles.add(VcsContextFactory.SERVICE.getInstance().createFilePathOn(file));
       }
     }
   }
