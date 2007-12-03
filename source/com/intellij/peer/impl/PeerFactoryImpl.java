@@ -32,6 +32,13 @@ import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.module.ModuleConfigurationEditor;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
@@ -265,6 +272,18 @@ public class PeerFactoryImpl extends PeerFactory {
 
   public EditorHighlighter createEditorHighlighter(final SyntaxHighlighter syntaxHighlighter, final EditorColorsScheme colors) {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(syntaxHighlighter, colors);
+  }
+
+  public ProjectJdk createProjectJdk(final String name, final String version, final String homePath, final SdkType sdkType) {
+    final ProjectJdkImpl projectJdk = new ProjectJdkImpl(name, sdkType);
+    projectJdk.setHomePath(homePath);
+    projectJdk.setVersionString(version);
+    return projectJdk;
+  }
+
+  public ModuleConfigurationEditor createModuleConfigurationEditor(final Project project, final String moduleName, final ModifiableRootModel model,
+                                                                   final ModulesProvider modulesProvider) {
+    return new CommonContentEntriesEditor(project, moduleName, model, modulesProvider);
   }
 
 }
