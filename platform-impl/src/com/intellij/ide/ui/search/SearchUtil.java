@@ -263,7 +263,7 @@ public class SearchUtil {
     final Pattern insideHtmlTagPattern = Pattern.compile("[<[^<>]*>]*<[^<>]*");
     final SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
     final HashSet<String> quoted = new HashSet<String>();
-    filter = processFilter(filter, quoted);
+    filter = processFilter(quoteStrictOccurences(textToMarkup, filter), quoted);
     final Set<String> options = registrar.getProcessedWords(filter);
     final Set<String> words = registrar.getProcessedWords(textToMarkup);
     for (String option : options) {
@@ -275,6 +275,18 @@ public class SearchUtil {
       textToMarkup = markup(textToMarkup, insideHtmlTagPattern, stripped);
     }
     return textToMarkup;
+  }
+
+  private static String quoteStrictOccurences(final String textToMarkup, final String filter) {
+    String cur = "";
+    for (String part : filter.split(" ")) {
+      if (textToMarkup.indexOf(part) != -1) {
+        cur += "\"" + part + "\" ";
+      } else {
+        cur += part + " ";
+      }
+    }
+    return cur;
   }
 
   private static String markup(@NonNls String textToMarkup, final Pattern insideHtmlTagPattern, final String option) {
@@ -307,8 +319,7 @@ public class SearchUtil {
     }
     else { //markup
       final HashSet<String> quoted = new HashSet<String>();
-      filter = processFilter(filter, quoted);
-
+      filter = processFilter(quoteStrictOccurences(text, filter), quoted);
       final TreeMap<Integer, String> indx = new TreeMap<Integer, String>();
       for (String stripped : quoted) {
         int beg = 0;
