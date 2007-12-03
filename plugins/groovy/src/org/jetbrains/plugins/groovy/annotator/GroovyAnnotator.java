@@ -35,6 +35,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
+import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
@@ -236,7 +237,7 @@ public class GroovyAnnotator implements Annotator {
 
   private void checkInnerMethod(AnnotationHolder holder, GrMethod grMethod) {
     if (grMethod.getParent() instanceof GrOpenBlock)
-      holder.createErrorAnnotation(grMethod, GroovyBundle.message("Inner.methods.are.not.support"));
+      holder.createErrorAnnotation(grMethod, GroovyBundle.message("Inner.methods.are.not.supported"));
   }
 
   private void checkDomainClass(GroovyFile file, AnnotationHolder holder) {
