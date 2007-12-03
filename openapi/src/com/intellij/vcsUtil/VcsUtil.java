@@ -24,10 +24,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -282,14 +280,6 @@ public class VcsUtil {
         return content;
       }
     });
-  }
-
-  public static boolean isPathUnderProject(Project project, final VirtualFile vf) {
-    if (vf != null && !FileTypeManager.getInstance().isFileIgnored(vf.getPath())) {
-      Module mod = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vf);
-      return mod != null;
-    }
-    return false;
   }
 
   public static FilePath getFilePath(String path) {
