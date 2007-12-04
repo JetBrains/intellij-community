@@ -19,7 +19,6 @@ import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -39,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -163,8 +163,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
       // Process method return statements
       if (hasReturnStatements && PsiType.VOID != methodType && !isTailMethodCall) {
-        GrVariableDeclaration resultDecl = factory.createVariableDeclaration(new String[0], resultName, null, methodType, false);
-        owner.addStatementBefore(resultDecl, anchor);
+        PsiType type = methodType != null && methodType.equalsToText("java.lang.Object") ? null : methodType;
+        GrVariableDeclaration resultDecl = factory.createVariableDeclaration(new String[0], resultName, null, type, false);
+        GrStatement statement = owner.addStatementBefore(resultDecl, anchor);
+        PsiUtil.shortenReferences(statement);
 
         // Replace all return statements with assignments to 'result' variable
         for (GrReturnStatement returnStatement : returnStatements) {

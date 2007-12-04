@@ -425,6 +425,7 @@ public abstract class GroovyRefactoringUtil {
     }
     ArrayList<GrExpression> exprs = new ArrayList<GrExpression>();
     exprs.addAll(Arrays.asList(argumentList.getExpressionArguments()));
+    exprs.addAll(Arrays.asList(call.getClosureArguments()));
 
     // first parameter may have map type
     boolean firstParamIsMap = argumentList.getNamedArguments().length > 0;

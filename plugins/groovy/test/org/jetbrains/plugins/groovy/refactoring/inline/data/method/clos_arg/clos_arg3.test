@@ -1,0 +1,19 @@
+def cl = <begin>qwerty<end>(45){int x -> return x + 1}
+
+ def qwerty(int i, Closure cl){
+    def call = cl(42)
+    println (call)
+    return call + i;
+}
+-----
+def result
+def call = {int x -> return x + 1}(42)
+println(call)
+result = call + 45
+def cl = result
+
+def qwerty(int i, Closure cl){
+    def call = cl(42)
+    println (call)
+    return call + i;
+}
