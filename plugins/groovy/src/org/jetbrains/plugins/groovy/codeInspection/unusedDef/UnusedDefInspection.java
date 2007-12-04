@@ -124,7 +124,13 @@ public class UnusedDefInspection extends LocalInspectionTool {
         final PsiElement element = instruction.getElement();
         if (isLocalAssignment(element)) {
           if (element instanceof GrReferenceExpression) {
-            PsiElement toHighlight = ((GrAssignmentExpression) element.getParent()).getRValue();
+            PsiElement parent = element.getParent();
+            PsiElement toHighlight = null;
+            if (parent instanceof GrAssignmentExpression) {
+              toHighlight = ((GrAssignmentExpression) parent).getRValue();
+            } if (parent instanceof GrPostfixExpression) {
+              toHighlight = parent;
+            }
             if (toHighlight == null) toHighlight = element;
             problemsHolder.registerProblem(toHighlight, GroovyInspectionBundle.message("unused.assignment.tooltip"), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
           } else if (element instanceof GrVariable) {
