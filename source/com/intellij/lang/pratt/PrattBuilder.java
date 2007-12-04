@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class PrattBuilder {
   private final PsiBuilder myBuilder;
   private PsiBuilder.Marker myPrevMarker;
+  private final Stack<PrattTokenType> myStack = new Stack<PrattTokenType>();
 
   public PrattBuilder(final PsiBuilder builder) {
     myBuilder = builder;
@@ -43,17 +45,22 @@ public class PrattBuilder {
 
   @Nullable
   public IElementType parse(int rightPriority) {
+    return parse(rightPriority, null);
+  }
+
+  @Nullable
+  public IElementType parse(int rightPriority, @Nullable String expectedMessage) {
     IElementType tokenType = getTokenType();
     if (tokenType == null) return null;
 
     if (!(tokenType instanceof PrattTokenType) || ((PrattTokenType)tokenType).getPriority() <= rightPriority) {
-      myBuilder.error(JavaErrorMessages.message("unexpected.token"));
+      error(expectedMessage != null ? expectedMessage : JavaErrorMessages.message("unexpected.token"));
       return null;
     }
 
     final Nud nud = ((PrattTokenType)tokenType).getNud();
     if (nud == null) {
-      myBuilder.error(JavaErrorMessages.message("unexpected.token"));
+      error(expectedMessage != null ? expectedMessage : JavaErrorMessages.message("unexpected.token"));
       return null;
     }
 
@@ -64,17 +71,25 @@ public class PrattBuilder {
 
     final PsiBuilder.Marker oldMarker = myPrevMarker;
     myPrevMarker = myBuilder.mark();
+    myStack.push((PrattTokenType)tokenType);
     try {
       myBuilder.advanceLexer();
       left = nud.parsePrefix(this);
       result = left.getDoneType();
     }
     finally {
+      myStack.pop();
       myPrevMarker.drop();
       myPrevMarker = oldMarker;
     }
 
-    while (!left.isError()) {
+    if (left.getErrorMessage() != null) {
+      marker.rollbackTo();
+      myBuilder.error(left.getErrorMessage());
+      return null;
+    }
+
+    while (!left.isStop()) {
       tokenType = myBuilder.getTokenType();
       if (!(tokenType instanceof PrattTokenType) || rightPriority >= ((PrattTokenType)tokenType).getPriority()) break;
 
@@ -82,6 +97,7 @@ public class PrattBuilder {
       if (led == null) break;
 
       myPrevMarker = myBuilder.mark();
+      myStack.push((PrattTokenType)tokenType);
       try {
         myBuilder.advanceLexer();
 
@@ -95,6 +111,12 @@ public class PrattBuilder {
         }
       }
       finally {
+        if (left.getErrorMessage() != null) {
+          myPrevMarker.rollbackTo();
+          myBuilder.error(left.getErrorMessage());
+        }
+
+        myStack.pop();
         myPrevMarker.drop();
         myPrevMarker = oldMarker;
       }
@@ -127,7 +149,7 @@ public class PrattBuilder {
       return true;
     }
     if (error) {
-      myBuilder.error(type.getExpectedText());
+      error(type.getExpectedText());
     }
     return false;
   }
@@ -143,9 +165,13 @@ public class PrattBuilder {
       return true;
     }
     if (errorText != null) {
-      myBuilder.error(errorText);
+      error(errorText);
     }
     return false;
+  }
+
+  public void error(final String errorText) {
+    myBuilder.error(errorText);
   }
 
 
@@ -165,4 +191,14 @@ public class PrattBuilder {
   public ASTNode getTreeBuilt() {
     return myBuilder.getTreeBuilt().getFirstChildNode();
   }
+
+  /**
+   * @param depth 0 is current
+   * @return
+   */
+  @Nullable
+  public PrattTokenType getStackValue(int depth) {
+    return myStack.size() - 1 < depth ? null : myStack.get(myStack.size() - 1 - depth);
+  }
+
 }

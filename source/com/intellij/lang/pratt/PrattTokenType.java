@@ -14,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PrattTokenType extends IElementType {
-  private Nud myNud;
-  private Led myLed;
+  protected Nud myNud;
+  protected Led myLed;
   private final int myPriority;
 
   public PrattTokenType(@NotNull final String tokenName,
