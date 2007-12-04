@@ -28,4 +28,16 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
   public String getTextPresentation() {
     return getUserObject().getName();
   }
+
+  public int getSortWeight() {
+    return 3;
+  }
+
+  public int compareUserObjects(final Object o2) {
+    if (o2 instanceof Module) {
+      return getUserObject().getName().compareToIgnoreCase(((Module) o2).getName());
+    }
+
+    return 0;
+  }
 }

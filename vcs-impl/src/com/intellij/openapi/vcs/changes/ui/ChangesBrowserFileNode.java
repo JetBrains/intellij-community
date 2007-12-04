@@ -62,4 +62,15 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> {
   public String toString() {
     return getUserObject().getPresentableUrl();
   }
+
+  public int getSortWeight() {
+    return 7;
+  }
+
+  public int compareUserObjects(final Object o2) {
+    if (o2 instanceof VirtualFile) {
+      return getUserObject().getName().compareToIgnoreCase(((VirtualFile)o2).getName());
+    }
+    return 0;
+  }
 }

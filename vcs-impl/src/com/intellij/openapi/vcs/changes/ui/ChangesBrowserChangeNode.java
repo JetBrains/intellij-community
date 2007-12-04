@@ -97,4 +97,15 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> {
   public String toString() {
     return FileUtil.toSystemDependentName(ChangesUtil.getFilePath(getUserObject()).getPath());
   }
+
+  public int getSortWeight() {
+    return 6;
+  }
+
+  public int compareUserObjects(final Object o2) {
+    if (o2 instanceof Change) {
+      return ChangesUtil.getFilePath(getUserObject()).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
+    }
+    return 0;
+  }
 }

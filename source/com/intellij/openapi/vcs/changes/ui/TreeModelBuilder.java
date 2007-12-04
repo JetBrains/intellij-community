@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -8,7 +7,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -192,51 +190,12 @@ public class TreeModelBuilder {
         Object o1 = node1.getUserObject();
         Object o2 = node2.getUserObject();
 
-        final int classdiff = getNodeClassWeight(o1) - getNodeClassWeight(o2);
+        final int classdiff = node1.getSortWeight() - node2.getSortWeight();
         if (classdiff != 0) return classdiff;
 
-        if (o1 instanceof Change && o2 instanceof Change) {
-          return ChangesUtil.getFilePath((Change)o1).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
-        }
-
-        if (o1 instanceof ChangeList && o2 instanceof ChangeList) {
-          return ((ChangeList)o1).getName().compareToIgnoreCase(((ChangeList)o2).getName());
-        }
-
-        if (o1 instanceof VirtualFile && o2 instanceof VirtualFile) {
-          return ((VirtualFile)o1).getName().compareToIgnoreCase(((VirtualFile)o2).getName());
-        }
-
-        if (o1 instanceof FilePath && o2 instanceof FilePath) {
-          return ((FilePath)o1).getPath().compareToIgnoreCase(((FilePath)o2).getPath());
-        }
-
-        if (o1 instanceof Module && o2 instanceof Module) {
-          return ((Module)o1).getName().compareToIgnoreCase(((Module) o2).getName());
-        }
-
-        return 0;
+        return node1.compareUserObjects(o2);
       }
-
-      private int getNodeClassWeight(Object userObject) {
-        if (userObject instanceof ChangeList) {
-          if (userObject instanceof LocalChangeList && ((LocalChangeList)userObject).isDefault()) return 1;
-          return 2;
-        }
-
-        if (userObject instanceof Module) return 3;
-
-        if (userObject instanceof FilePath) {
-          if (((FilePath)userObject).isDirectory()) return 4;
-          return 5;
-        }
-
-        if (userObject instanceof Change) return 6;
-        if (userObject instanceof VirtualFile) return 7;
-        return 8;
-      }
-
-    });
+   });
 
     model.nodeStructureChanged((TreeNode)model.getRoot());
   }

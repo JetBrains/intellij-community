@@ -71,4 +71,17 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
     if (parent == null) return child.getPath().replace('/', File.separatorChar);
     return child.getPath().substring(parent.getPath().length() + 1).replace('/', File.separatorChar);
   }
+
+  public int getSortWeight() {
+    if (((FilePath)userObject).isDirectory()) return 4;
+    return 5;
+  }
+
+  public int compareUserObjects(final Object o2) {
+    if (o2 instanceof FilePath) {
+      return getUserObject().getPath().compareToIgnoreCase(((FilePath)o2).getPath());
+    }
+
+    return 0;
+  }
 }

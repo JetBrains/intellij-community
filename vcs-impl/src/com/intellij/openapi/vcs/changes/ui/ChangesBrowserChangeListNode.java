@@ -76,4 +76,16 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       dragOwner.addUnversionedFiles(dropList, ignoredFiles);
     }
   }
+
+  public int getSortWeight() {
+    if (userObject instanceof LocalChangeList && ((LocalChangeList)userObject).isDefault()) return 1;
+    return 2;
+  }
+
+  public int compareUserObjects(final Object o2) {
+    if (o2 instanceof ChangeList) {
+      return getUserObject().getName().compareToIgnoreCase(((ChangeList)o2).getName());
+    }
+    return 0;
+  }
 }

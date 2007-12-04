@@ -185,4 +185,12 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
   }
+
+  public int getSortWeight() {
+    return 8;
+  }
+
+  public int compareUserObjects(final Object o2) {
+    return 0;
+  }
 }
