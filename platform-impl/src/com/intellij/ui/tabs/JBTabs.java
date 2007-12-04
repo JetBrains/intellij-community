@@ -1324,7 +1324,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       }
 
       int blinkCount = myInfo.getBlinkCount();
-      if (blinkCount < 10) {
+      if (blinkCount < 6) {
         getLayeredIcon().setLayerEnabled(1, !getLayeredIcon().isLayerEnabled(1));
         if (blinkCount == 0) {
           needsUpdate = true;

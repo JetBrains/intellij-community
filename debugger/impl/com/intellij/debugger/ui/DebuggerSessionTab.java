@@ -30,10 +30,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RestartAction;
-import com.intellij.execution.ui.CloseAction;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.*;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -54,6 +51,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collection;
 
 public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
@@ -265,6 +263,8 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
                             IconLoader.getIcon("/debugger/console.png"), DebuggerContentInfo.CONSOLE_CONTENT,
                             myConsole.getPreferredFocusableComponent());
 
+    attachNotificationTo(content);
+
     final DefaultActionGroup consoleActions = new DefaultActionGroup();
     addAction(consoleActions, DebuggerActions.EXPORT_THREADS);
     if (myConsole instanceof ConsoleView) {
@@ -304,6 +304,20 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     myContentPanel.add(myToolBarPanel, BorderLayout.WEST);
 
     return myRunContentDescriptor;
+  }
+
+  private void attachNotificationTo(final Content content) {
+    if (myConsole instanceof ObservableConsoleView) {
+      ObservableConsoleView observable = (ObservableConsoleView)myConsole;
+      final Content toNotify = content;
+      observable.addChangeListener(new ObservableConsoleView.ChangeListener() {
+        public void contentAdded(final Collection<ConsoleViewContentType> types) {
+          if (types.contains(ConsoleViewContentType.ERROR_OUTPUT) || types.contains(ConsoleViewContentType.NORMAL_OUTPUT)) {
+            toNotify.fireAlert();
+          }
+        }
+      }, content);
+    }
   }
 
   private static void addAction(DefaultActionGroup group, String actionId) {

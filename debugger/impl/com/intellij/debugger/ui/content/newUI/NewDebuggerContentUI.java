@@ -1,8 +1,8 @@
 package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.DebuggerLayoutSettings;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.content.DebuggerContentUI;
 import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
@@ -18,6 +18,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -25,11 +26,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
 import java.util.*;
 import java.util.List;
 
 public class NewDebuggerContentUI
-  implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions, CellTransform.Facade, ViewContext {
+  implements ContentUI, DebuggerContentInfo, Disposable, DebuggerContentUIFacade, DebuggerActions, CellTransform.Facade, ViewContext,
+             PropertyChangeListener {
 
   ContentManager myManager;
   DebuggerSettings mySettings;
@@ -81,6 +85,16 @@ public class NewDebuggerContentUI
 
     myComponent.setContent(myTabs);
 
+    myTabs.addListener(new TabsListener() {
+      public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
+        if (!myTabs.isShowing()) return;
+
+        if (newSelection != null) {
+          newSelection.stopAlerting();
+        }
+      }
+    });
+
     myDebuggerActions.add(myActionManager.getAction(SHOW_EXECUTION_POINT));
     myDebuggerActions.addSeparator();
     myDebuggerActions.add(myActionManager.getAction(STEP_OVER));
@@ -89,6 +103,21 @@ public class NewDebuggerContentUI
     myDebuggerActions.add(myActionManager.getAction(STEP_OUT));
     myDebuggerActions.addSeparator();
     myDebuggerActions.add(myActionManager.getAction(RUN_TO_CURSOR));
+  }
+
+  public void propertyChange(final PropertyChangeEvent evt) {
+    Content content = (Content)evt.getSource();
+    if (Content.PROP_ALERT.equals(evt.getPropertyName())) {
+      Grid grid = getGridFor(content, false);
+      if (grid.getContents().size() == 1) {
+        TabInfo info = myTabs.findInfo(grid);
+        if (myTabs.getSelectedInfo() != info) {
+          info.startAlerting();
+        }
+      } else {
+        grid.alert(content);
+      }
+    }
   }
 
   public JComponent getComponent() {
@@ -102,11 +131,14 @@ public class NewDebuggerContentUI
     myManager.addContentManagerListener(new ContentManagerListener() {
       public void contentAdded(final ContentManagerEvent event) {
         getGridFor(event.getContent(), true).add(event.getContent(), false);
-
         updateTabsUI();
+
+        event.getContent().addPropertyChangeListener(NewDebuggerContentUI.this);
       }
 
       public void contentRemoved(final ContentManagerEvent event) {
+        event.getContent().removePropertyChangeListener(NewDebuggerContentUI.this);
+
         Grid grid = findGridFor(event.getContent());
         if (grid != null) {
           grid.remove(event.getContent());

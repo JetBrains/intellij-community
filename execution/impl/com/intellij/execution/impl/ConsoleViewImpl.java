@@ -4,9 +4,10 @@ import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -43,6 +44,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
@@ -62,8 +64,9 @@ import java.awt.event.MouseMotionAdapter;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
-public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataProvider, OccurenceNavigator {
+public final class ConsoleViewImpl extends JPanel implements ObservableConsoleView, DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
   private static final int FLUSH_DELAY = 200; //TODO : make it an option
@@ -85,6 +88,10 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
   private final boolean USE_CYCLIC_BUFFER = GeneralSettings.getInstance().isUseCyclicBuffer();
   private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
   private Alarm mySpareTimeAlarm = new Alarm();
+
+  private CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
+  private Set<ConsoleViewContentType> myDeferredTypes = new HashSet<ConsoleViewContentType>();
+
 
   private static class TokenInfo{
     private final ConsoleViewContentType contentType;
@@ -157,6 +164,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       else {
         myDeferredOutput = new StringBuffer();
       }
+      myDeferredTypes.clear();
       myDeferredUserInput = new StringBuffer();
       myHyperlinks.clear();
       myEditor.getMarkupModel().removeAllHighlighters();
@@ -268,6 +276,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
 
   public void print(String s, final ConsoleViewContentType contentType) {
     synchronized(LOCK){
+      myDeferredTypes.add(contentType);
+
       s = StringUtil.convertLineSeparators(s,  "\n");
       myContentSize += s.length();
       myDeferredOutput.append(s);
@@ -338,6 +348,9 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           public void run() {
             document.insertString(document.getTextLength(), text);
+            synchronized (LOCK) {
+              fireChange();
+            }
           }
         }, null, document);
       }
@@ -921,4 +934,23 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     };
   }
 
+  private void fireChange() {
+    if (myDeferredTypes.size() == 0) return;
+    Collection<ConsoleViewContentType> types = Collections.unmodifiableCollection(myDeferredTypes);
+
+    for (ChangeListener each : myListeners) {
+      each.contentAdded(types);
+    }
+
+    myDeferredTypes.clear();
+  }
+
+  public void addChangeListener(final ChangeListener listener, final Disposable parent) {
+    myListeners.add(listener);
+    Disposer.register(parent, new Disposable() {
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
+  }
 }

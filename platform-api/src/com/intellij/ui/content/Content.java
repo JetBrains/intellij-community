@@ -16,10 +16,11 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -32,6 +33,8 @@ public interface Content extends UserDataHolder, ComponentContainer {
   @NonNls String PROP_DESCRIPTION = "description";
   @NonNls 
   String PROP_COMPONENT = "component";
+
+  String PROP_ALERT = "alerting";
 
   void setComponent(JComponent component);
 
@@ -86,5 +89,10 @@ public interface Content extends UserDataHolder, ComponentContainer {
   void setActions(ActionGroup actions, String place);
   ActionGroup getActions();
   String getPlace();
+
+  void setAlertIcon(@Nullable AlertIcon icon);
+  @Nullable AlertIcon getAlertIcon();
+
+  void fireAlert();
   
 }

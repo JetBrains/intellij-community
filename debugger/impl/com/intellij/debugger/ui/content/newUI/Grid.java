@@ -151,6 +151,11 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
     return getCellFor(content).select(content, requestFocus);
   }
 
+  public void alert(final Content content) {
+    GridCell cell = getCellFor(content);
+    cell.alert(content);
+  }
+
   static class Placeholder extends Wrapper implements NullableComponent {
     public boolean isNull() {
       return getComponentCount() == 0;

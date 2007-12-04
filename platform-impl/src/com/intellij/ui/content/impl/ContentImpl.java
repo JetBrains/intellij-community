@@ -9,7 +9,9 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.AlertIcon;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,6 +37,9 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   private JComponent myPreferredFocusableComponent;
   private static final Icon PIN_ICON = IconLoader.getIcon("/nodes/tabPin.png");
+  private AlertIcon myAlertIcon;
+
+  private boolean myAlerting = false;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -204,5 +209,18 @@ public class ContentImpl extends UserDataHolderBase implements Content {
       Disposer.dispose(myDisposer);
       myDisposer = null;
     }
+  }
+
+  @Nullable
+  public AlertIcon getAlertIcon() {
+    return myAlertIcon;
+  }
+
+  public void setAlertIcon(@Nullable final AlertIcon icon) {
+    myAlertIcon = icon;
+  }
+
+  public void fireAlert() {
+    myChangeSupport.firePropertyChange(PROP_ALERT, null, true);
   }
 }

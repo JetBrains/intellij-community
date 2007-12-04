@@ -10,6 +10,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -57,7 +58,15 @@ public class GridCell {
       }
     });
     myTabs.setPopupGroup((ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW), ViewContext.CELL_POPUP_PLACE);
+    myTabs.addListener(new TabsListener() {
+      public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
+        if (!myTabs.isShowing()) return;
 
+        if (newSelection != null) {
+          newSelection.stopAlerting();
+        }
+      }
+    });
   }
 
   public PlaceInGrid getPlaceInGrid() {
@@ -129,6 +138,16 @@ public class GridCell {
   public ActionCallback select(final Content content, final boolean requestFocus) {
     final TabInfo tabInfo = myContents.getValue(content);
     return tabInfo != null ? myTabs.select(tabInfo, requestFocus) : new ActionCallback.Done();
+  }
+
+  public void alert(final Content content) {
+    if (myMinimizedContents.contains(content)) return;
+
+    TabInfo tab = getTabFor(content);
+    if (tab == null) return;
+    if (myTabs.getSelectedInfo() != tab) {
+      tab.startAlerting();
+    }
   }
 
   private static class ProviderWrapper extends NonOpaquePanel implements DataProvider {
