@@ -7,6 +7,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -34,7 +35,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
 
   public void update(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(DataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
 
     if (project != null && changes == null && unversionedFiles == null) {
@@ -83,7 +84,7 @@ public class MoveChangesToAnotherListAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(DataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
 
     final List<VirtualFile> changedFiles = new ArrayList<VirtualFile>();
