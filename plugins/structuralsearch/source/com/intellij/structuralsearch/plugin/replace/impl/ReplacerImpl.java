@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
@@ -197,7 +198,7 @@ public class ReplacerImpl {
                   .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
               }
 
-              codeStyleManager.shortenClassReferences(elementParent, 0, elementParent.getTextLength());
+              JavaCodeStyleManager.getInstance(project).shortenClassReferences(elementParent, 0, elementParent.getTextLength());
             }
 
             if (options.isToReformatAccordingToStyle()) {
