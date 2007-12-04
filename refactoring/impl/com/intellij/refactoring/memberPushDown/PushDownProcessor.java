@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
@@ -49,9 +49,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiSearchHelper searchHelper = manager.getSearchHelper();
-    final PsiClass[] inheritors = searchHelper.findInheritors(myClass, myClass.getUseScope(), false);
+    final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass, myClass.getUseScope(), false).toArray(PsiClass.EMPTY_ARRAY);
     UsageInfo[] usages = new UsageInfo[inheritors.length];
     for (int i = 0; i < inheritors.length; i++) {
       usages[i] = new UsageInfo(inheritors[i]);

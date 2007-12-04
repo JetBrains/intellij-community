@@ -4,10 +4,11 @@ package com.intellij.codeInsight.generation.surroundWith;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -82,7 +83,7 @@ public class SurroundWithUtil {
     for (PsiElement element : elements) {
       if (element instanceof PsiVariable) {
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
-        PsiReference[] refs = helper.findReferences(element, projectScope, false);
+        PsiReference[] refs = ReferencesSearch.search(element, projectScope, false).toArray(new PsiReference[0]);
         if (refs.length > 0) {
           PsiReference lastRef = refs[refs.length - 1];
           if (lastRef.getElement().getTextOffset() > endOffset) {

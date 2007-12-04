@@ -118,7 +118,7 @@ public class JavaDocCompletionData extends CompletionData {
       final PsiElement parent = comment.getContext();
       final boolean isInline = position.getContext() instanceof PsiInlineDocTag;
 
-      final JavadocManager manager = context.file.getManager().getJavadocManager();
+      final JavadocManager manager = JavaPsiFacade.getInstance(context.file.getProject()).getJavadocManager();
       final JavadocTagInfo[] infos = manager.getTagInfos(parent);
       for (JavadocTagInfo info : infos) {
         if (info.getName().equals(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;

@@ -10,7 +10,9 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -63,15 +65,15 @@ public class DescendantClassesEnumMacro implements Macro {
 
       final List<PsiClass> classes = new ArrayList<PsiClass>();
 
-      helper.processInheritors(new PsiElementProcessor<PsiClass>() {
-        public boolean execute(PsiClass element) {
-          if (isAllowAbstract || !isAbstractOrInterface(element)) {
-            classes.add(element);
+      ClassInheritorsSearch.search(myBaseClass, myBaseClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+          public boolean execute(PsiClass element) {
+            if (isAllowAbstract || !isAbstractOrInterface(element)) {
+              classes.add(element);
+            }
+            return true;
           }
-          return true;
-        }
 
-      }, myBaseClass, myBaseClass.getUseScope(), true);
+        }));
 
       return classes;
     }

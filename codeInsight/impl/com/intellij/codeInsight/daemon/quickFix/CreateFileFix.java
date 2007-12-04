@@ -3,25 +3,25 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -104,7 +104,7 @@ class CreateFileFix implements IntentionAction, LocalQuickFix {
         String text = null;
 
         if (myText != null) {
-          final PsiFile psiFile = PsiManager.getInstance(project).getElementFactory().createFileFromText("_" + myNewFileName, myText);
+          final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("_" + myNewFileName, myText);
           final PsiElement psiElement = CodeStyleManager.getInstance(project).reformat(psiFile);
 
           text = psiElement.getText();

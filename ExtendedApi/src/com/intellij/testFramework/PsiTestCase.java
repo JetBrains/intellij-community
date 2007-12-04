@@ -13,10 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Document;
@@ -53,7 +50,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   protected PsiFile createDummyFile(String fileName, String text) throws IncorrectOperationException {
-    return myPsiManager.getElementFactory().createFileFromText(fileName, text);
+    return PsiFileFactory.getInstance(myProject).createFileFromText(fileName, text);
   }
 
   protected PsiFile createFile(@NonNls String fileName, String text) throws Exception {

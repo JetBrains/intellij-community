@@ -515,7 +515,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
 
     int offset = myCurrentFlow.getStartOffset(statement);
 
-    Object loopCondition = statement.getManager().getConstantEvaluationHelper().computeConstantExpression(statement.getCondition());
+    Object loopCondition = JavaPsiFacade.getInstance(statement.getProject()).getConstantEvaluationHelper().computeConstantExpression(statement.getCondition());
     if (loopCondition instanceof Boolean) {
       if (((Boolean)loopCondition).booleanValue()) {
         myCurrentFlow.addInstruction(new GoToInstruction(offset));
@@ -590,7 +590,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
 
 
-    Object loopCondition = statement.getManager().getConstantEvaluationHelper().computeConstantExpression(condition);
+    Object loopCondition = JavaPsiFacade.getInstance(statement.getProject()).getConstantEvaluationHelper().computeConstantExpression(condition);
     if (loopCondition instanceof Boolean || condition == null) {
       boolean value = condition == null || ((Boolean)loopCondition).booleanValue();
       if (value) {
@@ -709,7 +709,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
      * :end
      */
     if (myEvaluateConstantIfConfition) {
-      final Object value = statement.getManager().getConstantEvaluationHelper().computeConstantExpression(conditionExpression);
+      final Object value = JavaPsiFacade.getInstance(statement.getProject()).getConstantEvaluationHelper().computeConstantExpression(conditionExpression);
       if (value instanceof Boolean) {
         boolean condition = ((Boolean)value).booleanValue();
         generateThenFlow = condition;
@@ -1132,7 +1132,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
 
 
-    Object loopCondition = statement.getManager().getConstantEvaluationHelper().computeConstantExpression(statement.getCondition());
+    Object loopCondition = JavaPsiFacade.getInstance(statement.getProject()).getConstantEvaluationHelper().computeConstantExpression(statement.getCondition());
     if (loopCondition instanceof Boolean) {
       boolean value = ((Boolean)loopCondition).booleanValue();
       if (value) {
@@ -1248,7 +1248,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     final PsiExpression lOperand = expression.getLOperand();
     lOperand.accept(this);
 
-    PsiConstantEvaluationHelper evalHelper = expression.getManager().getConstantEvaluationHelper();
+    PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper();
     IElementType signTokenType = expression.getOperationSign().getTokenType();
     if (signTokenType == JavaTokenType.ANDAND) {
       if (myEnabledShortCircuit) {

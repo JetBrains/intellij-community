@@ -5,16 +5,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.pom.PomModel;
 import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.XmlDocumentChangedImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
@@ -190,8 +187,8 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
     if (strict) return null;
 
     try {
-      final PsiFile fileFromText =
-        getManager().getElementFactory().createFileFromText(containingFile.getName() + ".dtd", XmlUtil.generateDocumentDTD(this));
+      final PsiFile fileFromText = PsiFileFactory.getInstance(getManager().getProject())
+        .createFileFromText(containingFile.getName() + ".dtd", XmlUtil.generateDocumentDTD(this));
       if (fileFromText instanceof XmlFile) {
         return (XmlNSDescriptor)((XmlFile)fileFromText).getDocument().getMetaData();
       }

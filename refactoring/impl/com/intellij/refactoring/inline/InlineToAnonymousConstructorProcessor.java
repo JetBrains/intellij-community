@@ -210,7 +210,7 @@ class InlineToAnonymousConstructorProcessor {
   }
 
   public static boolean isConstant(final PsiExpression expr) {
-    Object constantValue = expr.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
+    Object constantValue = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr);
     return constantValue != null || ourNullPattern.accepts(expr);
   }
 

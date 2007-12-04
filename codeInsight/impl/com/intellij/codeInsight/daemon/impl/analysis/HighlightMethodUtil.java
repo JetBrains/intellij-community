@@ -808,7 +808,7 @@ public class HighlightMethodUtil {
     PsiModifierList modifierList = method.getModifierList();
     if (superModifierList.hasModifierProperty(PsiModifier.PRIVATE)) return null;
     if (superModifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
-        && !manager.arePackagesTheSame(aClass, superClass)) {
+        && !JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(aClass, superClass)) {
       return null;
     }
     boolean isMethodStatic = modifierList.hasModifierProperty(PsiModifier.STATIC);
@@ -1133,7 +1133,8 @@ public class HighlightMethodUtil {
       PsiClass aClass = PsiTreeUtil.getParentOfType(curElement, PsiClass.class);
       if (aClass == null) return false;
       curElement = aClass;
-      if (aClass.isInheritor(constructorClass, true) && !aClass.getManager().arePackagesTheSame(aClass, constructorClass)) {
+      if (aClass.isInheritor(constructorClass, true) && !JavaPsiFacade.getInstance(aClass.getProject())
+        .arePackagesTheSame(aClass, constructorClass)) {
         return true;
       }
     }

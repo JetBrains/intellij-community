@@ -34,6 +34,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -460,8 +461,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
             ContainerUtil.addIfNotNull(createSubclassLookupValue(context, extendClass), lookups);
           }
         }
-        final PsiClass[] result = context.getManager().getSearchHelper().findInheritors(extendClass, packageScope, true);
-        for (final PsiClass clazz : result) {
+        for (final PsiClass clazz : ClassInheritorsSearch.search(extendClass, packageScope, true)) {
           if (isClassAccepted(clazz, instantiatable, concrete, notInterface)) {
             ContainerUtil.addIfNotNull(createSubclassLookupValue(context, clazz), lookups);
           }

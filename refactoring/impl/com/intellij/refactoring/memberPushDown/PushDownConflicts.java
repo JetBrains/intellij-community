@@ -1,10 +1,11 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 
@@ -88,7 +89,7 @@ public class PushDownConflicts {
 
       Members:
       for (PsiMember member : myMovedMembers) {
-        final PsiReference[] refs = myClass.getManager().getSearchHelper().findReferences(member, member.getResolveScope(), false);
+        final PsiReference[] refs = ReferencesSearch.search(member, member.getResolveScope(), false).toArray(new PsiReference[0]);
         for (PsiReference ref : refs) {
           final PsiElement element = ref.getElement();
           if (element instanceof PsiReferenceExpression) {

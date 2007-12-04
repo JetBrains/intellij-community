@@ -178,7 +178,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       final PsiManager manager = getManager();
       final PsiPackage aPackage = manager.findPackage(packageName);
       if (aPackage == null) {
-        if (!manager.isPartOfPackagePrefix(packageName)) {
+        if (!JavaPsiFacade.getInstance(manager.getProject()).isPartOfPackagePrefix(packageName)) {
           return JavaResolveResult.EMPTY_ARRAY;
         }
         else {

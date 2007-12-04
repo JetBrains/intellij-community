@@ -373,7 +373,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
         PsiClass aClass = getClasses()[0];
         String fileName = aClass.getName() + "." + ext;
         PsiManager manager = getManager();
-        PsiFile mirror = manager.getElementFactory().createFileFromText(fileName, text);
+        PsiFile mirror = PsiFileFactory.getInstance(manager.getProject()).createFileFromText(fileName, text);
           ASTNode mirrorTreeElement = SourceTreeToPsiMap.psiElementToTree(mirror);
 
         //IMPORTANT: do not take lock too early - FileDocumentManager.getInstance().saveToString() can run write action...

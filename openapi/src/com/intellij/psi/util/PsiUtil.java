@@ -298,7 +298,7 @@ public final class PsiUtil {
   public static boolean isAccessibleFromPackage(@NotNull PsiModifierListOwner element, @NotNull PsiPackage aPackage) {
     if (element.hasModifierProperty(PsiModifier.PUBLIC)) return true;
     if (element.hasModifierProperty(PsiModifier.PRIVATE)) return false;
-    return element.getManager().isInPackage(element, aPackage);
+    return JavaPsiFacade.getInstance(element.getProject()).isInPackage(element, aPackage);
   }
 
   public static boolean isAccessedForWriting(PsiExpression expr) {
@@ -469,8 +469,6 @@ public final class PsiUtil {
   public static void updatePackageStatement(PsiFile file) throws IncorrectOperationException {
     if (!(file instanceof PsiJavaFile) || isInJspFile(file)) return;
 
-    PsiManager manager = file.getManager();
-    PsiElementFactory factory = manager.getElementFactory();
     PsiDirectory dir = file.getContainingDirectory();
     if (dir == null) return;
     PsiPackage aPackage = dir.getPackage();
@@ -489,7 +487,7 @@ public final class PsiUtil {
       if (packageName.length() > 0) {
         String text = "package " + packageName + ";";
         String ext = StdFileTypes.JAVA.getDefaultExtension();
-        PsiJavaFile dummyFile = (PsiJavaFile) factory.createFileFromText("_Dummy_." + ext, text);
+        PsiJavaFile dummyFile = (PsiJavaFile)PsiFileFactory.getInstance(file.getProject()).createFileFromText("_Dummy_." + ext, text);
         statement = dummyFile.getPackageStatement();
         if (statement == null) {
           throw new IncorrectOperationException();

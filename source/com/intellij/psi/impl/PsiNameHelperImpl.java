@@ -5,19 +5,19 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiNameHelperImpl extends PsiNameHelper{
-  private final PsiManager myManager;
+  private final JavaPsiFacade myManager;
   private Lexer myLexer;
   private LanguageLevel myLastLanguageLevel = LanguageLevel.JDK_1_3;
   private final Object LOCK = new Object();
 
-  public PsiNameHelperImpl(PsiManager manager) {
+  public PsiNameHelperImpl(JavaPsiFacade manager) {
     myManager = manager;
     myLastLanguageLevel = LanguageLevel.JDK_1_3; // to be updated by updateLexer()
     myLexer = new JavaLexer(myLastLanguageLevel);

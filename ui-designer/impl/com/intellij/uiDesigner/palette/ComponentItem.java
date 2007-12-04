@@ -11,13 +11,14 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.HSpacer;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.VSpacer;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.StringDescriptor;
@@ -366,8 +367,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     if (myClassName.length() == 0 || myClassName.startsWith("javax.swing")) {
       return null;
     }
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    PsiFile[] boundForms = psiManager.getSearchHelper().findFormsBoundToClass(myClassName.replace('$', '.'));
+    PsiFile[] boundForms = JavaPsiFacade.getInstance(myProject).findFormsBoundToClass(myClassName.replace('$', '.'));
     if (boundForms.length > 0) {
       return boundForms [0];
     }

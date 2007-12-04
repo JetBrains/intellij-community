@@ -8,18 +8,23 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 
@@ -116,7 +121,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     final PsiManager manager = myMethod.getManager();
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(manager.getProject());
     final PsiSearchHelper searchHelper = manager.getSearchHelper();
-    final PsiReference[] refs = searchHelper.findReferences(myMethod, searchScope, false);
+    final PsiReference[] refs = ReferencesSearch.search(myMethod, searchScope, false).toArray(new PsiReference[0]);
     final List<UsageInfo> usages = new ArrayList<UsageInfo>();
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
@@ -133,7 +138,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
 
     if (myTargetClass.isInterface()) {
-      addInheritorUsages(myTargetClass, searchHelper, searchScope, usages);
+      addInheritorUsages(myTargetClass, searchScope, usages);
     }
 
     final PsiCodeBlock body = myMethod.getBody();
@@ -164,17 +169,13 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     return usages.toArray(new UsageInfo[usages.size()]);
   }
 
-  private static void addInheritorUsages(PsiClass aClass,
-                                         final PsiSearchHelper searchHelper,
-                                         final GlobalSearchScope searchScope,
-                                         final List<UsageInfo> usages) {
-    final PsiClass[] inheritors = searchHelper.findInheritors(aClass, searchScope, false);
-    for (PsiClass inheritor : inheritors) {
+  private static void addInheritorUsages(PsiClass aClass, final GlobalSearchScope searchScope, final List<UsageInfo> usages) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(aClass, searchScope, false).findAll()) {
       if (!inheritor.isInterface()) {
         usages.add(new InheritorUsageInfo(inheritor));
       }
       else {
-        addInheritorUsages(inheritor, searchHelper, searchScope, usages);
+        addInheritorUsages(inheritor, searchScope, usages);
       }
     }
   }

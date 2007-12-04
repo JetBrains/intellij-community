@@ -18,6 +18,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -67,7 +68,8 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
   static boolean isParameterAssignedToField(final PsiParameter parameter) {
     final PsiSearchHelper searchHelper = parameter.getManager().getSearchHelper();
-    final PsiReference[] references = searchHelper.findReferences(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false);
+    final PsiReference[] references =
+      ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false).toArray(new PsiReference[0]);
     for (PsiReference reference : references) {
       if (!(reference instanceof PsiReferenceExpression)) continue;
       final PsiReferenceExpression expression = (PsiReferenceExpression)reference;

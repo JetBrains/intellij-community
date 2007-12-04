@@ -12,7 +12,10 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,7 +118,7 @@ public class LineMarkerInfo {
       PsiManager manager = method.getManager();
       PsiSearchHelper helper = manager.getSearchHelper();
       PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(5);
-      helper.processOverridingMethods(processor, method, method.getUseScope(), true);
+      OverridingMethodsSearch.search(method, method.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiMethod>(processor));
 
       boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
@@ -143,7 +146,7 @@ public class LineMarkerInfo {
     PsiSearchHelper helper = manager.getSearchHelper();
     if (type == MarkerType.SUBCLASSED_CLASS) {
       PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5);
-      helper.processInheritors(processor, aClass, aClass.getUseScope(), true);
+      ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
 
       if (processor.isOverflow()) {
         return aClass.isInterface()

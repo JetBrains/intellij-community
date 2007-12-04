@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IncorrectOperationException;
@@ -189,7 +190,7 @@ public class PsiViewerDialog extends DialogWrapper {
           JRadioButton fileTypeButton = myFileTypeButtons[i];
 
           if (fileTypeButton.isSelected()) {
-            rootElement = factory.createFileFromText("Dummy."+myFileTypes[i].getDefaultExtension(), text);
+            rootElement = PsiFileFactory.getInstance(myProject).createFileFromText("Dummy." + myFileTypes[i].getDefaultExtension(), text);
           }
         }
       }

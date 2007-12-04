@@ -6,9 +6,12 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   public static final String TYPE = IdeBundle.message("title.hierarchy.method");
@@ -134,9 +137,9 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
     final PsiClass psiClass = ((MethodHierarchyNodeDescriptor)descriptor).getPsiClass();
 
-    final PsiClass[] subclasses = getSubclasses(psiClass);
+    final Collection<PsiClass> subclasses = getSubclasses(psiClass);
 
-    final ArrayList<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>(subclasses.length);
+    final ArrayList<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>(subclasses.size());
     for (final PsiClass aClass : subclasses) {
       if (HierarchyBrowserManager.getInstance(myProject).HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED) {
         if (shouldHideClass(aClass)) {
@@ -150,12 +153,12 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     return descriptors.toArray(new HierarchyNodeDescriptor[descriptors.size()]);
   }
 
-  private PsiClass[] getSubclasses(final PsiClass psiClass) {
+  private static Collection<PsiClass> getSubclasses(final PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass || psiClass.hasModifierProperty(PsiModifier.FINAL)) {
-      return PsiClass.EMPTY_ARRAY;
+      return Collections.emptyList();
     }
 
-    return PsiManager.getInstance(myProject).getSearchHelper().findInheritors(psiClass, psiClass.getUseScope(), false);
+    return ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), false).findAll();
   }
 
   private boolean shouldHideClass(final PsiClass psiClass) {

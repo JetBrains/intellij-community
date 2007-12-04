@@ -36,7 +36,7 @@ public class FormClassAnnotator implements Annotator {
       PsiClass aClass = (PsiClass) psiElement;
       final String qName = aClass.getQualifiedName();
       if (qName != null) {
-        final PsiFile[] formsBoundToClass = psiElement.getManager().getSearchHelper().findFormsBoundToClass(qName);
+        final PsiFile[] formsBoundToClass = JavaPsiFacade.getInstance(aClass.getProject()).findFormsBoundToClass(qName);
         if (formsBoundToClass.length > 0) {
           Annotation boundClassAnnotation = holder.createInfoAnnotation(aClass.getNameIdentifier(), null);
           boundClassAnnotation.setGutterIconRenderer(new BoundIconRenderer(aClass));

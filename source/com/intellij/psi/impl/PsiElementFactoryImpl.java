@@ -372,7 +372,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiPackageStatement createPackageStatement(@NotNull String name) throws IncorrectOperationException {
-    final PsiJavaFile javaFile = (PsiJavaFile)createFileFromText("dummy.java", "package " + name + ";");
+    final PsiJavaFile javaFile = (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("dummy.java", "package " + name + ";");
     final PsiPackageStatement stmt = javaFile.getPackageStatement();
     if (stmt == null) throw new IncorrectOperationException("Incorrect package name: " + name);
     return stmt;
@@ -448,7 +448,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public XmlTag createXHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
-    return ((XmlFile)createFileFromText("dummy.xhtml", text)).getDocument().getRootTag();
+    return ((XmlFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("dummy.xhtml", text)).getDocument().getRootTag();
   }
 
   @NotNull
@@ -569,14 +569,14 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public XmlTag createTagFromText(@NotNull String text) throws IncorrectOperationException {
-    final XmlTag tag = ((XmlFile)createFileFromText("dummy.xml", text)).getDocument().getRootTag();
+    final XmlTag tag = ((XmlFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("dummy.xml", text)).getDocument().getRootTag();
     if (tag == null) throw new IncorrectOperationException("Incorrect tag text");
     return tag;
   }
 
   @NotNull
   public XmlAttribute createXmlAttribute(@NotNull String name, String value) throws IncorrectOperationException {
-    XmlTag tag = ((XmlFile)createFileFromText("dummy.xml", "<tag " + name + "=\"" + value + "\"/>")).getDocument().getRootTag();
+    XmlTag tag = ((XmlFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("dummy.xml", "<tag " + name + "=\"" + value + "\"/>")).getDocument().getRootTag();
     return tag.getAttributes()[0];
   }
 

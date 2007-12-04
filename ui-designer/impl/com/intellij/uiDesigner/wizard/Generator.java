@@ -432,7 +432,8 @@ public final class Generator {
       "}";
 
     try {
-      PsiFile sourceFile = psiManager.getElementFactory().createFileFromText(wizardData.myShortClassName + ".java", body);
+      PsiFile sourceFile =
+        PsiFileFactory.getInstance(psiManager.getProject()).createFileFromText(wizardData.myShortClassName + ".java", body);
       sourceFile = (PsiFile)targetDir.add(sourceFile);
 
       final PsiClass beanClass = ((PsiJavaFile)sourceFile).getClasses()[0];

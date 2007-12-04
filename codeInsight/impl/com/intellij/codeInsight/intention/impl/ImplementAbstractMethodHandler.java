@@ -22,9 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -127,11 +129,7 @@ public class ImplementAbstractMethodHandler {
 
   private PsiClass[] getClassImplementations(final PsiClass psiClass) {
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
-    PsiManager manager = psiClass.getManager();
-    PsiSearchHelper helper = manager.getSearchHelper();
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    PsiClass[] inheritors = helper.findInheritors(psiClass, psiClass.getUseScope(), true);
-    for (PsiClass inheritor : inheritors) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true)) {
       if (!inheritor.isInterface()) {
         PsiMethod method = inheritor.findMethodBySignature(myMethod, true);
         if (method == null || !method.getContainingClass().equals(psiClass)) continue;

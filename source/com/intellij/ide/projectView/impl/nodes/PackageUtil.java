@@ -90,7 +90,7 @@ public class PackageUtil {
                                        ViewSettings settings,
                                        final boolean inLibrary) {
     final boolean shouldSkipPackage = settings.isHideEmptyMiddlePackages() && isPackageEmpty(aPackage, module, !settings.isFlattenPackages(), inLibrary);
-    final Project project = aPackage.getManager().getProject();
+    final Project project = aPackage.getProject();
     if (!shouldSkipPackage) {
       children.add(new PackageElementNode(project,
                                           new PackageElement(module, aPackage, inLibrary), settings));
@@ -107,7 +107,7 @@ public class PackageUtil {
                                        Module module,
                                        boolean strictlyEmpty,
                                        final boolean inLibrary) {
-    final Project project = aPackage.getManager().getProject();
+    final Project project = aPackage.getProject();
     final GlobalSearchScope scopeToShow = getScopeToShow(project, module, inLibrary);
     final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
     for (final PsiDirectory dir : dirs) {
@@ -386,7 +386,7 @@ public class PackageUtil {
                                                                   final ViewSettings settings,
                                                                   boolean withSubDirectories) {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-    final Project project = psiDirectory.getManager().getProject();
+    final Project project = psiDirectory.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
     final ModuleFileIndex moduleFileIndex = module == null ? null : ModuleRootManager.getInstance(module).getFileIndex();
@@ -486,7 +486,7 @@ public class PackageUtil {
     }
 
     try {
-      container.add(ProjectViewNode.createTreeNode(nodeClass, element.getManager().getProject(), element, settings));
+      container.add(ProjectViewNode.createTreeNode(nodeClass, element.getProject(), element, settings));
     }
     catch (Exception e) {
       LOG.error(e);
@@ -498,7 +498,7 @@ public class PackageUtil {
                                         PsiDirectory dir,
                                         ModuleFileIndex moduleFileIndex,
                                         ViewSettings viewSettings) {
-    final Project project = dir.getManager().getProject();
+    final Project project = dir.getProject();
     PsiDirectory[] subdirs = dir.getSubdirectories();
     for (PsiDirectory subdir : subdirs) {
       if (subdir.getPackage() == null) {

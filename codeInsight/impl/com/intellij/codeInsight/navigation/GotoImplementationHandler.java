@@ -15,7 +15,9 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.DefinitionsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -154,14 +156,14 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     final ArrayList<PsiClass> list = new ArrayList<PsiClass>();
 
     PsiSearchHelper helper = psiClass.getManager().getSearchHelper();
-    helper.processInheritors(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {
         if (!element.isInterface()) {
           list.add(element);
         }
         return true;
       }
-    }, psiClass, psiClass.getUseScope(), true);
+    }));
 
     return list.toArray(new PsiClass[list.size()]);
   }

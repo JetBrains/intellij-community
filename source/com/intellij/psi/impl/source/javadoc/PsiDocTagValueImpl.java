@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -25,7 +26,7 @@ public class PsiDocTagValueImpl extends CompositePsiElement implements PsiDocTag
   public PsiReference getReference() {
     PsiDocTag docTag = PsiTreeUtil.getParentOfType(this, PsiDocTag.class);
     final String name = docTag.getName();
-    final JavadocManager manager = getManager().getJavadocManager();
+    final JavadocManager manager = JavaPsiFacade.getInstance(getManager().getProject()).getJavadocManager();
     final JavadocTagInfo info = manager.getTagInfo(name);
     if (info == null) return null;
 

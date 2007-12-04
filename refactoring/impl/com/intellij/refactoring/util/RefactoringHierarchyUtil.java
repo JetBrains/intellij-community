@@ -11,7 +11,9 @@ package com.intellij.refactoring.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,7 +213,7 @@ public class RefactoringHierarchyUtil {
     PsiManager manager = anInterface.getManager();
     visited.add(anInterface);
     PsiSearchHelper searchHelper = manager.getSearchHelper();
-    searchHelper.processInheritors(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(anInterface, anInterface.getUseScope(), false).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass aClass) {
         if (!aClass.isInterface()) {
           result.add(aClass);
@@ -222,10 +224,7 @@ public class RefactoringHierarchyUtil {
         return true;
       }
 
-    },
-                                   anInterface,
-                                   anInterface.getUseScope(),
-                                   false);
+    }));
   }
 
 

@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 
@@ -49,7 +50,7 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
 
   private void visitVariable(PsiVariable variable, ClassReferenceVisitor.TypeOccurence occurence) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
-    PsiReference[] references = mySearchHelper.findReferences(variable, projectScope, false);
+    PsiReference[] references = ReferencesSearch.search(variable, projectScope, false).toArray(new PsiReference[0]);
     for (int i = 0; i < references.length; i++) {
       PsiElement element = references[i].getElement();
 
@@ -65,7 +66,7 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
 
   public void visitMethodReturnType(PsiMethod method, ClassReferenceVisitor.TypeOccurence occurence) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
-    PsiReference[] refs = mySearchHelper.findReferences(method, projectScope, false);
+    PsiReference[] refs = ReferencesSearch.search(method, projectScope, false).toArray(new PsiReference[0]);
 
     for (int i = 0; i < refs.length; i++) {
       PsiElement element = refs[i].getElement();

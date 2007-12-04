@@ -397,7 +397,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       }
     }
     checkForPeriodInDoc(docComment, problems, manager);
-    checkInlineTags(manager, problems, docComment.getDescriptionElements(), docComment.getManager().getJavadocManager());
+    checkInlineTags(manager, problems, docComment.getDescriptionElements(),
+                    JavaPsiFacade.getInstance(docComment.getProject()).getJavadocManager());
 
     for (PsiDocTag tag : tags) {
       for (int i = 0; i < tagsToCheck.length; i++) {
@@ -452,7 +453,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
-    checkInlineTags(manager, problems, docComment.getDescriptionElements(), docComment.getManager().getJavadocManager());
+    checkInlineTags(manager, problems, docComment.getDescriptionElements(),
+                    JavaPsiFacade.getInstance(docComment.getProject()).getJavadocManager());
     checkForPeriodInDoc(docComment, problems, manager);
     checkDuplicateTags(docComment.getTags(), problems, manager);
     return problems.isEmpty()
@@ -497,12 +499,13 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
 
-    checkInlineTags(manager, problems, descriptionElements, docComment.getManager().getJavadocManager());
+    checkInlineTags(manager, problems, descriptionElements,
+                    JavaPsiFacade.getInstance(docComment.getProject()).getJavadocManager());
 
     final PsiDocTag tagByName = docComment.findTagByName("inheritDoc");
     if (tagByName != null) {
       final String tagName = tagByName.getName();
-      final JavadocTagInfo tagInfo = tagByName.getManager().getJavadocManager().getTagInfo(tagName);
+      final JavadocTagInfo tagInfo = JavaPsiFacade.getInstance(tagByName.getProject()).getJavadocManager().getTagInfo(tagName);
       if (tagInfo != null && tagInfo.isValidInContext(psiMethod)){
         return null;
       }
@@ -804,7 +807,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       final PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(docComment, PsiDocCommentOwner.class);
       for (PsiDocTag tag : tags) {
         final String tagName = tag.getName();
-        final JavadocTagInfo tagInfo = tag.getManager().getJavadocManager().getTagInfo(tagName);
+        final JavadocTagInfo tagInfo = JavaPsiFacade.getInstance(tag.getProject()).getJavadocManager().getTagInfo(tagName);
         if (tagInfo != null && tagInfo.isValidInContext(owner) && !tagInfo.isInline()) {
           tagOffset = tag.getTextOffset();
           break;
@@ -826,7 +829,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
     nextTag:
     for (PsiDocTag tag : tags) {
-      final JavadocManager manager = tag.getManager().getJavadocManager();
+      final JavadocManager manager = JavaPsiFacade.getInstance(tag.getProject()).getJavadocManager();
       String tagName = tag.getName();
       JavadocTagInfo tagInfo = manager.getTagInfo(tagName);
 

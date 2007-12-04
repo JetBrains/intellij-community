@@ -10,7 +10,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiElementFactoryImpl;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -70,10 +70,10 @@ public class CacheUtil {
           fileType = StdFileTypes.PLAIN_TEXT;
         }
         */
-        PsiElementFactoryImpl factory = (PsiElementFactoryImpl)psiFile.getManager().getElementFactory();
         final String name = psiFile.getName();
         assert name != null;
-        fileCopy = factory.createFileFromText(name, fileType, text, psiFile.getModificationStamp(), false, false);
+        fileCopy =
+          PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(name, fileType, text, psiFile.getModificationStamp(), false, false);
         fileCopy.putUserData(CACHE_COPY_KEY, Boolean.TRUE);
         ((PsiFileImpl)fileCopy).setOriginalFile(psiFile);
       }

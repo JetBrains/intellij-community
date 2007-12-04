@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -41,7 +38,7 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
 
         for (PsiMethod method : methods) {
           if (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-              !inheritor.getManager().arePackagesTheSame(psiClass, inheritor)) continue;
+              !JavaPsiFacade.getInstance(inheritor.getProject()).arePackagesTheSame(psiClass, inheritor)) continue;
           
           MethodSignature signature = method.getSignature(substitutor);
           PsiMethod inInheritor = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);

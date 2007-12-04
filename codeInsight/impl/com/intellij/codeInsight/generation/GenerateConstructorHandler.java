@@ -11,19 +11,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Arrays;
 
 public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateConstructorHandler");
@@ -36,12 +35,11 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   protected ClassMember[] getAllOriginalMembers(PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
     ArrayList<ClassMember> array = new ArrayList<ClassMember>();
-    final PsiSearchHelper searchHelper = aClass.getManager().getSearchHelper();
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
 
       if (field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() != null) continue;
-      if (searchHelper.isFieldBoundToForm(field)) continue;
+      if (JavaPsiFacade.getInstance(field.getProject()).isFieldBoundToForm(field)) continue;
       array.add(new PsiFieldMember(field));
     }
     return array.toArray(new ClassMember[array.size()]);

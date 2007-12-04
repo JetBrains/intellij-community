@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -21,7 +20,11 @@ import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -136,7 +139,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     PsiSearchHelper helper = manager.getSearchHelper();
 
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
-    PsiMethod[] overridingMethods = helper.findOverridingMethods(method, method.getUseScope(), true);
+    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
 
     for (PsiMethod overridingMethod : overridingMethods) {
       result.add(new OverriderUsageInfo(overridingMethod, method, isOriginal, isToModifyArgs, isToThrowExceptions));
@@ -146,7 +149,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     if (needToChangeCalls) {
       int parameterCount = method.getParameterList().getParametersCount();
 
-      PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
+      PsiReference[] refs = MethodReferencesSearch.search(method, projectScope, true).toArray(PsiReference.EMPTY_ARRAY);
       for (PsiReference ref : refs) {
         PsiElement element = ref.getElement();
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
@@ -180,7 +183,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       //}
     }
     else if (myChangeInfo.isParameterTypesChanged) {
-      PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
+      PsiReference[] refs = MethodReferencesSearch.search(method, projectScope, true).toArray(PsiReference.EMPTY_ARRAY);
       for (PsiReference reference : refs) {
         final PsiElement element = reference.getElement();
         if (element instanceof PsiDocTagValue) {
@@ -911,7 +914,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     PsiManager manager = parameter.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    PsiReference[] parmRefs = helper.findReferences(parameter, projectScope, false);
+    PsiReference[] parmRefs = ReferencesSearch.search(parameter, projectScope, false).toArray(new PsiReference[0]);
     for (PsiReference psiReference : parmRefs) {
       PsiElement parmRef = psiReference.getElement();
       UsageInfo usageInfo = new MyParameterUsageInfo(parmRef, parameter.getName(), info.getName());

@@ -6,10 +6,12 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.ArrayUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
   public static final String TYPE = IdeBundle.message("title.hierarchy.subtypes");
@@ -29,11 +31,10 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
     }
     if (psiClass instanceof PsiAnonymousClass) return ArrayUtil.EMPTY_OBJECT_ARRAY;
     if (psiClass.hasModifierProperty(PsiModifier.FINAL)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    final PsiSearchHelper helper = PsiManager.getInstance(myProject).getSearchHelper();
-    final PsiClass[] classes = helper.findInheritors(psiClass, psiClass.getUseScope(), false);
-    final HierarchyNodeDescriptor[] descriptors = new HierarchyNodeDescriptor[classes.length];
-    for (int i = 0; i < classes.length; i++) {
-      descriptors[i] = new TypeHierarchyNodeDescriptor(myProject, descriptor, classes[i], false);
+    final List<PsiClass> classes = new ArrayList<PsiClass>(ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), false).findAll());
+    final HierarchyNodeDescriptor[] descriptors = new HierarchyNodeDescriptor[classes.size()];
+    for (int i = 0; i < classes.size(); i++) {
+      descriptors[i] = new TypeHierarchyNodeDescriptor(myProject, descriptor, classes.get(i), false);
     }
     return descriptors;
   }

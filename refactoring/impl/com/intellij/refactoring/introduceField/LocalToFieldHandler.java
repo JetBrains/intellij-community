@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
@@ -137,7 +138,7 @@ public class LocalToFieldHandler {
           if (rebindNeeded2) {
             PsiManager manager = local.getManager();
             PsiSearchHelper helper = manager.getSearchHelper();
-            refs = helper.findReferences(local, GlobalSearchScope.projectScope(myProject), false);
+            refs = ReferencesSearch.search(local, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
           }
           else {
             refs = null;

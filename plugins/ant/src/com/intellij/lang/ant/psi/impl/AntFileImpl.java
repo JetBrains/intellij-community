@@ -28,10 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -504,7 +501,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         }
       }
       builder.append("</project>");
-      final XmlFile xmlFile = (XmlFile)getManager().getElementFactory()
+      final XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(getProject())
         .createFileFromText("dummy.xml", StdFileTypes.XML, builder, LocalTimeCounter.currentTime(), false, false);
       final XmlDocument document = xmlFile.getDocument();
       if (document == null) return;

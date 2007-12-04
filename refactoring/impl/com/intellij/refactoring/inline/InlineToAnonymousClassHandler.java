@@ -129,7 +129,7 @@ public class InlineToAnonymousClassHandler {
         Object initValue = null;
         final PsiExpression initializer = field.getInitializer();
         if (initializer != null) {
-          initValue = psiClass.getManager().getConstantEvaluationHelper().computeConstantExpression(initializer);
+          initValue = JavaPsiFacade.getInstance(psiClass.getProject()).getConstantEvaluationHelper().computeConstantExpression(initializer);
         }
         if (initValue == null) {
           return "Class cannot be inlined because it has static fields with non-constant initializers";

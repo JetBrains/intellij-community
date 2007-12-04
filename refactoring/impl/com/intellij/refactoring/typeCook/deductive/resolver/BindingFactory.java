@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeCook.Util;
@@ -52,9 +52,7 @@ public class BindingFactory {
           descendants.add(aClass);
         }
         else {
-          final PsiSearchHelper helper = aClass.getManager().getSearchHelper();
-          final PsiClass[] bInheritors = helper.findInheritors(bClass, bClass.getUseScope(), false);
-          for (PsiClass bInheritor : bInheritors) {
+          for (PsiClass bInheritor : ClassInheritorsSearch.search(bClass, bClass.getUseScope(), false)) {
             getGreatestLowerClasses(bInheritor, aClass, descendants);
           }
         }

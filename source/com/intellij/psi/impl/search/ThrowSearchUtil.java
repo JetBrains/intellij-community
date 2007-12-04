@@ -4,6 +4,7 @@ import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
@@ -68,7 +69,7 @@ public class ThrowSearchUtil {
         if (!processed.contains(method)) {
           processed.add(method);
           PsiSearchHelper helper = method.getManager().getSearchHelper();
-          final PsiReference[] refs = helper.findReferencesIncludingOverriding(method, options.searchScope, true);
+          final PsiReference[] refs = MethodReferencesSearch.search(method, options.searchScope, true).toArray(PsiReference.EMPTY_ARRAY);
           for (int i = 0; i != refs.length; ++i) {
             scanCatches(refs[i].getElement(), processor, root, options, processed);
           }

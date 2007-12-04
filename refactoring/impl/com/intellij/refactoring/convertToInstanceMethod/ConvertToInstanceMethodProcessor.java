@@ -1,8 +1,8 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -12,7 +12,7 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -80,9 +80,9 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(myTargetParameter.getDeclarationScope() == myMethod);
     final PsiManager manager = myMethod.getManager();
     final Project project = manager.getProject();
-    PsiSearchHelper searchHelper = manager.getSearchHelper();
 
-    final PsiReference[] methodReferences = searchHelper.findReferences(myMethod, GlobalSearchScope.projectScope(project), false);
+    final PsiReference[] methodReferences =
+      ReferencesSearch.search(myMethod, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     for (final PsiReference ref : methodReferences) {
       final PsiElement element = ref.getElement();
@@ -96,7 +96,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    PsiReference[] parameterReferences = searchHelper.findReferences(myTargetParameter, new LocalSearchScope(myMethod), false);
+    PsiReference[] parameterReferences =
+      ReferencesSearch.search(myTargetParameter, new LocalSearchScope(myMethod), false).toArray(new PsiReference[0]);
     for (final PsiReference ref : parameterReferences) {
       if (ref.getElement() instanceof PsiReferenceExpression) {
         result.add(new ParameterUsageInfo((PsiReferenceExpression)ref));
@@ -271,8 +272,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     if (myTypeParameterReplacements == null) return;
     final Collection<PsiTypeParameter> typeParameters = myTypeParameterReplacements.keySet();
     for (final PsiTypeParameter parameter : typeParameters) {
-      final PsiReference[] references = myMethod.getManager().getSearchHelper()
-        .findReferences(parameter, new LocalSearchScope(myMethod), false);
+      final PsiReference[] references =
+        ReferencesSearch.search(parameter, new LocalSearchScope(myMethod), false).toArray(new PsiReference[0]);
       for (final PsiReference reference : references) {
         if (reference.getElement() instanceof PsiJavaCodeReferenceElement) {
           reference.getElement().putCopyableUserData(BIND_TO_TYPE_PARAMETER, myTypeParameterReplacements.get(parameter));
@@ -299,7 +300,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       if (map == null) return newMethod;
       additionalReplacements = new HashMap<PsiTypeParameter, PsiTypeParameter>();
       for (final Map.Entry<PsiTypeParameter, PsiTypeParameter> entry : map.entrySet()) {
-        additionalReplacements.put((PsiTypeParameter)entry.getValue(), (PsiTypeParameter)entry.getKey());
+        additionalReplacements.put(entry.getValue(), entry.getKey());
       }
     }
     else {

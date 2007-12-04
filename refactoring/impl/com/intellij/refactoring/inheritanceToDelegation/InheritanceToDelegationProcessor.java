@@ -8,10 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -133,8 +133,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
-    PsiSearchHelper searchHelper = myManager.getSearchHelper();
-    final PsiClass[] inheritors = searchHelper.findInheritors(myClass, myClass.getUseScope(), true);
+    final PsiClass[] inheritors = ClassInheritorsSearch.search(myClass, myClass.getUseScope(), true).toArray(PsiClass.EMPTY_ARRAY);
     myClassInheritors = new HashSet<PsiClass>();
     myClassInheritors.add(myClass);
     addAll(myClassInheritors, inheritors);

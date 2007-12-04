@@ -53,7 +53,7 @@ public class VisibilityUtil  {
 
   public static String getPossibleVisibility(final PsiMember psiMethod, final PsiElement place) {
     if (PsiUtil.isAccessible(psiMethod, place, null)) return getVisibilityStringToDisplay(psiMethod);
-    if (psiMethod.getManager().arePackagesTheSame(psiMethod, place)) {
+    if (JavaPsiFacade.getInstance(psiMethod.getProject()).arePackagesTheSame(psiMethod, place)) {
       return PsiModifier.PACKAGE_LOCAL;
     }
     if (InheritanceUtil.isInheritorOrSelf(PsiTreeUtil.getParentOfType(place, PsiClass.class),

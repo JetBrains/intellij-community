@@ -19,12 +19,10 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,17 +48,6 @@ public interface PsiJavaParserFacade {
    */
   @NotNull
   PsiDocComment createDocCommentFromText(@NotNull String docCommentText, @Deprecated PsiElement context) throws IncorrectOperationException;
-
-  /**
-   * Creates a file from the specified text.
-   *
-   * @param name the name of the file to create (the extension of the name determines the file type).
-   * @param text the text of the file to create.
-   * @return the created file.
-   * @throws com.intellij.util.IncorrectOperationException if the file type with specified extension is binary.
-   */
-  @NotNull
-  PsiFile createFileFromText(@NotNull @NonNls String name, @NotNull @NonNls String text);
 
   /**
    * Creates a Java class from the specified text.
@@ -206,19 +193,6 @@ public interface PsiJavaParserFacade {
    */
   @NotNull
   PsiElement createWhiteSpaceFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
-
-  @NotNull
-  PsiFile createFileFromText(@NonNls @NotNull String fileName, @NotNull FileType fileType, @NotNull CharSequence text);
-
-  @NotNull
-  PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                      long modificationStamp, boolean physical);
-
-  @NotNull
-  PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text,
-                                      long modificationStamp, boolean physical, boolean markAsCopy);
-
-  PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text);
 
   @NotNull
   PsiEnumConstant createEnumConstantFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException;

@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -59,7 +60,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       message = RefactoringBundle.message("move.method.is.not.supported.for.generic.classes");
     }
     else if (method.findSuperMethods().length > 0 ||
-             method.getManager().getSearchHelper().findOverridingMethods(method, method.getUseScope(), true).length > 0) {
+             OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
       message = RefactoringBundle.message("move.method.is.not.supported.when.method.is.part.of.inheritance.hierarchy");
     }
     else {

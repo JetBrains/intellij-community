@@ -14,9 +14,9 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -286,7 +286,7 @@ public class HighlightUtil {
           PsiField field = (PsiField)resolved;
           PsiClass aClass = field.getContainingClass();
           if (aClass != null && aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-              !aClass.getManager().arePackagesTheSame(aClass, place)) {
+              !JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, place)) {
 
             return aClass;
           }
@@ -1728,7 +1728,7 @@ public class HighlightUtil {
     boolean overflow = false;
     try {
       if (expr.getUserData(HAS_OVERFLOW_IN_CHILD) == null) {
-        expr.getManager().getConstantEvaluationHelper().computeConstantExpression(expr, true);
+        JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr, true);
       }
       else {
         overflow = true;

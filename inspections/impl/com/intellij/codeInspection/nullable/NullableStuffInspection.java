@@ -7,14 +7,15 @@ import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -222,7 +223,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       if (hasAnnotatedParameter || annotated.isDeclaredNotNull) {
         PsiManager manager = method.getManager();
         PsiMethod[] overridings =
-          manager.getSearchHelper().findOverridingMethods(method, GlobalSearchScope.allScope(manager.getProject()), true);
+          OverridingMethodsSearch.search(method, GlobalSearchScope.allScope(manager.getProject()), true).toArray(PsiMethod.EMPTY_ARRAY);
         boolean methodQuickFixSuggested = false;
         for (PsiMethod overriding : overridings) {
           if (!manager.isInProject(overriding)) continue;

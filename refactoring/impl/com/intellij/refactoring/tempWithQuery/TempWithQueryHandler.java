@@ -18,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -63,7 +64,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     }
 
     PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
-    final PsiReference[] refs = searchHelper.findReferences(local, GlobalSearchScope.projectScope(project), false);
+    final PsiReference[] refs = ReferencesSearch.search(local, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);
 
     if (refs.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.never.used", localName));

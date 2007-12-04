@@ -378,7 +378,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
         if (aClass != null) {
           if(psiVar.getInitializer() != null) {
-            Object value = psiVar.getManager().getConstantEvaluationHelper().computeConstantExpression(psiVar.getInitializer());
+            Object value = JavaPsiFacade.getInstance(psiVar.getProject()).getConstantEvaluationHelper().computeConstantExpression(psiVar.getInitializer());
             if(value != null) {
               myResult = new LiteralEvaluator(value, psiVar.getType().getCanonicalText());
               return;

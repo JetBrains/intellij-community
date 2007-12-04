@@ -203,14 +203,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
             }
             builder.insert(0, "<project basedir=\"");
             builder.append("</project>");
-            final PsiElementFactory elementFactory = getManager().getElementFactory();
-            final XmlFile xmlFile = (XmlFile)elementFactory.createFileFromText(
-              "dummyEntities.xml", 
-              StdFileTypes.XML, 
-              builder.toString(), 
-              LocalTimeCounter.currentTime(), 
-              false, false
-            );
+            final XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(getProject())
+              .createFileFromText("dummyEntities.xml", StdFileTypes.XML, builder.toString(), LocalTimeCounter.currentTime(), false, false);
             addImportedFile(new AntFileImpl(xmlFile.getViewProvider()) {
               //
               // this is necessary for computing file paths in tags resolved as entity references

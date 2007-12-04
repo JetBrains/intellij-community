@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -85,7 +86,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    PsiReference[] refs = mySearchHelper.findReferences(myClass, GlobalSearchScope.projectScope(myProject), false);
+    PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     detectTurnToSuperRefs(refs, result);
     final PsiPackage originalPackage = myClass.getContainingFile().getContainingDirectory().getPackage();

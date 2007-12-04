@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -32,7 +33,7 @@ public class FieldConflictsResolver {
     final PsiVariable oldVariable = manager.getResolveHelper().resolveReferencedVariable(myName, myScope);
     if (!(oldVariable instanceof PsiField)) return;
     myField = (PsiField) oldVariable;
-    final PsiReference[] references = manager.getSearchHelper().findReferences(myField, new LocalSearchScope(myScope), false);
+    final PsiReference[] references = ReferencesSearch.search(myField, new LocalSearchScope(myScope), false).toArray(new PsiReference[0]);
     myReferenceExpressions = new ArrayList<PsiReferenceExpression>();
     for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();

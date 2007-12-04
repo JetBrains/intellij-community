@@ -562,7 +562,7 @@ public class TypeConversionUtil {
     if (lType instanceof PsiPrimitiveType
         && rType instanceof PsiPrimitiveType
         && rTypeRank >= BYTE_RANK && rTypeRank <= INT_RANK) {
-      final Object rValue = rExpr.getManager().getConstantEvaluationHelper().computeConstantExpression(rExpr);
+      final Object rValue = JavaPsiFacade.getInstance(rExpr.getProject()).getConstantEvaluationHelper().computeConstantExpression(rExpr);
       final long value;
       if (rValue instanceof Number) {
         value = ((Number)rValue).longValue();

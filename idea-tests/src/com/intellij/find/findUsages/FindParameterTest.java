@@ -2,6 +2,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.PsiTestCase;
 import junit.framework.Assert;
 
@@ -23,7 +24,8 @@ public class FindParameterTest extends PsiTestCase {
     final PsiElementFactory elementFactory = psiManager.getElementFactory();
     final PsiMethod methodFromText = elementFactory.createMethodFromText(text, null);
     final PsiParameter[] parameters = methodFromText.getParameterList().getParameters();
-    final PsiReference[] references = psiManager.getSearchHelper().findReferences(parameters[0], new LocalSearchScope(methodFromText), false);
+    final PsiReference[] references =
+      ReferencesSearch.search(parameters[0], new LocalSearchScope(methodFromText), false).toArray(new PsiReference[0]);
     Assert.assertEquals(references.length, 2);
   }
 }

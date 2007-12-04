@@ -17,6 +17,8 @@ import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -56,7 +58,7 @@ public class RenameUtil {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
 
-      PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
+      PsiReference[] refs = MethodReferencesSearch.search(method, projectScope, true).toArray(PsiReference.EMPTY_ARRAY);
       for (PsiReference ref : refs) {
         result.add(new MoveRenameUsageInfo(ref.getElement(), ref, element));
       }
@@ -208,7 +210,7 @@ public class RenameUtil {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return;
       if (method.hasModifierProperty(PsiModifier.PRIVATE)) return;
-      PsiClass[] inheritors = helper.findInheritors(containingClass, containingClass.getUseScope(), true);
+      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true).findAll();
 
       MethodSignature oldSignature = method.getSignature(PsiSubstitutor.EMPTY);
       MethodSignature newSignature = MethodSignatureUtil.createMethodSignature(newName, oldSignature.getParameterTypes(),
@@ -230,7 +232,7 @@ public class RenameUtil {
       if (field.getContainingClass() == null) return;
       if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
       final PsiClass containingClass = field.getContainingClass();
-      PsiClass[] inheritors = helper.findInheritors(containingClass, containingClass.getUseScope(), true);
+      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true).findAll();
       for (PsiClass inheritor : inheritors) {
         PsiField conflictingField = inheritor.findFieldByName(newName, false);
         if (conflictingField != null) {
@@ -242,7 +244,7 @@ public class RenameUtil {
       final PsiClass aClass = (PsiClass)element;
       if (aClass.getParent() instanceof PsiClass) {
         PsiClass parent = (PsiClass)aClass.getParent();
-        PsiClass[] inheritors = helper.findInheritors(parent, parent.getUseScope(), true);
+        Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent, parent.getUseScope(), true).findAll();
         for (PsiClass inheritor : inheritors) {
           PsiClass[] inners = inheritor.getInnerClasses();
           for (PsiClass inner : inners) {
@@ -583,9 +585,7 @@ public class RenameUtil {
 
     PsiManager psiManager = value.getManager();
     LOG.assertTrue(psiManager != null);
-    PsiElementFactory elementFactory = psiManager.getElementFactory();
-
-    XmlFile file = (XmlFile)elementFactory.createFileFromText("dummy.xml", "<a attr=\"" + newName + "\"/>");
+    XmlFile file = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject()).createFileFromText("dummy.xml", "<a attr=\"" + newName + "\"/>");
     final PsiElement element = value.replace(file.getDocument().getRootTag().getAttributes()[0].getValueElement());
     listener.elementRenamed(element);
   }
@@ -608,7 +608,8 @@ public class RenameUtil {
       if (!oldElement.isValid() || oldElement == originalElement) continue;
       final PsiElement newElement = reference.handleElementRename(newName);
       if (!oldElement.isValid()) {
-        final PsiReference[] references = searchHelper.findReferences(originalElement, new LocalSearchScope(newElement), false);
+        final PsiReference[] references =
+          ReferencesSearch.search(originalElement, new LocalSearchScope(newElement), false).toArray(new PsiReference[0]);
         for (PsiReference psiReference : references) {
           queue.addLast(psiReference);
         }

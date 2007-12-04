@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -163,8 +164,8 @@ public class InlineParameterHandler {
     if (field1 != null || field2 != null) {
       return field1 == field2;
     }
-    Object value1 = expr1.getManager().getConstantEvaluationHelper().computeConstantExpression(expr1);
-    Object value2 = expr2.getManager().getConstantEvaluationHelper().computeConstantExpression(expr2);
+    Object value1 = JavaPsiFacade.getInstance(expr1.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr1);
+    Object value2 = JavaPsiFacade.getInstance(expr2.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr2);
     return value1 != null && value2 != null && value1.equals(value2);
   }
 
@@ -174,7 +175,7 @@ public class InlineParameterHandler {
       return RefactoringBundle.message("inline.parameter.error.varargs");
     }
     if (method.findSuperMethods().length > 0 ||
-                 method.getManager().getSearchHelper().findOverridingMethods(method, method.getUseScope(), true).length > 0) {
+                 OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
       return RefactoringBundle.message("inline.parameter.error.hierarchy");
     }
     return null;

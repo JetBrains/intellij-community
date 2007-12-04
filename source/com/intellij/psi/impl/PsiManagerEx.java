@@ -4,9 +4,9 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.file.impl.FileManager;
@@ -28,6 +28,8 @@ public abstract class PsiManagerEx extends PsiManager {
   public abstract boolean isAssertOnFileLoading(VirtualFile file);
 
   public abstract void nonPhysicalChange();
+
+  public abstract void physicalChange();
 
   public abstract ResolveCache getResolveCache();
 

@@ -17,6 +17,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -126,12 +128,14 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     PsiSearchHelper helper = myManager.getSearchHelper();
 
-    PsiMethod[] overridingMethods = helper.findOverridingMethods(myMethodToSearchFor, myMethodToSearchFor.getUseScope(), true);
+    PsiMethod[] overridingMethods =
+      OverridingMethodsSearch.search(myMethodToSearchFor, myMethodToSearchFor.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod overridingMethod : overridingMethods) {
       result.add(new UsageInfo(overridingMethod));
     }
 
-    PsiReference[] refs = helper.findReferencesIncludingOverriding(myMethodToSearchFor, GlobalSearchScope.projectScope(myProject), true);
+    PsiReference[] refs =
+      MethodReferencesSearch.search(myMethodToSearchFor, GlobalSearchScope.projectScope(myProject), true).toArray(PsiReference.EMPTY_ARRAY);
 
 
     for (PsiReference ref1 : refs) {

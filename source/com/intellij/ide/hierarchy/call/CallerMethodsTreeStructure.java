@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -57,7 +58,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
     final HashMap<PsiMember,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<PsiMember, CallHierarchyNodeDescriptor>();
     for (final PsiMethod methodToFind : methodsToFind) {
-      for (final PsiReference reference : searchHelper.findReferencesIncludingOverriding(methodToFind, searchScope, true)) {
+      for (final PsiReference reference : MethodReferencesSearch.search(methodToFind, searchScope, true).toArray(PsiReference.EMPTY_ARRAY)) {
         if (reference instanceof PsiReferenceExpression) {
           final PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
           if (qualifier instanceof PsiSuperExpression) { // filter super.foo() call inside foo() and similar cases (bug 8411)

@@ -571,7 +571,8 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
                                          final LanguageFileType type,
                                          final CharSequence str,
                                          final PsiManager manager) {
-    return manager.getElementFactory().createFileFromText(name, type, str, LocalTimeCounter.currentTime(), false, false);
+    return PsiFileFactory.getInstance(manager.getProject())
+      .createFileFromText(name, type, str, LocalTimeCounter.currentTime(), false, false);
   }
 
   private static class CacheKey {

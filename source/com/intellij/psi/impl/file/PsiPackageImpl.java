@@ -22,8 +22,10 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -349,7 +351,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   @NotNull
   public PsiClass[] getClasses(@NotNull GlobalSearchScope scope) {
-    return myManager.getClasses(this, scope);
+    return getFacade().getClasses(this, scope);
   }
 
   @Nullable
@@ -367,7 +369,11 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   @NotNull
   public PsiPackage[] getSubPackages(@NotNull GlobalSearchScope scope) {
-    return myManager.getSubPackages(this, scope);
+    return getFacade().getSubPackages(this, scope);
+  }
+
+  private JavaPsiFacadeImpl getFacade() {
+    return ((JavaPsiFacadeImpl)JavaPsiFacade.getInstance(myManager.getProject()));
   }
 
   private PsiClass findClassByName(String name, GlobalSearchScope scope) {
@@ -413,8 +419,9 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
             }
           }
         }
-        if (myManager.getCurrentMigration() != null) {
-          final Iterator<PsiClass> migrationClasses = myManager.getCurrentMigration().getMigrationClasses(getQualifiedName());
+        final PsiMigrationImpl migration = getFacade().getCurrentMigration();
+        if (migration != null) {
+          final Iterator<PsiClass> migrationClasses = migration.getMigrationClasses(getQualifiedName());
           while (migrationClasses.hasNext()) {
             PsiClass psiClass = migrationClasses.next();
             if (!processor.execute(psiClass, substitutor)) {
@@ -444,8 +451,9 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
             return false;
           }
         }
-        if (myManager.getCurrentMigration() != null) {
-          final Iterator<PsiPackage> migrationClasses = myManager.getCurrentMigration().getMigrationPackages(getQualifiedName());
+        final PsiMigrationImpl migration = getFacade().getCurrentMigration();
+        if (migration != null) {
+          final Iterator<PsiPackage> migrationClasses = migration.getMigrationPackages(getQualifiedName());
           while (migrationClasses.hasNext()) {
             PsiPackage psiPackage = migrationClasses.next();
             if (!processor.execute(psiPackage, substitutor)) {

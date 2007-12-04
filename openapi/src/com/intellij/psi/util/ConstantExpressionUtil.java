@@ -15,13 +15,14 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 
 public class ConstantExpressionUtil {
   public static Object computeCastTo(PsiExpression expression, PsiType castTo) {
     if (expression == null) return null;
-    Object value = expression.getManager().getConstantEvaluationHelper().computeConstantExpression(expression, false);
+    Object value = JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper().computeConstantExpression(expression, false);
     if(value == null) return null;
     return computeCastTo(value, castTo);
   }

@@ -12,7 +12,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -107,15 +109,15 @@ public class ModifierFix implements IntentionAction {
       changeModifierList(copy);
       final int accessLevel = PsiUtil.getAccessLevel(copy);
 
-      helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
-        public boolean execute(PsiMethod inheritor) {
-          PsiModifierList list = inheritor.getModifierList();
-          if (inheritor.getManager().isInProject(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
-            modifierLists.add(list);
+      OverridingMethodsSearch.search((PsiMethod)owner, owner.getResolveScope(), true).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>() {
+          public boolean execute(PsiMethod inheritor) {
+            PsiModifierList list = inheritor.getModifierList();
+            if (inheritor.getManager().isInProject(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
+              modifierLists.add(list);
+            }
+            return true;
           }
-          return true;
-        }
-      }, (PsiMethod)owner, owner.getResolveScope(), true);
+        }));
     }
 
     if (!CodeInsightUtil.prepareFileForWrite(myModifierList.getContainingFile())) return;

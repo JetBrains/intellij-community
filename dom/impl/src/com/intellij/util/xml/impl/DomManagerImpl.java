@@ -114,7 +114,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   private final Project myProject;
   private final DomElementAnnotationsManagerImpl myAnnotationsManager;
   private final ReferenceProvidersRegistry myReferenceProvidersRegistry;
-  private final PsiElementFactory myElementFactory;
+  private final PsiFileFactory myFileFactory;
 
   private long myModificationCount;
   private boolean myChanging;
@@ -159,7 +159,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     registry.registerReferenceProvider(XmlTag.class, provider);
     registry.registerReferenceProvider(XmlAttributeValue.class, provider);
 
-    myElementFactory = psiManager.getElementFactory();
+    myFileFactory = PsiFileFactory.getInstance(project);
     solver.registerFileHighlightFilter(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
         final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
@@ -552,7 +552,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   public final <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
-    final XmlFile file = (XmlFile)myElementFactory.createFileFromText("a.xml", StdFileTypes.XML, "", 0, physical);
+    final XmlFile file = (XmlFile)myFileFactory.createFileFromText("a.xml", StdFileTypes.XML, "", (long)0, physical);
     final DomFileElementImpl<T> fileElement = getFileElement(file, aClass, "I_sincerely_hope_that_nobody_will_have_such_a_root_tag_name");
     fileElement.putUserData(MOCK_ELEMENT_MODULE, module);
     fileElement.putUserData(MOCK, new Object());

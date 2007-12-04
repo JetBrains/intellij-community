@@ -397,7 +397,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         final PsiManager manager = getManager();
         final PsiPackage aPackage = manager.findPackage(packageName);
         if (aPackage == null || !aPackage.isValid()) {
-          if (!manager.isPartOfPackagePrefix(packageName)) {
+          if (!JavaPsiFacade.getInstance(manager.getProject()).isPartOfPackagePrefix(packageName)) {
             return JavaResolveResult.EMPTY_ARRAY;
           }
           else {

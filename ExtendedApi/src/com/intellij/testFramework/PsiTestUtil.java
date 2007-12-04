@@ -1,23 +1,23 @@
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -126,8 +126,7 @@ import java.util.Collection;
 
   public static void checkFileStructure(PsiFile file) throws IncorrectOperationException {
     String originalTree = DebugUtil.psiTreeToString(file, false);
-    PsiElementFactory factory = file.getManager().getElementFactory();
-    PsiFile dummyFile = factory.createFileFromText(file.getName(), file.getText());
+    PsiFile dummyFile = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getText());
     String reparsedTree = DebugUtil.psiTreeToString(dummyFile, false);
     Assert.assertEquals(reparsedTree, originalTree);
   }

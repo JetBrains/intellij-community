@@ -22,7 +22,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -95,7 +94,9 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @deprecated use {@link #findClass(String, GlobalSearchScope)}
    */
   @Nullable
-  public abstract PsiClass findClass(@NotNull @NonNls String qualifiedName);
+  public PsiClass findClass(@NotNull @NonNls String qualifiedName) {
+    return JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName);
+  }
 
   /**
    * Searches the specified scope within the project for a class with the specified full-qualified
@@ -106,7 +107,9 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the PSI class, or null if no class with such name is found.
    */
   @Nullable
-  public abstract PsiClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  public PsiClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    return JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, scope);
+  }
 
   /**
    * Searches the specified scope within the project for classes with the specified full-qualified
@@ -117,7 +120,9 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the array of found classes, or an empty array if no classes are found.
    */
   @NotNull
-  public abstract PsiClass[] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  public PsiClass[] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    return JavaPsiFacade.getInstance(getProject()).findClasses(qualifiedName, scope);
+  }
 
   /**
    * Searches the project for the package with the specified full-qualified name and returns one
@@ -127,7 +132,9 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the PSI package, or null if no package with such name is found.
    */
   @Nullable
-  public abstract PsiPackage findPackage(@NonNls @NotNull String qualifiedName);
+  public PsiPackage findPackage(@NonNls @NotNull String qualifiedName) {
+    return JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName);
+  }
 
   /**
    * Checks if the specified two PSI elements (possibly invalid) represent the same source element
@@ -186,7 +193,9 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the element factory instance.
    */
   @NotNull
-  public abstract PsiElementFactory getElementFactory();
+  public PsiElementFactory getElementFactory() {
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory();
+  }
 
   /**
    * Returns the factory for the project, which can be used to create instances of certain java constructs from their textual
@@ -196,7 +205,10 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the parser facade.
    */
   @NotNull
-  public abstract PsiJavaParserFacade getParserFacade();
+  public PsiJavaParserFacade getParserFacade() {
+    return JavaPsiFacade.getInstance(getProject()).getParserFacade();
+  }
+
   /**
    * Returns the search helper for the project, which provides low-level search and
    * find usages functionality. It can be used to perform operations like finding references
@@ -214,7 +226,9 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the resolve helper instance.
    */
   @NotNull
-  public abstract PsiResolveHelper getResolveHelper();
+  public PsiResolveHelper getResolveHelper() {
+    return JavaPsiFacade.getInstance(getProject()).getResolveHelper();
+  }
 
   /**
    * Returns the short name cache for the project, which can be used to locate files, classes,
@@ -223,7 +237,9 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the short name cache instance.
    */
   @NotNull
-  public abstract PsiShortNamesCache getShortNamesCache();
+  public PsiShortNamesCache getShortNamesCache() {
+    return JavaPsiFacade.getInstance(getProject()).getShortNamesCache();
+  }
 
   /**
    * Registers a custom short name cache implementation for the project, which is used
@@ -231,25 +247,9 @@ public abstract class PsiManager extends UserDataHolderBase {
    *
    * @param cache the short name cache instance.
    */
-  public abstract void registerShortNamesCache(@NotNull PsiShortNamesCache cache);
-
-  /**
-   * Initiates a migrate refactoring. The refactoring is finished when
-   * {@link com.intellij.psi.PsiMigration#finish()} is called.
-   *
-   * @return the migrate operation object.
-   */
-  @NotNull
-  public abstract PsiMigration startMigration();
-
-  /**
-   * Returns the JavaDoc manager for the project, which can be used to retrieve
-   * information about JavaDoc tags known to IDEA.
-   *
-   * @return the JavaDoc manager instance.
-   */
-  @NotNull
-  public abstract JavadocManager getJavadocManager();
+  public void registerShortNamesCache(@NotNull PsiShortNamesCache cache) {
+    JavaPsiFacade.getInstance(getProject()).registerShortNamesCache(cache);
+  }
 
   /**
    * Returns the name helper for the project, which can be used to validate
@@ -258,15 +258,9 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the name helper instance.
    */
   @NotNull
-  public abstract PsiNameHelper getNameHelper();
-
-  /**
-   * Returns the constant expression evaluator for the project.
-   *
-   * @return the evaluator instance.
-   */
-  @NotNull
-  public abstract PsiConstantEvaluationHelper getConstantEvaluationHelper();
+  public PsiNameHelper getNameHelper() {
+    return JavaPsiFacade.getInstance(getProject()).getNameHelper();
+  }
 
   /**
    * Returns the modification tracker for the project, which can be used to get the PSI
@@ -345,47 +339,24 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return the language level instance.
    */
   @NotNull
-  public abstract LanguageLevel getEffectiveLanguageLevel();
-
-  /**
-   * Checks if the specified package name is part of the package prefix for
-   * any of the modules in this project.
-   *
-   * @param packageName the package name to check.
-   * @return true if it is part of the package prefix, false otherwise. 
-   */
-  public abstract boolean isPartOfPackagePrefix(String packageName);
+  public LanguageLevel getEffectiveLanguageLevel() {
+    return JavaPsiFacade.getInstance(getProject()).getEffectiveLanguageLevel();
+  }
 
   /**
    * Sets the language level to use for this project. For tests only.
    *
    * @param languageLevel the language level to set.
    */
-  public abstract void setEffectiveLanguageLevel(@NotNull LanguageLevel languageLevel);
+  public void setEffectiveLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    JavaPsiFacade.getInstance(getProject()).setEffectiveLanguageLevel(languageLevel);
+  }
 
   /**
    * Clears the resolve caches of the PSI manager. Can be used to reduce memory consumption
    * in batch operations sequentially processing multiple files.
    */
   public abstract void dropResolveCaches();
-
-  /**
-   * Checks if the specified PSI element belongs to the specified package.
-   *
-   * @param element  the element to check the package for.
-   * @param aPackage the package to check.
-   * @return true if the element belongs to the package, false otherwise.
-   */
-  public abstract boolean isInPackage(@NotNull PsiElement element, @NotNull PsiPackage aPackage);
-
-  /**
-   * Checks if the specified PSI elements belong to the same package.
-   *
-   * @param element1 the first element to check.
-   * @param element2 the second element to check.
-   * @return true if the elements are in the same package, false otherwise.
-   */
-  public abstract boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2);
 
   /**
    * Checks if the specified PSI element belongs to the sources of the project.

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,7 +30,10 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 
 public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParameterListOwner> extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor");
@@ -186,7 +190,8 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     }
 
     if (myMember instanceof PsiMethod) {
-      final PsiMethod[] overridingMethods = helper.findOverridingMethods((PsiMethod)myMember, myMember.getUseScope(), false);
+      final PsiMethod[] overridingMethods =
+        OverridingMethodsSearch.search((PsiMethod)myMember, myMember.getUseScope(), false).toArray(PsiMethod.EMPTY_ARRAY);
       for (PsiMethod overridingMethod : overridingMethods) {
         if (overridingMethod != myMember) {
           result.add(new OverridingMethodUsageInfo(overridingMethod));

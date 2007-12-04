@@ -7,8 +7,8 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.SmartList;
 
 import java.util.Iterator;
 import java.util.List;
@@ -151,7 +151,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
     if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
       accessible = false;
-      if (manager.arePackagesTheSame(aClass, myPlace)) {
+      if (JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(aClass, myPlace)) {
         accessible = true;
       }
       else {
@@ -161,7 +161,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       }
     }
     if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      if (!manager.arePackagesTheSame(aClass, myPlace)) {
+      if (!JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(aClass, myPlace)) {
         accessible = false;
       }
     }

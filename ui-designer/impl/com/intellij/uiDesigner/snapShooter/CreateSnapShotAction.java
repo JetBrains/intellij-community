@@ -33,10 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DocumentAdapter;
@@ -216,7 +213,8 @@ public class CreateSnapShotAction extends AnAction {
             CommandProcessor.getInstance().executeCommand(project, new Runnable() {
               public void run() {
                 try {
-                  PsiFile formFile = dir.getManager().getElementFactory().createFileFromText(dlg.getFormName() + FORM_EXTENSION, snapshot1);
+                  PsiFile formFile = PsiFileFactory.getInstance(dir.getProject())
+                    .createFileFromText(dlg.getFormName() + FORM_EXTENSION, snapshot1);
                   formFile = (PsiFile)dir.add(formFile);
                   formFile.getVirtualFile().setCharset(CharsetToolkit.UTF8_CHARSET);
                   formFile.getViewProvider().getDocument().setText(snapshot1);

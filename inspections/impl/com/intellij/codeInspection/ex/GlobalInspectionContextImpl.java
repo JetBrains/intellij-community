@@ -51,6 +51,10 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.content.Content;
@@ -458,18 +462,18 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
         final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(psiClass);
-        helper.processInheritors(new PsiElementProcessor<PsiClass>() {
-          public boolean execute(PsiClass inheritor) {
-            if (scope.contains(inheritor)) return true;
-            DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
-            for (DerivedClassesProcessor processor : processorsArrayed) {
-              if (!processor.process(inheritor)) {
-                processors.remove(processor);
+        ClassInheritorsSearch.search(psiClass, searchScope, false).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
+              public boolean execute(PsiClass inheritor) {
+                if (scope.contains(inheritor)) return true;
+                DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
+                for (DerivedClassesProcessor processor : processorsArrayed) {
+                  if (!processor.process(inheritor)) {
+                    processors.remove(processor);
+                  }
+                }
+                return !processors.isEmpty();
               }
-            }
-            return !processors.isEmpty();
-          }
-        }, psiClass, searchScope, false);
+            }));
       }
 
       myDerivedClassesRequests = null;
@@ -484,19 +488,19 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
         incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refMethod));
 
         final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(psiMethod);
-        helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
-          public boolean execute(PsiMethod derivedMethod) {
-            if (scope.contains(derivedMethod)) return true;
-            DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
-            for (DerivedMethodsProcessor processor : processorsArrayed) {
-              if (!processor.process(derivedMethod)) {
-                processors.remove(processor);
-              }
-            }
+        OverridingMethodsSearch.search(psiMethod, searchScope, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(new PsiElementProcessor<PsiMethod>() {
+              public boolean execute(PsiMethod derivedMethod) {
+                if (scope.contains(derivedMethod)) return true;
+                DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
+                for (DerivedMethodsProcessor processor : processorsArrayed) {
+                  if (!processor.process(derivedMethod)) {
+                    processors.remove(processor);
+                  }
+                }
 
-            return !processors.isEmpty();
-          }
-        }, psiMethod, searchScope, true);
+                return !processors.isEmpty();
+              }
+            }));
       }
 
       myDerivedMethodsRequests = null;
@@ -510,7 +514,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
         incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refManager.getReference(psiField)));
 
-        helper.processReferences(createReferenceProcessor(processors), psiField, searchScope, false);
+        ReferencesSearch.search(psiField, searchScope, false).forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors)));
       }
 
       myFieldUsagesRequests = null;
@@ -524,7 +528,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
         incrementJobDoneAmount(FIND_EXTERNAL_USAGES, psiClass.getQualifiedName());
 
-        helper.processReferences(createReferenceProcessor(processors), psiClass, searchScope, false);
+        ReferencesSearch.search(psiClass, searchScope, false).forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors)));
       }
 
       myClassUsagesRequests = null;
@@ -538,7 +542,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
         incrementJobDoneAmount(FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refManager.getReference(psiMethod)));
 
-        helper.processReferencesIncludingOverriding(createReferenceProcessor(processors), psiMethod, searchScope);
+        final boolean result;
+        MethodReferencesSearch.search(psiMethod, searchScope, true).forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors)));
       }
 
       myMethodUsagesRequests = null;

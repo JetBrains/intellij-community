@@ -8,11 +8,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.palette.ComponentItem;
 import com.intellij.uiDesigner.editor.UIFormEditor;
+import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +94,6 @@ public class BoundIconRenderer extends GutterIconRenderer {
 
   private PsiFile[] getBoundFormFiles() {
     PsiFile[] formFiles = PsiFile.EMPTY_ARRAY;
-    PsiSearchHelper helper = myElement.getManager().getSearchHelper();
     PsiClass aClass;
     if (myElement instanceof PsiField) {
       aClass = ((PsiField) myElement).getContainingClass();
@@ -104,7 +102,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
       aClass = (PsiClass) myElement;
     }
     if (aClass != null && aClass.getQualifiedName() != null) {
-      formFiles = helper.findFormsBoundToClass(aClass.getQualifiedName());
+      formFiles = JavaPsiFacade.getInstance(myElement.getProject()).findFormsBoundToClass(aClass.getQualifiedName());
     }
     return formFiles;
   }

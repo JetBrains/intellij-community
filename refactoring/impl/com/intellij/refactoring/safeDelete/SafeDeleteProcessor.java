@@ -18,6 +18,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PropertyUtil;
@@ -533,7 +534,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       return;
     }
     final PsiMethod[] overridingMethods =
-            removeDeletedMethods(searchHelper.findOverridingMethods(psiMethod, psiMethod.getUseScope(), true));
+            removeDeletedMethods(OverridingMethodsSearch.search(psiMethod, psiMethod.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY));
 
     boolean anyRefs = false;
     for (PsiReference reference : references) {

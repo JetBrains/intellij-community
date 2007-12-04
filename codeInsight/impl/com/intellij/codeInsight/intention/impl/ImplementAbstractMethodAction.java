@@ -13,7 +13,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -56,7 +58,8 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
 
       }
       MyElementProcessor processor = new MyElementProcessor();
-      helper.processInheritors(processor, containingClass, containingClass.getUseScope(), false);
+      ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), false).forEach(new PsiElementProcessorAdapter<PsiClass>(
+        processor));
       return processor.isFound();
     }
 

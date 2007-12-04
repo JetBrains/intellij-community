@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -46,6 +47,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class TreeClassChooserDialog extends DialogWrapper implements TreeClassChooser{
@@ -388,9 +390,8 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     }
 
     public String[] getNames(boolean checkBoxState) {
-      final PsiManager manager = PsiManager.getInstance(myProject);
-      PsiClass[] classes = manager.getSearchHelper().findInheritors(myBaseClass, myScope, true);
-      ArrayList<String> names = new ArrayList<String>(classes.length + 1);
+      Collection<PsiClass> classes = ClassInheritorsSearch.search(myBaseClass, myScope, true).findAll();
+      ArrayList<String> names = new ArrayList<String>(classes.size() + 1);
       if ((myClassFilter == null || myClassFilter.isAccepted(myBaseClass)) && myBaseClass.getName() != null) {
         names.add(myBaseClass.getName());
       }

@@ -1,6 +1,7 @@
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.refactoring.RefactoringBundle;
 
 /**
@@ -8,8 +9,7 @@ import com.intellij.refactoring.RefactoringBundle;
  */
 public class InheritorRenamer extends AutomaticRenamer {
   public InheritorRenamer(PsiClass aClass, String newClassName) {
-    final PsiClass[] inheritors = aClass.getManager().getSearchHelper().findInheritors(aClass, aClass.getUseScope(), true);
-    for (final PsiClass inheritor : inheritors) {
+    for (final PsiClass inheritor : ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).findAll()) {
       if (inheritor.getName() != null) {
         myElements.add(inheritor);
       }

@@ -17,8 +17,8 @@ import com.intellij.psi.impl.cache.ClassView;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -44,22 +44,18 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
         return aClass.getQualifiedName();
       }
     });
+
     if ("java.lang.Object".equals(qualifiedName)) {
-      return psiManager.getSearchHelper().processAllClasses(
-        new PsiElementProcessor<PsiClass>() {
-          public boolean execute(final PsiClass psiClass) {
+      final SearchScope scope = useScope.intersectWith(
+        GlobalSearchScope.notScope(
+          GlobalSearchScope.getScopeRestrictedByFileTypes(
+            GlobalSearchScope.allScope(psiManager.getProject()), StdFileTypes.JSP, StdFileTypes.JSPX)));
+
+      return AllClassesSearch.search(scope, aClass.getProject()).forEach(new Processor<PsiClass>() {
+        public boolean process(final PsiClass psiClass) {
             return consumer.process(psiClass);
           }
-        },
-        useScope.intersectWith(
-          GlobalSearchScope.notScope(
-            GlobalSearchScope.getScopeRestrictedByFileTypes(
-              GlobalSearchScope.allScope(psiManager.getProject()),
-              StdFileTypes.JSP,
-              StdFileTypes.JSPX
-            )
-          )
-        )
+        }
       );
     }
     else {

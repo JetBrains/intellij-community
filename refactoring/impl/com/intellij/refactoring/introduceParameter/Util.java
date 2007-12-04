@@ -10,6 +10,7 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -91,7 +92,7 @@ public class Util {
     if (parameters.length == 0) return new TIntArrayList();
 
     PsiSearchHelper helper = method.getManager().getSearchHelper();
-    PsiMethod[] overridingMethods = helper.findOverridingMethods(method, method.getUseScope(), true);
+    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
     final PsiMethod[] allMethods = ArrayUtil.append(overridingMethods, method);
 
     final TIntHashSet suspects = new TIntHashSet();

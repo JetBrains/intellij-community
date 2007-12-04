@@ -18,13 +18,17 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
@@ -318,10 +322,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
         List<PsiElement> classesToSearch = new LinkedList<PsiElement>();
         classesToSearch.add(aClass);
 
-        final PsiManager psiManager = PsiManager.getInstance(myProject);
-
-        final PsiClass[] descendants = psiManager.getSearchHelper().findInheritors(aClass, aClass.getUseScope(), true);
-        classesToSearch.addAll(Arrays.asList(descendants));
+        classesToSearch.addAll(ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).findAll());
 
         myCachedScope = new LocalSearchScope(classesToSearch.toArray(new PsiElement[classesToSearch.size()]),
                                              IdeBundle.message("scope.hierarchy", ClassPresentationUtil.getNameForClass(aClass, true)));

@@ -54,7 +54,7 @@ public class GenerateMainAction extends AnAction {
       return;
     }
 
-    final PsiFile[] boundForms = PsiManager.getInstance(project).getSearchHelper().findFormsBoundToClass(psiClass.getQualifiedName());
+    final PsiFile[] boundForms = JavaPsiFacade.getInstance(project).findFormsBoundToClass(psiClass.getQualifiedName());
     final LwRootContainer rootContainer;
     try {
       rootContainer = Utils.getRootContainer(boundForms [0].getText(), null);
@@ -126,7 +126,7 @@ public class GenerateMainAction extends AnAction {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null) return false;
     if (PsiMethodUtil.findMainMethod(psiClass) != null) return false;
-    if (psiClass.getManager().getSearchHelper().findFormsBoundToClass(psiClass.getQualifiedName()).length == 0) return false;
+    if (JavaPsiFacade.getInstance(project).findFormsBoundToClass(psiClass.getQualifiedName()).length == 0) return false;
     return true;
   }
 }

@@ -6,10 +6,9 @@ import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -109,7 +108,7 @@ public class GuessManagerImpl extends GuessManager {
     PsiManager manager = PsiManager.getInstance(myProject);
     PsiSearchHelper helper = manager.getSearchHelper();
     PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<PsiClass>(5);
-    helper.processInheritors(processor, refClass, refClass.getUseScope(), true);
+    ClassInheritorsSearch.search(refClass, refClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
     if (processor.isOverflow()) return;
 
     for (PsiClass derivedClass : processor.getCollection()) {
@@ -196,7 +195,7 @@ public class GuessManagerImpl extends GuessManager {
     SearchScope searchScope = new LocalSearchScope(scopeFile);
 
     if ((flags & (CHECK_USAGE | CHECK_DOWN)) != 0){
-      PsiReference[] varRefs = helper.findReferences(var, searchScope, false);
+      PsiReference[] varRefs = ReferencesSearch.search(var, searchScope, false).toArray(new PsiReference[0]);
       for (PsiReference varRef : varRefs) {
         PsiElement ref = varRef.getElement();
 
@@ -249,7 +248,7 @@ public class GuessManagerImpl extends GuessManager {
 
         PsiMethod method = (PsiMethod)var.getParent().getParent();
         //System.out.println("analyzing usages of " + method + " in file " + scopeFile);
-        PsiReference[] methodRefs = helper.findReferences(method, searchScope, false);
+        PsiReference[] methodRefs = ReferencesSearch.search(method, searchScope, false).toArray(new PsiReference[0]);
         for (PsiReference methodRef : methodRefs) {
           PsiElement ref = methodRef.getElement();
           if (ref.getParent() instanceof PsiMethodCallExpression) {

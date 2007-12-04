@@ -4,12 +4,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
+import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -169,7 +169,8 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
   @NotNull
   protected PsiElement[] create(final String newName, final PsiDirectory directory) throws IncorrectOperationException {
-    PsiFile sourceFile = directory.getManager().getElementFactory().createFileFromText(newName + ".java", createClassBody(newName, myRecentGenerateOK, myRecentGenerateCancel, myRecentGenerateMain));
+    PsiFile sourceFile = PsiFileFactory.getInstance(directory.getProject())
+      .createFileFromText(newName + ".java", createClassBody(newName, myRecentGenerateOK, myRecentGenerateCancel, myRecentGenerateMain));
     sourceFile = (PsiFile)directory.add(sourceFile);
 
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(directory.getProject());
@@ -182,7 +183,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
 
     final String formBody = createFormBody(fqClassName, "/com/intellij/uiDesigner/NewDialog.xml",
                                            GuiDesignerConfiguration.getInstance(directory.getProject()).DEFAULT_LAYOUT_MANAGER);
-    final PsiFile formFile = directory.getManager().getElementFactory().createFileFromText(newName + ".form", formBody);
+    final PsiFile formFile = PsiFileFactory.getInstance(directory.getProject()).createFileFromText(newName + ".form", formBody);
     PsiElement createdFile = directory.add(formFile);
 
     PsiClass[] classes = ((PsiJavaFile)sourceFile).getClasses();

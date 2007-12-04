@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -16,7 +17,9 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -25,7 +28,9 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor");
@@ -130,7 +135,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     for(int i = 0; i < fields.length; i++){
       PsiField field = fields[i];
       PsiSearchHelper helper = field.getManager().getSearchHelper();
-      PsiReference[] refs = helper.findReferences(field, GlobalSearchScope.projectScope(myProject), true);
+      PsiReference[] refs = ReferencesSearch.search(field, GlobalSearchScope.projectScope(myProject), true).toArray(new PsiReference[0]);
       for (final PsiReference reference : refs) {
         if (!(reference instanceof PsiReferenceExpression)) continue;
         PsiReferenceExpression ref = (PsiReferenceExpression)reference;

@@ -14,6 +14,9 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.search.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
@@ -95,15 +98,14 @@ public class FindUsagesUtil {
     }
 
     if (element instanceof PsiMethod){
-      PsiSearchHelper searchHelper = element.getManager().getSearchHelper();
       final PsiMethod psiMethod = (PsiMethod)element;
       if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         if (options.isImplementingMethods){
-          processOverridingMethods(psiMethod, processor, searchHelper, options);
+          processOverridingMethods(psiMethod, processor, options);
         }
       }
       else if (options.isOverridingMethods){
-          processOverridingMethods(psiMethod, processor, searchHelper, options);
+          processOverridingMethods(psiMethod, processor, options);
         }
     }
 
@@ -132,15 +134,15 @@ public class FindUsagesUtil {
   }
 
   private static void processOverridingMethods(final PsiMethod psiMethod,
-                                               final Processor<UsageInfo> processor,
-                                               PsiSearchHelper searchHelper, final FindUsagesOptions options) {
-    searchHelper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
+                                               final Processor<UsageInfo> processor, final FindUsagesOptions options) {
+    OverridingMethodsSearch.search(psiMethod, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiMethod>(
+      new PsiElementProcessor<PsiMethod>() {
       public boolean execute(PsiMethod element) {
         addResult(processor, element.getNavigationElement(), options, null);
         return true;
       }
 
-    }, psiMethod, options.searchScope, options.isCheckDeepInheritance);
+    }));
   }
 
   private static String getStringToSearch(final PsiElement element) {
@@ -195,7 +197,6 @@ public class FindUsagesUtil {
   }
 
   private static void addMethodUsages(final PsiMethod method, final Processor<UsageInfo> result, final FindUsagesOptions options, SearchScope searchScope) {
-    PsiSearchHelper helper = method.getManager().getSearchHelper();
     if (method.isConstructor()) {
       if (options.isIncludeOverloadUsages) {
         for (PsiMethod constructor : method.getContainingClass().getConstructors()) {
@@ -207,11 +208,12 @@ public class FindUsagesUtil {
       }
     }
     else {
-      helper.processReferencesIncludingOverriding(new PsiReferenceProcessor() {
-        public boolean execute(PsiReference ref) {
-          return addResult(result, ref, options, method);
-        }
-      }, method, searchScope, !options.isIncludeOverloadUsages);
+      boolean strictSignatureSearch = !options.isIncludeOverloadUsages;
+      MethodReferencesSearch.search(method, searchScope, strictSignatureSearch).forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
+          public boolean execute(PsiReference ref) {
+            return addResult(result, ref, options, method);
+          }
+        }));
     }
   }
 
@@ -293,7 +295,6 @@ public class FindUsagesUtil {
   private static void addMethodsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
     if (options.isIncludeInherited) {
       final PsiManager manager = aClass.getManager();
-      PsiSearchHelper helper = manager.getSearchHelper();
       PsiMethod[] methods = aClass.getAllMethods();
       MethodsLoop:
         for(int i = 0; i < methods.length; i++){
@@ -308,12 +309,13 @@ public class FindUsagesUtil {
             addMethodUsages(methods[i], results, options, options.searchScope);
           }
           else{
-            helper.processReferencesIncludingOverriding(new PsiReferenceProcessor() {
-              public boolean execute(PsiReference reference) {
-                addResultFromReference(reference, methodClass, manager, aClass, results, options, method);
-                return true;
-              }
-            }, method, options.searchScope, !options.isIncludeOverloadUsages);
+            boolean strictSignatureSearch = !options.isIncludeOverloadUsages;
+            MethodReferencesSearch.search(method, options.searchScope, strictSignatureSearch).forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
+                      public boolean execute(PsiReference reference) {
+                        addResultFromReference(reference, methodClass, manager, aClass, results, options, method);
+                        return true;
+                      }
+                    }));
           }
         }
     }
@@ -410,19 +412,19 @@ public class FindUsagesUtil {
   }
 
   private static void addInheritors(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
-    PsiSearchHelper helper = aClass.getManager().getSearchHelper();
-    helper.processInheritors(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(aClass, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
+      new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {
         addResult(results, element, options, null);
         return true;
       }
 
-    }, aClass, options.searchScope, options.isCheckDeepInheritance);
+    }));
   }
 
   private static void addDerivedInterfaces(PsiClass anInterface, final Processor<UsageInfo> results, final FindUsagesOptions options) {
-    PsiSearchHelper helper = anInterface.getManager().getSearchHelper();
-    helper.processInheritors(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
+      new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass inheritor) {
         if (inheritor.isInterface()) {
           addResult(results, inheritor, options, null);
@@ -430,12 +432,12 @@ public class FindUsagesUtil {
         return true;
       }
 
-    }, anInterface, options.searchScope, options.isCheckDeepInheritance);
+    }));
   }
 
   private static void addImplementingClasses(PsiClass anInterface, final Processor<UsageInfo> results, final FindUsagesOptions options) {
-    PsiSearchHelper helper = anInterface.getManager().getSearchHelper();
-    helper.processInheritors(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(new PsiElementProcessorAdapter<PsiClass>(
+      new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass inheritor) {
         if (!inheritor.isInterface()) {
           addResult(results, inheritor, options, null);
@@ -443,7 +445,7 @@ public class FindUsagesUtil {
         return true;
       }
 
-    }, anInterface, options.searchScope, options.isCheckDeepInheritance);
+    }));
   }
 
   private static void addResult(Processor<UsageInfo> total, PsiElement element, FindUsagesOptions options, PsiElement refElement) {

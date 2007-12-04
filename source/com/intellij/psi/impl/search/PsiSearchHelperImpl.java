@@ -5,31 +5,25 @@ import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.*;
+import com.intellij.psi.search.searches.AllClassesSearch;
+import com.intellij.psi.search.searches.IndexPatternSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +45,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     ReferencesSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new SimpleAccessorReferenceSearcher());
     ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferenceViaLastWordSearcher());
+    AllClassesSearch.INSTANCE.registerExecutor(new AllClassesSearchExecutor());
 
     IndexPatternSearch.INDEX_PATTERN_SEARCH_INSTANCE = new IndexPatternSearchImpl();
   }
@@ -167,96 +162,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  public PsiReference[] findReferences(@NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope) {
-    PsiReferenceProcessor.CollectElements processor = new PsiReferenceProcessor.CollectElements();
-    processReferences(processor, element, searchScope, ignoreAccessScope);
-    return processor.toArray(PsiReference.EMPTY_ARRAY);
-  }
-
-  public boolean processReferences(@NotNull final PsiReferenceProcessor processor,
-                                   @NotNull final PsiElement refElement,
-                                   @NotNull SearchScope originalScope,
-                                   boolean ignoreAccessScope) {
-    final Query<PsiReference> query = ReferencesSearch.search(refElement, originalScope, ignoreAccessScope);
-    return query.forEach(new ReadActionProcessor<PsiReference>() {
-      public boolean processInReadAction(final PsiReference psiReference) {
-        return processor.execute(psiReference);
-      }
-    });
-  }
-
-  @NotNull
-  public PsiMethod[] findOverridingMethods(@NotNull PsiMethod method, @NotNull SearchScope searchScope, boolean checkDeep) {
-    PsiElementProcessor.CollectElements<PsiMethod> processor = new PsiElementProcessor.CollectElements<PsiMethod>();
-    processOverridingMethods(processor, method, searchScope, checkDeep);
-
-    return processor.toArray(PsiMethod.EMPTY_ARRAY);
-  }
-
-  public boolean processOverridingMethods(@NotNull final PsiElementProcessor<PsiMethod> processor,
-                                          @NotNull final PsiMethod method,
-                                          @NotNull SearchScope searchScope,
-                                          final boolean checkDeep) {
-    return OverridingMethodsSearch.search(method, searchScope, checkDeep).forEach(new ReadActionProcessor<PsiMethod>() {
-      public boolean processInReadAction(final PsiMethod psiMethod) {
-        return processor.execute(psiMethod);
-      }
-    });
-  }
-
-  @NotNull
-  public PsiReference[] findReferencesIncludingOverriding(@NotNull final PsiMethod method,
-                                                          @NotNull SearchScope searchScope,
-                                                          boolean isStrictSignatureSearch) {
-    PsiReferenceProcessor.CollectElements processor = new PsiReferenceProcessor.CollectElements();
-    processReferencesIncludingOverriding(processor, method, searchScope, isStrictSignatureSearch);
-    return processor.toArray(PsiReference.EMPTY_ARRAY);
-  }
-
-  public boolean processReferencesIncludingOverriding(@NotNull final PsiReferenceProcessor processor,
-                                                      @NotNull final PsiMethod method,
-                                                      @NotNull SearchScope searchScope) {
-    return processReferencesIncludingOverriding(processor, method, searchScope, true);
-  }
-
-  public boolean processReferencesIncludingOverriding(@NotNull final PsiReferenceProcessor processor,
-                                                      @NotNull final PsiMethod method,
-                                                      @NotNull SearchScope searchScope,
-                                                      final boolean isStrictSignatureSearch) {
-    return MethodReferencesSearch.search(method, searchScope, isStrictSignatureSearch).forEach(new ReadActionProcessor<PsiReference>() {
-      public boolean processInReadAction(final PsiReference psiReference) {
-        return processor.execute(psiReference);
-      }
-    });
-  }
-
-  @NotNull
-  public PsiClass[] findInheritors(@NotNull PsiClass aClass, @NotNull SearchScope searchScope, boolean checkDeep) {
-    PsiElementProcessor.CollectElements<PsiClass> processor = new PsiElementProcessor.CollectElements<PsiClass>();
-    processInheritors(processor, aClass, searchScope, checkDeep);
-    return processor.toArray(PsiClass.EMPTY_ARRAY);
-  }
-
-  public boolean processInheritors(@NotNull PsiElementProcessor<PsiClass> processor,
-                                   @NotNull PsiClass aClass,
-                                   @NotNull SearchScope searchScope,
-                                   boolean checkDeep) {
-    return processInheritors(processor, aClass, searchScope, checkDeep, true);
-  }
-
-  public boolean processInheritors(@NotNull final PsiElementProcessor<PsiClass> processor,
-                                   @NotNull PsiClass aClass,
-                                   @NotNull SearchScope searchScope,
-                                   boolean checkDeep,
-                                   boolean checkInheritance) {
-    return ClassInheritorsSearch.search(aClass, searchScope, checkDeep, checkInheritance).forEach(new ReadActionProcessor<PsiClass>() {
-      public boolean processInReadAction(final PsiClass psiClass) {
-        return processor.execute(psiClass);
-      }
-    });
-  }
-
-  @NotNull
   public PsiFile[] findFilesWithTodoItems() {
     return myManager.getCacheManager().getFilesWithTodoItems();
   }
@@ -354,97 +259,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return results.toArray(new PsiElement[results.size()]);
   }
 
-  @NotNull
-  public PsiLiteralExpression[] findStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope) {
-    final ArrayList<PsiLiteralExpression> results = new ArrayList<PsiLiteralExpression>();
-    TextOccurenceProcessor processor = new TextOccurenceProcessor() {
-      public boolean execute(PsiElement element, int offsetInElement) {
-        if (element instanceof PsiLiteralExpression) {
-          synchronized (results) {
-            results.add((PsiLiteralExpression)element);
-          }
-        }
-        return true;
-      }
-    };
-    processElementsWithWord(processor,
-                            searchScope,
-                            identifier,
-                            UsageSearchContext.IN_STRINGS,
-                            true);
-    return results.toArray(new PsiLiteralExpression[results.size()]);
-  }
-
-  public boolean processAllClasses(@NotNull final PsiElementProcessor<PsiClass> processor, @NotNull SearchScope searchScope) {
-    if (searchScope instanceof GlobalSearchScope) {
-      return processAllClassesInGlobalScope((GlobalSearchScope)searchScope, processor);
-    }
-
-    PsiElement[] scopeRoots = ((LocalSearchScope)searchScope).getScope();
-    for (final PsiElement scopeRoot : scopeRoots) {
-      if (!processScopeRootForAllClasses(scopeRoot, processor)) return false;
-    }
-    return true;
-  }
-
-  private static boolean processScopeRootForAllClasses(PsiElement scopeRoot, final PsiElementProcessor<PsiClass> processor) {
-    if (scopeRoot == null) return true;
-    final boolean[] stopped = new boolean[]{false};
-
-    scopeRoot.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (!stopped[0]) {
-          visitElement(expression);
-        }
-      }
-
-      public void visitClass(PsiClass aClass) {
-        stopped[0] = !processor.execute(aClass);
-        super.visitClass(aClass);
-      }
-    });
-
-    return !stopped[0];
-  }
-
-  private boolean processAllClassesInGlobalScope(final GlobalSearchScope searchScope, final PsiElementProcessor<PsiClass> processor) {
-    myManager.getRepositoryManager().updateAll();
-
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
-    return fileIndex.iterateContent(new ContentIterator() {
-      public boolean processFile(final VirtualFile fileOrDir) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            if (!fileOrDir.isDirectory() && searchScope.contains(fileOrDir)) {
-              final PsiFile psiFile = myManager.findFile(fileOrDir);
-              if (psiFile instanceof PsiJavaFile) {
-                long fileId = myManager.getRepositoryManager().getFileId(fileOrDir);
-                if (fileId >= 0) {
-                  long[] allClasses = myManager.getRepositoryManager().getFileView().getAllClasses(fileId);
-                  for (long allClass : allClasses) {
-                    PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
-                    if (!processor.execute(psiClass)) return false;
-                  }
-                }
-                else {
-                  if (!processScopeRootForAllClasses(psiFile, processor)) return false;
-                }
-              }
-            }
-            return true;
-          }
-        });
-      }
-    });
-  }
-
-  @NotNull
-  public PsiClass[] findAllClasses(@NotNull SearchScope searchScope) {
-    PsiElementProcessor.CollectElements<PsiClass> processor = new PsiElementProcessor.CollectElements<PsiClass>();
-    processAllClasses(processor, searchScope);
-    return processor.toArray(PsiClass.EMPTY_ARRAY);
-  }
-
   public boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                           @NotNull SearchScope searchScope,
                                           @NotNull String text,
@@ -483,7 +297,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher, ignoreInjectedPsi);
       }
-    });
+    }).booleanValue();
   }
 
   private boolean processElementsWithTextInGlobalScope(final TextOccurenceProcessor processor,
@@ -653,44 +467,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  @NotNull
-  public PsiFile[] findFormsBoundToClass(String className) {
-    if (className == null) return PsiFile.EMPTY_ARRAY;
-    GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myManager.getProject());
-    PsiFile[] files = myManager.getCacheManager().getFilesWithWord(className, UsageSearchContext.IN_FOREIGN_LANGUAGES, projectScope, true);
-    if (files.length == 0) return PsiFile.EMPTY_ARRAY;
-    List<PsiFile> boundForms = new ArrayList<PsiFile>(files.length);
-    for (PsiFile psiFile : files) {
-      if (psiFile.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
-
-      String text = psiFile.getText();
-      try {
-        String boundClass = Utils.getBoundClassName(text);
-        if (className.equals(boundClass)) boundForms.add(psiFile);
-      }
-      catch (Exception e) {
-        LOG.debug(e);
-      }
-    }
-
-    return boundForms.toArray(new PsiFile[boundForms.size()]);
-  }
-
-  public boolean isFieldBoundToForm(@NotNull PsiField field) {
-    PsiClass aClass = field.getContainingClass();
-    if (aClass != null && aClass.getQualifiedName() != null) {
-      PsiFile[] formFiles = findFormsBoundToClass(aClass.getQualifiedName());
-      for (PsiFile file : formFiles) {
-        final PsiReference[] references = file.getReferences();
-        for (final PsiReference reference : references) {
-          if (reference.isReferenceTo(field)) return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   public void processAllFilesWithWord(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor, final boolean caseSensitively) {
     myManager.getCacheManager().processFilesWithWord(processor,word, UsageSearchContext.IN_CODE, scope, caseSensitively);
   }
@@ -707,4 +483,5 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public void processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor) {
     myManager.getCacheManager().processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
+
 }

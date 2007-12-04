@@ -335,7 +335,8 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
 
     try {
-      return (XmlFile)directory.add(myPsiManager.getElementFactory().createFileFromText(ANNOTATIONS_XML, "<root></root>"));
+      return (XmlFile)directory.add(PsiFileFactory.getInstance(myPsiManager.getProject()).createFileFromText(ANNOTATIONS_XML,
+                                                                                                             "<root></root>"));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

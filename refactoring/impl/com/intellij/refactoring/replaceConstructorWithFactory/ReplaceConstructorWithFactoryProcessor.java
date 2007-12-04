@@ -7,22 +7,21 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author dsl
@@ -79,10 +78,10 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     final PsiReference[] references;
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     if (myConstructor != null) {
-      references = searchHelper.findReferences(myConstructor, projectScope, false);
+      references = ReferencesSearch.search(myConstructor, projectScope, false).toArray(new PsiReference[0]);
     }
     else {
-      references = searchHelper.findReferences(myOriginalClass, projectScope, false);
+      references = ReferencesSearch.search(myOriginalClass, projectScope, false).toArray(new PsiReference[0]);
     }
 
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();

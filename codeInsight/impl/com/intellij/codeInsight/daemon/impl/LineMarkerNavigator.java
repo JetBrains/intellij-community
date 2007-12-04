@@ -9,6 +9,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.awt.RelativePoint;
 
@@ -36,7 +38,7 @@ class LineMarkerNavigator {
       else if (info.type == LineMarkerInfo.MarkerType.OVERRIDEN_METHOD){
         PsiManager manager = method.getManager();
         PsiSearchHelper helper = manager.getSearchHelper();
-        PsiMethod[] overridings = helper.findOverridingMethods(method, method.getUseScope(), true);
+        PsiMethod[] overridings = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
         if (overridings.length == 0) return;
         String title = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
                        DaemonBundle .message("navigation.title.implementation.method", method.getName(), overridings.length) :
@@ -52,10 +54,8 @@ class LineMarkerNavigator {
     }
     else if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
-      PsiManager manager = aClass.getManager();
-      PsiSearchHelper helper = manager.getSearchHelper();
       if (info.type == LineMarkerInfo.MarkerType.SUBCLASSED_CLASS) {
-        PsiClass[] inheritors = helper.findInheritors(aClass, aClass.getUseScope(), true);
+        PsiClass[] inheritors = ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).toArray(new PsiClass[0]);
         if (inheritors.length == 0) return;
         String title = aClass.isInterface()
                        ? CodeInsightBundle.message("goto.implementation.chooser.title", aClass.getName(), inheritors.length)

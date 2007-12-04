@@ -527,7 +527,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
               if (caseValue != null &&
                   caseExpression instanceof PsiReferenceExpression &&
                   ((PsiReferenceExpression)caseExpression).getQualifierExpression() == null &&
-                  body.getManager().getConstantEvaluationHelper().computeConstantExpression(caseValue) != null) {
+                  JavaPsiFacade.getInstance(body.getProject()).getConstantEvaluationHelper().computeConstantExpression(caseValue) != null) {
                 PsiExpression psiComparison = psiFactory.createExpressionFromText(
                   caseExpression.getText() + "==" + caseValue.getText(), switchStmt);
                 psiComparison.accept(this);

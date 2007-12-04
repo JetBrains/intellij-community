@@ -1,12 +1,13 @@
 package com.intellij.refactoring.changeClassSignature;
 
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
 import com.intellij.usageView.UsageInfo;
@@ -50,7 +51,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     PsiSearchHelper searchHelper = myClass.getManager().getSearchHelper();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
-    PsiReference[] references = searchHelper.findReferences(myClass, projectScope, false);
+    PsiReference[] references = ReferencesSearch.search(myClass, projectScope, false).toArray(new PsiReference[0]);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
 
     boolean hadTypeParameters = myClass.getTypeParameters().length > 0;

@@ -19,6 +19,7 @@ import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -42,8 +43,6 @@ public class ImportHelper{
   }
 
   public PsiImportList prepareOptimizeImportsResult(CodeStyleManager codeStyleManager, final PsiJavaFile file) {
-    PsiManager manager = file.getManager();
-
     final Set<String> namesToImportStaticly = new THashSet<String>();
     String[] names = collectNamesToImport(file, namesToImportStaticly); // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
     Arrays.sort(names);
@@ -109,11 +108,11 @@ public class ImportHelper{
 
     Set<String> classesToUseSingle = findSingleImports(file, names, classesOrPackagesToImportOnDemand, namesToImportStaticly);
 
-    final PsiElementFactory factory = manager.getElementFactory();
     try {
       final String text = buildImportListText(names, classesOrPackagesToImportOnDemand, classesToUseSingle, namesToImportStaticly);
       String ext = StdFileTypes.JAVA.getDefaultExtension();
-      final PsiJavaFile dummyFile = (PsiJavaFile)factory.createFileFromText("_Dummy_." + ext, StdFileTypes.JAVA, text);
+      final PsiJavaFile dummyFile = (PsiJavaFile)PsiFileFactory.getInstance(file.getProject())
+        .createFileFromText("_Dummy_." + ext, StdFileTypes.JAVA, text);
       codeStyleManager.reformat(dummyFile);
 
       PsiImportList resultList = dummyFile.getImportList();
@@ -290,7 +289,8 @@ public class ImportHelper{
                       PsiClass conflictClass2 = manager.findClass(conflictClassName2, resolveScope);
                       if (conflictClass2 != null && helper.isAccessible(conflictClass2, file, null)) {
                         PsiSearchHelper searchHelper = manager.getSearchHelper();
-                        PsiReference[] usages = searchHelper.findReferences(conflictClass, new LocalSearchScope(file), false);
+                        PsiReference[] usages =
+                          ReferencesSearch.search(conflictClass, new LocalSearchScope(file), false).toArray(new PsiReference[0]);
                         if (usages.length > 0) {
                           classesToReimport.add(conflictClass);
                         }

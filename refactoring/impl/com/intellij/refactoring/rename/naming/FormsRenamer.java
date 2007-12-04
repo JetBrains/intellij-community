@@ -1,5 +1,6 @@
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -20,7 +21,7 @@ public class FormsRenamer extends AutomaticRenamer {
 
   public FormsRenamer(PsiClass aClass, String newClassName) {
     if (aClass.getQualifiedName() != null) {
-      PsiFile[] forms = aClass.getManager().getSearchHelper().findFormsBoundToClass(aClass.getQualifiedName());
+      PsiFile[] forms = JavaPsiFacade.getInstance(aClass.getProject()).findFormsBoundToClass(aClass.getQualifiedName());
       for (final PsiFile form : forms) {
         if (form.getName() != null) {
           myElements.add(form);

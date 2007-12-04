@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -292,7 +293,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     PsiAssignmentExpression assignment = (PsiAssignmentExpression)ref.getParent();
     if (!(assignment.getParent() instanceof PsiExpressionStatement)) return -1;
 
-    if (psiManager.getSearchHelper().findReferences(var, new LocalSearchScope(assignment.getRExpression()), false).length > 0) {
+    if (ReferencesSearch.search(var, new LocalSearchScope(assignment.getRExpression()), false).toArray(new PsiReference[0]).length > 0) {
       return -1;
     }
 

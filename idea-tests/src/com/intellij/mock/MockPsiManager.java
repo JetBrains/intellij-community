@@ -268,7 +268,10 @@ public class MockPsiManager extends PsiManagerEx {
 
   @NotNull
   public PsiNameHelper getNameHelper() {
-    return new PsiNameHelperImpl(this);
+    if (true) {
+      throw new UnsupportedOperationException();
+    }
+    return new PsiNameHelperImpl(null);
   }
 
   //public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
@@ -396,6 +399,10 @@ public class MockPsiManager extends PsiManagerEx {
 
   public void nonPhysicalChange() {
     throw new UnsupportedOperationException("Method nonPhysicalChange is not yet implemented in " + getClass().getName());
+  }
+
+  public void physicalChange() {
+    throw new UnsupportedOperationException("physicalChange is not implemented"); // TODO
   }
 
   public ResolveCache getResolveCache() {

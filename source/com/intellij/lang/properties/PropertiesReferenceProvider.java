@@ -2,10 +2,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.i18n.I18nUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -52,7 +49,7 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
         final Object resourceBundleName = annotationParams.get(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER);
         if (resourceBundleName instanceof PsiExpression) {
           PsiExpression expr = (PsiExpression)resourceBundleName;
-          final Object bundleValue = expr.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
+          final Object bundleValue = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr);
           bundleName = bundleValue == null ? null : bundleValue.toString();
         }
       }

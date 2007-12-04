@@ -1,7 +1,7 @@
 package com.intellij.refactoring.migration;
 
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMigration;
@@ -39,7 +40,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   private PsiMigration startMigration(final PsiManager psiManager) {
-    final PsiMigration migration = psiManager.startMigration();
+    final PsiMigration migration = JavaPsiFacade.getInstance(psiManager.getProject()).startMigration();
 
     final Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
@@ -118,7 +119,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    final PsiMigration psiMigration = psiManager.startMigration();
+    final PsiMigration psiMigration = JavaPsiFacade.getInstance(psiManager.getProject()).startMigration();
     LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
 
     try {

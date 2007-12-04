@@ -16,7 +16,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassRe
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PropertyUtil;
@@ -72,10 +71,9 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
 
   @Nullable
   public static PsiReference getFormReference(PsiField field) {
-    final PsiSearchHelper searchHelper = field.getManager().getSearchHelper();
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && containingClass.getQualifiedName() != null) {
-      final PsiFile[] forms = searchHelper.findFormsBoundToClass(containingClass.getQualifiedName());
+      final PsiFile[] forms = JavaPsiFacade.getInstance(field.getProject()).findFormsBoundToClass(containingClass.getQualifiedName());
       for (PsiFile formFile : forms) {
         final PsiReference[] refs = formFile.getReferences();
         for (final PsiReference ref : refs) {
@@ -107,11 +105,7 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
   }
 
   private static void processReferences(final PsiPlainTextFile file, final PsiReferenceProcessor processor) {
-    final PsiManager manager = file.getManager();
-
-    final PsiElementFactory elementFactory = manager.getElementFactory();
-
-    final PsiFile _f = elementFactory.createFileFromText("a.xml", file.getText());
+    final PsiFile _f = PsiFileFactory.getInstance(file.getProject()).createFileFromText("a.xml", file.getText());
 
     final XmlFile xmlFile = (XmlFile)_f;
     final XmlDocument document = xmlFile.getDocument();

@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -74,7 +75,8 @@ public class MethodNode extends CheckedTreeNode {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
-        final PsiReference[] refs = searchHelper.findReferencesIncludingOverriding(myMethod, GlobalSearchScope.allScope(project), true);
+        final PsiReference[] refs =
+          MethodReferencesSearch.search(myMethod, GlobalSearchScope.allScope(project), true).toArray(PsiReference.EMPTY_ARRAY);
         for (PsiReference ref : refs) {
           final PsiElement element = ref.getElement();
           if (!(element instanceof PsiReferenceExpression) ||

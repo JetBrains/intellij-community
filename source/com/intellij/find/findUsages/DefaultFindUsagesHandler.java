@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -94,7 +95,7 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
   private static PsiElement[] getParameterElementsToSearch(final PsiParameter parameter) {
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     PsiSearchHelper helper = parameter.getManager().getSearchHelper();
-    PsiMethod[] overrides = helper.findOverridingMethods(method, method.getUseScope(), true);
+    PsiMethod[] overrides = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
     for (int i = 0; i < overrides.length; i++) {
       overrides[i] = (PsiMethod)overrides[i].getNavigationElement();
     }

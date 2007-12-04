@@ -277,7 +277,7 @@ public class RefactoringUtil {
     PsiSearchHelper helper = manager.getSearchHelper();
     SearchScope scope = element.getUseScope();
     scope = scope.intersectWith(GlobalSearchScope.projectScope(manager.getProject()));
-    PsiLiteralExpression[] literals = helper.findStringLiteralsContainingIdentifier(stringToSearch, scope);
+    PsiLiteralExpression[] literals = findStringLiteralsContainingIdentifier(stringToSearch, scope, helper);
     for (PsiLiteralExpression literal : literals) {
       processStringOrComment(literal, stringToSearch, results, factory, ignoreReferences);
     }
@@ -286,6 +286,27 @@ public class RefactoringUtil {
     for (PsiElement comment : comments) {
       processStringOrComment(comment, stringToSearch, results, factory, ignoreReferences);
     }
+  }
+
+  public static PsiLiteralExpression[] findStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, PsiSearchHelper helper) {
+    final ArrayList<PsiLiteralExpression> results = new ArrayList<PsiLiteralExpression>();
+    TextOccurenceProcessor processor = new TextOccurenceProcessor() {
+      public boolean execute(PsiElement element, int offsetInElement) {
+        if (element instanceof PsiLiteralExpression) {
+          synchronized (results) {
+            results.add((PsiLiteralExpression)element);
+          }
+        }
+        return true;
+      }
+    };
+
+    helper.processElementsWithWord(processor,
+                                   searchScope,
+                                   identifier,
+                                   UsageSearchContext.IN_STRINGS,
+                                   true);
+    return results.toArray(new PsiLiteralExpression[results.size()]);
   }
 
   public static boolean isSearchTextOccurencesEnabled(PsiElement element) {

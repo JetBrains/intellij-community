@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -58,7 +59,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
       }
     }
     if (annotateOverriddenMethods()) {
-      PsiMethod[] methods = method.getManager().getSearchHelper().findOverridingMethods(method, GlobalSearchScope.allScope(project), true);
+      PsiMethod[] methods = OverridingMethodsSearch.search(method, GlobalSearchScope.allScope(project), true).toArray(PsiMethod.EMPTY_ARRAY);
       for (PsiMethod psiMethod : methods) {
         if (!AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false) && psiMethod.getManager().isInProject(psiMethod)) {
           toAnnotate.add(psiMethod);

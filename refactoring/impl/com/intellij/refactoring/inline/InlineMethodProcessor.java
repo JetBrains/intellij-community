@@ -1,8 +1,8 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -472,7 +472,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private boolean isStrictlyFinal(PsiParameter parameter) {
     PsiSearchHelper searchHelper = myManager.getSearchHelper();
-    final PsiReference[] references = searchHelper.findReferences(parameter, GlobalSearchScope.projectScope(myProject), false);
+    final PsiReference[] references =
+      ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
     for (PsiReference reference : references) {
       final PsiElement refElement = reference.getElement();
       final PsiElement anonymousClass = PsiTreeUtil.getParentOfType(refElement, PsiAnonymousClass.class);
@@ -791,7 +792,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       else {
         if (isAccessedForWriting) {
           if (refVar.hasModifierProperty(PsiModifier.FINAL) || shouldBeFinal) return false;
-          PsiReference[] refs = myManager.getSearchHelper().findReferences(refVar, GlobalSearchScope.projectScope(myProject), false);
+          PsiReference[] refs =
+            ReferencesSearch.search(refVar, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
           return refs.length == 1; //TODO: control flow
         }
         else {
@@ -896,7 +898,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   */
 
   private void inlineResultVariable(PsiVariable resultVar) throws IncorrectOperationException {
-    PsiReference[] refs = myManager.getSearchHelper().findReferences(resultVar, GlobalSearchScope.projectScope(myProject), false);
+    PsiReference[] refs = ReferencesSearch.search(resultVar, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
     PsiAssignmentExpression assignment = null;
     PsiReferenceExpression resultUsage = null;
     for (PsiReference ref1 : refs) {

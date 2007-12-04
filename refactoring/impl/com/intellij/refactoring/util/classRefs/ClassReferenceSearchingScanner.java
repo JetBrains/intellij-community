@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 
 /**
  * @author dsl
@@ -20,7 +21,7 @@ public class ClassReferenceSearchingScanner extends ClassReferenceScanner {
 
   public PsiReference[] findReferences() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
-    return mySearchHelper.findReferences(myClass, projectScope, false);
+    return ReferencesSearch.search(myClass, projectScope, false).toArray(new PsiReference[0]);
   }
 
 }

@@ -48,6 +48,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -497,13 +498,13 @@ import java.util.Map;
   }
 
   protected static PsiFile createLightFile(String fileName, String text) throws IncorrectOperationException {
-    return getPsiManager().getElementFactory().createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName),
-                                                                  text, LocalTimeCounter.currentTime(), false);
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(
+      fileName), text, LocalTimeCounter.currentTime(), false);
   }
 
   protected static PsiFile createPseudoPhysicalFile(String fileName, String text) throws IncorrectOperationException {
-    return getPsiManager().getElementFactory().createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(fileName),
-                                                                  text, LocalTimeCounter.currentTime(), true);
+    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, FileTypeManager.getInstance().getFileTypeByFileName(
+      fileName), text, LocalTimeCounter.currentTime(), true);
   }
 
   /**

@@ -15,9 +15,9 @@
  */
 package com.intellij.pom.impl;
 
+import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomTransaction;
-import com.intellij.pom.PomManager;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -30,7 +30,7 @@ public abstract class PomTransactionBase implements PomTransaction{
   public PomTransactionBase(PsiElement scope, final PomModelAspect aspect){
     myScope = scope;
     myAspect = aspect;
-    myAccumulatedEvent = new PomModelEvent(PomManager.getModel(scope.getManager().getProject()));
+    myAccumulatedEvent = new PomModelEvent(PomManager.getModel(scope.getProject()));
   }
 
   public PomModelEvent getAccumulatedEvent() {

@@ -3,10 +3,7 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -53,6 +50,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   private static boolean isAcceptable(final PsiMethod found, final PsiMethod method) {
     return !found.hasModifierProperty(PsiModifier.STATIC) &&
            (!method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) ||
-            found.getManager().arePackagesTheSame(method.getContainingClass(), found.getContainingClass()));
+            JavaPsiFacade.getInstance(found.getProject())
+              .arePackagesTheSame(method.getContainingClass(), found.getContainingClass()));
   }
 }

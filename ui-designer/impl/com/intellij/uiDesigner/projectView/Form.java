@@ -1,8 +1,9 @@
 package com.intellij.uiDesigner.projectView;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 
@@ -18,7 +19,7 @@ public class Form implements Navigatable {
 
   public Form(PsiClass classToBind) {
     myClassToBind = classToBind;
-    myFormFiles = Arrays.asList(classToBind.getManager().getSearchHelper().findFormsBoundToClass(classToBind.getQualifiedName()));
+    myFormFiles = Arrays.asList(JavaPsiFacade.getInstance(classToBind.getProject()).findFormsBoundToClass(classToBind.getQualifiedName()));
   }
 
   public Form(PsiClass classToBind, Collection<PsiFile> formFiles) {

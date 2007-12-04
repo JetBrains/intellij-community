@@ -90,7 +90,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
       public void visitDocTag(PsiDocTag tag) {
         super.visitDocTag(tag);
-        final JavadocManager javadocManager = tag.getManager().getJavadocManager();
+        final JavadocManager javadocManager = JavaPsiFacade.getInstance(tag.getProject()).getJavadocManager();
         final JavadocTagInfo info = javadocManager.getTagInfo(tag.getName());
         if (info == null || !info.isInline()) {
           visitRefInDocTag(tag, javadocManager, context, problems, manager);
@@ -99,7 +99,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
       public void visitInlineDocTag(PsiInlineDocTag tag) {
         super.visitInlineDocTag(tag);
-        final JavadocManager javadocManager = tag.getManager().getJavadocManager();
+        final JavadocManager javadocManager = JavaPsiFacade.getInstance(tag.getProject()).getJavadocManager();
         visitRefInDocTag(tag, javadocManager, context, problems, manager);
       }
 

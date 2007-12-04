@@ -17,6 +17,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlChildRole;
@@ -61,10 +62,8 @@ public class CheckEmptyScriptTagInspection extends BaseJavaLocalInspectionTool {
 
                 try {
                   final FileType fileType = tag.getContainingFile().getFileType();
-                  PsiFile file = tag.getManager().getElementFactory().createFileFromText(
-                    "dummy." + (fileType == StdFileTypes.JSP || fileType == StdFileTypes.HTML ? "html":"xml"),
-                    builder.toString()
-                  );
+                  PsiFile file = PsiFileFactory.getInstance(tag.getProject()).createFileFromText(
+                    "dummy." + (fileType == StdFileTypes.JSP || fileType == StdFileTypes.HTML ? "html" : "xml"), builder.toString());
 
                   tag.replace(((XmlFile)file).getDocument().getRootTag());
                 }

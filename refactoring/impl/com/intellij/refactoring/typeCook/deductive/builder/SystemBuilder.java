@@ -1,16 +1,18 @@
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
@@ -20,7 +22,6 @@ import com.intellij.util.containers.HashMap;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-import java.lang.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -121,7 +122,7 @@ public class SystemBuilder {
       keyParameter = parameter;
     }
 
-    final PsiMethod[] overriders = helper.findOverridingMethods(keyMethod, keyMethod.getUseScope(), true);
+    final PsiMethod[] overriders = OverridingMethodsSearch.search(keyMethod, keyMethod.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
 
     for (final PsiMethod overrider : overriders) {
       final PsiElement e = parameter != null ? overrider.getParameterList().getParameters()[index] : overrider;
@@ -657,7 +658,7 @@ public class SystemBuilder {
           final PsiSearchHelper helper = myManager.getSearchHelper();
           SearchScope scope = getScope(helper, method);
 
-          final PsiReference[] refs = helper.findReferences(method, scope, true);
+          final PsiReference[] refs = ReferencesSearch.search(method, scope, true).toArray(new PsiReference[0]);
 
           for (PsiReference ref : refs) {
             final PsiElement elt = ref.getElement();
@@ -972,7 +973,7 @@ public class SystemBuilder {
       addUsage(system, element);
 
       if (!(element instanceof PsiExpression)) {
-        final PsiReference[] refs = helper.findReferences(element, getScope(helper, element), true);
+        final PsiReference[] refs = ReferencesSearch.search(element, getScope(helper, element), true).toArray(new PsiReference[0]);
 
         for (PsiReference ref : refs) {
           final PsiElement elt = ref.getElement();

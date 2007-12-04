@@ -16,7 +16,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiReferenceProcessor;
+import com.intellij.psi.search.PsiReferenceProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -91,7 +94,7 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
             if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
               final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
               if (unusedParameters.isEmpty()) return;
-              PsiMethod[] derived = helper.findOverridingMethods(psiMethod, psiMethod.getUseScope(), true);
+              PsiMethod[] derived = OverridingMethodsSearch.search(psiMethod, psiMethod.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
               for (final RefParameter refParameter : unusedParameters) {
                 if (refMethod.isAbstract() && derived.length == 0) {
                   refParameter.parameterReferenced(false);
@@ -103,14 +106,15 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
                   for (int i = 0; i < derived.length && !found[0]; i++) {
                     if (!scope.contains(derived[i])) {
                       PsiParameter psiParameter = derived[i].getParameterList().getParameters()[idx];
-                      helper.processReferences(new PsiReferenceProcessor() {
-                        public boolean execute(PsiReference element) {
-                          refParameter.parameterReferenced(false);
-                          processor.ignoreElement(refParameter);
-                          found[0] = true;
-                          return false;
-                        }
-                      }, psiParameter, helper.getUseScope(psiParameter), false);
+                      ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false).forEach(new PsiReferenceProcessorAdapter(
+                        new PsiReferenceProcessor() {
+                                          public boolean execute(PsiReference element) {
+                                            refParameter.parameterReferenced(false);
+                                            processor.ignoreElement(refParameter);
+                                            found[0] = true;
+                                            return false;
+                                          }
+                                        }));
                     }
                   }
                 }

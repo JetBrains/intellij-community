@@ -5,10 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -49,7 +46,7 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
                   buffer.insert(text.length(),nextSibling.getText());
                 }
               }
-              tempFile = (XmlFile) file.getManager().getElementFactory().createFileFromText("dummy.xml", buffer.toString());
+              tempFile = (XmlFile)PsiFileFactory.getInstance(file.getProject()).createFileFromText("dummy.xml", buffer.toString());
               prolog.replace(tempFile.getDocument().getProlog());
             }
             catch(IncorrectOperationException e){

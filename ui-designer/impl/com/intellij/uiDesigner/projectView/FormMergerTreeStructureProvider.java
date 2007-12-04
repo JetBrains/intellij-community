@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -52,7 +53,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
         PsiClass aClass = (PsiClass)element.getValue();
         final String qName = aClass.getQualifiedName();
         if (qName == null) continue;
-        PsiFile[] forms = aClass.getManager().getSearchHelper().findFormsBoundToClass(qName);
+        PsiFile[] forms = JavaPsiFacade.getInstance(myProject).findFormsBoundToClass(qName);
         Collection<BasePsiNode<? extends PsiElement>> formNodes = findFormsIn(children, forms);
         if (!formNodes.isEmpty()) {
           Collection<PsiFile> formFiles = convertToFiles(formNodes);

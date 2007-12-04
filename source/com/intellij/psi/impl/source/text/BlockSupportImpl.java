@@ -16,7 +16,7 @@ import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiElementFactoryImpl;
+import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -26,13 +26,13 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.templateLanguages.TemplateDataElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IErrorCounterChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.diff.DiffTree;
-import com.intellij.psi.templateLanguages.TemplateDataElementType;
 
 public class BlockSupportImpl extends BlockSupport {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.text.BlockSupportImpl");
@@ -232,11 +232,9 @@ public class BlockSupportImpl extends BlockSupport {
       parent.replaceAllChildrenToChildrenOf(holderElement);
     }
     else {
-      final PsiManagerEx manager = (PsiManagerEx)fileImpl.getManager();
-      final PsiElementFactoryImpl factory = (PsiElementFactoryImpl)manager.getElementFactory();
-
-      final PsiFileImpl newFile = 
-        (PsiFileImpl)factory.createFileFromText(fileImpl.getName(), fileType, fileImpl.getViewProvider().getBaseLanguage(), fileImpl.getLanguage(), fileImpl.getLanguageDialect(), newFileText, fileImpl.getModificationStamp(), true, false);
+      final PsiFileFactoryImpl fileFactory = (PsiFileFactoryImpl)PsiFileFactory.getInstance(fileImpl.getProject());
+      final PsiFileImpl newFile = (PsiFileImpl) fileFactory.
+        createFileFromText(fileImpl.getName(), fileType, fileImpl.getViewProvider().getBaseLanguage(), fileImpl.getLanguage(), fileImpl.getLanguageDialect(), newFileText, fileImpl.getModificationStamp(), true, false);
       newFile.setOriginalFile(fileImpl);
 
       final FileElement newFileElement = (FileElement)newFile.getNode();

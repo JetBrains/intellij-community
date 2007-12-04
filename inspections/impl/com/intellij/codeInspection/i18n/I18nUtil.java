@@ -7,22 +7,22 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.PropertyCreationHandler;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,7 +151,7 @@ public class I18nUtil {
         return false;
       }
       PsiExpression expr = (PsiExpression)resourceBundleName;
-      final Object value = expr.getManager().getConstantEvaluationHelper().computeConstantExpression(expr);
+      final Object value = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr);
       if (value == null) {
         return false;
       }

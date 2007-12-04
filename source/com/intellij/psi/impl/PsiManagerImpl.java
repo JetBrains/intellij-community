@@ -21,59 +21,43 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.*;
-import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
-import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
-import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.javadoc.JavadocManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.jsp.JspImplicitVariable;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.concurrent.ConcurrentMap;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -83,20 +67,13 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final Project myProject;
 
   private final FileManager myFileManager;
-  private final PsiElementFactory myElementFactory;
   private final PsiSearchHelperImpl mySearchHelper;
-  private PsiShortNamesCache myShortNamesCache;
-  private final PsiResolveHelper myResolveHelper;
   private final CacheManager myCacheManager;
   private final RepositoryManager myRepositoryManager;
   private final RepositoryElementsManager myRepositoryElementsManager;
-  private final JavadocManager myJavadocManager;
-  private final PsiNameHelper myNameHelper;
   private final PsiModificationTrackerImpl myModificationTracker;
   private final ResolveCache myResolveCache;
   private final CachedValuesManager myCachedValuesManager;
-  private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
-  private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
 
   private final List<PsiTreeChangeListener> myTreeChangeListeners = new CopyOnWriteArrayList<PsiTreeChangeListener>();
   private boolean myTreeChangeEventIsFiring = false;
@@ -128,9 +105,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   public static final int CHILD_MOVED = 9;
   public static final int CHILDREN_CHANGED = 10;
   public static final int PROPERTY_CHANGED = 11;
-  private PsiMigrationImpl myCurrentMigration;
-  private LanguageLevel myLanguageLevel;
-  private final PsiElementFinder[] myElementFinders;
 
   private final List<LanguageInjector> myLanguageInjectors = new CopyOnWriteArrayList<LanguageInjector>();
   private final ProgressManager myProgressManager;
@@ -151,24 +125,18 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       myRepositoryManager = new EmptyRepository.MyRepositoryManagerImpl();
     }
 
-    myLanguageLevel = projectRootManagerEx.getLanguageLevel();
-
     boolean isProjectDefault = project.isDefault();
 
     myFileManager = isProjectDefault ? new EmptyRepository.EmptyFileManager() : new FileManagerImpl(this, fileTypeManager,
                                                                                                     virtualFileManager, fileDocumentManager,
                                                                                                     projectRootManagerEx);
-    myElementFactory = new PsiElementFactoryImpl(this);
     mySearchHelper = new PsiSearchHelperImpl(this);
-    myResolveHelper = new PsiResolveHelperImpl(this);
     final CompositeCacheManager cacheManager = new CompositeCacheManager();
     if (psiManagerConfiguration.REPOSITORY_ENABLED && !isProjectDefault) {
-      myShortNamesCache = new PsiShortNamesCacheImpl(this, projectRootManagerEx);
       cacheManager.addCacheManager(new CacheManagerImpl(this));
       myRepositoryElementsManager = new RepositoryElementsManager(this);
     }
     else {
-      myShortNamesCache = new EmptyRepository.PsiShortNamesCacheImpl();
       cacheManager.addCacheManager(new EmptyRepository.CacheManagerImpl());
       myRepositoryElementsManager = new EmptyRepository.MyRepositoryElementsManager(this);
     }
@@ -179,18 +147,10 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     myCacheManager = cacheManager;
 
-    myJavadocManager = new JavadocManagerImpl();
-    myNameHelper = new PsiNameHelperImpl(this);
     myExternalResourceListener = new MyExternalResourceListener();
     myModificationTracker = new PsiModificationTrackerImpl(this);
     myResolveCache = new ResolveCache(this);
     myCachedValuesManager = new CachedValuesManagerImpl(this);
-    myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
-
-    List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
-    elementFinders.addAll(Arrays.asList(myProject.getComponents(PsiElementFinder.class)));
-    elementFinders.add(new PsiElementFinderImpl()); //this finder should be added at end for Fabrique's needs
-    myElementFinders = elementFinders.toArray(new PsiElementFinder[elementFinders.size()]);
 
     if (externalResourceManagerEx != null) {
       externalResourceManagerEx.addExteralResourceListener(myExternalResourceListener);
@@ -200,30 +160,13 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       ((StartupManagerEx)startupManager).registerPreStartupActivity(
         new Runnable() {
           public void run() {
-            // update effective language level before the project is opened because it might be changed
-            // e.g. while setting up newly created project
-            if (!ApplicationManager.getApplication().isUnitTestMode()) {
-              myLanguageLevel = projectRootManagerEx.getLanguageLevel();
-            }
             runPreStartupActivity();
           }
         }
       );
-
-      startupManager.registerStartupActivity(
-        new Runnable() {
-          public void run() {
-            runStartupActivity();
-          }
-        }
-      );
     }
-    myProgressManager = ProgressManager.getInstance();
-  }
 
-  @NotNull
-  public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
-    return myConstantEvaluationHelper;
+    myProgressManager = ProgressManager.getInstance();
   }
 
   public void initComponent() {
@@ -245,40 +188,11 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return myIsDisposed;
   }
 
-  @NotNull
-  public LanguageLevel getEffectiveLanguageLevel() {
-    return myLanguageLevel;
-  }
-
-  public boolean isPartOfPackagePrefix(String packageName) {
-    final Collection<String> packagePrefixes = myFileManager.getNonTrivialPackagePrefixes();
-    for (final String subpackageName : packagePrefixes) {
-      if (isSubpackageOf(subpackageName, packageName)) return true;
-    }
-    return false;
-  }
-
-  private static boolean isSubpackageOf(final String subpackageName, String packageName) {
-    return subpackageName.equals(packageName) ||
-           subpackageName.startsWith(packageName) && subpackageName.charAt(packageName.length()) == '.';
-  }
 
   public void dropResolveCaches() {
     myResolveCache.clearCache();
     ControlFlowFactory.getInstance(myProject).clearCache();
     ((RepositoryIndexImpl)myRepositoryManager.getIndex()).resetIndexCaches();
-  }
-
-  public boolean isInPackage(@NotNull PsiElement element, @NotNull PsiPackage aPackage) {
-    final PsiFile file = ResolveUtil.getContextFile(element);
-    if (file instanceof DummyHolder) {
-      return ((DummyHolder) file).isInPackage(aPackage);
-    }
-    if (file instanceof PsiJavaFile) {
-      final String packageName = ((PsiJavaFile) file).getPackageName();
-      return packageName.equals(aPackage.getQualifiedName());
-    }
-    return false;
   }
 
   public boolean isInProject(@NotNull PsiElement element) {
@@ -384,32 +298,11 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     PostprocessReformattingAspect.getInstance(getProject()).postponeFormattingInside(runnable);
   }
 
-  public boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2) {
-    PsiFile file1 = ResolveUtil.getContextFile(element1);
-    PsiFile file2 = ResolveUtil.getContextFile(element2);
-    if (Comparing.equal(file1, file2)) return true;
-    if (file1 instanceof DummyHolder && file2 instanceof DummyHolder) return true;
-    if (file1 instanceof DummyHolder || file2 instanceof DummyHolder) {
-      DummyHolder dummyHolder = (DummyHolder) (file1 instanceof DummyHolder ? file1 : file2);
-      PsiElement other = file1 instanceof DummyHolder ? file2 : file1;
-      return dummyHolder.isSamePackage(other);
-    }
-    if (!(file1 instanceof PsiJavaFile)) return false;
-    if (!(file2 instanceof PsiJavaFile)) return false;
-    String package1 = ((PsiJavaFile) file1).getPackageName();
-    String package2 = ((PsiJavaFile) file2).getPackageName();
-    return Comparing.equal(package1, package2);
-  }
-
 
   public void projectClosed() {
   }
 
   public void projectOpened() {
-  }
-
-  private void runStartupActivity() {
-    myShortNamesCache.runStartupActivity();
   }
 
   private void runPreStartupActivity() {
@@ -488,34 +381,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return myFileManager.getRootDirectories(rootType);
   }
 
-  /**
-   * @deprecated
-   */
-  public PsiClass findClass(@NotNull String qualifiedName) {
-    return findClass(qualifiedName, GlobalSearchScope.allScope(myProject));
-  }
-
-  public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
-
-    for (PsiElementFinder finder : myElementFinders) {
-      PsiClass aClass = finder.findClass(qualifiedName, scope);
-      if (aClass != null) return aClass;
-    }
-
-    return null;
-  }
-
-  @NotNull
-  public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    List<PsiClass> classes = new SmartList<PsiClass>();
-    for (PsiElementFinder finder : myElementFinders) {
-      PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
-      classes.addAll(Arrays.asList(finderClasses));
-    }
-
-    return classes.toArray(new PsiClass[classes.size()]);
-  }
 
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
     myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
@@ -652,24 +517,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return myFileManager.findDirectory(file);
   }
 
-  public PsiPackage findPackage(@NotNull String qualifiedName) {
-    PsiPackage aPackage = myPackageCache.get(qualifiedName);
-    if (aPackage == null) {
-      for (PsiElementFinder finder : myElementFinders) {
-        aPackage = finder.findPackage(qualifiedName);
-        if (aPackage != null) {
-          aPackage = ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
-          break;
-        }
-      }
-    }
-
-    return aPackage;
-  }
-
-  public PsiMigrationImpl getCurrentMigration() {
-    return myCurrentMigration;
-  }
 
   public void invalidateFile(PsiFile file) {
     if (myIsDisposed) {
@@ -945,9 +792,12 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     onChange(false);
   }
 
+  public void physicalChange() {
+    onChange(true);
+  }
+
   private void onChange(boolean isPhysical) {
     if (isPhysical) {
-      myPackageCache.clear();
       runRunnables(myRunnablesOnChange);
 
       WeakReference[] refs = myWeakRunnablesOnChange.toArray(
@@ -977,53 +827,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   @NotNull
-  public PsiElementFactory getElementFactory() {
-    return myElementFactory;
-  }
-
-  @NotNull
-  public PsiJavaParserFacade getParserFacade() {
-    return getElementFactory(); // TODO: ligter implementation which doesn't mark all the elements as generated.
-  }
-
-  @NotNull
   public PsiSearchHelper getSearchHelper() {
     return mySearchHelper;
-  }
-
-  @NotNull
-  public PsiResolveHelper getResolveHelper() {
-    return myResolveHelper;
-  }
-
-  @NotNull
-  public PsiShortNamesCache getShortNamesCache() {
-    return myShortNamesCache;
-  }
-
-  public void registerShortNamesCache(@NotNull PsiShortNamesCache cache) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (myShortNamesCache instanceof CompositeShortNamesCache) {
-      ((CompositeShortNamesCache)myShortNamesCache).addCache(cache);
-    }
-    else {
-      CompositeShortNamesCache composite = new CompositeShortNamesCache();
-      composite.addCache(myShortNamesCache);
-      composite.addCache(cache);
-      myShortNamesCache = composite;
-    }
-  }
-
-  @NotNull
-  public PsiMigration startMigration() {
-    LOG.assertTrue(myCurrentMigration == null);
-    myCurrentMigration = new PsiMigrationImpl(this);
-    return myCurrentMigration;
-  }
-
-  @NotNull
-  public JavadocManager getJavadocManager() {
-    return myJavadocManager;
   }
 
   @NotNull
@@ -1034,11 +839,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   @NotNull
   public CachedValuesManager getCachedValuesManager() {
     return myCachedValuesManager;
-  }
-
-  @NotNull
-  public PsiNameHelper getNameHelper() {
-    return myNameHelper;
   }
 
   public void moveDirectory(@NotNull final PsiDirectory dir, @NotNull PsiDirectory newParent) throws IncorrectOperationException {
@@ -1122,106 +922,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return "PsiManager";
   }
 
-  public void migrationModified(boolean terminated) {
-    if (terminated) {
-      myCurrentMigration = null;
-    }
-    onChange(true);
-  }
-
-  public PsiClass[] getClasses(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
-    List<PsiClass> result = new ArrayList<PsiClass>();
-    for (PsiElementFinder finder : myElementFinders) {
-      PsiClass[] classes = finder.getClasses(psiPackage, scope);
-      result.addAll(Arrays.asList(classes));
-    }
-
-    return result.toArray(new PsiClass[result.size()]);
-  }
-
-  public PsiPackage[] getSubPackages(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
-    List<PsiPackage> result = new ArrayList<PsiPackage>();
-    for (PsiElementFinder finder : myElementFinders) {
-      PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
-      result.addAll(Arrays.asList(packages));
-    }
-
-    return result.toArray(new PsiPackage[result.size()]);
-  }
-
   private class MyExternalResourceListener implements ExternalResourceListener {
     public void externalResourceChanged() {
       onChange(true);
-    }
-  }
-
-  public void setEffectiveLanguageLevel(@NotNull LanguageLevel languageLevel) {
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myProject.isDefault(), "Use PsiManager.setEffectiveLanguageLevel only from unit tests");
-    myLanguageLevel = languageLevel;
-  }
-
-  private class PsiElementFinderImpl implements PsiElementFinder {
-    public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-      PsiClass psiClass = myFileManager.findClass(qualifiedName, scope);
-
-      if (psiClass == null && myCurrentMigration != null) {
-        psiClass = myCurrentMigration.getMigrationClass(qualifiedName);
-      }
-
-      return psiClass;
-    }
-
-    @NotNull
-    public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-      final PsiClass[] classes = myFileManager.findClasses(qualifiedName, scope);
-      if (classes.length == 0 && myCurrentMigration != null) {
-        final PsiClass migrationClass = myCurrentMigration.getMigrationClass(qualifiedName);
-        if (migrationClass != null) {
-          return new PsiClass[]{migrationClass};
-        }
-      }
-      return classes;
-    }
-
-    public PsiPackage findPackage(@NotNull String qualifiedName) {
-      final PsiPackage aPackage = myFileManager.findPackage(qualifiedName);
-      if (aPackage == null && myCurrentMigration != null) {
-        final PsiPackage migrationPackage = myCurrentMigration.getMigrationPackage(qualifiedName);
-        if (migrationPackage != null) return migrationPackage;
-      }
-
-      return aPackage;
-    }
-
-    @NotNull
-    public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-      final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
-      final String qualifiedName = psiPackage.getQualifiedName();
-      final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
-      for (PsiDirectory dir : dirs) {
-        PsiDirectory[] subdirs = dir.getSubdirectories();
-        for (PsiDirectory subdir : subdirs) {
-          final PsiPackage aPackage = subdir.getPackage();
-          if (aPackage != null) {
-            final String subQualifiedName = aPackage.getQualifiedName();
-            if (subQualifiedName.startsWith(qualifiedName) && !packagesMap.containsKey(subQualifiedName)) {
-              packagesMap.put(aPackage.getQualifiedName(), aPackage);
-            }
-          }
-        }
-      }
-      return packagesMap.values().toArray(new PsiPackage[packagesMap.size()]);
-    }
-
-    @NotNull
-    public PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-      ArrayList<PsiClass> list = new ArrayList<PsiClass>();
-      final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
-      for (PsiDirectory dir : dirs) {
-        PsiClass[] classes = dir.getClasses();
-        list.addAll(Arrays.asList(classes));
-      }
-      return list.toArray(new PsiClass[list.size()]);
     }
   }
 }

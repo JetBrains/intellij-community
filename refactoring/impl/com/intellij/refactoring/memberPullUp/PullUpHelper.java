@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -415,7 +416,7 @@ public class PullUpHelper {
 
       if (doLookup) {
         final PsiReference[] references =
-          myManager.getSearchHelper().findReferences(field, new LocalSearchScope(statement), false);
+          ReferencesSearch.search(field, new LocalSearchScope(statement), false).toArray(new PsiReference[0]);
         if (commonInitializerCandidate == null && references.length > 0) {
           return null;
         }
@@ -512,7 +513,7 @@ public class PullUpHelper {
       constructorsToSubConstructors.put(constructor, referencingSubConstructors);
       if (constructor != null) {
         final PsiReference[] references
-          = myManager.getSearchHelper().findReferences(constructor, new LocalSearchScope(mySourceClass), false);
+          = ReferencesSearch.search(constructor, new LocalSearchScope(mySourceClass), false).toArray(new PsiReference[0]);
         // find references
         for (PsiReference reference : references) {
           final PsiElement element = reference.getElement();
@@ -690,7 +691,7 @@ public class PullUpHelper {
 
   private static boolean willBeUsedInSubclass(PsiElement member, Set<PsiMember> movedMembers, PsiClass superclass, PsiClass subclass) {
     PsiSearchHelper helper = member.getManager().getSearchHelper();
-    PsiReference[] refs = helper.findReferences(member, new LocalSearchScope(subclass), false);
+    PsiReference[] refs = ReferencesSearch.search(member, new LocalSearchScope(subclass), false).toArray(new PsiReference[0]);
     for (PsiReference ref : refs) {
       PsiElement element = ref.getElement();
       if (!RefactoringHierarchyUtil.willBeInTargetClass(element, movedMembers, superclass, false)) {

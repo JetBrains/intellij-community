@@ -51,6 +51,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -178,8 +179,9 @@ public abstract class CodeStyleAbstractPanel {
         PsiElementFactory factory = manager.getElementFactory();
         try {
           //important not mark as generated not to get the classes before setting language level
-          PsiFile psiFile = factory.createFileFromText("a." + getFileType().getDefaultExtension(), getFileType(),
-                                                       myTextToReformat, LocalTimeCounter.currentTime(), false, false);
+          PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("a." + getFileType().getDefaultExtension(),
+                                                                                   getFileType(), myTextToReformat,
+                                                                                   LocalTimeCounter.currentTime(), false, false);
 
           psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
           apply(mySettings);

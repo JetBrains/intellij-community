@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.*;
@@ -35,7 +36,8 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
       return dummyParent.getFirstChildNode();
     } else {
       final XmlTag rootTag =
-        ((XmlFile)containingFile.getManager().getElementFactory().createFileFromText("a.xml", "<a>" + displayText + "</a>")).getDocument().getRootTag();
+        ((XmlFile)PsiFileFactory.getInstance(containingFile.getProject())
+          .createFileFromText("a.xml", "<a>" + displayText + "</a>")).getDocument().getRootTag();
 
       assert rootTag != null;
       final XmlTagChild[] tagChildren = rootTag.getValue().getChildren();

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -91,7 +92,7 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
   protected boolean verifyTargetClass (PsiClass targetClass) {
     if (targetClass.isInterface()) {
       final Project project = getProject();
-      if (targetClass.getManager().getSearchHelper().findInheritors(targetClass, targetClass.getUseScope(), false).length == 0) {
+      if (ClassInheritorsSearch.search(targetClass, targetClass.getUseScope(), false).findFirst() == null) {
         final String message = RefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", UsageViewUtil.getDescriptiveName(targetClass));
 
         Messages.showErrorDialog(project, message, myRefactoringName);

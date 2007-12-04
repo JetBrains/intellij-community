@@ -4,6 +4,7 @@ package com.intellij.refactoring.migration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
@@ -55,7 +56,7 @@ public class MigrationUtil {
   private static UsageInfo[] findRefs(final PsiManager manager, final PsiElement aClass) {
     final ArrayList<UsageInfo> results = new ArrayList<UsageInfo>();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    PsiReference[] usages = manager.getSearchHelper().findReferences(aClass, projectScope, false);
+    PsiReference[] usages = ReferencesSearch.search(aClass, projectScope, false).toArray(new PsiReference[0]);
     for (PsiReference usage : usages) {
       results.add(new UsageInfo(usage.getElement()));
     }

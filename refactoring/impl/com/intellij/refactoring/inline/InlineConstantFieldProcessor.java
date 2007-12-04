@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -43,11 +43,9 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    PsiManager manager = myField.getManager();
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myRefExpr)};
 
-    PsiSearchHelper helper = manager.getSearchHelper();
-    PsiReference[] refs = helper.findReferences(myField, GlobalSearchScope.projectScope(myProject), false);
+    PsiReference[] refs = ReferencesSearch.search(myField, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
     UsageInfo[] infos = new UsageInfo[refs.length];
     for (int i = 0; i < refs.length; i++) {
       infos[i] = new UsageInfo(refs[i].getElement());
@@ -64,7 +62,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     PsiExpression initializer = myField.getInitializer();
     LOG.assertTrue(initializer != null);
 
-    PsiConstantEvaluationHelper evalHelper = myField.getManager().getConstantEvaluationHelper();
+    PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(myField.getProject()).getConstantEvaluationHelper();
     initializer = normalize ((PsiExpression)initializer.copy());
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();

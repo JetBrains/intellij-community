@@ -135,10 +135,10 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     if (other instanceof DummyHolder) {
       final PsiElement otherContext = ((DummyHolder)other).myContext;
       if (myContext == null) return otherContext == null;
-      return myContext.getManager().arePackagesTheSame(myContext, otherContext);
+      return JavaPsiFacade.getInstance(myContext.getProject()).arePackagesTheSame(myContext, otherContext);
     }
     if (other instanceof PsiJavaFile) {
-      if (myContext != null) return myContext.getManager().arePackagesTheSame(myContext, other);
+      if (myContext != null) return JavaPsiFacade.getInstance(myContext.getProject()).arePackagesTheSame(myContext, other);
       final String packageName = ((PsiJavaFile)other).getPackageName();
       return "".equals(packageName);
     }
@@ -155,7 +155,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public boolean isInPackage(PsiPackage aPackage) {
-    if (myContext != null) return myContext.getManager().isInPackage(myContext, aPackage);
+    if (myContext != null) return JavaPsiFacade.getInstance(myContext.getProject()).isInPackage(myContext, aPackage);
     if (aPackage == null) return true;
     return "".equals(aPackage.getQualifiedName());
   }
