@@ -33,7 +33,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -42,7 +42,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
   protected String getActionName(VcsContext dataContext) {
@@ -80,7 +82,13 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
         change.set(changeListManager.getChange(file));
       }
       else {
-        ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(file, new ContentIterator() {
+        final ExcludedFileIndex index = ExcludedFileIndex.getInstance(project);
+        final VirtualFileFilter filter = new VirtualFileFilter() {
+          public boolean accept(final VirtualFile file) {
+            return !index.isExcludedFile(file);
+          }
+        };
+        FileIndexImplUtil.iterateRecursively(file, filter, new ContentIterator() {
           public boolean processFile(VirtualFile fileOrDir) {
             Change c = changeListManager.getChange(fileOrDir);
             if (c != null) {
