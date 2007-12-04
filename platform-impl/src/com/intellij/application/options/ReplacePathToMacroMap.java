@@ -49,39 +49,34 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   private static String replacePathMacro(String text, String path, final String macro, boolean caseSensitive, final Set<String> usedMacros) {
-    if (text.length() < path.length()) {
+    if (text.length() < path.length() || path.length() == 0) {
       return text;
     }
 
-    if (path.length() == 0) return text;
+    boolean startsWith;
+
+    if (caseSensitive) {
+      startsWith = text.startsWith(path);
+    }
+    else {
+      startsWith = StringUtil.startsWithIgnoreCase(text, path);
+    }
+
+    if (!startsWith) return text;
 
     final StringBuilder newText = StringBuilderSpinAllocator.alloc();
     try {
+      //check that this is complete path (ends with "/" or "!/")
+      int endOfOccurence = path.length();
       final boolean isWindowsRoot = path.endsWith(":/");
-      int i = 0;
-      while (i < text.length()) {
-        int occurrenceOfPath = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
-        if (occurrenceOfPath >= 0) {
-          int endOfOccurence = occurrenceOfPath + path.length();
-          if (!isWindowsRoot && endOfOccurence < text.length() && text.charAt(endOfOccurence) != '/' && !text.substring(endOfOccurence).startsWith("!/")) {
-            i = endOfOccurence;
-            continue;
-          }
-        }
-        if (occurrenceOfPath < 0) {
-          if (newText.length() == 0) {
-            return text;
-          }
-          newText.append(text.substring(i));
-          break;
-        }
-        else {
-          newText.append(text.substring(i, occurrenceOfPath));
-          newText.append(macro);
-          logUsage(macro, usedMacros);
-          i = occurrenceOfPath + path.length();
-        }
+      if (!isWindowsRoot && endOfOccurence < text.length() && text.charAt(endOfOccurence) != '/' && !text.substring(endOfOccurence).startsWith("!/")) {
+        return text;
       }
+
+      newText.append(macro);
+      newText.append(text.substring(endOfOccurence));
+      logUsage(macro, usedMacros);
+
       return newText.toString();
     }
     finally {
