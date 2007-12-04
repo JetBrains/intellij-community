@@ -18,7 +18,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.update.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.annotate.Annotater;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;

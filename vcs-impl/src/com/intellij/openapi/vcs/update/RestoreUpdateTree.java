@@ -39,8 +39,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
-import com.intellij.openapi.vcs.update.ProjectLevelVcsManagerEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 

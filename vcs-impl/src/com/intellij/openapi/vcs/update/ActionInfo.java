@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.update.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 
 import java.util.LinkedHashMap;
 

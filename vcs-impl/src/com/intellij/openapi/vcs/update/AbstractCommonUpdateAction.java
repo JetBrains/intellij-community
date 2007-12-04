@@ -49,7 +49,7 @@ import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
-import com.intellij.openapi.vcs.update.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;

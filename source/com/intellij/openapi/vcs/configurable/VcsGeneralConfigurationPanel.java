@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.update.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.changes.committed.CacheSettingsDialog;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
