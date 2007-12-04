@@ -2497,7 +2497,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s2 = "try  { '_st*; } catch('_Type 't+) { '_st2*; }";
 
     final List<PsiVariable> vars = new ArrayList<PsiVariable>();
-    final PsiFile file = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("_.java", s1);
+    final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("_.java", s1);
 
     file.acceptChildren(new PsiRecursiveElementVisitor() {
       public void visitVariable(final PsiVariable variable) {

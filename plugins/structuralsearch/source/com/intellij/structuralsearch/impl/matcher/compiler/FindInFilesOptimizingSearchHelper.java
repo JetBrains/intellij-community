@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -116,12 +117,7 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     };
 
     for (PsiClass aClass : classes) {
-      helper.processInheritors(
-        processor,
-        aClass,
-        scope,
-        true
-      );
+      ClassInheritorsSearch.search(aClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
     }
 
     if (includeSelf) {

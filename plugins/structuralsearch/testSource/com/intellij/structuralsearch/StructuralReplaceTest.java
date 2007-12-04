@@ -2,7 +2,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.idea.IdeaTestUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.LocalSearchScope;
 
 import java.io.IOException;
@@ -1702,7 +1702,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String toReplace = "jspHelper.composeTag('tag, 'a)";
     String replacement = "jspHelper.composeTag($tag$, $a$, Boolean.getBoolean($a$))";
 
-    final PsiFile psiFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText("A.jsp", jsp);
+    final PsiFile psiFile = PsiFileFactory.getInstance(myProject).createFileFromText("A.jsp", jsp);
     options.getMatchOptions().setScope(new LocalSearchScope(psiFile));
     actualResult = replacer.testReplace(jsp,toReplace,replacement,options, true);
 
