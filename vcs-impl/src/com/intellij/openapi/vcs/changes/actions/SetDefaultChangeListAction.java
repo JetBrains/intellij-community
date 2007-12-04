@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -26,7 +27,7 @@ public class SetDefaultChangeListAction extends AnAction {
 
 
   public void update(AnActionEvent e) {
-    ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
+    ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
     final boolean visible =
       lists != null && lists.length == 1 && lists[0] instanceof LocalChangeList && !((LocalChangeList)lists[0]).isDefault();
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
@@ -37,7 +38,7 @@ public class SetDefaultChangeListAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    final ChangeList[] lists = e.getData(DataKeys.CHANGE_LISTS);
+    final ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
     assert lists != null;
     ChangeListManager.getInstance(project).setDefaultChangeList((LocalChangeList)lists[0]);
   }

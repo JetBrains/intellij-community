@@ -11,10 +11,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 
 /**
  * @author yole
@@ -65,7 +65,7 @@ public class BrowseChangesAction extends AnAction {
     if (vcs == null || vcs.getCommittedChangesProvider() == null) {
       return false;
     }
-    FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(vFile);
+    FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(vFile);
     return vcs.fileExistsInVcs(filePath);
   }
 }
