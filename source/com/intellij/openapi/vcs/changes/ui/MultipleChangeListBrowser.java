@@ -112,7 +112,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   }
 
   @Override
-  protected void rebuildList() {
+  public void rebuildList() {
     if (myChangesToDisplay == null) {
       final ChangeListManager manager = ChangeListManager.getInstance(myProject);
       myChangeListsMap = new HashMap<Change, LocalChangeList>();

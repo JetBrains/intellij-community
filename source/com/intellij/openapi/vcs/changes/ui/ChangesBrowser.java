@@ -3,14 +3,11 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +33,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   private DefaultActionGroup myToolBarGroup;
   private final JPanel myListPanel;
   private ShowDiffAction.DiffExtendUIFactory myDiffExtendUIFactory = new DiffToolbarActionsFactory();
+
+  public static DataKey<ChangesBrowser> DATA_KEY = DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowser");
 
   public void setChangesToDisplay(final List<Change> changes) {
     myChangesToDisplay = changes;
@@ -91,10 +90,6 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   public void dispose() {
   }
 
-  public void addRollbackAction() {
-    myToolBarGroup.add(new RollbackAction());
-  }
-
   public void addToolbarAction(AnAction action) {
     myToolBarGroup.add(action);
   }
@@ -133,6 +128,9 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     }
     else if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {
       sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
+    }
+    else if (key == DATA_KEY) {
+      sink.put(DATA_KEY, this);
     }
   }
 
@@ -204,7 +202,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return actions;
   }
 
-  protected void rebuildList() {
+  public void rebuildList() {
     myViewer.setChangesToDisplay(getCurrentDisplayedChanges());
   }
 
@@ -278,23 +276,4 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return ChangesUtil.getFilesFromChanges(changes);
   }
 
-  public class RollbackAction extends AnAction {
-    public RollbackAction() {
-      super(VcsBundle.message("changes.action.rollback.text"), VcsBundle.message("changes.action.rollback.description"),
-            IconLoader.getIcon("/actions/rollback.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-      Change[] changes = e.getData(VcsDataKeys.CHANGES);
-      RollbackChangesDialog.rollbackChanges(myProject, Arrays.asList(changes), true);
-      ChangeListManager.getInstance(myProject).ensureUpToDate(false);
-      rebuildList();
-    }
-
-    public void update(AnActionEvent e) {
-      Change[] changes = e.getData(VcsDataKeys.CHANGES);
-      e.getPresentation().setEnabled(changes != null);
-    }
-  }
 }

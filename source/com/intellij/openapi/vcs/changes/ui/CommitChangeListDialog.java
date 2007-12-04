@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
@@ -143,7 +144,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myAllOfDefaultChangeListChangesIncluded = changes.containsAll(defaultList.getChanges());
 
     myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, initialSelection, true, true);
-    myBrowser.addRollbackAction();
+    myBrowser.addToolbarAction(new RollbackDialogAction());
     myBrowser.addSelectedListChangeListener(new MultipleChangeListBrowser.SelectedListChangeListener() {
       public void selectedListChanged() {
         updateComment();
