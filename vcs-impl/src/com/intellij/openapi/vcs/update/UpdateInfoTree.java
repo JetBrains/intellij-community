@@ -228,11 +228,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
         return myTreeExpander;
       }
     }
-    final Object fromProvider = ProjectLevelVcsManager.getInstance(myProject)
-      .createVirtualAndPsiFileDataProvider(getVirtualFileArray(), mySelectedFile)
-      .getData(dataId);
 
-    return fromProvider == null ? super.getData(dataId) : fromProvider;
+    return super.getData(dataId);
   }
 
   private VirtualFile[] getVirtualFileArray() {
