@@ -25,9 +25,9 @@ import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.UIUtil;
@@ -76,7 +76,7 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   public void projectOpened() {
     ChangeListManager.getInstance(myProject).addChangeListListener(myListener);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    final Content content = PeerFactory.getInstance().getContentFactory().createContent(createChangeViewComponent(), "Local", false);
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(createChangeViewComponent(), "Local", false);
     content.setCloseable(false);
     myContentManager.addContent(content);
 
