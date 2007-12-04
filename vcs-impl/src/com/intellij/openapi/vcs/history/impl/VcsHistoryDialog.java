@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs.history.impl;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
@@ -384,7 +383,7 @@ public class VcsHistoryDialog extends DialogWrapper {
 
   protected Action[] createActions() {
     Action okAction = getOKAction();
-    okAction.putValue(Action.NAME, ExecutionBundle.message("close.tab.action.name"));
+    okAction.putValue(Action.NAME, VcsBundle.message("close.tab.action.name"));
     if (myHelpId != null) {
       return new Action[]{okAction, getHelpAction()};
     }
