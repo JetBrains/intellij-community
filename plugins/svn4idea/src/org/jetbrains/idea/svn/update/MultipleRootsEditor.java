@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NonNls;
@@ -60,10 +60,10 @@ public class MultipleRootsEditor {
         if (value instanceof FilePath) {
           final FilePath path = ((FilePath)value);
           if (path.getVirtualFile() != null) {
-            append(ProjectLevelVcsManager.getInstance(project).getPresentableRelativePathFor(path.getVirtualFile()),
+            append(VcsPathPresenter.getInstance(project).getPresentableRelativePathFor(path.getVirtualFile()),
                    SimpleTextAttributes.REGULAR_ATTRIBUTES);
           } else {
-            append(ProjectLevelVcsManager.getInstance(project).getPresentableRelativePathFor(path.getVirtualFileParent()) + File.separator + path.getName(),
+            append(VcsPathPresenter.getInstance(project).getPresentableRelativePathFor(path.getVirtualFileParent()) + File.separator + path.getName(),
                    SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
           }
