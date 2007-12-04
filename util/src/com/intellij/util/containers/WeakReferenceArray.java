@@ -218,7 +218,7 @@ public class WeakReferenceArray <T> {
 
   public void toStrongCollection(final List<T> result) {
     for (MyWeakReference reference : myReferences) {
-      final T deref = (T)reference.get();
+      final T deref = reference != null ? (T)reference.get() : null;
       if (deref != null) {
         result.add(deref);
       }
