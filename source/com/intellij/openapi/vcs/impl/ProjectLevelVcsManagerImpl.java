@@ -31,7 +31,6 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -467,10 +466,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
     }
     return FileUtil.getRelativePath(toRevision.getFile().getIOFile(), fromRevision.getFile().getIOFile());
-  }
-
-  public DataProvider createVirtualAndPsiFileDataProvider(VirtualFile[] virtualFileArray, VirtualFile selectedFile) {
-    return new VirtualAndPsiFileDataProvider(myProject, virtualFileArray, selectedFile);
   }
 
   public AbstractVcs[] getAllActiveVcss() {

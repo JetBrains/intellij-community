@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -134,8 +133,6 @@ public abstract class ProjectLevelVcsManager {
   public abstract String getPresentableRelativePathFor(VirtualFile file);
 
   public abstract String getPresentableRelativePath(ContentRevision fromRevision, ContentRevision toRevision);
-
-  public abstract DataProvider createVirtualAndPsiFileDataProvider(VirtualFile[] virtualFileArray, VirtualFile selectedFile);
 
   /**
    * Returns the list of VCSes used by at least one module in the project.
