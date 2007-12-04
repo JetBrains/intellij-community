@@ -54,9 +54,9 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -67,11 +67,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.*;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Icons;
@@ -255,7 +251,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           toolWindow.setIcon(Icons.VCS_SMALL_TAB);
           toolWindow.installWatcher(myContentManager);
         } else {
-          myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
+          myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
         }
       }
     });
@@ -505,7 +501,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
       myEditorAdapter = new EditorAdapter(editor, myProject);
       final JComponent panel = editor.getComponent();
-      content = PeerFactory.getInstance().getContentFactory().createContent(panel, displayName, true);
+      content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
       contentManager.addContent(content);
 
       contentManager.addContentManagerListener(new ContentManagerAdapter() {
@@ -552,7 +548,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo) {
     ContentManager contentManager = getContentManager();
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-    Content content = PeerFactory.getInstance().getContentFactory().createContent(updateInfoTree, VcsBundle.message(
+    Content content = ContentFactory.SERVICE.getInstance().createContent(updateInfoTree, VcsBundle.message(
       "toolwindow.title.update.action.info", displayActionName), true);
     Disposer.register(content, updateInfoTree);
     ContentsUtil.addOrReplaceContent(contentManager, content, true);
