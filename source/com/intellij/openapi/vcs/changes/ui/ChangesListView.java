@@ -1,12 +1,11 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.CopyProvider;
-import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.dnd.*;
-import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -15,10 +14,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -46,7 +41,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class ChangesListView extends Tree implements TypeSafeDataProvider, DeleteProvider, AdvancedDnDSource {
+public class ChangesListView extends Tree implements TypeSafeDataProvider, AdvancedDnDSource {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.ChangesListView");
 
   private ChangesListView.DropTarget myDropTarget;
@@ -137,26 +132,26 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   }
 
   public void calcData(DataKey key, DataSink sink) {
-    if (key == DataKeys.CHANGES) {
-      sink.put(DataKeys.CHANGES, getSelectedChanges());
+    if (key == VcsDataKeys.CHANGES) {
+      sink.put(VcsDataKeys.CHANGES, getSelectedChanges());
     }
-    else if (key == DataKeys.CHANGE_LISTS) {
-      sink.put(DataKeys.CHANGE_LISTS, getSelectedChangeLists());
+    else if (key == VcsDataKeys.CHANGE_LISTS) {
+      sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists());
     }
     else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
       sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
     }
-    else if (key == DataKeys.NAVIGATABLE) {
+    else if (key == PlatformDataKeys.NAVIGATABLE) {
       final VirtualFile[] files = getSelectedFiles();
       if (files.length == 1 && !files [0].isDirectory()) {
-        sink.put(DataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, files[0], 0));
+        sink.put(PlatformDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, files[0], 0));
       }
     }
-    else if (key == DataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(DataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
+    else if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {
+      sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
     }
     else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
-      sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, this);
+      sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
     }
     else if (key == PlatformDataKeys.COPY_PROVIDER) {
       sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
@@ -242,39 +237,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     files.addAll(getSelectedVirtualFiles(null));
 
     return files.toArray(new VirtualFile[files.size()]);
-  }
-
-  public void deleteElement(DataContext dataContext) {
-    PsiElement[] elements = getPsiElements(dataContext);
-    DeleteHandler.deletePsiElement(elements, myProject);
-  }
-
-  public boolean canDeleteElement(DataContext dataContext) {
-    PsiElement[] elements = getPsiElements(dataContext);
-    return DeleteHandler.shouldEnableDeleteAction(elements);
-  }
-
-  private PsiElement[] getPsiElements(final DataContext dataContext) {
-    List<PsiElement> elements = new ArrayList<PsiElement>();
-    final PsiManager manager = PsiManager.getInstance(myProject);
-    List<VirtualFile> files = UNVERSIONED_FILES_DATA_KEY.getData(dataContext);
-    if (files == null) return PsiElement.EMPTY_ARRAY;
-
-    for (VirtualFile file : files) {
-      if (file.isDirectory()) {
-        final PsiDirectory psiDir = manager.findDirectory(file);
-        if (psiDir != null) {
-          elements.add(psiDir);
-        }
-      }
-      else {
-        final PsiFile psiFile = manager.findFile(file);
-        if (psiFile != null) {
-          elements.add(psiFile);
-        }
-      }
-    }
-    return elements.toArray(new PsiElement[elements.size()]);
   }
 
   @NotNull
