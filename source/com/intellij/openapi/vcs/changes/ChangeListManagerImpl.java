@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
@@ -23,6 +22,7 @@ import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.peer.PeerFactory;
@@ -397,7 +397,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                 public void processUnversionedFile(VirtualFile file) {
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
-                  if (ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) return;
+                  if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
                   if (scope.belongsTo(new FilePathImpl(file))) {
                     if (isIgnoredFile(file)) {
                       ignoredHolder.addFile(file);
@@ -424,7 +424,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                 public void processModifiedWithoutCheckout(VirtualFile file) {
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
-                  if (ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) return;
+                  if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
                   if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                     modifiedWithoutEditingHolder.addFile(file);
                     ChangesViewManager.getInstance(myProject).scheduleRefresh();
@@ -434,7 +434,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                 public void processIgnoredFile(VirtualFile file) {
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
-                  if (ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) return;
+                  if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
                   if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                     ignoredHolder.addFile(file);
                     ChangesViewManager.getInstance(myProject).scheduleRefresh();
@@ -444,7 +444,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                 public void processSwitchedFile(final VirtualFile file, final String branch, final boolean recursive) {
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
-                  if (ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(file)) return;
+                  if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
                   if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
                     switchedHolder.addFile(file, branch, recursive);
                   }

@@ -6,14 +6,13 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -121,7 +120,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     createReadChangesCache();
     myChangesBeforeUpdate = new ChangeHashSet(myChanges);
     myOutdatedChanges = new ArrayList<Change>();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final ExcludedFileIndex fileIndex = ExcludedFileIndex.getInstance(project);
     for (Change oldBoy : myChangesBeforeUpdate) {
       final ContentRevision before = oldBoy.getBeforeRevision();
       final ContentRevision after = oldBoy.getAfterRevision();
@@ -137,15 +136,15 @@ public class LocalChangeListImpl extends LocalChangeList {
     }
   }
 
-  private static boolean isIgnoredChange(final Change change, final ProjectFileIndex fileIndex) {
+  private static boolean isIgnoredChange(final Change change, final ExcludedFileIndex fileIndex) {
     boolean beforeRevIgnored = change.getBeforeRevision() == null || isIgnoredRevision(change.getBeforeRevision(), fileIndex);
     boolean afterRevIgnored = change.getAfterRevision() == null || isIgnoredRevision(change.getAfterRevision(), fileIndex);
     return beforeRevIgnored && afterRevIgnored;
   }
 
-  private static boolean isIgnoredRevision(final ContentRevision revision, final ProjectFileIndex fileIndex) {
+  private static boolean isIgnoredRevision(final ContentRevision revision, final ExcludedFileIndex fileIndex) {
     VirtualFile vFile = revision.getFile().getVirtualFile();
-    return vFile != null && fileIndex.isIgnored(vFile);
+    return vFile != null && fileIndex.isExcludedFile(vFile);
   }
 
   synchronized boolean processChange(Change change) {

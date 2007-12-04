@@ -635,7 +635,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           if (filesToExclude != null && filesToExclude.contains(child)) {
             continue;
           }
-          if (ProjectRootManager.getInstance(myProject).getFileIndex().isIgnored(child)) {
+          if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(child)) {
             continue;
           }
         }
