@@ -17,10 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
 
-import java.util.AbstractList;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class WeakList<T> extends AbstractList<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.WeakList");
@@ -71,6 +68,12 @@ public class WeakList<T> extends AbstractList<T> {
     synchronized (myArray) {
       return myArray.size();
     }
+  }
+
+  public List<T> toStrongList() {
+    List<T> result = new ArrayList<T>();
+    myArray.toStrongCollection(result);
+    return result;
   }
 
   private int tryReduceCapacity(int trackIndex) {

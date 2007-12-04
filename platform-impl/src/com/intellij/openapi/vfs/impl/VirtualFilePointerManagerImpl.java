@@ -189,7 +189,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private void cleanContainerCaches() {
-    for (VirtualFilePointerContainerImpl container : myContainers) {
+    for (VirtualFilePointerContainerImpl container : myContainers.toStrongList()) {
       container.dropCaches();
     }
   }

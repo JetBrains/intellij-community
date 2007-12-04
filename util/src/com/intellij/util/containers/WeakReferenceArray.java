@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.List;
 
 public class WeakReferenceArray <T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.containers.WeakReferenceArray");
@@ -213,6 +214,15 @@ public class WeakReferenceArray <T> {
   boolean removeReference(int index) {
     MyWeakReference reference = MyWeakReference.getFrom(myReferences, index);
     return reference != null && reference.removeFrom(myReferences);
+  }
+
+  public void toStrongCollection(final List<T> result) {
+    for (MyWeakReference reference : myReferences) {
+      final T deref = (T)reference.get();
+      if (deref != null) {
+        result.add(deref);
+      }
+    }
   }
 
   private static class MyWeakReference<E> extends WeakReference<E> {
