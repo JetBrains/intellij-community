@@ -16,6 +16,6 @@ public class XmlStringUtil {
   }
 
   public static String escapeString(String str, final boolean escapeWhiteSpace) {
-    return XmlTagTextUtil.escapeString(str, escapeWhiteSpace);
+    return XmlTagUtilBase.escapeString(str, escapeWhiteSpace);
   }
 }
