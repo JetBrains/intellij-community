@@ -677,7 +677,7 @@ public class HighlightUtil {
   @Nullable
   static HighlightInfo checkBreakOutsideLoop(PsiBreakStatement statement) {
     if (statement.getLabelIdentifier() == null) {
-      if (new PsiMatcherImpl(statement).ancestor(PsiMatcherExpression.ENCLOSING_LOOP_OR_SWITCH).getElement() == null) {
+      if (new PsiMatcherImpl(statement).ancestor(EnclosingLoopOrSwitchMatcherExpression.INSTANCE).getElement() == null) {
         return HighlightInfo
           .createHighlightInfo(HighlightInfoType.ERROR, statement, JavaErrorMessages.message("break.outside.switch.or.loop"));
       }
@@ -692,7 +692,7 @@ public class HighlightUtil {
   @Nullable
   static HighlightInfo checkContinueOutsideLoop(PsiContinueStatement statement) {
     if (statement.getLabelIdentifier() == null) {
-      if (new PsiMatcherImpl(statement).ancestor(PsiMatcherExpression.ENCLOSING_LOOP).getElement() == null) {
+      if (new PsiMatcherImpl(statement).ancestor(EnclosingLoopMatcherExpression.INSTANCE).getElement() == null) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, JavaErrorMessages.message("continue.outside.loop"));
       }
     }
@@ -1390,11 +1390,11 @@ public class HighlightUtil {
       // check if expression inside super()/this() call
       if (isSuperOrThisMethodCall(element)) {
         PsiElement parentClass = new PsiMatcherImpl(element)
-          .parent(PsiMatcherImpl.hasClass(PsiExpressionStatement.class))
-          .parent(PsiMatcherImpl.hasClass(PsiCodeBlock.class))
-          .parent(PsiMatcherImpl.hasClass(PsiMethod.class))
-          .dot(PsiMatcherImpl.isConstructor(true))
-          .parent(PsiMatcherImpl.hasClass(PsiClass.class))
+          .parent(PsiMatchers.hasClass(PsiExpressionStatement.class))
+          .parent(PsiMatchers.hasClass(PsiCodeBlock.class))
+          .parent(PsiMatchers.hasClass(PsiMethod.class))
+          .dot(PsiMatchers.isConstructor(true))
+          .parent(PsiMatchers.hasClass(PsiClass.class))
           .getElement();
         if (parentClass == null) {
           return null;
@@ -1451,11 +1451,11 @@ public class HighlightUtil {
     if (statements.length == 0) return false;
     final PsiStatement statement = statements[0];
     final PsiElement element = new PsiMatcherImpl(statement)
-        .dot(PsiMatcherImpl.hasClass(PsiExpressionStatement.class))
-        .firstChild(PsiMatcherImpl.hasClass(PsiMethodCallExpression.class))
-        .firstChild(PsiMatcherImpl.hasClass(PsiReferenceExpression.class))
-        .firstChild(PsiMatcherImpl.hasClass(PsiKeyword.class))
-        .dot(PsiMatcherImpl.hasText(PsiKeyword.SUPER))
+        .dot(PsiMatchers.hasClass(PsiExpressionStatement.class))
+        .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
+        .firstChild(PsiMatchers.hasClass(PsiReferenceExpression.class))
+        .firstChild(PsiMatchers.hasClass(PsiKeyword.class))
+        .dot(PsiMatchers.hasText(PsiKeyword.SUPER))
         .getElement();
     return element != null;
   }

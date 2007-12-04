@@ -389,8 +389,8 @@ public class GenericsHighlightUtil {
     if (type instanceof PsiPrimitiveType ||
         type instanceof PsiWildcardType && ((PsiWildcardType)type).getBound() instanceof PsiPrimitiveType) {
       final PsiElement element = new PsiMatcherImpl(typeElement)
-        .parent(PsiMatcherImpl.hasClass(PsiReferenceParameterList.class))
-        .parent(PsiMatcherImpl.hasClass(PsiJavaCodeReferenceElement.class))
+        .parent(PsiMatchers.hasClass(PsiReferenceParameterList.class))
+        .parent(PsiMatchers.hasClass(PsiJavaCodeReferenceElement.class))
         .getElement();
       if (element == null) return null;
 

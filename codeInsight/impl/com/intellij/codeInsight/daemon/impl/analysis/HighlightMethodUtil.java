@@ -760,10 +760,10 @@ public class HighlightMethodUtil {
 
     // check whether constructor call super(...) or this(...)
     PsiElement element = new PsiMatcherImpl(body)
-      .firstChild(PsiMatcherImpl.hasClass(PsiExpressionStatement.class))
-      .firstChild(PsiMatcherImpl.hasClass(PsiMethodCallExpression.class))
-      .firstChild(PsiMatcherImpl.hasClass(PsiReferenceExpression.class))
-      .firstChild(PsiMatcherImpl.hasClass(PsiKeyword.class))
+      .firstChild(PsiMatchers.hasClass(PsiExpressionStatement.class))
+      .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
+      .firstChild(PsiMatchers.hasClass(PsiReferenceExpression.class))
+      .firstChild(PsiMatchers.hasClass(PsiKeyword.class))
       .getElement();
     if (element != null) return null;
     TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(constructor);

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiMatcherImpl;
+import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -15,7 +16,10 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class RefCountHolder {
@@ -174,9 +178,9 @@ public class RefCountHolder {
       PsiElement argument = (PsiElement)reference;
 
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)new PsiMatcherImpl(argument)
-        .dot(PsiMatcherImpl.hasClass(PsiReferenceExpression.class))
-        .parent(PsiMatcherImpl.hasClass(PsiExpressionList.class))
-        .parent(PsiMatcherImpl.hasClass(PsiMethodCallExpression.class))
+        .dot(PsiMatchers.hasClass(PsiReferenceExpression.class))
+        .parent(PsiMatchers.hasClass(PsiExpressionList.class))
+        .parent(PsiMatchers.hasClass(PsiMethodCallExpression.class))
         .getElement();
       if (methodCallExpression == null) return false;
       PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();

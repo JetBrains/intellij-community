@@ -14,15 +14,16 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
+import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -193,11 +194,11 @@ public class HighlightControlFlowUtil {
       if (statements.length == 0) return;
       final PsiStatement statement = statements[0];
       final PsiElement element = new PsiMatcherImpl(statement)
-          .dot(PsiMatcherImpl.hasClass(PsiExpressionStatement.class))
-          .firstChild(PsiMatcherImpl.hasClass(PsiMethodCallExpression.class))
-          .firstChild(PsiMatcherImpl.hasClass(PsiReferenceExpression.class))
-          .firstChild(PsiMatcherImpl.hasClass(PsiKeyword.class))
-          .dot(PsiMatcherImpl.hasText(PsiKeyword.THIS))
+          .dot(PsiMatchers.hasClass(PsiExpressionStatement.class))
+          .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
+          .firstChild(PsiMatchers.hasClass(PsiReferenceExpression.class))
+          .firstChild(PsiMatchers.hasClass(PsiKeyword.class))
+          .dot(PsiMatchers.hasText(PsiKeyword.THIS))
           .parent(null)
           .parent(null)
           .getElement();

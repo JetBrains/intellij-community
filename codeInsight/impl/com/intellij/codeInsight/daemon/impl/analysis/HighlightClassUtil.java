@@ -24,10 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiMatcherImpl;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -221,10 +218,10 @@ public class HighlightClassUtil {
     // todo most testcase classes located in wrong files
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (new PsiMatcherImpl(keyword)
-      .dot(PsiMatcherImpl.hasText(PsiModifier.PUBLIC))
-      .parent(PsiMatcherImpl.hasClass(PsiModifierList.class))
-      .parent(PsiMatcherImpl.hasClass(PsiClass.class))
-      .parent(PsiMatcherImpl.hasClass(PsiJavaFile.class))
+      .dot(PsiMatchers.hasText(PsiModifier.PUBLIC))
+      .parent(PsiMatchers.hasClass(PsiModifierList.class))
+      .parent(PsiMatchers.hasClass(PsiClass.class))
+      .parent(PsiMatchers.hasClass(PsiJavaFile.class))
       .getElement() == null) {
       return null;
     }
@@ -314,12 +311,12 @@ public class HighlightClassUtil {
 
   private static PsiElement getEnclosingStaticClass(PsiKeyword keyword, Class<?> parentClass) {
     return new PsiMatcherImpl(keyword)
-      .dot(PsiMatcherImpl.hasText(PsiModifier.STATIC))
-      .parent(PsiMatcherImpl.hasClass(PsiModifierList.class))
-      .parent(PsiMatcherImpl.hasClass(parentClass))
-      .parent(PsiMatcherImpl.hasClass(PsiClass.class))
-      .dot(PsiMatcherImpl.hasModifier(PsiModifier.STATIC, false))
-      .parent(PsiMatcherImpl.hasClass(new Class[]{PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class}))
+      .dot(PsiMatchers.hasText(PsiModifier.STATIC))
+      .parent(PsiMatchers.hasClass(PsiModifierList.class))
+      .parent(PsiMatchers.hasClass(parentClass))
+      .parent(PsiMatchers.hasClass(PsiClass.class))
+      .dot(PsiMatchers.hasModifier(PsiModifier.STATIC, false))
+      .parent(PsiMatchers.hasClass(new Class[]{PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class}))
       .getElement();
   }
 
@@ -327,11 +324,11 @@ public class HighlightClassUtil {
   private static HighlightInfo checkStaticClassDeclarationInInnerClass(PsiKeyword keyword) {
     // keyword points to 'class' or 'interface' or 'enum'
     if (new PsiMatcherImpl(keyword)
-      .parent(PsiMatcherImpl.hasClass(PsiClass.class))
-      .dot(PsiMatcherImpl.hasModifier(PsiModifier.STATIC, true))
-      .parent(PsiMatcherImpl.hasClass(PsiClass.class))
-      .dot(PsiMatcherImpl.hasModifier(PsiModifier.STATIC, false))
-      .parent(PsiMatcherImpl.hasClass(new Class[]{PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class}))
+      .parent(PsiMatchers.hasClass(PsiClass.class))
+      .dot(PsiMatchers.hasModifier(PsiModifier.STATIC, true))
+      .parent(PsiMatchers.hasClass(PsiClass.class))
+      .dot(PsiMatchers.hasModifier(PsiModifier.STATIC, false))
+      .parent(PsiMatchers.hasClass(new Class[]{PsiClass.class, PsiDeclarationStatement.class, PsiNewExpression.class, PsiEnumConstant.class}))
       .getElement() == null) {
       return null;
     }

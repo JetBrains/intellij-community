@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
+import com.intellij.psi.util.PsiMatchers;
 import com.intellij.util.IncorrectOperationException;
 
 public class InsertSuperFix implements IntentionAction {
@@ -45,11 +46,11 @@ public class InsertSuperFix implements IntentionAction {
       PsiJavaToken lBrace = body.getLBrace();
       body.addAfter(superCall, lBrace);
       lBrace = (PsiJavaToken) new PsiMatcherImpl(body)
-                .firstChild(PsiMatcherImpl.hasClass(PsiExpressionStatement.class))
-                .firstChild(PsiMatcherImpl.hasClass(PsiMethodCallExpression.class))
-                .firstChild(PsiMatcherImpl.hasClass(PsiExpressionList.class))
-                .firstChild(PsiMatcherImpl.hasClass(PsiJavaToken.class))
-                .dot(PsiMatcherImpl.hasText("("))
+                .firstChild(PsiMatchers.hasClass(PsiExpressionStatement.class))
+                .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
+                .firstChild(PsiMatchers.hasClass(PsiExpressionList.class))
+                .firstChild(PsiMatchers.hasClass(PsiJavaToken.class))
+                .dot(PsiMatchers.hasText("("))
                 .getElement();
       editor.getCaretModel().moveToOffset(lBrace.getTextOffset()+1);
       UndoUtil.markPsiFileForUndo(file);
