@@ -1,0 +1,20 @@
+<extensionPoints>
+  <extensionPoint name="checkoutProvider"
+                  interface="com.intellij.openapi.vcs.CheckoutProvider"/>
+  <extensionPoint name="checkoutListener"
+                  interface="com.intellij.openapi.vcs.checkout.CheckoutListener"/>
+  <extensionPoint name="checkoutCompletedListener"
+                  interface="com.intellij.openapi.vcs.checkout.CheckoutListener"/>
+
+  <extensionPoint name="vcs"
+                  beanClass="com.intellij.openapi.vcs.impl.VcsEP"
+                  area="IDEA_PROJECT"/>
+
+  <extensionPoint name="checkinHandlerFactory"
+                  interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"
+                  area="IDEA_PROJECT"/>
+
+  <extensionPoint name="changesViewContent"
+                  beanClass="com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP"
+                  area="IDEA_PROJECT"/>
+</extensionPoints>

@@ -1,4 +1,24 @@
 <extensions>
   <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
                       serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>
+
+  <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
+                  serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
+  <projectService serviceInterface="com.intellij.openapi.vcs.IssueNavigationConfiguration"
+                  serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
+
+  <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
+
+  <projectConfigurable implementation="com.intellij.openapi.vcs.configurable.VcsManagerConfigurable"/>
+
+  <changesViewContent tabName="Repository" className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
+                      predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>
+  <changesViewContent tabName="Incoming" className="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider"
+                      predicateClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesVisibilityPredicate"/>
+
+  <checkinHandlerFactory implementation="com.intellij.openapi.vcs.changes.committed.CommittedChangesCheckinHandlerFactory"/>
+
+  <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
+
+  <keymapExtension implementation="com.intellij.openapi.vcs.impl.VcsKeymapExtension"/>
 </extensions>

@@ -64,6 +64,23 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.ModuleVcsDetector</implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vcs.changes.VcsEventWatcher</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
+
+  <module-components>
+    <component>
+      <interface-class>com.intellij.openapi.vcs.impl.VcsManagerPerModuleConfiguration</interface-class>
+      <implementation-class>com.intellij.openapi.vcs.impl.VcsManagerPerModuleConfiguration</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+  </module-components>
 </components>
   

@@ -1,0 +1,155 @@
+<component>
+  <actions>
+    <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"
+      icon="/_cvs/showAsTree.png"/>
+
+    <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction" icon="/actions/commit.png">
+      <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
+    </action>
+    <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.CommonCheckinFilesAction"/>
+    <action id="UpdateFiles" class="com.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction"/>
+    <action id="CheckStatusForFiles" class="com.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction"/>
+    <action id="IntegrateFiles" class="com.intellij.openapi.vcs.update.CommonIntegrateFileOrDirectoryAction"/>
+    <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction"/>
+    <action id="Compare.SameVersion" class="com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction"/>
+    <action id="Compare.LastVersion" class="com.intellij.openapi.vcs.actions.CompareWithLastVersion"/>
+    <action id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" popup="true"/>
+    <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction"
+            text="Com_pare with Specified Revision..." popup="true"/>
+
+    <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" test="Version Control"/>
+
+    <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" test="Version Control"
+           popup="true">
+    </group>
+
+    <group id="VersionControlsGroup">
+      <reference ref="VcsFileGroupPopup"/>
+    </group>
+
+    <group id="GoToChangeMarkerGroup">
+      <separator/>
+      <action id="VcsShowNextChangeMarker" class="com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction"
+              icon="/actions/nextOccurence.png"/>
+      <action id="VcsShowPrevChangeMarker" class="com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction"
+              icon="/actions/previousOccurence.png"/>
+
+      <add-to-group group-id="GoToMenu" anchor="last"/>
+    </group>
+
+    <!-- Version Control -->
+    <group id="VcsGroups" popup="true">
+      <separator/>
+      <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control">
+        <action id="Vcs.ChangesView" class="com.intellij.openapi.vcs.changes.ShowChangesViewAction"/>
+        <reference ref="CheckinProject"/>
+        <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="/_cvs/checkOut.png">
+          <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
+        </action>
+        <action id="Vcs.ProjectStatus" class="com.intellij.openapi.vcs.update.CommonStatusProjectAction">
+        </action>
+        <action id="Vcs.IntegrateProject" class="com.intellij.openapi.vcs.update.CommonIntegrateProjectAction"/>
+        <action id="Vcs.RefreshStatuses" class="com.intellij.openapi.vcs.actions.RefreshStatuses"/>
+        <separator/>
+        <action id="ChangesView.CreatePatch" class="com.intellij.openapi.vcs.changes.actions.CreatePatchAction"/>
+        <action id="ChangesView.ApplyPatch" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchAction"/>
+        <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction"/>
+      </group>
+
+      <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" popup="true"/>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="ToolsMenu"/>
+    </group>
+
+    <group id="ChangesViewToolbar">
+      <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
+              icon="/actions/sync.png"/>
+      <action id="ChangesView.Commit" class="com.intellij.openapi.vcs.changes.actions.CommitAction"
+              icon="/actions/commit.png"/>
+      <action id="ChangesView.Rollback" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
+              icon="/actions/rollback.png"/>
+      <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
+              icon="/actions/include.png"/>
+      <action id="ChangesView.RemoveChangeList" class="com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction"
+              icon="/actions/exclude.png"/>
+      <action id="ChangesView.SetDefault" class="com.intellij.openapi.vcs.changes.actions.SetDefaultChangeListAction"
+              icon="/actions/submit1.png"/>
+      <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
+              icon="/actions/fileStatus.png"/>
+      <action id="ChangesView.Diff" class="com.intellij.openapi.vcs.changes.actions.ShowDiffAction"
+              icon="/actions/diff.png"/>
+    </group>
+
+    <group id="ChangesViewPopupMenu">
+      <reference ref="ChangesView.Commit"/>
+      <reference ref="ChangesView.Rollback"/>
+      <reference ref="ChangesView.Move"/>
+      <reference ref="ChangesView.Diff"/>
+      <reference ref="EditSource"/>
+      <separator/>
+      <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"
+              icon="/actions/cancel.png"/>
+      <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
+              icon="/actions/include.png"/>
+      <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction"/>
+      <action id="ChangesView.RemoveDeleted" class="com.intellij.openapi.vcs.changes.actions.ScheduleForRemovalAction"
+              icon="/actions/exclude.png"/>
+      <action id="ChangesView.Edit" class="com.intellij.openapi.vcs.changes.actions.EditAction"/>
+      <separator/>
+      <reference ref="ChangesView.NewChangeList"/>
+      <reference ref="ChangesView.RemoveChangeList"/>
+      <reference ref="ChangesView.SetDefault"/>
+      <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"/>
+      <reference ref="ChangesView.CreatePatch"/>
+      <reference ref="ChangesView.Shelve"/>
+      <separator/>
+      <reference ref="ChangesView.Refresh"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+    </group>
+
+    <group id="ShelvedChangesPopupMenu">
+      <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
+      <reference ref="ChangesView.Diff"/>
+      <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
+              icon="/actions/createPatch.png"/>
+      <separator/>
+      <action id="ShelvedChanges.Rename" class="com.intellij.openapi.vcs.changes.shelf.RenameShelvedChangeListAction"
+              use-shortcut-of="RenameElement"/>
+      <reference ref="$Delete"/>
+    </group>
+
+    <group id="CommittedChangesToolbar">
+      <action id="CommittedChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshCommittedAction"
+              icon="/vcs/refresh.png"/>
+      <action id="CommittedChanges.Filter" class="com.intellij.openapi.vcs.changes.committed.FilterCommittedAction"
+              icon="/ant/filter.png"/>
+      <action id="CommittedChanges.Details" class="com.intellij.openapi.vcs.changes.committed.ChangeListDetailsAction"
+              icon="/actions/showChangesOnly.png"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
+    </group>
+
+    <group id="IncomingChangesToolbar">
+      <action id="IncomingChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction"
+              icon="/vcs/refresh.png"/>
+      <reference ref="CommittedChanges.Details"/>
+      <!--
+      <action id="IncomingChanges.Get" class="com.intellij.openapi.vcs.changes.committed.GetCommittedChangelistAction"
+              icon="/actions/get.png"/>
+      -->
+      <reference ref="Vcs.UpdateProject"/>
+    </group>
+
+    <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
+
+    <action id="Diff.PrevChange" class="com.intellij.openapi.vcs.changes.actions.ShowPrevChangeAction"
+      icon="/actions/prevfile.png" use-shortcut-of="PreviousTab"/>
+    <action id="Diff.NextChange" class="com.intellij.openapi.vcs.changes.actions.ShowNextChangeAction"
+      icon="/actions/nextfile.png" use-shortcut-of="NextTab"/>
+
+    <group id="EditorGutterVcsPopupMenu">
+      <reference ref="Annotate"/>
+      <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
+    </group>
+  </actions>
+</component>
