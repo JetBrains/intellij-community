@@ -4,15 +4,13 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -23,22 +21,16 @@ import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.peer.PeerFactory;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
-import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -58,14 +50,12 @@ public class ChangesViewContentManager implements ProjectComponent {
   private ToolWindow myToolWindow;
   private VcsListener myVcsListener = new MyVcsListener();
   private Alarm myVcsChangeAlarm;
-  private final MessageBusConnection myConnection;
   private List<Content> myAddedContents = new ArrayList<Content>();
 
   public ChangesViewContentManager(final Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-    myConnection = project.getMessageBus().connect();
   }
 
   public void projectOpened() {
@@ -86,7 +76,6 @@ public class ChangesViewContentManager implements ProjectComponent {
           myAddedContents.clear();
           myVcsManager.addVcsListener(myVcsListener);
           ProjectManager.getInstance().addProjectManagerListener(myProject, new MyProjectManagerListener());
-          myConnection.subscribe(ProjectTopics.MODULES, new MyModuleListener());
           loadExtensionTabs();
           if (myContentManager.getContentCount() > 0) {
             myContentManager.setSelectedContent(myContentManager.getContent(0));
@@ -107,7 +96,7 @@ public class ChangesViewContentManager implements ProjectComponent {
   }
 
   private void addExtensionTab(final ChangesViewContentEP ep) {
-    final Content content = PeerFactory.getInstance().getContentFactory().createContent(new ContentStub(ep), ep.getTabName(), false);
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(new ContentStub(ep), ep.getTabName(), false);
     content.setCloseable(false);
     content.putUserData(myEPKey, ep);
     myContentManager.addContent(content);
@@ -151,7 +140,6 @@ public class ChangesViewContentManager implements ProjectComponent {
   public void projectClosed() {
     myVcsManager.removeVcsListener(myVcsListener);
     myVcsChangeAlarm.cancelAllRequests();
-    myConnection.disconnect();
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (myToolWindow != null) {
       ToolWindowManager.getInstance(myProject).unregisterToolWindow(TOOLWINDOW_ID);
@@ -220,16 +208,6 @@ public class ChangesViewContentManager implements ProjectComponent {
           updateExtensionTabs();
         }
       }, 100, ModalityState.NON_MODAL);
-    }
-  }
-
-  private class MyModuleListener extends ModuleAdapter {
-    public void moduleAdded(Project project, Module module) {
-      updateToolWindowAvailability();
-    }
-
-    public void moduleRemoved(Project project, Module module) {
-      updateToolWindowAvailability();
     }
   }
 
