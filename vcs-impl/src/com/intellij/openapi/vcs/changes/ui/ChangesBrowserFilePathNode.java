@@ -84,4 +84,8 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
 
     return 0;
   }
+
+  public FilePath[] getFilePathsUnder() {
+    return new FilePath[] { getUserObject() };
+  }
 }

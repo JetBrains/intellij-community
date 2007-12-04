@@ -1,20 +1,17 @@
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.Tree;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -25,10 +22,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -109,17 +104,8 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
       myStructureTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
         public void valueChanged(final TreeSelectionEvent e) {
           mySelection.clear();
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getPath().getLastPathComponent();
-          if (node.getUserObject() instanceof FilePath) {
-            mySelection.add((FilePath) node.getUserObject());
-          }
-          else if (node.getUserObject() instanceof Module) {
-            Module module = (Module) node.getUserObject();
-            final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-            for(VirtualFile file: files) {
-              mySelection.add(new FilePathImpl(file));
-            }
-          }
+          ChangesBrowserNode node = (ChangesBrowserNode) e.getPath().getLastPathComponent();
+          Collections.addAll(mySelection, node.getFilePathsUnder());
 
           for(ChangeListener listener: myListeners) {
             listener.stateChanged(new ChangeEvent(this));

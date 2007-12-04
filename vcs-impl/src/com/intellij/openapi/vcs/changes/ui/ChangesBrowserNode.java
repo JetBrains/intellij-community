@@ -193,4 +193,8 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   public int compareUserObjects(final Object o2) {
     return 0;
   }
+
+  public FilePath[] getFilePathsUnder() {
+    return new FilePath[0];
+  }
 }
