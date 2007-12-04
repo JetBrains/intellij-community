@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
@@ -25,8 +25,8 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.*;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -67,7 +67,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   private TypeSelector myTypeSelector;
   private StateRestoringCheckBox myCbDeleteVariable;
-  private final CodeStyleManager myCodeStyleManager;
+  private final JavaCodeStyleManager myCodeStyleManager;
   private TextAccessor myTfTargetClassName;
   private PsiClass myDestinationClass;
   private JPanel myTypePanel;
@@ -100,7 +100,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myDestinationClass = null;
 
     setTitle(IntroduceConstantHandler.REFACTORING_NAME);
-    myCodeStyleManager = CodeStyleManager.getInstance(myProject);
+    myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
     init();
 
     final String ourLastVisibility = RefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;

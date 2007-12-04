@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,14 +16,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -276,7 +277,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     final Template template = templateManager.createTemplate("", "");
     template.setToReformat(true);
 
-    SuggestedNameInfo suggestedNameInfo = CodeStyleManager.getInstance(project).suggestVariableName(VariableKind.LOCAL_VARIABLE, null,
+    SuggestedNameInfo suggestedNameInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.LOCAL_VARIABLE, null,
                                                                                                     initializer, type);
     List<String> uniqueNames = new ArrayList<String>();
     for (String name : suggestedNameInfo.names) {
@@ -286,7 +287,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     }
     if (uniqueNames.isEmpty() && suggestedNameInfo.names.length != 0) {
       String baseName = suggestedNameInfo.names[0];
-      String name = CodeStyleManager.getInstance(project).suggestUniqueVariableName(baseName, initializer, true);
+      String name = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(baseName, initializer, true);
       uniqueNames.add(name);
     }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -52,6 +53,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private final PsiManager myManager;
   private final PsiElementFactory myFactory;
   private final CodeStyleManager myCodeStyleManager;
+  private final JavaCodeStyleManager myJavaCodeStyle;
 
   private PsiBlockStatement[] myAddedBraces;
   private final String myDescriptiveName;
@@ -72,6 +74,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myManager = PsiManager.getInstance(myProject);
     myFactory = myManager.getElementFactory();
     myCodeStyleManager = CodeStyleManager.getInstance(myProject);
+    myJavaCodeStyle = JavaCodeStyleManager.getInstance(myProject);
     myDescriptiveName = UsageViewUtil.getDescriptiveName(myMethod);
   }
 
@@ -505,8 +508,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     String resultName = null;
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(myMethod, callSubstitutor, argumentList);
     if (returnType != null && returnType != PsiType.VOID) {
-      resultName = myCodeStyleManager.propertyNameToVariableName("result", VariableKind.LOCAL_VARIABLE);
-      resultName = myCodeStyleManager.suggestUniqueVariableName(resultName, block.getFirstChild(), true);
+      resultName = myJavaCodeStyle.propertyNameToVariableName("result", VariableKind.LOCAL_VARIABLE);
+      resultName = myJavaCodeStyle.suggestUniqueVariableName(resultName, block.getFirstChild(), true);
       PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(resultName, returnType, null);
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
       resultVar = (PsiLocalVariable)declaration.getDeclaredElements()[0];
@@ -518,10 +521,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       PsiParameter parm = parms[i];
       String parmName = parm.getName();
       String name = parmName;
-      name = myCodeStyleManager.variableNameToPropertyName(name, VariableKind.PARAMETER);
-      name = myCodeStyleManager.propertyNameToVariableName(name, VariableKind.LOCAL_VARIABLE);
+      name = myJavaCodeStyle.variableNameToPropertyName(name, VariableKind.PARAMETER);
+      name = myJavaCodeStyle.propertyNameToVariableName(name, VariableKind.LOCAL_VARIABLE);
       if (!name.equals(parmName)) {
-        name = myCodeStyleManager.suggestUniqueVariableName(name, block.getFirstChild(), true);
+        name = myJavaCodeStyle.suggestUniqueVariableName(name, block.getFirstChild(), true);
       }
       RefactoringUtil.renameVariableReferences(parm, name, GlobalSearchScope.projectScope(myProject));
       PsiType paramType = parm.getType();
@@ -554,10 +557,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
       if (containingClass != null) {
         PsiType thisType = myFactory.createType(containingClass, callSubstitutor);
-        String[] names = myCodeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType)
+        String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType)
           .names;
         String thisVarName = names[0];
-        thisVarName = myCodeStyleManager.suggestUniqueVariableName(thisVarName, block.getFirstChild(), true);
+        thisVarName = myJavaCodeStyle.suggestUniqueVariableName(thisVarName, block.getFirstChild(), true);
         PsiExpression initializer = myFactory.createExpressionFromText("null", null);
         PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(thisVarName, thisType, initializer);
         declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
@@ -598,10 +601,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       String name = var.getName();
       String oldName = name;
       while (true) {
-        String newName = myCodeStyleManager.suggestUniqueVariableName(name, placeToInsert, true);
+        String newName = myJavaCodeStyle.suggestUniqueVariableName(name, placeToInsert, true);
         if (newName.equals(name)) break;
         name = newName;
-        newName = myCodeStyleManager.suggestUniqueVariableName(name, var, true);
+        newName = myJavaCodeStyle.suggestUniqueVariableName(name, var, true);
         if (newName.equals(name)) break;
         name = newName;
       }

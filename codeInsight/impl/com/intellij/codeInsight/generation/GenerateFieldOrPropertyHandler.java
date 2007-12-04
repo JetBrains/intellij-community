@@ -6,6 +6,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.util.IncorrectOperationException;
@@ -41,7 +42,7 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
   public List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     final PsiElementFactory psiElementFactory = aClass.getManager().getElementFactory();
     try {
-      final String name = myMemberType == PropertyMemberType.FIELD? myAttributeName : aClass.getManager().getCodeStyleManager().propertyNameToVariableName(myAttributeName, VariableKind.FIELD);
+      final String name = myMemberType == PropertyMemberType.FIELD? myAttributeName : JavaCodeStyleManager.getInstance(aClass.getProject()).propertyNameToVariableName(myAttributeName, VariableKind.FIELD);
       final PsiField psiField = psiElementFactory.createField(name, myType);
       final GenerationInfo[] objects = new GenerateGetterAndSetterHandler().generateMemberPrototypes(aClass, new PsiFieldMember(psiField));
       final GenerationInfo getter = objects[0];
@@ -62,7 +63,8 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
         for (PsiAnnotation annotation : myAnnotations) {
           targetMember.getModifierList().addAfter(annotation, null);
         }
-        targetMember.getManager().getCodeStyleManager().shortenClassReferences(targetMember.getModifierList());
+
+        JavaCodeStyleManager.getInstance(targetMember.getProject()).shortenClassReferences(targetMember.getModifierList());
       }
       return Arrays.asList(new PsiGenerationInfo<PsiField>(psiField), getter, setter);
     }

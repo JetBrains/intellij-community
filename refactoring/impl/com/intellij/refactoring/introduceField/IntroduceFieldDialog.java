@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -472,7 +472,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 
   private NameSuggestionsGenerator createGenerator() {
     return new NameSuggestionsGenerator() {
-      private CodeStyleManager myCodeStyleManager = CodeStyleManager.getInstance(myProject);
+      private JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         VariableKind variableKind = myWillBeDeclaredStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
 

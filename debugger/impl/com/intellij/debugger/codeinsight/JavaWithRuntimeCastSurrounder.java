@@ -1,10 +1,10 @@
 package com.intellij.debugger.codeinsight;
 
-import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
 
@@ -101,7 +101,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
             PsiParenthesizedExpression parenth = (PsiParenthesizedExpression) factory.createExpressionFromText("((" + type + ")expr)", null);
             PsiTypeCastExpression cast = (PsiTypeCastExpression) parenth.getExpression();
             cast.getOperand().replace(myElement);
-            parenth = (PsiParenthesizedExpression)CodeStyleManager.getInstance(project).shortenClassReferences(parenth);
+            parenth = (PsiParenthesizedExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(parenth);
             PsiExpression expr  = (PsiExpression) myElement.replace(parenth);
             TextRange range = expr.getTextRange();
             getEditor().getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());

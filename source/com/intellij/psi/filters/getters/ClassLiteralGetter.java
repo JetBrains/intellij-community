@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -63,7 +64,7 @@ public class ClassLiteralGetter implements ContextGetter {
         final PsiManager manager = context.getManager();
         PsiExpression expr =
           manager.getElementFactory().createExpressionFromText(type.getCanonicalText() + DOT_CLASS, context);
-        expr = (PsiExpression)manager.getCodeStyleManager().shortenClassReferences(expr);
+        expr = (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr);
         list.add(LookupElementFactory.getInstance().createLookupElement(expr, expr.getText()).setPriority(priority));
       }
       catch (IncorrectOperationException e) {

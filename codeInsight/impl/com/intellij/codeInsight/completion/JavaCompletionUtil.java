@@ -6,10 +6,9 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,7 +19,7 @@ import java.util.Set;
 public class JavaCompletionUtil {
   public static LookupItemPreferencePolicy completeLocalVariableName(Set<LookupItem> set, CompletionContext context, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
-    final CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(context.project);
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(context.project);
     final VariableKind variableKind = codeStyleManager.getVariableKind(var);
 
     String propertyName = null;
@@ -53,8 +52,8 @@ public class JavaCompletionUtil {
   public static LookupItemPreferencePolicy completeFieldName(Set<LookupItem> set, CompletionContext context, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
 
-    CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(context.project);
-    final VariableKind variableKind = CodeStyleManager.getInstance(var.getProject()).getVariableKind(var);
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(context.project);
+    final VariableKind variableKind = JavaCodeStyleManager.getInstance(var.getProject()).getVariableKind(var);
     final String prefix = context.getPrefix();
 
     if (var.getType() == PsiType.VOID ||

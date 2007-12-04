@@ -12,10 +12,9 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
@@ -127,7 +126,7 @@ public class RenameDialog extends RefactoringDialog {
   private void completeVariable(Editor editor) {
     String prefix = myNameSuggestionsField.getEnteredName();
     PsiVariable var = (PsiVariable)myPsiElement;
-    VariableKind kind = CodeStyleManager.getInstance(myProject).getVariableKind(var);
+    VariableKind kind = JavaCodeStyleManager.getInstance(myProject).getVariableKind(var);
     Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, var.getType(), kind);
 
@@ -203,7 +202,7 @@ public class RenameDialog extends RefactoringDialog {
     String name = ((PsiNamedElement)psiElement).getName();
     if (name == null) return null;
     if (psiElement instanceof PsiVariable) {
-      final CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)CodeStyleManager.getInstance(myProject);
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
       final VariableKind kind = codeStyleManager.getVariableKind((PsiVariable)psiElement);
       final String prefix = codeStyleManager.getPrefixByVariableKind(kind);
       if (name.startsWith(prefix)) {
@@ -252,7 +251,7 @@ public class RenameDialog extends RefactoringDialog {
 
     if (var == null) return null;
 
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
     VariableKind variableKind = codeStyleManager.getVariableKind(var);
     return codeStyleManager.suggestVariableName(variableKind, null, var.getInitializer(), var.getType());
   }

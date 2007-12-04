@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -96,7 +97,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
 
     myFieldName = fieldName;
-    final String propertyName = CodeStyleManager.getInstance(myProject).variableNameToPropertyName(myFieldName, VariableKind.FIELD);
+    final String propertyName = JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(myFieldName, VariableKind.FIELD);
     myGetterName = PropertyUtil.suggestGetterName(propertyName, myBaseClassType);
     myGenerateGetter = generateGetter;
 
@@ -513,7 +514,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     if (methodToAdd.getDocComment() != null) methodToAdd.getDocComment().delete();
     methodToAdd = (PsiMethod)CodeStyleManager.getInstance(myProject).reformat(methodToAdd);
-    methodToAdd = (PsiMethod)CodeStyleManager.getInstance(myProject).shortenClassReferences(methodToAdd);
+    methodToAdd = (PsiMethod)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(methodToAdd);
     return methodToAdd;
   }
 

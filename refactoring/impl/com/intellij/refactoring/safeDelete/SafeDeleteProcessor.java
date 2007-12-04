@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -825,8 +826,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     for (PsiElement psiElement : elementsToDelete) {
       if (psiElement instanceof PsiField) {
         PsiField field = (PsiField)psiElement;
-        final String propertyName =
-          manager.getCodeStyleManager().variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+        String propertyName = JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
 
         PsiClass aClass = field.getContainingClass();
         if (aClass != null) {

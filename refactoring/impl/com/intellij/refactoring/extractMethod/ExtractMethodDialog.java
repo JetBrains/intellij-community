@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -80,7 +80,7 @@ class ExtractMethodDialog extends DialogWrapper {
     for (PsiVariable var : inputVariables) {
       String name = var.getName();
       if (!(var instanceof PsiParameter)) {
-        CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+        JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
         VariableKind kind = codeStyleManager.getVariableKind(var);
         name = codeStyleManager.variableNameToPropertyName(name, kind);
         name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);

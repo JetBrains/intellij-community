@@ -6,7 +6,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -49,7 +49,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
     }
     myVariableData = new ParameterTablePanel.VariableData[variableInfos.length];
 
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
     for(int idx = 0; idx < variableInfos.length; idx++){
       VariableInfo info = variableInfos[idx];
       String name = info.variable.getName();
@@ -93,7 +93,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
   }
 
   public VariableInfo[] getVariableInfos() {
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
     VariableInfo[] infos = new VariableInfo[myVariableData.length];
     for (int idx = 0; idx < myVariableData.length; idx++) {
       ParameterTablePanel.VariableData data = myVariableData[idx];

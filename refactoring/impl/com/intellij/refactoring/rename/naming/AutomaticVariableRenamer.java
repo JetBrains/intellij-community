@@ -2,7 +2,7 @@ package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
@@ -64,7 +64,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
   }
 
   public String nameToCanonicalName(String name, PsiNamedElement psiVariable) {
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiVariable.getManager());
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(psiVariable.getProject());
     final String propertyName = codeStyleManager.variableNameToPropertyName(name, codeStyleManager.getVariableKind((PsiVariable)psiVariable));
     if (myToUnpluralize.contains(psiVariable)) {
       final String singular = StringUtil.unpluralize(propertyName);
@@ -75,7 +75,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
   }
 
   public String canonicalNameToName(String canonicalName, PsiNamedElement psiVariable) {
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiVariable.getManager());
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(psiVariable.getProject());
     final String variableName =
       codeStyleManager.propertyNameToVariableName(canonicalName, codeStyleManager.getVariableKind((PsiVariable)psiVariable));
     if (myToUnpluralize.contains(psiVariable)) return StringUtil.pluralize(variableName);

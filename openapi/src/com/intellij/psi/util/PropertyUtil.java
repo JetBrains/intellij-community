@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -330,7 +331,7 @@ public class PropertyUtil {
 
   public static PsiMethod generateSetterPrototype(PsiField field) {
     Project project = field.getProject();
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     PsiElementFactory factory = field.getManager().getElementFactory();
 
     String name = field.getName();
@@ -369,7 +370,7 @@ public class PropertyUtil {
       buffer.append(";\n}");
       PsiCodeBlock body = factory.createCodeBlockFromText(buffer.toString(), null);
       setMethod.getBody().replace(body);
-      setMethod = (PsiMethod)codeStyleManager.reformat(setMethod);
+      setMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(setMethod);
       return setMethod;
     }
     catch (IncorrectOperationException e) {
@@ -396,7 +397,7 @@ public class PropertyUtil {
   }
 
   public static String suggestPropertyName(Project project, PsiField field) {
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     VariableKind kind = codeStyleManager.getVariableKind(field);
     return codeStyleManager.variableNameToPropertyName(field.getName(), kind);
   }

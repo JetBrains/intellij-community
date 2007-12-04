@@ -7,14 +7,14 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -172,7 +172,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     if (name.length() > 1 && Character.isDigit(name.charAt(name.length()-1))) {
       name = name.substring(0,name.length()-1);
     }
-    return CodeStyleManager.getInstance(project).suggestUniqueVariableName(name, variable, true);
+    return JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(name, variable, true);
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +24,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
     throws IncorrectOperationException {
     PsiManager manager = PsiManager.getInstance(project);
     PsiElementFactory factory = manager.getElementFactory();
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);
     if (statements.length == 0) {
@@ -48,7 +49,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
     }
     String text = buffer.toString();
     PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
-    tryStatement = (PsiTryStatement)codeStyleManager.reformat(tryStatement);
+    tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
 
     tryStatement = (PsiTryStatement)container.addAfter(tryStatement, statements[statements.length - 1]);
 

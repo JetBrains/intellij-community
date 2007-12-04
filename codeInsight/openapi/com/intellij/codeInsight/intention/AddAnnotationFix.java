@@ -30,7 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -153,7 +153,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
         PsiElementFactory factory = manager.getElementFactory();
         PsiAnnotation annotation = factory.createAnnotationFromText("@" + myAnnotation, myModifierListOwner);
         PsiElement inserted = modifierList.addAfter(annotation, null);
-        CodeStyleManager.getInstance(project).shortenClassReferences(inserted);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
         if (containingFile != file) {
           UndoUtil.markPsiFileForUndo(file);
         }

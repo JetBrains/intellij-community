@@ -19,14 +19,13 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.infos.CandidateInfo;
@@ -262,7 +261,7 @@ public class CompletionUtil {
                                                                               PsiType varType,
                                                                               VariableKind varKind) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
-    CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)CodeStyleManager.getInstance(project);
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
     final String[] suggestedNames = suggestedNameInfo.names;
     LookupItemUtil.addLookupItems(set, suggestedNames, prefix);

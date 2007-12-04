@@ -13,7 +13,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class JavaImportOptimizer implements ImportOptimizer {
   public Runnable processFile(final PsiFile file) {
     if (file instanceof PsiJavaFile) {
       Project project = file.getProject();
-      final PsiImportList newImportList = CodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
+      final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
       return new Runnable() {
         public void run() {
           try {

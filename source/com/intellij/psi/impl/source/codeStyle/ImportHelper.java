@@ -42,7 +42,9 @@ public class ImportHelper{
     mySettings = settings;
   }
 
-  public PsiImportList prepareOptimizeImportsResult(CodeStyleManager codeStyleManager, final PsiJavaFile file) {
+  public PsiImportList prepareOptimizeImportsResult(final PsiJavaFile file) {
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(file.getProject());
+
     final Set<String> namesToImportStaticly = new THashSet<String>();
     String[] names = collectNamesToImport(file, namesToImportStaticly); // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
     Arrays.sort(names);

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,9 +154,9 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   }
 
   private static void reformatAndCorrectReferences(PsiElement newExpression) throws IncorrectOperationException {
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(newExpression.getProject());
-    newExpression = codeStyleManager.shortenClassReferences(newExpression);
-    codeStyleManager.reformat(newExpression);
+    final Project project = newExpression.getProject();
+    newExpression = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpression);
+    CodeStyleManager.getInstance(project).reformat(newExpression);
   }
 
   protected I18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {

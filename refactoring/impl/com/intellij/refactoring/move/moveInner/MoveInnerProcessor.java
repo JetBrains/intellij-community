@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
@@ -381,7 +382,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     myDescriptiveName = UsageViewUtil.getDescriptiveName(myInnerClass);
     myOuterClass = myInnerClass.getContainingClass();
     myTargetContainer = targetContainer;
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
     myParameterNameOuterClass = passOuterClass ? parameterName : null;
     if (myParameterNameOuterClass != null) {
       myFieldNameOuterClass =

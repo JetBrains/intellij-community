@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -12,7 +12,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -68,7 +68,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
   private static PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement, PsiClassType exceptionType, PsiFile file) throws IncorrectOperationException {
     PsiElementFactory factory = tryStatement.getManager().getElementFactory();
 
-    CodeStyleManager styleManager = tryStatement.getManager().getCodeStyleManager();
+    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(tryStatement.getProject());
     String name = styleManager.suggestVariableName(VariableKind.PARAMETER, null, null, exceptionType).names[0];
     name = styleManager.suggestUniqueVariableName(name, tryStatement, false);
 

@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -77,7 +77,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
                 member.getManager().getElementFactory().createType(member.getContainingClass());
         //TODO: callback
         String[] nameSuggestions =
-                CodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type).names;
+                JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, null, null, type).names;
 
         dialog = new MakeParameterizedStaticDialog(project, member,
                                                    nameSuggestions,

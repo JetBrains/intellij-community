@@ -23,7 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
@@ -226,7 +226,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
         else if (expression != null) {
           PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
           if (exprType == null) return null;
-          CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(expression.getProject());
+          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
           String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);
           result.add(new ParameterInfo(-1, name, exprType, expression.getText()));
           ei++;
@@ -266,7 +266,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     return result.toArray(new ParameterInfo[result.size()]);
   }
 
-  private static String suggestUniqueParameterName(CodeStyleManager codeStyleManager,
+  private static String suggestUniqueParameterName(JavaCodeStyleManager codeStyleManager,
                                                               PsiExpression expression,
                                                               PsiType exprType,
                                                               Set<String> existingNames) {

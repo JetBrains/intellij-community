@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -126,7 +127,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   public static String suggestParameterNameForThisClass(final PsiClass thisClass) {
     PsiManager manager = thisClass.getManager();
     PsiType type = manager.getElementFactory().createType(thisClass);
-    final SuggestedNameInfo suggestedNameInfo = manager.getCodeStyleManager()
+    final SuggestedNameInfo suggestedNameInfo = JavaCodeStyleManager.getInstance(manager.getProject())
       .suggestVariableName(VariableKind.PARAMETER, null, null, type);
     return suggestedNameInfo.names.length > 0 ? suggestedNameInfo.names[0] : "";
   }

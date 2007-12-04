@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -31,8 +32,8 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -316,7 +317,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       blockStatement = (PsiBlockStatement) loopBody.replace(blockStatement);
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       declaration = (PsiStatement) codeBlock.add(declaration);
-      declaration.getManager().getCodeStyleManager().shortenClassReferences(declaration);
+      JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
       if (loopBodyCopy != null) codeBlock.add(loopBodyCopy);
     }
     return declaration;

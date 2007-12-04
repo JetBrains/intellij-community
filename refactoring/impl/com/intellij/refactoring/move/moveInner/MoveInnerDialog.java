@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
@@ -261,7 +261,7 @@ public class MoveInnerDialog extends RefactoringDialog {
     if (!myInnerClass.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiManager manager = myInnerClass.getManager();
       PsiType outerType = manager.getElementFactory().createType(myInnerClass.getContainingClass());
-      mySuggestedNameInfo =  CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, null, null, outerType);
+      mySuggestedNameInfo =  JavaCodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, null, null, outerType);
       String[] variants = mySuggestedNameInfo.names;
       myParameterField = new NameSuggestionsField(variants, myProject);
     }

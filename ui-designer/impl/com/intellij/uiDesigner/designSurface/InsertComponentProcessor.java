@@ -16,7 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.*;
@@ -150,7 +150,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     //noinspection ForLoopThatDoesntUseLoopVariable
     for(int i = 0; true; i++){
       final String nameCandidate = baseName + (i + 1);
-      final String binding = CodeStyleManager.getInstance(root.getModule().getProject()).propertyNameToVariableName(
+      final String binding = JavaCodeStyleManager.getInstance(root.getModule().getProject()).propertyNameToVariableName(
         nameCandidate,
         VariableKind.FIELD
       );

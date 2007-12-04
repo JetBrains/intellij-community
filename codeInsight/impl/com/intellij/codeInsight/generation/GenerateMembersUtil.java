@@ -7,8 +7,8 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
@@ -222,7 +222,7 @@ public class GenerateMembersUtil {
       }
 
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       Map<PsiType,Pair<String,Integer>> m = new HashMap<PsiType, Pair<String,Integer>>();
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -195,7 +196,7 @@ public class CreateFromUsageUtils {
     for (int i = 0; i < arguments.length; i++) {
       PsiExpression arg = arguments[i];
 
-      SuggestedNameInfo suggestedInfo = CodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(
+      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(
         VariableKind.PARAMETER, null, arg, null);
       @NonNls String[] names = suggestedInfo.names; //TODO: callback about used name
 

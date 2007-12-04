@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -177,7 +177,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
             variableName = "listener";
           }
           else {
-            final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myClass.getProject());
+            final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myClass.getProject());
             variableName = codeStyleManager.suggestUniqueVariableName("listener", body.getLastBodyElement(), false);
           }
           builder.append(variableName).append("=");
@@ -194,7 +194,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
 
         PsiStatement stmt = factory.createStatementFromText(builder.toString(), constructor);
         stmt = (PsiStatement) body.addAfter(stmt, body.getLastBodyElement());
-        CodeStyleManager.getInstance(body.getProject()).shortenClassReferences(stmt);
+        JavaCodeStyleManager.getInstance(body.getProject()).shortenClassReferences(stmt);
 
         if (boundFields.length > 1) {
           PsiElement anchor = stmt;

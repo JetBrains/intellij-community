@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -45,6 +42,7 @@ public class GenerateEqualsHelper implements Runnable {
   @NonNls private static final HashMap<String, MessageFormat> PRIMITIVE_HASHCODE_FORMAT = new HashMap<String, MessageFormat>();
   private final boolean mySuperHasHashCode;
   private CodeStyleManager myCodeStyleManager;
+  private JavaCodeStyleManager myJavaCodeStyleManager;
   private final Project myProject;
   private boolean myCheckParameterWithInstanceof;
 
@@ -77,6 +75,7 @@ public class GenerateEqualsHelper implements Runnable {
 
     mySuperHasHashCode = superMethodExists(getHashCodeSignature());
     myCodeStyleManager = CodeStyleManager.getInstance(manager.getProject());
+    myJavaCodeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
   }
 
   private static String getUniqueLocalVarName(String base, PsiField[] fields) {
@@ -147,7 +146,7 @@ public class GenerateEqualsHelper implements Runnable {
 
 
   private PsiMethod createEquals() throws IncorrectOperationException {
-    CodeStyleManager codeStyleManager = myCodeStyleManager;
+    JavaCodeStyleManager codeStyleManager = myJavaCodeStyleManager;
     final PsiType objectType = myFactory.createType(myJavaLangObject);
     String[] nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, objectType).names;
     final String objectBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : BASE_OBJECT_PARAMETER_NAME;
@@ -203,7 +202,7 @@ public class GenerateEqualsHelper implements Runnable {
       .setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS);
 
     PsiMethod method = (PsiMethod)myCodeStyleManager.reformat(result);
-    method = (PsiMethod)myCodeStyleManager.shortenClassReferences(method);
+    method = (PsiMethod)myJavaCodeStyleManager.shortenClassReferences(method);
     return method;
   }
 

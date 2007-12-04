@@ -7,11 +7,11 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -183,7 +183,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       PsiCodeBlock anchorBlock = findAnchorBlock(refs);
       if (anchorBlock == null) return; //was assert, but need to fix the case when obsolete inspection highlighting is left
       final PsiElementFactory elementFactory = manager.getElementFactory();
-      final CodeStyleManager styleManager = manager.getCodeStyleManager();
+      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(manager.getProject());
       final String propertyName = styleManager.variableNameToPropertyName(myField.getName(), VariableKind.FIELD);
       String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
       localName = RefactoringUtil.suggestUniqueVariableName(localName, anchorBlock, myField);

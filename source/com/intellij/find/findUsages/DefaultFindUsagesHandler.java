@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -138,7 +139,7 @@ public class DefaultFindUsagesHandler extends FindUsagesHandler{
       final PsiField field = (PsiField)element;
       if (field.getContainingClass() != null) {
         final String propertyName =
-          field.getManager().getCodeStyleManager().variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+          JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
         PsiMethod getter = PropertyUtil.
           findPropertyGetterWithType(propertyName, field.hasModifierProperty(PsiModifier.STATIC), field.getType(),
                                      ContainerUtil.iterate(field.getContainingClass().getMethods()));

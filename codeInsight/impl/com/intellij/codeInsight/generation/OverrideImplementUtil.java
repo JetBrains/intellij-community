@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -243,11 +244,12 @@ public class OverrideImplementUtil {
       setupMethodBody(result, method, aClass);
 
       // probably, it's better to reformat the whole method - it can go from other style sources
-      CodeStyleManager codeStyleManager = method.getManager().getCodeStyleManager();
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(codeStyleManager.getProject());
+      final Project project = method.getProject();
+      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
       boolean keepBreaks = settings.KEEP_LINE_BREAKS;
       settings.KEEP_LINE_BREAKS = false;
-      result = (PsiMethod)codeStyleManager.shortenClassReferences(result);
+      result = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       result = (PsiMethod)codeStyleManager.reformat(result);
       settings.KEEP_LINE_BREAKS = keepBreaks;
 

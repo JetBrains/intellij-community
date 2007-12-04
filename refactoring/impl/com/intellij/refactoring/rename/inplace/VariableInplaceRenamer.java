@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
@@ -239,7 +239,7 @@ public class VariableInplaceRenamer {
 
     public MyExpression(String name) {
       myName = name;
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myElementToRename.getManager());
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myElementToRename.getProject());
       VariableKind variableKind = codeStyleManager.getVariableKind(myElementToRename);
       String propertyName = codeStyleManager.variableNameToPropertyName(myElementToRename.getName(), variableKind);
       SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, myElementToRename.getType());

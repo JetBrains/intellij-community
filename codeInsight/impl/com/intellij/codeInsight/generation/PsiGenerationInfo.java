@@ -5,7 +5,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,7 @@ public class PsiGenerationInfo<T extends PsiMember> implements GenerationInfo {
     else existingMember = null;
     if (existingMember == null) {
       PsiElement newMember = GenerateMembersUtil.insert(aClass, myMember, anchor, before);
-      myMember = (T)CodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(newMember);
+      myMember = (T)JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(newMember);
     }
     else {
       final PsiModifierList modifierList = myMember.getModifierList();

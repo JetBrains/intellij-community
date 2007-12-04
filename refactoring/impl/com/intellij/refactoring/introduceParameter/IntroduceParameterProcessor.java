@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -793,7 +794,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     final PsiParameter anchorParameter = getAnchorParameter(methodToReplaceIn);
     final PsiParameterList parameterList = methodToReplaceIn.getParameterList();
     parameter = (PsiParameter)parameterList.addAfter(parameter, anchorParameter);
-    manager.getCodeStyleManager().shortenClassReferences(parameter);
+    JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(parameter);
     final PsiDocTag tagForAnchorParameter = javaDocHelper.getTagForParameter(anchorParameter);
     javaDocHelper.addParameterAfter(myParameterName, tagForAnchorParameter);
 

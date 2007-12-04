@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiMethodUtil;
@@ -77,7 +77,7 @@ public class GenerateMainAction extends AnAction {
     }
 
     @NonNls final StringBuilder mainBuilder = new StringBuilder("public static void main(String[] args) { ");
-    final CodeStyleManager csm = CodeStyleManager.getInstance(project);
+    final JavaCodeStyleManager csm = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo nameInfo = csm.suggestVariableName(VariableKind.LOCAL_VARIABLE, "frame", null, null);
     String varName = nameInfo.names [0];
     mainBuilder.append(JFrame.class.getName()).append(" ").append(varName).append("= new ").append(JFrame.class.getName());

@@ -11,7 +11,7 @@ import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -51,7 +51,7 @@ public class VariableTypeFix implements IntentionAction {
     try {
       myVariable.normalizeDeclaration();
       myVariable.getTypeElement().replace(file.getManager().getElementFactory().createTypeElement(myReturnType));
-      CodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
       UndoUtil.markPsiFileForUndo(file);
     } catch (IncorrectOperationException e) {
       LOG.error(e);

@@ -23,13 +23,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -189,7 +190,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             PsiAnnotation annotation =
               myParentClass.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, myParentClass);
             field.getModifierList().addAfter(annotation, null);
-            CodeStyleManager.getInstance(myParentClass.getProject()).shortenClassReferences(field.getModifierList());
+            JavaCodeStyleManager.getInstance(myParentClass.getProject()).shortenClassReferences(field.getModifierList());
           }
           PsiElement finalAnchorElement = null;
           if (destClass == myParentClass) {

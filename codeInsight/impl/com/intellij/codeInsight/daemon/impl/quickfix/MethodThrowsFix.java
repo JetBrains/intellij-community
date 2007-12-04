@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class MethodThrowsFix implements IntentionAction {
         final PsiElementFactory factory = myMethod.getManager().getElementFactory();
         final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
         PsiJavaCodeReferenceElement ref = factory.createReferenceElementByType(type);
-        ref = (PsiJavaCodeReferenceElement)PsiManager.getInstance(project).getCodeStyleManager().shortenClassReferences(ref);
+        ref = (PsiJavaCodeReferenceElement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
         myMethod.getThrowsList().add(ref);
       }
       UndoUtil.markPsiFileForUndo(file);

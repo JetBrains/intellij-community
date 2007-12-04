@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
@@ -12,7 +13,6 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiSubstitutorEx;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -515,9 +515,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     ASTNode ref = Parsing.parseJavaCodeReferenceText(manager, qName + getParameterList().getText(), SharedImplUtil.findCharTableByTree(this));
     getTreeParent().replaceChildInternal(this, (TreeElement)ref);
     if (!preserveQualification /*&& (TreeUtil.findParent(ref, ElementType.DOC_COMMENT) == null)*/) {
-      final CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)manager.getCodeStyleManager();
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(aClass.getProject());
       ref = SourceTreeToPsiMap.psiElementToTree(
-        codeStyleManager.shortenClassReferences(SourceTreeToPsiMap.treeElementToPsi(ref), CodeStyleManagerEx.UNCOMPLETE_CODE)
+        codeStyleManager.shortenClassReferences(SourceTreeToPsiMap.treeElementToPsi(ref), JavaCodeStyleManager.UNCOMPLETE_CODE)
       );
     }
     return SourceTreeToPsiMap.treeElementToPsi(ref);

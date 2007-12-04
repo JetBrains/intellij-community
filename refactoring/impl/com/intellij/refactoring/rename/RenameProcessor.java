@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -283,7 +283,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     // search for getters/setters
     PsiClass aClass = field.getContainingClass();
 
-    final CodeStyleManager manager = CodeStyleManager.getInstance(myProject);
+    final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(myProject);
 
     final String propertyName =
         manager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);

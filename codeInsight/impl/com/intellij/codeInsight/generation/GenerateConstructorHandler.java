@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -198,10 +199,12 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       }
     }
 
+    JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(aClass.getProject());
+
     for (PsiField field : fields) {
       String fieldName = field.getName();
-      String name = codeStyleManager.variableNameToPropertyName(fieldName, VariableKind.FIELD);
-      String parmName = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
+      String name = javaStyle.variableNameToPropertyName(fieldName, VariableKind.FIELD);
+      String parmName = javaStyle.propertyNameToVariableName(name, VariableKind.PARAMETER);
       PsiParameter parm = factory.createParameter(parmName, field.getType());
 
 

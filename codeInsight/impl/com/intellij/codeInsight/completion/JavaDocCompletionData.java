@@ -17,6 +17,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.TokenTypeFilter;
@@ -270,7 +271,7 @@ public class JavaDocCompletionData extends CompletionData {
       final PsiDocTagValue tagValue = PsiTreeUtil.getParentOfType(element, PsiDocTagValue.class);
       if (tagValue != null) {
         try {
-          tagValue.getManager().getCodeStyleManager().shortenClassReferences(tagValue);
+          JavaCodeStyleManager.getInstance(project).shortenClassReferences(tagValue);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

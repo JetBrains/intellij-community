@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -161,7 +162,7 @@ public class LocalToFieldHandler {
           field.getModifierList().setModifierProperty(fieldVisibility, true);
 
           field = (PsiField)aaClass.add(field);
-          CodeStyleManager.getInstance(myProject).shortenClassReferences(field);
+          JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(field);
 
           local.normalizeDeclaration();
           PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)local.getParent();

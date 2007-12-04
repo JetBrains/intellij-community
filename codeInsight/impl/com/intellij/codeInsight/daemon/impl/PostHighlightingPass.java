@@ -34,9 +34,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
@@ -69,7 +68,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private Collection<HighlightInfo> myHighlights;
   private boolean myHasRedundantImports;
-  private final CodeStyleManagerEx myStyleManager;
+  private final JavaCodeStyleManager myStyleManager;
   private int myCurentEntryIndex;
   private boolean myHasMissortedImports;
   private final ImplicitUsageProvider[] myImplicitUsageProviders;
@@ -86,7 +85,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myStartOffset = startOffset;
     myEndOffset = endOffset;
 
-    myStyleManager = (CodeStyleManagerEx)CodeStyleManager.getInstance(myProject);
+    myStyleManager = JavaCodeStyleManager.getInstance(myProject);
     myCurentEntryIndex = -1;
 
     myImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);

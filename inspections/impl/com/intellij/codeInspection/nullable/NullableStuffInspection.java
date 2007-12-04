@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -64,7 +65,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           final String annoToRemove = annotated.isDeclaredNotNull ? AnnotationUtil.NULLABLE : AnnotationUtil.NOT_NULL;
           final String simpleName = annotated.isDeclaredNotNull ? AnnotationUtil.NOT_NULL_SIMPLE_NAME : AnnotationUtil.NULLABLE_SIMPLE_NAME;
 
-          final String propName = field.getManager().getCodeStyleManager().variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+          final String propName = JavaCodeStyleManager.getInstance(field.getProject()).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
           final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
           if (REPORT_NOT_ANNOTATED_GETTER) {
             final PsiMethod getter = PropertyUtil.findPropertyGetter(field.getContainingClass(), propName, isStatic, false);

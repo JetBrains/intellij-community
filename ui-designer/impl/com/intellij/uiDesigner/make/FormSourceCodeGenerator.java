@@ -17,6 +17,7 @@ import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -236,7 +237,9 @@ public final class FormSourceCodeGenerator {
       null
     );
 
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(module.getProject());
+    final CodeStyleManager formatter = CodeStyleManager.getInstance(module.getProject());
+    final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(module.getProject());
+
     PsiMethod method = (PsiMethod) newClass.add(fakeClass.getMethods()[0]);
 
     // don't generate initializer block if $$$setupUI$$$() is called explicitly from one of the constructors
@@ -272,8 +275,8 @@ public final class FormSourceCodeGenerator {
     final String loadLabelTextMethodText = getLoadMethodText(AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, JLabel.class, module);
     generateMethodIfRequired(newClass, method, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, loadLabelTextMethodText, myNeedLoadLabelText);
 
-    newClass = (PsiClass) codeStyleManager.shortenClassReferences(newClass);
-    newClass = (PsiClass) codeStyleManager.reformat(newClass);
+    newClass = (PsiClass) styler.shortenClassReferences(newClass);
+    newClass = (PsiClass) formatter.reformat(newClass);
 
     if (!lexemsEqual(classToBind, newClass)) {
       classToBind.replace(newClass);

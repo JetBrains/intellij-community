@@ -2,6 +2,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -111,7 +112,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
         @NonNls String name = getName();
         if (name != null) return name;
 
-        String[] nameSuggestions = getManager().getCodeStyleManager().suggestVariableName(VariableKind.PARAMETER, null,
+        String[] nameSuggestions = JavaCodeStyleManager.getInstance(getProject()).suggestVariableName(VariableKind.PARAMETER, null,
             null, getType())
             .names;
         name = "p";

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -183,9 +184,11 @@ public final class Generator {
           final StringBuffer membersBuffer = new StringBuffer();
           final StringBuffer methodsBuffer = new StringBuffer();
 
-          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(data.myBeanClass.getProject());
+          final Project project = data.myBeanClass.getProject();
+          final CodeStyleManager formatter = CodeStyleManager.getInstance(project);
+          final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(project);
 
-          generateProperty(codeStyleManager, form2bean.myBeanProperty.myName, form2bean.myBeanProperty.myType, membersBuffer,
+          generateProperty(styler, form2bean.myBeanProperty.myName, form2bean.myBeanProperty.myType, membersBuffer,
                            methodsBuffer);
 
           final PsiClass fakeClass;
@@ -196,20 +199,20 @@ public final class Generator {
             final PsiField[] fields = fakeClass.getFields();
             {
               final PsiElement result = data.myBeanClass.add(fields[0]);
-              codeStyleManager.shortenClassReferences(result);
-              codeStyleManager.reformat(result);
+              styler.shortenClassReferences(result);
+              formatter.reformat(result);
             }
 
             final PsiMethod[] methods = fakeClass.getMethods();
             {
               final PsiElement result = data.myBeanClass.add(methods[0]);
-              codeStyleManager.shortenClassReferences(result);
-              codeStyleManager.reformat(result);
+              styler.shortenClassReferences(result);
+              formatter.reformat(result);
             }
             {
               final PsiElement result = data.myBeanClass.add(methods[1]);
-              codeStyleManager.shortenClassReferences(result);
-              codeStyleManager.reformat(result);
+              styler.shortenClassReferences(result);
+              formatter.reformat(result);
             }
           }
           catch (IncorrectOperationException e) {
@@ -367,20 +370,21 @@ public final class Generator {
         existing3.delete();
       }
 
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(module.getProject());
+      final CodeStyleManager formatter = CodeStyleManager.getInstance(module.getProject());
+      final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(module.getProject());
 
       final PsiElement setData = boundClass.add(methodSetData);
-      codeStyleManager.shortenClassReferences(setData);
-      codeStyleManager.reformat(setData);
+      styler.shortenClassReferences(setData);
+      formatter.reformat(setData);
 
       final PsiElement getData = boundClass.add(methodGetData);
-      codeStyleManager.shortenClassReferences(getData);
-      codeStyleManager.reformat(getData);
+      styler.shortenClassReferences(getData);
+      formatter.reformat(getData);
 
       if (data.myGenerateIsModified) {
         final PsiElement isModified = boundClass.add(methodIsModified);
-        codeStyleManager.shortenClassReferences(isModified);
-        codeStyleManager.reformat(isModified);
+        styler.shortenClassReferences(isModified);
+        formatter.reformat(isModified);
       }
 
       final OpenFileDescriptor descriptor = new OpenFileDescriptor(setData.getProject(), setData.getContainingFile().getVirtualFile(), setData.getTextOffset());
@@ -474,14 +478,15 @@ public final class Generator {
     final StringBuffer membersBuffer = new StringBuffer();
     final StringBuffer methodsBuffer = new StringBuffer();
 
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(aClass.getProject());
+    final CodeStyleManager formatter = CodeStyleManager.getInstance(aClass.getProject());
+    final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(aClass.getProject());
 
     for (final String property : properties) {
       LOG.assertTrue(property != null);
       final String type = property2fqClassName.get(property);
       LOG.assertTrue(type != null);
 
-      generateProperty(codeStyleManager, property, type, membersBuffer, methodsBuffer);
+      generateProperty(styler, property, type, membersBuffer, methodsBuffer);
     }
 
     final PsiClass fakeClass;
@@ -501,15 +506,15 @@ public final class Generator {
         aClass.add(method);
       }
 
-      codeStyleManager.shortenClassReferences(aClass);
-      codeStyleManager.reformat(aClass);
+      styler.shortenClassReferences(aClass);
+      formatter.reformat(aClass);
     }
     catch (IncorrectOperationException e) {
       throw new MyException(e.getMessage());
     }
   }
 
-  private static void generateProperty(final CodeStyleManager codeStyleManager,
+  private static void generateProperty(final JavaCodeStyleManager codeStyleManager,
                                        final String property,
                                        final String type,
                                        @NonNls final StringBuffer membersBuffer, @NonNls final StringBuffer methodsBuffer) {

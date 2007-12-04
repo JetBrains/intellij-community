@@ -10,8 +10,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
@@ -160,7 +160,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
             new NameSuggestionsGenerator() {
               public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-                final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+                final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
                 final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, myExpression, type);
                 return codeStyleManager.suggestUniqueVariableName(nameInfo, myExpression, true);
               }

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.scope.processor.VariablesProcessor;
@@ -773,7 +774,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private static void addExceptions(PsiClassType[] exceptionsToAdd, PsiTryStatement tryStatement) throws IncorrectOperationException {
     for (PsiClassType type : exceptionsToAdd) {
-      final CodeStyleManager styleManager = tryStatement.getManager().getCodeStyleManager();
+      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(tryStatement.getProject());
       String name = styleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type).names[0];
       name = styleManager.suggestUniqueVariableName(name, tryStatement, false);
 
@@ -795,7 +796,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private void replaceThrowsList(PsiMethod method, PsiReferenceList throwsList) throws IncorrectOperationException {
     PsiReferenceList methodThrowsList = (PsiReferenceList)method.getThrowsList().replace(throwsList);
-    methodThrowsList = (PsiReferenceList)myManager.getCodeStyleManager().shortenClassReferences(methodThrowsList);
+    methodThrowsList = (PsiReferenceList)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(methodThrowsList);
     myManager.getCodeStyleManager().reformatRange(method, method.getParameterList().getTextRange().getEndOffset(),
                                                   methodThrowsList.getTextRange().getEndOffset());
   }

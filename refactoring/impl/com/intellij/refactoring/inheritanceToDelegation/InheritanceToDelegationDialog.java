@@ -3,7 +3,7 @@ package com.intellij.refactoring.inheritanceToDelegation;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
@@ -229,7 +229,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     PsiManager psiManager = myClass.getManager();
     PsiType superType = psiManager.getElementFactory().createType(targetClass);
     SuggestedNameInfo suggestedNameInfo =
-      CodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(VariableKind.FIELD, null, null, superType);
+      JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(VariableKind.FIELD, null, null, superType);
     myFieldNameField.setSuggestions(suggestedNameInfo.names);
     myInnerClassNameField.getComponent().setEnabled(InheritanceToDelegationUtil.isInnerClassNeeded(myClass, targetClass));
     @NonNls final String suggestion = "My" + targetClass.getName();

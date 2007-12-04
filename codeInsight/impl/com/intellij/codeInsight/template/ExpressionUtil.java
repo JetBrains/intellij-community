@@ -4,7 +4,7 @@
  import com.intellij.openapi.diagnostic.Logger;
  import com.intellij.openapi.project.Project;
  import com.intellij.psi.*;
- import com.intellij.psi.codeStyle.CodeStyleManager;
+ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
  import com.intellij.psi.codeStyle.SuggestedNameInfo;
  import com.intellij.psi.codeStyle.VariableKind;
  import com.intellij.psi.text.BlockSupport;
@@ -55,7 +55,7 @@
      if (identifier.getParent() instanceof PsiVariable){
        PsiVariable var = (PsiVariable)identifier.getParent();
        if (identifier.equals(var.getNameIdentifier())){
-         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
          VariableKind variableKind = codeStyleManager.getVariableKind(var);
          PsiExpression initializer = var.getInitializer();
          if (var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement) {

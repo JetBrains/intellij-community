@@ -12,7 +12,7 @@ import static com.intellij.patterns.impl.StandardPatterns.psiElement;
 import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
 import com.intellij.patterns.impl.TraverseContext;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -134,7 +134,7 @@ class InlineToAnonymousConstructorProcessor {
     }
     ChangeContextUtil.decodeContextInfo(anonymousClass, anonymousClass, null);
     final PsiNewExpression superNewExpression = (PsiNewExpression) myNewExpression.replace(superNewExpressionTemplate);
-    superNewExpression.getManager().getCodeStyleManager().shortenClassReferences(superNewExpression);
+    JavaCodeStyleManager.getInstance(superNewExpression.getProject()).shortenClassReferences(superNewExpression);
   }
 
   private void checkInlineChainingConstructor() {
@@ -222,7 +222,7 @@ class InlineToAnonymousConstructorProcessor {
   }
 
   private PsiVariable generateLocal(final String baseName, final PsiType type, final PsiExpression initializer) {
-    final CodeStyleManager codeStyleManager = myClass.getManager().getCodeStyleManager();
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myClass.getProject());
 
     String baseNameForIndex = baseName;
     int index = 0;

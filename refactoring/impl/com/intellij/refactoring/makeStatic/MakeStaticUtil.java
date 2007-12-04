@@ -9,7 +9,7 @@
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -148,7 +148,7 @@ public class MakeStaticUtil {
     for (final PsiField field : psiFields) {
       if (accessedForWriting.contains(field)) continue;
       ParameterTablePanel.VariableData data = new ParameterTablePanel.VariableData(field);
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(member.getProject());
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(member.getProject());
       String name = field.getName();
       name = codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);
       name = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);

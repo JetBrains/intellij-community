@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -181,7 +181,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                       parametersToRemove).run();
     }
     else {
-      final String propName = localVar != null ? CodeStyleManager.getInstance(myProject).variableNameToPropertyName(localVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
+      final String propName = localVar != null ? JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(localVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
       final PsiType initializerType = IntroduceParameterProcessor.getInitializerType(null, expr, localVar);
 
       TypeSelectorManager typeSelectorManager = expr != null
@@ -190,7 +190,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
       NameSuggestionsGenerator nameSuggestionsGenerator = new NameSuggestionsGenerator() {
         public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-          return CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
+          return JavaCodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
         }
 
         public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {

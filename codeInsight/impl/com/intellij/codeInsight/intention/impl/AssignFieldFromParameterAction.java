@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -108,7 +109,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
 
   @Nullable
   private static PsiField findFieldToAssign(final PsiParameter myParameter) {
-    final CodeStyleManager styleManager = CodeStyleManager.getInstance(myParameter.getProject());
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myParameter.getProject());
     final String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
 

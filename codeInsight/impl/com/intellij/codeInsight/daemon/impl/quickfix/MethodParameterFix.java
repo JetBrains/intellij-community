@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -91,7 +91,7 @@ public class MethodParameterFix implements IntentionAction {
     List<ParameterInfo> result = new ArrayList<ParameterInfo>();
     PsiParameter[] parameters = myMethod.getParameterList().getParameters();
     PsiElementFactory factory = myMethod.getManager().getElementFactory();
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myMethod.getProject());
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myMethod.getProject());
     SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, myParameterType);
     PsiParameter newParameter = factory.createParameter(nameInfo.names[0], myParameterType);
 

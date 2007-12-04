@@ -1,14 +1,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
 public class OptimizeImportsFix implements IntentionAction{
@@ -31,7 +31,7 @@ public class OptimizeImportsFix implements IntentionAction{
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     try{
-      CodeStyleManager.getInstance(project).optimizeImports(file);
+      JavaCodeStyleManager.getInstance(project).optimizeImports(file);
     }
     catch(IncorrectOperationException e){
       LOG.error(e);

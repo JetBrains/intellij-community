@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
@@ -113,7 +114,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     final PsiType type = getType(myParameter);
-    final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
     final String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
 
@@ -192,7 +193,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           }
 
           PsiStatement assignmentStmt = factory.createStatementFromText(stmtText, methodBody);
-          assignmentStmt = (PsiStatement)styleManager.reformat(assignmentStmt);
+          assignmentStmt = (PsiStatement)CodeStyleManager.getInstance(project).reformat(assignmentStmt);
 
           if (i == statements.length) {
             methodBody.add(assignmentStmt);

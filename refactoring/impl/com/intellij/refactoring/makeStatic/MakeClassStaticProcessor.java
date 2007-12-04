@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -123,7 +124,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
   }
 
   private String convertToFieldName(final String parameterName) {
-    CodeStyleManager manager = CodeStyleManager.getInstance(myProject);
+    JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(myProject);
     final String propertyName = manager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
     final String fieldName = manager.propertyNameToVariableName(propertyName, VariableKind.FIELD);
     return fieldName;

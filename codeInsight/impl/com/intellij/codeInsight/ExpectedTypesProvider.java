@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.jsp.jspJava.JspMethodCall;
 import com.intellij.psi.infos.CandidateInfo;
@@ -965,7 +965,7 @@ public class ExpectedTypesProvider {
     private String getPropertyName(PsiVariable variable) {
       final String name = variable.getName();
       if (name == null) return null;
-      CodeStyleManager codeStyleManager = variable.getManager().getCodeStyleManager();
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
       VariableKind variableKind = codeStyleManager.getVariableKind(variable);
       return codeStyleManager.variableNameToPropertyName(name, variableKind);
     }

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
@@ -322,7 +323,7 @@ public class TemplateState implements Disposable {
       public void run() {
         final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
         if (file != null) {
-          CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
           if (myTemplate.isToShortenLongNames()) {
             try {
               IntArrayList indices = initEmptyVariables();
@@ -922,11 +923,12 @@ public class TemplateState implements Disposable {
   private void reformat() {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     if (file != null) {
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+      JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(myProject);
+      CodeStyleManager style = CodeStyleManager.getInstance(myProject);
       if (myTemplate.isToShortenLongNames()) {
         try {
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-          codeStyleManager.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
+          javaStyle.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
           unblockDocument();
         }
         catch (IncorrectOperationException e) {
@@ -940,10 +942,10 @@ public class TemplateState implements Disposable {
           RangeMarker rangeMarker = null;
           if (endSegmentNumber >= 0) {
             int endVarOffset = mySegments.getSegmentStart(endSegmentNumber);
-            PsiElement marker = codeStyleManager.insertNewLineIndentMarker(file, endVarOffset);
+            PsiElement marker = style.insertNewLineIndentMarker(file, endVarOffset);
             if(marker != null) rangeMarker = myDocument.createRangeMarker(marker.getTextRange());
           }
-          codeStyleManager.reformatText(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
+          style.reformatText(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
 
           if (rangeMarker != null && rangeMarker.isValid()) {

@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -32,7 +32,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
   private final TObjectIntHashMap<LookupItem> myItemToIndexMap = new TObjectIntHashMap<LookupItem>();
 
   private final PsiProximityComparator myProximityComparator;
-  private final CodeStyleManager myCodeStyleManager;
+  private final JavaCodeStyleManager myCodeStyleManager;
   private String myPrefix;
   private String myPrefixLowered;
   private final String myPrefixCapitals;
@@ -51,7 +51,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     setPrefix( prefix );
     myProximityComparator = new PsiProximityComparator(position, manager.getProject());
     myPrefixCapitals = capitalsOnly(prefix);
-    myCodeStyleManager = manager.getCodeStyleManager();
+    myCodeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
     if(expectedInfos != null){
       final Map<PsiType, ExpectedTypeInfo> map = new HashMap<PsiType, ExpectedTypeInfo>(expectedInfos.length);
       for (final ExpectedTypeInfo expectedInfo : expectedInfos) {

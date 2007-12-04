@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -180,7 +180,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     if (name.length() > 1 && Character.isDigit(name.charAt(name.length()-1))) {
       name = name.substring(0,name.length()-1);
     }
-    return CodeStyleManager.getInstance(project).suggestUniqueVariableName(name, variable, true);
+    return JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(name, variable, true);
   }
 
 

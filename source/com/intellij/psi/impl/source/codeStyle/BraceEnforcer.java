@@ -1,11 +1,11 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
 
 /**

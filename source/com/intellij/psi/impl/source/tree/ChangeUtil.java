@@ -9,8 +9,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.PomModel;
 import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.java.LanguageLevel;
@@ -21,6 +21,7 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -31,7 +32,6 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
@@ -437,7 +437,7 @@ public class ChangeUtil {
           element.putCopyableUserData(REFERENCED_CLASS_KEY, null);
 
           PsiManager manager = refClass.getManager();
-          CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx)manager.getCodeStyleManager();
+          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(refClass.getProject());
           PsiElement refElement1 = ref.resolve();
           try {
             if (refClass != refElement1 && !manager.areElementsEquivalent(refClass, refElement1)) {
@@ -448,7 +448,7 @@ public class ChangeUtil {
             }
             else {
               // shorten references to the same package and to inner classes that can be accessed by short name
-              ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, CodeStyleManagerEx.DO_NOT_ADD_IMPORTS);
+              ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.DO_NOT_ADD_IMPORTS);
             }
             element = (TreeElement)SourceTreeToPsiMap.psiElementToTree(ref);
           }

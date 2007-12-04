@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -122,7 +123,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       myNonCodeUsages = MoveClassesOrPackagesProcessor.retargetUsages(usages, oldToNewElementsMapping);
       retargetNonCodeUsages(newClass);
 
-      PsiManager.getInstance(myProject).getCodeStyleManager().removeRedundantImports((PsiJavaFile)newClass.getContainingFile());
+      JavaCodeStyleManager.getInstance(myProject).removeRedundantImports((PsiJavaFile)newClass.getContainingFile());
 
       myClassToMove.delete();
       for(PsiElement element: importStatements) {

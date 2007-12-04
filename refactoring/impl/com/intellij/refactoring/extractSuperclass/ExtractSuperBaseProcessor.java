@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -122,7 +122,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       }
       final PsiFile containingFile = myClass.getContainingFile();
       if (containingFile instanceof PsiJavaFile) {
-        CodeStyleManager.getInstance(myManager).removeRedundantImports((PsiJavaFile) containingFile);
+        JavaCodeStyleManager.getInstance(myProject).removeRedundantImports((PsiJavaFile) containingFile);
       }
     }
     catch (IncorrectOperationException e) {

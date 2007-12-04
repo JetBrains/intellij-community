@@ -1,8 +1,8 @@
 package com.intellij.refactoring;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,8 +12,11 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
@@ -318,7 +321,7 @@ public abstract class BaseRefactoringProcessor {
   }
 
   private void removeRedundantImports(final Set<PsiJavaFile> javaFiles) {
-    final CodeStyleManager styleManager = PsiManager.getInstance(myProject).getCodeStyleManager();
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
     for (PsiJavaFile file : javaFiles) {
       try {
         if (file.isValid() && file.getVirtualFile() != null) {

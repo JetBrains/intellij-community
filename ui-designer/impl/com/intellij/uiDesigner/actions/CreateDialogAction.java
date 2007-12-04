@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.Icons;
@@ -173,9 +174,8 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
       .createFileFromText(newName + ".java", createClassBody(newName, myRecentGenerateOK, myRecentGenerateCancel, myRecentGenerateMain));
     sourceFile = (PsiFile)directory.add(sourceFile);
 
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(directory.getProject());
-    codeStyleManager.shortenClassReferences(sourceFile);
-    codeStyleManager.reformat(sourceFile);
+    JavaCodeStyleManager.getInstance(directory.getProject()).shortenClassReferences(sourceFile);
+    CodeStyleManager.getInstance(directory.getProject()).reformat(sourceFile);
 
     final PsiPackage aPackage = directory.getPackage();
     final String packageName = aPackage.getQualifiedName();

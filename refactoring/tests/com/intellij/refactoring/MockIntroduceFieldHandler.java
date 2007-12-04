@@ -2,7 +2,7 @@ package com.intellij.refactoring;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
@@ -24,7 +24,7 @@ public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
                                                                         PsiExpression[] occurences,
                                                                         PsiElement anchorElement,
                                                                         PsiElement anchorElementIfAll) {
-    SuggestedNameInfo name = CodeStyleManager.getInstance(project).suggestVariableName(VariableKind.FIELD, null, expr, type);
+    SuggestedNameInfo name = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.FIELD, null, expr, type);
     return new Settings(name.names[0], true,
             true, true, myInitializationPlace,
             PsiModifier.PUBLIC,
