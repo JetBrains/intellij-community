@@ -2,8 +2,6 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -27,7 +25,6 @@ import java.util.*;
  */
 public class TreeModelBuilder {
   @NonNls public static final String ROOT_NODE_VALUE = "root";
-  public static final String PROJECT_ROOT_TAG = "<Project Root>";
 
   private Project myProject;
   private boolean showFlatten;
@@ -43,15 +40,19 @@ public class TreeModelBuilder {
 
   public DefaultTreeModel buildModel(final List<Change> changes) {
     final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
-    final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
+    final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (Change change : changes) {
-      insertChangeNode(change, foldersCache, moduleCache, root);
+      insertChangeNode(change, foldersCache, policy, root);
     }
 
     collapseDirectories(model, root);
     sortNodes();
 
     return model;
+  }
+
+  private ChangesGroupingPolicy createGroupingPolicy() {
+    return ChangesGroupingPolicyFactory.getInstance(myProject).createGroupingPolicy(model);
   }
 
   public DefaultTreeModel buildModelFromFiles(final List<VirtualFile> files) {
@@ -79,17 +80,17 @@ public class TreeModelBuilder {
       ChangesBrowserNode listNode = ChangesBrowserNode.create(myProject, list);
       model.insertNodeInto(listNode, root, 0);
       final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
-      final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
+      final ChangesGroupingPolicy policy = createGroupingPolicy();
       for (Change change : list.getChanges()) {
-        insertChangeNode(change, foldersCache, moduleCache, listNode);
+        insertChangeNode(change, foldersCache, policy, listNode);
       }
     }
 
     if (!modifiedWithoutEditing.isEmpty()) {
-      buildVirtualFiles(modifiedWithoutEditing, ChangesListView.MODIFIED_WITHOUT_EDITING_TAG);
+      buildVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
     }
     if (!unversionedFiles.isEmpty()) {
-      buildVirtualFiles(unversionedFiles, ChangesListView.UNVERSIONED_FILES_TAG);
+      buildVirtualFiles(unversionedFiles, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     }
     if (!switchedFiles.isEmpty()) {
       buildSwitchedFiles(switchedFiles);
@@ -120,28 +121,28 @@ public class TreeModelBuilder {
       baseNode = root;
     }
     final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
-    final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
+    final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (VirtualFile file : files) {
-      insertChangeNode(file, foldersCache, moduleCache, baseNode);
+      insertChangeNode(file, foldersCache, policy, baseNode);
     }
   }
 
   private void buildFilePaths(final Collection<FilePath> filePaths, final ChangesBrowserNode baseNode) {
     final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
-    final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
+    final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (FilePath file : filePaths) {
       assert file != null;
       ChangesBrowserNode oldNode = foldersCache.get(file);
       if (oldNode == null) {
         final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, file);
-        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, baseNode), 0);
+        model.insertNodeInto(node, getParentNodeFor(node, foldersCache, policy, baseNode), 0);
         foldersCache.put(file, node);
       }
     }
   }
 
   private void buildSwitchedFiles(final MultiMap<String, VirtualFile> switchedFiles) {
-    ChangesBrowserNode baseNode = ChangesBrowserNode.create(myProject, ChangesListView.SWITCHED_FILES_TAG);
+    ChangesBrowserNode baseNode = ChangesBrowserNode.create(myProject, ChangesBrowserNode.SWITCHED_FILES_TAG);
     model.insertNodeInto(baseNode, root, root.getChildCount());
     for(String branchName: switchedFiles.keySet()) {
       final List<VirtualFile> switchedFileList = switchedFiles.get(branchName);
@@ -150,15 +151,16 @@ public class TreeModelBuilder {
         model.insertNodeInto(branchNode, baseNode, baseNode.getChildCount());
 
         final HashMap<FilePath, ChangesBrowserNode> foldersCache = new HashMap<FilePath, ChangesBrowserNode>();
-        final HashMap<Module, ChangesBrowserNode> moduleCache = new HashMap<Module, ChangesBrowserNode>();
+        final ChangesGroupingPolicy policy = createGroupingPolicy();
         for (VirtualFile file : switchedFileList) {
-          insertChangeNode(file, foldersCache, moduleCache, branchNode);
+          insertChangeNode(file, foldersCache, policy, branchNode);
         }
       }
     }
   }
 
-  private void insertChangeNode(final Object change, final HashMap<FilePath, ChangesBrowserNode> foldersCache, final HashMap<Module, ChangesBrowserNode> moduleCache,
+  private void insertChangeNode(final Object change, final HashMap<FilePath, ChangesBrowserNode> foldersCache,
+                                final ChangesGroupingPolicy policy,
                                 final ChangesBrowserNode listNode) {
     final FilePath nodePath = getPathForObject(change);
     ChangesBrowserNode oldNode = foldersCache.get(nodePath);
@@ -177,7 +179,7 @@ public class TreeModelBuilder {
     }
     else {
       final ChangesBrowserNode node = ChangesBrowserNode.create(myProject, change);
-      model.insertNodeInto(node, getParentNodeFor(node, foldersCache, moduleCache, listNode), 0);
+      model.insertNodeInto(node, getParentNodeFor(node, foldersCache, policy, listNode), 0);
       foldersCache.put(nodePath, node);
     }
   }
@@ -276,19 +278,17 @@ public class TreeModelBuilder {
 
   private ChangesBrowserNode getParentNodeFor(ChangesBrowserNode node,
                                 Map<FilePath, ChangesBrowserNode> folderNodesCache,
-                                Map<Module, ChangesBrowserNode> moduleNodesCache,
+                                ChangesGroupingPolicy policy,
                                 ChangesBrowserNode rootNode) {
     if (showFlatten) {
       return rootNode;
     }
 
-    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final FilePath path = getPathForObject(node.getUserObject());
 
-    VirtualFile vFile = path.getVirtualFile();
-    if (vFile != null && vFile == index.getContentRootForFile(vFile)) {
-      Module module = index.getModuleForFile(vFile);
-      return getNodeForModule(module, moduleNodesCache, rootNode);
+    ChangesBrowserNode nodeFromPolicy = policy.getParentNodeFor(node, rootNode);
+    if (nodeFromPolicy != null) {
+      return nodeFromPolicy;
     }
 
     FilePath parentPath = path.getParentPath();
@@ -299,29 +299,11 @@ public class TreeModelBuilder {
     ChangesBrowserNode parentNode = folderNodesCache.get(parentPath);
     if (parentNode == null) {
       parentNode = ChangesBrowserNode.create(myProject, parentPath);
-      ChangesBrowserNode grandPa = getParentNodeFor(parentNode, folderNodesCache, moduleNodesCache, rootNode);
+      ChangesBrowserNode grandPa = getParentNodeFor(parentNode, folderNodesCache, policy, rootNode);
       model.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
       folderNodesCache.put(parentPath, parentNode);
     }
 
     return parentNode;
   }
-
-  private ChangesBrowserNode getNodeForModule(Module module,
-                                              Map<Module, ChangesBrowserNode> moduleNodesCache,
-                                              ChangesBrowserNode root) {
-    ChangesBrowserNode node = moduleNodesCache.get(module);
-    if (node == null) {
-      if (module == null) {
-        node = ChangesBrowserNode.create(myProject, PROJECT_ROOT_TAG);
-      }
-      else {
-        node = new ChangesBrowserModuleNode(module);
-      }
-      model.insertNodeInto(node, root, root.getChildCount());
-      moduleNodesCache.put(module, node);
-    }
-    return node;
-  }
-
 }

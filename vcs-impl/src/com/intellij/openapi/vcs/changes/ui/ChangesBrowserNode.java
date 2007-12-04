@@ -28,6 +28,21 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
       return VcsBundle.message("changes.nodetitle.ignored.files");
     }
   };
+  public static final Object UNVERSIONED_FILES_TAG = new Object() {
+    public String toString() {
+      return VcsBundle.message("changes.nodetitle.unversioned.files");
+    }
+  };
+  public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Object() {
+    public String toString() {
+      return VcsBundle.message("changes.nodetitle.modified.without.editing");
+    }
+  };
+  public static final Object SWITCHED_FILES_TAG = new Object() {
+    public String toString() {
+      return VcsBundle.message("changes.nodetitle.switched.files");
+    }
+  };
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);

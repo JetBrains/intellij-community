@@ -63,23 +63,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<String> HELP_ID_DATA_KEY = DataKey.create(HELP_ID_KEY);
 
-  public static final Object UNVERSIONED_FILES_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.unversioned.files");
-    }
-  };
-
-  public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.modified.without.editing");
-    }
-  };
-
-  public static final Object SWITCHED_FILES_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.switched.files");
-    }
-  };
   private ActionGroup myMenuGroup;
 
   public ChangesListView(final Project project) {
@@ -203,11 +186,11 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   }
 
   private List<VirtualFile> getSelectedUnversionedFiles() {
-    return getSelectedVirtualFiles(UNVERSIONED_FILES_TAG);
+    return getSelectedVirtualFiles(ChangesBrowserNode.UNVERSIONED_FILES_TAG);
   }
 
   private List<VirtualFile> getSelectedModifiedWithoutEditing() {
-    return getSelectedVirtualFiles(MODIFIED_WITHOUT_EDITING_TAG);
+    return getSelectedVirtualFiles(ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
   }
 
   private List<VirtualFile> getSelectedIgnoredFiles() {
