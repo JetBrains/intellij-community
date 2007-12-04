@@ -1,6 +1,5 @@
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -24,6 +23,11 @@ import java.util.List;
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   protected int myCount = -1;
   private int myDirectoryCount = -1;
+  public static final Object IGNORED_FILES_TAG = new Object() {
+    public String toString() {
+      return VcsBundle.message("changes.nodetitle.ignored.files");
+    }
+  };
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
@@ -42,10 +46,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     if (userObject instanceof ChangeList) {
       return new ChangesBrowserChangeListNode(project, (ChangeList) userObject);
     }
-    if (userObject instanceof Module) {
-      return new ChangesBrowserModuleNode((Module) userObject);
-    }
-    if (userObject == ChangesListView.IGNORED_FILES_TAG) {
+    if (userObject == IGNORED_FILES_TAG) {
       return new ChangesBrowserIgnoredFilesNode(userObject);
     }
     return new ChangesBrowserNode(userObject);

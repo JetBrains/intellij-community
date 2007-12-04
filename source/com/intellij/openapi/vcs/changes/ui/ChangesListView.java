@@ -76,12 +76,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
     }
   };
 
-  public static final Object IGNORED_FILES_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.ignored.files");
-    }
-  };
-
   public static final Object SWITCHED_FILES_TAG = new Object() {
     public String toString() {
       return VcsBundle.message("changes.nodetitle.switched.files");
@@ -228,7 +222,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
   }
 
   private List<VirtualFile> getSelectedIgnoredFiles() {
-    return getSelectedVirtualFiles(IGNORED_FILES_TAG);
+    return getSelectedVirtualFiles(ChangesBrowserNode.IGNORED_FILES_TAG);
   }
 
   private List<VirtualFile> getSelectedVirtualFiles(final Object tag) {
@@ -504,7 +498,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
       if (!(attached instanceof ChangeListDragBean)) return false;
 
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-      if (dragBean.getView() != ChangesListView.this) return false;
+      if (dragBean.getSourceComponent() != ChangesListView.this) return false;
       dragBean.setTargetNode(null);
 
       RelativePoint dropPoint = aEvent.getRelativePoint();

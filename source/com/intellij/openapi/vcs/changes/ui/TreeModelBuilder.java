@@ -95,7 +95,7 @@ public class TreeModelBuilder {
       buildSwitchedFiles(switchedFiles);
     }
     if (ignoredFiles != null && !ignoredFiles.isEmpty()) {
-      buildVirtualFiles(ignoredFiles, ChangesListView.IGNORED_FILES_TAG);
+      buildVirtualFiles(ignoredFiles, ChangesBrowserNode.IGNORED_FILES_TAG);
     }
 
     if (!locallyDeletedFiles.isEmpty()) {
@@ -316,7 +316,7 @@ public class TreeModelBuilder {
         node = ChangesBrowserNode.create(myProject, PROJECT_ROOT_TAG);
       }
       else {
-        node = ChangesBrowserNode.create(myProject, module);
+        node = new ChangesBrowserModuleNode(module);
       }
       model.insertNodeInto(node, root, root.getChildCount());
       moduleNodesCache.put(module, node);

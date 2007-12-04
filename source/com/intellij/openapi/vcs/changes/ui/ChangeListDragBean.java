@@ -7,28 +7,29 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
  * @author yole
 */
 class ChangeListDragBean {
-  private ChangesListView myView;
+  private JComponent mySourceComponent;
   private Change[] myChanges;
   private List<VirtualFile> myUnversionedFiles;
   private List<VirtualFile> myIgnoredFiles;
   private ChangesBrowserNode myTargetNode;
 
-  public ChangeListDragBean(final ChangesListView view, final Change[] changes, final List<VirtualFile> unversionedFiles,
+  public ChangeListDragBean(final JComponent sourceComponent, final Change[] changes, final List<VirtualFile> unversionedFiles,
                             final List<VirtualFile> ignoredFiles) {
-    myView = view;
+    mySourceComponent = sourceComponent;
     myChanges = changes;
     myUnversionedFiles = unversionedFiles;
     myIgnoredFiles = ignoredFiles;
   }
 
-  public ChangesListView getView() {
-    return myView;
+  public JComponent getSourceComponent() {
+    return mySourceComponent;
   }
 
   public Change[] getChanges() {
