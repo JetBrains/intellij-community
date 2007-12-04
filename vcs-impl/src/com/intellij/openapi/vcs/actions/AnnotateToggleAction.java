@@ -1,5 +1,6 @@
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +14,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ public class AnnotateToggleAction extends ToggleAction {
   protected static final Key<Collection<AnnotationFieldGutter>> KEY_IN_EDITOR = Key.create("Annotations");
 
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(isEnabled(PeerFactory.getInstance().getVcsContextFactory().createContextOn(e)));
+    e.getPresentation().setEnabled(isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e)));
   }
 
   private static boolean isEnabled(final VcsContext context) {
@@ -71,7 +70,7 @@ public class AnnotateToggleAction extends ToggleAction {
   }
 
   public boolean isSelected(AnActionEvent e) {
-    VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createContextOn(e);
+    VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
     Editor editor = context.getEditor();
     if (editor == null) return false;
     Collection annotations = editor.getUserData(KEY_IN_EDITOR);
@@ -79,7 +78,7 @@ public class AnnotateToggleAction extends ToggleAction {
   }
 
   public void setSelected(AnActionEvent e, boolean state) {
-    VcsContext context = PeerFactory.getInstance().getVcsContextFactory().createContextOn(e);
+    VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
     Editor editor = context.getEditor();
     if (!state) {
       if (editor != null) {
@@ -137,8 +136,9 @@ public class AnnotateToggleAction extends ToggleAction {
     FileAnnotation fileAnnotation = fileAnnotationRef.get();
     String upToDateContent = fileAnnotation.getAnnotatedContent();
 
-    final UpToDateLineNumberProvider getUpToDateLineNumber = LocalVcs.getInstance(project).getUpToDateLineNumberProvider(
+    final UpToDateLineNumberProvider getUpToDateLineNumber = new UpToDateLineNumberProviderImpl(
       editor.getDocument(),
+      project, 
       upToDateContent);
 
     editor.getGutter().closeAllAnnotations();

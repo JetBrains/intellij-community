@@ -1,23 +1,22 @@
-package com.intellij.history.deprecated;
+package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 
 import java.util.List;
 
 /**
  * author: lesya
  */
-public class DeprecatedUpToDateLineNumberProviderImpl implements UpToDateLineNumberProvider {
+public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvider {
   private final Document myDocument;
   private final Project myProject;
   private final String myUpToDateContent;
 
-  public DeprecatedUpToDateLineNumberProviderImpl(Document document, Project project, String upToDateContent) {
+  public UpToDateLineNumberProviderImpl(Document document, Project project, String upToDateContent) {
     myDocument = document;
     myProject = project;
     myUpToDateContent = upToDateContent;

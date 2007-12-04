@@ -17,7 +17,6 @@ package com.intellij.openapi.localVcs;
 
 import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.components.SettingsSavingComponent;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -70,8 +69,6 @@ public abstract class LocalVcs implements SettingsSavingComponent {
   public abstract void addLvcsLabelListener(LvcsLabelListener listener);
 
   public abstract void removeLvcsLabelListener(LvcsLabelListener listener);
-
-  public abstract UpToDateLineNumberProvider getUpToDateLineNumberProvider(Document document, String upToDateContent);
 
   public abstract LocalHistoryConfiguration getConfiguration();
 }

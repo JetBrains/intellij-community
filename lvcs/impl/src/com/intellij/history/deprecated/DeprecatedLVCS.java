@@ -1,9 +1,7 @@
 package com.intellij.history.deprecated;
 
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.localVcs.*;
-import com.intellij.history.deprecated.DeprecatedUpToDateLineNumberProviderImpl;
 import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -141,10 +139,6 @@ public class DeprecatedLVCS extends LocalVcs implements ProjectComponent {
   }
 
   public void removeLvcsLabelListener(final LvcsLabelListener listener) {
-  }
-
-  public UpToDateLineNumberProvider getUpToDateLineNumberProvider(final Document document, final String upToDateContent) {
-    return new DeprecatedUpToDateLineNumberProviderImpl(document, myProject, upToDateContent);
   }
 
   public LocalHistoryConfiguration getConfiguration() {

@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.localVcs;
 
-/**
- * @deprecated use LocalHistory instead
- */
 public interface UpToDateLineNumberProvider {
   int ABSENT_LINE_NUMBER = -1;
 
