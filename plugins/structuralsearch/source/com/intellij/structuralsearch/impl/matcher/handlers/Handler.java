@@ -125,7 +125,7 @@ public abstract class Handler {
       visitElement(expression);
     }
 
-    void clearState(CompiledPattern _pattern, PsiElement el) {
+    synchronized void clearState(CompiledPattern _pattern, PsiElement el) {
       pattern = _pattern;
       el.acceptChildren(this);
       pattern = null;
