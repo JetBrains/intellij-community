@@ -86,7 +86,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private List<AbstractVcs> myVcss = new ArrayList<AbstractVcs>();
   private AbstractVcs[] myCachedVCSs = null;
   private final Project myProject;
-  private final MessageBus myMessageBus;
 
   private boolean myIsInitialized = false;
   private boolean myIsDisposed = false;
@@ -114,7 +113,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private boolean myMappingsLoaded = false;
   private boolean myHaveLegacyVcsConfiguration = false;
   private boolean myCheckinHandlerFactoriesLoaded = false;
-  private final VirtualFile myBaseDir;
+  private DefaultVcsRootPolicy myDefaultVcsRootPolicy;
 
   private volatile int myBackgroundOperationCounter = 0;
 
@@ -124,10 +123,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public ProjectLevelVcsManagerImpl(Project project, AbstractVcs[] vcses, MessageBus bus) {
     myProject = project;
-    myMessageBus = bus;
     myDirectoryMappingList = new VcsDirectoryMappingList(project);
     myVcss = new ArrayList<AbstractVcs>(Arrays.asList(vcses));
-    myBaseDir = project.getBaseDir();
+    myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
   }
 
   private final Map<String, VcsShowOptionsSettingImpl> myOptions = new LinkedHashMap<String, VcsShowOptionsSettingImpl>();
@@ -314,14 +312,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
     final String directory = mapping.getDirectory();
     if (directory.length() == 0) {
-      if (myBaseDir != null && VfsUtil.isAncestor(myBaseDir, file, false)) {
-        return myBaseDir;
-      }
-      final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file);
-      if (contentRoot != null) {
-        return contentRoot;
-      }
-      return null;
+      return myDefaultVcsRootPolicy.getVcsRootFor(file);
     }
     return LocalFileSystem.getInstance().findFileByPath(directory);
   }

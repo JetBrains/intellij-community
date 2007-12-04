@@ -58,4 +58,16 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   public Object getMatchContext(final VirtualFile file) {
     return ModuleUtil.findModuleForFile(file, myProject);
   }
+
+  @Nullable
+  public VirtualFile getVcsRootFor(final VirtualFile file) {
+    if (myBaseDir != null && VfsUtil.isAncestor(myBaseDir, file, false)) {
+      return myBaseDir;
+    }
+    final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file);
+    if (contentRoot != null) {
+      return contentRoot;
+    }
+    return null;
+  }
 }

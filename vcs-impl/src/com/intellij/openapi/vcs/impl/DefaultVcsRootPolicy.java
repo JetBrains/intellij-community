@@ -1,12 +1,11 @@
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -22,4 +21,7 @@ public abstract class DefaultVcsRootPolicy {
 
   @Nullable
   public abstract Object getMatchContext(final VirtualFile file);
+
+  @Nullable
+  public abstract VirtualFile getVcsRootFor(final VirtualFile file);
 }
