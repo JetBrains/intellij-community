@@ -28,8 +28,6 @@ public interface Instruction {
   Iterable<? extends Instruction> succ(CallEnvironment env);
   Iterable<? extends Instruction> pred(CallEnvironment env);
 
-  boolean isReturn();
-
   int num();
 
   @Nullable

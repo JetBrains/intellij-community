@@ -49,35 +49,4 @@ public class ControlFlowUtil {
     postorder[curr.num()] = --currN;
     return currN;
   }
-
-  public static boolean isImplicitSingleExit(GrMethod method) {
-    GrOpenBlock block = method.getBlock();
-    if (block == null) return false;
-    Instruction[] flow = block.getControlFlow();
-    boolean[] visited = new boolean[flow.length];
-    CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
-    return doVisitForImplicitSingleExit(flow[0], flow, env, visited, new Ref<Boolean>(false));
-  }
-
-  private static boolean doVisitForImplicitSingleExit(Instruction curr,
-                                                      Instruction[] flow,
-                                                      CallEnvironment env,
-                                                      boolean[] visited,
-                                                      Ref<Boolean> returnEncountered) {
-    if (curr == flow[flow.length - 1]) {
-      return !returnEncountered.get();
-    } else if (curr.isReturn()) {
-      returnEncountered.set(true);
-      return false;
-    }
-
-    visited[curr.num()] = true;
-    for (Instruction succ : curr.succ(env)) {
-      if (!visited[succ.num()]) {
-        if (!doVisitForImplicitSingleExit(succ, flow, env, visited, returnEncountered)) return false;
-      }
-    }
-
-    return true;
-  }
 }

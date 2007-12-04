@@ -9,7 +9,7 @@ print e
 1(2) element: Open block
 2(3) element: IF statement
 3(4,8) READ c
-4(6) return element: RETURN statement
+4(6) element: RETURN statement
 5(10) element: Finally clause
 6(5,7)  CALL 5
 7(14) AFTER CALL 6
