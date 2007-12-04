@@ -9,6 +9,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
 
+import java.io.File;
+
 /**
  * @author yole
  */
@@ -29,7 +31,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final FilePath path = (FilePath)userObject;
     if (path.isDirectory() || !isLeaf()) {
-      renderer.append(ChangesListView.getRelativePath(ChangesListView.safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path),
+      renderer.append(getRelativePath(safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path),
              SimpleTextAttributes.REGULAR_ATTRIBUTES);
       if (!isLeaf()) {
         appendCount(renderer);
@@ -43,7 +45,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
         renderer.append(" (" + parentPath.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       else {
-        renderer.append(ChangesListView.getRelativePath(ChangesListView.safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path),
+        renderer.append(getRelativePath(safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path),
                         SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       renderer.setIcon(path.getFileType().getIcon());
@@ -58,5 +60,15 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   @Override
   public String toString() {
     return FileUtil.toSystemDependentName(getUserObject().getPath());
+  }
+
+  public static FilePath safeCastToFilePath(Object o) {
+    if (o instanceof FilePath) return (FilePath)o;
+    return null;
+  }
+
+  public static String getRelativePath(FilePath parent, FilePath child) {
+    if (parent == null) return child.getPath().replace('/', File.separatorChar);
+    return child.getPath().substring(parent.getPath().length() + 1).replace('/', File.separatorChar);
   }
 }

@@ -40,7 +40,6 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -99,16 +98,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Delet
 
   public DefaultTreeModel getModel() {
     return (DefaultTreeModel)super.getModel();
-  }
-
-  public static FilePath safeCastToFilePath(Object o) {
-    if (o instanceof FilePath) return (FilePath)o;
-    return null;
-  }
-
-  public static String getRelativePath(FilePath parent, FilePath child) {
-    if (parent == null) return child.getPath().replace('/', File.separatorChar);
-    return child.getPath().substring(parent.getPath().length() + 1).replace('/', File.separatorChar);
   }
 
   public void installDndSupport(ChangeListOwner owner) {
