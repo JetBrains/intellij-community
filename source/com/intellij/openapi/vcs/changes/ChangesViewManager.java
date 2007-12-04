@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
@@ -55,7 +54,6 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
   private boolean myDisposed = false;
 
   private ChangeListListener myListener = new MyChangeListListener();
-  private WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
   private ChangesViewContentManager myContentManager;
 
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
@@ -79,13 +77,10 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     final Content content = ContentFactory.SERVICE.getInstance().createContent(createChangeViewComponent(), "Local", false);
     content.setCloseable(false);
     myContentManager.addContent(content);
-
-    WolfTheProblemSolver.getInstance(myProject).addProblemListener(myProblemListener);
   }
 
   public void projectClosed() {
     ChangeListManager.getInstance(myProject).removeChangeListListener(myListener);
-    WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
 
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
@@ -219,6 +214,33 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
     }
   }
 
+  public void refreshChangesViewNodeAsync(final VirtualFile file) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) return;
+        refreshChangesViewNode(file);
+      }
+    });
+  }
+
+  private void refreshChangesViewNode(final VirtualFile file) {
+    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
+    Object userObject;
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    if (changeListManager.isUnversioned(file)) {
+      userObject = file;
+    }
+    else {
+      userObject = changeListManager.getChange(file);
+    }
+    if (userObject != null) {
+      final DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
+      if (node != null) {
+        myView.getModel().nodeChanged(node);
+      }
+    }
+  }
+
   private class MyChangeListListener extends ChangeListAdapter {
 
     public void changeListAdded(ChangeList list) {
@@ -306,45 +328,5 @@ public class ChangesViewManager implements ProjectComponent, JDOMExternalizable 
       SHOW_IGNORED_MODE = state;
       refreshView();
     }
-  }
-
-  private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
-    @Override
-    public void problemsAppeared(final VirtualFile file) {
-      refreshChangesViewNodeAsync(file);
-    }
-
-    @Override
-    public void problemsDisappeared(VirtualFile file) {
-      refreshChangesViewNodeAsync(file);
-    }
-
-    private void refreshChangesViewNodeAsync(final VirtualFile file) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-          refreshChangesViewNode(file);
-        }
-      });
-    }
-
-    private void refreshChangesViewNode(final VirtualFile file) {
-      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      Object userObject;
-      final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      if (changeListManager.isUnversioned(file)) {
-        userObject = file;
-      }
-      else {
-        userObject = changeListManager.getChange(file);
-      }
-      if (userObject != null) {
-        final DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
-        if (node != null) {
-          myView.getModel().nodeChanged(node);
-        }
-      }
-    }
-
   }
 }

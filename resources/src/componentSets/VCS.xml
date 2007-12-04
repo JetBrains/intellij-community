@@ -92,7 +92,7 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.RootsChangedWatcher</implementation-class>
+      <implementation-class>com.intellij.openapi.vcs.changes.VcsEventWatcher</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

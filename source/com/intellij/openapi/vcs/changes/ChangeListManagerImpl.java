@@ -18,6 +18,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
@@ -25,7 +26,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
@@ -425,7 +425,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
                   if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
-                  if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                  if (scope.belongsTo(new FilePathImpl(file))) {
                     modifiedWithoutEditingHolder.addFile(file);
                     ChangesViewManager.getInstance(myProject).scheduleRefresh();
                   }
@@ -435,7 +435,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
                   if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
-                  if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                  if (scope.belongsTo(new FilePathImpl(file))) {
                     ignoredHolder.addFile(file);
                     ChangesViewManager.getInstance(myProject).scheduleRefresh();
                   }
@@ -445,7 +445,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                   if (file == null || !updateUnversionedFiles) return;
                   if (myDisposed) throw new DisposedException();
                   if (ExcludedFileIndex.getInstance(myProject).isExcludedFile(file)) return;
-                  if (scope.belongsTo(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(file))) {
+                  if (scope.belongsTo(new FilePathImpl(file))) {
                     switchedHolder.addFile(file, branch, recursive);
                   }
                 }
@@ -804,7 +804,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @NotNull
   public Collection<Change> getChangesIn(VirtualFile dir) {
-    return getChangesIn(PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(dir));
+    return getChangesIn(new FilePathImpl(dir));
   }
 
   @NotNull
@@ -1048,7 +1048,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     private final FilePath myFile;
 
     public FakeRevision(String path) throws OutdatedFakeRevisionException {
-      final FilePath file = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(new File(path));
+      final FilePath file = VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path));
       if (file == null) throw new OutdatedFakeRevisionException();
       myFile = file;
     }
