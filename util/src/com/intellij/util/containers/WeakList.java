@@ -71,9 +71,11 @@ public class WeakList<T> extends AbstractList<T> {
   }
 
   public List<T> toStrongList() {
-    List<T> result = new ArrayList<T>();
-    myArray.toStrongCollection(result);
-    return result;
+    synchronized (myArray) {
+      List<T> result = new ArrayList<T>();
+      myArray.toStrongCollection(result);
+      return result;
+    }
   }
 
   private int tryReduceCapacity(int trackIndex) {
