@@ -56,7 +56,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.update.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;

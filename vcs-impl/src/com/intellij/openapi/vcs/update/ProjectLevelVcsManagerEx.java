@@ -1,4 +1,4 @@
-package com.intellij.openapi.vcs.ex;
+package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
