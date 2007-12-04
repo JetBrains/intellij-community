@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -121,18 +120,6 @@ public abstract class ProjectLevelVcsManager {
    * @return true if the VCS is used by any of the modules, false otherwise
    */
   public abstract boolean checkVcsIsActive(@NonNls String vcsName);
-
-  /**
-   * Returns the user-visible relative path from the content root under which the
-   * specified file is located to the file itself, prefixed by the module name in
-   * angle brackets.
-   *
-   * @param file the file for which the path is requested.
-   * @return the relative path.
-   */
-  public abstract String getPresentableRelativePathFor(VirtualFile file);
-
-  public abstract String getPresentableRelativePath(ContentRevision fromRevision, ContentRevision toRevision);
 
   /**
    * Returns the list of VCSes used by at least one module in the project.

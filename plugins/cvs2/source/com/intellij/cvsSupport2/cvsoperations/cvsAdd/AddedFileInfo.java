@@ -38,7 +38,7 @@ import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionListWithS
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ListWithSelection;
@@ -126,7 +126,7 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
 
   public String getPresentableText() {
     if (myParent == null) {
-      return ProjectLevelVcsManager.getInstance(myProject).getPresentableRelativePathFor(myAddedFile);
+      return VcsPathPresenter.getInstance(myProject).getPresentableRelativePathFor(myAddedFile);
     }
     else {
       return myAddedFile.getName();

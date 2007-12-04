@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,7 +156,7 @@ public class Change {
       }
     }
     if (myMoved && myMoveRelativePath == null && project != null) {
-      myMoveRelativePath = ProjectLevelVcsManager.getInstance(project).getPresentableRelativePath(myBeforeRevision, myAfterRevision);
+      myMoveRelativePath = VcsPathPresenter.getInstance(project).getPresentableRelativePath(myBeforeRevision, myAfterRevision);
     }
   }
 
