@@ -3,29 +3,53 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.ide.StandardTargetWeights;
-import com.intellij.ide.impl.SelectInTargetPsiWrapper;
+import com.intellij.ide.SelectInContext;
+import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class SelectInChangesViewTarget extends SelectInTargetPsiWrapper {
+public class SelectInChangesViewTarget implements SelectInTarget {
+  private Project myProject;
+
   public SelectInChangesViewTarget(final Project project) {
-    super(project);
+    myProject = project;
   }
 
   public String toString() {
     return VcsBundle.message("changes.toolwindow.name");
+  }
+
+  public boolean canSelect(final SelectInContext context) {
+    final VirtualFile file = context.getVirtualFile();
+    FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(file);
+    return ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length != 0 &&
+           !fileStatus.equals(FileStatus.NOT_CHANGED);
+  }
+
+  public void selectIn(final SelectInContext context, final boolean requestFocus) {
+    final VirtualFile file = context.getVirtualFile();
+    Runnable runnable = new Runnable() {
+      public void run() {
+        ChangesViewContentManager.getInstance(myProject).selectContent("Local");
+        ChangesViewManager.getInstance(myProject).selectFile(file);
+      }
+    };
+    if (requestFocus) {
+      ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).activate(runnable);
+    }
+    else {
+      runnable.run();
+    }
   }
 
   public String getToolWindowId() {
@@ -37,40 +61,6 @@ public class SelectInChangesViewTarget extends SelectInTargetPsiWrapper {
   }
 
   public float getWeight() {
-    return StandardTargetWeights.CHANGES_VIEW;
-  }
-
-  protected boolean canSelect(PsiFileSystemItem file) {
-    FileStatus fileStatus = file.getFileStatus();
-    return ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length != 0 &&
-           !fileStatus.equals(FileStatus.NOT_CHANGED);
-  }
-
-  protected void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus) {
-    selectVirtualFile(virtualFile, true);
-  }
-
-  protected boolean canWorkWithCustomObjects() {
-    return false;
-  }
-
-  protected void select(final PsiElement element, boolean requestFocus) {
-    final VirtualFile vFile = element.getContainingFile().getVirtualFile();
-    selectVirtualFile(vFile, requestFocus);
-  }
-
-  private void selectVirtualFile(final VirtualFile vFile, final boolean requestFocus) {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        ChangesViewContentManager.getInstance(myProject).selectContent("Local");
-        ChangesViewManager.getInstance(myProject).selectFile(vFile);
-      }
-    };
-    if (requestFocus) {
-      ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).activate(runnable);
-    }
-    else {
-      runnable.run();
-    }
+    return 9;
   }
 }
