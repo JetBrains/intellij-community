@@ -1,18 +1,12 @@
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.ui.DialogWrapper;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,19 +16,20 @@ import java.awt.event.MouseListener;
  * To change this template use File | Settings | File Templates.
  */
 
-class UpdateInfoDialog extends DialogWrapper {
+class UpdateInfoDialog extends AbstractUpdateDialog {
   private UpdateInfoPanel myUpdateInfoPanel;
   private UpdateChecker.NewVersion myNewVersion;
-  private final String myUploadedPlugins;
 
-  protected UpdateInfoDialog(final boolean canBeParent, UpdateChecker.NewVersion newVersion, final String uploadedPlugins) {
-    super(canBeParent);
+  protected UpdateInfoDialog(final boolean canBeParent, UpdateChecker.NewVersion newVersion, final List<PluginDownloader> uploadedPlugins,
+                             final boolean enableLink) {
+    super(canBeParent, enableLink, uploadedPlugins);
     myNewVersion = newVersion;
-    myUploadedPlugins = uploadedPlugins;
     setTitle(IdeBundle.message("updates.info.dialog.title"));
-    setOKButtonText(myUploadedPlugins != null ? IdeBundle.message("update.plugins.shutdown.action") : IdeBundle.message("updates.more.info.button"));
-    setCancelButtonText(myUploadedPlugins != null ? IdeBundle.message("update.plugins.update.later.action") : CommonBundle.getCloseButtonText());
     init();
+  }
+
+  protected String getOkButtonText() {
+    return IdeBundle.message("updates.more.info.button");
   }
 
   protected JComponent createCenterPanel() {
@@ -43,53 +38,18 @@ class UpdateInfoDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    BrowserUtil.launchBrowser(getDownloadUrl());
-    if (myUploadedPlugins != null) {
-      ApplicationManagerEx.getApplicationEx().exit(true);
-    }
-  }
-
-  private String getDownloadUrl() {
-    return ApplicationInfoEx.getInstanceEx().getUpdateUrls().getDownloadUrl();
-  }
-
-  public boolean shouldCloseOnCross() {
-    return true;
-  }
-
-  public void setLinkEnabled(final boolean enableLink) {
-    if (enableLink) {
-      myUpdateInfoPanel.myUpdatesLink.setForeground(Color.BLUE); // TODO: specify correct color
-      myUpdateInfoPanel.myUpdatesLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      myUpdateInfoPanel.myUpdatesLink.setToolTipText(IdeBundle.message("updates.open.settings.link"));
-      myUpdateInfoPanel.myUpdatesLink.addMouseListener(new MouseListener() {
-        public void mouseClicked(MouseEvent e) {
-          UpdateSettingsConfigurable updatesSettings = UpdateSettingsConfigurable.getInstance();
-          updatesSettings.setCheckNowEnabled(false);
-          ShowSettingsUtil.getInstance().editConfigurable(myUpdateInfoPanel.myPanel, updatesSettings);
-          updatesSettings.setCheckNowEnabled(true);
-        }
-        public void mouseEntered(MouseEvent e) {
-        }
-        public void mouseExited(MouseEvent e) {
-        }
-        public void mousePressed(MouseEvent e) {
-        }
-        public void mouseReleased(MouseEvent e) {
-        }
-      });
-    }
+    BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getUpdateUrls().getDownloadUrl());
+    super.doOKAction();
   }
 
   private class UpdateInfoPanel {
-
     private JPanel myPanel;
     private JLabel myBuildNumber;
     private JLabel myVersionNumber;
     private JLabel myNewVersionNumber;
     private JLabel myNewBuildNumber;
-    private JLabel myUpdatesLink;
-    private JLabel myUpdatedPlugins;
+    private JPanel myUpdatedPluginsPanel;
+    private JEditorPane myEditorPane;
 
     public UpdateInfoPanel() {
 
@@ -113,17 +73,8 @@ class UpdateInfoDialog extends DialogWrapper {
       myVersionNumber.setText(version);
       myNewBuildNumber.setText(Integer.toString(myNewVersion.getLatestBuild()) + ")");
       myNewVersionNumber.setText(myNewVersion.getLatestVersion());
-      myUpdatedPlugins.setText(myUploadedPlugins != null ? myUploadedPlugins : "");
-      myUpdatedPlugins.setVisible(myUploadedPlugins != null);
 
-      LabelTextReplacingUtil.replaceText(myPanel);
-    }
-
-    public JComponent getComponent() {
-      return myPanel;
-    }
-
-    public void dispose() {
+      initPluginsPanel(myPanel, myUpdatedPluginsPanel, myEditorPane);
     }
   }
 

@@ -43,6 +43,9 @@ public class PluginDownloader {
   private String myFileName;
   private String myPluginName;
 
+  private File myFile;
+  private File myOldFile;
+
   public PluginDownloader(final String pluginId, final String pluginUrl, final String pluginVersion) {
     myPluginId = pluginId;
     myPluginUrl = pluginUrl;
@@ -66,26 +69,24 @@ public class PluginDownloader {
   }
 
   public boolean prepareToInstall(ProgressIndicator pi) throws IOException {
-    File oldFile = null;
     IdeaPluginDescriptor ideaPluginDescriptor = null;
     if (PluginManager.isPluginInstalled(PluginId.getId(myPluginId))) {
       //store old plugins file
       ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(myPluginId));
       LOG.assertTrue(ideaPluginDescriptor != null);
       if (myPluginVersion != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), myPluginVersion) >= 0) return false;
-      oldFile = ideaPluginDescriptor.getPath();
+      myOldFile = ideaPluginDescriptor.getPath();
     }
     // download plugin
-    File file;
     String errorMessage = IdeBundle.message("unknown.error");
     try {
-      file = downloadPlugin(pi);
+      myFile = downloadPlugin(pi);
     }
     catch (IOException ex) {
-      file = null;
+      myFile = null;
       errorMessage = ex.getMessage();
     }
-    if (file == null) {
+    if (myFile == null) {
       final String errorMessage1 = errorMessage;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
@@ -97,41 +98,45 @@ public class PluginDownloader {
     }
 
     if (ideaPluginDescriptor != null) {
-      final IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(file);
+      final IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(myFile);
       if (descriptor == null) return false;
       if (IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) return false; //was not updated
-      if (oldFile != null) {
-        // add command to delete the 'action script' file
-        StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(oldFile);
-        StartupActionScriptManager.addActionCommand(deleteOld);
-      }
+    }
+    return true;
+  }
+
+  public void install() throws IOException {
+    LOG.assertTrue(myFile != null);
+    if (myOldFile != null) {
+      // add command to delete the 'action script' file
+      StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(myOldFile);
+      StartupActionScriptManager.addActionCommand(deleteOld);
     }
 
     //noinspection HardCodedStringLiteral
-    if (file.getName().endsWith(".jar")) {
+    if (myFile.getName().endsWith(".jar")) {
       // add command to copy file to the IDEA/plugins path
       StartupActionScriptManager.ActionCommand copyPlugin =
-        new StartupActionScriptManager.CopyCommand(file, new File(PathManager.getPluginsPath() + File.separator + file.getName()));
+        new StartupActionScriptManager.CopyCommand(myFile, new File(PathManager.getPluginsPath() + File.separator + myFile.getName()));
       StartupActionScriptManager.addActionCommand(copyPlugin);
     }
     else {
       // add command to unzip file to the IDEA/plugins path
       String unzipPath;
-      if (ZipUtil.isZipContainsFolder(file)) {
+      if (ZipUtil.isZipContainsFolder(myFile)) {
         unzipPath = PathManager.getPluginsPath();
       }
       else {
         unzipPath = PathManager.getPluginsPath() + File.separator + getPluginName();
       }
 
-      StartupActionScriptManager.ActionCommand unzip = new StartupActionScriptManager.UnzipCommand(file, new File(unzipPath));
+      StartupActionScriptManager.ActionCommand unzip = new StartupActionScriptManager.UnzipCommand(myFile, new File(unzipPath));
       StartupActionScriptManager.addActionCommand(unzip);
     }
 
     // add command to remove temp plugin file
-    StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(file);
+    StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(myFile);
     StartupActionScriptManager.addActionCommand(deleteTemp);
-    return true;
   }
 
   private File downloadPlugin(ProgressIndicator pi) throws IOException {
@@ -216,6 +221,10 @@ public class PluginDownloader {
     }
   }
 
+  public String getPluginId() {
+    return myPluginId;
+  }
+
   public String getFileName() {
     if (myFileName == null) {
       myFileName = myPluginUrl.substring(myPluginUrl.lastIndexOf("/") + 1);
@@ -239,6 +248,9 @@ public class PluginDownloader {
   public static void updateFromRepository(final String pluginId, final @Nullable String pluginVersion) throws IOException {
     @NonNls final String url =
       RepositoryHelper.DOWNLOAD_URL + URLEncoder.encode(pluginId, "UTF8") + "&build=" + ApplicationInfo.getInstance().getBuildNumber();
-    new PluginDownloader(pluginId, url, pluginVersion).prepareToInstall();
+    final PluginDownloader downloader = new PluginDownloader(pluginId, url, pluginVersion);
+    if (downloader.prepareToInstall()) {
+      downloader.install();
+    }
   }
 }

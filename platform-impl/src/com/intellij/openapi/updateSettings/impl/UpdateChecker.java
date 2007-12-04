@@ -12,11 +12,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.DateFormatUtil;
@@ -26,13 +28,9 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -59,6 +57,10 @@ public final class UpdateChecker {
   @NonNls private static final String BUILD_NUMBER_STUB = "__BUILD_NUMBER__";
   @NonNls private static final String ELEMENT_BUILD = "build";
   @NonNls private static final String ELEMENT_VERSION = "version";
+
+  @NonNls
+  private static final String DISABLED_UPDATE = "disabled_update.txt";
+  private static TreeSet<String> ourDisabledToUpdatePlugins;
 
   private static String getUpdateUrl() {
     if (UPDATE_URL == null) {
@@ -101,44 +103,12 @@ public final class UpdateChecker {
     return settings.CHECK_NEEDED;
   }
 
-  public static String updatePlugins(final boolean showErrorDialog) throws ConnectionException {
-    final List<String> downloaded = new ArrayList<String>();
+  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog) throws ConnectionException {
+    final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
     for (String host : UpdateSettingsConfigurable.getInstance().getPluginHosts()) {
       try {
-        final Document document = loadVersionInfo(host);
-        if (document == null) continue;
-        for (Object plugin : document.getRootElement().getChildren("plugin")) {
-          Element pluginElement = (Element)plugin;
-          final String pluginId = pluginElement.getAttributeValue("id");
-          final String pluginUrl = pluginElement.getAttributeValue("url");
-          final String pluginVersion = pluginElement.getAttributeValue("version");
-
-          if (pluginId == null) {
-            LOG.info("plugin id should not be null");
-            continue;
-          }
-
-          if (pluginUrl == null) {
-            LOG.info("plugin url should not be null");
-            continue;
-          }
-
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
-            public void run() {
-              try {
-                final PluginDownloader uploader = new PluginDownloader(pluginId, pluginUrl, pluginVersion);
-                if (uploader.prepareToInstall()) {
-                  downloaded.add(uploader.getPluginName());
-                }
-              }
-              catch (IOException e) {
-                LOG.info(e);
-              }
-            }
-          }, IdeBundle.message("update.uploading.plugin.progress.title", pluginUrl), true, null);
-
-        }
+        checkPluginsHost(host, downloaded);
       }
       catch (Exception e) {
         LOG.info(e);
@@ -153,8 +123,45 @@ public final class UpdateChecker {
         LOG.info(failedMessage);
       }
     }
-    if (downloaded.isEmpty()) return null;
-    return IdeBundle.message("update.plugin.upload.message", StringUtil.join(downloaded, "</li><li>"));
+    return downloaded.isEmpty() ? null : downloaded;
+  }
+
+  public static boolean checkPluginsHost(final String host, final List<PluginDownloader> downloaded) throws Exception {
+    final Document document = loadVersionInfo(host);
+    if (document == null) return false;
+    boolean success = true;
+    for (Object plugin : document.getRootElement().getChildren("plugin")) {
+      Element pluginElement = (Element)plugin;
+      final String pluginId = pluginElement.getAttributeValue("id");
+      final String pluginUrl = pluginElement.getAttributeValue("url");
+      final String pluginVersion = pluginElement.getAttributeValue("version");
+      if (pluginId == null) {
+        LOG.info("plugin id should not be null");
+        success = false;
+        continue;
+      }
+
+      if (pluginUrl == null) {
+        LOG.info("plugin url should not be null");
+        success = false;
+        continue;
+      }
+
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
+        public void run() {
+          try {
+            final PluginDownloader uploader = new PluginDownloader(pluginId, pluginUrl, pluginVersion);
+            if (uploader.prepareToInstall()) {
+              downloaded.add(uploader);
+            }
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+        }
+      }, IdeBundle.message("update.uploading.plugin.progress.title", pluginUrl), true, null);
+    }
+    return success;
   }
 
 
@@ -222,7 +229,7 @@ public final class UpdateChecker {
           exception[0] = e;
         }
         catch (JDOMException e) {
-          // Broken xml downloaded. Don't bother telling user.
+          LOG.info(e); // Broken xml downloaded. Don't bother telling user.
         }
       }
     });
@@ -245,18 +252,30 @@ public final class UpdateChecker {
     return document[0];
   }
 
-  public static void showNoUpdatesDialog(boolean enableLink, final String updatePlugins) {
-    NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatePlugins);
-    dialog.setLinkEnabled(enableLink);
-    dialog.setResizable(false);
+  public static void showNoUpdatesDialog(boolean enableLink, final List<PluginDownloader> updatePlugins) {
+    NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatePlugins, enableLink);
     dialog.show();
   }
 
-  public static void showUpdateInfoDialog(boolean enableLink, final NewVersion version, final String updatePlugins) {
-    UpdateInfoDialog dialog = new UpdateInfoDialog(true, version, updatePlugins);
-    dialog.setLinkEnabled(enableLink);
-    dialog.setResizable(false);
+  public static void showUpdateInfoDialog(boolean enableLink, final NewVersion version, final List<PluginDownloader> updatePlugins) {
+    UpdateInfoDialog dialog = new UpdateInfoDialog(true, version, updatePlugins, enableLink);
     dialog.show();
+  }
+
+
+  public static boolean install(List<PluginDownloader> downloaders) {
+    boolean installed = false;
+    for (PluginDownloader downloader : downloaders) {
+      if (getDisabledToUpdatePlugins().contains(downloader.getPluginId())) continue;
+      try {
+        downloader.install();
+        installed = true;
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+    return installed;
   }
 
   public static class NewVersion {
@@ -274,6 +293,51 @@ public final class UpdateChecker {
     public NewVersion(int build, String version) {
       latestBuild = build;
       latestVersion = version;
+    }
+  }
+
+  public static Set<String> getDisabledToUpdatePlugins() {
+    if (ourDisabledToUpdatePlugins == null) {
+      ourDisabledToUpdatePlugins = new TreeSet<String>();
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        try {
+          final String[] ids = new String(FileUtil.loadFileText(new File(PathManager.getConfigPath(), DISABLED_UPDATE))).split("[\\s]");
+          for (String id : ids) {
+            if (id != null && id.trim().length() > 0) {
+              ourDisabledToUpdatePlugins.add(id.trim());
+            }
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    }
+    return ourDisabledToUpdatePlugins;
+  }
+
+  public static void saveDisabledToUpdatePlugins() {
+    try {
+      File plugins = new File(PathManager.getConfigPath(), DISABLED_UPDATE);
+      if (!plugins.isFile()) {
+        plugins.createNewFile();
+      }
+      PrintWriter printWriter = null;
+      try {
+        printWriter = new PrintWriter(new BufferedWriter(new FileWriter(plugins)));
+        for (String id : getDisabledToUpdatePlugins()) {
+          printWriter.println(id);
+        }
+        printWriter.flush();
+      }
+      finally {
+        if (printWriter != null) {
+          printWriter.close();
+        }
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 }

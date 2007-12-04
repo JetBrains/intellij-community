@@ -28,7 +28,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 public abstract class OrderPanel<T> extends JPanel{
-  private String CHECKBOX_COLUMN_NAME = UIBundle.message("order.entries.panel.export.column.name");
+  private String CHECKBOX_COLUMN_NAME;
 
   private final Class<T> myEntryClass;
   private final JTable myEntryTable;
@@ -209,7 +209,7 @@ public abstract class OrderPanel<T> extends JPanel{
         return "";
       }
       if (column == getCheckboxColumn()) {
-        return CHECKBOX_COLUMN_NAME;
+        return getCheckboxColumnName();
       }
       return null;
     }
@@ -250,6 +250,13 @@ public abstract class OrderPanel<T> extends JPanel{
   public abstract boolean isCheckable(T entry);
   public abstract boolean isChecked  (T entry);
   public abstract void    setChecked (T entry, boolean checked);
+
+  public String getCheckboxColumnName() {
+    if (CHECKBOX_COLUMN_NAME == null) {
+      CHECKBOX_COLUMN_NAME = UIBundle.message("order.entries.panel.export.column.name");
+    }
+    return CHECKBOX_COLUMN_NAME;
+  }
 
   public java.util.List<T> getEntries() {
     final TableModel model = myEntryTable.getModel();

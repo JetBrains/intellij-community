@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 
+import java.util.List;
+
 public class CheckForUpdateAction extends AnAction {
 
   public void update(AnActionEvent e) {
@@ -20,7 +22,7 @@ public class CheckForUpdateAction extends AnAction {
   public static void actionPerformed(final boolean enableLink) {
     try {
       final UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
-      final String updatedPlugins = UpdateChecker.updatePlugins(true);
+      final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true);
       if (newVersion != null) {
         UpdateSettingsConfigurable.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
         UpdateChecker.showUpdateInfoDialog(enableLink, newVersion, updatedPlugins);

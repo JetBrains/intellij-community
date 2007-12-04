@@ -145,8 +145,10 @@ public class PluginInstaller {
       final @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
                          URLEncoder.encode(pluginNode.getPluginId().getIdString(), "UTF8") +
                          "&build=" + buildNumber;
-      if (new PluginDownloader(pluginNode.getPluginId().getIdString(), url, null, null, pluginNode.getName())
-        .prepareToInstall(ProgressManager.getInstance().getProgressIndicator())) {
+      final PluginDownloader downloader =
+        new PluginDownloader(pluginNode.getPluginId().getIdString(), url, null, null, pluginNode.getName());
+      if (downloader.prepareToInstall(ProgressManager.getInstance().getProgressIndicator())) {
+        downloader.install();
         pluginNode.setStatus(PluginNode.STATUS_DOWNLOADED);
       }
     }

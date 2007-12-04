@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.ui.ListUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.MappingListCellRenderer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -20,10 +21,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -209,7 +212,10 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       myAddButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
-          final String input = Messages.showInputDialog(myPanel, IdeBundle.message("update.plugin.host.url.message"), IdeBundle.message("update.add.new.plugin.host.title"), Messages.getQuestionIcon(), "", new InputValidator() {
+          final HostMessages.InputHostDialog dlg = new HostMessages.InputHostDialog(myPanel,
+                                                                                    IdeBundle.message("update.plugin.host.url.message"),
+                                                                                    IdeBundle.message("update.add.new.plugin.host.title"),
+                                                                                    Messages.getQuestionIcon(), "", new InputValidator() {
             public boolean checkInput(final String inputString) {
               return inputString.length() > 0;
             }
@@ -218,6 +224,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
               return checkInput(inputString);
             }
           });
+          dlg.show();
+          final String input = dlg.getInputString();
           if (input != null) {
             ((DefaultListModel)myUrlsList.getModel()).addElement(input);
           }
@@ -226,15 +234,22 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       myEditButton.addActionListener(new ActionListener(){
         public void actionPerformed(final ActionEvent e) {
-          final String input = Messages.showInputDialog(myPanel, IdeBundle.message("update.plugin.host.url.message"), IdeBundle.message("update.edit.plugin.host.title"), Messages.getQuestionIcon(), (String)myUrlsList.getSelectedValue(), new InputValidator() {
-            public boolean checkInput(final String inputString) {
-              return inputString.length() > 0;
-            }
+          final HostMessages.InputHostDialog dlg = new HostMessages.InputHostDialog(myPanel,
+                                                                                    IdeBundle.message("update.plugin.host.url.message"),
+                                                                                    IdeBundle.message("update.edit.plugin.host.title"),
+                                                                                    Messages.getQuestionIcon(),
+                                                                                    (String)myUrlsList.getSelectedValue(),
+                                                                                    new InputValidator() {
+                                                                                      public boolean checkInput(final String inputString) {
+                                                                                        return inputString.length() > 0;
+                                                                                      }
 
-            public boolean canClose(final String inputString) {
-              return checkInput(inputString);
-            }
-          });
+                                                                                      public boolean canClose(final String inputString) {
+                                                                                        return checkInput(inputString);
+                                                                                      }
+                                                                                    });
+          dlg.show();
+          final String input = dlg.getInputString();
           if (input != null) {
             ((DefaultListModel)myUrlsList.getModel()).set(myUrlsList.getSelectedIndex(), input);
           }
@@ -284,5 +299,34 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @Nullable
   public Runnable enableSearch(String option) {
     return null;
+  }
+
+  public static class HostMessages extends Messages {
+    public static class InputHostDialog extends InputDialog {
+      private final Component myParentComponent;
+
+      public InputHostDialog(Component parentComponent, String message, String title, Icon icon, String initialValue, InputValidator validator) {
+        super(parentComponent, message, title, icon, initialValue, validator);
+        myParentComponent = parentComponent;
+      }
+
+      protected Action[] createActions() {
+        final Action[] actions = super.createActions();
+        return ArrayUtil.append(actions, new AbstractAction("Check Now") {
+          public void actionPerformed(final ActionEvent e) {
+            try {
+              if (UpdateChecker.checkPluginsHost(getTextField().getText(), new ArrayList<PluginDownloader>())) {
+                showInfoMessage(myParentComponent, "Plugins Host was sucessfully checked", "Check Plugins Host");
+              } else {
+                showErrorDialog(myParentComponent, "Plugin descriptions contain some errors. Please, check idea.log for details.");
+              }
+            }
+            catch (Exception e1) {
+              showErrorDialog(myParentComponent, "Connection failed: " + e1.getMessage());
+            }
+          }
+        });
+      }
+    }
   }
 }

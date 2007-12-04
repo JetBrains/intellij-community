@@ -13,6 +13,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.List;
 
 
 @SuppressWarnings({"CallToPrintStackTrace"})
@@ -158,7 +160,7 @@ public class IdeaApplication {
             try {
               UpdateChecker.setMyVeryFirstOpening(false);
               final UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
-              final String updatedPlugins = UpdateChecker.updatePlugins(false);
+              final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false);
               if (newVersion != null) {
                 UpdateChecker.showUpdateInfoDialog(true, newVersion, updatedPlugins);
               } else if (updatedPlugins != null) {
