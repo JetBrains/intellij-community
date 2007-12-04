@@ -2,7 +2,6 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -19,6 +18,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -734,7 +734,7 @@ public class LineStatusTracker {
     if (range.getType() != Range.INSERTED) {
       DocumentEx doc = (DocumentEx)myUpToDateDocument;
       EditorImpl uEditor = new EditorImpl(doc, true, myProject);
-      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, getFileName());
+      EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, getFileName());
       uEditor.setHighlighter(highlighter);
 
       EditorFragmentComponent editorFragmentComponent =
