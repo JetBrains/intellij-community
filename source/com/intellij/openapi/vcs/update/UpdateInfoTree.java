@@ -48,12 +48,10 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.UIHelper;
+import com.intellij.ui.*;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -164,9 +162,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
   }
 
   private void createTree() {
-    UIHelper uiHelper = PeerFactory.getInstance().getUIHelper();
-    uiHelper.installSmartExpander(myTree);
-    uiHelper.installSelectionSaver(myTree);
+    SmartExpander.installOn(myTree);
+    SelectionSaver.installOn(myTree);
     refreshTree();
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
@@ -181,7 +178,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       }
     });
     myTree.setCellRenderer(new UpdateTreeCellRenderer());
-    uiHelper.installToolTipHandler(myTree);
+    TreeUIHelper.getInstance().installToolTipHandler(myTree);
     TreeUtil.installActions(myTree);
 
     myTree.addMouseListener(new PopupHandler() {
@@ -194,8 +191,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
         }
       }
     });
-    uiHelper.installEditSourceOnDoubleClick(myTree);
-    uiHelper.installEditSourceOnEnterKeyHandler(myTree);
+    EditSourceOnDoubleClickHandler.install(myTree);
+    EditSourceOnEnterKeyHandler.install(myTree);
 
     myTree.setSelectionRow(0);
   }
