@@ -69,7 +69,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacade implements Disposable {
     myJavadocManager = new JavadocManagerImpl();
     myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
-    PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
+    PsiManagerEx psiManager = (PsiManagerEx)PsiManager.getInstance(project);
     myElementFactory = new PsiElementFactoryImpl(psiManager);
 
     List<PsiElementFinder> elementFinders = new ArrayList<PsiElementFinder>();
@@ -80,7 +80,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacade implements Disposable {
 
     boolean isProjectDefault = project.isDefault();
     if (psiManagerConfiguration.REPOSITORY_ENABLED && !isProjectDefault) {
-      myShortNamesCache = new PsiShortNamesCacheImpl((PsiManagerImpl)PsiManager.getInstance(project), projectRootManagerEx);
+      myShortNamesCache = new PsiShortNamesCacheImpl((PsiManagerEx)PsiManager.getInstance(project), projectRootManagerEx);
     }
     else {
       myShortNamesCache = new EmptyRepository.PsiShortNamesCacheImpl();

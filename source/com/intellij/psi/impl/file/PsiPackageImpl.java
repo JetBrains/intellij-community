@@ -24,7 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.PsiElementBase;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.scope.ElementClassHint;
@@ -46,11 +46,11 @@ import java.util.List;
 public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiPackageImpl");
 
-  private final PsiManagerImpl myManager;
+  private final PsiManagerEx myManager;
   private final String myQualifiedName;
   private volatile CachedValue<PsiModifierList> myAnnotationList;
 
-  public PsiPackageImpl(PsiManagerImpl manager, String qualifiedName) {
+  public PsiPackageImpl(PsiManagerEx manager, String qualifiedName) {
     myManager = manager;
     myQualifiedName = qualifiedName;
   }

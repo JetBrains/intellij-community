@@ -28,7 +28,7 @@ import java.util.Set;
 class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiShortNamesCacheImpl");
 
-  private final PsiManagerImpl myManager;
+  private final PsiManagerEx myManager;
   private final ProjectFileIndex myProjectFileIndex;
 
   private THashMap<String,Object> myFileNameToFilesMap = new THashMap<String,Object>(); // short name --> VirtualFile or Pair of VirtualFile or ArrayList of VirtualFile
@@ -37,7 +37,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   private RepositoryIndex myRepositoryIndex = null;
   private final ContentCacheBuilder myBuilder = new ContentCacheBuilder();
 
-  public PsiShortNamesCacheImpl(PsiManagerImpl manager, ProjectRootManager projectRootManager) {
+  public PsiShortNamesCacheImpl(PsiManagerEx manager, ProjectRootManager projectRootManager) {
     myManager = manager;
     myProjectFileIndex = projectRootManager.getFileIndex();
   }

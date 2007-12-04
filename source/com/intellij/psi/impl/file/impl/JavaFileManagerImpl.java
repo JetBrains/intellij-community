@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerConfiguration;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -41,7 +41,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
   private final Map<String,PsiClass> myNameToClassMap = new ConcurrentHashMap<String, PsiClass>(); // used only in mode without repository
   @NonNls private static final String JAVA_EXTENSION = ".java";
   @NonNls private static final String CLASS_EXTENSION = ".class";
-  private final PsiManagerImpl myManager;
+  private final PsiManagerEx myManager;
   private final ProjectRootManager myProjectRootManager;
   private final FileManager myFileManager;
   private final RootManager myRootManager;
@@ -51,7 +51,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
   private boolean myDisposed = false;
 
 
-  public JavaFileManagerImpl(final PsiManagerImpl manager, final ProjectRootManager projectRootManager, FileManager fileManager, MessageBus bus) {
+  public JavaFileManagerImpl(final PsiManagerEx manager, final ProjectRootManager projectRootManager, FileManager fileManager, MessageBus bus) {
     myManager = manager;
     myProjectRootManager = projectRootManager;
     myFileManager = fileManager;
