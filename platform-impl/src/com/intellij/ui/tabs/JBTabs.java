@@ -158,13 +158,20 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         repaintAttractions();
       }
     };
+    myAnimator.setTakInitialDelay(false);
 
     Disposer.register(parent, myAnimator);
   }
 
   private void repaintAttractions() {
-    for (TabInfo each : myAttractions) {
-      myInfo2Label.get(each);
+    boolean needsUpdate = false;
+    for (TabInfo each : myInfos) {
+      TabLabel eachLabel = myInfo2Label.get(each);
+      needsUpdate |= eachLabel.repaintAttraction();
+    }
+
+    if (needsUpdate) {
+      update(true);
     }
   }
 
@@ -418,8 +425,6 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       updateIcon(tabInfo);
-    } else if (TabInfo.ALERT_ICON.equals(evt.getPropertyName())) {
-      updateAttractionIcon(tabInfo);
     } else if (TabInfo.ALERT_STATUS.equals(evt.getPropertyName())) {
       boolean start = ((Boolean)evt.getNewValue()).booleanValue();
       updateAttraction(tabInfo, start);
@@ -434,12 +439,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     myInfo2Label.get(tabInfo).setIcon(tabInfo.getIcon());
   }
 
-  private void updateAttractionIcon(final TabInfo tabInfo) {
-    myInfo2Label.get(tabInfo).setAttractionIcon(tabInfo.getIcon());
-  }
 
   private void updateAttraction(final TabInfo tabInfo, boolean start) {
     if (start) {
+      tabInfo.setBlinkCount(0);
       myAttractions.add(tabInfo);
     } else {
       myAttractions.remove(tabInfo);
@@ -449,6 +452,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       myAnimator.resume();
     } else if (!start && myAttractions.size() == 0) {
       myAnimator.suspend();
+      repaintAttractions();
     }
   }
 
@@ -1235,15 +1239,15 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
 
     public void setIcon(final Icon icon) {
-      ((LayeredIcon)myLabel.getIcon()).setIcon(icon, 0);
+      getLayeredIcon().setIcon(icon, 0);
     }
 
-    public void setAttractionIcon(final Icon icon) {
-      ((LayeredIcon)myLabel.getIcon()).setIcon(icon, 1);
+    private LayeredIcon getLayeredIcon() {
+      return ((LayeredIcon)myLabel.getIcon());
     }
 
     public void setAttraction(boolean enabled) {
-      ((LayeredIcon)myLabel.getIcon()).setLayerEnabled(1, enabled);
+      getLayeredIcon().setLayerEnabled(1, enabled);
     }
 
     public TabInfo getInfo() {
@@ -1300,6 +1304,39 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       if (myActionPanel != null) {
         myActionPanel.update();
       }
+    }
+
+    public boolean repaintAttraction() {
+      if (!myAttractions.contains(myInfo)) {
+        if (getLayeredIcon().isLayerEnabled(1)) {
+          getLayeredIcon().setLayerEnabled(1, false);
+          getLayeredIcon().setIcon(null, 1);
+          return true;
+        }
+        return false;
+      }
+
+      boolean needsUpdate = false;
+
+      if (getLayeredIcon().getIcon(1) != myInfo.getAlertIcon()) {
+        getLayeredIcon().setIcon(myInfo.getAlertIcon(), 1);
+        needsUpdate = true;
+      }
+
+      int blinkCount = myInfo.getBlinkCount();
+      if (blinkCount < 10) {
+        getLayeredIcon().setLayerEnabled(1, !getLayeredIcon().isLayerEnabled(1));
+        if (blinkCount == 0) {
+          needsUpdate = true;
+        }
+        myInfo.setBlinkCount(blinkCount + 1);
+        repaint();
+      } else {
+        needsUpdate = !getLayeredIcon().isLayerEnabled(1);
+        getLayeredIcon().setLayerEnabled(1, true);
+      }
+
+      return needsUpdate;
     }
   }
 
@@ -1718,10 +1755,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       .setIcon(IconLoader.getIcon("/debugger/frame.png"));
 
     final TabInfo toAnimate1 = new TabInfo(new JTree());
+    toAnimate1.setIcon(IconLoader.getIcon("/debugger/console.png"));
     final JCheckBox attract1 = new JCheckBox("Attract 1");
     attract1.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        toAnimate1.setAlertIcon(IconLoader.getIcon("/nodes/tabPin.png"));
         if (attract1.isSelected()) {
           toAnimate1.startAlerting();
         } else {

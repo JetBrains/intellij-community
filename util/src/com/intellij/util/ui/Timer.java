@@ -29,6 +29,10 @@ public abstract class Timer implements Disposable {
 
   private String myName;
 
+  private boolean myTakeInitialDelay = true;
+  private boolean myInitiallySlept = false;
+  private boolean myInterruptRequest;
+
   public Timer(String name, int span) {
     myName = name;
     mySpan = span;
@@ -36,7 +40,12 @@ public abstract class Timer implements Disposable {
       public void run() {
         try {
           while(true) {
-            sleep(mySpan);
+            if (myInterruptRequest) break;
+
+            if (myTakeInitialDelay || myInitiallySlept) {
+              sleep(mySpan);
+            }
+            myInitiallySlept = true;
 
             if (myRestartRequest) {
               myRestartRequest = false;
@@ -52,6 +61,10 @@ public abstract class Timer implements Disposable {
         myDisposed = true;
       }
     };
+  }
+
+  public void setTakeInitialDelay(final boolean take) {
+    myTakeInitialDelay = take;
   }
 
   public final int getSpan() {
@@ -71,6 +84,7 @@ public abstract class Timer implements Disposable {
     if (myThread.isAlive()) {
       myRunning = false;
     }
+    myInitiallySlept = false;
   }
 
   public final void resume() {
@@ -88,8 +102,10 @@ public abstract class Timer implements Disposable {
 
   public final void dispose() {
     if (myThread.isAlive()) {
+      myInterruptRequest = true;
       myThread.interrupt();
       myDisposed = true;
+      myThread = null;
     }
   }
 

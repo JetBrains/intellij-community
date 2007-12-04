@@ -1,6 +1,7 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -173,5 +174,9 @@ public final class TabInfo {
 
   public String toString() {
     return myText;
+  }
+
+  public Icon getAlertIcon() {
+    return myAlertIcon == null ? IconLoader.getIcon("/nodes/tabAlert.png") : myAlertIcon;
   }
 }

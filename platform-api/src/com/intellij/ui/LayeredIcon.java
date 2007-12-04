@@ -65,6 +65,10 @@ public class LayeredIcon implements Icon {
     setIcon(icon, layer, 0, 0);
   }
 
+  public Icon getIcon(int layer) {
+    return myIcons[layer];
+  }
+
   public void setIcon(Icon icon, int layer, int hShift, int vShift) {
     if (icon instanceof LayeredIcon) {
       ((LayeredIcon)icon).checkIHaventIconInsideMe(this);

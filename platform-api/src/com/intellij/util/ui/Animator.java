@@ -115,6 +115,10 @@ public abstract class Animator implements Disposable {
     myTimer.resume();
   }
 
+  public void setTakInitialDelay(boolean take) {
+    myTimer.setTakeInitialDelay(take);
+  }
+
   public abstract void paintNow(int frame);
 
   public void dispose() {
