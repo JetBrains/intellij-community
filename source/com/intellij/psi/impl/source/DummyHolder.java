@@ -80,7 +80,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     if (myContext != null) {
       final PsiClass resolved = getManager().getResolveHelper().resolveReferencedClass(aClass.getName(), myContext);
       if (resolved != null) {
-        return resolved.equals(aClass);
+        return getManager().areElementsEquivalent(aClass, resolved);
       }
     }
 
