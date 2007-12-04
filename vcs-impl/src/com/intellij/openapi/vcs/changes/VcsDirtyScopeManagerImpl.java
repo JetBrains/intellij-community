@@ -1,24 +1,17 @@
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
+import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,17 +31,16 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManagerImpl myVcsManager;
-  private final ProjectRootManager myProjectRootManager;
+  private final ExcludedFileIndex myExcludedFileIndex;
   private boolean myIsDisposed = false;
   private boolean myIsInitialized = false;
   private boolean myEverythingDirty = false;
-  private MessageBusConnection myConnection;
 
   public VcsDirtyScopeManagerImpl(Project project,
                                   ChangeListManager changeListManager,
                                   ProjectLevelVcsManager vcsManager,
-                                  final ProjectRootManager projectRootManager) {
-    myProjectRootManager = projectRootManager;
+                                  final ExcludedFileIndex excludedFileIndex) {
+    myExcludedFileIndex = excludedFileIndex;
     myProject = project;
     myChangeListManager = changeListManager;
     myVcsManager = (ProjectLevelVcsManagerImpl)vcsManager;
@@ -73,20 +65,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
         }
       });
     }
-
-    myConnection = myProject.getMessageBus().connect();
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      public void beforeRootsChange(ModuleRootEvent event) {
-      }
-
-      public void rootsChanged(ModuleRootEvent event) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            markEverythingDirty();
-          }
-        }, ModalityState.NON_MODAL);
-      }
-    });
   }
 
   public void markEverythingDirty() {
@@ -97,29 +75,8 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       myScopes.clear();
     }
 
-    for(Module module: ModuleManager.getInstance(myProject).getModules()) {
-      final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-      for(VirtualFile file: files) {
-        final AbstractVcs vcs = myVcsManager.getVcsFor(file);
-        if (vcs != null) {
-          getScope(vcs).addDirtyDirRecursively(new FilePathImpl(file));
-        }
-      }
-    }
+    DefaultVcsRootPolicy.getInstance(myProject).markDefaultRootsDirty(this);
 
-    final AbstractVcs[] abstractVcses = myVcsManager.getAllActiveVcss();
-    for(AbstractVcs vcs: abstractVcses) {
-      VcsDirtyScopeImpl scope = getScope(vcs);
-      final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
-      for(VirtualFile root: roots) {
-        if (root.equals(myProject.getBaseDir())) {
-          scope.addDirtyFile(new FilePathImpl(root));
-        }
-        else {
-          scope.addDirtyDirRecursively(new FilePathImpl(root));
-        }
-      }
-    }
     synchronized(myScopes) {
       myEverythingDirty = true;
     }
@@ -128,7 +85,6 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   public void projectClosed() {
     myIsDisposed = true;
-    myConnection.disconnect();
     VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
   }
 
@@ -151,9 +107,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if (!file.isInLocalFileSystem()) {
       return null;
     }
-    if (myProjectRootManager.getFileIndex().isInContent(file) || isFileInBaseDir(file) ||
+    if (myExcludedFileIndex.isInContent(file) || isFileInBaseDir(file) ||
         myVcsManager.hasExplicitMapping(file)) {
-      if (myProjectRootManager.getFileIndex().isIgnored(file)) {
+      if (myExcludedFileIndex.isExcludedFile(file)) {
         return null;
       }
       return myVcsManager.getVcsFor(file);
@@ -173,9 +129,9 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if (validParent == null) {
       return null;
     }
-    if (myProjectRootManager.getFileIndex().isInContent(validParent) || isFileInBaseDir(filePath) ||
+    if (myExcludedFileIndex.isInContent(validParent) || isFileInBaseDir(filePath) ||
         myVcsManager.hasExplicitMapping(filePath)) {
-      if (myProjectRootManager.getFileIndex().isIgnored(validParent)) {
+      if (myExcludedFileIndex.isExcludedFile(validParent)) {
         return null;
       }
       return myVcsManager.getVcsFor(validParent);
@@ -230,7 +186,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @NotNull
-  private VcsDirtyScopeImpl getScope(final AbstractVcs vcs) {
+  public VcsDirtyScopeImpl getScope(final AbstractVcs vcs) {
     synchronized (myScopes) {
       VcsDirtyScopeImpl scope = myScopes.get(vcs);
       if (scope == null) {

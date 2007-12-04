@@ -13,6 +13,10 @@ public class ProjectExcludedFileIndex extends ExcludedFileIndex {
     myRootManager = rootManager;
   }
 
+  public boolean isInContent(final VirtualFile file) {
+    return myRootManager.getFileIndex().isInContent(file);
+  }
+
   public boolean isExcludedFile(final VirtualFile file) {
     return myRootManager.getFileIndex().isIgnored(file);
   }

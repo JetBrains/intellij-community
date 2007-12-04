@@ -12,5 +12,6 @@ public abstract class ExcludedFileIndex {
     return ServiceManager.getService(project, ExcludedFileIndex.class);
   }
 
+  public abstract boolean isInContent(VirtualFile file);
   public abstract boolean isExcludedFile(VirtualFile file);
 }
