@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -120,9 +121,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
             final PsiJavaCodeReferenceElement classReference =
                     elementFactory.createClassReferenceElement(oldClass);
             final SearchScope searchScope = oldClass.getUseScope();
-            final PsiClass[] inheritors =
-                    searchHelper.findInheritors(oldClass, searchScope, false);
-            for (final PsiClass inheritor : inheritors) {
+          for (final PsiClass inheritor : ClassInheritorsSearch.search(oldClass, searchScope, false)) {
                 final PsiReferenceList extendsList = inheritor.getExtendsList();
                 if (extendsList == null) {
                     continue;

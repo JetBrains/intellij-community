@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -29,6 +30,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 public class AbstractMethodWithMissingImplementationsInspection
@@ -68,8 +70,7 @@ public class AbstractMethodWithMissingImplementationsInspection
             }
             final InheritorFinder inheritorFinder =
                     new InheritorFinder(containingClass);
-            final PsiClass[] inheritors = inheritorFinder.getInheritors();
-            for (final PsiClass inheritor : inheritors) {
+          for (final PsiClass inheritor : inheritorFinder.getInheritors()) {
                 if (!inheritor.isInterface() &&
                         !inheritor.hasModifierProperty(PsiModifier.ABSTRACT)) {
                     if (!hasMatchingImplementation(inheritor, method)) {
@@ -96,7 +97,7 @@ public class AbstractMethodWithMissingImplementationsInspection
             }
             final PsiClass superClass = method.getContainingClass();
             final PsiManager manager = overridingMethod.getManager();
-            return manager.arePackagesTheSame(superClass, aClass);
+          return JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(superClass, aClass);
         }
 
         /**
@@ -135,7 +136,7 @@ public class AbstractMethodWithMissingImplementationsInspection
     private static class InheritorFinder implements Runnable {
 
         private final PsiClass aClass;
-        private PsiClass[] inheritors = null;
+        private Collection<PsiClass> inheritors = null;
 
         InheritorFinder(PsiClass aClass) {
             this.aClass = aClass;
@@ -145,11 +146,10 @@ public class AbstractMethodWithMissingImplementationsInspection
             final PsiManager manager = aClass.getManager();
             final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final SearchScope searchScope = aClass.getUseScope();
-            inheritors = searchHelper.findInheritors(aClass,
-                    searchScope, true);
+          inheritors = ClassInheritorsSearch.search(aClass, searchScope, true).findAll();
         }
 
-        public PsiClass[] getInheritors() {
+        public Collection<PsiClass> getInheritors() {
             final ProgressManager progressManager =
                     ProgressManager.getInstance();
             // do not display progress

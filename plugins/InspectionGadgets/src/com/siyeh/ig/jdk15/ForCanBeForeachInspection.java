@@ -38,9 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -942,8 +940,8 @@ public class ForCanBeForeachInspection extends BaseInspection{
             return false;
         }
         final PsiManager manager = initialValue.getManager();
-        final PsiConstantEvaluationHelper constantEvaluationHelper =
-                manager.getConstantEvaluationHelper();
+      final PsiConstantEvaluationHelper constantEvaluationHelper =
+        JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
         final Object constant =
                 constantEvaluationHelper.computeConstantExpression(
                         initialValue);

@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
 
@@ -143,8 +143,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
                 return false;
             }
             final PsiManager manager = rhs.getManager();
-            final PsiConstantEvaluationHelper constantEvaluationHelper =
-                    manager.getConstantEvaluationHelper();
+          final PsiConstantEvaluationHelper constantEvaluationHelper =
+            JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final Object object =
                     constantEvaluationHelper.computeConstantExpression(rhs);
             if (!(object instanceof Integer)) {

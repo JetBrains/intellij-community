@@ -27,11 +27,12 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MoveDeclarationIntention extends Intention {
@@ -46,9 +47,7 @@ public class MoveDeclarationIntention extends Intention {
         final PsiLocalVariable variable = (PsiLocalVariable)element;
         final PsiManager manager = variable.getManager();
         final PsiSearchHelper searchHelper = manager.getSearchHelper();
-        final PsiReference[] references =
-                searchHelper.findReferences(variable, variable.getUseScope(),
-                        false);
+      final PsiReference[] references = ReferencesSearch.search(variable, variable.getUseScope(), false).toArray(new PsiReference[0]);
         final PsiCodeBlock tightestBlock =
                 MoveDeclarationPredicate.getTightestBlock(references);
         assert tightestBlock != null;

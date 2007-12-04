@@ -227,8 +227,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
                 throws IncorrectOperationException {
             final PsiManager manager = context.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
-            final PsiConstantEvaluationHelper evaluationHelper =
-                    manager.getConstantEvaluationHelper();
+          final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final PsiExpression fromOffsetExpression =
                     factory.createExpressionFromText(expressionText, context);
             final Object fromOffsetConstant =

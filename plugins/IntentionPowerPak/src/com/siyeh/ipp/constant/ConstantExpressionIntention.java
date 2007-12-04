@@ -16,15 +16,12 @@
 package com.siyeh.ipp.constant;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiConstantEvaluationHelper;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ConstantExpressionIntention extends Intention {
 
@@ -38,8 +35,7 @@ public class ConstantExpressionIntention extends Intention {
         final PsiExpression expression =
                 (PsiExpression)element;
         final PsiManager psiManager = expression.getManager();
-        final PsiConstantEvaluationHelper helper =
-                psiManager.getConstantEvaluationHelper();
+      final PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(psiManager.getProject()).getConstantEvaluationHelper();
         final Object value = helper.computeConstantExpression(expression);
         @NonNls final String newExpression;
         if (value instanceof String) {

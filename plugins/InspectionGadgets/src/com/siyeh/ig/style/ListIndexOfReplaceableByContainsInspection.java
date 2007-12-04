@@ -169,8 +169,8 @@ public class ListIndexOfReplaceableByContainsInspection
                 return false;
             }
             final PsiManager manager = lhs.getManager();
-            final PsiConstantEvaluationHelper constantEvaluationHelper =
-                    manager.getConstantEvaluationHelper();
+          final PsiConstantEvaluationHelper constantEvaluationHelper =
+            JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final Object object =
                     constantEvaluationHelper.computeConstantExpression(rhs);
             if (!(object instanceof Integer)) {

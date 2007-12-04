@@ -19,7 +19,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -33,7 +35,7 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.Collection;
 
 public class ObjectEqualityInspection extends BaseInspection {
@@ -151,8 +153,7 @@ public class ObjectEqualityInspection extends BaseInspection {
             final ProgressManager progressManager = ProgressManager.getInstance();
             progressManager.runProcess(new Runnable() {
                 public void run() {
-                    searchHelper.processInheritors(processor, aClass, scope,
-                            true, true);
+                  ClassInheritorsSearch.search(aClass, scope, true, true).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
                 }
             }, null);
             if (processor.isOverflow()) {

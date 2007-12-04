@@ -87,8 +87,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
                 return;
             }
             final PsiManager manager = expression.getManager();
-            final PsiConstantEvaluationHelper evaluationHelper =
-                    manager.getConstantEvaluationHelper();
+          final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             Object result =
                     evaluationHelper.computeConstantExpression(operand);
 

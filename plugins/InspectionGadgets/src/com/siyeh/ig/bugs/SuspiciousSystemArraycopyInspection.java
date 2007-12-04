@@ -133,8 +133,8 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
         private static boolean isNegativeArgument(
                 @NotNull PsiExpression argument) {
             final PsiManager manager = argument.getManager();
-            final PsiConstantEvaluationHelper constantEvaluationHelper =
-                    manager.getConstantEvaluationHelper();
+          final PsiConstantEvaluationHelper constantEvaluationHelper =
+            JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final Object constant =
                     constantEvaluationHelper.computeConstantExpression(
                             argument);

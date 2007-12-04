@@ -178,7 +178,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
             LOG.assertTrue(directory != null);
             new WriteCommandAction(project, getName(), null) {
               protected void run(final Result result) throws Throwable {
-                XmlFile testngXml = (XmlFile)psiManager.getElementFactory()
+                XmlFile testngXml = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject())
                   .createFileFromText("testng.xml", "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n<suite></suite>");
                 try {
                   testngXml = (XmlFile)directory.add(testngXml);

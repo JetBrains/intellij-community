@@ -113,8 +113,8 @@ public class PointlessIndexOfComparisonInspection extends BaseInspection {
             if (!isIndexOfCall(callExpression)) {
                 return false;
             }
-            final PsiConstantEvaluationHelper constantEvaluationHelper =
-                    manager.getConstantEvaluationHelper();
+          final PsiConstantEvaluationHelper constantEvaluationHelper =
+            JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final Object object =
                     constantEvaluationHelper.computeConstantExpression(rhs);
             if (!(object instanceof Integer)) {

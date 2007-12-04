@@ -19,8 +19,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -70,8 +72,7 @@ public class InterfaceWithOnlyOneDirectInheritorInspection
             final ProgressManager instance = ProgressManager.getInstance();
             instance.runProcess(new Runnable() {
                 public void run() {
-                    searchHelper.processInheritors(processor, aClass,
-                            searchScope, false);
+                  ClassInheritorsSearch.search(aClass, searchScope, false).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
                 }
             }, null);
             final Collection<PsiClass> collection = processor.getCollection();

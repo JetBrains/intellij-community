@@ -27,7 +27,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class MagicNumberInspection extends BaseInspection {
 
@@ -118,8 +118,7 @@ public class MagicNumberInspection extends BaseInspection {
 
         private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
             final PsiManager manager = expression.getManager();
-            final PsiConstantEvaluationHelper evaluationHelper =
-                    manager.getConstantEvaluationHelper();
+          final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final Object object = evaluationHelper.computeConstantExpression(
                     expression);
             if (object instanceof Integer) {

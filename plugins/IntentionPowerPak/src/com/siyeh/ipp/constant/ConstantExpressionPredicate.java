@@ -42,8 +42,7 @@ class ConstantExpressionPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiManager manager= element.getManager();
-        final PsiConstantEvaluationHelper helper =
-                manager.getConstantEvaluationHelper();
+      final PsiConstantEvaluationHelper helper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
         final Object value = helper.computeConstantExpression(expression);
         if(value == null){
 	        return false;

@@ -18,10 +18,10 @@ package com.siyeh.ipp.constant;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.concatenation.ConcatenationUtils;
-import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantSubexpressionIntention extends MutablyNamedIntention {
@@ -56,8 +56,8 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
     public void processIntention(PsiElement element)
             throws IncorrectOperationException {
         final PsiManager manager = element.getManager();
-        final PsiConstantEvaluationHelper constantEvaluationHelper =
-                manager.getConstantEvaluationHelper();
+      final PsiConstantEvaluationHelper constantEvaluationHelper =
+        JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
         final PsiExpression expression = (PsiExpression)element.getParent();
         assert expression != null;
         String newExpression = "";

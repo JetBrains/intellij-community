@@ -22,8 +22,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Processor;
 import junit.runner.BaseTestRunner;
 
@@ -37,12 +39,12 @@ public class ConfigurationUtil {
 
     GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(manager.getProject());
     final GlobalSearchScope scope = projectScopeWithoutLibraries.intersectWith(testClassFilter.getScope());
-    searchHelper.processInheritors(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(final PsiClass aClass) {
         if (testClassFilter.isAccepted(aClass)) found.add(aClass);
         return true;
       }
-    }, testClassFilter.getBase(), scope, true);
+    }));
 
     // classes having suite() method
     final PsiMethod[] suiteMethods = manager.getShortNamesCache().getMethodsByName(BaseTestRunner.SUITE_METHODNAME, scope);

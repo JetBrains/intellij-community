@@ -26,7 +26,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -198,7 +198,7 @@ public class TestNGUtil implements TestFramework
    * specified annotation parameter. For example, this method can be used to return all classes that contain all tesng
    * annotations that are in the groups 'foo' or 'bar'.
    */
-  public static Map<PsiClass, Collection<PsiMethod>> filterAnnotations(String parameter, Set<String> values, PsiClass[] classes) {
+  public static Map<PsiClass, Collection<PsiMethod>> filterAnnotations(String parameter, Set<String> values, Collection<PsiClass> classes) {
     Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
     Set<String> test = new HashSet<String>(1);
     test.add(TEST_ANNOTATION_FQN);
@@ -351,12 +351,10 @@ public class TestNGUtil implements TestFramework
 
         Collection<PsiClass> set = new HashSet<PsiClass>();
         PsiManager manager = PsiManager.getInstance(filter.getProject());
-        PsiSearchHelper helper = manager.getSearchHelper();
         GlobalSearchScope scope = filter.getScope();
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
         scope = projectScope.intersectWith(scope);
-        PsiClass apsiclass[] = helper.findAllClasses(scope);
-        for (PsiClass psiClass : apsiclass) {
+        for (PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
           if (filter.isAccepted(psiClass)) {
             indicator.setText2("Found test class " + psiClass.getQualifiedName());
             set.add(psiClass);

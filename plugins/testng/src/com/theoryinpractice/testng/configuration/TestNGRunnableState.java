@@ -39,6 +39,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
@@ -455,9 +456,10 @@ public class TestNGRunnableState extends JavaCommandLineState
       }
       Set<String> dependencies = TestNGUtil.getAnnotationValues("dependsOnGroups", classes);
       if (!dependencies.isEmpty()) {
-        PsiManager psiManager = PsiManager.getInstance(classes[0].getProject());
+        final Project project = classes[0].getProject();
+        PsiManager psiManager = PsiManager.getInstance(project);
         //we get all classes in the module to figure out which are in the groups we depend on
-        PsiClass[] allClasses = psiManager.getSearchHelper().findAllClasses(data.getScope().getSourceScope(config).getGlobalSearchScope());
+        Collection<PsiClass> allClasses = AllClassesSearch.search(data.getScope().getSourceScope(config).getGlobalSearchScope(), project).findAll();
         Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
         //we now have a list of dependencies, and a list of classes that match those dependencies
         results.putAll(filteredClasses);

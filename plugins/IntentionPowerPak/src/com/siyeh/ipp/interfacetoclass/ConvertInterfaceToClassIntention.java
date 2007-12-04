@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -26,7 +27,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collection;
 
 public class ConvertInterfaceToClassIntention extends Intention {
 
@@ -109,12 +110,11 @@ public class ConvertInterfaceToClassIntention extends Intention {
 		final PsiJavaCodeReferenceElement oldInterfaceReference =
 				elementFactory.createClassReferenceElement(oldInterface);
 		final SearchScope searchScope = oldInterface.getUseScope();
-		final PsiClass[] inheritors =
-				searchHelper.findInheritors(oldInterface, searchScope, false);
+          final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(oldInterface, searchScope, false).findAll();
         final Project project = oldInterface.getProject();
         final boolean succes =
                 CommonRefactoringUtil.checkReadOnlyStatusRecursively(
-                        project, Arrays.asList(inheritors), false);
+                        project, inheritors, false);
         if (!succes) {
             return false;
         }

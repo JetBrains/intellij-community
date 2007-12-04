@@ -17,6 +17,7 @@ package com.siyeh.ipp.decls;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +41,7 @@ class MoveDeclarationPredicate implements PsiElementPredicate{
         }
         final PsiManager manager = variable.getManager();
         final PsiSearchHelper searchHelper = manager.getSearchHelper();
-        final PsiReference[] references =
-                searchHelper.findReferences(variable, variable.getUseScope(),
-                                            false);
+      final PsiReference[] references = ReferencesSearch.search(variable, variable.getUseScope(), false).toArray(new PsiReference[0]);
         if(references.length == 0){
             return false;
         }

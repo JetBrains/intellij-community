@@ -19,8 +19,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
@@ -40,10 +40,8 @@ class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
 			return false;
 		}
 		final PsiManager manager = element.getManager();
-		final PsiSearchHelper searchHelper = manager.getSearchHelper();
 		final SearchScope useScope = aClass.getUseScope();
-		final PsiClass[] inheritors = searchHelper.findInheritors(aClass, useScope, true);
-		for (PsiClass inheritor : inheritors) {
+          for (PsiClass inheritor : ClassInheritorsSearch.search(aClass, useScope, true)) {
 			if (inheritor.isInterface()) {
 				return false;
 			}

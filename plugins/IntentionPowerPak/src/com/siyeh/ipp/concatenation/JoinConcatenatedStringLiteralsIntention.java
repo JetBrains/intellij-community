@@ -58,8 +58,8 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
 	private static String computeConstantStringExpression(
 			PsiBinaryExpression expression) {
 		final PsiManager manager = expression.getManager();
-		final PsiConstantEvaluationHelper constantEvaluationHelper =
-				manager.getConstantEvaluationHelper();
+          final PsiConstantEvaluationHelper constantEvaluationHelper =
+            JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
 		final PsiExpression lhs = expression.getLOperand();
 		final Object lhsConstant =
 				constantEvaluationHelper.computeConstantExpression(lhs);

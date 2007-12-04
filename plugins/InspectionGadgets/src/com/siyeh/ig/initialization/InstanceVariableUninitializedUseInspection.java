@@ -16,7 +16,6 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,7 +24,7 @@ import com.siyeh.ig.psiutils.UninitializedReadCollector;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class InstanceVariableUninitializedUseInspection
         extends BaseInspection {
@@ -80,8 +79,7 @@ public class InstanceVariableUninitializedUseInspection
                 return;
             }
             final PsiManager manager = field.getManager();
-            final PsiSearchHelper searchHelper = manager.getSearchHelper();
-            if (searchHelper.isFieldBoundToForm(field)) {
+            if (JavaPsiFacade.getInstance(field.getProject()).isFieldBoundToForm(field)) {
                 return;
             }
             final UninitializedReadCollector uninitializedReadsCollector =
