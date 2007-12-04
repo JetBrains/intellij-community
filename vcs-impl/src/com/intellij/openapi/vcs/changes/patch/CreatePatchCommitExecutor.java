@@ -5,6 +5,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +21,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.Icons;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -150,7 +150,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
         Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
         try {
           List<FilePatch> patches = PatchBuilder.buildPatch(changes, myProject.getBaseDir().getPresentableUrl(), false, REVERSE_PATCH);
-          final String lineSeparator = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().getLineSeparator();
+          final String lineSeparator = CodeStyleFacade.getInstance(myProject).getLineSeparator();
           UnifiedDiffWriter.write(patches, writer, lineSeparator);
         }
         finally {

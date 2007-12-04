@@ -12,7 +12,6 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -96,7 +95,7 @@ public class RollbackAction extends AnAction {
 
   @Nullable
   private static Change[] getChanges(final Project project, final AnActionEvent e) {
-    final Change[] changes = e.getData(DataKeys.CHANGES);
+    final Change[] changes = e.getData(VcsDataKeys.CHANGES);
     if (changes != null && changes.length > 0) {
       if (ChangesUtil.getChangeListIfOnlyOne(project, changes) == null) {
         return null;

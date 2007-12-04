@@ -32,7 +32,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -43,9 +42,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.Processor;
 
 import java.io.IOException;
@@ -133,7 +132,7 @@ public class ApplyPatchAction extends AnAction {
         return false;
       }
       // security check to avoid overwriting system files with a patch
-      if (fileToPatch != null && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(fileToPatch) && 
+      if (fileToPatch != null && !ExcludedFileIndex.getInstance(project).isInContent(fileToPatch) &&
           ProjectLevelVcsManager.getInstance(project).getVcsRootFor(fileToPatch) == null) {
         Messages.showErrorDialog(project, "File to patch found outside content root: " + patch.getBeforeName(),
                                  VcsBundle.message("patch.apply.dialog.title"));
@@ -236,7 +235,7 @@ public class ApplyPatchAction extends AnAction {
   }
 
   private static ApplyPatchStatus showMergeDialog(Project project, VirtualFile file, CharSequence content, final String patchedContent) {
-    final DiffRequestFactory diffRequestFactory = PeerFactory.getInstance().getDiffRequestFactory();
+    final DiffRequestFactory diffRequestFactory = DiffRequestFactory.getInstance();
     CharSequence fileContent = LoadTextUtil.loadText(file);
     final MergeRequest request = diffRequestFactory.createMergeRequest(fileContent.toString(), patchedContent, content.toString(), file,
                                                                        project, ActionButtonPresentation.createApplyButton());

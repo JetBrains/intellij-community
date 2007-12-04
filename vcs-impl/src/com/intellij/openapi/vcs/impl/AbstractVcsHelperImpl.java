@@ -40,7 +40,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -77,7 +76,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       public void run() {
         final MessageView messageView = myProject.getComponent(MessageView.class);
         final Content content =
-          PeerFactory.getInstance().getContentFactory().createContent(errorTreeView, tabDisplayName, true);
+          ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
         messageView.getContentManager().addContent(content);
         Disposer.register(content, errorTreeView);
         messageView.getContentManager().setSelectedContent(content);
@@ -103,7 +102,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
       FileHistoryPanelImpl fileHistoryPanel =
         new FileHistoryPanelImpl(myProject, path, session, vcsHistoryProvider, annotationProvider, contentManager);
-      Content content = PeerFactory.getInstance().getContentFactory().createContent(fileHistoryPanel, actionName, true);
+      Content content = ContentFactory.SERVICE.getInstance().createContent(fileHistoryPanel, actionName, true);
       ContentsUtil.addOrReplaceContent(contentManager, content, true);
 
       ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
@@ -475,7 +474,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings, location, extraActions);
     panel.setMaxCount(maxCount);
     panel.refreshChanges(false);
-    final ContentFactory factory = PeerFactory.getInstance().getContentFactory();
+    final ContentFactory factory = ContentFactory.SERVICE.getInstance();
     if (title == null && location != null) {
       title = VcsBundle.message("browse.changes.content.title", location.toPresentableString());
     }

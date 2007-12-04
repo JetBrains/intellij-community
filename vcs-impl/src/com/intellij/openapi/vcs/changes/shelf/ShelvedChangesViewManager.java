@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
@@ -30,11 +31,11 @@ import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -108,7 +109,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         final Object lastPathComponent = selectionPath.getLastPathComponent();
         if (((TreeNode) lastPathComponent).isLeaf()) {
           DataContext context = DataManager.getInstance().getDataContext(myTree);
-          final Change[] changes = DataKeys.CHANGES.getData(context);
+          final Change[] changes = VcsDataKeys.CHANGES.getData(context);
           ShowDiffAction.showDiffForChange(changes, 0, myProject);
           e.consume();
         }
@@ -145,7 +146,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
     else {
       if (myContent == null) {
-        myContent = PeerFactory.getInstance().getContentFactory().createContent(new JScrollPane(myTree), VcsBundle.message("shelf.tab"), false);
+        myContent = ContentFactory.SERVICE.getInstance().createContent(new JScrollPane(myTree), VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
         myContentManager.addContent(myContent);
       }
@@ -228,14 +229,14 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       else if (key == SHELVED_BINARY_FILE_KEY) {
         sink.put(SHELVED_BINARY_FILE_KEY, TreeUtil.collectSelectedObjectsOfType(this, ShelvedBinaryFile.class));
       }
-      else if (key == DataKeys.CHANGES) {
+      else if (key == VcsDataKeys.CHANGES) {
         List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
         if (shelvedChanges.size() > 0) {
           Change[] changes = new Change[shelvedChanges.size()];
           for(int i=0; i<shelvedChanges.size(); i++) {
             changes [i] = shelvedChanges.get(i).getChange(myProject);
           }
-          sink.put(DataKeys.CHANGES, changes);
+          sink.put(VcsDataKeys.CHANGES, changes);
         }
         else {
           final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
@@ -247,7 +248,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
                 changes.add(shelvedChange.getChange(myProject));
               }
             }
-            sink.put(DataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+            sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
           }
         }
       }

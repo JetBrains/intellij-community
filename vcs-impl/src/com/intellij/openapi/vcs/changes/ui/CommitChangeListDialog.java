@@ -714,7 +714,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final Navigatable[] navigatableArray = e.getData(DataKeys.NAVIGATABLE_ARRAY);
+      final Navigatable[] navigatableArray = e.getData(PlatformDataKeys.NAVIGATABLE_ARRAY);
       if (navigatableArray != null && navigatableArray.length > 0) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
