@@ -29,8 +29,8 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,7 +216,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             final PsiStatement statement =
                     factory.createStatementFromText(newStatementText.toString(),
                             methodExpression);
-            final CodeStyleManager styleManager = manager.getCodeStyleManager();
+            final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
             styleManager.shortenClassReferences(statement);
             return statement;
         }
@@ -298,8 +298,8 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (iteratorClass == null) {
                 return "iterator";
             }
-            final CodeStyleManager codeStyleManager =
-                    manager.getCodeStyleManager();
+            final JavaCodeStyleManager codeStyleManager =
+                    JavaCodeStyleManager.getInstance(project);
             final PsiType iteratorType = factory.createType(iteratorClass);
             final SuggestedNameInfo baseNameInfo =
                     codeStyleManager.suggestVariableName(

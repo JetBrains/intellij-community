@@ -5,7 +5,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -163,7 +163,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
                 inserted = methodCallStatement.replace(factory.createStatementFromText(call, methodCall.getParent()));
               }
               if (inserted != null) {
-                CodeStyleManager.getInstance(project).shortenClassReferences(inserted);
+                JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
               }
             }
             if (assertStatement != null) {
@@ -208,7 +208,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
           newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.AfterMethod", method);
         }
         if (newAnnotation != null) {
-          CodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(annotation.replace(newAnnotation));
+          JavaCodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(annotation.replace(newAnnotation));
         }
       }
     }
@@ -317,7 +317,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.AfterMethod", method);
       }
       if (annotation != null) {
-        CodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(method.getModifierList().addAfter(annotation, null));
+        JavaCodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(method.getModifierList().addAfter(annotation, null));
       }
     }
 

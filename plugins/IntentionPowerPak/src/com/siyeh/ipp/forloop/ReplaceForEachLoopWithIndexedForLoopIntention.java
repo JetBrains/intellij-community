@@ -17,14 +17,12 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
 
@@ -42,8 +40,8 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         }
         final PsiManager psiManager = statement.getManager();
         final Project project = psiManager.getProject();
-        final CodeStyleManager codeStyleManager =
-                CodeStyleManager.getInstance(project);
+        final JavaCodeStyleManager codeStyleManager =
+                JavaCodeStyleManager.getInstance(project);
         final PsiExpression iteratedValue = statement.getIteratedValue();
         if (iteratedValue == null) {
             return;

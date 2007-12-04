@@ -799,8 +799,8 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 @NotNull PsiForStatement scope, PsiType type,
                 @Nullable String containerName){
             final Project project = scope.getProject();
-            final CodeStyleManager codeStyleManager =
-                    CodeStyleManager.getInstance(project);
+            final JavaCodeStyleManager codeStyleManager =
+                    JavaCodeStyleManager.getInstance(project);
             @NonNls String baseName;
             if(containerName != null){
                 baseName = StringUtils.createSingularFromName(containerName);

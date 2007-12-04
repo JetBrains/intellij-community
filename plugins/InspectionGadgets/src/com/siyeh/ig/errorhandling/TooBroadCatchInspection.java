@@ -15,16 +15,16 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -33,7 +33,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -143,7 +142,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     }
 
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       String name = codeStyleManager.suggestUniqueVariableName("e", myTryStatement.getTryBlock(), false);
       PsiCatchSection section =
         myTryStatement.getManager().getElementFactory().createCatchSection((PsiClassType)myThrown, name, myTryStatement);

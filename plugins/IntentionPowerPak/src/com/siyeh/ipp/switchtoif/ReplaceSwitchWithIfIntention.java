@@ -17,13 +17,14 @@ package com.siyeh.ipp.switchtoif;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -62,7 +63,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
                 return;
             }
             final String variableName =
-                    codeStyleMgr.suggestUniqueVariableName("i",
+                    JavaCodeStyleManager.getInstance(manager.getProject()).suggestUniqueVariableName("i",
                             switchExpression, true);
             expressionText = variableName;
             declarationString =

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -34,7 +35,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class AssignmentToMethodParameterInspection
         extends BaseInspection {
@@ -93,7 +94,7 @@ public class AssignmentToMethodParameterInspection
                     manager.getCodeStyleManager();
             final String parameterName = parameterReference.getText();
             final String variableName =
-                    codeStyleManager.suggestUniqueVariableName(
+                    JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(
                             parameterName, parameterReference, true);
             final PsiElement parameter = parameterReference.resolve();
             final SearchScope scope = parameterReference.getUseScope();

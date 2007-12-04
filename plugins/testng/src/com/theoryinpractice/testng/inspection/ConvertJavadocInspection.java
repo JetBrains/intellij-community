@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -145,7 +145,7 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
         final PsiElement inserted = method.getModifierList().addBefore(
           tag.getManager().getElementFactory().createAnnotationFromText(annotationText.toString(), method),
           method.getModifierList().getFirstChild());
-        CodeStyleManager.getInstance(project).shortenClassReferences(inserted);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
 
 
         final PsiDocComment docComment = PsiTreeUtil.getParentOfType(tag, PsiDocComment.class);

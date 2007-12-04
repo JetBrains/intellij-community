@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -99,9 +100,8 @@ public class TailRecursionInspection extends BaseInspection {
                     final PsiClass aClass = classType.resolve();
                     if (aClass != null && aClass.equals(containingClass)) {
                         builder.append(containingClass.getName());
-                        final PsiManager manager = method.getManager();
-                        final CodeStyleManager styleManager =
-                                manager.getCodeStyleManager();
+                        final JavaCodeStyleManager styleManager =
+                                JavaCodeStyleManager.getInstance(project);
                         thisVariableName =
                                 styleManager.suggestUniqueVariableName(
                                         "result", method, false);

@@ -14,7 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -111,7 +111,7 @@ public class ConvertOldAnnotationInspection extends BaseJavaLocalInspectionTool 
         newAnnotationBuffer.append(newAnnotation).append('(').append(')');
         final PsiElementFactory factory = annotation.getManager().getElementFactory();
         final PsiAnnotation newPsiAnnotation = factory.createAnnotationFromText(newAnnotationBuffer.toString(), modifierList);
-        CodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(modifierList.addAfter(newPsiAnnotation, null));
+        JavaCodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(modifierList.addAfter(newPsiAnnotation, null));
       }
     }
   }

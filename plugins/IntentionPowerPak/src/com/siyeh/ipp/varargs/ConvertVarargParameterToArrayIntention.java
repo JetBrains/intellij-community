@@ -17,6 +17,7 @@ package com.siyeh.ipp.varargs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -113,9 +114,9 @@ public class ConvertVarargParameterToArrayIntention extends Intention {
         } else {
             argumentList.add(arrayExpression);
         }
+        JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(argumentList);
         final CodeStyleManager codeStyleManager =
-                manager.getCodeStyleManager();
-        codeStyleManager.shortenClassReferences(argumentList);
+              manager.getCodeStyleManager();
         codeStyleManager.reformat(argumentList);
     }
 }

@@ -15,14 +15,14 @@
  */
 package com.siyeh.ipp.forloop;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
 
@@ -40,8 +40,8 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
         }
         final PsiManager psiManager = statement.getManager();
         final Project project = psiManager.getProject();
-        final CodeStyleManager codeStyleManager =
-                CodeStyleManager.getInstance(project);
+        final JavaCodeStyleManager codeStyleManager =
+                JavaCodeStyleManager.getInstance(project);
         final PsiExpression iteratedValue = statement.getIteratedValue();
         if (iteratedValue == null) {
             return;

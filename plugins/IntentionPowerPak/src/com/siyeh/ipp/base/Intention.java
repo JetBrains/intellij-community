@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.psiutils.BoolUtils;
@@ -153,10 +154,9 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
         final PsiStatement newCall =
                 factory.createStatementFromText(newStatement, statement);
         final PsiElement insertedElement = statement.replace(newCall);
-        final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         final PsiElement shortenedElement =
-                codeStyleManager.shortenClassReferences(insertedElement);
-        codeStyleManager.reformat(shortenedElement);
+                JavaCodeStyleManager.getInstance(mgr.getProject()).shortenClassReferences(insertedElement);
+        mgr.getCodeStyleManager().reformat(shortenedElement);
     }
 
     @Nullable PsiElement findMatchingElement(PsiFile file,

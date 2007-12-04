@@ -18,7 +18,7 @@ package com.siyeh.ig.jdk;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -59,8 +59,8 @@ public class ForeachStatementInspection extends BaseInspection{
             final PsiForeachStatement statement =
                     (PsiForeachStatement) element.getParent();
 
-            final CodeStyleManager codeStyleManager =
-                    CodeStyleManager.getInstance(project);
+            final JavaCodeStyleManager codeStyleManager =
+                    JavaCodeStyleManager.getInstance(project);
             assert statement != null;
             final PsiExpression iteratedValue = statement.getIteratedValue();
             final PsiParameter iterationParameter =

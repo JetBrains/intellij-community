@@ -351,8 +351,8 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                 @NotNull PsiWhileStatement scope, PsiType type,
                 String containerName) {
             final Project project = scope.getProject();
-            final CodeStyleManager codeStyleManager =
-                    CodeStyleManager.getInstance(project);
+            final JavaCodeStyleManager codeStyleManager =
+                    JavaCodeStyleManager.getInstance(project);
             @NonNls String baseName;
             if (containerName != null) {
                 baseName = StringUtils.createSingularFromName(containerName);

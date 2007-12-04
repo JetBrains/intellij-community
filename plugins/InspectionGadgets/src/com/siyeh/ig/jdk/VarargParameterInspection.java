@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -136,7 +137,7 @@ public class VarargParameterInspection extends BaseInspection {
             }
             final CodeStyleManager codeStyleManager =
                     manager.getCodeStyleManager();
-            codeStyleManager.shortenClassReferences(argumentList);
+            JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(argumentList);
             codeStyleManager.reformat(argumentList);
         }
     }

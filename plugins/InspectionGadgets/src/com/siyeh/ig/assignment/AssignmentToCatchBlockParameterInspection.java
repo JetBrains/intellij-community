@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -77,7 +78,7 @@ public class AssignmentToCatchBlockParameterInspection
                     psiManager.getCodeStyleManager();
             final String originalVariableName = variable.getText();
             final SuggestedNameInfo suggestions =
-                    codeStyleManager.suggestVariableName(
+                    JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(
                             VariableKind.LOCAL_VARIABLE,
                             originalVariableName + '1', variable, type);
             final String[] names = suggestions.names;
@@ -88,7 +89,7 @@ public class AssignmentToCatchBlockParameterInspection
                 baseName = "value";
             }
             final String variableName =
-                    codeStyleManager.suggestUniqueVariableName(
+                    JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestUniqueVariableName(
                             baseName, catchSection, false);
             final String className = type.getPresentableText();
             assert body != null;

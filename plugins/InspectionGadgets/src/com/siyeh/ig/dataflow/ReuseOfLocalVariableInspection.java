@@ -19,12 +19,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -81,10 +81,9 @@ public class ReuseOfLocalVariableInspection
             final PsiExpression lExpression = assignment.getLExpression();
             final String originalVariableName = lExpression.getText();
             assert variable != null;
-            final PsiManager manager = variable.getManager();
             final PsiType type = variable.getType();
-            final CodeStyleManager codeStyleManager =
-                    manager.getCodeStyleManager();
+            final JavaCodeStyleManager codeStyleManager =
+                    JavaCodeStyleManager.getInstance(project);
             final PsiCodeBlock variableBlock =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
             final SuggestedNameInfo suggestions =

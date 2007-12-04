@@ -17,21 +17,22 @@ package com.siyeh.ig;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.jsp.JspxFileViewProvider;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
@@ -99,7 +100,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final PsiReferenceExpression newExpression = (PsiReferenceExpression)factory.createExpressionFromText("xxx", expression);
         final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)expression.replace(newExpression);
       PsiElement element = replacementExpression.bindToElement(target);
-      final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
+      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(psiManager.getProject());
         styleManager.shortenClassReferences(element);
     }
 
@@ -112,8 +113,8 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final PsiExpression newExpression =
                 factory.createExpressionFromText(newExpressionText, expression);
         final PsiElement replacementExp = expression.replace(newExpression);
+        JavaCodeStyleManager.getInstance(psiManager.getProject()).shortenClassReferences(replacementExp);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
-        styleManager.shortenClassReferences(replacementExp);
         styleManager.reformat(replacementExp);
     }
 
@@ -167,7 +168,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
                 }
             }
             newStatement = (PsiStatement) elementAt;
-            styleManager.shortenClassReferences(newStatement);
+            JavaCodeStyleManager.getInstance(psiManager.getProject()).shortenClassReferences(newStatement);
             final TextRange newTextRange = newStatement.getTextRange();
             final PsiFile element = viewProvider.getPsi(
                     viewProvider.getBaseLanguage());
@@ -178,7 +179,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             newStatement = factory.createStatementFromText(newStatementText,
                     statement);
             newStatement = (PsiStatement) statement.replace(newStatement);
-            styleManager.shortenClassReferences(newStatement);
+            JavaCodeStyleManager.getInstance(psiManager.getProject()).shortenClassReferences(newStatement);
             styleManager.reformat(newStatement);
         }
     }

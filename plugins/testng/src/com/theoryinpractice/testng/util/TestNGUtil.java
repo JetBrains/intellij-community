@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -420,7 +420,7 @@ public class TestNGUtil implements TestFramework
     }
     if (inClass == null) {
       final PsiMethod psiMethod = (PsiMethod)psiClass.add(patternMethod);
-      CodeStyleManager.getInstance(psiClass.getProject()).shortenClassReferences(psiClass);
+      JavaCodeStyleManager.getInstance(psiClass.getProject()).shortenClassReferences(psiClass);
       return psiMethod;
     }
     else if (inClass.getBody() == null) {

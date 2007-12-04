@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -61,7 +62,9 @@ public class GenerateComponentExternalizationAction extends AnAction {
               );
 
               read = (PsiMethod)formatter.reformat(target.add(read));
-              formatter.shortenClassReferences(read);
+
+              final JavaCodeStyleManager styler = JavaCodeStyleManager.getInstance(target.getProject());
+              styler.shortenClassReferences(read);
 
               PsiMethod write = factory.createMethodFromText(
                 "public void writeExternal(org.jdom.Element element) throws com.intellij.openapi.util.WriteExternalException { com.intellij.openapi.util.DefaultJDOMExternalizer.writeExternal(this, element); }",
@@ -69,7 +72,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
               );
 
               write = (PsiMethod)formatter.reformat(target.add(write));
-              formatter.shortenClassReferences(write);
+              styler.shortenClassReferences(write);
             }
             catch (IncorrectOperationException e1) {
               LOG.error(e1);

@@ -16,7 +16,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit.jar!/" />
+          <root url="jar:///Applications/Current.app/lib/junit.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
