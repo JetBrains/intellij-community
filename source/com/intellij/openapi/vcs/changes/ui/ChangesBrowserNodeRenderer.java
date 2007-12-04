@@ -1,9 +1,8 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 
@@ -15,13 +14,13 @@ import java.awt.*;
  */
 public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
   private final boolean myShowFlatten;
-  private WolfTheProblemSolver myProblemSolver;
+  private Project myProject;
   private IssueLinkRenderer myIssueLinkRenderer;
   private final boolean myHighlightProblems;
 
   public ChangesBrowserNodeRenderer(final Project project, final boolean showFlatten, final boolean highlightProblems) {
     myShowFlatten = showFlatten;
-    myProblemSolver = WolfTheProblemSolver.getInstance(project);
+    myProject = project;
     myHighlightProblems = highlightProblems;
     myIssueLinkRenderer = new IssueLinkRenderer(project, this);
   }
@@ -43,13 +42,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
 
 
   protected void appendFileName(final VirtualFile vFile, final String fileName, final Color color) {
-    int style = SimpleTextAttributes.STYLE_PLAIN;
-    Color underlineColor = null;
-    if (myHighlightProblems && vFile != null && !vFile.isDirectory() && myProblemSolver.isProblemFile(vFile)) {
-      underlineColor = Color.red;
-      style = SimpleTextAttributes.STYLE_WAVED;
-    }
-    append(fileName, new SimpleTextAttributes(style, color, underlineColor));
+    ChangesFileNameDecorator.getInstance(myProject).appendFileName(this, vFile, fileName, color, myHighlightProblems);
   }
 
   public void appendTextWithIssueLinks(final String text, final SimpleTextAttributes baseStyle) {
