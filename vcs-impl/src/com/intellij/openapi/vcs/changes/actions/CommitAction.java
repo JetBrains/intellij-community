@@ -12,10 +12,10 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -27,7 +27,7 @@ import java.util.Arrays;
 public class CommitAction extends AnAction {
   public void update(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(DataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     boolean enabled = false;
     if (project != null) {
       final ChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(project, changes);
@@ -45,7 +45,7 @@ public class CommitAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    Change[] changes = e.getData(DataKeys.CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     final ChangeList list = ChangesUtil.getChangeListIfOnlyOne(project, changes);
     if (list == null) return;
 
