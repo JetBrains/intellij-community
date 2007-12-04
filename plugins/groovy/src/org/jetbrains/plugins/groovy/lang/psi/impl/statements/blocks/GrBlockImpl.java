@@ -104,8 +104,6 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     } else {
       getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchorNode);
     }
-    PsiFile file = getContainingFile();
-    assert file != null;
     return (GrStatement) elemNode.getPsi();
   }
 

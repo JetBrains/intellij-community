@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
@@ -43,10 +44,10 @@ public class ControlStructureFilter implements ElementFilter {
         PsiElement parent = leaf.getParent();
         if (parent instanceof GroovyFile ||
             parent instanceof GrOpenBlock ||
-            parent instanceof  GrClosableBlock) {
+            parent instanceof GrClosableBlock) {
           return true;
         }
-        if (parent instanceof GrCaseSection){
+        if (parent instanceof GrCaseSection) {
           return true;
         }
       }
@@ -69,10 +70,16 @@ public class ControlStructureFilter implements ElementFilter {
             superParent instanceof GrCaseSection ||
             superParent instanceof GrIfStatement ||
             superParent instanceof GrForStatement ||
-            superParent instanceof GrWhileStatement ||
-            superParent instanceof GrExpression
-                && superParent.getParent() instanceof GrCaseSection) {
+            superParent instanceof GrWhileStatement) {
           return true;
+        }
+        if (superParent instanceof GrExpression) {
+          PsiElement elem = superParent.getParent();
+          if (elem instanceof GrCaseSection ||
+              elem instanceof GrLoopStatement ||
+              elem instanceof GrIfStatement) {
+            return true;
+          }
         }
       }
 

@@ -71,13 +71,13 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     return findChildrenByClass(GrStatement.class);
   }
 
-  public GrStatement addStatementBefore(@NotNull GrStatement element, @NotNull GrStatement anchor) throws IncorrectOperationException {
+  public GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
 
-    if (anchor != null && !this.equals(anchor.getParent())) {
+    if (anchor == null || !this.equals(anchor.getParent())) {
       throw new IncorrectOperationException();
     }
     ASTNode elemNode = element.getNode();
-    final ASTNode anchorNode = anchor != null ? anchor.getNode() : getLastChild().getNode();
+    final ASTNode anchorNode = anchor.getNode();
     getNode().addChild(elemNode, anchorNode);
     if (mayUseNewLinesAsSeparators()) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
