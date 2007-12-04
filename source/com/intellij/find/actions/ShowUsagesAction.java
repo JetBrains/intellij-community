@@ -11,7 +11,6 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -57,7 +56,7 @@ public class ShowUsagesAction extends AnAction {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
 
     UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
-    Editor editor = e.getData(DataKeys.EDITOR);
+    Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (usageTargets == null) {
       chooseAmbiguousTarget(project, editor);
     }
@@ -238,7 +237,7 @@ public class ShowUsagesAction extends AnAction {
 
   public void update(AnActionEvent e){
     FindUsagesInFileAction.updateFindUsagesAction(e);
-    Editor editor = e.getData(DataKeys.EDITOR);
+    Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (editor == null) {
       e.getPresentation().setEnabled(false);
     }
