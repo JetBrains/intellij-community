@@ -19,6 +19,7 @@ import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -65,26 +66,19 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     PsiElement element = reference.getElement();
     assert element instanceof GrExpression && element.getParent() instanceof GrCallExpression;
     GrCallExpression call = (GrCallExpression) element.getParent();
-    PsiElement position = inlineReferenceImpl(call, myMethod, isOnExpressionOrReturnPlace(call), GroovyInlineMethodUtil.isTailMethodCall(call));
+    SmartPsiElementPointer<GrExpression> pointer =
+        inlineReferenceImpl(call, myMethod, isOnExpressionOrReturnPlace(call), GroovyInlineMethodUtil.isTailMethodCall(call));
 
     // highilght replaced result
-    if (position != null && position instanceof GrExpression) {
+    if (pointer != null && pointer.getElement() != null) {
       Project project = referenced.getProject();
       FileEditorManager manager = FileEditorManager.getInstance(project);
       Editor editor = manager.getSelectedTextEditor();
-      GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{position});
+      GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{pointer.getElement()});
       WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-    }
-    if (position != null) {
-      GrVariableDeclarationOwner owner = position instanceof GrVariableDeclarationOwner ?
-          ((GrVariableDeclarationOwner) position) :
-          PsiTreeUtil.getParentOfType(position, GrVariableDeclarationOwner.class);
-      if (owner != null) {
-        try {
-          reformatOwner(owner);
-        } catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+      GrExpression expression = pointer.getElement();
+      if (editor != null && expression != null) {
+        editor.getCaretModel().moveToOffset(expression.getTextRange().getEndOffset());
       }
     }
   }
@@ -115,13 +109,14 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   }
 
 
-  static PsiElement inlineReferenceImpl(GrCallExpression call, GrMethod method, boolean replaceCall, boolean isTailMethodCall) {
+  static SmartPsiElementPointer<GrExpression> inlineReferenceImpl(GrCallExpression call, GrMethod method, boolean replaceCall, boolean isTailMethodCall) {
     try {
 
       GrMethod newMethod = prepareNewMethod(call, method);
       GrExpression result = getAloneResultExpression(newMethod);
       if (result != null) {
-        return call.replaceWithExpression(result, true);
+        GrExpression expression = call.replaceWithExpression(result, true);
+        return SmartPointerManager.getInstance(result.getProject()).createSmartPsiElementPointer(expression);
       }
 
       String resultName = InlineMethodConflictSolver.suggestNewName("result", newMethod, call);
@@ -196,7 +191,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         }
       }
       if (replaceCall && !isTailMethodCall) {
-        return replaced;
+        assert replaced != null;
+        SmartPsiElementPointer<GrExpression> pointer = SmartPointerManager.getInstance(replaced.getProject()).createSmartPsiElementPointer(replaced);
+        reformatOwner(owner);
+        return pointer;
       } else {
         GrStatement stmt;
         if (isTailMethodCall && enclosingExpr.getParent() instanceof GrReturnStatement) {
@@ -205,7 +203,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           stmt = enclosingExpr;
         }
         stmt.removeStatement();
-        return owner;
+        reformatOwner(owner);
+        return null;
       }
     } catch (IncorrectOperationException e) {
       LOG.error(e);
