@@ -188,17 +188,17 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   public void calcData(DataKey key, DataSink sink) {
-    if (key.equals(DataKeys.CHANGES)) {
+    if (key.equals(VcsDataKeys.CHANGES)) {
       final CommittedChangeList list = myBrowser.getSelectedChangeList();
       if (list != null) {
         final Collection<Change> changes = list.getChanges();
-        sink.put(DataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+        sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
       }
     }
-    else if (key.equals(DataKeys.CHANGE_LISTS)) {
+    else if (key.equals(VcsDataKeys.CHANGE_LISTS)) {
       final CommittedChangeList list = myBrowser.getSelectedChangeList();
       if (list != null) {
-        sink.put(DataKeys.CHANGE_LISTS, new ChangeList[] { list });
+        sink.put(VcsDataKeys.CHANGE_LISTS, new ChangeList[] { list });
       }
     }
   }
