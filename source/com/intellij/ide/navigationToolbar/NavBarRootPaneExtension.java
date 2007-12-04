@@ -79,8 +79,10 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   public void deinstallComponent(final JPanel northPanel) {
-    northPanel.remove(myNavigationBar);
-    northPanel.remove(myCloseNavBarLabel);
+    if (myNavigationBar != null) {
+      northPanel.remove(myNavigationBar);
+      northPanel.remove(myCloseNavBarLabel);
+    }
   }
 
   public JComponent getComponent() {
