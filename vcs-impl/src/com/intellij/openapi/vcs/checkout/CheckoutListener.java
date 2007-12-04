@@ -11,6 +11,7 @@ import java.io.File;
  */
 public interface CheckoutListener {
   ExtensionPointName<CheckoutListener> EP_NAME = ExtensionPointName.create("com.intellij.checkoutListener");
+  ExtensionPointName<CheckoutListener> COMPLETED_EP_NAME = ExtensionPointName.create("com.intellij.checkoutCompletedListener");
   
   boolean processCheckedOutDirectory(Project project, File directory);
 }

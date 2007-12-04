@@ -1,16 +1,14 @@
 package com.intellij.openapi.vcs.checkout;
 
-import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -48,14 +46,6 @@ public class CheckoutAction extends AnAction {
     return result.get();
   }
 
-  private static void processNoProject(final Project project, final File directory) {
-    int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.create.project.prompt", directory.getAbsolutePath()),
-                                      VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
-    if (rc == 0) {
-      NewProjectUtil.createNewProject(project, directory.getAbsolutePath());
-    }
-  }
-
   public void update(AnActionEvent e) {
     super.update(e);
     e.getPresentation().setText(myProvider.getVcsName(), true);
@@ -77,18 +67,22 @@ public class CheckoutAction extends AnAction {
           if (myFirstDirectory == null) {
             myFirstDirectory = directory;
           }
-          CheckoutListener[] listeners = Extensions.getExtensions(CheckoutListener.EP_NAME);
-          for(CheckoutListener listener: listeners) {
-            myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
-            if (myFoundProject) break;
-          }
+          notifyCheckoutListeners(directory, CheckoutListener.EP_NAME);
         }
+      }
+    }
+
+    private void notifyCheckoutListeners(final File directory, final ExtensionPointName<CheckoutListener> epName) {
+      CheckoutListener[] listeners = Extensions.getExtensions(epName);
+      for(CheckoutListener listener: listeners) {
+        myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
+        if (myFoundProject) break;
       }
     }
 
     public void checkoutCompleted() {
       if (!myFoundProject && myFirstDirectory != null) {
-        processNoProject(myProject, myFirstDirectory);
+        notifyCheckoutListeners(myFirstDirectory, CheckoutListener.COMPLETED_EP_NAME);
       }
     }
   }
