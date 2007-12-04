@@ -89,7 +89,7 @@ public class PrattBuilder {
       return null;
     }
 
-    while (!left.isStop()) {
+    while (myStack.isEmpty() || !left.isStop()) {
       tokenType = myBuilder.getTokenType();
       if (!(tokenType instanceof PrattTokenType) || rightPriority >= ((PrattTokenType)tokenType).getPriority()) break;
 
@@ -201,4 +201,8 @@ public class PrattBuilder {
     return myStack.size() - 1 < depth ? null : myStack.get(myStack.size() - 1 - depth);
   }
 
+  @Nullable
+  public String getTokenText() {
+    return myBuilder.getTokenText();
+  }
 }

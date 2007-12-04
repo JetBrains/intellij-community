@@ -4,6 +4,7 @@
  */
 package com.intellij.lang.pratt;
 
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,11 +12,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PrattParsingUtil {
 
-  public static void skipUntil(PrattBuilder builder, @NotNull PrattTokenType type) {
-    if (!builder.assertToken(type)) {
-      while (!builder.checkToken(type) && !builder.isEof()) {
+  public static void skipUntil(PrattBuilder builder, @NotNull PrattTokenType... types) {
+    final TokenSet set = TokenSet.create(types);
+    if (!set.contains(builder.getTokenType())) {
+      builder.assertToken(types[0]);
+      while (!set.contains(builder.getTokenType()) && !builder.isEof()) {
         builder.advance();
       }
     }
+    builder.advance();
   }
 }
