@@ -18,10 +18,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -121,12 +122,6 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   public GrStatement addStatementBefore(@NotNull GrStatement statement, @NotNull GrStatement anchor) throws IncorrectOperationException {
     final PsiElement result = addBefore(statement, anchor);
     getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
-    Document document = manager.getDocument(this);
-    if (document != null) {
-      manager.doPostponedOperationsAndUnblockDocument(document);
-    }
-    CodeStyleManager.getInstance(getProject()).adjustLineIndent(this, result.getTextRange());
     return (GrStatement) result;
   }
 

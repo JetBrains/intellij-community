@@ -15,6 +15,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -22,6 +23,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.refactoring.inline.GenericInlineHandler;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
@@ -46,7 +49,7 @@ import java.io.IOException;
  */
 public class InlineMethodTest extends CommonRefactoringTestCase {
 
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/inline/data/method";
+  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/inline/data/method/";
 
   public InlineMethodTest() {
     super(System.getProperty("path") != null ?
@@ -87,6 +90,7 @@ public class InlineMethodTest extends CommonRefactoringTestCase {
     file = PsiManager.getInstance(myProject).findFile(virtualFile);
     Assert.assertTrue(file instanceof GroovyFileBase);
 
+    setIndentationToNode(file.getNode());
     PsiDocumentManager manager = PsiDocumentManager.getInstance(myProject);
     try {
       myEditor.getSelectionModel().setSelection(startOffset, endOffset);
@@ -123,6 +127,15 @@ public class InlineMethodTest extends CommonRefactoringTestCase {
     }
 
     return result;
+  }
+
+  private static void setIndentationToNode(ASTNode element){
+    if (element instanceof TreeElement) {
+      CodeEditUtil.setOldIndentation(((TreeElement) element), 0);
+    }
+    for (ASTNode node : element.getChildren(null)) {
+      setIndentationToNode(node);
+    }
   }
 
 

@@ -25,6 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
  */
 public interface GrStatementOwner extends GroovyPsiElement {
 
-  GrStatement addStatementBefore(@NotNull GrStatement statement, @NotNull GrStatement anchor) throws IncorrectOperationException;
+  GrStatement addStatementBefore(@NotNull GrStatement statement, GrStatement anchor) throws IncorrectOperationException;
 
 }

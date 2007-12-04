@@ -18,16 +18,14 @@ def foo(int i, def j) {
 def result = 26
 
 def cl = { int x ->
-    int result1
     if (x > 42) {
         println("preved!")
         println("medved")
-        result1 = x * x
+        return x * x
     } else {
         println "bugoga"
-        result1 = x
+        return x
     }
-    result1
 }
 
 def foo(int i, def j) {

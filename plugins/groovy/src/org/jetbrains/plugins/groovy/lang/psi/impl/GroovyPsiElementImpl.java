@@ -18,10 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -43,7 +43,11 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
       throw new IncorrectOperationException();
     }
     ASTNode parentNode = getParent().getNode();
+    ASTNode prevNode = getNode().getTreePrev();
     parentNode.removeChild(this.getNode());
+    if (prevNode != null && TokenSets.SEPARATORS.contains(prevNode.getElementType())) {
+      parentNode.removeChild(prevNode);
+    }
   }
 
   public GrStatement replaceWithStatement(@NotNull GrStatement newStmt) throws IncorrectOperationException {

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -96,9 +97,15 @@ public abstract class InlineMethodConflictSolver {
   }
 
   private static boolean isValidNameUp(@NotNull String name, PsiElement startElement, GrCallExpression call) {
+    if (startElement instanceof PsiFile) {
+      return true;
+    }
+    
     PsiElement prevSibling = startElement.getPrevSibling();
     while (prevSibling != null) {
-      if (!isValidNameDown(name, prevSibling, call)) return false;
+      if (!isValidNameDown(name, prevSibling, call)) {
+        return false;
+      }
       prevSibling = prevSibling.getPrevSibling();
     }
 

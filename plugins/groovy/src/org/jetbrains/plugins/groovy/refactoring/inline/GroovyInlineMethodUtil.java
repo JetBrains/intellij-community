@@ -23,8 +23,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -34,15 +32,16 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -56,6 +55,12 @@ public abstract class GroovyInlineMethodUtil {
   public static InlineHandler.Settings inlineMethodSettings(GrMethod method, Editor editor, boolean invokedOnReference) {
 
     final Project project = method.getProject();
+    if (method.isConstructor()) {
+      String message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.constructors", REFACTORING_NAME);
+      showErrorMessage(message, project);
+      return null;
+    }
+
     PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (!invokedOnReference || reference == null) {
       String message = GroovyRefactoringBundle.message("multiple.method.inline.is.not.suppored", REFACTORING_NAME);
@@ -63,22 +68,31 @@ public abstract class GroovyInlineMethodUtil {
       return null;
     }
 
-    final Collection<PsiReference> refs = ReferencesSearch.search(method, GlobalSearchScope.projectScope(method.getProject()), false).findAll();
-    ArrayList<PsiElement> exprs = new ArrayList<PsiElement>();
     PsiElement element = reference.getElement();
-    if (element != null && element.getContainingFile() instanceof GroovyFile) {
-      if (isStaticMethod(method) || areInSameClass(element, method)) { // todo implement for other cases
-        exprs.add(element);
+
+    if (element.getContainingFile() instanceof GroovyFile) {
+      if (!(isStaticMethod(method) || areInSameClass(element, method))) { // todo implement for other cases
+//        showErrorMessage("Other class support will be implemented soon", project);
+//        return null;
       }
     }
-    if (element instanceof GrExpression && PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
+
+    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) {
+      String message = GroovyRefactoringBundle.message("refactoring.is.available.only.for.method.calls", REFACTORING_NAME);
+      showErrorMessage(message, project);
+      return null;
+    }
+
+    GrCallExpression call = (GrCallExpression) element.getParent();
+
+    if (PsiTreeUtil.getParentOfType(element, GrParameter.class) != null) {
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.in.parameter.initializers", REFACTORING_NAME);
       showErrorMessage(message, project);
       return null;
     }
 
 
-    GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(PsiElement.EMPTY_ARRAY));
+    GroovyRefactoringUtil.highlightOccurrences(project, editor, new GrExpression[]{call});
     if (method.getBlock() == null) {
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -90,19 +104,54 @@ public abstract class GroovyInlineMethodUtil {
       return null;
     }
 
-    if (hasBadReturns(method)) { //todo process tail method calls
+    if (hasBadReturns(method) && !isTailMethodCall(call)) { 
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
       showErrorMessage(message, project);
       return null;
     }
 
-    if (method.isConstructor()) {
-      String message = GroovyRefactoringBundle.message("refactoring.cannot.be.applied.to.constructors", REFACTORING_NAME);
-      showErrorMessage(message, project);
-      return null;
+    return inlineMethodDialogResult(GroovyRefactoringUtil.getMethodSignature(method), project);
+  }
+
+  /**
+   * Checks wheter given method call is tail call of other method or closure
+   * @param call [tail?] Method call
+   * @return
+   */
+  static boolean isTailMethodCall(GrCallExpression call) {
+    GrStatement stmt = call;
+    PsiElement parent = call.getParent();
+
+    // return statement
+    if (parent instanceof GrReturnStatement) {
+      stmt = ((GrReturnStatement) parent);
+      parent = parent.getParent();
+    }
+    // method body result
+    if (parent instanceof GrOpenBlock) {
+      if (parent.getParent() instanceof GrMethod) {
+        GrStatement[] statements = ((GrOpenBlock) parent).getStatements();
+        return statements.length > 0 && stmt == statements[statements.length - 1];
+
+      }
+    }
+    // closure result
+    if (parent instanceof GrClosableBlock) {
+      GrStatement[] statements = ((GrClosableBlock) parent).getStatements();
+      return statements.length > 0 && stmt == statements[statements.length - 1];
     }
 
-    return inlineMethodDialogResult(GroovyRefactoringUtil.getMethodSignature(method), project);
+    // todo add for inner method block statements
+    // todo test me!
+    if (stmt instanceof GrReturnStatement) {
+      GrMethod method = PsiTreeUtil.getParentOfType(stmt, GrMethod.class);
+      if (method != null) {
+        Collection<GrReturnStatement> returnStatements = GroovyRefactoringUtil.findReturnStatements(method);
+        return returnStatements.contains(stmt) && !hasBadReturns(method);
+      }
+    }
+
+    return false;
   }
 
   /**

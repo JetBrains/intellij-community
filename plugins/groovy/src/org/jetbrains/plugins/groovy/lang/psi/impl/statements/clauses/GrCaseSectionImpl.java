@@ -16,12 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -88,15 +84,6 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     } else {
       getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchorNode);
     }
-    PsiFile file = anchor.getContainingFile();
-    assert file != null;
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
-    Document document = manager.getDocument(file);
-    if (document != null) {
-      manager.doPostponedOperationsAndUnblockDocument(document);
-    }
-    CodeStyleManager.getInstance(getProject()).adjustLineIndent(file, getTextRange());
-
     return (GrStatement) elemNode.getPsi();
   }
 

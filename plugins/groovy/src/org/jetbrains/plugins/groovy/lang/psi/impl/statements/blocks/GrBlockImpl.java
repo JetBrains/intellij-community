@@ -16,12 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -89,28 +86,26 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     return findChildrenByClass(GrStatement.class);
   }
 
-  public GrStatement addStatementBefore(@NotNull GrStatement element, @NotNull GrStatement anchor) throws IncorrectOperationException {
+  public GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
 
-    if (!this.equals(anchor.getParent())) {
+    if (anchor == null && getRBrace() == null) {
+      throw new IncorrectOperationException();
+    }
+
+    if (anchor != null && !this.equals(anchor.getParent())) {
       throw new IncorrectOperationException();
     }
 
     ASTNode elemNode = element.getNode();
-    final ASTNode anchorNode = anchor.getNode();
+    final ASTNode anchorNode = anchor != null ? anchor.getNode() : getRBrace().getNode();
     getNode().addChild(elemNode, anchorNode);
     if (mayUseNewLinesAsSeparators()) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
     } else {
       getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchorNode);
     }
-    PsiFile file = anchor.getContainingFile();
+    PsiFile file = getContainingFile();
     assert file != null;
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
-    Document document = manager.getDocument(file);
-    if (document != null) {
-      manager.doPostponedOperationsAndUnblockDocument(document);
-    }
-    CodeStyleManager.getInstance(getProject()).adjustLineIndent(file, getTextRange());
     return (GrStatement) elemNode.getPsi();
   }
 
