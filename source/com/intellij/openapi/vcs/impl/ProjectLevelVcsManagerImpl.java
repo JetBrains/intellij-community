@@ -55,10 +55,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
-import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler;
-import com.intellij.openapi.vcs.checkin.StandardBeforeCheckinHandler;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
@@ -240,21 +237,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void projectOpened() {
-    registerCheckinHandlerFactory(new CheckinHandlerFactory() {
-      public
-      @NotNull
-      CheckinHandler createHandler(final CheckinProjectPanel panel) {
-        return new StandardBeforeCheckinHandler(myProject, panel);
-      }
-    });
-    registerCheckinHandlerFactory(new CheckinHandlerFactory() {
-      public
-      @NotNull
-      CheckinHandler createHandler(final CheckinProjectPanel panel) {
-        return new CodeAnalysisBeforeCheckinHandler(myProject, panel);
-      }
-    });
-
     initialize();
 
     final StartupManager manager = StartupManager.getInstance(myProject);
