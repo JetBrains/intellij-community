@@ -20,9 +20,12 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
+import com.intellij.util.Icons;
+import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.*;
 import java.util.List;
 
 public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMethod {
@@ -379,6 +382,12 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   public ItemPresentation getPresentation() {
     return SymbolPresentationUtil.getMethodPresentation(this);
+  }
+
+  public Icon getElementIcon(final int flags) {
+    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
+    RowIcon baseIcon = createLayeredIcon(methodIcon, getFlags(this, false));
+    return addVisibilityIcon(this, flags, baseIcon);
   }
 }
 

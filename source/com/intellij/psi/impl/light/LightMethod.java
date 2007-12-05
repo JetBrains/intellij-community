@@ -2,15 +2,16 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.ui.RowIcon;
+import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.List;
-
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.List;
 
 /**
  * @author ven
@@ -164,5 +165,11 @@ public class LightMethod extends LightElement implements PsiMethod {
 
   public String toString() {
     return "PsiMethod:" + getName();
+  }
+
+  public Icon getElementIcon(final int flags) {
+    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
+    RowIcon baseIcon = createLayeredIcon(methodIcon, getFlags(this, false));
+    return addVisibilityIcon(this, flags, baseIcon);
   }
 }

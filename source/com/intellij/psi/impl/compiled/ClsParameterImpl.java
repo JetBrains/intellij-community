@@ -199,7 +199,7 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags(this, false));
+    final RowIcon baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
     return addVisibilityIcon(this, flags, baseIcon);
   }
 }

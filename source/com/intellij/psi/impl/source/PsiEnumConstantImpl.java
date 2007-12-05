@@ -233,7 +233,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags(this, false));
+    final RowIcon baseIcon = createLayeredIcon(Icons.FIELD_ICON, getFlags(this, false));
     return addVisibilityIcon(this, flags, baseIcon);
   }
 

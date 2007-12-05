@@ -91,17 +91,6 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       Icon symbolIcon = getClassBaseIcon(aClass);
       baseIcon = createLayeredIcon(symbolIcon, getFlags(aClass, isLocked));
     }
-    else if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
-      Icon methodIcon = method.hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
-      baseIcon = createLayeredIcon(methodIcon, getFlags(method, false));
-    }
-    else if (element instanceof PsiField) {
-      baseIcon = createLayeredIcon(Icons.FIELD_ICON, getFlags((PsiField)element, false));
-    }
-    else if (element instanceof PsiParameter) {
-      baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
-    }
     else {
       return null;
     }

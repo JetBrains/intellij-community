@@ -23,12 +23,15 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Icons;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
+import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
@@ -877,5 +880,11 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
   public ItemPresentation getPresentation() {
     return SymbolPresentationUtil.getMethodPresentation(this);
+  }
+
+  public Icon getElementIcon(final int flags) {
+    Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
+    RowIcon baseIcon = createLayeredIcon(methodIcon, getFlags(this, false));
+    return addVisibilityIcon(this, flags, baseIcon);
   }
 }
