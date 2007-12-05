@@ -128,6 +128,9 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
 
   @NotNull
   public SearchScope getUseScope() {
+    if (isProperty()) {
+      return getManager().getFileManager().getUseScope(this); //maximal scope
+    }
     return PsiImplUtil.getUseScope(this);
   }
 
