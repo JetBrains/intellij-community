@@ -49,8 +49,13 @@ public class TreeModelBuilder {
     return model;
   }
 
+  @Nullable
   private ChangesGroupingPolicy createGroupingPolicy() {
-    return ChangesGroupingPolicyFactory.getInstance(myProject).createGroupingPolicy(model);
+    final ChangesGroupingPolicyFactory factory = ChangesGroupingPolicyFactory.getInstance(myProject);
+    if (factory != null) {
+      return factory.createGroupingPolicy(model);
+    }
+    return null;
   }
 
   public DefaultTreeModel buildModelFromFiles(final List<VirtualFile> files) {
@@ -237,7 +242,7 @@ public class TreeModelBuilder {
 
   private ChangesBrowserNode getParentNodeFor(ChangesBrowserNode node,
                                 Map<FilePath, ChangesBrowserNode> folderNodesCache,
-                                ChangesGroupingPolicy policy,
+                                @Nullable ChangesGroupingPolicy policy,
                                 ChangesBrowserNode rootNode) {
     if (showFlatten) {
       return rootNode;
@@ -245,9 +250,11 @@ public class TreeModelBuilder {
 
     final FilePath path = getPathForObject(node.getUserObject());
 
-    ChangesBrowserNode nodeFromPolicy = policy.getParentNodeFor(node, rootNode);
-    if (nodeFromPolicy != null) {
-      return nodeFromPolicy;
+    if (policy != null) {
+      ChangesBrowserNode nodeFromPolicy = policy.getParentNodeFor(node, rootNode);
+      if (nodeFromPolicy != null) {
+        return nodeFromPolicy;
+      }
     }
 
     FilePath parentPath = path.getParentPath();
