@@ -17,7 +17,7 @@ protected static def getGeneratedFileNames() {
     int t = foo
 }
 
-private static Serializable testMethod(Serializable foo) {
+private static String testMethod(Serializable foo) {
   println(foo)
   foo = ""
   return foo

@@ -82,11 +82,16 @@ public class ReachingDefinitionsCollector {
         String name = rwInstruction.getVariableName();
         final int[] defs = dfaResult.get(ref).toArray();
         if (anyDefInFragment(defs, fragmentInstructions)) {
-          PsiType type = getType(rwInstruction.getElement());
-          addVariable(name, omap, manager, type);
+          for (int def : defs) {
+            if (fragmentInstructions.contains(def)) {
+              PsiType outputType = getType(flow[def].getElement());
+              addVariable(name, omap, manager, outputType);
+            }
+          }
 
           if (!allProperDefsInFragment(defs, ref, fragmentInstructions, postorder)) {
-            addVariable(name, imap, manager, type);
+            PsiType inputType = getType(rwInstruction.getElement());
+            addVariable(name, imap, manager, inputType);
           }
         }
 
