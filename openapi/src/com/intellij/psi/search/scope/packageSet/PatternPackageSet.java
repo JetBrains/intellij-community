@@ -25,10 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -141,7 +138,7 @@ public class PatternPackageSet implements PackageSet {
 
     if (file instanceof PsiJavaFile) return ((PsiJavaFile)file).getPackageName() + "." + file.getVirtualFile().getNameWithoutExtension();
     PsiDirectory dir = file.getContainingDirectory();
-    PsiPackage aPackage = dir.getPackage();
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
     return aPackage == null ? file.getName() : aPackage.getQualifiedName() + "." + file.getVirtualFile().getNameWithoutExtension();
   }
 

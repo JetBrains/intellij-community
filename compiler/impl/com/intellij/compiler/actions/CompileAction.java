@@ -14,10 +14,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,7 +71,7 @@ public class CompileAction extends CompileActionBase {
       if (files.length == 1) {
         final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(files[0]);
         if (directory != null) {
-          aPackage = directory.getPackage();
+          aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         }
       }
       else {
@@ -157,7 +154,7 @@ public class CompileAction extends CompileActionBase {
       }
       if (file.isDirectory()) {
         final PsiDirectory directory = psiManager.findDirectory(file);
-        if (directory == null || directory.getPackage() == null) {
+        if (directory == null || JavaDirectoryService.getInstance().getPackage(directory) == null) {
           continue;
         }
       }

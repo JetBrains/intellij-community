@@ -113,7 +113,7 @@ public class CopyHandler {
   }
 
   private static boolean hasPackages(PsiDirectory directory) {
-    if (directory.getPackage() != null) {
+    if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
       return true;
     }
     PsiDirectory[] subdirectories = directory.getSubdirectories();

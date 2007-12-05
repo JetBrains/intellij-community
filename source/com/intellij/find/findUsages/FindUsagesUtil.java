@@ -150,7 +150,7 @@ public class FindUsagesUtil {
       public String compute() {
         PsiElement norm = element;
         if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-          norm = ((PsiDirectory)element).getPackage();
+          norm = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
         }
         if (norm instanceof PsiPackage) {
           return ((PsiPackage)norm).getQualifiedName();
@@ -280,7 +280,7 @@ public class FindUsagesUtil {
   private static void addClassesInDirectory(final PsiDirectory dir, final boolean includeSubdirs, final ArrayList<PsiClass> array) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        PsiClass[] classes = dir.getClasses();
+        PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
         array.addAll(Arrays.asList(classes));
         if (includeSubdirs) {
           PsiDirectory[] dirs = dir.getSubdirectories();

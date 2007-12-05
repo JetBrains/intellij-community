@@ -101,7 +101,7 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
 
   public boolean isToSearchInCommentsForRename(PsiElement element) {
     if (element instanceof PsiDirectory) {
-      element = ((PsiDirectory)element).getPackage();
+      element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
       if (element == null) return false;
     }
     if (element instanceof PsiPackage){
@@ -139,7 +139,7 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
 
   public boolean isToSearchForTextOccurencesForRename(PsiElement element) {
     if (element instanceof PsiDirectory) {
-      element = ((PsiDirectory)element).getPackage();
+      element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     }
     if (element instanceof PsiPackage){
       return RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE;
@@ -171,7 +171,7 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
 
   public void setToSearchInCommentsForRename(PsiElement element, boolean value) {
     if (element instanceof PsiDirectory) {
-      final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
       if (aPackage != null) {
         element = aPackage;
       }
@@ -206,7 +206,7 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
 
   public void setToSearchInNonJavaFilesForRename(PsiElement element, boolean value) {
     if (element instanceof PsiDirectory) {
-      final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
       if (aPackage != null) {
         element = aPackage;
       }

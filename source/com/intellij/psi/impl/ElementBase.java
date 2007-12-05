@@ -53,7 +53,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     } else if (element instanceof PsiDirectory) {
       Icon symbolIcon;
       final PsiDirectory psiDirectory = (PsiDirectory)element;
-      if (psiDirectory.getPackage() != null) {
+      if (JavaDirectoryService.getInstance().getPackage(psiDirectory) != null) {
         symbolIcon = Icons.PACKAGE_ICON;
       }
       else {

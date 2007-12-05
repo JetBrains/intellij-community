@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NonNls;
@@ -158,7 +159,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
       // should convert PsiDirectories into PackageElements
       if (element instanceof PsiDirectory) {
         PsiDirectory dir = (PsiDirectory)element;
-        final PsiPackage aPackage = dir.getPackage();
+        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
         if (ProjectView.getInstance(myProject).isShowModules(getId())) {
           Module[] modules = getModulesFor(dir);
           boolean rv = false;

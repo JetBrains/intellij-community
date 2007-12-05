@@ -242,7 +242,7 @@ public class AnalysisScope {
         if (onlyPackLocalClasses) {
           final PsiDirectory psiDirectory = psiJavaFile.getContainingDirectory();
           if (psiDirectory != null) {
-            return new AnalysisScope[]{new AnalysisScope(psiDirectory.getPackage())};
+            return new AnalysisScope[]{new AnalysisScope(JavaDirectoryService.getInstance().getPackage(psiDirectory))};
           }
         }
       }

@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.IncorrectOperationException;
@@ -42,7 +43,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
         final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         final PsiDirectory[] dirs = view.getDirectories();
         for (final PsiDirectory dir : dirs) {
-          if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
+          if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
             return;
           }
         }
@@ -83,6 +84,6 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
   }
 
   protected String getActionName(final PsiDirectory directory, final String newName) {
-    return UIDesignerBundle.message("progress.creating.class", directory.getPackage().getQualifiedName(), newName);
+    return UIDesignerBundle.message("progress.creating.class", JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName(), newName);
   }
 }

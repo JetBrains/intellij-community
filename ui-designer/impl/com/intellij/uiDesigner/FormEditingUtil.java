@@ -564,7 +564,7 @@ public final class FormEditingUtil {
   public static String buildResourceName(final PsiFile file) {
     PsiDirectory directory = file.getContainingDirectory();
     if (directory != null) {
-      PsiPackage pkg = directory.getPackage();
+      PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
       String packageName = pkg != null ? pkg.getQualifiedName() : "";
       return packageName.replace('.', '/') + '/' + file.getName();
     }

@@ -1,8 +1,5 @@
 package com.intellij.psi.impl.file;
 
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.util.EditSourceUtil;
@@ -15,10 +12,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -48,16 +40,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Properties;
 
 public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiDirectoryImpl");
 
   private final PsiManagerImpl myManager;
   private VirtualFile myFile;
-
-  private LanguageLevel myLanguageLevel;
 
   public PsiDirectoryImpl(PsiManagerImpl manager, VirtualFile file) {
     myManager = manager;
@@ -67,10 +55,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   @NotNull
   public VirtualFile getVirtualFile() {
     return myFile;
-  }
-
-  public void setVirtualFile(VirtualFile file) {
-    myFile = file;
   }
 
   public boolean isDirectory() {
@@ -151,13 +135,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     }
   }
 
-  public PsiPackage getPackage() {
-    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    String packageName = projectFileIndex.getPackageNameByDirectory(myFile);
-    if (packageName == null) return null;
-    return myManager.findPackage(packageName);
-  }
-
   public PsiDirectory getParentDirectory() {
     VirtualFile parentFile = myFile.getParent();
     if (parentFile == null) return null;
@@ -201,22 +178,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     return myManager.findFile(childVFile);
-  }
-
-  @NotNull
-  public PsiClass[] getClasses() {
-    LOG.assertTrue(isValid());
-
-    VirtualFile[] vFiles = myFile.getChildren();
-    ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
-    for (VirtualFile vFile : vFiles) {
-      PsiFile file = myManager.findFile(vFile);
-      if (file instanceof PsiJavaFile && !PsiUtil.isInJspFile(file)) {
-        PsiClass[] fileClasses = ((PsiJavaFile)file).getClasses();
-        classes.addAll(Arrays.asList(fileClasses));
-      }
-    }
-    return classes.toArray(new PsiClass[classes.size()]);
   }
 
   public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
@@ -316,100 +277,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     return null;
   }
 
-  @NotNull
-  public PsiClass createClass(@NotNull String name) throws IncorrectOperationException {
-    return createClassFromTemplate(name, FileTemplateManager.INTERNAL_CLASS_TEMPLATE_NAME);
-  }
-
-  @NotNull
-  public PsiClass createClass(@NotNull String name, @NotNull String templateName) throws IncorrectOperationException {
-    return createClassFromTemplate(name, templateName);
-  }
-
-  @NotNull
-  public PsiClass createInterface(@NotNull String name) throws IncorrectOperationException {
-    String templateName = FileTemplateManager.INTERNAL_INTERFACE_TEMPLATE_NAME;
-    PsiClass someClass = createClassFromTemplate(name, templateName);
-    if (!someClass.isInterface()) {
-      throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
-    }
-    return someClass;
-  }
-
-  @NotNull
-  public PsiClass createEnum(@NotNull String name) throws IncorrectOperationException {
-    String templateName = FileTemplateManager.INTERNAL_ENUM_TEMPLATE_NAME;
-    PsiClass someClass = createClassFromTemplate(name, templateName);
-    if (!someClass.isEnum()) {
-      throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
-    }
-    return someClass;
-  }
-
-  @NotNull
-  public PsiClass createAnnotationType(@NotNull String name) throws IncorrectOperationException {
-    String templateName = FileTemplateManager.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
-    PsiClass someClass = createClassFromTemplate(name, templateName);
-    if (!someClass.isAnnotationType()) {
-      throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
-    }
-    return someClass;
-  }
-
-  private PsiClass createClassFromTemplate(String name, String templateName) throws IncorrectOperationException {
-    checkCreateClassOrInterface(name);
-
-    FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
-
-    Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
-    Properties properties = new Properties(defaultProperties);
-    properties.setProperty(FileTemplate.ATTRIBUTE_NAME, name);
-
-    String ext = StdFileTypes.JAVA.getDefaultExtension();
-    String fileName = name + "." + ext;
-
-    PsiElement element;
-    try {
-      element = FileTemplateUtil.createFromTemplate(template, fileName, properties, this);
-    }
-    catch (IncorrectOperationException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return null;
-    }
-
-    final PsiJavaFile file = (PsiJavaFile)element.getContainingFile();
-    PsiClass[] classes = file.getClasses();
-    if (classes.length != 1 || !name.equals(classes[0].getName())) {
-      throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
-    }
-    return file.getClasses()[0];
-  }
-
-  private static String getIncorrectTemplateMessage(String templateName) {
-    return PsiBundle.message("psi.error.incorroect.class.template.message",
-                             FileTemplateManager.getInstance().internalTemplateToSubject(templateName), templateName);
-  }
-
-  public void checkCreateClass(@NotNull String name) throws IncorrectOperationException {
-    checkCreateClassOrInterface(name);
-  }
-
-  public void checkCreateInterface(@NotNull String name) throws IncorrectOperationException {
-    checkCreateClassOrInterface(name);
-  }
-
-  /**
-   * @not_implemented
-   */
-  public void checkCreateClassOrInterface(String name) throws IncorrectOperationException {
-    CheckUtil.checkIsIdentifier(myManager, name);
-
-    String fileName = name + "." + StdFileTypes.JAVA.getDefaultExtension();
-    checkCreateFile(fileName);
-  }
 
   @NotNull
   public PsiDirectory createSubdirectory(@NotNull String name) throws IncorrectOperationException {
@@ -503,31 +370,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     CheckUtil.checkWritable(this);
   }
 
-  public boolean isSourceRoot() {
-    if (myFile == null) return false;
-    final VirtualFile sourceRoot = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getSourceRootForFile(myFile);
-    return myFile.equals(sourceRoot);
-  }
-
-  public LanguageLevel getLanguageLevel() {
-    synchronized (PsiLock.LOCK) {
-      if (myLanguageLevel == null) {
-        myLanguageLevel = getLanguageLevelInner();
-      }
-      return myLanguageLevel;
-    }
-  }
-
-  private LanguageLevel getLanguageLevelInner() {
-    final VirtualFile virtualFile = getVirtualFile();
-    final Project project = getProject();
-    final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
-    if (module != null) {
-      return module.getEffectiveLanguageLevel();
-    }
-
-    return PsiManager.getInstance(project).getEffectiveLanguageLevel();
-  }
 
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     checkAdd(element);
@@ -593,7 +435,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     else if (element instanceof PsiClass) {
       final String name = ((PsiClass)element).getName();
       if (name != null) {
-        final PsiClass newClass = createClass(name);
+        final PsiClass newClass = JavaDirectoryService.getInstance().createClass(this, name);
         return newClass.replace(element);
       } else {
         LOG.error("not implemented");
@@ -628,7 +470,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     }
     else if (element instanceof PsiClass) {
       if (element.getParent() instanceof PsiFile) {
-        checkCreateClassOrInterface(((PsiClass)element).getName());
+        JavaDirectoryServiceImpl.checkCreateClassOrInterface(this, ((PsiClass)element).getName());
       }
       else {
         LOG.error("not implemented");

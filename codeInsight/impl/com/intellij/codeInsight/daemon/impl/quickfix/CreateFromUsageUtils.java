@@ -272,7 +272,7 @@ public class CreateFromUsageUtils {
     else {
       final PsiDirectory directory = sourceFile.getContainingDirectory();
       if (directory != null) {
-        aPackage = directory.getPackage();
+        aPackage = JavaDirectoryService.getInstance().getPackage(directory);
       }
 
       if (aPackage == null) {
@@ -315,13 +315,13 @@ public class CreateFromUsageUtils {
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               try {
                 if (classKind == INTERFACE) {
-                  targetClass = directory.createInterface(name);
+                  targetClass = JavaDirectoryService.getInstance().createInterface(directory, name);
                 }
                 else if (classKind == CLASS) {
-                  targetClass = directory.createClass(name);
+                  targetClass = JavaDirectoryService.getInstance().createClass(directory, name);
                 }
                 else if (classKind == ENUM) {
-                  targetClass = directory.createEnum(name);
+                  targetClass = JavaDirectoryService.getInstance().createEnum(directory, name);
                 }
                 else {
                   LOG.error("Unknown kind of a class to create");

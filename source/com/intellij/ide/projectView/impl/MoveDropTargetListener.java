@@ -4,10 +4,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
@@ -285,7 +282,7 @@ class MoveDropTargetListener implements DropTargetListener {
         psiDirectory = psiDirectories.length != 0 ? psiDirectories[0] : null;
       } else {
         psiDirectory = (PsiDirectory)targetElement;
-        psiPackage = psiDirectory == null ? null : psiDirectory.getPackage();
+        psiPackage = psiDirectory == null ? null : JavaDirectoryService.getInstance().getPackage(psiDirectory);
       }
       CopyHandler.doCopy(sourceElements, psiPackage, psiDirectory );
     }

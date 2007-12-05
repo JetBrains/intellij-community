@@ -70,7 +70,7 @@ public class PackageUtil {
     for (PsiDirectory dir : dirs) {
       final PsiDirectory[] subdirectories = dir.getSubdirectories();
       for (PsiDirectory subdirectory : subdirectories) {
-        final PsiPackage psiPackage = subdirectory.getPackage();
+        final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(subdirectory);
         if (psiPackage != null) {
           final String name = psiPackage.getName();
           // skip "default" subpackages as they should be attributed to other modules
@@ -158,12 +158,12 @@ public class PackageUtil {
       if (directory == null) {
         continue;
       }
-      final PsiPackage directoryPackage = directory.getPackage();
+      final PsiPackage directoryPackage = JavaDirectoryService.getInstance().getPackage(directory);
       if (directoryPackage == null || isPackageDefault(directoryPackage)) {
         // add subpackages
         final PsiDirectory[] subdirectories = directory.getSubdirectories();
         for (PsiDirectory subdirectory : subdirectories) {
-          final PsiPackage aPackage = subdirectory.getPackage();
+          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subdirectory);
           if (aPackage != null && !isPackageDefault(aPackage)) {
             topLevelPackages.add(aPackage);
           }
@@ -216,7 +216,7 @@ public class PackageUtil {
   }
 
   private static boolean isPackage(final PsiDirectory psiDirectory) {
-    return psiDirectory.getPackage() != null;
+    return JavaDirectoryService.getInstance().getPackage(psiDirectory) != null;
   }
 
   public static boolean isFQNameShown(final PsiDirectory value, final Object parentValue, final ViewSettings settings) {
@@ -225,7 +225,7 @@ public class PackageUtil {
            && !(parentValue instanceof Project)
            && settings.isFlattenPackages()
            && !isSourceRoot(value)
-           && (aPackage = value.getPackage()) != null
+           && (aPackage = JavaDirectoryService.getInstance().getPackage(value)) != null
            && aPackage.getQualifiedName().length() > 0;
 
   }
@@ -259,7 +259,7 @@ public class PackageUtil {
                                     final ViewSettings settings,
                                     final Object parentValue,
                                     final AbstractTreeNode<?> node) {
-    PsiPackage aPackage = psiDirectory.getPackage();
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
 
     if (aPackage != null
@@ -278,7 +278,7 @@ public class PackageUtil {
     if (!isSourceRoot(psiDirectory) && aPackage != null && aPackage.getQualifiedName().length() > 0 &&
                               parentValue instanceof PsiDirectory) {
 
-      parentPackage = ((PsiDirectory)parentValue).getPackage();
+      parentPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)parentValue));
     }
     else {
       parentPackage = null;
@@ -390,18 +390,18 @@ public class PackageUtil {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
     final ModuleFileIndex moduleFileIndex = module == null ? null : ModuleRootManager.getInstance(module).getFileIndex();
-    if (!settings.isFlattenPackages() || psiDirectory.getPackage() == null) {
+    if (!settings.isFlattenPackages() || JavaDirectoryService.getInstance().getPackage(psiDirectory) == null) {
       processPsiDirectoryChildren(psiDirectory, psiDirectory.getChildren(), children, fileIndex, moduleFileIndex, settings,
                                   withSubDirectories);
     }
     else { // source directory in "flatten packages" mode
       final PsiDirectory parentDir = psiDirectory.getParentDirectory();
-      if (parentDir == null || parentDir.getPackage() == null /*|| !rootDirectoryFound(parentDir)*/ && withSubDirectories) {
+      if (parentDir == null || JavaDirectoryService.getInstance().getPackage(parentDir) == null /*|| !rootDirectoryFound(parentDir)*/ && withSubDirectories) {
         addAllSubpackages(children, psiDirectory, moduleFileIndex, settings);
       }
       PsiDirectory[] subdirs = psiDirectory.getSubdirectories();
       for (PsiDirectory subdir : subdirs) {
-        if (subdir.getPackage() != null) {
+        if (JavaDirectoryService.getInstance().getPackage(subdir) != null) {
           continue;
         }
         if (moduleFileIndex != null) {
@@ -440,7 +440,7 @@ public class PackageUtil {
           PsiDirectory dir = (PsiDirectory)child;
           vFile = dir.getVirtualFile();
           if (!vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
-            if (viewSettings.isHideEmptyMiddlePackages() && dir.getPackage() != null && TreeViewUtil.isEmptyMiddlePackage(dir, true)) {
+            if (viewSettings.isHideEmptyMiddlePackages() && JavaDirectoryService.getInstance().getPackage(dir) != null && TreeViewUtil.isEmptyMiddlePackage(dir, true)) {
               processPsiDirectoryChildren(dir, dir.getChildren(), container, projectFileIndex, moduleFileIndex, viewSettings,
                                           withSubDirectories); // expand it recursively
               continue;
@@ -501,7 +501,7 @@ public class PackageUtil {
     final Project project = dir.getProject();
     PsiDirectory[] subdirs = dir.getSubdirectories();
     for (PsiDirectory subdir : subdirs) {
-      if (subdir.getPackage() == null) {
+      if (JavaDirectoryService.getInstance().getPackage(subdir) == null) {
         continue;
       }
       if (moduleFileIndex != null) {

@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.PathUtil;
@@ -332,7 +331,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
     @Nullable
     private PsiPackage getPsiPackage(VirtualFile dir) {
       PsiDirectory directory = getPsiDirectory(dir);
-      return directory != null ? directory.getPackage() : null;
+      return directory != null ? JavaDirectoryService.getInstance().getPackage(directory) : null;
     }
   }
 

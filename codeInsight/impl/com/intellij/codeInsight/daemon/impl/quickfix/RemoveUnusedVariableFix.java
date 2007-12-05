@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -338,7 +338,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
 
     PsiFile file = aClass.getContainingFile();
     PsiDirectory directory = file.getContainingDirectory();
-    PsiPackage classPackage = directory.getPackage();
+    PsiPackage classPackage = JavaDirectoryService.getInstance().getPackage(directory);
     String packageName = classPackage.getQualifiedName();
 
     // all Throwable descendants from java.lang are side effects free

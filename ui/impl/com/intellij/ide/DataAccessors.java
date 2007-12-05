@@ -1,12 +1,12 @@
 package com.intellij.ide;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 
@@ -47,7 +47,7 @@ public class DataAccessors {
       PsiFile psiFile = PSI_FILE.getNotNull(dataContext);
       PsiDirectory containingDirectory = psiFile.getContainingDirectory();
       if (containingDirectory == null || !containingDirectory.isValid()) return null;
-      return containingDirectory.getPackage();
+      return JavaDirectoryService.getInstance().getPackage(containingDirectory);
     }
   };
   public static final DataAccessor<PsiJavaFile> PSI_JAVA_FILE = DataAccessor.SubClassDataAccessor.create(PSI_FILE, PsiJavaFile.class);

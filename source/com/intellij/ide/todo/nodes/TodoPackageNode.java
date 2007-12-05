@@ -1,5 +1,6 @@
 package com.intellij.ide.todo.nodes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
@@ -9,7 +10,6 @@ import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -17,6 +17,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
@@ -25,8 +26,8 @@ import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -153,7 +154,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
         while (_dir != null) {
           final PsiDirectory parentDirectory = _dir.getParentDirectory();
           if (parentDirectory != null){
-            PsiPackage _package = _dir.getPackage();
+            PsiPackage _package = JavaDirectoryService.getInstance().getPackage(_dir);
             if (_package != null && _package.getParentPackage() != null && psiPackage.equals(_package.getParentPackage())) {
               final GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
               _package = TodoPackageUtil.findNonEmptyPackage(_package, module, project, myBuilder, scope); //compact empty middle packages

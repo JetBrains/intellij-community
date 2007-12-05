@@ -166,7 +166,7 @@ public class JUnitUtil {
   }
 
   public static PsiPackage getContainingPackage(final PsiClass psiClass) {
-    return psiClass.getContainingFile().getContainingDirectory().getPackage();
+    return JavaDirectoryService.getInstance().getPackage(psiClass.getContainingFile().getContainingDirectory());
   }
 
   public static PsiClass getTestClass(final PsiElement element) {

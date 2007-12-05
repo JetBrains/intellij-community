@@ -20,8 +20,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,6 +163,7 @@ public class PsiTreeUtil {
 
 
   private static boolean instanceOf(final Class aClass, final PsiElement child) {
+    /*
     if (aClass == PsiClass.class) return child instanceof PsiClass;
     else if (aClass == PsiMethod.class) return child instanceof PsiMethod;
     else if (aClass == PsiField.class) return child instanceof PsiField;
@@ -175,6 +174,7 @@ public class PsiTreeUtil {
     else if (aClass == PsiClassInitializer.class) return child instanceof PsiClassInitializer;
     else if (aClass == XmlTag.class) return child instanceof XmlTag;
     else if (aClass == XmlDocument.class) return child instanceof XmlDocument;
+    */
 
     return aClass.isInstance(child);
   }

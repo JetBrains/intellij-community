@@ -288,7 +288,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacade implements Disposable {
       for (PsiDirectory dir : dirs) {
         PsiDirectory[] subdirs = dir.getSubdirectories();
         for (PsiDirectory subdir : subdirs) {
-          final PsiPackage aPackage = subdir.getPackage();
+          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subdir);
           if (aPackage != null) {
             final String subQualifiedName = aPackage.getQualifiedName();
             if (subQualifiedName.startsWith(qualifiedName) && !packagesMap.containsKey(subQualifiedName)) {
@@ -305,7 +305,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacade implements Disposable {
       ArrayList<PsiClass> list = new ArrayList<PsiClass>();
       final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
       for (PsiDirectory dir : dirs) {
-        PsiClass[] classes = dir.getClasses();
+        PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
         list.addAll(Arrays.asList(classes));
       }
       return list.toArray(new PsiClass[list.size()]);

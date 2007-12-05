@@ -450,7 +450,7 @@ public class JavaDocManager implements ProjectComponent {
       urls = findUrlForPackage((PsiPackage)element);
     }
     else if (element instanceof PsiDirectory) {
-      PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
       if (aPackage != null) {
         urls = findUrlForPackage(aPackage);
       }
@@ -859,7 +859,7 @@ public class JavaDocManager implements ProjectComponent {
                 parent = parent.getParent();
               }
               if (parent != null) {
-                PsiPackage aPackage = ((PsiDirectory)parent).getPackage();
+                PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)parent));
                 if (aPackage != null) {
                   String url1 = findUrlForLink(aPackage, url);
                   if (url1 != null) {

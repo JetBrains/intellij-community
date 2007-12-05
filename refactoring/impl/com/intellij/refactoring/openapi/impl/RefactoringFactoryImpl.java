@@ -45,7 +45,7 @@ public class RefactoringFactoryImpl extends RefactoringFactory {
 
   public MoveDestination createSourceRootMoveDestination(@NotNull String targetPackageQualifiedName, @NotNull VirtualFile sourceRoot) {
     final PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(sourceRoot);
-    LOG.assertTrue(directory != null && directory.isSourceRoot(), "Should pass source root");
+    LOG.assertTrue(directory != null && JavaDirectoryService.getInstance().isSourceRoot(directory), "Should pass source root");
     return new AutocreatingSingleSourceRootMoveDestination(createPackageWrapper(targetPackageQualifiedName),
                                                            sourceRoot);
   }

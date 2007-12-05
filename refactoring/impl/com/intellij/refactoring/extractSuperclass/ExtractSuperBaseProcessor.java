@@ -89,8 +89,8 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
     final ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     detectTurnToSuperRefs(refs, result);
-    final PsiPackage originalPackage = myClass.getContainingFile().getContainingDirectory().getPackage();
-    if (Comparing.equal(myTargetDirectory.getPackage(), originalPackage)) {
+    final PsiPackage originalPackage = JavaDirectoryService.getInstance().getPackage(myClass.getContainingFile().getContainingDirectory());
+    if (Comparing.equal(JavaDirectoryService.getInstance().getPackage(myTargetDirectory), originalPackage)) {
       result.clear();
     }
     for (final PsiReference ref : refs) {

@@ -17,7 +17,6 @@ package com.intellij.psi.search;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIdentifier;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,30 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.psi.PsiManager#getSearchHelper()
  */
 public interface PsiSearchHelper {
-  /**
-   * Searches the specified scope for occurrences of the specified identifier.
-   *
-   * @param identifier    the identifier to search.
-   * @param searchScope   the scope in which occurrences are searched.
-   * @param searchContext the contexts in which identifiers are searched (a combination of flags
-   *                      defined in the {@link UsageSearchContext} class).
-   * @return the array of found identifiers.
-   */
-  @NotNull PsiIdentifier[] findIdentifiers(@NotNull String identifier, @NotNull SearchScope searchScope, short searchContext);
-
-  /**
-   * Passes the occurrences of the specified identifier in the specified scope to the specified
-   * processor.
-   *
-   * @param processor     the processor which accepts found occurrences.
-   * @param identifier    the identifier to search.
-   * @param searchScope   the scope in which occurrences are searched.
-   * @param searchContext the contexts in which identifiers are searched (a combination of flags
-   *                      defined in the {@link UsageSearchContext} class).
-   * @return true if the search was completed normally, if the occurrence processing was cancelled by the processor.
-   */
-  boolean processIdentifiers(@NotNull PsiElementProcessor<PsiIdentifier> processor, @NotNull String identifier, @NotNull SearchScope searchScope, short searchContext);
-
   /**
    * Searches the specified scope for comments containing the specified identifier.
    *

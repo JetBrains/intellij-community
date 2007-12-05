@@ -72,7 +72,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
   }
 
   protected void checkBeforeCreate(final String newName, final PsiDirectory directory) throws IncorrectOperationException {
-    directory.checkCreateClass(newName);
+    JavaDirectoryService.getInstance().checkCreateClass(directory, newName);
   }
 
   protected String getErrorTitle() {
@@ -177,7 +177,7 @@ public final class CreateDialogAction extends AbstractCreateFormAction {
     JavaCodeStyleManager.getInstance(directory.getProject()).shortenClassReferences(sourceFile);
     CodeStyleManager.getInstance(directory.getProject()).reformat(sourceFile);
 
-    final PsiPackage aPackage = directory.getPackage();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     final String packageName = aPackage.getQualifiedName();
     final String fqClassName = packageName.length() == 0 ? newName : packageName + "." + newName;
 

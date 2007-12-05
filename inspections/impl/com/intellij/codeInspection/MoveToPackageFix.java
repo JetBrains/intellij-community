@@ -64,7 +64,7 @@ public class MoveToPackageFix implements LocalQuickFix {
       new MoveClassesOrPackagesProcessor(
               project,
               new PsiElement[]{((PsiJavaFile) myFile).getClasses()[0]},
-              new SingleSourceRootMoveDestination(PackageWrapper.create(directory.getPackage()), directory), false,
+              new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(directory)), directory), false,
               false,
               null).run();
     }

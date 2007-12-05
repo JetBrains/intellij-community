@@ -4,13 +4,10 @@
  */
 package com.intellij.ide.util.treeView;
 
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.resolve.ResolveCache;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -83,7 +80,7 @@ public class TreeViewUtil {
     int count = 0;
     final PsiDirectory[] subdirs = dir.getSubdirectories();
     for (final PsiDirectory subdir : subdirs) {
-      count += subdir.getPackage() != null ? 1 : 0;
+      count += JavaDirectoryService.getInstance().getPackage(subdir) != null ? 1 : 0;
     }
     return count;
   }

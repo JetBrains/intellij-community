@@ -203,7 +203,7 @@ public abstract class ElementPresentation {
     }
 
     public String getComment() {
-      PsiPackage psiPackage = myPsiClass.getContainingFile().getContainingDirectory().getPackage();
+      PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(myPsiClass.getContainingFile().getContainingDirectory());
       if (psiPackage == null) return "";
       return forElement(psiPackage).getQualifiedName();
     }

@@ -1,5 +1,6 @@
 package com.intellij.ide.todo.nodes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
@@ -8,7 +9,6 @@ import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -87,7 +88,7 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
   public Collection<AbstractTreeNode> getChildrenImpl() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     final PsiDirectory psiDirectory = getValue();
-    if (!getStructure().getIsFlattenPackages() || psiDirectory.getPackage() == null) {
+    if (!getStructure().getIsFlattenPackages() || JavaDirectoryService.getInstance().getPackage(psiDirectory) == null) {
       final Iterator<PsiFile> iterator = myBuilder.getFiles(psiDirectory);
       while (iterator.hasNext()) {
         final PsiFile psiFile = iterator.next();
@@ -101,7 +102,7 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
         // Add directories (find first ancestor directory that is in our psiDirectory)
         PsiDirectory _dir = psiFile.getContainingDirectory();
         while (_dir != null) {
-          if (_dir.getPackage() != null){
+          if (JavaDirectoryService.getInstance().getPackage(_dir) != null){
             break;
           }
           final PsiDirectory parentDirectory = _dir.getParentDirectory();
@@ -119,7 +120,7 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
       final PsiDirectory parentDirectory = psiDirectory.getParentDirectory();
       if (
         parentDirectory == null ||
-        parentDirectory.getPackage() == null ||
+        JavaDirectoryService.getInstance().getPackage(parentDirectory) == null ||
         !ProjectRootManager.getInstance(getProject()).getFileIndex().isInContent(parentDirectory.getVirtualFile())
       ) {
         final Iterator<PsiFile> iterator = myBuilder.getFiles(psiDirectory);
@@ -133,7 +134,7 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
           }
           // Add directories
           final PsiDirectory _dir = psiFile.getContainingDirectory();
-          if (_dir.getPackage() != null){
+          if (JavaDirectoryService.getInstance().getPackage(_dir) != null){
             continue;
           }
           TodoDirNode todoDirNode = new TodoDirNode(getProject(), _dir, myBuilder);

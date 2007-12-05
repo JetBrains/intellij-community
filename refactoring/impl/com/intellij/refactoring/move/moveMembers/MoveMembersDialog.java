@@ -321,7 +321,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     final PsiClass newClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
           public PsiClass compute() {
             try {
-              return directory.createClass(className);
+              return JavaDirectoryService.getInstance().createClass(directory, className);
             }
             catch (IncorrectOperationException e) {
               eRef.set(e);

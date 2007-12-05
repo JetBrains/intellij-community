@@ -202,13 +202,13 @@ class HTMLTextPainter {
     PsiClass refClass = (PsiClass)ref.resolve();
 
     PsiFile refFile = refClass.getContainingFile();
-    PsiPackage refPackage = refFile.getContainingDirectory().getPackage();
+    PsiPackage refPackage = JavaDirectoryService.getInstance().getPackage(refFile.getContainingDirectory());
     String refPackageName = "";
     if(refPackage != null) {
       refPackageName = refPackage.getQualifiedName();
     }
 
-    PsiPackage psiPackage = myPsiFile.getContainingDirectory().getPackage();
+    PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(myPsiFile.getContainingDirectory());
     String psiPackageName = "";
     if(psiPackage != null) {
       psiPackageName = psiPackage.getQualifiedName();

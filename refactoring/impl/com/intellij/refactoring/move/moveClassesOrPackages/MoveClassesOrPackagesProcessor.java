@@ -210,7 +210,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
             if (containingFile != null && !isInsideMoved(element)) {
               PsiDirectory directory = containingFile.getContainingDirectory();
               if (directory != null) {
-                PsiPackage usagePackage = directory.getPackage();
+                PsiPackage usagePackage = JavaDirectoryService.getInstance().getPackage(directory);
                 if (aPackage != null && usagePackage != null && !aPackage.equalToPackage(usagePackage)) {
 
                   final String message = RefactoringBundle.message("a.package.local.class.0.will.no.longer.be.accessible.from.1",
@@ -288,7 +288,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     members.addElements(aClass.getInnerClasses());
 
     final RefactoringUtil.IsDescendantOf isDescendantOf = new RefactoringUtil.IsDescendantOf(aClass);
-    final PsiPackage aPackage = aClass.getContainingFile().getContainingDirectory().getPackage();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
     final GlobalSearchScope packageScope = aPackage == null ? aClass.getResolveScope() : GlobalSearchScope.packageScopeWithoutLibraries(aPackage, false);
     for (final ClassMemberWrapper memberWrapper : members) {
       ReferencesSearch.search(memberWrapper.getMember(), packageScope, false).forEach(new Processor<PsiReference>() {
@@ -511,7 +511,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           if (containingFile != null) {
             PsiDirectory directory = containingFile.getContainingDirectory();
             if (directory != null) {
-              PsiPackage aPackage = directory.getPackage();
+              PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
               if (!myTargetPackage.equalToPackage(aPackage)) {
                 String message = RefactoringBundle.message("0.will.be.inaccessible.from.1", ConflictsUtil.getDescription(member, true),
                                                       ConflictsUtil.getDescription(container, true));

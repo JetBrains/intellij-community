@@ -83,7 +83,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         if (aPackage == null) {
           PsiDirectory dir = file.getContainingDirectory();
           if (dir != null) {
-            aPackage = dir.getPackage();
+            aPackage = JavaDirectoryService.getInstance().getPackage(dir);
           }
         }
 
@@ -217,25 +217,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if (item.getPattern().equals(pattern)) count++;
     }
     return count;
-  }
-
-  @NotNull
-  public PsiIdentifier[] findIdentifiers(@NotNull String identifier, @NotNull SearchScope searchScope, short searchContext) {
-    PsiElementProcessor.CollectElements<PsiIdentifier> processor = new PsiElementProcessor.CollectElements<PsiIdentifier>();
-    processIdentifiers(processor, identifier, searchScope, searchContext);
-    return processor.toArray(PsiIdentifier.EMPTY_ARRAY);
-  }
-
-  public boolean processIdentifiers(@NotNull final PsiElementProcessor<PsiIdentifier> processor,
-                                    @NotNull final String identifier,
-                                    @NotNull SearchScope searchScope,
-                                    short searchContext) {
-    TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
-      public boolean execute(PsiElement element, int offsetInElement) {
-        return !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
-      }
-    };
-    return processElementsWithWord(processor1, searchScope, identifier, searchContext, true);
   }
 
   private static final TokenSet COMMENT_BIT_SET = TokenSet.create(JavaDocTokenType.DOC_COMMENT_DATA, JavaDocTokenType.DOC_TAG_VALUE_TOKEN,

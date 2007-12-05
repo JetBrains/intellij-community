@@ -58,13 +58,13 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     myMoveCallback = moveCallback;
-    myTargetPackage = myTargetClass.getContainingFile().getContainingDirectory().getPackage();
+    myTargetPackage = JavaDirectoryService.getInstance().getPackage(myTargetClass.getContainingFile().getContainingDirectory());
 }
 
   private void setClassToMove(final PsiClass classToMove) {
     myClassToMove = classToMove;
     mySourceVisibility = VisibilityUtil.getVisibilityModifier(myClassToMove.getModifierList());
-    mySourcePackage = myClassToMove.getContainingFile().getContainingDirectory().getPackage();
+    mySourcePackage = JavaDirectoryService.getInstance().getPackage(myClassToMove.getContainingFile().getContainingDirectory());
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
@@ -306,7 +306,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean isInaccessibleFromTarget(final PsiElement element, final String visibility) {
-    final PsiPackage elementPackage = element.getContainingFile().getContainingDirectory().getPackage();
+    final PsiPackage elementPackage = JavaDirectoryService.getInstance().getPackage(element.getContainingFile().getContainingDirectory());
     return !PsiUtil.isAccessible(myTargetClass, element, null) ||
         (visibility.equals(PsiModifier.PACKAGE_LOCAL) && !Comparing.equal(elementPackage, myTargetPackage));
   }

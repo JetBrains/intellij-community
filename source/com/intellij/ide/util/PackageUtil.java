@@ -17,10 +17,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiRootPackageType;
+import com.intellij.psi.*;
 import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -290,7 +287,7 @@ public class PackageUtil {
     while (true) {
       Query<VirtualFile> vFiles = moduleFileIndex.getDirsByPackageName(nameToMatch, false);
       PsiDirectory directory = getWritableDirectory(vFiles, manager);
-      if (directory != null) return directory.getPackage();
+      if (directory != null) return JavaDirectoryService.getInstance().getPackage(directory);
 
       int lastDotIndex = nameToMatch.lastIndexOf(".");
       if (lastDotIndex >= 0) {

@@ -78,7 +78,7 @@ public class CreateSnapShotAction extends AnAction {
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     PsiDirectory[] dirs = view.getDirectories();
     for (PsiDirectory dir : dirs) {
-      if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
+      if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
         return true;
       }
     }

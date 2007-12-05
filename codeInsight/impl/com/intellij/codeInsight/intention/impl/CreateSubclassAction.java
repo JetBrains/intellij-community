@@ -10,8 +10,8 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,7 +71,7 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
 
     PsiDirectory sourceDir = file.getContainingDirectory();
 
-    final PsiPackage aPackage = sourceDir.getPackage();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(sourceDir);
     final CreateClassDialog dialog = new CreateClassDialog(
       project,
       myText,
@@ -92,7 +92,7 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
 
             PsiClass targetClass;
             try {
-              targetClass = targetDirectory.createClass(dialog.getClassName());
+              targetClass = JavaDirectoryService.getInstance().createClass(targetDirectory, dialog.getClassName());
             }
             catch (IncorrectOperationException e) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {

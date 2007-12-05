@@ -499,7 +499,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
     if (createJavaClass) {
       try {
-        directory.checkCreateClass(canonicalText);
+        JavaDirectoryService.getInstance().checkCreateClass(directory, canonicalText);
       } catch(IncorrectOperationException ex) {
         return false;
       }

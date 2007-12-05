@@ -8,8 +8,8 @@ import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,7 @@ class PackagePrefixFileSystemItem extends PsiElementBase implements PsiFileSyste
 
   public static PackagePrefixFileSystemItem create(final PsiDirectory directory) {
     final ArrayList<PsiPackage> packages = new ArrayList<PsiPackage>();
-    for (PsiPackage cur = directory.getPackage(); cur != null; cur = cur.getParentPackage()) {
+    for (PsiPackage cur = JavaDirectoryService.getInstance().getPackage(directory); cur != null; cur = cur.getParentPackage()) {
       packages.add(0, cur);
     }
     return new PackagePrefixFileSystemItem(directory, 0, packages.toArray(new PsiPackage[packages.size()]));

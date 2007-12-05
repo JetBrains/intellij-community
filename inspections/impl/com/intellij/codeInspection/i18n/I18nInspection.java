@@ -540,7 +540,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
   private static boolean isClassNonNls(final PsiClass clazz) {
     final PsiDirectory directory = clazz.getContainingFile().getContainingDirectory();
-    if (directory != null && isPackageNonNls(directory.getPackage())) {
+    if (directory != null && isPackageNonNls(JavaDirectoryService.getInstance().getPackage(directory))) {
       return true;
     }
 

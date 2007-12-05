@@ -253,7 +253,7 @@ public class PropertiesReferenceManager implements ProjectComponent {
       if (!(psiFile instanceof PropertiesFile)) continue;
 
       PsiDirectory directory = psiFile.getParent();
-      PsiPackage pkg = directory.getPackage();
+      PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
       if (pkg != null) {
         StringBuilder qName = new StringBuilder(pkg.getQualifiedName());
         if (qName.length() > 0) {

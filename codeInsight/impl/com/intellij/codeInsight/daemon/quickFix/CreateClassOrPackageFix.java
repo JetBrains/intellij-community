@@ -17,8 +17,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
@@ -146,7 +146,7 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
     if (myCreateClass) {
       if (unitTestMode) {
         try {
-          directory.createClass(lastName);
+          JavaDirectoryService.getInstance().createClass(directory, lastName);
         }
         catch (IncorrectOperationException e) {
           CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox(e, lastName, directory, false);

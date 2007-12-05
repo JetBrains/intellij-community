@@ -123,7 +123,7 @@ public class YourkitFilter implements Filter{
     protected String getContainerText(final PsiElement element, final String name) {
       final PsiDirectory parent = ((PsiFile)element).getParent();
       if (parent == null) return null;
-      final PsiPackage psiPackage = parent.getPackage();
+      final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(parent);
       if (psiPackage == null) return null;
       return "(" + psiPackage.getQualifiedName() + ")";
     }

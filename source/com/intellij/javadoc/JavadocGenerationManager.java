@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import org.jdom.Element;
@@ -51,7 +52,7 @@ public final class JavadocGenerationManager implements JDOMExternalizable, Proje
 
   public void generateJavadoc(final PsiDirectory directory, DataContext dataContext) {
     Component component = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
-    final PsiPackage aPackage = directory != null ? directory.getPackage() : null;
+    final PsiPackage aPackage = directory != null ? JavaDirectoryService.getInstance().getPackage(directory) : null;
     String packageFQName = aPackage != null ? aPackage.getQualifiedName() : null;
 
     final GenerateJavadocDialog dialog = new GenerateJavadocDialog(packageFQName, myProject, myConfiguration);

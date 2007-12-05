@@ -1,6 +1,8 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.*;
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
@@ -17,8 +19,6 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -644,7 +644,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       // todo!!!
       if (element instanceof PsiDirectory) {
         PsiDirectory directory = (PsiDirectory)element;
-        PsiPackage aPackage = directory.getPackage();
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         if (aPackage != null) {
           title = aPackage.getQualifiedName();
         }
@@ -868,11 +868,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         final PsiElement element = elements[idx];
         if (element instanceof PsiDirectory) {
           PsiDirectory directory = (PsiDirectory)element;
-          if (isHideEmptyMiddlePackages(viewPane.getId()) && directory.getChildren().length == 0 && directory.getPackage() != null) {
+          if (isHideEmptyMiddlePackages(viewPane.getId()) && directory.getChildren().length == 0 && JavaDirectoryService.getInstance()
+            .getPackage(directory) != null) {
             while (true) {
               PsiDirectory parent = directory.getParentDirectory();
               if (parent == null) break;
-              PsiPackage psiPackage = parent.getPackage();
+              PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(parent);
               if (psiPackage == null || psiPackage.getName() == null) break;
               PsiElement[] children = parent.getChildren();
               if (children.length == 0 || children.length == 1 && children[0] == directory) {

@@ -11,11 +11,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -92,7 +90,7 @@ public class ChangedConstantsDependencyProcessor {
       }
     }
     final PsiSearchHelper psiSearchHelper = PsiManager.getInstance(myProject).getSearchHelper();
-    PsiIdentifier[] identifiers = psiSearchHelper.findIdentifiers(myDependencyCache.resolve(info.getName()), searchScope, UsageSearchContext.IN_CODE);
+    PsiIdentifier[] identifiers = findIdentifiers(psiSearchHelper, myDependencyCache.resolve(info.getName()), searchScope, UsageSearchContext.IN_CODE);
     for (PsiIdentifier identifier : identifiers) {
       PsiElement parent = identifier.getParent();
       if (parent instanceof PsiReferenceExpression) {
@@ -114,6 +112,26 @@ public class ChangedConstantsDependencyProcessor {
         }
       }
     }
+  }
+
+  @NotNull
+  private static PsiIdentifier[] findIdentifiers(PsiSearchHelper helper, @NotNull String identifier, @NotNull SearchScope searchScope, short searchContext) {
+    PsiElementProcessor.CollectElements<PsiIdentifier> processor = new PsiElementProcessor.CollectElements<PsiIdentifier>();
+    processIdentifiers(helper, processor, identifier, searchScope, searchContext);
+    return processor.toArray(PsiIdentifier.EMPTY_ARRAY);
+  }
+
+  private static boolean processIdentifiers(PsiSearchHelper helper,
+                                            @NotNull final PsiElementProcessor<PsiIdentifier> processor,
+                                            @NotNull final String identifier,
+                                            @NotNull SearchScope searchScope,
+                                            short searchContext) {
+    TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
+      public boolean execute(PsiElement element, int offsetInElement) {
+        return !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
+      }
+    };
+    return helper.processElementsWithWord(processor1, searchScope, identifier, searchContext, true);
   }
 
   private void processFieldChanged(PsiField field, PsiClass aClass, final boolean isAccessibilityChange) throws CacheCorruptedException {

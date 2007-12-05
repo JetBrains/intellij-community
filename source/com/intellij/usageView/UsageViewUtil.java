@@ -65,7 +65,7 @@ public class UsageViewUtil {
   }
 
   public static String getPackageName(PsiDirectory directory, boolean includeRootDir) {
-    PsiPackage aPackage = directory.getPackage();
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage == null) {
       return directory.getVirtualFile().getPresentableUrl();
     }
@@ -135,7 +135,7 @@ public class UsageViewUtil {
     LOG.assertTrue(psiElement.isValid());
     String ret;
     if (psiElement instanceof PsiDirectory) {
-      PsiPackage aPackage = ((PsiDirectory)psiElement).getPackage();
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)psiElement));
       if (aPackage != null) {
         ret = aPackage.getQualifiedName();
       }

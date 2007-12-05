@@ -14,6 +14,7 @@ import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +96,7 @@ public final class ProjectViewPane extends AbstractProjectViewPSIPane {
         PsiDirectory dirToUpdateFrom = dir;
         if (!treeStructure.isFlattenPackages() && treeStructure.isHideEmptyMiddlePackages()) {
           // optimization: this check makes sense only if flattenPackages == false && HideEmptyMiddle == true
-          while (dirToUpdateFrom != null && dirToUpdateFrom.getPackage() != null && TreeViewUtil.isEmptyMiddlePackage(dirToUpdateFrom, true)) {
+          while (dirToUpdateFrom != null && JavaDirectoryService.getInstance().getPackage(dirToUpdateFrom) != null && TreeViewUtil.isEmptyMiddlePackage(dirToUpdateFrom, true)) {
             dirToUpdateFrom = dirToUpdateFrom.getParentDirectory();
           }
         }

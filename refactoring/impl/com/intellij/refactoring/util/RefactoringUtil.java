@@ -986,7 +986,7 @@ public class RefactoringUtil {
       }
     }
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-      final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
       if (aPackage != null) element = aPackage;
     }
 

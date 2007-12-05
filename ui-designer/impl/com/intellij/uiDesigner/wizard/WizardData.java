@@ -3,10 +3,7 @@ package com.intellij.uiDesigner.wizard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,7 +63,7 @@ public final class WizardData {
     LOG.assertTrue(directory.isDirectory());
     final PsiDirectory psiDirectory = manager.findDirectory(directory);
     LOG.assertTrue(psiDirectory != null);
-    final PsiPackage aPackage = psiDirectory.getPackage();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
     if(aPackage != null){
       myPackageName = aPackage.getQualifiedName();
     }

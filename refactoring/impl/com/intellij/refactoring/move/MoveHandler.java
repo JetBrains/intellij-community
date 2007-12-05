@@ -276,7 +276,7 @@ public static PsiElement[] adjustForMove(Project project, final PsiElement[] sou
         return true;
       }
       if (targetContainer instanceof PsiDirectory) {
-        return ((PsiDirectory)targetContainer).getPackage() != null;
+        return JavaDirectoryService.getInstance().getPackage(((PsiDirectory)targetContainer)) != null;
       }
       if (targetContainer instanceof PsiClass) {
         return moveType == MoveType.CLASSES;
@@ -311,7 +311,7 @@ public static PsiElement[] adjustForMove(Project project, final PsiElement[] sou
       }
       if (element instanceof PsiDirectory) {
         PsiDirectory directory = (PsiDirectory)element;
-        return directory.getPackage() != null ? MoveType.PACKAGES : MoveType.NOT_SUPPORTED;
+        return JavaDirectoryService.getInstance().getPackage(directory) != null ? MoveType.PACKAGES : MoveType.NOT_SUPPORTED;
       }
       else if (element instanceof PsiField) {
         return MoveType.MEMBERS;
@@ -345,7 +345,7 @@ public static PsiElement[] adjustForMove(Project project, final PsiElement[] sou
         break;
       }
       PsiDirectory directory = (PsiDirectory)element;
-      if (directory.getPackage() == null) {
+      if (JavaDirectoryService.getInstance().getPackage(directory) == null) {
         type = MoveType.NOT_SUPPORTED;
         break;
       }
@@ -412,7 +412,7 @@ public static PsiElement[] adjustForMove(Project project, final PsiElement[] sou
 
       final HashSet<String> packages = new HashSet<String>();
       for (PsiDirectory directory : myDirectories) {
-        packages.add(directory.getPackage().getQualifiedName());
+        packages.add(JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName());
       }
       final String moveDescription;
       LOG.assertTrue(myDirectories.length > 0);

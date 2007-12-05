@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.nodes.ModuleToDoNode;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
@@ -32,9 +33,9 @@ public final class TodoFileDirAndModuleComparator implements Comparator{
       return 1;
     }else if((obj1 instanceof PsiDirectoryNode)&&(obj2 instanceof PsiDirectoryNode)){
       PsiDirectory psiDirectory1=((PsiDirectoryNode)obj1).getValue();
-      PsiPackage psiPackage1=psiDirectory1.getPackage();
+      PsiPackage psiPackage1= JavaDirectoryService.getInstance().getPackage(psiDirectory1);
       PsiDirectory psiDirectory2=((PsiDirectoryNode)obj2).getValue();
-      PsiPackage psiPackage2=psiDirectory2.getPackage();
+      PsiPackage psiPackage2= JavaDirectoryService.getInstance().getPackage(psiDirectory2);
       if(psiPackage1!=null&&psiPackage2==null){
         return -1;
       }else if(psiPackage1==null&&psiPackage2!=null){

@@ -52,7 +52,7 @@ class CopyClassDialog extends DialogWrapper{
       myTfPackage.prependItem(defaultTargetPackage.getQualifiedName());
     }
     else if (myDefaultTargetDirectory != null) {
-      PsiPackage aPackage = myDefaultTargetDirectory.getPackage();
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(myDefaultTargetDirectory);
       if (aPackage != null) {
         myTfPackage.prependItem(aPackage.getQualifiedName());
       }

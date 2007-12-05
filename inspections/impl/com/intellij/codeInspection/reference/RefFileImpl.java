@@ -43,7 +43,7 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
       if (parentDirectory == null) return;
       final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(parentDirectory);
       if (psiDirectory != null){
-        final PsiPackage aPackage = psiDirectory.getPackage();
+        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
         if (aPackage != null){
           final Module module = fileIndex.getModuleForFile(parentDirectory);
           if (module == null) return;

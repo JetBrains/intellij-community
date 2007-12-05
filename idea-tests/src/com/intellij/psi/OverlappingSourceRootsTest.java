@@ -8,8 +8,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PsiTestCase;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.PsiTestCase;
 
 import java.io.File;
 import java.io.IOException;
@@ -114,10 +114,10 @@ public class OverlappingSourceRootsTest extends PsiTestCase {
     PsiDirectory psiDir11 = myPsiManager.findDirectory(mySourceRoot11);
     PsiDirectory psiDir21 = myPsiManager.findDirectory(mySourceRoot21);
 
-    String pack1 = psiDir1.getPackage().getQualifiedName();
-    String pack2 = psiDir2.getPackage().getQualifiedName();
-    String pack11 = psiDir11.getPackage().getQualifiedName();
-    String pack21 = psiDir21.getPackage().getQualifiedName();
+    String pack1 = JavaDirectoryService.getInstance().getPackage(psiDir1).getQualifiedName();
+    String pack2 = JavaDirectoryService.getInstance().getPackage(psiDir2).getQualifiedName();
+    String pack11 = JavaDirectoryService.getInstance().getPackage(psiDir11).getQualifiedName();
+    String pack21 = JavaDirectoryService.getInstance().getPackage(psiDir21).getQualifiedName();
 
     assertEquals("", pack1);
     assertEquals("", pack2);

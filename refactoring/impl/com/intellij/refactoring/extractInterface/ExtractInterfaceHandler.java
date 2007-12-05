@@ -1,7 +1,7 @@
 package com.intellij.refactoring.extractInterface;
 
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -113,7 +113,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler {
                                    MemberInfo[] selectedMembers,
                                    JavaDocPolicy javaDocPolicy) throws IncorrectOperationException {
     PsiClass anInterface;
-    anInterface = targetDir.createInterface(interfaceName);
+    anInterface = JavaDirectoryService.getInstance().createInterface(targetDir, interfaceName);
     PsiJavaCodeReferenceElement ref = ExtractSuperClassUtil.createExtendingReference(anInterface, aClass, selectedMembers);
     final PsiReferenceList referenceList = aClass.isInterface() ? aClass.getExtendsList() : aClass.getImplementsList();
     assert referenceList != null;

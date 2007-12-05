@@ -34,7 +34,7 @@ public class HighlightMessageUtil {
     }
     else if (symbol instanceof PsiJavaFile) {
       PsiDirectory directory = ((PsiJavaFile) symbol).getContainingDirectory();
-      PsiPackage aPackage = directory == null ? null : directory.getPackage();
+      PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
       symbolName = aPackage == null ? null : aPackage.getQualifiedName();
     }
     else if (symbol instanceof PsiDirectory){

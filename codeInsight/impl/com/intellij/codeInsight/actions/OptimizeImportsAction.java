@@ -135,7 +135,7 @@ public class OptimizeImportsAction extends AnAction {
         }
       }
       else{
-        PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
         if (aPackage == null){
           presentation.setEnabled(false);
           return;

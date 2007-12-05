@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,16 +40,9 @@ public interface PsiDirectory extends PsiFileSystemItem {
 
   @NotNull
   String getName();
+
   @NotNull
   PsiElement setName(@NotNull String name) throws IncorrectOperationException;
-
-  /**
-   * Returns the package corresponding to the directory.
-   *
-   * @return the package instance, or null if the directory does not correspond to any package.
-   */
-  @Nullable
-  PsiPackage getPackage();
 
   /**
    * Returns the parent directory of the directory.
@@ -80,14 +72,6 @@ public interface PsiDirectory extends PsiFileSystemItem {
   PsiFile[] getFiles();
 
   /**
-   * Returns the list of Java classes contained in the directory.
-   *
-   * @return the array of classes.
-   */
-  @NotNull
-  PsiClass[] getClasses();
-
-  /**
    * Finds the subdirectory of this directory with the specified name.
    *
    * @param name the name of the subdirectory to find.
@@ -104,73 +88,6 @@ public interface PsiDirectory extends PsiFileSystemItem {
    */
   @Nullable
   PsiFile findFile(@NotNull @NonNls String name);
-
-  /**
-   * Creates a class with the specified name in the directory.
-   *
-   * @param name the name of the class to create (not including the file extension).
-   * @return the created class instance.
-   * @throws IncorrectOperationException if the operation failed for some reason.
-   */
-  @NotNull PsiClass createClass(@NotNull String name) throws IncorrectOperationException;
-
-  /**
-   * Creates a class with the specified name in the directory.
-   *
-   * @param name the name of the class to create (not including the file extension).
-   * @param templateName custom file template to create class text based on.
-   * @return the created class instance.
-   * @throws IncorrectOperationException if the operation failed for some reason.
-   * @since 5.1
-   */
-  @NotNull PsiClass createClass(@NotNull String name, @NotNull String templateName) throws IncorrectOperationException;
-
-  /**
-   * Checks if it's possible to create a class with the specified name in the directory,
-   * and throws an exception if the creation is not possible. Does not actually modify
-   * anything.
-   *
-   * @param name the name of the class to check creation possibility (not including the file extension).
-   * @throws IncorrectOperationException if the creation is not possible.
-   */
-  void checkCreateClass(@NotNull String name) throws IncorrectOperationException;
-
-  /**
-   * Creates an interface class with the specified name in the directory.
-   *
-   * @param name the name of the interface to create (not including the file extension).
-   * @return the created interface instance.
-   * @throws IncorrectOperationException if the operation failed for some reason.
-   */
-  @NotNull PsiClass createInterface(@NotNull String name) throws IncorrectOperationException;
-
-  /**
-   * Checks if it's possible to create an interface with the specified name in the directory,
-   * and throws an exception if the creation is not possible. Does not actually modify
-   * anything.
-   *
-   * @param name the name of the interface to check creation possibility (not including the file extension).
-   * @throws IncorrectOperationException if the creation is not possible.
-   */
-  void checkCreateInterface(@NotNull String name) throws IncorrectOperationException;
-
-  /**
-   * Creates an enumeration class with the specified name in the directory.
-   *
-   * @param name the name of the enumeration class to create (not including the file extension).
-   * @return the created class instance.
-   * @throws IncorrectOperationException if the operation failed for some reason.
-   */
-  @NotNull PsiClass createEnum(@NotNull String name) throws IncorrectOperationException;
-
-  /**
-   * Creates an annotation class with the specified name in the directory.
-   *
-   * @param name the name of the annotation class to create (not including the file extension).
-   * @return the created class instance.
-   * @throws IncorrectOperationException if the operation failed for some reason.
-   */
-  @NotNull PsiClass createAnnotationType(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates a subdirectory with the specified name in the directory.
@@ -211,13 +128,4 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @throws IncorrectOperationException if the creation is not possible.
    */
   void checkCreateFile(@NotNull String name) throws IncorrectOperationException;
-
-  /**
-   * Checks if the directory is a source root for the project to which it belongs.
-   *
-   * @return true if the directory is a source root, false otherwise
-   */
-  boolean isSourceRoot();
-
-  LanguageLevel getLanguageLevel();
 }

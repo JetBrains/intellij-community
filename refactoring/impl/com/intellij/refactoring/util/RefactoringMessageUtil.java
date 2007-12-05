@@ -1,8 +1,9 @@
 
 package com.intellij.refactoring.util;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiMethod;
@@ -22,7 +23,7 @@ public class RefactoringMessageUtil {
    *
    */
   public static String checkCanCreateClass(PsiDirectory destinationDirectory, String className) {
-    PsiClass[] classes = destinationDirectory.getClasses();
+    PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(destinationDirectory);
     VirtualFile file = destinationDirectory.getVirtualFile();
     for (PsiClass aClass : classes) {
       if (className.equals(aClass.getName())) {

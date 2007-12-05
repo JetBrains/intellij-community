@@ -4,8 +4,8 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-import com.intellij.history.LocalHistoryAction;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -105,7 +105,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final PsiPackage targetPackage;
     if (targetDirectory != null) {
-      targetPackage = targetDirectory.getPackage();
+      targetPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
     }
     else {
       targetPackage = null;

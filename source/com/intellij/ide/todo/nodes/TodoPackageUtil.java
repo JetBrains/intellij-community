@@ -9,10 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,12 +55,12 @@ public class TodoPackageUtil {
       if (directory == null) {
         continue;
       }
-      final PsiPackage directoryPackage = directory.getPackage();
+      final PsiPackage directoryPackage = JavaDirectoryService.getInstance().getPackage(directory);
       if (directoryPackage == null || PackageUtil.isPackageDefault(directoryPackage)) {
         // add subpackages
         final PsiDirectory[] subdirectories = directory.getSubdirectories();
         for (PsiDirectory subdirectory : subdirectories) {
-          final PsiPackage aPackage = subdirectory.getPackage();
+          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subdirectory);
           if (aPackage != null && !PackageUtil.isPackageDefault(aPackage)) {
             topLevelPackages.add(aPackage);
           } else {

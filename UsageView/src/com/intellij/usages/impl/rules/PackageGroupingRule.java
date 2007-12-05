@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
@@ -51,7 +52,7 @@ public class PackageGroupingRule implements UsageGroupingRule {
         VirtualFile dir = file.getParent();
         if (dir == null) return null;
         PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(dir);
-        PsiPackage aPackage = psiDirectory.getPackage();
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
         if (aPackage != null) return new PackageGroup(aPackage);
         return new DirectoryGroup(dir);
       }

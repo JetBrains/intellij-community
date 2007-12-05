@@ -60,7 +60,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     if (element instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)element;
-      PsiPackage aPackage = psiDirectory.getPackage();
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
       final String qualifiedName = aPackage != null ? aPackage.getQualifiedName() : "";
       if (aPackage == null || qualifiedName.length() == 0/*default package*/) {
         rename(element, project, nameSuggestionContext, editor);

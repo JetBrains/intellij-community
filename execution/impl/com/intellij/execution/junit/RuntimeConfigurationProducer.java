@@ -15,10 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +113,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
     }
     else if (element instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory)element;
-      return isSource(directory, fileIndex) ? directory.getPackage() : null;
+      return isSource(directory, fileIndex) ? JavaDirectoryService.getInstance().getPackage(directory) : null;
     }
     else {
       return null;

@@ -120,7 +120,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private void prepareDirectoryRenaming(final PsiDirectory directory, final String newName) {
-    final PsiPackage aPackage = directory.getPackage();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage != null && aPackage.getName() != null) {
       myAllRenames.put(aPackage, newName);
       preparePackageRenaming(aPackage, newName);
@@ -139,7 +139,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private void preparePackageRenaming(PsiPackage psiPackage, String newName) {
     final PsiDirectory[] directories = psiPackage.getDirectories();
     for (PsiDirectory directory : directories) {
-      if (!directory.isSourceRoot()) {
+      if (!JavaDirectoryService.getInstance().isSourceRoot(directory)) {
         myAllRenames.put(directory, newName);
       }
     }

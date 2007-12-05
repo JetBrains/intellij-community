@@ -5,9 +5,9 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaFindUsagesProvider implements FindUsagesProvider {
   public boolean canFindUsagesFor(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
-      PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
+      PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
       return psiPackage != null && psiPackage.getQualifiedName().length() != 0;
     }
 

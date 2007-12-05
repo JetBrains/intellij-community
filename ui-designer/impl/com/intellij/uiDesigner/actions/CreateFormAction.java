@@ -61,7 +61,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
 
   protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
     if (myLastClassName != null) {
-      directory.checkCreateClass(myLastClassName);
+      JavaDirectoryService.getInstance().checkCreateClass(directory, myLastClassName);
     }
   }
 
@@ -70,7 +70,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
     PsiElement createdFile;
     PsiClass newClass = null;
     try {
-      final PsiPackage aPackage = directory.getPackage();
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
       assert aPackage != null;
       final String packageName = aPackage.getQualifiedName();
       String fqClassName = null;
@@ -86,7 +86,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
       createdFile = directory.add(formFile);
 
       if (myLastClassName != null) {
-        newClass = directory.createClass(myLastClassName);
+        newClass = JavaDirectoryService.getInstance().createClass(directory, myLastClassName);
       }
     }
     catch(IncorrectOperationException e) {

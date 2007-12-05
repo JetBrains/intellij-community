@@ -121,7 +121,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
 
 
     super.doOKAction();
-    final PsiPackage aPackage = directory.getPackage();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage == null) {
       Messages.showErrorDialog(project, RefactoringBundle.message("destination.directory.does.not.correspond.to.any.package"),
                                RefactoringBundle.message("cannot.move"));

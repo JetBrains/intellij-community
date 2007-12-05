@@ -12,6 +12,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
@@ -34,7 +35,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     PsiDirectory directory = PackageUtil.getOrChooseDirectory(view);
 
     if (directory == null) return;
-    boolean isDirectory = directory.getPackage() == null;
+    boolean isDirectory = JavaDirectoryService.getInstance().getPackage(directory) == null;
 
     MyInputValidator validator = new MyInputValidator(project, directory, isDirectory);
     Messages.showInputDialog(project, isDirectory
@@ -78,7 +79,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
 
     boolean isPackage = false;
     for (PsiDirectory directory : directories) {
-      if (directory.getPackage() != null) {
+      if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
         isPackage = true;
         break;
       }
@@ -152,7 +153,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
                   actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
                 }
                 else {
-                  String packagePath = myDirectory.getPackage().getQualifiedName();
+                  String packagePath = JavaDirectoryService.getInstance().getPackage(myDirectory).getQualifiedName();
                   actionName = IdeBundle.message("progress.creating.package", packagePath, subDirName);
                 }
                 action = LocalHistory.startAction(myProject, actionName);

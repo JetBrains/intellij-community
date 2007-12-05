@@ -310,10 +310,10 @@ public class FileTemplateUtil{
     String className = createdClass.getName();
     String fileName = className + "." + extension;
     if(createdClass.isInterface()){
-      directory.checkCreateInterface(className);
+      JavaDirectoryService.getInstance().checkCreateInterface(directory, className);
     }
     else{
-      directory.checkCreateClass(className);
+      JavaDirectoryService.getInstance().checkCreateClass(directory, className);
     }
     psiJavaFile = (PsiJavaFile)psiJavaFile.setName(fileName);
     psiJavaFile = (PsiJavaFile)directory.add(psiJavaFile);
@@ -384,7 +384,7 @@ public class FileTemplateUtil{
   }
 
   public static void setPackageNameAttribute (@NotNull Properties properties, @NotNull PsiDirectory directory) {
-    PsiPackage aPackage = directory.getPackage();
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage != null) {
       String packageName = aPackage.getQualifiedName();
       if (packageName.length() > 0) {
@@ -403,7 +403,7 @@ public class FileTemplateUtil{
       fileType.equals(StdFileTypes.GUI_DESIGNER_FORM)
     ){
       for (PsiDirectory dir : dirs) {
-        if (dir.getPackage() != null) return true;
+        if (JavaDirectoryService.getInstance().getPackage(dir) != null) return true;
       }
       return false;
     }

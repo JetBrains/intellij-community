@@ -208,7 +208,7 @@ public class MoveFilesOrDirectoriesUtil {
       if (RefactoringUtil.isSourceRoot(directory)) {
         return false;
       }
-      final PsiPackage aPackage = directory.getPackage();
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
       if (aPackage == null) return false;
       if ("".equals(aPackage.getQualifiedName())) return false;
       final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(element.getProject()).getFileIndex()
@@ -243,7 +243,7 @@ public class MoveFilesOrDirectoriesUtil {
   }
 
   private static boolean hasPackages(PsiDirectory directory) {
-    if (directory.getPackage() != null) {
+    if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
       return true;
     }
     PsiDirectory[] subdirectories = directory.getSubdirectories();

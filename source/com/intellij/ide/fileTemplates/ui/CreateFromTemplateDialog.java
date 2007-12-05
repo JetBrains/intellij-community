@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -37,7 +38,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     myTemplate = template;
     setTitle(IdeBundle.message("title.new.from.template", template.getName()));
 
-    PsiPackage aPackage = myDirectory.getPackage();
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(myDirectory);
     String packageName = aPackage == null ? "" : aPackage.getQualifiedName();
     myDefaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
     myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, packageName);

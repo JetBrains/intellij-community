@@ -187,7 +187,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
         count=mySearchHelper.getTodoItemsCount(psiFile);
       }
     }else if(element instanceof PsiDirectory){
-      if (((PsiDirectory)element).getPackage() != null){
+      if (JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element)) != null){
         return 0;
       }
       Iterator<PsiFile> iterator = myBuilder.getFiles((PsiDirectory)element);

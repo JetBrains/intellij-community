@@ -73,7 +73,7 @@ public class MoveClassesOrPackagesImpl {
     for (int idx = 0; idx < elements.length; idx++) {
       PsiElement element = elements[idx];
       if (element instanceof PsiDirectory) {
-        PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
         LOG.assertTrue(aPackage != null);
         if (aPackage.getQualifiedName().length() == 0) { //is default package
           String message = RefactoringBundle.message("move.package.refactoring.cannot.be.applied.to.default.package");
@@ -148,7 +148,8 @@ public class MoveClassesOrPackagesImpl {
   private static boolean checkNesting(final Project project, final PsiPackage srcPackage, final PsiElement targetElement) {
     final PsiPackage targetPackage = targetElement instanceof PsiPackage
                                      ? (PsiPackage)targetElement
-                                     : targetElement instanceof PsiDirectory ? ((PsiDirectory)targetElement).getPackage() : null;
+                                     : targetElement instanceof PsiDirectory ? JavaDirectoryService.getInstance()
+                                       .getPackage(((PsiDirectory)targetElement)) : null;
     for (PsiPackage curPackage = targetPackage; curPackage != null; curPackage = curPackage.getParentPackage()) {
       if (curPackage.equals(srcPackage)) {
         CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.tltle"),
@@ -168,8 +169,8 @@ public class MoveClassesOrPackagesImpl {
       }
       if (name == null) {
         final PsiDirectory commonDirectory = getCommonDirectory(movedElements);
-        if (commonDirectory != null && commonDirectory.getPackage() != null) {
-          name = commonDirectory.getPackage().getQualifiedName();
+        if (commonDirectory != null && JavaDirectoryService.getInstance().getPackage(commonDirectory) != null) {
+          name = JavaDirectoryService.getInstance().getPackage(commonDirectory).getQualifiedName();
         }
       }
     }
@@ -212,11 +213,11 @@ public class MoveClassesOrPackagesImpl {
       return ((PsiPackage)psiElement).getQualifiedName();
     }
     else if (psiElement instanceof PsiDirectory) {
-      PsiPackage aPackage = ((PsiDirectory)psiElement).getPackage();
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)psiElement));
       return (aPackage != null) ? aPackage.getQualifiedName() : "";
     }
     else if (psiElement != null) {
-      PsiPackage aPackage = psiElement.getContainingFile().getContainingDirectory().getPackage();
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiElement.getContainingFile().getContainingDirectory());
       return (aPackage != null) ? aPackage.getQualifiedName() : "";
     }
     else {
@@ -231,11 +232,11 @@ public class MoveClassesOrPackagesImpl {
       return parentPackage != null ? parentPackage.getQualifiedName() : "";
     }
     else if (psiElement instanceof PsiDirectory) {
-      PsiPackage aPackage = ((PsiDirectory)psiElement).getPackage();
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)psiElement));
       return (aPackage != null) ? getTargetPackageNameForMovedElement(aPackage) : "";
     }
     else if (psiElement != null) {
-      PsiPackage aPackage = psiElement.getContainingFile().getContainingDirectory().getPackage();
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiElement.getContainingFile().getContainingDirectory());
       return (aPackage != null) ? aPackage.getQualifiedName() : "";
     }
     else {
@@ -323,11 +324,11 @@ public class MoveClassesOrPackagesImpl {
     for (final VirtualFile sourceRoot : sourceRoots) {
       PsiDirectory sourceRootDirectory = PsiManager.getInstance(project).findDirectory(sourceRoot);
       if (sourceRootDirectory == null) continue;
-      final PsiPackage aPackage = sourceRootDirectory.getPackage();
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(sourceRootDirectory);
       if (aPackage == null) continue;
       final String packagePrefix = aPackage.getQualifiedName();
       for (final PsiDirectory directory : directories) {
-        String qualifiedName = directory.getPackage().getQualifiedName();
+        String qualifiedName = JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName();
         if (!qualifiedName.startsWith(packagePrefix)) {
           continue sourceRoots;
         }
@@ -341,7 +342,7 @@ public class MoveClassesOrPackagesImpl {
     throws IncorrectOperationException {
     final VirtualFile sourceRoot = selectedTarget.getVirtualFile();
     for (PsiDirectory directory : directories) {
-      final PsiPackage parentPackage = directory.getPackage().getParentPackage();
+      final PsiPackage parentPackage = JavaDirectoryService.getInstance().getPackage(directory).getParentPackage();
       final PackageWrapper wrapper = new PackageWrapper(parentPackage);
       final PsiDirectory moveTarget = RefactoringUtil.createPackageDirectoryInSourceRoot(wrapper, sourceRoot);
       MoveClassesOrPackagesUtil.moveDirectoryRecursively(directory, moveTarget);

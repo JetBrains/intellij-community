@@ -51,7 +51,7 @@ public class ClassUtil {
 
   public static PsiDirectory sourceRoot(PsiDirectory containingDirectory) {
     while (containingDirectory != null) {
-      if (containingDirectory.isSourceRoot()) {
+      if (JavaDirectoryService.getInstance().isSourceRoot(containingDirectory)) {
         return containingDirectory;
       }
       containingDirectory = containingDirectory.getParentDirectory();

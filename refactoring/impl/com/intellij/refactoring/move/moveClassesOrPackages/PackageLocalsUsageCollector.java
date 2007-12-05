@@ -42,7 +42,7 @@ class PackageLocalsUsageCollector extends PsiRecursiveElementVisitor {
         if (aFile != null && !isInsideMoved(resolved)) {
           final PsiDirectory containingDirectory = aFile.getContainingDirectory();
           if (containingDirectory != null) {
-            PsiPackage aPackage = containingDirectory.getPackage();
+            PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(containingDirectory);
             if (aPackage != null && !myTargetPackage.equalToPackage(aPackage)) {
               HashSet<PsiElement> reportedRefs = myReported.get(resolved);
               if (reportedRefs == null) {

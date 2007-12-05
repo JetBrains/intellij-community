@@ -20,10 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -210,7 +207,7 @@ public class PackageChooserDialog extends PackageChooser {
           if (fileOrDir.isDirectory() && fileIndex.isInSourceContent(fileOrDir)){
             final PsiDirectory psiDirectory = psiManager.findDirectory(fileOrDir);
             LOG.assertTrue(psiDirectory != null);
-            PsiPackage aPackage = psiDirectory.getPackage();
+            PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
             if (aPackage != null){
               addPackage(aPackage);
             }
@@ -299,7 +296,7 @@ public class PackageChooserDialog extends PackageChooser {
                   newQualifiedName += newPackageName;
                   final PsiDirectory dir = PackageUtil.findOrCreateDirectoryForPackage(myProject, newQualifiedName, null, false);
                   if (dir == null) return;
-                  final PsiPackage newPackage = dir.getPackage();
+                  final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(dir);
 
                   DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getSelectionPath().getLastPathComponent();
                   final DefaultMutableTreeNode newChild = new DefaultMutableTreeNode();

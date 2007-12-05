@@ -31,7 +31,7 @@ public class ExtractSuperClassUtil {
                                            final MemberInfo[] selectedMemberInfos,
                                            final JavaDocPolicy javaDocPolicy)
     throws IncorrectOperationException {
-    PsiClass superclass = targetDirectory.createClass(superclassName);
+    PsiClass superclass = JavaDirectoryService.getInstance().createClass(targetDirectory, superclassName);
     final PsiModifierList superClassModifierList = superclass.getModifierList();
     assert superClassModifierList != null;
     superClassModifierList.setModifierProperty(PsiModifier.FINAL, false);

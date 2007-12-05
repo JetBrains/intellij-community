@@ -37,10 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import junit.framework.Assert;
 
@@ -52,7 +49,7 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase{
     try {
       final PsiDirectory psiDirectory = getPackageDirectory("com/package1");
       Assert.assertNotNull(psiDirectory);
-      final PsiPackage psiPackage = psiDirectory.getPackage();
+      final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
       Assert.assertNotNull(psiPackage);
       final PsiClass[] classes = psiPackage.getClasses();
       final PsiFile file = classes[0].getContainingFile();

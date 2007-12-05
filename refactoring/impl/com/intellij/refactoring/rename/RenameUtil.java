@@ -438,7 +438,7 @@ public class RenameUtil {
       }
     }
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-      element = ((PsiDirectory)element).getPackage();
+      element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     }
 
     if (element instanceof PsiPackage) {

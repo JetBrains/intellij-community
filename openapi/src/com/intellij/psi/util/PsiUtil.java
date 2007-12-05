@@ -471,7 +471,7 @@ public final class PsiUtil {
 
     PsiDirectory dir = file.getContainingDirectory();
     if (dir == null) return;
-    PsiPackage aPackage = dir.getPackage();
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
     if (aPackage == null) return;
     String packageName = aPackage.getQualifiedName();
     PsiPackageStatement statement = ((PsiJavaFile) file).getPackageStatement();
@@ -1208,7 +1208,7 @@ public final class PsiUtil {
 
   @NotNull
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
-    if (element instanceof PsiDirectory) return ((PsiDirectory)element).getLanguageLevel();
+    if (element instanceof PsiDirectory) return JavaDirectoryService.getInstance().getLanguageLevel(((PsiDirectory)element));
     final PsiFile file = element.getContainingFile();
     if (file == null) return element.getManager().getEffectiveLanguageLevel();
 

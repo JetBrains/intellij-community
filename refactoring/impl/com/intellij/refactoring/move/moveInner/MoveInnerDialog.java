@@ -282,7 +282,7 @@ public class MoveInnerDialog extends RefactoringDialog {
   private PsiPackage getTargetPackage() {
     if (myTargetContainer instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory)myTargetContainer;
-      return directory.getPackage();
+      return JavaDirectoryService.getInstance().getPackage(directory);
     }
     return null;
   }

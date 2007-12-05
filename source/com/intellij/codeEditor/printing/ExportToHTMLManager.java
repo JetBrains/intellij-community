@@ -167,7 +167,7 @@ class ExportToHTMLManager {
   }
 
   private static String constructOutputDirectory(final PsiDirectory directory, final String outputDirectoryName) {
-    PsiPackage psiPackage = directory.getPackage();
+    PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(directory);
     String dirName = outputDirectoryName;
     if(psiPackage != null) {
       String packageName = psiPackage.getQualifiedName();
@@ -202,7 +202,7 @@ class ExportToHTMLManager {
     throws FileNotFoundException {
     String indexHtmlName = constructOutputDirectory(psiDirectory, outputDirectoryName) + File.separator + "index.html";
     OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(indexHtmlName), CharsetToolkit.UTF8_CHARSET);
-    final PsiPackage aPackage = psiDirectory.getPackage();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
     try {
       writer.write("<html><head><title>" + (aPackage != null ? aPackage.getQualifiedName() : psiDirectory.getName()) + "</title></head><body>");
       if (recursive) {
@@ -275,7 +275,7 @@ class ExportToHTMLManager {
         if (!dirToShow.endsWith(File.separator)) {
           dirToShow += File.separatorChar;
         }
-        PsiPackage aPackage = myPsiDirectory.getPackage();
+        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(myPsiDirectory);
         if (aPackage != null) {
           dirToShow += aPackage.getQualifiedName().replace('.', File.separatorChar);
         }

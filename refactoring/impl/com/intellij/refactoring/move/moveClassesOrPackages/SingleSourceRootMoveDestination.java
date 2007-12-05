@@ -1,10 +1,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -23,7 +20,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   private final PsiDirectory myTargetDirectory;
 
   public SingleSourceRootMoveDestination(PackageWrapper aPackage, PsiDirectory targetDirectory) {
-    LOG.assertTrue(aPackage.equalToPackage(targetDirectory.getPackage()));
+    LOG.assertTrue(aPackage.equalToPackage(JavaDirectoryService.getInstance().getPackage(targetDirectory)));
     myPackage = aPackage;
     myTargetDirectory = targetDirectory;
   }

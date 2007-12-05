@@ -266,7 +266,7 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
       return null;
     }
     final String packageName;
-    final PsiPackage aPackage = directory.getPackage();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage == null) {
       packageName = "";
     }

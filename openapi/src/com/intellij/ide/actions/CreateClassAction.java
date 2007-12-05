@@ -19,6 +19,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -56,15 +57,15 @@ public class CreateClassAction extends CreateInPackageActionBase {
 
 
   protected String getActionName(PsiDirectory directory, String newName) {
-    return IdeBundle.message("progress.creating.class", directory.getPackage().getQualifiedName(), newName);
+    return IdeBundle.message("progress.creating.class", JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName(), newName);
   }
 
   protected void doCheckCreate(final PsiDirectory dir, final String className) throws IncorrectOperationException {
-    dir.checkCreateClass(className);
+    JavaDirectoryService.getInstance().checkCreateClass(dir, className);
   }
 
 
   protected PsiClass doCreate(final PsiDirectory dir, final String className) throws IncorrectOperationException {
-    return dir.createClass(className);
+    return JavaDirectoryService.getInstance().createClass(dir, className);
   }
 }

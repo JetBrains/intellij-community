@@ -7,10 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
@@ -89,7 +86,8 @@ public class MoveClassTest extends CodeInsightTestCase {
     assertEquals(dirs.length, 1);
 
     new MoveClassesOrPackagesProcessor(myProject, classes,
-                                       new SingleSourceRootMoveDestination(PackageWrapper.create(dirs[0].getPackage()), dirs[0]),
+                                       new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService
+                                         .getInstance().getPackage(dirs[0])), dirs[0]),
                                        true, true, null).run();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();

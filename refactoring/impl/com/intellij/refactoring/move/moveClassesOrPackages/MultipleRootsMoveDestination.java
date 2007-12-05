@@ -2,10 +2,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
@@ -32,7 +29,7 @@ public class MultipleRootsMoveDestination extends AutocreatingMoveDestination {
 
 
   public PsiDirectory getTargetDirectory(PsiDirectory source) throws IncorrectOperationException {
-    if (source.isSourceRoot()) return null;
+    if (JavaDirectoryService.getInstance().isSourceRoot(source)) return null;
     return getOrCreateDirectoryForSource(source.getVirtualFile());
   }
 

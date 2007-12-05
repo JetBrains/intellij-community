@@ -52,7 +52,7 @@ public class MoveInnerImpl {
       }
       else if (outerClassParent instanceof PsiFile) {
         final PsiDirectory directory = innerClass.getContainingFile().getContainingDirectory();
-        final PsiPackage aPackage = directory.getPackage();
+        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
         if (aPackage == null) {
           if (chooseIfNotUnderSource) {
             PackageChooserDialog chooser = new PackageChooserDialog("Select Target Package", innerClass.getProject());

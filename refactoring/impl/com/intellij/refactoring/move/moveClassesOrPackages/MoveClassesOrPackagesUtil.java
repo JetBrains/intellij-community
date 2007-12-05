@@ -72,7 +72,7 @@ public class MoveClassesOrPackagesUtil {
       oldQName = ((PsiPackage)element).getQualifiedName();
     }
     else if (element instanceof PsiDirectory) {
-      final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
       oldQName = aPackage != null ? aPackage.getQualifiedName() : null;
     }
     else {
@@ -170,7 +170,7 @@ public class MoveClassesOrPackagesUtil {
     final VirtualFile sourceVFile = dir.getVirtualFile();
     if (movedPaths.contains(sourceVFile)) return;
     String targetName = dir.getName();
-    final PsiPackage aPackage = dir.getPackage();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(dir);
     if (aPackage != null) {
       final String sourcePackageName = aPackage.getName();
       if (!sourcePackageName.equals(targetName)) {
@@ -224,12 +224,12 @@ public class MoveClassesOrPackagesUtil {
   public static PsiClass doMoveClass(PsiClass aClass, MoveDestination moveDestination) throws IncorrectOperationException {
     PsiFile file = aClass.getContainingFile();
     PsiDirectory newDirectory = moveDestination.getTargetDirectory(file);
-    final PsiPackage newPackage = newDirectory.getPackage();
+  final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(newDirectory);
 
     PsiClass newClass;
     if (file instanceof PsiJavaFile && ((PsiJavaFile)file).getClasses().length > 1) {
       correctSelfReferences(aClass, newPackage);
-      final PsiClass created = newDirectory.createClass(aClass.getName());
+      final PsiClass created = JavaDirectoryService.getInstance().createClass(newDirectory, aClass.getName());
       if (aClass.getDocComment() == null) {
         final PsiDocComment createdDocComment = created.getDocComment();
         if (createdDocComment != null) {
@@ -260,7 +260,7 @@ public class MoveClassesOrPackagesUtil {
   }
 
   private static void correctSelfReferences(final PsiClass aClass, final PsiPackage newContainingPackage) {
-    final PsiPackage aPackage = aClass.getContainingFile().getContainingDirectory().getPackage();
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
     if (aPackage != null) {
       aClass.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {

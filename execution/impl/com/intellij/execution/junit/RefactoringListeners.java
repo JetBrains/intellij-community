@@ -4,6 +4,7 @@ import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.SingleClassConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -146,7 +147,7 @@ public class RefactoringListeners {
       myAccessor = accessor;
       PsiClass aClass = myAccessor.getPsiElement();
       aClass = (PsiClass)aClass.getOriginalElement();
-      myContainingPackage = aClass.getContainingFile().getContainingDirectory().getPackage();
+      myContainingPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
       myModule = ExecutionUtil.findModule(aClass);
       final String classQName = aClass.getQualifiedName();
       final String classPackageQName = myContainingPackage.getQualifiedName();

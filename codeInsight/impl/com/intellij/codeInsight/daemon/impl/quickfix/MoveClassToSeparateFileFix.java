@@ -1,13 +1,14 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -37,9 +38,9 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
     if (dir == null) return false;
     try {
       if (myClass.isInterface()) {
-        dir.checkCreateInterface(myClass.getName());
+        JavaDirectoryService.getInstance().checkCreateInterface(dir, myClass.getName());
       } else {
-        dir.checkCreateClass(myClass.getName());
+        JavaDirectoryService.getInstance().checkCreateClass(dir, myClass.getName());
       }
     }
     catch (IncorrectOperationException e) {
@@ -54,7 +55,8 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
 
     PsiDirectory dir = file.getContainingDirectory();
     try{
-      PsiClass placeHolder = myClass.isInterface() ? dir.createInterface(myClass.getName()) : dir.createClass(myClass.getName());
+      PsiClass placeHolder = myClass.isInterface() ? JavaDirectoryService.getInstance().createInterface(dir, myClass.getName()) : JavaDirectoryService.getInstance()
+        .createClass(dir, myClass.getName());
       PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
       myClass.delete();
 

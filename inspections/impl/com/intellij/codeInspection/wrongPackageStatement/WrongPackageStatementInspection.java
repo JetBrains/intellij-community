@@ -46,7 +46,7 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
       if (classes.length == 0) return null;
       PsiDirectory directory = javaFile.getContainingDirectory();
       if (directory == null) return null;
-      PsiPackage dirPackage = directory.getPackage();
+      PsiPackage dirPackage = JavaDirectoryService.getInstance().getPackage(directory);
       if (dirPackage == null) return null;
       PsiPackageStatement packageStatement = javaFile.getPackageStatement();
 

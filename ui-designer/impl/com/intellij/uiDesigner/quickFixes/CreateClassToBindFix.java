@@ -1,25 +1,25 @@
 package com.intellij.uiDesigner.quickFixes;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -87,7 +87,7 @@ public final class CreateClassToBindFix extends QuickFix{
                 // 2. Create class in the package
                 try {
                   final String name = myClassName.substring(indexOfLastDot != -1 ? indexOfLastDot + 1 : 0);
-                  final PsiClass aClass = psiDirectory.createClass(name);
+                  final PsiClass aClass = JavaDirectoryService.getInstance().createClass(psiDirectory, name);
                   createBoundFields(aClass);
                 }
                 catch (final IncorrectOperationException e) {

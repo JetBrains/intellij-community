@@ -4,6 +4,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -38,7 +39,6 @@ import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.lang.findUsages.LanguageFindUsages;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +118,7 @@ public class FindUsagesManager implements JDOMExternalizable {
         }
 
         if (element instanceof PsiDirectory) {
-          final PsiPackage psiPackage = ((PsiDirectory)element).getPackage();
+          final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
           return psiPackage == null ? null : new Factory<FindUsagesHandler>() {
             public FindUsagesHandler create() {
               return new DefaultFindUsagesHandler(psiPackage, findClassOptions, findMethodOptions, findPackageOptions, findThrowOptions,
