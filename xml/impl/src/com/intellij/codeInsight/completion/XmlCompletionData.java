@@ -233,19 +233,19 @@ public class XmlCompletionData extends CompletionData {
 
         int caretOffset = editor.getCaretModel().getOffset();
 
-        PsiElement otherTag = PsiTreeUtil.getParentOfType(context.file.findElementAt(caretOffset), getTagClass());
+        PsiElement otherTag = PsiTreeUtil.getParentOfType(context.file.findElementAt(caretOffset), XmlTag.class);
 
-        PsiElement endTagStart = getEndTagStart(otherTag);
+        PsiElement endTagStart = XmlUtil.getTokenOfType(otherTag, XmlTokenType.XML_END_TAG_START);
 
         if (endTagStart != null) {
           PsiElement sibling = endTagStart.getNextSibling();
 
-          if (isTagNameToken(sibling)) {
+          if (sibling.getNode().getElementType() == XmlTokenType.XML_NAME) {
             int sOffset = sibling.getTextRange().getStartOffset();
             int eOffset = sibling.getTextRange().getEndOffset();
 
             editor.getDocument().deleteString(sOffset, eOffset);
-            editor.getDocument().insertString(sOffset, getTagText(otherTag));
+            editor.getDocument().insertString(sOffset, ((XmlTag)otherTag).getName());
           }
         }
 
@@ -364,22 +364,6 @@ public class XmlCompletionData extends CompletionData {
     private static boolean isTagFromHtml(final XmlTag tag) {
       final String ns = tag.getNamespace();
       return XmlUtil.XHTML_URI.equals(ns) || XmlUtil.HTML_URI.equals(ns);
-    }
-
-    private Class getTagClass() {
-      return XmlTag.class;
-    }
-
-    private PsiElement getEndTagStart(PsiElement tag) {
-      return XmlUtil.getTokenOfType(tag, XmlTokenType.XML_END_TAG_START);
-    }
-
-    private String getTagText(PsiElement tag) {
-      return ((XmlTag)tag).getName();
-    }
-
-    private boolean isTagNameToken(PsiElement token) {
-      return token.getNode().getElementType() == XmlTokenType.XML_NAME;
     }
   }
 
