@@ -41,7 +41,7 @@ public class PrattTokenType extends IElementType {
     this(tokenName, language, priority, null, null);
   }
 
-  public String getExpectedText() {
+  public String getExpectedText(final PrattBuilder builder) {
     return PsiBundle.message("0.expected", toString());
   }
 

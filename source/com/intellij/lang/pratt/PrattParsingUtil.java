@@ -12,7 +12,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PrattParsingUtil {
 
-  public static void skipUntil(PrattBuilder builder, @NotNull PrattTokenType... types) {
+  public static void searchFor(PrattBuilder builder, @NotNull PrattTokenType... types) {
+    searchFor(builder, true, types);
+  }
+
+  public static boolean searchFor(final PrattBuilder builder, final boolean consume, final PrattTokenType... types) {
     final TokenSet set = TokenSet.create(types);
     if (!set.contains(builder.getTokenType())) {
       builder.assertToken(types[0]);
@@ -20,6 +24,9 @@ public class PrattParsingUtil {
         builder.advance();
       }
     }
-    builder.advance();
+    if (consume) {
+      builder.advance();
+    }
+    return !builder.isEof();
   }
 }

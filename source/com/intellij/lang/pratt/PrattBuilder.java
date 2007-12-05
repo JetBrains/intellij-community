@@ -7,6 +7,8 @@ package com.intellij.lang.pratt;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +24,10 @@ public class PrattBuilder {
 
   public PrattBuilder(final PsiBuilder builder) {
     myBuilder = builder;
+  }
+
+  public Lexer getLexer() {
+    return ((PsiBuilderImpl) myBuilder).getLexer();
   }
 
   @NotNull
@@ -132,7 +138,11 @@ public class PrattBuilder {
   }
 
   public boolean assertToken(final PrattTokenType type) {
-    return _checkToken(type, true);
+    return assertToken(type, type.getExpectedText(this));
+  }
+
+  public boolean assertToken(final PrattTokenType type, @NotNull final String errorMessage) {
+    return _checkToken(type, errorMessage);
   }
 
   public PsiBuilder.Marker mark() {
@@ -140,16 +150,16 @@ public class PrattBuilder {
   }
 
   public boolean checkToken(final PrattTokenType type) {
-    return _checkToken(type, false);
+    return _checkToken(type, null);
   }
 
-  private boolean _checkToken(final PrattTokenType type, final boolean error) {
+  private boolean _checkToken(final PrattTokenType type, @Nullable String errorMessage) {
     if (isToken(type)) {
       advance();
       return true;
     }
-    if (error) {
-      error(type.getExpectedText());
+    if (errorMessage != null) {
+      error(errorMessage);
     }
     return false;
   }
