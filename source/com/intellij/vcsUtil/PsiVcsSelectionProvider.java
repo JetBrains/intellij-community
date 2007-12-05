@@ -5,29 +5,20 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.codeInsight.TargetElementUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class VcsSelectionUtil {
-  public static VcsSelection getSelection(VcsContext context) {
-
-    VcsSelection selectionFromEditor = getSelectionFromEditor(context);
-    if (selectionFromEditor != null) {
-      return selectionFromEditor;
-    }
-    return /* TODO[yole] getSelectionFromPsiElement(context); */ null;
-  }
-
+public class PsiVcsSelectionProvider implements VcsSelectionProvider {
   @Nullable
-  private static VcsSelection getSelectionFromPsiElement(PsiElement psiElement) {
+  public VcsSelection getSelection(final VcsContext context) {
+    PsiElement psiElement = TargetElementUtil.findTargetElement(context.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     if (psiElement == null) {
       return null;
     }
@@ -80,15 +71,5 @@ public class VcsSelectionUtil {
 
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     return new VcsSelection(document, textRange, actionName);
-  }
-
-  private static VcsSelection getSelectionFromEditor(VcsContext context) {
-    Editor editor = context.getEditor();
-    if (editor == null) return null;
-    SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection()) {
-      return null;
-    }
-    return new VcsSelection(editor.getDocument(), selectionModel);
   }
 }

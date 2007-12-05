@@ -16,6 +16,7 @@
     <action id="Compare.Selected" class="com.intellij.openapi.vcs.actions.CompareWithSelectedRevisionAction" popup="true"/>
     <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction"
             text="Com_pare with Specified Revision..." popup="true"/>
+    <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
 
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" test="Version Control"/>
 
@@ -150,6 +151,17 @@
     <group id="EditorGutterVcsPopupMenu">
       <reference ref="Annotate"/>
       <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
+    </group>
+
+    <group id="Vcs.CheckinProjectPopup">
+      <separator/>
+    </group>
+
+    <group id="Vcs.CheckinProjectToolbar">
+    </group>
+
+    <group id="UpdateActionGroup">
+      <reference ref="$Delete"/>
     </group>
   </actions>
 </component>
