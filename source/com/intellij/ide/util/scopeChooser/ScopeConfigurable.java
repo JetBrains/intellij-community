@@ -9,18 +9,18 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * User: anna
@@ -30,9 +30,9 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
   private NamedScope myScope;
   private ScopeEditorPanel myPanel;
   private String myPackageSet;
-  private JCheckBox mySharedCheckbox = new JCheckBox(IdeBundle.message("share.scope.checkbox.title"));
+  private final JCheckBox mySharedCheckbox;
   private boolean myShareScope = false;
-  private Project myProject;
+  private final Project myProject;
   private Icon myIcon;
 
   public ScopeConfigurable(final NamedScope scope, final boolean shareScope, final Project project, final Runnable updateTree) {
@@ -42,6 +42,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     myProject = project;
     final PackageSet packageSet = scope.getValue();
     myPackageSet = packageSet != null ? packageSet.getText() : null;
+    mySharedCheckbox = new JCheckBox(IdeBundle.message("share.scope.checkbox.title"), shareScope);
     myPanel = new ScopeEditorPanel(project){
       public NamedScopesHolder getHolder() {
         return ScopeConfigurable.this.getHolder();

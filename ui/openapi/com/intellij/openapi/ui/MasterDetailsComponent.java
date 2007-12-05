@@ -294,7 +294,6 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
       if (userObject instanceof Configurable) {
         final Configurable configurable = (Configurable)userObject;
         final String displayName = configurable.getDisplayName();
-        myState.order.add(displayName);
         if (!selected && Comparing.strEqual(displayName, myState.lastEditedConfigurable)) {
           TreeUtil.selectInTree(node, true, myTree);
           selected = true;
