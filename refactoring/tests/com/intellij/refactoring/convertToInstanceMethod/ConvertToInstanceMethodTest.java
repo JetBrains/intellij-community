@@ -13,6 +13,8 @@ public class ConvertToInstanceMethodTest extends LightCodeInsightTestCase {
 
   public void testInterface() throws Exception { doTest(1); }
 
+  public void testInterfacePrivate() throws Exception { doTest(1); }
+
   public void testInterface2() throws Exception { doTest(0); }
 
   public void testTypeParameter() throws Exception { doTest(0); }

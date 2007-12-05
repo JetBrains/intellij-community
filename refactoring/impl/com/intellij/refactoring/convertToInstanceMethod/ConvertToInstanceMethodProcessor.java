@@ -240,7 +240,12 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     }
     else {
       final PsiMethod interfaceMethod = addMethodToClass(myTargetClass);
+      final PsiModifierList modifierList = interfaceMethod.getModifierList();
+      modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
+      modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+      modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
       RefactoringUtil.abstractizeMethod(myTargetClass, interfaceMethod);
+
       for (final PsiClass psiClass : inheritors) {
         final PsiMethod newMethod = addMethodToClass(psiClass);
         newMethod.getModifierList().setModifierProperty((myNewVisibility != null && !myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY)
