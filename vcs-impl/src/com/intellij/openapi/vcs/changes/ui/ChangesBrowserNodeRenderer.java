@@ -42,7 +42,13 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
 
 
   protected void appendFileName(final VirtualFile vFile, final String fileName, final Color color) {
-    ChangesFileNameDecorator.getInstance(myProject).appendFileName(this, vFile, fileName, color, myHighlightProblems);
+    final ChangesFileNameDecorator decorator = ChangesFileNameDecorator.getInstance(myProject);
+    if (decorator != null) {
+      decorator.appendFileName(this, vFile, fileName, color, myHighlightProblems);
+    }
+    else {
+      append(fileName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color));
+    }
   }
 
   public void appendTextWithIssueLinks(final String text, final SimpleTextAttributes baseStyle) {
