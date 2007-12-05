@@ -7,12 +7,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.*;
 import com.intellij.util.Icons;
+import com.intellij.util.VisibilityIcons;
+import com.intellij.ui.RowIcon;
 import gnu.trove.TIntObjectHashMap;
 
 import javax.swing.*;
@@ -22,6 +25,9 @@ public class ElementPresentationUtil {
   private static final Icon FINAL_MARK_ICON = IconLoader.getIcon("/nodes/finalMark.png");
   private static final Icon JUNIT_TEST_MARK = IconLoader.getIcon("/nodes/junitTestMark.png");
   private static final Icon RUNNABLE_MARK = IconLoader.getIcon("/nodes/runnableMark.png");
+
+  private ElementPresentationUtil() {
+  }
 
 
   public static int getFlags(PsiModifierListOwner element, final boolean isLocked) {
@@ -209,5 +215,12 @@ public class ElementPresentationUtil {
     ElementBase.registerIconLayer(FLAGS_FINAL, FINAL_MARK_ICON);
     ElementBase.registerIconLayer(FLAGS_JUNIT_TEST, JUNIT_TEST_MARK);
     ElementBase.registerIconLayer(FLAGS_RUNNABLE, RUNNABLE_MARK);
+  }
+
+  public static Icon addVisibilityIcon(final PsiModifierListOwner element, final int flags, final RowIcon baseIcon) {
+    if ((flags & Iconable.ICON_FLAG_VISIBILITY) != 0) {
+      VisibilityIcons.setVisibilityIcon(element.getModifierList(), baseIcon);
+    }
+    return baseIcon;
   }
 }

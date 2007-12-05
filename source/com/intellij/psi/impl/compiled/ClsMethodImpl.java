@@ -882,6 +882,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   public Icon getElementIcon(final int flags) {
     Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
     RowIcon baseIcon = createLayeredIcon(methodIcon, ElementPresentationUtil.getFlags(this, false));
-    return addVisibilityIcon(this, flags, baseIcon);
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 }

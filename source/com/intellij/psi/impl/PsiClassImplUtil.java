@@ -262,7 +262,7 @@ public class PsiClassImplUtil {
     final boolean isLocked = (flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !aClass.isWritable();
     Icon symbolIcon = ElementPresentationUtil.getClassBaseIcon(aClass);
     RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, ElementPresentationUtil.getFlags(aClass, isLocked));
-    return ElementBase.addVisibilityIcon(aClass, flags, baseIcon);
+    return ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
   }
 
   private static class ByNameCachedValueProvider implements CachedValueProvider<Map> {

@@ -35,6 +35,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,6 +79,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   @NotNull
   public PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope) {
     return new DirectoriesSearch().search(scope).toArray(PsiDirectory.EMPTY_ARRAY);
+  }
+
+  public RowIcon getPackageIcon(final int elementFlags) {
+    return createLayeredIcon(Icons.PACKAGE_ICON, elementFlags);
   }
 
   private class DirectoriesSearch extends QueryFactory<PsiDirectory, GlobalSearchScope> {

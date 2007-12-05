@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -210,6 +211,6 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
 
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
-    return addVisibilityIcon(this, flags, baseIcon);
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 }

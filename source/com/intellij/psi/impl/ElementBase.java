@@ -25,8 +25,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
-      final RowIcon rowIcon = providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
-      return addVisibilityIcon(element, flags, rowIcon);
+      return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
     }
 
     return getElementIcon(flags);
@@ -34,15 +33,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   protected Icon getElementIcon(final int flags) {
     final PsiElement element = (PsiElement)this;
-    boolean visibilityAdded = false;
     RowIcon baseIcon;
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
     if (element instanceof ItemPresentation && ((ItemPresentation)element).getIcon(false) != null) {
         baseIcon = createLayeredIcon(((ItemPresentation)element).getIcon(false), elementFlags);
-    }
-    else if (element instanceof PsiPackage) {
-      baseIcon = createLayeredIcon(Icons.PACKAGE_ICON, elementFlags);
     }
     else if (element instanceof PsiFile) {
       PsiFile file = (PsiFile)element;
@@ -54,22 +49,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       }
       else {
         fileTypeIcon = IconUtil.getIcon(virtualFile, flags & ~ICON_FLAG_READ_STATUS, file.getProject());
-        if (fileTypeIcon instanceof RowIcon) {
-          visibilityAdded = true;
-        }
       }
-      baseIcon = createLayeredIcon(fileTypeIcon, elementFlags);
+      return createLayeredIcon(fileTypeIcon, elementFlags);
     }
     else {
       return null;
-    }
-    return visibilityAdded ? baseIcon : addVisibilityIcon(element, flags, baseIcon);
-  }
-
-  protected static Icon addVisibilityIcon(final PsiElement element, final int flags, final RowIcon baseIcon) {
-    if ((flags & ICON_FLAG_VISIBILITY) != 0) {
-      PsiModifierList modifierList = element instanceof PsiModifierListOwner ? ((PsiModifierListOwner)element).getModifierList() : null;
-      VisibilityIcons.setVisibilityIcon(modifierList, baseIcon);
     }
     return baseIcon;
   }

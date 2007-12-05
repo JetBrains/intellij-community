@@ -235,7 +235,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
 
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = createLayeredIcon(Icons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
-    return addVisibilityIcon(this, flags, baseIcon);
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
   private class MyReference implements PsiJavaReference {

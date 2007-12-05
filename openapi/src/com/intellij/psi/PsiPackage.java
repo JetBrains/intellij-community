@@ -19,6 +19,8 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Icons;
+import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,4 +133,6 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem, PsiModifier
   @Nullable("default package")
   @NonNls
   String getName();
+
+  RowIcon getPackageIcon(int elementFlags);
 }

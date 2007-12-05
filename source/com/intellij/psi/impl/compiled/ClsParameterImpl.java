@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.Icons;
@@ -200,6 +201,6 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
 
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
-    return addVisibilityIcon(this, flags, baseIcon);
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 }
