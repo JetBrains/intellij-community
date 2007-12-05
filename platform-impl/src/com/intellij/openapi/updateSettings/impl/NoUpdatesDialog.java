@@ -1,6 +1,5 @@
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
@@ -28,7 +27,6 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
 
   protected Action[] createActions() {
     final Action cancelAction = getCancelAction();
-    cancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
     if (myUploadedPlugins != null) {
       return new Action[] {getOKAction(), cancelAction};
     }
