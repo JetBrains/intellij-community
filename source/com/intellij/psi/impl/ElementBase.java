@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.ArrayList;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   private static final Icon STATIC_MARK_ICON = IconLoader.getIcon("/nodes/staticMark.png");
@@ -287,24 +288,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   public static RowIcon createLayeredIcon(Icon icon, int flags) {
     if (flags != 0) {
       List<Icon> iconLayers = new SmartList<Icon>();
-      if ((flags & FLAGS_STATIC) != 0) {
-        iconLayers.add(STATIC_MARK_ICON);
-      }
-      if ((flags & FLAGS_LOCKED) != 0) {
-        iconLayers.add(Icons.LOCKED_ICON);
-      }
-      if ((flags & FLAGS_EXCLUDED) != 0) {
-        iconLayers.add(Icons.EXCLUDED_FROM_COMPILE_ICON);
-      }
-      final boolean isFinal = (flags & FLAGS_FINAL) != 0;
-      if (isFinal) {
-        iconLayers.add(FINAL_MARK_ICON);
-      }
-      if ((flags & FLAGS_JUNIT_TEST) != 0) {
-        iconLayers.add(JUNIT_TEST_MARK);
-      }
-      if ((flags & FLAGS_RUNNABLE) != 0) {
-        iconLayers.add(RUNNABLE_MARK);
+      for(IconLayer l: ourIconLayers) {
+        if ((flags & l.flagMask) != 0) {
+          iconLayers.add(l.icon);
+        }
       }
       LayeredIcon layeredIcon = new LayeredIcon(1 + iconLayers.size());
       layeredIcon.setIcon(icon, 0);
@@ -317,5 +304,30 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     RowIcon baseIcon = new RowIcon(2);
     baseIcon.setIcon(icon, 0);
     return baseIcon;
+  }
+
+  private static class IconLayer {
+    int flagMask;
+    Icon icon;
+
+    IconLayer(final int flagMask, final Icon icon) {
+      this.flagMask = flagMask;
+      this.icon = icon;
+    }
+  }
+
+  private static final List<IconLayer> ourIconLayers = new ArrayList<IconLayer>();
+
+  public static void registerIconLayer(int flagMask, Icon icon) {
+    ourIconLayers.add(new IconLayer(flagMask, icon));
+  }
+
+  static {
+    registerIconLayer(FLAGS_STATIC, STATIC_MARK_ICON);
+    registerIconLayer(FLAGS_LOCKED, Icons.LOCKED_ICON);
+    registerIconLayer(FLAGS_EXCLUDED, Icons.EXCLUDED_FROM_COMPILE_ICON);
+    registerIconLayer(FLAGS_FINAL, FINAL_MARK_ICON);
+    registerIconLayer(FLAGS_JUNIT_TEST, JUNIT_TEST_MARK);
+    registerIconLayer(FLAGS_RUNNABLE, RUNNABLE_MARK);
   }
 }
