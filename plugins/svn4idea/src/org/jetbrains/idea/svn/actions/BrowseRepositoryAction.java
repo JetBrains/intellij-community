@@ -24,8 +24,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog;
 
 import javax.swing.*;
@@ -48,7 +48,7 @@ public class BrowseRepositoryAction extends AnAction {
       if (w == null) {
         RepositoryToolWindowPanel component = new RepositoryToolWindowPanel(project);
         w = manager.registerToolWindow(REPOSITORY_BROWSER_TOOLWINDOW, true, ToolWindowAnchor.BOTTOM);
-        final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, "", false);
+        final Content content = ContentFactory.SERVICE.getInstance().createContent(component, "", false);
         content.setDisposer(component);
         w.getContentManager().addContent(content);
       }

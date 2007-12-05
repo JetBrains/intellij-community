@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.peer.PeerFactory;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNAdminAreaFactorySelector;
@@ -116,7 +116,7 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
   private static Project findProject(final File path) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
       public Project compute() {
-        final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(path);
+        final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(path);
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
         for (Project project : projects) {
           AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(filePath);

@@ -17,11 +17,11 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -75,7 +75,7 @@ public class SvnDiffProvider implements DiffProvider {
 
   public ContentRevision createFileContent(final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile) {
     final SVNRevision svnRevision = ((SvnRevisionNumber)revisionNumber).getRevision();
-    FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(selectedFile);
+    FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(selectedFile);
     final SVNStatusClient client = myVcs.createStatusClient();
     try {
       final SVNStatus svnStatus = client.doStatus(new File(selectedFile.getPresentableUrl()), false, false);

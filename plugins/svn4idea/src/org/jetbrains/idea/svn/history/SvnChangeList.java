@@ -25,9 +25,9 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.peer.PeerFactory;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +126,7 @@ public class SvnChangeList implements CommittedChangeList {
       String relPath = fullPath.substring(myLocation.getURL().length());
       final String basePath = myLocation.getRootFile().getPresentableUrl();
       File localFile = new File(basePath, relPath);
-      return PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(localFile);
+      return VcsContextFactory.SERVICE.getInstance().createFilePathOn(localFile);
     }
     return null;
   }

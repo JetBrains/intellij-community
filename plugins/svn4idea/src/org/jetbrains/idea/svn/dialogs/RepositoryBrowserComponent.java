@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,7 +160,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
     add(scrollPane, BorderLayout.CENTER);
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
 
-    PeerFactory.getInstance().getUIHelper().installEditSourceOnDoubleClick(myRepositoryTree);
+    EditSourceOnDoubleClickHandler.install(myRepositoryTree);
   }
 
   @Nullable

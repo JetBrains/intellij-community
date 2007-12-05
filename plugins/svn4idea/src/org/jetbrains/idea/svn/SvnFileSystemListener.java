@@ -41,13 +41,13 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -535,7 +535,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Comman
       DeletedFileInfo deletedFileInfo = it.next();
       if (deletedFileInfo.myProject == project) {
         it.remove();
-        final FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(deletedFileInfo.myFile);
+        final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(deletedFileInfo.myFile);
         deletedFiles.add(filePath);
       }
     }

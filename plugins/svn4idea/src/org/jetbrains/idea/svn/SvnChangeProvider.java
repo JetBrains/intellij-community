@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.peer.PeerFactory;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   public SvnChangeProvider(final SvnVcs vcs) {
     myVcs = vcs;
-    myFactory = PeerFactory.getInstance().getVcsContextFactory();
+    myFactory = VcsContextFactory.SERVICE.getInstance();
     myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
     myProjectRootManager = ProjectRootManager.getInstance(myVcs.getProject());
   }
@@ -94,7 +93,7 @@ public class SvnChangeProvider implements ChangeProvider {
           if (childURL.startsWith(copyFromURL + "/")) {
             String relativePath = childURL.substring(copyFromURL.length());
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
-            FilePath newFilePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(newPath);
+            FilePath newFilePath = myFactory.createFilePathOn(newPath);
             builder.processChange(new Change(createBeforeRevision(deletedChild),
                                              CurrentContentRevision.create(newFilePath)));
             iterChild.remove();

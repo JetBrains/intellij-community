@@ -9,6 +9,7 @@ package org.jetbrains.idea.svn.status;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
@@ -16,7 +17,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -66,14 +66,14 @@ public class SvnDiffEditor implements ISVNEditor {
     }
     // 'path' includes the first component of the root local path
     File f = new File(mySourceRoot.getParent().getPath(), path);
-    FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(f);
+    FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(f);
     return CurrentContentRevision.create(filePath);
   }
 
   private DiffContentRevision createAfterRevision(final String path) {
     if (mySourceRoot != null) {
       File f = new File(mySourceRoot.getParent().getPath(), path);
-      FilePath filePath = PeerFactory.getInstance().getVcsContextFactory().createFilePathOn(f);
+      FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(f);
       return new DiffContentRevision(path, myTarget, myTargetRevision, filePath);
     }
     return new DiffContentRevision(path, myTarget, myTargetRevision);
