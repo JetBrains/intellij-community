@@ -301,10 +301,13 @@ public final class UpdateChecker {
       ourDisabledToUpdatePlugins = new TreeSet<String>();
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         try {
-          final String[] ids = new String(FileUtil.loadFileText(new File(PathManager.getConfigPath(), DISABLED_UPDATE))).split("[\\s]");
-          for (String id : ids) {
-            if (id != null && id.trim().length() > 0) {
-              ourDisabledToUpdatePlugins.add(id.trim());
+          final File file = new File(PathManager.getConfigPath(), DISABLED_UPDATE);
+          if (file.isFile()) {
+            final String[] ids = new String(FileUtil.loadFileText(file)).split("[\\s]");
+            for (String id : ids) {
+              if (id != null && id.trim().length() > 0) {
+                ourDisabledToUpdatePlugins.add(id.trim());
+              }
             }
           }
         }
