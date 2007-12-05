@@ -19,6 +19,7 @@ import com.intellij.util.cls.ClsFormatException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.text.CharacterIterator;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -346,5 +347,9 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
 
   public boolean isMetaEnough() {
     return false;
+  }
+
+  public Icon getElementIcon(final int flags) {
+    return PsiClassImplUtil.getClassIcon(flags, this);
   }
 }

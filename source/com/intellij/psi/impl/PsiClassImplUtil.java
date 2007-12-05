@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.OrFilter;
@@ -21,11 +22,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
+import com.intellij.ui.RowIcon;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -253,6 +256,13 @@ public class PsiClassImplUtil {
       }
     }
     return (Map<String, List<Pair<T, PsiSubstitutor>>>)value.getValue().get(memberClazz);
+  }
+
+  public static Icon getClassIcon(final int flags, final PsiClass aClass) {
+    final boolean isLocked = (flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !aClass.isWritable();
+    Icon symbolIcon = ElementPresentationUtil.getClassBaseIcon(aClass);
+    RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, ElementPresentationUtil.getFlags(aClass, isLocked));
+    return ElementBase.addVisibilityIcon(aClass, flags, baseIcon);
   }
 
   private static class ByNameCachedValueProvider implements CachedValueProvider<Map> {

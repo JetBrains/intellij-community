@@ -60,11 +60,6 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       }
       baseIcon = createLayeredIcon(fileTypeIcon, elementFlags);
     }
-    else if (element instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)element;
-      Icon symbolIcon = ElementPresentationUtil.getClassBaseIcon(aClass);
-      baseIcon = createLayeredIcon(symbolIcon, ElementPresentationUtil.getFlags(aClass, isLocked));
-    }
     else {
       return null;
     }

@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiClass {
@@ -827,6 +828,10 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
   public ItemPresentation getPresentation() {
     return ClassPresentationUtil.getPresentation(this);
+  }
+
+  public Icon getElementIcon(final int flags) {
+    return PsiClassImplUtil.getClassIcon(flags, this);
   }
 }
 

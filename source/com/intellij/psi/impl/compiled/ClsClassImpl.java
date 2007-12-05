@@ -22,6 +22,7 @@ import com.intellij.util.cls.ClsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.*;
@@ -1147,5 +1148,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
 
   public ItemPresentation getPresentation() {
     return ClassPresentationUtil.getPresentation(this);
+  }
+
+  public Icon getElementIcon(final int flags) {
+    return PsiClassImplUtil.getClassIcon(flags, this);
   }
 }

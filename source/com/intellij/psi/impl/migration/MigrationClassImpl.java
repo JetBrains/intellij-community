@@ -3,17 +3,20 @@ package com.intellij.psi.impl.migration;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
-import com.intellij.psi.HierarchicalMethodSignature;
 import com.intellij.psi.impl.InheritanceImplUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
-
-import java.util.*;
-
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author dsl
@@ -257,5 +260,9 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
 
   public boolean isMetaEnough() {
     return false;
+  }
+
+  public Icon getElementIcon(final int flags) {
+    return PsiClassImplUtil.getClassIcon(flags, this);
   }
 }
