@@ -414,13 +414,13 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   private PsiFile getCachedPsiFileInner(VirtualFile file) {
     final FileViewProvider fileViewProvider = myVFileToViewProviderMap.get(file);
-    return fileViewProvider == null ? null : ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage());
+    return fileViewProvider instanceof SingleRootFileViewProvider ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }
 
   public List<PsiFile> getAllCachedFiles() {
     List<PsiFile> files = new ArrayList<PsiFile>();
     for (FileViewProvider provider : myVFileToViewProviderMap.values()) {
-      if (provider != null) {
+      if (provider instanceof SingleRootFileViewProvider) {
         files.add(((SingleRootFileViewProvider)provider).getCachedPsi(provider.getBaseLanguage()));
       }
     }
@@ -740,7 +740,7 @@ public class FileManagerImpl implements FileManager {
 
       final FileViewProvider fileViewProvider = findViewProvider(vFile);
       final PsiFile oldPsiFile;
-      if (fileViewProvider != null) {
+      if (fileViewProvider instanceof SingleRootFileViewProvider) {
         oldPsiFile = ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage());
       }
       else oldPsiFile = null;
