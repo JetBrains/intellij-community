@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -22,4 +23,13 @@ import java.awt.*;
 public interface FileStatusFactory {
   FileStatus createFileStatus(@NonNls String id, String description, Color color);
   FileStatus[] getAllFileStatuses();
+
+  class SERVICE {
+    private SERVICE() {
+    }
+
+    public static FileStatusFactory getInstance() {
+      return ServiceManager.getService(FileStatusFactory.class);      
+    }
+  }
 }
